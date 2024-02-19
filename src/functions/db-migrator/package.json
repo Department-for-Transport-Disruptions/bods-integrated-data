@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build": "rm -rf ./dist && tsc && cp -r node_modules dist && cd dist && zip -r function.zip ."
+        "build": "rm -rf ./dist && tsc && cp -r node_modules dist"
     },
     "keywords": [],
     "author": "",

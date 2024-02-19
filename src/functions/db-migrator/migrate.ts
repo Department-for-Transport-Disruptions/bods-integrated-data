@@ -1,6 +1,5 @@
 import {
     GetSecretValueCommand,
-    ListSecretsCommand,
     SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
 import { Database } from "@bods-integrated-data/shared/database.types";
@@ -33,11 +32,14 @@ export const handler = async () => {
         DB_PORT: dbPort,
         DB_SECRET_ARN: databaseSecretArn,
         DB_NAME: dbName,
+        ROLLBACK: rollback,
     } = process.env;
 
     if (!dbHost || !dbPort || !databaseSecretArn || !dbName) {
         throw new Error("Missing env vars");
     }
+
+    const isRollback = rollback === "true";
 
     const databaseSecret = await smClient.send(
         new GetSecretValueCommand({
@@ -72,20 +74,28 @@ export const handler = async () => {
         }),
     });
 
-    const { error, results } = await migrator.migrateToLatest();
+    const { error, results } = isRollback
+        ? await migrator.migrateDown()
+        : await migrator.migrateToLatest();
 
     results?.forEach((it) => {
         if (it.status === "Success") {
             logger.info(
-                `migration "${it.migrationName}" was executed successfully`
+                `${isRollback ? "rollback of" : "migration "} ${
+                    it.migrationName
+                }" was executed successfully`
             );
         } else if (it.status === "Error") {
-            logger.error(`failed to execute migration "${it.migrationName}"`);
+            logger.error(
+                `failed to execute ${
+                    isRollback ? "rollback of" : "migration"
+                }  " ${it.migrationName}"`
+            );
         }
     });
 
     if (error) {
-        logger.error("failed to migrate");
+        logger.error(`failed to ${isRollback ? "rollback" : "migrate"} `);
         logger.error(error as Error);
         process.exit(1);
     }

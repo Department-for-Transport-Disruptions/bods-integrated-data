@@ -61,12 +61,20 @@ resource "aws_iam_role" "integrated_data_db_migrator_role" {
   })
 }
 
+data "archive_file" "lambda" {
+  type             = "zip"
+  source_dir       = "${path.module}/../../../src/functions/db-migrator/dist"
+  output_path      = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  excludes         = ["function.zip"]
+  output_file_mode = "0644"
+}
+
 resource "aws_lambda_function" "integrated_data_db_migrator_function" {
   function_name    = "integrated-data-db-migrator-${var.environment}"
-  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  filename         = data.archive_file.lambda.output_path
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "migrate.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
+  source_code_hash = data.archive_file.lambda.output_base64sha256
 
   runtime     = "nodejs20.x"
   timeout     = 120
@@ -89,10 +97,10 @@ resource "aws_lambda_function" "integrated_data_db_migrator_function" {
 
 resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
   function_name    = "integrated-data-db-migrator-rollback-${var.environment}"
-  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  filename         = data.archive_file.lambda.output_path
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "rollback.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
+  source_code_hash = data.archive_file.lambda.output_base64sha256
 
   runtime     = "nodejs20.x"
   timeout     = 120
@@ -109,6 +117,7 @@ resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
       DB_PORT       = var.db_port
       DB_SECRET_ARN = var.db_secret_arn
       DB_NAME       = var.db_name
+      ROLLBACK      = "true"
     }
   }
 }
