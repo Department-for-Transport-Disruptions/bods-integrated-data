@@ -63,10 +63,10 @@ resource "aws_iam_role" "integrated_data_db_migrator_role" {
 
 resource "aws_lambda_function" "integrated_data_db_migrator_function" {
   function_name    = "integrated-data-db-migrator-${var.environment}"
-  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  filename         = "${path.module}/../../../src/functions/db-migrator/function.zip"
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "migrate.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/function.zip")
 
   runtime     = "nodejs20.x"
   timeout     = 120
@@ -89,10 +89,10 @@ resource "aws_lambda_function" "integrated_data_db_migrator_function" {
 
 resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
   function_name    = "integrated-data-db-migrator-rollback-${var.environment}"
-  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  filename         = "${path.module}/../../../src/functions/db-migrator/function.zip"
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "rollback.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/function.zip")
 
   runtime     = "nodejs20.x"
   timeout     = 120
