@@ -91,7 +91,7 @@ resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
   function_name    = "integrated-data-db-migrator-rollback-${var.environment}"
   filename         = "${path.module}/../../../src/functions/db-migrator/function.zip"
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler          = "rollback.handler"
+  handler          = "migrate.handler"
   source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/function.zip")
 
   runtime     = "nodejs20.x"
@@ -109,6 +109,7 @@ resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
       DB_PORT       = var.db_port
       DB_SECRET_ARN = var.db_secret_arn
       DB_NAME       = var.db_name
+      ROLLBACK      = "true"
     }
   }
 }
