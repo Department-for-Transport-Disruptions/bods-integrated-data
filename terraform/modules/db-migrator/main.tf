@@ -1,3 +1,19 @@
+terraform {
+  required_version = ">= 1.6.6"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.33"
+    }
+
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
+  }
+}
+
 resource "aws_security_group" "integrated_data_db_migrator_sg" {
   name   = "integrated-data-db-migrator-sg-${var.environment}"
   vpc_id = var.vpc_id
@@ -45,19 +61,12 @@ resource "aws_iam_role" "integrated_data_db_migrator_role" {
   })
 }
 
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_dir  = "${path.root}/../../src/functions/db-migrator/dist"
-  output_path = "${path.root}/../../src/functions/db-migrator/dist/function.zip"
-  excludes    = ["function.zip"]
-}
-
 resource "aws_lambda_function" "integrated_data_db_migrator_function" {
   function_name    = "integrated-data-db-migrator-${var.environment}"
-  filename         = data.archive_file.lambda.output_path
+  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "migrate.handler"
-  source_code_hash = data.archive_file.lambda.output_base64sha256
+  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
 
   runtime     = "nodejs20.x"
   timeout     = 120
@@ -80,10 +89,10 @@ resource "aws_lambda_function" "integrated_data_db_migrator_function" {
 
 resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
   function_name    = "integrated-data-db-migrator-rollback-${var.environment}"
-  filename         = data.archive_file.lambda.output_path
+  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "rollback.handler"
-  source_code_hash = data.archive_file.lambda.output_base64sha256
+  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
 
   runtime     = "nodejs20.x"
   timeout     = 120
