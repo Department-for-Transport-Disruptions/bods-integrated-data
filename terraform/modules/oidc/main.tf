@@ -31,28 +31,88 @@ data "aws_iam_policy_document" "github_oidc_assume_role_policy" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:Department-for-Transport-Disruptions/bods-integrated-data:environment:${var.environment}"]
+      values   = ["repo:Department-for-Transport-Disruptions/bods-integrated-data:*"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
     }
   }
 }
 
 resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
-  name = "integrated-data-oidc-policy"
+  name = "integrated-data-github-actions-policy-${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Action = [
-          "rds:*",
-          "s3:*",
-          "lambda:*",
-          "ec2:*",
-          "s3-object-lambda:*"
+          "iam:AddRoleToInstanceProfile",
+          "iam:AttachRolePolicy",
+          "iam:CreatePolicy",
+          "iam:CreatePolicyVersion",
+          "iam:CreateRole",
+          "iam:CreateServiceLinkedRole",
+          "iam:DeletePolicy",
+          "iam:DeletePolicyVersion",
+          "iam:DeleteRole",
+          "iam:DeleteRolePermissionsBoundary",
+          "iam:DeleteRolePolicy",
+          "iam:DeleteServiceLinkedRole",
+          "iam:DetachRolePolicy",
+          "iam:*InstanceProfile*",
+          "iam:GetPolicy",
+          "iam:GetPolicyVersion",
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:GetServiceLinkedRoleDeletionStatus",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole",
+          "iam:ListPolicyVersions",
+          "iam:ListRolePolicies",
+          "iam:ListRoleTags",
+          "iam:ListRoles",
+          "iam:PassRole",
+          "iam:PutRolePermissionsBoundary",
+          "iam:PutRolePolicy",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:SetDefaultPolicyVersion",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:UpdateAssumeRolePolicy",
+          "iam:UpdateRole",
+          "iam:UpdateRoleDescription",
+          "route53:*",
         ]
         Effect   = "Allow"
         Resource = "*"
       },
+      {
+        Action = [
+          "rds:*",
+          "s3:*",
+          "lambda:*",
+          "firehose:*",
+          "ec2:*",
+          "autoscaling:*",
+          "s3-object-lambda:*",
+          "route53:*",
+          "cloudwatch:*",
+          "dynamodb:*"
+        ],
+        Effect   = "Allow",
+        Resource = "*",
+        "Condition" : {
+          "StringLike" : {
+            "aws:RequestedRegion" : [
+              "eu-west-2",
+              "us-east-1"
+            ]
+          }
+        },
+      }
     ]
   })
 }
@@ -62,6 +122,6 @@ resource "aws_iam_role" "oidc_github_actions_role" {
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.github_oidc_assume_role_policy.json
   managed_policy_arns = [
-    aws_iam_policy.integrated_data_oidc_policy.arn
+    aws_iam_policy.integrated_data_oidc_github_actions_policy.arn
   ]
 }

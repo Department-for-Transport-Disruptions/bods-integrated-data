@@ -31,7 +31,7 @@ resource "aws_subnet" "integrated_data_db_subnet" {
   for_each = { for idx, subnet in local.db_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-db-subnet-${idx + 1}-${var.environment}"
-      cidr_block = "${subnet}"
+      cidr_block = subnet
     }
   }
 
@@ -48,7 +48,7 @@ resource "aws_subnet" "integrated_data_private_subnet" {
   for_each = { for idx, subnet in local.private_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-private-subnet-${idx + 1}-${var.environment}"
-      cidr_block = "${subnet}"
+      cidr_block = subnet
     }
   }
 
@@ -144,5 +144,5 @@ locals {
   vpc_cidr                        = "10.0.0.0/16"
   db_subnet_cidr_blocks           = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
   private_subnet_cidr_blocks      = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
-  vpc_interface_endpoint_services = ["ssm", "ssmmessages", "ec2messages", "secretsmanager"]
+  vpc_interface_endpoint_services = ["ssm", "ssmmessages", "secretsmanager"]
 }

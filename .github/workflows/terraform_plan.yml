@@ -35,12 +35,30 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "20.x"
-                  cache: "pnpm"
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: 8
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
                   aws-region: "eu-west-2"
                   role-session-name: GitHub-OIDC-TERRAFORM
 
@@ -79,7 +97,7 @@ jobs:
 
             - name: Run TFLint
               id: tflint
-              run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact
+              run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact --minimum-failure-severity=warning
               continue-on-error: true
 
             - name: Terraform Init
