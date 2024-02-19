@@ -1,0 +1,164 @@
+on:
+    pull_request:
+
+name: "Terraform Plan"
+
+defaults:
+    run:
+        working-directory: ./terraform
+
+permissions:
+    id-token: write # This is required for aws oidc connection
+    contents: read # This is required for actions/checkout
+    pull-requests: write # This is required for posting comment to PR
+
+env:
+    TERRAFORM_VERSION: 1.6.6
+    AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+    terraform_plan:
+        strategy:
+            matrix:
+                stage: ["dev"]
+
+        name: "Terraform Branch Plan"
+        runs-on: ubuntu-22.04
+        env:
+            stage: ${{ matrix.stage }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and cache
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20.x"
+                  cache: "pnpm"
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+                  aws-region: "eu-west-2"
+                  role-session-name: GitHub-OIDC-TERRAFORM
+
+            - uses: actions/cache@v4
+              name: Cache plugin dir
+              with:
+                  path: ~/.tflint.d/plugins
+                  key: ${{ matrix.stage }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+            - name: Terraform fmt
+              id: fmt
+              run: terraform fmt -check
+              continue-on-error: true
+
+            - name: Setup TFLint
+              uses: terraform-linters/setup-tflint@v4
+              with:
+                  tflint_wrapper: true
+
+            - name: Init TFLint
+              run: tflint --init
+              env:
+                  # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+                  GITHUB_TOKEN: ${{ github.token }}
+
+            - name: Build functions
+              run: |
+                  cd ../src
+                  pnpm i
+                  pnpm build-all
+
+            - name: Run TFLint
+              id: tflint
+              run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact
+              continue-on-error: true
+
+            - name: Terraform Init
+              id: init
+              run: terraform -chdir=$stage init
+
+            - name: Terraform Validate
+              id: validate
+              run: terraform -chdir=$stage validate -no-color
+
+            - name: Terraform Plan
+              id: plan
+              run: terraform -chdir=$stage plan -input=false -no-color
+              continue-on-error: true
+
+            - name: Add plan to PR comment
+              uses: actions/github-script@v6
+              env:
+                  PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      // 1. Retrieve existing bot comments for the PR
+                      const { data: comments } = await github.rest.issues.listComments({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: context.issue.number,
+                      })
+                      const botComment = comments.find(comment => {
+                        return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+                      })
+
+                      // 2. Prepare format of the comment
+                      const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+                      #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+                      #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+                      <details><summary>Validation Output</summary>
+
+                      \`\`\`\n
+                      ${{ steps.validate.outputs.stdout }}
+                      \`\`\`
+
+                      </details>
+
+                      #### TFLint 🖌\`${{ steps.tflint.outcome }}\`
+
+                      <details><summary>TFLint Output</summary>
+
+                      \`\`\`\n
+                      ${{ steps.tflint.outputs.stdout }}
+                      \`\`\`
+
+                      </details>
+
+                      #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+                      <details><summary>Show Plan</summary>
+
+                      \`\`\`\n
+                      ${process.env.PLAN}
+                      \`\`\`
+
+                      </details>
+
+                      *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+                      // 3. If we have a comment, update it, otherwise create a new one
+                      if (botComment) {
+                        github.rest.issues.updateComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          comment_id: botComment.id,
+                          body: output
+                        })
+                      } else {
+                        github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: output
+                        })
+                      }
