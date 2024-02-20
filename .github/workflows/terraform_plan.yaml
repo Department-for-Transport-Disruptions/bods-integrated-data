@@ -1,6 +1,5 @@
 on:
     pull_request:
-        branches: test123
 
 name: Terraform Plan
 
