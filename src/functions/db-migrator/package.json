@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build": "rm -rf ./dist && tsc && cp -r node_modules ./dist && cd ./dist && find . -exec touch -t 202402190000 {} + && zip -rq -D -X -9 -A --compression-method deflate function.zip ."
+        "build": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd dist && deterministic-zip -rq ./function.zip ."
     },
     "keywords": [],
     "author": "",
