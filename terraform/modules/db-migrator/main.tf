@@ -61,65 +61,45 @@ resource "aws_iam_role" "integrated_data_db_migrator_role" {
   })
 }
 
-locals {
-  zip_path         = "${path.module}/../../../src/functions/dist/db-migrator.zip"
-  source_code_hash = fileexists(local.zip_path) ? filebase64sha256(local.zip_path) : data.aws_lambda_function.existing[0].source_code_hash
-}
+module "integrated_data_db_migrator_migrate_function" {
+  source = "../shared/lambda-function"
 
-data "aws_lambda_function" "existing" {
-  count         = fileexists(local.zip_path) ? 0 : 1
-  function_name = "integrated-data-db-migrator-${var.environment}"
-}
+  function_name      = "integrated-data-db-migrator-migrate-${var.environment}"
+  zip_path           = "${path.module}/../../../src/functions/dist/db-migrator.zip"
+  role_arn           = aws_iam_role.integrated_data_db_migrator_role.arn
+  handler            = "migrate.handler"
+  runtime            = "nodejs20.x"
+  timeout            = 120
+  memory             = 1024
+  subnet_ids         = var.private_subnet_ids
+  security_group_ids = [aws_security_group.integrated_data_db_migrator_sg.id]
 
-resource "aws_lambda_function" "integrated_data_db_migrator_function" {
-  function_name    = "integrated-data-db-migrator-${var.environment}"
-  filename         = local.zip_path
-  role             = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler          = "migrate.handler"
-  source_code_hash = local.source_code_hash
-
-  runtime     = "nodejs20.x"
-  timeout     = 120
-  memory_size = 1024
-
-  vpc_config {
-    subnet_ids         = var.private_subnet_ids
-    security_group_ids = [aws_security_group.integrated_data_db_migrator_sg.id]
-  }
-
-  environment {
-    variables = {
-      DB_HOST       = var.db_host
-      DB_PORT       = var.db_port
-      DB_SECRET_ARN = var.db_secret_arn
-      DB_NAME       = var.db_name
-    }
+  env_vars = {
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
   }
 }
 
-resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
-  function_name    = "integrated-data-db-migrator-rollback-${var.environment}"
-  filename         = local.zip_path
-  role             = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler          = "migrate.handler"
-  source_code_hash = local.source_code_hash
+module "integrated_data_db_migrator_rollback_function" {
+  source = "../shared/lambda-function"
 
-  runtime     = "nodejs20.x"
-  timeout     = 120
-  memory_size = 1024
+  function_name      = "integrated-data-db-migrator-rollback-${var.environment}"
+  zip_path           = "${path.module}/../../../src/functions/dist/db-migrator.zip"
+  role_arn           = aws_iam_role.integrated_data_db_migrator_role.arn
+  handler            = "migrate.handler"
+  runtime            = "nodejs20.x"
+  timeout            = 120
+  memory             = 1024
+  subnet_ids         = var.private_subnet_ids
+  security_group_ids = [aws_security_group.integrated_data_db_migrator_sg.id]
 
-  vpc_config {
-    subnet_ids         = var.private_subnet_ids
-    security_group_ids = [aws_security_group.integrated_data_db_migrator_sg.id]
-  }
-
-  environment {
-    variables = {
-      DB_HOST       = var.db_host
-      DB_PORT       = var.db_port
-      DB_SECRET_ARN = var.db_secret_arn
-      DB_NAME       = var.db_name
-      ROLLBACK      = "true"
-    }
+  env_vars = {
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+    ROLLBACK      = "true"
   }
 }
