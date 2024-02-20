@@ -5,11 +5,22 @@
     "scripts": {
         "build-all": "pnpm -r --if-present build"
     },
+    "type": "module",
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
         "@tsconfig/node20": "^20.1.2",
-        "typescript": "^5.3.3"
+        "@typescript-eslint/eslint-plugin": "^7.0.2",
+        "@typescript-eslint/parser": "^7.0.2",
+        "eslint": "^8",
+        "eslint-config-prettier": "^9.1.0",
+        "prettier": "^3.2.5",
+        "typescript": "^5.3.3",
+        "typescript-eslint": "^7.0.2"
+    },
+    "packageManager": "pnpm@8.15.3",
+    "engines": {
+        "pnpm": "^8.0.0"
     }
 }
