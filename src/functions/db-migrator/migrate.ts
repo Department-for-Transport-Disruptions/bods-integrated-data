@@ -81,13 +81,13 @@ export const handler = async () => {
     results?.forEach((it) => {
         if (it.status === "Success") {
             logger.info(
-                `${isRollback ? "rollback of" : "migration "} ${
+                `${isRollback ? "Rollback of" : "migration "} ${
                     it.migrationName
                 }" was executed successfully`
             );
         } else if (it.status === "Error") {
             logger.error(
-                `failed to execute ${
+                `Failed to execute ${
                     isRollback ? "rollback of" : "migration"
                 }  " ${it.migrationName}"`
             );
@@ -95,7 +95,7 @@ export const handler = async () => {
     });
 
     if (error) {
-        logger.error(`failed to ${isRollback ? "rollback" : "migrate"} `);
+        logger.error(`Failed to ${isRollback ? "rollback" : "migrate"} `);
         logger.error(error as Error);
         process.exit(1);
     }

@@ -32,5 +32,6 @@ jobs:
                   quotepath: false
 
             - name: Set output in matrix format
+              if: steps.changed-files.outputs.all_changed_files_count != 0
               id: set-output
               run: echo "changed_directories={\"dir\":${{ steps.changed-files.outputs.all_changed_files }}}" >> "$GITHUB_OUTPUT"
