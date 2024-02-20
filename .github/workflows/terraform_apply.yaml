@@ -1,0 +1,86 @@
+on:
+    # pull_request_review:
+    #     types: [submitted]
+    # push:
+    #     branches:
+    #         - main
+    pull_request:
+
+name: Terraform Apply
+
+defaults:
+    run:
+        working-directory: ./terraform
+
+permissions:
+    id-token: write # This is required for aws oidc connection
+    contents: read # This is required for actions/checkout.
+
+env:
+    TERRAFORM_VERSION: 1.6.6
+    AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+    check_for_function_changes:
+        uses: ./.github/workflows/get_directories_with_changes.yaml
+        name: Get list of updated functions
+        with:
+            path: "./src/functions"
+
+    zip_functions:
+        uses: ./.github/workflows/zip_function.yaml
+        name: Zip updated functions
+        if: ${{ needs.check_for_function_changes.outputs.changed_directories != '' }}
+        strategy:
+            matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+        needs:
+            - check_for_function_changes
+        with:
+            function_dir: ${{ matrix.dir }}
+
+    terraform_apply:
+        runs-on: ubuntu-22.04
+        name: Terraform Apply
+        needs:
+            - check_for_function_changes
+            - zip_functions
+        if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+        strategy:
+            matrix:
+                stage: ["dev"]
+        env:
+            stage: ${{ matrix.stage }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: actions/download-artifact@v4
+              with:
+                  path: ./src/functions/dist
+                  merge-multiple: true
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+                  aws-region: "eu-west-2"
+                  role-session-name: GitHub-OIDC-TERRAFORM
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+            - name: Terraform Init
+              id: init
+              run: terraform -chdir=$stage init
+
+            - name: Terraform Plan
+              id: plan
+              run: terraform -chdir=$stage plan -input=false -no-color -out=tfplan
+
+            - name: Terraform Apply
+              if: steps.plan.outcome == 'success'
+              id: apply
+              run: terraform -chdir=$stage apply -input=false -no-color tfplan

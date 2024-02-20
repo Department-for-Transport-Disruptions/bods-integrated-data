@@ -3,7 +3,8 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd dist && deterministic-zip -rq ./function.zip ."
+        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd ./dist && zip -rq ./db-migrator.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/db-migrator.zip ../dist/db-migrator.zip"
     },
     "keywords": [],
     "author": "",

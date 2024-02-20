@@ -61,12 +61,22 @@ resource "aws_iam_role" "integrated_data_db_migrator_role" {
   })
 }
 
+locals {
+  zip_path         = "${path.module}/../../../src/functions/dist/db-migrator.zip"
+  source_code_hash = fileexists(local.zip_path) ? filebase64sha256(local.zip_path) : data.aws_lambda_function.existing[0].source_code_hash
+}
+
+data "aws_lambda_function" "existing" {
+  count         = fileexists(local.zip_path) ? 0 : 1
+  function_name = "integrated-data-db-migrator-${var.environment}"
+}
+
 resource "aws_lambda_function" "integrated_data_db_migrator_function" {
   function_name    = "integrated-data-db-migrator-${var.environment}"
-  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  filename         = local.zip_path
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "migrate.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
+  source_code_hash = local.source_code_hash
 
   runtime     = "nodejs20.x"
   timeout     = 120
@@ -89,10 +99,10 @@ resource "aws_lambda_function" "integrated_data_db_migrator_function" {
 
 resource "aws_lambda_function" "integrated_data_db_migrator_rollback_function" {
   function_name    = "integrated-data-db-migrator-rollback-${var.environment}"
-  filename         = "${path.module}/../../../src/functions/db-migrator/dist/function.zip"
+  filename         = local.zip_path
   role             = aws_iam_role.integrated_data_db_migrator_role.arn
   handler          = "migrate.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../../src/functions/db-migrator/dist/function.zip")
+  source_code_hash = local.source_code_hash
 
   runtime     = "nodejs20.x"
   timeout     = 120
