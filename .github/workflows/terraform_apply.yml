@@ -39,6 +39,10 @@ jobs:
               with:
                   node-version: "20.x"
 
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
             - uses: pnpm/action-setup@v3
               name: Install pnpm
               with:
@@ -77,6 +81,7 @@ jobs:
             - name: Build functions
               run: |
                   cd ../src
+                  pip install deterministic_zip
                   pnpm i
                   pnpm build-all
 
