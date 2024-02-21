@@ -35,8 +35,8 @@ resource "aws_rds_cluster" "integrated_data_rds_cluster" {
   database_name               = "bods_integrated_data"
 
   serverlessv2_scaling_configuration {
-    max_capacity = 1.0
-    min_capacity = 0.5
+    max_capacity = var.max_db_capacity
+    min_capacity = var.min_db_capacity
   }
 }
 

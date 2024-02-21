@@ -53,3 +53,17 @@ variable "security_group_ids" {
   default     = null
   description = "List of Security Group IDs to use for a VPC lambda"
 }
+
+variable "schedule" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = "Provide cron schedule or rate to trigger the lambda on a schedule"
+}
+
+variable "s3_bucket_trigger" {
+  type        = map(string)
+  nullable    = true
+  default     = null
+  description = "ID and ARN of the bucket which will trigger the function when new objects are uploaded"
+}

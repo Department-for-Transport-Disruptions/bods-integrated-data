@@ -11,16 +11,11 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@aws-sdk/client-secrets-manager": "3.362.0",
-        "@bods-integrated-data/shared": "workspace:*",
         "kysely": "^0.27.2",
-        "lambda-log": "^3.1.0",
-        "pg": "^8.11.3",
-        "tslib": "^2.6.2"
+        "lambda-log": "^3.1.0"
     },
     "devDependencies": {
         "@types/lambda-log": "^3.0.3",
-        "@types/node": "^20.11.19",
-        "@types/pg": "^8.11.0"
+        "@types/node": "^20.11.19"
     }
 }
