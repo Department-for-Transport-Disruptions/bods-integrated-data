@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+    db:
+        container_name: bods_integrated_data_postgres
+        image: postgres
+        restart: always
+        shm_size: 128mb
+        environment:
+            POSTGRES_PASSWORD: password
+            POSTGRES_USER: postgres
+            POSTGRES_DB: bods_integrated_data
+        ports:
+            - 5432:5432
+        volumes:
+            - postgres_db:/var/lib/postgresql/data
+
+    localstack:
+        container_name: bods_integrated_data_localstack
+        image: localstack/localstack
+        ports:
+            - "127.0.0.1:4566:4566" # LocalStack Gateway
+            - "127.0.0.1:4510-4559:4510-4559" # external services port range
+        environment:
+            # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+            - DEBUG=${DEBUG:-0}
+        volumes:
+            - localstack_volume:/var/lib/localstack
+            - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+    postgres_db:
+        driver: local
+
+    localstack_volume:
+        driver: local

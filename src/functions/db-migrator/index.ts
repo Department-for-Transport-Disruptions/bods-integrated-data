@@ -1,21 +1,9 @@
-import {
-    GetSecretValueCommand,
-    SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
-import { Database } from "@bods-integrated-data/shared/database.types";
+import { getDatabaseClient } from "../../shared";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
-import {
-    FileMigrationProvider,
-    Kysely,
-    Migrator,
-    PostgresDialect,
-} from "kysely";
+import { FileMigrationProvider, Migrator } from "kysely";
 import * as logger from "lambda-log";
 import * as path from "path";
-import { Pool } from "pg";
-
-const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
 export const handler = async () => {
     logger.options.dev = process.env.NODE_ENV !== "production";
@@ -27,43 +15,11 @@ export const handler = async () => {
         id: randomUUID(),
     };
 
-    const {
-        DB_HOST: dbHost,
-        DB_PORT: dbPort,
-        DB_SECRET_ARN: databaseSecretArn,
-        DB_NAME: dbName,
-        ROLLBACK: rollback,
-    } = process.env;
-
-    if (!dbHost || !dbPort || !databaseSecretArn || !dbName) {
-        throw new Error("Missing env vars");
-    }
+    const { ROLLBACK: rollback } = process.env;
 
     const isRollback = rollback === "true";
 
-    const databaseSecret = await smClient.send(
-        new GetSecretValueCommand({
-            SecretId: databaseSecretArn,
-        })
-    );
-
-    if (!databaseSecret.SecretString) {
-        throw new Error("Database secret could not be retrieved");
-    }
-
-    const parsedSecret = JSON.parse(databaseSecret.SecretString);
-
-    const db = new Kysely<Database>({
-        dialect: new PostgresDialect({
-            pool: new Pool({
-                host: dbHost,
-                port: Number(dbPort),
-                database: dbName,
-                user: parsedSecret.username,
-                password: parsedSecret.password,
-            }),
-        }),
-    });
+    const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     const migrator = new Migrator({
         db,
@@ -77,6 +33,10 @@ export const handler = async () => {
     const { error, results } = isRollback
         ? await migrator.migrateDown()
         : await migrator.migrateToLatest();
+
+    if (results?.length === 0) {
+        logger.info("Nothing to do");
+    }
 
     results?.forEach((it) => {
         if (it.status === "Success") {
@@ -102,5 +62,3 @@ export const handler = async () => {
 
     await db.destroy();
 };
-
-handler().catch((e) => console.error(e));

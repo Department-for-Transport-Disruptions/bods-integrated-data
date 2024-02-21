@@ -33,3 +33,13 @@ variable "private_hosted_zone_name" {
   type        = string
   description = "Name of the private hosted zone"
 }
+
+variable "min_db_capacity" {
+  type    = number
+  default = 0.5
+}
+
+variable "max_db_capacity" {
+  type    = number
+  default = 1
+}

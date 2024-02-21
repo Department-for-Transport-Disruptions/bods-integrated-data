@@ -20,7 +20,7 @@ terraform {
 }
 
 module "oidc" {
-  source = "../../modules/oidc"
+  source = "../../modules/bootstrap/oidc"
 
   environment = "dev"
 }

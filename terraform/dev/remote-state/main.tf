@@ -10,7 +10,7 @@ terraform {
 }
 
 module "tf-state-dev" {
-  source = "../../modules/tf-state"
+  source = "../../modules/bootstrap/tf-state"
 
   environment = "dev"
 }

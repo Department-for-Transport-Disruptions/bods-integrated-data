@@ -1,3 +1,63 @@
+import { Kysely, PostgresDialect } from "kysely";
+import { Pool } from "pg";
+import {
+    GetSecretValueCommand,
+    SecretsManagerClient,
+} from "@aws-sdk/client-secrets-manager";
+
+const smClient = new SecretsManagerClient({ region: "eu-west-2" });
+
+export const getDatabaseClient = async (isLocal = false) => {
+    if (isLocal) {
+        return new Kysely<Database>({
+            dialect: new PostgresDialect({
+                pool: new Pool({
+                    host: "127.0.0.1",
+                    port: 5432,
+                    database: "bods_integrated_data",
+                    user: "postgres",
+                    password: "password",
+                }),
+            }),
+        });
+    }
+
+    const {
+        DB_HOST: dbHost,
+        DB_PORT: dbPort,
+        DB_SECRET_ARN: databaseSecretArn,
+        DB_NAME: dbName,
+    } = process.env;
+
+    if (!dbHost || !dbPort || !databaseSecretArn || !dbName) {
+        throw new Error("Missing env vars");
+    }
+
+    const databaseSecret = await smClient.send(
+        new GetSecretValueCommand({
+            SecretId: databaseSecretArn,
+        })
+    );
+
+    if (!databaseSecret.SecretString) {
+        throw new Error("Database secret could not be retrieved");
+    }
+
+    const parsedSecret = JSON.parse(databaseSecret.SecretString);
+
+    return new Kysely<Database>({
+        dialect: new PostgresDialect({
+            pool: new Pool({
+                host: dbHost,
+                port: Number(dbPort),
+                database: dbName,
+                user: parsedSecret.username,
+                password: parsedSecret.password,
+            }),
+        }),
+    });
+};
+
 import { Insertable, Selectable, Updateable } from "kysely";
 
 export interface Database {
