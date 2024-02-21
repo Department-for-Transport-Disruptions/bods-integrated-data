@@ -64,3 +64,9 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 
 }
+
+module "integrated_data_dms" {
+  source             = "../modules/dms"
+  environment        = "dev"
+  private_subnet_ids = [module.integrated_data_vpc_dev.private_subnet_ids]
+}

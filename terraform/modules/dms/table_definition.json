@@ -1,0 +1,32 @@
+{
+    "TableCount": "1",
+    "Tables": [
+        {
+            "TableName": "vehicle_activity",
+            "TablePath": "cavl/vehicle_activity/",
+            "TableOwner": "cavl",
+            "TableColumns": [
+                {
+                    "ColumnName": "id",
+                    "ColumnType": "STRING",
+                    "ColumnNullable": "false",
+                    "ColumnLength": 20,
+                    "ColumnIsPk": "true"
+                },
+                {
+                    "ColumnName": "longitude",
+                    "ColumnType": "STRING",
+                    "ColumnNullable": "false",
+                    "ColumnLength": "20"
+                },
+                {
+                    "ColumnName": "latitude",
+                    "ColumnType": "STRING",
+                    "ColumnNullable": "false",
+                    "ColumnLength": "20"
+                }
+            ],
+            "TableColumnsTotal": "3"
+        }
+    ]
+}
