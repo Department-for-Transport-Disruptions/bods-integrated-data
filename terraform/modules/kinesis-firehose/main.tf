@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "aws_cloudwatch_log_group" "kinesis_firehose_stream_logging_group" {
-  name = "/aws/kinesisfirehose/cavl-kinesis-firehose-stream-${var.environment}"
+  name = "/aws/kinesisfirehose/avl-kinesis-firehose-stream-${var.environment}"
 }
 
 resource "aws_cloudwatch_log_stream" "kinesis_firehose_stream_logging_stream" {
@@ -19,7 +19,7 @@ resource "aws_cloudwatch_log_stream" "kinesis_firehose_stream_logging_stream" {
 }
 
 resource "aws_s3_bucket" "kinesis_firehose_stream_bucket" {
-  bucket = "cavl-kinesis-firehose-destination-${var.environment}"
+  bucket = "avl-kinesis-firehose-destination-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "block_kinesis_firehose_stream_bucket_public_access" {
@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "kinesis_firehose_stream_trust_policy" {
 }
 
 resource "aws_iam_policy" "kinesis_firehose_policy" {
-  name = "cavl-kinesis-firehose-policy-${var.environment}"
+  name = "avl-kinesis-firehose-policy-${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -99,7 +99,7 @@ resource "aws_iam_policy" "kinesis_firehose_policy" {
 }
 
 resource "aws_iam_role" "kinesis_firehose_stream_role" {
-  name                = "cavl-kinesis-firehose-stream-role-${var.environment}"
+  name                = "avl-kinesis-firehose-stream-role-${var.environment}"
   assume_role_policy  = data.aws_iam_policy_document.kinesis_firehose_stream_trust_policy.json
   managed_policy_arns = [aws_iam_policy.kinesis_firehose_policy.arn]
 }
@@ -129,7 +129,7 @@ resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream" {
     s3_backup_configuration {
       role_arn   = aws_iam_role.kinesis_firehose_stream_role.arn
       bucket_arn = aws_s3_bucket.kinesis_firehose_stream_bucket.arn
-      prefix     = "cavl-kinesis-backup-stream-${var.environment}"
+      prefix     = "avl-kinesis-backup-stream-${var.environment}"
 
       cloudwatch_logging_options {
         enabled         = true
@@ -151,5 +151,5 @@ output "kinesis_firehose_stream_arn" {
 }
 
 locals {
-  stream_name = "cavl-kinesis-firehose-stream-${var.environment}"
+  stream_name = "avl-kinesis-firehose-stream-${var.environment}"
 }

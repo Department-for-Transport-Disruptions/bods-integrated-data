@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_iam_policy" "lambda_transform_siri_policy" {
-  name = "cavl-lambda-transform-siri-policy-${var.environment}"
+  name = "avl-lambda-transform-siri-policy-${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -66,7 +66,7 @@ resource "aws_iam_policy" "lambda_transform_siri_policy" {
 
 
 resource "aws_iam_role" "iam_for_lambda" {
-  name               = "cavl-lambda-transform-siri-role-${var.environment}"
+  name               = "avl-lambda-transform-siri-role-${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
   managed_policy_arns = [aws_iam_policy.lambda_transform_siri_policy.arn]
 }
@@ -124,6 +124,6 @@ output "lambda_transform_siri_arn" {
 }
 
 locals {
-  lambda_name = "cavl-lambda-transform-siri-${var.environment}"
-  kinesis_firehose_stream_name = "cavl-kinesis-firehose-stream-${var.environment}"
+  lambda_name = "avl-lambda-transform-siri-${var.environment}"
+  kinesis_firehose_stream_name = "avl-kinesis-firehose-stream-${var.environment}"
 }
