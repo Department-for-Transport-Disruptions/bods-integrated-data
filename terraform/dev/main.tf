@@ -80,7 +80,7 @@ module "integrated_data_naptan_pipeline" {
 }
 
 module "avl_lambda_transform_siri" {
-  source = "../modules/lambda-transform-siri"
+  source = "../modules/data-pipelines/transform-avl-siri"
 
   environment = "dev"
   region    = data.aws_region.current.name
@@ -93,5 +93,5 @@ module "avl_firehose_dev" {
   environment = "dev"
   region      = data.aws_region.current.name
   account_id  = data.aws_caller_identity.current.account_id
-  transform_siri_lambda_arn = module.avl_lambda_transform_siri.lambda_transform_siri_arn
+  transform_siri_lambda_arn = module.avl_lambda_transform_siri.avl_transform_siri_lambda_arn
 }
