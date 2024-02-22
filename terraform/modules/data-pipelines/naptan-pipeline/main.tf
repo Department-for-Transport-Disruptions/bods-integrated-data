@@ -143,7 +143,7 @@ module "integrated_data_naptan_retriever_function" {
   function_name = "integrated-data-naptan-retriever-${var.environment}"
   zip_path      = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
   role_arn      = aws_iam_role.integrated_data_naptan_retriever_role.arn
-  handler       = "index.handler"
+  handler       = "functions/naptan-retriever/index.handler"
   runtime       = "nodejs20.x"
   timeout       = 60
   memory        = 1024

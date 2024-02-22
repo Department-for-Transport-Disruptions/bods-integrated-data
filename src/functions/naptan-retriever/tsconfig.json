@@ -3,8 +3,8 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "../../",
-        "moduleResolution": "Bundler",
-        "module": "ES2022"
+        "moduleResolution": "node10",
+        "module": "CommonJS"
     },
     "include": ["../../shared", "."]
 }

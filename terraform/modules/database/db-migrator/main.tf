@@ -67,7 +67,7 @@ module "integrated_data_db_migrator_migrate_function" {
   function_name      = "integrated-data-db-migrator-migrate-${var.environment}"
   zip_path           = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
   role_arn           = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler            = "index.handler"
+  handler            = "functions/db-migrator/index.handler"
   runtime            = "nodejs20.x"
   timeout            = 120
   memory             = 1024
@@ -88,7 +88,7 @@ module "integrated_data_db_migrator_rollback_function" {
   function_name      = "integrated-data-db-migrator-rollback-${var.environment}"
   zip_path           = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
   role_arn           = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler            = "index.handler"
+  handler            = "functions/db-migrator/index.handler"
   runtime            = "nodejs20.x"
   timeout            = 120
   memory             = 1024

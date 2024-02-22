@@ -1,10 +1,11 @@
 {
-    "name": "@bods-integrated-data/db-migrator",
+    "name": "@bods-integrated-data/transform-siri",
     "version": "0.1.0",
-    "description": "",
+    "description": "This function is to transform AVL SIRI-VM data into a CSV format.",
     "scripts": {
         "test": "vitest run",
-        "build": "rm -rf ./dist && tsc && cp -r node_modules dist"
+        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd ./dist && zip -rq ./transform-siri.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/transform-siri.zip ../dist/transform-siri.zip"
     },
     "keywords": [],
     "author": "",
@@ -19,7 +20,6 @@
         "@types/node": "^20.11.19",
         "@types/xml2js": "^0.4.14",
         "json-2-csv": "^5.0.1",
-        "ts-node": "^10.9.1",
         "xml2js": "^0.6.2",
         "zod": "^3.22.4"
     }

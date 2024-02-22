@@ -69,39 +69,12 @@ resource "aws_iam_role" "iam_for_lambda" {
   })
 }
 
-//TODO DEANNA Remove
-#resource "terraform_data" "lambda_dependencies" {
-#  triggers_replace = {
-#    index = sha256(file("${path.root}/../../src/transform-siri/index.ts"))
-#    package = sha256(file("${path.root}/../../src/package.json"))
-#    lock = sha256(file("${path.root}/../../src/package-lock.json"))
-#    ts_files = sha256(join("",fileset(path.root, "../../src/**/*.ts")))
-#  }
-#
-#  provisioner "local-exec" {
-#    command = <<-EOF
-#      cd ${path.root}/../../src &&\
-#      npm i &&\
-#      npm run build
-#    EOF
-#  }
-#}
-
-//TODO DEANNA Remove
-#data "archive_file" "lambda_zip" {
-#  type        = "zip"
-#  source_dir = "${path.root}/../../src/transform-siri/dist/"
-#  output_path = "${path.root}/../../src/bundle/transform_siri_vm.zip"
-#  depends_on = [terraform_data.lambda_dependencies]
-#}
-
-
 module "avl_transform_siri" {
   source = "../../shared/lambda-function"
 
   function_name = local.lambda_name
   zip_path      = "${path.module}/../../../../src/functions/dist/transform-siri.zip"
-  handler       = "functions/transform-siri/index.main"
+  handler       = "functions/transform-siri/index.handler"
   memory        = 1024
   role_arn      = aws_iam_role.iam_for_lambda.arn
   runtime       = "nodejs20.x"

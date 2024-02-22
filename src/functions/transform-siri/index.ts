@@ -50,7 +50,7 @@ export const transformXmlToCsv = (siriXml: string) => {
     return json2csv([formattedSiri.data]);
 };
 
-export const main: FirehoseTransformationHandler = (event, context, callback) => {
+export const handler: FirehoseTransformationHandler = (event, context, callback) => {
     try {
         logger.info(`Starting transformation of SIRI-VM. Number of records to process: ${event.records.length}`);
 
@@ -79,7 +79,7 @@ export const main: FirehoseTransformationHandler = (event, context, callback) =>
         );
 
         logger.info(
-            `Processing completed.  Successful records: ${output.filter((record) => record.result === "Ok").length}.`,
+            `Processing completed. Successful records: ${output.filter((record) => record.result === "Ok").length}.`,
         );
         callback(null, { records: output });
     } catch (e) {

@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd ./dist && zip -rq ./naptan-uploader.zip .",
+        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cp -rL ../../shared/node_modules/* ./dist/node_modules && cd ./dist && zip -rq ./naptan-uploader.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/naptan-uploader.zip ../dist/naptan-uploader.zip"
     },
     "keywords": [],
