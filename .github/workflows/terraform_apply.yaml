@@ -1,8 +1,11 @@
 on:
     pull_request_review:
         types: [submitted]
+    push:
+        branches:
+            - main
 
-name: "Terraform Apply"
+name: Terraform Apply
 
 defaults:
     run:
@@ -17,14 +20,33 @@ env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
+    check_for_function_changes:
+        uses: ./.github/workflows/get_directories_with_changes.yaml
+        name: Get list of updated functions
+        with:
+            path: "./src/functions"
+
+    zip_functions:
+        uses: ./.github/workflows/zip_function.yaml
+        name: Zip updated functions
+        if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
+        strategy:
+            matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+        needs:
+            - check_for_function_changes
+        with:
+            function_dir: ${{ matrix.dir }}
+
     terraform_apply:
+        runs-on: ubuntu-22.04
+        name: Terraform Apply
+        needs:
+            - check_for_function_changes
+            - zip_functions
+        if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
         strategy:
             matrix:
                 stage: ["dev"]
-
-        name: "Terraform Apply"
-        runs-on: ubuntu-22.04
-        if: github.event.review.state == 'APPROVED' && github.event.pull_request.base.ref == 'main'
         env:
             stage: ${{ matrix.stage }}
 
@@ -32,16 +54,15 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Setup Node.js and cache
-              uses: actions/setup-node@v4
+            - uses: actions/download-artifact@v4
               with:
-                  node-version: "20.x"
-                  cache: "pnpm"
+                  path: ./src/functions/dist
+                  merge-multiple: true
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
                   aws-region: "eu-west-2"
                   role-session-name: GitHub-OIDC-TERRAFORM
 
@@ -53,12 +74,6 @@ jobs:
             - name: Terraform Init
               id: init
               run: terraform -chdir=$stage init
-
-            - name: Build functions
-              run: |
-                  cd ../src
-                  pnpm i
-                  pnpm build-all
 
             - name: Terraform Plan
               id: plan

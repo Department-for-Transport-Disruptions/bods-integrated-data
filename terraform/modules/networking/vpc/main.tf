@@ -31,7 +31,7 @@ resource "aws_subnet" "integrated_data_db_subnet" {
   for_each = { for idx, subnet in local.db_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-db-subnet-${idx + 1}-${var.environment}"
-      cidr_block = "${subnet}"
+      cidr_block = subnet
     }
   }
 
@@ -48,7 +48,7 @@ resource "aws_subnet" "integrated_data_private_subnet" {
   for_each = { for idx, subnet in local.private_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-private-subnet-${idx + 1}-${var.environment}"
-      cidr_block = "${subnet}"
+      cidr_block = subnet
     }
   }
 
@@ -140,9 +140,22 @@ resource "aws_vpc_endpoint" "integrated_data_vpc_interface_endpoint" {
   }
 }
 
+resource "aws_vpc_endpoint" "integrated_data_vpc_gateway_endpoint" {
+  for_each     = toset(local.vpc_gateway_endpoint_services)
+  vpc_id       = aws_vpc.integrated_data_vpc.id
+  service_name = "com.amazonaws.${var.region}.${each.value}"
+}
+
+resource "aws_vpc_endpoint_route_table_association" "integrated_data_vpc_gateway_endpoint_route_table_association" {
+  for_each        = aws_vpc_endpoint.integrated_data_vpc_gateway_endpoint
+  route_table_id  = aws_route_table.integrated_data_private_subnet_route_table.id
+  vpc_endpoint_id = each.value.id
+}
+
 locals {
   vpc_cidr                        = "10.0.0.0/16"
   db_subnet_cidr_blocks           = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
   private_subnet_cidr_blocks      = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
-  vpc_interface_endpoint_services = ["ssm", "ssmmessages", "ec2messages", "secretsmanager"]
+  vpc_interface_endpoint_services = ["ssm", "ssmmessages", "secretsmanager"]
+  vpc_gateway_endpoint_services   = ["s3"]
 }

@@ -1,4 +1,4 @@
-import { Database } from "@bods-integrated-data/shared/database.types";
+import { Database } from "../../../shared";
 import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {

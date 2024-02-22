@@ -1,7 +1,7 @@
 on:
     pull_request:
 
-name: "Terraform Plan"
+name: Terraform Plan
 
 defaults:
     run:
@@ -17,30 +17,48 @@ env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
+    check_for_function_changes:
+        uses: ./.github/workflows/get_directories_with_changes.yaml
+        name: Get list of updated functions
+        with:
+            path: "./src/functions"
+
+    zip_functions:
+        uses: ./.github/workflows/zip_function.yaml
+        name: Zip updated functions
+        if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
+        strategy:
+            matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+        needs:
+            - check_for_function_changes
+        with:
+            function_dir: ${{ matrix.dir }}
+
     terraform_plan:
+        runs-on: ubuntu-22.04
+        name: Terraform Plan
+        needs:
+            - check_for_function_changes
+            - zip_functions
+        if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
         strategy:
             matrix:
                 stage: ["dev"]
-
-        name: "Terraform Branch Plan"
-        runs-on: ubuntu-22.04
         env:
             stage: ${{ matrix.stage }}
-
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Setup Node.js and cache
-              uses: actions/setup-node@v4
+            - uses: actions/download-artifact@v4
               with:
-                  node-version: "20.x"
-                  cache: "pnpm"
+                  path: ./src/functions/dist
+                  merge-multiple: true
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
                   aws-region: "eu-west-2"
                   role-session-name: GitHub-OIDC-TERRAFORM
 
@@ -71,15 +89,9 @@ jobs:
                   # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
                   GITHUB_TOKEN: ${{ github.token }}
 
-            - name: Build functions
-              run: |
-                  cd ../src
-                  pnpm i
-                  pnpm build-all
-
             - name: Run TFLint
               id: tflint
-              run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact
+              run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact --minimum-failure-severity=warning
               continue-on-error: true
 
             - name: Terraform Init
@@ -96,7 +108,7 @@ jobs:
               continue-on-error: true
 
             - name: Add plan to PR comment
-              uses: actions/github-script@v6
+              uses: actions/github-script@v7
               env:
                   PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
               with:

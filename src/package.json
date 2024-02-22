@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build-all": "pnpm -r --if-present build"
+        "build-all": "pnpm build-shared && rm -rf ./functions/dist && pnpm -r --if-present build:local"
     },
     "type": "module",
     "keywords": [],

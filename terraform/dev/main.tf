@@ -22,29 +22,32 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 module "integrated_data_vpc_dev" {
-  source      = "../modules/vpc"
+  source = "../modules/networking/vpc"
+
   environment = "dev"
   region      = data.aws_region.current.name
 }
 
 module "integrated_data_route53" {
-  source = "../modules/route-53"
+  source = "../modules/networking/route-53"
 
   vpc_id = module.integrated_data_vpc_dev.vpc_id
 }
 
 module "integrated_data_aurora_db_dev" {
-  source = "../modules/aurora-db"
+  source = "../modules/database/aurora-db"
 
   environment              = "dev"
   db_subnet_ids            = module.integrated_data_vpc_dev.db_subnet_ids
   vpc_id                   = module.integrated_data_vpc_dev.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
+  min_db_capacity          = 0.5
+  max_db_capacity          = 4
 }
 
 module "integrated_data_bastion_host" {
-  source = "../modules/bastion-host"
+  source = "../modules/database/bastion-host"
 
   environment              = "dev"
   db_sg_id                 = module.integrated_data_aurora_db_dev.db_sg_id
@@ -55,7 +58,7 @@ module "integrated_data_bastion_host" {
 }
 
 module "integrated_data_db_migrator" {
-  source = "../modules/db-migrator"
+  source = "../modules/database/db-migrator"
 
   environment        = "dev"
   vpc_id             = module.integrated_data_vpc_dev.vpc_id
@@ -63,7 +66,17 @@ module "integrated_data_db_migrator" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+}
 
+module "integrated_data_naptan_pipeline" {
+  source = "../modules/data-pipelines/naptan-pipeline"
+
+  environment        = "dev"
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
 module "avl_lambda_transform_siri" {

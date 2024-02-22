@@ -3,23 +3,19 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build": "rm -rf ./dist && tsc && cp -r node_modules dist"
+        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd ./dist && zip -rq ./db-migrator.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/db-migrator.zip ../dist/db-migrator.zip"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@aws-sdk/client-secrets-manager": "3.362.0",
-        "@bods-integrated-data/shared": "workspace:*",
         "kysely": "^0.27.2",
-        "lambda-log": "^3.1.0",
-        "pg": "^8.11.3",
-        "tslib": "^2.6.2"
+        "lambda-log": "^3.1.0"
     },
     "devDependencies": {
         "@types/lambda-log": "^3.0.3",
-        "@types/node": "^20.11.19",
-        "@types/pg": "^8.11.0"
+        "@types/node": "^20.11.19"
     }
 }
