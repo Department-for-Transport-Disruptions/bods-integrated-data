@@ -87,8 +87,8 @@ module "avl_lambda_transform_siri" {
   account_id  = data.aws_caller_identity.current.account_id
 }
 
-module "avl_firehose_dev" {
-  source = "../modules/kinesis-firehose"
+module "avl_firehose" {
+  source = "../modules/data-pipelines/avl-kinesis-firehose"
 
   environment = "dev"
   region      = data.aws_region.current.name
