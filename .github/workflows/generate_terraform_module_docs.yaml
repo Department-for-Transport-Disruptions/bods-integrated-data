@@ -1,7 +1,5 @@
 on:
-  push:
-    branches:
-      - main
+  pull_request: 
 
 name: Generate Docs for Terraform Modules
 
@@ -38,7 +36,7 @@ jobs:
         - name: Commit docs if changes have been made
           if: steps.verify_diff.outputs.changed == 'true' || steps.verify_diff.outputs.added == 'true'
           run: |
-            git config --global user.name 'docs-bot'
-            git config --global user.email 'docs-bot@users.noreply.github.com'
+            git config --global user.name 'bods-docs-bot'
+            git config --global user.email 'bods-docs-bot@users.noreply.github.com'
             git commit -am "Automated module docs"
             git push
