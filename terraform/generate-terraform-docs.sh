@@ -8,7 +8,6 @@ tar -xzf terraform-docs.tar.gz
 chmod +x terraform-docs
 mkdir docs
 cp terraform-docs /usr/local/bin
-mv terraform-docs /docs/terraform-docs
 
 # Go to modules folder
 cd ./modules
