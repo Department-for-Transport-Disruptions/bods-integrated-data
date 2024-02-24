@@ -2,6 +2,8 @@
 
 shopt -s lastpipe
 
+cd ./terraform
+
 # Install terraform-docs
 curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.17.0/terraform-docs-v0.17.0-$(uname)-amd64.tar.gz
 tar -xzf terraform-docs.tar.gz

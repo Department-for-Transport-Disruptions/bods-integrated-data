@@ -17,36 +17,6 @@ env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
-    generate_docs_for_modules:
-      name: "Generate terraform docs for modules"
-      runs-on: ubuntu-22.04
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-          with:
-            ref: ${{ github.event.pull_request.head.ref }}
-            token: ${{ github.token }}
-
-
-        - name: Generate README.md for modules
-          shell: bash
-          run: ./generate-terraform-docs.sh
-
-        - name: Check if any updates have been made to the docs
-          id: verify_diff
-          run: |
-            git add "modules/*README.md" 
-            git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
-            git diff --staged --quiet . || echo "added=true" >> $GITHUB_OUTPUT
-
-        - name: Commit docs if changes have been made
-          if: steps.verify_diff.outputs.changed == 'true' || steps.verify_diff.outputs.added == 'true'
-          run: |
-            git config --global user.name 'docs-bot'
-            git config --global user.email 'docs-bot@users.noreply.github.com'
-            git commit -am "Automated module docs"
-            git push
-
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions

@@ -1,13 +1,11 @@
 on:
-  push:
-    branches:
-      - main
+    pull_request:
 
 name: Generate Docs for Terraform Modules
 
 defaults:
     run:
-        working-directory: ./terraform
+        working-directory: ./
 
 permissions:
     contents: write # This is required for terraform-docs to push READMEs back to PR branch
@@ -25,20 +23,21 @@ jobs:
             token: ${{ github.token }}
 
 
-        - name: Run terraform-docs to generate README.md for modules
+        - name: Generate README.md for modules
           shell: bash
-          run: ./generate-terraform-docs.sh
+          run: ./scripts/generate-terraform-docs.sh
 
         - name: Check if any updates have been made to the docs
           id: verify_diff
           run: |
+            git add "terraform/modules/*README.md" 
             git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+            git diff --staged --quiet . || echo "added=true" >> $GITHUB_OUTPUT
 
         - name: Commit docs if changes have been made
-          if: steps.verify_diff.outputs.changed == 'true'
+          if: steps.verify_diff.outputs.changed == 'true' || steps.verify_diff.outputs.added == 'true'
           run: |
             git config --global user.name 'docs-bot'
             git config --global user.email 'docs-bot@users.noreply.github.com'
-            git add "*README.md" 
             git commit -am "Automated module docs"
             git push
