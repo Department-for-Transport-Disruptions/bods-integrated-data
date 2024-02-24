@@ -10,7 +10,7 @@ defaults:
         working-directory: ./
 
 permissions:
-    contents: write # This is required for terraform-docs to push READMEs back to PR branch
+    contents: write # This is required for terraform-docs to push READMEs to main
 
 jobs:
     generate_docs_for_modules:
