@@ -32,6 +32,13 @@ jobs:
           shell: bash
           run: ./generate-terraform-docs.sh
 
+        - name: Commit report
+          run: |
+            git config --global user.name 'docs-bot'
+            git config --global user.email 'docs-bot@users.noreply.github.com'
+            git commit -am "Automated module docs"
+            git push
+
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions
