@@ -32,7 +32,13 @@ jobs:
           shell: bash
           run: ./generate-terraform-docs.sh
 
-        - name: Commit report
+        - name: Check if any updates have been made to the docs
+          id: verify_diff
+          run: |
+            git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+
+        - name: Commit docs if changes have been made
+          if: steps.verify_diff.outputs.changed == 'true'
           run: |
             git config --global user.name 'docs-bot'
             git config --global user.email 'docs-bot@users.noreply.github.com'
