@@ -9,7 +9,6 @@ defaults:
 
 permissions:
     contents: write # This is required for terraform-docs to push READMEs back to PR branch
-    pull-requests: write # This is required for posting comment to PR
 
 jobs:
     generate_docs_for_modules:
