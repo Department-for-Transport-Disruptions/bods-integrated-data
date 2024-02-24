@@ -6,10 +6,10 @@ shopt -s lastpipe
 curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.17.0/terraform-docs-v0.17.0-$(uname)-amd64.tar.gz
 tar -xzf terraform-docs.tar.gz
 chmod +x terraform-docs
-mv terraform-docs ./terraform-docs
+cp terraform-docs /usr/local/bin
 
 # Go to modules folder
-cd ./terraform/modules
+cd ./modules
 
 # Create an array of directories to create READMEs for
 find . -name "main.tf" -print0 | while IFS= read -r -d '' file
