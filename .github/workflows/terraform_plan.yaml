@@ -30,7 +30,7 @@ jobs:
 
         - name: Generate README.md for modules
           shell: bash
-          run: ./scripts/generate-terraform-docs.sh
+          run: echo "${ls}"
 
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
