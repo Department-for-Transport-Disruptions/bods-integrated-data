@@ -9,7 +9,7 @@ defaults:
 
 permissions:
     id-token: write # This is required for aws oidc connection
-    contents: read # This is required for actions/checkout
+    contents: write # This is required for terraform-docs to push READMEs back to PR branch
     pull-requests: write # This is required for posting comment to PR
 
 env:
@@ -17,6 +17,22 @@ env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
+    generate_docs_for_modules:
+      name: "Generate terraform docs for modules"
+      runs-on: ubuntu-22.04
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            ref: ${{ github.event.pull_request.head.ref }}
+            token: ${{ github.token }}
+
+
+        - name: Generate README.md for modules
+          shell: bash
+          run: |
+            make docs
+
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions
