@@ -48,5 +48,4 @@ operations/variable-scripts/variable.json
 .sentinel
 
 # Ignore terraform docs files
-terraform-docs
-terraform-docs.tar.gz
+terraform/docs/
