@@ -7,8 +7,8 @@ curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.17.0/terrafor
 tar -xzf terraform-docs.tar.gz
 chmod +x terraform-docs
 mkdir docs
-mv terraform-docs /docs/terraform-docs
 cp terraform-docs /usr/local/bin
+mv terraform-docs /docs/terraform-docs
 
 # Go to modules folder
 cd ./modules
