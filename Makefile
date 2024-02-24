@@ -28,9 +28,6 @@ rollback-last-local-db-migration:
 bastion-tunnel:
 	./scripts/bastion-tunnel.sh
 
-docs:
-	./scripts/generate-terraform-docs.sh
-
 # Naptan
 
 run-local-naptan-retriever:
