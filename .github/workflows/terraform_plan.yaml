@@ -35,7 +35,7 @@ jobs:
         - name: Check if any updates have been made to the docs
           id: verify_diff
           run: |
-            git add "*README.md" 
+            git add "modules/*README.md" 
             git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
             git diff --staged --quiet . || echo "added=true" >> $GITHUB_OUTPUT
 
