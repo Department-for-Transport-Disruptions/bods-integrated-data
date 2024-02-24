@@ -37,6 +37,7 @@ jobs:
           run: |
             git add "*README.md" 
             git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+            git diff --staged --quiet . || echo "added=true" >> $GITHUB_OUTPUT
 
         - name: Commit docs if changes have been made
           if: steps.verify_diff.outputs.changed == 'true' || steps.verify_diff.outputs.added == 'true'
