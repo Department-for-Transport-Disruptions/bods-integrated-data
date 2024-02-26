@@ -1,0 +1,37 @@
+name: Check for directory changes
+
+on:
+    workflow_call:
+        inputs:
+            path:
+                required: true
+                type: string
+        outputs:
+            changed_directories:
+                description: List of directory names with changes
+                value: ${{ jobs.get_directories_with_changes.outputs.changed_directories }}
+
+jobs:
+    get_directories_with_changes:
+        name: Get directories with updated files
+        runs-on: ubuntu-22.04
+        outputs:
+            changed_directories: ${{ steps.set-output.outputs.changed_directories }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Get changed files
+              id: changed-files
+              uses: tj-actions/changed-files@v42
+              with:
+                  path: ${{ inputs.path }}
+                  dir_names: true
+                  dir_names_max_depth: 1
+                  json: true
+                  quotepath: false
+
+            - name: Set output in matrix format
+              if: steps.changed-files.outputs.all_changed_files_count != 0
+              id: set-output
+              run: echo "changed_directories={\"dir\":${{ steps.changed-files.outputs.all_changed_files }}}" >> "$GITHUB_OUTPUT"
