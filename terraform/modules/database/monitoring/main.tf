@@ -50,8 +50,8 @@ resource "aws_cloudwatch_metric_alarm" "low_memory" {
   statistic           = "Maximum"
   threshold           = var.freeable_memory_threshold
   alarm_description   = "Database instance memory below threshold"
-  alarm_actions       = [aws_sns_topic.bods_integrated_datards_alarm_topic.arn]
-  ok_actions          = [aws_sns_topic.bods_integrated_datards_ok_topic.arn]
+  alarm_actions       = [aws_sns_topic.bods_integrated_data_rds_alarm_topic.arn]
+  ok_actions          = [aws_sns_topic.bods_integrated_data_rds_ok_topic.arn]
 
   dimensions = {
     DBInstanceIdentifier = var.db_endpoint
@@ -68,8 +68,8 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   statistic           = "Maximum"
   threshold           = var.cpu_utilization_threshold
   alarm_description   = "Database instance CPU above threshold"
-  alarm_actions       = [aws_sns_topic.bods_integrated_datards_alarm_topic.arn]
-  ok_actions          = [aws_sns_topic.bods_integrated_datards_ok_topic.arn]
+  alarm_actions       = [aws_sns_topic.bods_integrated_data_rds_alarm_topic.arn]
+  ok_actions          = [aws_sns_topic.bods_integrated_data_rds_ok_topic.arn]
 
   dimensions = {
     DBInstanceIdentifier = var.db_endpoint
