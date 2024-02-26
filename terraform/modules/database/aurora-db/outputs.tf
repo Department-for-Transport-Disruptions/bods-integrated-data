@@ -11,5 +11,5 @@ output "db_secret_arn" {
 }
 
 output "db_endpoint" {
-  value = aws_rds_cluster_instance.integrated_data_postgres_db_instance.endpoint
+  value = aws_rds_cluster_instance.integrated_data_postgres_db_instance[0].endpoint
 }
