@@ -90,3 +90,7 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 
   depends_on = [aws_lambda_permission.allow_bucket_trigger]
 }
+
+output "lambda_arn" {
+  value = aws_lambda_function.function.arn
+}
