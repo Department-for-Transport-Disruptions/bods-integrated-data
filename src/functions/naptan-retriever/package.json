@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd ./dist && zip -rq ./naptan-retriever.zip .",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./naptan-retriever.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/naptan-retriever.zip ../dist/naptan-retriever.zip"
     },
     "keywords": [],

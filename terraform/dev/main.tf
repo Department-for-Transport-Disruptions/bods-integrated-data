@@ -19,6 +19,7 @@ terraform {
 }
 
 data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 module "integrated_data_vpc_dev" {
   source = "../modules/networking/vpc"
@@ -83,4 +84,21 @@ module "integrated_data_naptan_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "avl_lambda_transform_siri" {
+  source = "../modules/data-pipelines/transform-avl-siri"
+
+  environment = "dev"
+  region    = data.aws_region.current.name
+  account_id  = data.aws_caller_identity.current.account_id
+}
+
+module "avl_firehose" {
+  source = "../modules/data-pipelines/avl-kinesis-firehose"
+
+  environment = "dev"
+  region      = data.aws_region.current.name
+  account_id  = data.aws_caller_identity.current.account_id
+  transform_siri_lambda_arn = module.avl_lambda_transform_siri.avl_transform_siri_lambda_arn
 }

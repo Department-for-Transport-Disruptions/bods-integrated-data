@@ -160,7 +160,7 @@ module "integrated_data_naptan_uploader_function" {
   function_name      = "integrated-data-naptan-uploader-${var.environment}"
   zip_path           = "${path.module}/../../../../src/functions/dist/naptan-uploader.zip"
   role_arn           = aws_iam_role.integrated_data_naptan_uploader_role.arn
-  handler            = "functions/naptan-uploader/index.handler"
+  handler            = "index.handler"
   runtime            = "nodejs20.x"
   timeout            = 300
   memory             = 3008
