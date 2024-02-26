@@ -67,6 +67,13 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_db_migrator" {
+  source = "../modules/database/monitoring"
+
+  environment = "dev"
+  db_endpoint = module.integrated_data_aurora_db_dev.db_endpoint
+}
+
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
 
