@@ -1,9 +1,7 @@
 on:
     pull_request_review:
         types: [submitted]
-    push:
-        branches:
-            - main
+    workflow_dispatch:
 
 name: Terraform Apply
 
@@ -23,6 +21,7 @@ jobs:
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions
+        if: (github.event.review.state == 'approved' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
         with:
             path: "./src/functions"
 
