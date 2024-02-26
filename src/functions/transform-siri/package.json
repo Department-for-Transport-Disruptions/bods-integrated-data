@@ -4,7 +4,7 @@
     "description": "This function is to transform AVL SIRI-VM data into a CSV format.",
     "scripts": {
         "test": "vitest run",
-        "build:ci": "rm -rf ./dist && tsc && cp -rL node_modules ./dist && cd ./dist && zip -rq ./transform-siri.zip .",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./transform-siri.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/transform-siri.zip ../dist/transform-siri.zip"
     },
     "keywords": [],

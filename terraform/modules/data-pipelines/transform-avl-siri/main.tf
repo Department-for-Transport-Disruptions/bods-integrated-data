@@ -8,7 +8,7 @@ terraform {
     }
 
     archive = {
-      source = "hashicorp/archive"
+      source  = "hashicorp/archive"
       version = "~> 2.4"
 
     }
@@ -26,34 +26,34 @@ resource "aws_iam_policy" "lambda_transform_siri_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        "Action": [
+        "Action" : [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        "Resource": ["${aws_cloudwatch_log_group.lambda_transform_siri_logging_group.arn}:*"],
-        "Effect": "Allow"
+        "Resource" : ["${aws_cloudwatch_log_group.lambda_transform_siri_logging_group.arn}:*"],
+        "Effect" : "Allow"
       },
       {
-            "Effect": "Allow",
-            "Action": [
-                "kinesis:DescribeStream",
-                "kinesis:DescribeStreamSummary",
-                "kinesis:GetRecords",
-                "kinesis:GetShardIterator",
-                "kinesis:ListShards",
-                "kinesis:ListStreams",
-                "kinesis:SubscribeToShard",
-            ],
-            "Resource": ["arn:aws:kinesis:${var.region}:${var.account_id}:stream/${local.kinesis_firehose_stream_name}"]
-        }
+        "Effect" : "Allow",
+        "Action" : [
+          "kinesis:DescribeStream",
+          "kinesis:DescribeStreamSummary",
+          "kinesis:GetRecords",
+          "kinesis:GetShardIterator",
+          "kinesis:ListShards",
+          "kinesis:ListStreams",
+          "kinesis:SubscribeToShard",
+        ],
+        "Resource" : ["arn:aws:kinesis:${var.region}:${var.account_id}:stream/${local.kinesis_firehose_stream_name}"]
+      }
     ]
   })
 }
 
 
 resource "aws_iam_role" "iam_for_lambda" {
-  name               = "avl-lambda-transform-siri-role-${var.environment}"
+  name                = "avl-lambda-transform-siri-role-${var.environment}"
   managed_policy_arns = [aws_iam_policy.lambda_transform_siri_policy.arn]
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -74,7 +74,7 @@ module "avl_transform_siri" {
 
   function_name = local.lambda_name
   zip_path      = "${path.module}/../../../../src/functions/dist/transform-siri.zip"
-  handler       = "functions/transform-siri/index.handler"
+  handler       = "index.handler"
   memory        = 1024
   role_arn      = aws_iam_role.iam_for_lambda.arn
   runtime       = "nodejs20.x"
@@ -82,9 +82,9 @@ module "avl_transform_siri" {
 
   //TODO Replace with actual table and schema when created
   env_vars = {
-      CAVL_TABLE_NAME = "avl"
-      CAVL_TABLE_SCHEMA = "avl_schema"
-    }
+    CAVL_TABLE_NAME   = "avl"
+    CAVL_TABLE_SCHEMA = "avl_schema"
+  }
 }
 
 output "avl_transform_siri_lambda_arn" {
@@ -92,6 +92,6 @@ output "avl_transform_siri_lambda_arn" {
 }
 
 locals {
-  lambda_name = "avl-transform-siri-${var.environment}"
+  lambda_name                  = "avl-transform-siri-${var.environment}"
   kinesis_firehose_stream_name = "avl-kinesis-firehose-stream-${var.environment}"
 }

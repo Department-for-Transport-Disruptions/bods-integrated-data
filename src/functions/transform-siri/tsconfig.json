@@ -4,7 +4,15 @@
         "outDir": "./dist",
         "rootDir": "../../",
         "moduleResolution": "node",
-        "module": "CommonJS"
+        "module": "CommonJS",
+        "isolatedModules": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true,
+        "strict": true,
+        "target": "ES2020",
+        "preserveConstEnums": true,
+        "noEmit": true
     },
     "include": ["../../shared", "."]
 }
