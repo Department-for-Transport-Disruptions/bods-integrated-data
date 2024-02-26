@@ -3,19 +3,43 @@ NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
 dev: dev-containers-up
 setup: dev-containers-up create-buckets migrate-local-db-to-latest
 
-# Docker
+# Dev
+
+asdf:
+	asdf plugin add awscli && \
+	asdf plugin add terraform https://github.com/asdf-community/asdf-hashicorp.git && \
+	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
+	asdf install
 
 dev-containers-up:
 	docker compose --project-directory dev up -d
+
 dev-containers-down:
 	docker compose --project-directory dev down
+
 dev-containers-kill:
 	docker compose --project-directory dev kill
+
+# Terraform
+
+tf-plan-%:
+	terraform -chdir=terraform/$* plan
+
+tf-apply-%:
+	terraform -chdir=terraform/$* apply
+
+# Build
+
+install-deps:
+	cd src && pnpm i
+
+build-functions:
+	cd src && pnpm build-all
 
 # Localstack
 
 create-buckets:
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${NAPTAN_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${NAPTAN_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 # Database
 
