@@ -1,0 +1,62 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  kysely:
+    specifier: ^0.27.2
+    version: 0.27.2
+  lambda-log:
+    specifier: ^3.1.0
+    version: 3.1.0
+
+devDependencies:
+  '@types/aws-lambda':
+    specifier: ^8.10.110
+    version: 8.10.134
+  '@types/lambda-log':
+    specifier: ^2.2.1
+    version: 2.2.1
+  '@types/node':
+    specifier: ^20.11.19
+    version: 20.11.20
+
+packages:
+
+  /@types/aws-lambda@8.10.134:
+    resolution: {integrity: sha512-cfv422ivDMO+EeA3N4YcshbTHBL+5lLXe+Uz+4HXvIcsCuWvqNFpOs28ZprL8NA3qRCzt95ETiNAJDn4IcC/PA==}
+    dev: true
+
+  /@types/lambda-log@2.2.1:
+    resolution: {integrity: sha512-+EEBg+jwPTjqRlnNRAUr2zP3HA7Vq75hSChjDpQ/wJCAGmTZQ7ZfG0m3eR4bvVmDY/z005iIkcnOBVpwkWgXgA==}
+    dependencies:
+      '@types/node': 20.11.20
+    dev: true
+
+  /@types/node@20.11.20:
+    resolution: {integrity: sha512-7/rR21OS+fq8IyHTgtLkDK949uzsa6n8BkziAKtPVpugIkO6D+/ooXMvzXxDnZrmtXVfjb1bKQafYpb8s89LOg==}
+    dependencies:
+      undici-types: 5.26.5
+    dev: true
+
+  /fast-safe-stringify@2.1.1:
+    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
+    dev: false
+
+  /kysely@0.27.2:
+    resolution: {integrity: sha512-DmRvEfiR/NLpgsTbSxma2ldekhsdcd65+MNiKXyd/qj7w7X5e3cLkXxcj+MypsRDjPhHQ/CD5u3Eq1sBYzX0bw==}
+    engines: {node: '>=14.0.0'}
+    dev: false
+
+  /lambda-log@3.1.0:
+    resolution: {integrity: sha512-dfkFw+e0CoFftuOjxkufhi1srIpa4dM3sbbe+0KtfjX11auNl7Kok+5/+07IffjXUuspKAFeiHlHUPAHJzcL3A==}
+    engines: {node: '>=10.0.0'}
+    dependencies:
+      fast-safe-stringify: 2.1.1
+    dev: false
+
+  /undici-types@5.26.5:
+    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+    dev: true

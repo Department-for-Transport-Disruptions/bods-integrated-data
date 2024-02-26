@@ -37,3 +37,8 @@ run-local-naptan-uploader:
 	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/naptan-uploader'; handler({Records:[{s3:{bucket:{name:'${NAPTAN_BUCKET_NAME}'},object:{key:'Stops.csv'}}}]}).catch(e => console.error(e))"
 
 run-full-local-naptan-pipeline: run-local-naptan-retriever run-local-naptan-uploader
+
+# AVL
+
+run-avl-aggregate-siri:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/aggregate-siri'; handler()"

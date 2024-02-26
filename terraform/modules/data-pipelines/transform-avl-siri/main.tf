@@ -79,12 +79,6 @@ module "avl_transform_siri" {
   role_arn      = aws_iam_role.iam_for_lambda.arn
   runtime       = "nodejs20.x"
   timeout       = 60
-
-  //TODO Replace with actual table and schema when created
-  env_vars = {
-      CAVL_TABLE_NAME = "avl"
-      CAVL_TABLE_SCHEMA = "avl_schema"
-    }
 }
 
 output "avl_transform_siri_lambda_arn" {
