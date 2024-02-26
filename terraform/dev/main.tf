@@ -67,7 +67,7 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
-module "integrated_data_db_migrator" {
+module "integrated_data_db_monitoring" {
   source = "../modules/database/monitoring"
 
   environment = "dev"
