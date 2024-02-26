@@ -40,6 +40,12 @@ install-deps:
 build-functions:
 	cd src && pnpm build-all
 
+lint-functions:
+	cd src && pnpm lint
+
+test-functions:
+	cd src && pnpm test-all
+
 # Secrets
 
 edit-secrets-%:

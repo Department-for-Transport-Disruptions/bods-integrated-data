@@ -3,10 +3,6 @@ on:
 
 name: Terraform Plan
 
-defaults:
-    run:
-        working-directory: ./terraform
-
 permissions:
     id-token: write # This is required for aws oidc connection
     contents: read # This is required for actions/checkout
@@ -17,9 +13,48 @@ env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
+    lint_functions:
+        runs-on: ubuntu-22.04
+        name: Lint Functions
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20.x"
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: 8
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install Deps
+              run: make install-deps
+
+            - name: Lint Functions
+              run: make lint-functions
+
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions
+        needs:
+            - lint_functions
         with:
             path: "./src/functions"
 
@@ -46,6 +81,9 @@ jobs:
                 stage: ["dev"]
         env:
             stage: ${{ matrix.stage }}
+        defaults:
+            run:
+                working-directory: ./terraform
         steps:
             - name: Checkout
               uses: actions/checkout@v4

@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import axios from "axios";
-import { randomUUID } from "crypto";
 import * as logger from "lambda-log";
+import { randomUUID } from "crypto";
 
 const s3Client = new S3Client({
     region: "eu-west-2",
@@ -19,9 +19,7 @@ const s3Client = new S3Client({
 
 export const handler = async () => {
     logger.options.dev = process.env.NODE_ENV !== "production";
-    logger.options.debug =
-        process.env.ENABLE_DEBUG_LOGS === "true" ||
-        process.env.NODE_ENV !== "production";
+    logger.options.debug = process.env.ENABLE_DEBUG_LOGS === "true" || process.env.NODE_ENV !== "production";
 
     logger.options.meta = {
         id: randomUUID(),
@@ -36,12 +34,9 @@ export const handler = async () => {
 
         logger.info("Starting naptan retriever");
 
-        const response = await axios.get(
-            "https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv",
-            {
-                responseType: "arraybuffer",
-            }
-        );
+        const response = await axios.get("https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv", {
+            responseType: "arraybuffer",
+        });
 
         logger.info("Data retrieved");
 
@@ -51,7 +46,7 @@ export const handler = async () => {
                 Key: "Stops.csv",
                 ContentType: "text/csv",
                 Body: response.data as string,
-            })
+            }),
         );
 
         logger.info("Naptan retriever successful");
