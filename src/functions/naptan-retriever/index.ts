@@ -30,8 +30,6 @@ export const handler = async () => {
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 
-        console.log("hello");
-
         if (!bucketName) {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }

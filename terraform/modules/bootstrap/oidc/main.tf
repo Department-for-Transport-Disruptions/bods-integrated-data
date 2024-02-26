@@ -101,7 +101,8 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "route53:*",
           "cloudwatch:*",
           "dynamodb:*",
-          "events:*"
+          "events:*",
+          "logs:*"
         ],
         Effect   = "Allow",
         Resource = "*",
