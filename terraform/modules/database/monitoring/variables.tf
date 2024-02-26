@@ -3,9 +3,9 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "db_endpoint" {
+variable "db_cluster_id" {
   type        = string
-  description = "RDS instance endpoint"
+  description = "RDS cluster ID"
 }
 
 variable "cpu_utilization_threshold" {
@@ -23,5 +23,11 @@ variable "freeable_memory_threshold" {
 variable "email_addresses" {
   description = "List of email address for this subscription."
   type        = list(string)
-  default     = ["mohit.vashishat@kpmg.co.uk"]
+  default     = []
+}
+
+variable "multi_az" {
+  type        = bool
+  description = "Whether it is a multi-az db deployment or not"
+  default     = false
 }

@@ -9,6 +9,7 @@ asdf:
 	asdf plugin add awscli && \
 	asdf plugin add terraform https://github.com/asdf-community/asdf-hashicorp.git && \
 	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
+	asdf plugin-add sops https://github.com/feniix/asdf-sops.git && \
 	asdf install
 
 dev-containers-up:
@@ -21,6 +22,9 @@ dev-containers-kill:
 	docker compose --project-directory dev kill
 
 # Terraform
+
+tf-init-%:
+	terraform -chdir=terraform/$* init
 
 tf-plan-%:
 	terraform -chdir=terraform/$* plan

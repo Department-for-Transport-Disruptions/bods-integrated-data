@@ -46,3 +46,6 @@ operations/variable-scripts/variable.json
 
 # Sentinel runtime directory
 .sentinel
+
+# SOPS
+secrets.json
