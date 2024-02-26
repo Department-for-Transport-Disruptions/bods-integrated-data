@@ -15,16 +15,25 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.33"
     }
+
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.0"
+    }
   }
 }
 
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+data "sops_file" "secrets" {
+  source_file = "secrets.enc.json"
+}
+
 module "integrated_data_vpc_dev" {
   source = "../modules/networking/vpc"
 
-  environment = "dev"
+  environment = local.env
   region      = data.aws_region.current.name
 }
 
@@ -37,7 +46,7 @@ module "integrated_data_route53" {
 module "integrated_data_aurora_db_dev" {
   source = "../modules/database/aurora-db"
 
-  environment              = "dev"
+  environment              = local.env
   db_subnet_ids            = module.integrated_data_vpc_dev.db_subnet_ids
   vpc_id                   = module.integrated_data_vpc_dev.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
@@ -49,7 +58,7 @@ module "integrated_data_aurora_db_dev" {
 module "integrated_data_bastion_host" {
   source = "../modules/database/bastion-host"
 
-  environment              = "dev"
+  environment              = local.env
   db_sg_id                 = module.integrated_data_aurora_db_dev.db_sg_id
   private_subnet_ids       = module.integrated_data_vpc_dev.private_subnet_ids
   vpc_id                   = module.integrated_data_vpc_dev.vpc_id
@@ -60,7 +69,7 @@ module "integrated_data_bastion_host" {
 module "integrated_data_db_migrator" {
   source = "../modules/database/db-migrator"
 
-  environment        = "dev"
+  environment        = local.env
   vpc_id             = module.integrated_data_vpc_dev.vpc_id
   private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
@@ -71,14 +80,15 @@ module "integrated_data_db_migrator" {
 module "integrated_data_db_monitoring" {
   source = "../modules/database/monitoring"
 
-  environment = "dev"
-  db_endpoint = module.integrated_data_aurora_db_dev.db_endpoint
+  environment     = local.env
+  db_cluster_id   = module.integrated_data_aurora_db_dev.db_cluster_id
+  email_addresses = jsondecode(data.sops_file.secrets.raw)["email_addresses_for_alarms"]
 }
 
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
 
-  environment        = "dev"
+  environment        = local.env
   vpc_id             = module.integrated_data_vpc_dev.vpc_id
   private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
@@ -89,16 +99,20 @@ module "integrated_data_naptan_pipeline" {
 module "avl_lambda_transform_siri" {
   source = "../modules/data-pipelines/transform-avl-siri"
 
-  environment = "dev"
-  region    = data.aws_region.current.name
+  environment = local.env
+  region      = data.aws_region.current.name
   account_id  = data.aws_caller_identity.current.account_id
 }
 
 module "avl_firehose" {
   source = "../modules/data-pipelines/avl-kinesis-firehose"
 
-  environment = "dev"
-  region      = data.aws_region.current.name
-  account_id  = data.aws_caller_identity.current.account_id
+  environment               = local.env
+  region                    = data.aws_region.current.name
+  account_id                = data.aws_caller_identity.current.account_id
   transform_siri_lambda_arn = module.avl_lambda_transform_siri.avl_transform_siri_lambda_arn
+}
+
+locals {
+  env = "dev"
 }
