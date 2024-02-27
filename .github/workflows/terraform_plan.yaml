@@ -13,9 +13,9 @@ env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
-    lint_functions:
+    lint_and_test_functions:
         runs-on: ubuntu-22.04
-        name: Lint Functions
+        name: Lint and Test Functions
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -50,11 +50,14 @@ jobs:
             - name: Lint Functions
               run: make lint-functions
 
+            - name: Test Functions
+              run: make test-functions
+
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions
         needs:
-            - lint_functions
+            - lint_and_test_functions
         with:
             path: "./src/functions"
 
