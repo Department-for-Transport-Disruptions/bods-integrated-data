@@ -102,18 +102,26 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "cloudwatch:*",
           "dynamodb:*",
           "events:*",
-          "logs:*"
+          "logs:*",
+          "sns:*"
         ],
         Effect   = "Allow",
         Resource = "*",
-        "Condition" : {
-          "StringLike" : {
-            "aws:RequestedRegion" : [
+        Condition = {
+          "StringLike" = {
+            "aws:RequestedRegion" = [
               "eu-west-2",
               "us-east-1"
             ]
           }
-        },
+        }
+      },
+      {
+        Action = [
+          "kms:Decrypt"
+        ],
+        Effect   = "Allow",
+        Resource = [var.sops_kms_key_arn]
       }
     ]
   })

@@ -19,8 +19,19 @@ terraform {
   }
 }
 
+module "sops" {
+  source = "../../modules/bootstrap/sops"
+
+  environment = local.env
+}
+
 module "oidc" {
   source = "../../modules/bootstrap/oidc"
 
-  environment = "dev"
+  environment      = local.env
+  sops_kms_key_arn = module.sops.kms_key_arn
+}
+
+locals {
+  env = "dev"
 }
