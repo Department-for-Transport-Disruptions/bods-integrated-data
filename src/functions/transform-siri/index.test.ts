@@ -4,8 +4,8 @@ import { transformXmlToCsv } from "./index";
 
 describe("transformXmlToCsv", () => {
     it("should transform valid SIRI-VM to CSV format", () => {
-        const result = `responseTimeStamp,producerRef,recordedAtTime,validUntilTime,lineRef,directionRef,datedVehicleJourneyRef,vehicleRef,operatorRef,dataSource,longitude,latitude,bearing,delay,isCompleteStopSequence
-2018-08-17T15:14:21.432,ATB,2018-08-17T15:13:20,2018-08-17T16:13:29,ATB:Line:60,2,ATB:ServiceJourney:00600027,200141,placeholder,ATB,10.40261,63.43613,0,PT0S,false`;
+        const result = `responseTimeStamp,producerRef,recordedAtTime,validUntilTime,lineRef,directionRef,operatorRef,datedVehicleJourneyRef,vehicleRef,dataSource,longitude,latitude,bearing,delay,isCompleteStopSequence,publishedLineName,originRef,destinationRef,blockRef
+2018-08-17T15:14:21.432,ATB,2018-08-17T15:13:20,2018-08-17T16:13:29,ATB:Line:60,2,placeholder,ATB:ServiceJourney:00600027,200141,ATB,10.40261,63.43613,0,PT0S,false,1,originRef,destinationRef,blockRef`;
 
         expect(transformXmlToCsv(mockSiri)).toEqual(result);
     });
