@@ -9,3 +9,7 @@ output "db_host" {
 output "db_secret_arn" {
   value = aws_rds_cluster.integrated_data_rds_cluster.master_user_secret[0].secret_arn
 }
+
+output "db_cluster_id" {
+  value = aws_rds_cluster.integrated_data_rds_cluster.id
+}

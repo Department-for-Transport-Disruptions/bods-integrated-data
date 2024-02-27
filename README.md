@@ -51,3 +51,34 @@ make install-deps build-functions
 ```
 
 to do this. Then run a `make tf-apply-{ENV}` to deploy the changes. Terraform will see the new bundled functions and deploy the changes.
+
+## Adding or updating secrets
+
+[SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS key to encrypt a secrets file which can then be committed into version control.
+
+In order to add or update a secret, first authenticate against the target AWS account (where the required KMS key resides) and then run the following from the root directory:
+
+```bash
+make edit-secrets-{ENV}
+```
+
+This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will automatically encrypt the new file which can then be pushed.
+
+### Using SOPS secrets in Terraform
+
+To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the secrets file in a data block. The secrets can then be extracted. An example of this would be:
+
+```terraform
+sops = {
+    source  = "carlpett/sops"
+    version = "~> 1.0"
+}
+
+data "sops_file" "secrets" {
+  source_file = "secrets.enc.json"
+}
+
+locals {
+    secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
+}
+```

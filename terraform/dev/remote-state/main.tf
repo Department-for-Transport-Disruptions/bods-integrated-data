@@ -12,7 +12,7 @@ terraform {
 module "tf-state-dev" {
   source = "../../modules/bootstrap/tf-state"
 
-  environment = "dev"
+  environment = local.env
 }
 
 import {
@@ -38,4 +38,5 @@ import {
 locals {
   bucket_name         = "integrated-data-tfstate-dev"
   dynamodb_table_name = "integrated-data-state-lock-dev"
+  env                 = "dev"
 }
