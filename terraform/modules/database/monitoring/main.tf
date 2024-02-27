@@ -40,7 +40,7 @@ resource "aws_sns_topic_subscription" "integrated_data_rds_alarm" {
   endpoint  = var.email_addresses[count.index]
 }
 
-resource "aws_cloudwatch_metric_alarm" "low_memory_writer" {
+resource "aws_cloudwatch_metric_alarm" "low_memory" {
   count               = var.multi_az ? 2 : 1
   alarm_name          = "integrated-data-db-${count.index == 0 ? "writer" : "reader"}-low-memory-${var.environment}"
   comparison_operator = "LessThanThreshold"
@@ -60,7 +60,7 @@ resource "aws_cloudwatch_metric_alarm" "low_memory_writer" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "high_cpu_writer" {
+resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   count               = var.multi_az ? 2 : 1
   alarm_name          = "integrated-data-db-${count.index == 0 ? "writer" : "reader"}-high-cpu-${var.environment}"
   comparison_operator = "GreaterThanThreshold"

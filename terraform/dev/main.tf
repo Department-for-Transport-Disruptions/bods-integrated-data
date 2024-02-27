@@ -82,7 +82,7 @@ module "integrated_data_db_monitoring" {
 
   environment     = local.env
   db_cluster_id   = module.integrated_data_aurora_db_dev.db_cluster_id
-  email_addresses = jsondecode(data.sops_file.secrets.raw)["email_addresses_for_alarms"]
+  email_addresses = local.secrets["email_addresses_for_alarms"]
 }
 
 module "integrated_data_naptan_pipeline" {
@@ -114,5 +114,6 @@ module "avl_firehose" {
 }
 
 locals {
-  env = "dev"
+  env     = "dev"
+  secrets = jsondecode(data.sops_file.secrets.raw)
 }
