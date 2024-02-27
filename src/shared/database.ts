@@ -1,9 +1,6 @@
-import { Kysely, PostgresDialect } from "kysely";
+import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { Kysely, PostgresDialect, Insertable, Selectable, Updateable } from "kysely";
 import { Pool } from "pg";
-import {
-    GetSecretValueCommand,
-    SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
@@ -22,12 +19,7 @@ export const getDatabaseClient = async (isLocal = false) => {
         });
     }
 
-    const {
-        DB_HOST: dbHost,
-        DB_PORT: dbPort,
-        DB_SECRET_ARN: databaseSecretArn,
-        DB_NAME: dbName,
-    } = process.env;
+    const { DB_HOST: dbHost, DB_PORT: dbPort, DB_SECRET_ARN: databaseSecretArn, DB_NAME: dbName } = process.env;
 
     if (!dbHost || !dbPort || !databaseSecretArn || !dbName) {
         throw new Error("Missing env vars");
@@ -36,14 +28,14 @@ export const getDatabaseClient = async (isLocal = false) => {
     const databaseSecret = await smClient.send(
         new GetSecretValueCommand({
             SecretId: databaseSecretArn,
-        })
+        }),
     );
 
     if (!databaseSecret.SecretString) {
         throw new Error("Database secret could not be retrieved");
     }
 
-    const parsedSecret = JSON.parse(databaseSecret.SecretString);
+    const parsedSecret = JSON.parse(databaseSecret.SecretString) as { username: string; password: string };
 
     return new Kysely<Database>({
         dialect: new PostgresDialect({
@@ -57,8 +49,6 @@ export const getDatabaseClient = async (isLocal = false) => {
         }),
     });
 };
-
-import { Insertable, Selectable, Updateable } from "kysely";
 
 export interface Database {
     naptan_stop: NaptanStopTable;

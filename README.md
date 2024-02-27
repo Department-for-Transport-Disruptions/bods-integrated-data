@@ -51,3 +51,42 @@ make install-deps build-functions
 ```
 
 to do this. Then run a `make tf-apply-{ENV}` to deploy the changes. Terraform will see the new bundled functions and deploy the changes.
+
+## Adding or updating secrets
+
+[SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS key to encrypt a secrets file which can then be committed into version control.
+
+In order to add or update a secret, first authenticate against the target AWS account (where the required KMS key resides) and then run the following from the root directory:
+
+```bash
+make edit-secrets-{ENV}
+```
+
+This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will automatically encrypt the new file which can then be pushed.
+
+### Using SOPS secrets in Terraform
+
+To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the secrets file in a data block. The secrets can then be extracted. An example of this would be:
+
+```terraform
+sops = {
+    source  = "carlpett/sops"
+    version = "~> 1.0"
+}
+
+data "sops_file" "secrets" {
+  source_file = "secrets.enc.json"
+}
+
+locals {
+    secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
+}
+```
+
+## CI Pipelines
+
+On creating a Pull Request, a Github Actions pipeline will trigger which will generate a terraform plan and save it as a comment to the Pull Request. It will also run tflint and run the tests for the lambda functions.
+
+When the PR is approved, the CI will run a terraform apply, this is to ensure that any code in main will successfully deploy. After it has deployed successfully, the code can be merged.
+
+The pipelines will detect which lambda functions have been updated and it will only build those functions, this ensures that terraform will only apply changes to functions that have actually been changed as part of the PR.
