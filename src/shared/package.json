@@ -6,7 +6,6 @@
     "author": "",
     "license": "ISC",
     "type": "module",
-    "main": "./dist",
     "devDependencies": {
         "@types/node": "^20.11.19",
         "@types/pg": "^8.11.0"

@@ -1,5 +1,5 @@
-import { Database, getDatabaseClient } from "../../shared";
-import { Kysely } from "kysely";
+import { Database } from "../../shared";
+import { Kysely, sql } from "kysely";
 
 export type Logger = {
     info: (message: string) => void;
@@ -13,6 +13,7 @@ export const getCurrentAvlData = async (db: Kysely<Database>, logger: Logger) =>
     const avl = await db
         .selectFrom("avl")
         .selectAll("avl")
+        .where(sql`"validUntilTime"::DATE`, ">=", sql<Date>`NOW()`)
         .execute()
 
     return avl

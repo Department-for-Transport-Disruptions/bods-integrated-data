@@ -64,6 +64,7 @@ export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;
     naptan_stop_old: NaptanStopTable;
+    avl: AvlTable;
 }
 
 export interface NaptanStopTable {
@@ -112,6 +113,29 @@ export interface NaptanStopTable {
     status: string | null;
 }
 
+export interface AvlTable {
+    responseTimeStamp: string | null;
+    producerRef: string | null;
+    recordedAtTime: string | null;
+    validUntilTime: string;
+    lineRef: string | null;
+    directionRef: string | null;
+    operatorRef: string | null;
+    datedVehicleJourneyRef: string | null;
+    vehicleRef: string | null;
+    dataSource: string | null;
+    longitude: string | null;
+    latitude: string | null;
+    bearing: string | null;
+    delay: string | null;
+    isCompleteStopSequence: string | null;
+    publishedLineRef: string | null;
+    originRef: string | null;
+    destinationRef: string | null;
+    blockRef: string | null;
+}
+
 export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
+export type Avl = Selectable<AvlTable>
