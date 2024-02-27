@@ -82,3 +82,11 @@ locals {
     secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
 }
 ```
+
+## CI Pipelines
+
+On creating a Pull Request, a Github Actions pipeline will trigger which will generate a terraform plan and save it as a comment to the Pull Request. It will also run tflint and run the tests for the lambda functions.
+
+When the PR is approved, the CI will run a terraform apply, this is to ensure that any code in main will successfully deploy. After it has deployed successfully, the code can be merged.
+
+The pipelines will detect which lambda functions have been updated and it will only build those functions, this ensures that terraform will only apply changes to functions that have actually been changed as part of the PR.

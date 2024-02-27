@@ -1,12 +1,10 @@
-import { Database } from "../../../shared";
 import { Kysely } from "kysely";
+import { Database } from "../../../shared";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
         .createTable("naptan_stop")
-        .addColumn("atcoCode", "varchar(255)", (col) =>
-            col.primaryKey().unique()
-        )
+        .addColumn("atcoCode", "varchar(255)", (col) => col.primaryKey().unique())
         .addColumn("naptanCode", "varchar(255)")
         .addColumn("plateCode", "varchar(255)")
         .addColumn("cleardownCode", "varchar(255)")
@@ -52,6 +50,6 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .execute();
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
+export async function down(db: Kysely<Database>): Promise<void> {
     await db.schema.dropTable("naptan_stop").execute();
 }

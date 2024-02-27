@@ -54,7 +54,6 @@ export const siriSchema = z
                     .FramedVehicleJourneyRef.DatedVehicleJourneyRef,
             vehicleRef:
                 item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.VehicleRef,
-
             dataSource:
                 item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.DataSource,
             longitude:

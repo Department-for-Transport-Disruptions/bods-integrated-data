@@ -1,15 +1,13 @@
-import { getDatabaseClient } from "../../shared";
-import { randomUUID } from "crypto";
-import { promises as fs } from "fs";
 import { FileMigrationProvider, Migrator } from "kysely";
 import * as logger from "lambda-log";
+import { randomUUID } from "crypto";
+import { promises as fs } from "fs";
 import * as path from "path";
+import { getDatabaseClient } from "../../shared";
 
 export const handler = async () => {
     logger.options.dev = process.env.NODE_ENV !== "production";
-    logger.options.debug =
-        process.env.ENABLE_DEBUG_LOGS === "true" ||
-        process.env.NODE_ENV !== "production";
+    logger.options.debug = process.env.ENABLE_DEBUG_LOGS === "true" || process.env.NODE_ENV !== "production";
 
     logger.options.meta = {
         id: randomUUID(),
@@ -30,9 +28,7 @@ export const handler = async () => {
         }),
     });
 
-    const { error, results } = isRollback
-        ? await migrator.migrateDown()
-        : await migrator.migrateToLatest();
+    const { error, results } = isRollback ? await migrator.migrateDown() : await migrator.migrateToLatest();
 
     if (results?.length === 0) {
         logger.info("Nothing to do");
@@ -40,17 +36,9 @@ export const handler = async () => {
 
     results?.forEach((it) => {
         if (it.status === "Success") {
-            logger.info(
-                `${isRollback ? "Rollback of" : "migration "} ${
-                    it.migrationName
-                }" was executed successfully`
-            );
+            logger.info(`${isRollback ? "Rollback of" : "migration "} ${it.migrationName}" was executed successfully`);
         } else if (it.status === "Error") {
-            logger.error(
-                `Failed to execute ${
-                    isRollback ? "rollback of" : "migration"
-                }  " ${it.migrationName}"`
-            );
+            logger.error(`Failed to execute ${isRollback ? "rollback of" : "migration"}  " ${it.migrationName}"`);
         }
     });
 
