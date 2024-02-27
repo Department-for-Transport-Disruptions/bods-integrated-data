@@ -21,7 +21,7 @@ jobs:
     check_for_function_changes:
         uses: ./.github/workflows/get_directories_with_changes.yaml
         name: Get list of updated functions
-        if: (github.event.review.state == 'approved' && github.base_ref == 'main') || github.event_name == 'workflow_dispatch'
+        if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
         with:
             path: "./src/functions"
 
