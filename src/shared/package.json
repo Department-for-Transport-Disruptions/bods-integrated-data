@@ -8,7 +8,8 @@
     "type": "module",
     "devDependencies": {
         "@types/node": "^20.11.19",
-        "@types/pg": "^8.11.0"
+        "@types/pg": "^8.11.0",
+        "zod": "^3.22.4"
     },
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "3.362.0",

@@ -1,5 +1,7 @@
-import { Database } from "../../shared";
 import { Kysely, sql } from "kysely";
+import { Database } from "../../shared";
+import { avlSchema } from "../../shared/schema/siri.schema";
+import { notEmpty } from "../../shared/util";
 
 export type Logger = {
     info: (message: string) => void;
@@ -8,16 +10,26 @@ export type Logger = {
     debug: (message: string) => void;
 };
 export const getCurrentAvlData = async (db: Kysely<Database>, logger: Logger) => {
-    logger.info("Getting AVL data from avl table...");
+    logger.info("Getting data from avl table...");
 
     const avl = await db
         .selectFrom("avl")
-        .distinctOn("operatorRef" && "vehicleRef")
+        .distinctOn(["operatorRef", "vehicleRef"])
         .selectAll("avl")
-        .orderBy("operatorRef" && "vehicleRef", "desc")
-        .execute()
+        .orderBy(sql`"operatorRef", "vehicleRef", "responseTimeStamp" DESC`)
+        .execute();
 
-    return avl
-}
+    const parsedAvl = avl.map((record) => {
+        const parsedAvl = avlSchema.safeParse(record);
 
-const data = [{"id":11,"responseTimeStamp":"2024-02-26T11:31:12+00:00","producerRef":"BODS-AVL","recordedAtTime":"2024-02-26T11:31:12+00:00","validUntilTime":"2024-02-28 11:36:26","lineRef":"25","directionRef":"outbound","operatorRef":"GOGO","datedVehicleJourneyRef":"1","vehicleRef":"XYZ-123","dataSource":"BODS","longitude":"-1.5492094","latitude":"53.7949385","bearing":"90","delay":"0","isCompleteStopSequence":"No","publishedLineName":"25","originRef":"The Origin","destinationRef":"The Destination","blockRef":null},{"id":3,"responseTimeStamp":"2024-02-26T11:31:12+00:00","producerRef":"BODS-AVL","recordedAtTime":"2024-02-26T11:31:12+00:00","validUntilTime":"2024-02-26 11:36:26","lineRef":"33","directionRef":"outbound","operatorRef":"FMAN","datedVehicleJourneyRef":"1","vehicleRef":"ABC","dataSource":"BODS","longitude":"-1.5613995","latitude":"53.7920412","bearing":"90","delay":"0","isCompleteStopSequence":"No","publishedLineName":"33","originRef":"Bus Station","destinationRef":"The Destination","blockRef":null}]
+        if (!parsedAvl.success) {
+            logger.warn(`Invalid avl data in database. ID: ${record.id}`);
+            logger.warn(`${JSON.stringify(parsedAvl.error)}`);
+            return null;
+        }
+
+        return parsedAvl.data;
+    });
+
+    return parsedAvl.filter(notEmpty);
+};

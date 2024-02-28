@@ -18,6 +18,8 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
         "@types/lambda-log": "^2.2.1",
-        "@types/node": "^20.11.19"
+        "@types/node": "^20.11.19",
+        "js2xmlparser": "^5.0.0",
+        "zod": "^3.22.4"
     }
 }

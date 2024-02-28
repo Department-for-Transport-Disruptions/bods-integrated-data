@@ -104,6 +104,7 @@ export interface NaptanStopTable {
 }
 
 export interface AvlTable {
+    id: string;
     responseTimeStamp: string | null;
     producerRef: string | null;
     recordedAtTime: string | null;
@@ -128,4 +129,4 @@ export interface AvlTable {
 export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
-export type Avl = Selectable<AvlTable>
+export type Avl = Selectable<AvlTable>;

@@ -7,10 +7,10 @@ import { json2csv } from "json-2-csv";
 import * as logger from "lambda-log";
 import { parseString } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors.js";
-import { siriSchema, SiriSchema } from "./schema/siri.schema";
+import { siriSchemaTransformed, TransformedSiriSchema } from "../../shared/schema/siri.schema";
 
 interface parsedXmlSiri {
-    Siri: SiriSchema;
+    Siri: TransformedSiriSchema;
 }
 
 const parseXml = (xml: string) => {
@@ -40,7 +40,7 @@ export const transformXmlToCsv = (siriXml: string) => {
         return null;
     }
 
-    const formattedSiri = siriSchema.safeParse(siriJson.Siri);
+    const formattedSiri = siriSchemaTransformed.safeParse(siriJson.Siri);
 
     if (!formattedSiri.success) {
         logger.warn(`Failed to parse SIRI-VM: ${JSON.stringify(formattedSiri.error)}`);
