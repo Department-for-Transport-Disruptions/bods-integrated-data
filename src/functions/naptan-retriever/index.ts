@@ -1,16 +1,8 @@
+import { logger } from "@baselime/lambda-logger";
 import { putS3Object } from "@bods-integrated-data/shared";
 import axios from "axios";
-import * as logger from "lambda-log";
-import { randomUUID } from "crypto";
 
 export const handler = async () => {
-    logger.options.dev = process.env.NODE_ENV !== "production";
-    logger.options.debug = process.env.ENABLE_DEBUG_LOGS === "true" || process.env.NODE_ENV !== "production";
-
-    logger.options.meta = {
-        id: randomUUID(),
-    };
-
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 
@@ -36,8 +28,7 @@ export const handler = async () => {
         logger.info("Naptan retriever successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the naptan retriever");
-            logger.error(e);
+            logger.error("There was a problem with the naptan retriever", e);
         }
 
         throw e;

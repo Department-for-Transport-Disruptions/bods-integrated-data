@@ -12,10 +12,10 @@
     "type": "module",
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "3.362.0",
+        "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "bluebird": "^3.7.2",
         "kysely": "^0.27.2",
-        "lambda-log": "^3.1.0",
         "ospoint": "^0.2.1",
         "papaparse": "^5.4.1",
         "pg": "^8.11.3"
@@ -23,7 +23,6 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.134",
         "@types/bluebird": "^3.5.42",
-        "@types/lambda-log": "^3.0.3",
         "@types/node": "^20.11.19",
         "@types/papaparse": "^5.3.14",
         "@types/pg": "^8.11.0"

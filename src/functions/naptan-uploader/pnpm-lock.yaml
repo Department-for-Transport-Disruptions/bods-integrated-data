@@ -8,6 +8,9 @@ dependencies:
   '@aws-sdk/client-secrets-manager':
     specifier: 3.362.0
     version: 3.362.0
+  '@baselime/lambda-logger':
+    specifier: ^0.2.2
+    version: 0.2.2
   '@bods-integrated-data/shared':
     specifier: workspace:^
     version: link:../../shared
@@ -17,9 +20,6 @@ dependencies:
   kysely:
     specifier: ^0.27.2
     version: 0.27.2
-  lambda-log:
-    specifier: ^3.1.0
-    version: 3.1.0
   ospoint:
     specifier: ^0.2.1
     version: 0.2.1
@@ -37,9 +37,6 @@ devDependencies:
   '@types/bluebird':
     specifier: ^3.5.42
     version: 3.5.42
-  '@types/lambda-log':
-    specifier: ^3.0.3
-    version: 3.0.3
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.19
@@ -807,6 +804,10 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@baselime/lambda-logger@0.2.2:
+    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
+    dev: false
+
   /@smithy/protocol-http@1.2.0:
     resolution: {integrity: sha512-GfGfruksi3nXdFok5RhgtOnWe5f6BndzYfmEXISD+5gAGdayFGpjWu5pIqIweTudMtse20bGbc+7MFZXT1Tb8Q==}
     engines: {node: '>=14.0.0'}
@@ -835,12 +836,6 @@ packages:
 
   /@types/bluebird@3.5.42:
     resolution: {integrity: sha512-Jhy+MWRlro6UjVi578V/4ZGNfeCOcNCp0YaFNIUGFKlImowqwb1O/22wDVk3FDGMLqxdpOV3qQHD5fPEH4hK6A==}
-    dev: true
-
-  /@types/lambda-log@3.0.3:
-    resolution: {integrity: sha512-QfIV6chAG1mMoeNkl6/FXqkpVyUJ80eZ2cv1vpxUZH8uTwrwD1i1GOCmzz9fqxFr5FAWYaQJdSaLSIEkJJdXvg==}
-    dependencies:
-      '@types/node': 20.11.19
     dev: true
 
   /@types/node@20.11.19:
@@ -876,10 +871,6 @@ packages:
     engines: {node: '>=4'}
     dev: false
 
-  /fast-safe-stringify@2.1.1:
-    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
-    dev: false
-
   /fast-xml-parser@4.2.5:
     resolution: {integrity: sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==}
     hasBin: true
@@ -890,13 +881,6 @@ packages:
   /kysely@0.27.2:
     resolution: {integrity: sha512-DmRvEfiR/NLpgsTbSxma2ldekhsdcd65+MNiKXyd/qj7w7X5e3cLkXxcj+MypsRDjPhHQ/CD5u3Eq1sBYzX0bw==}
     engines: {node: '>=14.0.0'}
-    dev: false
-
-  /lambda-log@3.1.0:
-    resolution: {integrity: sha512-dfkFw+e0CoFftuOjxkufhi1srIpa4dM3sbbe+0KtfjX11auNl7Kok+5/+07IffjXUuspKAFeiHlHUPAHJzcL3A==}
-    engines: {node: '>=10.0.0'}
-    dependencies:
-      fast-safe-stringify: 2.1.1
     dev: false
 
   /obuf@1.1.2:

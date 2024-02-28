@@ -13,5 +13,5 @@
         "preserveConstEnums": true,
         "noEmit": true
     },
-    "include": ["@bods-integrated-data/shared", "."]
+    "include": ["@bods-integrated-data/shared", ".", "../../../vitest.config.ts"]
 }
