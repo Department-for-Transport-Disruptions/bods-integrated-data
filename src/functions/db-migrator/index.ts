@@ -1,9 +1,9 @@
+import { getDatabaseClient } from "@bods-integrated-data/shared";
 import { FileMigrationProvider, Migrator } from "kysely";
 import * as logger from "lambda-log";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import * as path from "path";
-import { getDatabaseClient } from "../../shared";
 
 export const handler = async () => {
     logger.options.dev = process.env.NODE_ENV !== "production";

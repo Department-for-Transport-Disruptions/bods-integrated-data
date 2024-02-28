@@ -1,0 +1,28 @@
+{
+    "name": "@bods-integrated-data/avl-processor",
+    "version": "0.1.0",
+    "description": "This function is to process SIRI-VM AVL data and upload it to the database",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-processor.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-processor.zip ../dist/avl-processor.zip"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "kysely": "^0.27.2",
+        "lambda-log": "^3.1.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/lambda-log": "^2.2.1",
+        "@types/lodash": "^4.14.202",
+        "@types/node": "^20.11.19",
+        "@types/xml2js": "^0.4.14",
+        "xml2js": "^0.6.2",
+        "zod": "^3.22.4"
+    }
+}

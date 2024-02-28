@@ -1,21 +1,7 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { putS3Object } from "@bods-integrated-data/shared";
 import axios from "axios";
 import * as logger from "lambda-log";
 import { randomUUID } from "crypto";
-
-const s3Client = new S3Client({
-    region: "eu-west-2",
-    ...(process.env.IS_LOCAL === "true"
-        ? {
-              endpoint: "http://localhost:4566",
-              forcePathStyle: true,
-              credentials: {
-                  accessKeyId: "DUMMY",
-                  secretAccessKey: "DUMMY",
-              },
-          }
-        : {}),
-});
 
 export const handler = async () => {
     logger.options.dev = process.env.NODE_ENV !== "production";
@@ -40,14 +26,12 @@ export const handler = async () => {
 
         logger.info("Data retrieved");
 
-        await s3Client.send(
-            new PutObjectCommand({
-                Bucket: bucketName,
-                Key: "Stops.csv",
-                ContentType: "text/csv",
-                Body: response.data as string,
-            }),
-        );
+        await putS3Object({
+            Bucket: bucketName,
+            Key: "Stops.csv",
+            ContentType: "text/csv",
+            Body: response.data as string,
+        });
 
         logger.info("Naptan retriever successful");
     } catch (e) {
