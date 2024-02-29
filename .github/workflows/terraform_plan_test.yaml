@@ -150,5 +150,5 @@ jobs:
 
             - name: Invoke dbmigrator Lambda
               run: |
-                aws lambda invoke --function-name integrated-data-db-migrator-migrate-dev --cli-binary-format raw-in-base64-out response.json
+                aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ matrix.stage }} --cli-binary-format raw-in-base64-out response.json
 
