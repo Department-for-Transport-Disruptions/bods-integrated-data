@@ -149,14 +149,6 @@ jobs:
               continue-on-error: true
 
             - name: Invoke dbmigrator Lambda
-              id: dbmigrator
-              uses: gagoar/invoke-aws-lambda@master
-              with:
-                role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
-                aws-region: "eu-west-2"
-                role-session-name: GitHub-OIDC-TERRAFORM
-                FunctionName: integrated-data-db-migrator-migrate-dev
-                LogType: Tail
-            - name: Store tail logs to file
-              run: echo "${{ fromJSON(steps.dbmigrator.outputs.response).LogResult }}" > invocation-logs.json
+              run: |
+                aws lambda invoke --function-name integrated-data-db-migrator-migrate-dev --cli-binary-format raw-in-base64-out response.json
 
