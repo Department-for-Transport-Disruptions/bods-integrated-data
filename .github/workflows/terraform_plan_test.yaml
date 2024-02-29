@@ -1,0 +1,162 @@
+on:
+    pull_request:
+
+name: Terraform Plan
+
+permissions:
+    id-token: write # This is required for aws oidc connection
+    contents: read # This is required for actions/checkout
+    pull-requests: write # This is required for posting comment to PR
+
+env:
+    TERRAFORM_VERSION: 1.6.6
+    AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+    lint_and_test_functions:
+        runs-on: ubuntu-22.04
+        name: Lint and Test Functions
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20.x"
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: 8
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install Deps
+              run: make install-deps
+
+            - name: Lint Functions
+              run: make lint-functions
+
+            - name: Test Functions
+              run: make test-functions
+
+    check_for_function_changes:
+        uses: ./.github/workflows/get_directories_with_changes.yaml
+        name: Get list of updated functions
+        needs:
+            - lint_and_test_functions
+        with:
+            path: "./src/functions"
+
+    zip_functions:
+        uses: ./.github/workflows/zip_function.yaml
+        name: Zip updated functions
+        if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
+        strategy:
+            matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+        needs:
+            - check_for_function_changes
+        with:
+            function_dir: ${{ matrix.dir }}
+
+    terraform_plan:
+        runs-on: ubuntu-22.04
+        name: Terraform Plan
+        needs:
+            - check_for_function_changes
+            - zip_functions
+        if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+        strategy:
+            matrix:
+                stage: ["dev"]
+        env:
+            stage: ${{ matrix.stage }}
+        defaults:
+            run:
+                working-directory: ./terraform
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: actions/download-artifact@v4
+              with:
+                  path: ./src/functions/dist
+                  merge-multiple: true
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+                  aws-region: "eu-west-2"
+                  role-session-name: GitHub-OIDC-TERRAFORM
+
+            - uses: actions/cache@v4
+              name: Cache plugin dir
+              with:
+                  path: ~/.tflint.d/plugins
+                  key: ${{ matrix.stage }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+            - name: Terraform fmt
+              id: fmt
+              run: terraform fmt -check
+              continue-on-error: true
+
+            - name: Setup TFLint
+              uses: terraform-linters/setup-tflint@v4
+              with:
+                  tflint_wrapper: true
+
+            - name: Init TFLint
+              run: tflint --init
+              env:
+                  # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+                  GITHUB_TOKEN: ${{ github.token }}
+
+            - name: Run TFLint
+              id: tflint
+              run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact --minimum-failure-severity=warning
+              continue-on-error: true
+
+            - name: Terraform Init
+              id: init
+              run: terraform -chdir=$stage init
+
+            - name: Terraform Validate
+              id: validate
+              run: terraform -chdir=$stage validate -no-color
+
+            - name: Terraform Plan
+              id: plan
+              run: terraform -chdir=$stage plan -input=false -no-color
+              continue-on-error: true
+
+            - name: Invoke dbmigrator Lambda
+              id: dbmigrator
+              uses: gagoar/invoke-aws-lambda@master
+              with:
+                role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+                aws-region: "eu-west-2"
+                role-session-name: GitHub-OIDC-TERRAFORM
+                FunctionName: integrated-data-db-migrator-migrate-dev
+                LogType: Tail
+            - name: Store tail logs to file
+              run: echo "${{ fromJSON(steps.dbmigrator.outputs.response).LogResult }}" > invocation-logs.json
+
