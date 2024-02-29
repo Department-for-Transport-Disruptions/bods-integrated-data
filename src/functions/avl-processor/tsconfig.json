@@ -1,8 +1,7 @@
 {
     "extends": "@tsconfig/node20/tsconfig.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "../../",
+        "rootDir": ".",
         "moduleResolution": "node",
         "module": "CommonJS",
         "isolatedModules": true,
@@ -14,5 +13,5 @@
         "preserveConstEnums": true,
         "noEmit": true
     },
-    "include": ["../../shared", "."]
+    "include": ["@bods-integrated-data/shared", ".", "../../../vitest.config.ts"]
 }

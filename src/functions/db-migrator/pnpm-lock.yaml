@@ -5,28 +5,26 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@baselime/lambda-logger':
+    specifier: ^0.2.2
+    version: 0.2.2
+  '@bods-integrated-data/shared':
+    specifier: workspace:^
+    version: link:../../shared
   kysely:
     specifier: ^0.27.2
     version: 0.27.2
-  lambda-log:
-    specifier: ^3.1.0
-    version: 3.1.0
 
 devDependencies:
-  '@types/lambda-log':
-    specifier: ^3.0.3
-    version: 3.0.3
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.19
 
 packages:
 
-  /@types/lambda-log@3.0.3:
-    resolution: {integrity: sha512-QfIV6chAG1mMoeNkl6/FXqkpVyUJ80eZ2cv1vpxUZH8uTwrwD1i1GOCmzz9fqxFr5FAWYaQJdSaLSIEkJJdXvg==}
-    dependencies:
-      '@types/node': 20.11.19
-    dev: true
+  /@baselime/lambda-logger@0.2.2:
+    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
+    dev: false
 
   /@types/node@20.11.19:
     resolution: {integrity: sha512-7xMnVEcZFu0DikYjWOlRq7NTPETrm7teqUT2WkQjrTIkEgUyyGdWsj/Zg8bEJt5TNklzbPD1X3fqfsHw3SpapQ==}
@@ -34,20 +32,9 @@ packages:
       undici-types: 5.26.5
     dev: true
 
-  /fast-safe-stringify@2.1.1:
-    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
-    dev: false
-
   /kysely@0.27.2:
     resolution: {integrity: sha512-DmRvEfiR/NLpgsTbSxma2ldekhsdcd65+MNiKXyd/qj7w7X5e3cLkXxcj+MypsRDjPhHQ/CD5u3Eq1sBYzX0bw==}
     engines: {node: '>=14.0.0'}
-    dev: false
-
-  /lambda-log@3.1.0:
-    resolution: {integrity: sha512-dfkFw+e0CoFftuOjxkufhi1srIpa4dM3sbbe+0KtfjX11auNl7Kok+5/+07IffjXUuspKAFeiHlHUPAHJzcL3A==}
-    engines: {node: '>=10.0.0'}
-    dependencies:
-      fast-safe-stringify: 2.1.1
     dev: false
 
   /undici-types@5.26.5:

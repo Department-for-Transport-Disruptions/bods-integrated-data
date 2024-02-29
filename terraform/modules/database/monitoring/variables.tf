@@ -20,14 +20,18 @@ variable "freeable_memory_threshold" {
   description = "RDS CPU Utilization threshold"
 }
 
-variable "email_addresses" {
-  description = "List of email address for this subscription."
-  type        = list(string)
-  default     = []
-}
-
 variable "multi_az" {
   type        = bool
   description = "Whether it is a multi-az db deployment or not"
   default     = false
+}
+
+variable "ok_topic_arn" {
+  type        = string
+  description = "ARN of the SNS topic to use for ok notifications"
+}
+
+variable "alarm_topic_arn" {
+  type        = string
+  description = "ARN of the SNS topic to use for alarm notifications"
 }
