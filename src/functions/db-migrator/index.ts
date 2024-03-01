@@ -1,18 +1,10 @@
+import { logger } from "@baselime/lambda-logger";
+import { getDatabaseClient } from "@bods-integrated-data/shared";
 import { FileMigrationProvider, Migrator } from "kysely";
-import * as logger from "lambda-log";
-import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import * as path from "path";
-import { getDatabaseClient } from "../../shared";
 
 export const handler = async () => {
-    logger.options.dev = process.env.NODE_ENV !== "production";
-    logger.options.debug = process.env.ENABLE_DEBUG_LOGS === "true" || process.env.NODE_ENV !== "production";
-
-    logger.options.meta = {
-        id: randomUUID(),
-    };
-
     const { ROLLBACK: rollback } = process.env;
 
     const isRollback = rollback === "true";
@@ -43,8 +35,7 @@ export const handler = async () => {
     });
 
     if (error) {
-        logger.error(`Failed to ${isRollback ? "rollback" : "migrate"} `);
-        logger.error(error as Error);
+        logger.error(`Failed to ${isRollback ? "rollback" : "migrate"}`, error);
         process.exit(1);
     }
 

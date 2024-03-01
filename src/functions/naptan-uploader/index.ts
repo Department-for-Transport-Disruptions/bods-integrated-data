@@ -1,26 +1,10 @@
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { logger } from "@baselime/lambda-logger";
+import { Database, NaptanStop, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
 import { S3Event } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
 import { sql, Kysely } from "kysely";
-import * as logger from "lambda-log";
 import OsPoint from "ospoint";
 import { parse } from "papaparse";
-import { randomUUID } from "crypto";
-import { Database, NaptanStop, getDatabaseClient } from "../../shared";
-
-const s3Client = new S3Client({
-    region: "eu-west-2",
-    ...(process.env.IS_LOCAL === "true"
-        ? {
-              endpoint: "http://localhost:4566",
-              forcePathStyle: true,
-              credentials: {
-                  accessKeyId: "DUMMY",
-                  secretAccessKey: "DUMMY",
-              },
-          }
-        : {}),
-});
 
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
@@ -54,12 +38,10 @@ const addLonAndLatData = (naptanData: unknown[]) => {
 const getAndParseNaptanFile = async (event: S3Event) => {
     const { object, bucket } = event.Records[0].s3;
 
-    const file = await s3Client.send(
-        new GetObjectCommand({
-            Bucket: bucket.name,
-            Key: object.key,
-        }),
-    );
+    const file = await getS3Object({
+        Bucket: bucket.name,
+        Key: object.key,
+    });
 
     const body = (await file.Body?.transformToString()) || "";
 
@@ -109,13 +91,6 @@ const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[
 };
 
 export const handler = async (event: S3Event) => {
-    logger.options.dev = process.env.NODE_ENV !== "production";
-    logger.options.debug = process.env.ENABLE_DEBUG_LOGS === "true" || process.env.NODE_ENV !== "production";
-
-    logger.options.meta = {
-        id: randomUUID(),
-    };
-
     try {
         const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
@@ -129,8 +104,7 @@ export const handler = async (event: S3Event) => {
         logger.info("Naptan uploader successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the naptan uploader");
-            logger.error(e);
+            logger.error("There was a problem with the naptan uploader", e);
         }
 
         throw e;

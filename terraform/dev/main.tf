@@ -24,10 +24,16 @@ terraform {
 }
 
 data "aws_region" "current" {}
-data "aws_caller_identity" "current" {}
 
 data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
+}
+
+module "integrated_data_monitoring_dev" {
+  source = "../modules/monitoring"
+
+  environment     = local.env
+  email_addresses = local.secrets["email_addresses_for_alarms"]
 }
 
 module "integrated_data_vpc_dev" {
@@ -55,6 +61,15 @@ module "integrated_data_aurora_db_dev" {
   max_db_capacity          = 4
 }
 
+module "integrated_data_db_monitoring" {
+  source = "../modules/database/monitoring"
+
+  environment     = local.env
+  db_cluster_id   = module.integrated_data_aurora_db_dev.db_cluster_id
+  alarm_topic_arn = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn    = module.integrated_data_monitoring_dev.ok_topic_arn
+}
+
 module "integrated_data_bastion_host" {
   source = "../modules/database/bastion-host"
 
@@ -77,14 +92,6 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
-module "integrated_data_db_monitoring" {
-  source = "../modules/database/monitoring"
-
-  environment     = local.env
-  db_cluster_id   = module.integrated_data_aurora_db_dev.db_cluster_id
-  email_addresses = local.secrets["email_addresses_for_alarms"]
-}
-
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
 
@@ -96,21 +103,17 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
-module "avl_lambda_transform_siri" {
-  source = "../modules/data-pipelines/transform-avl-siri"
+module "integrated_data_avl_pipeline" {
+  source = "../modules/data-pipelines/avl-pipeline"
 
-  environment = local.env
-  region      = data.aws_region.current.name
-  account_id  = data.aws_caller_identity.current.account_id
-}
-
-module "avl_firehose" {
-  source = "../modules/data-pipelines/avl-kinesis-firehose"
-
-  environment               = local.env
-  region                    = data.aws_region.current.name
-  account_id                = data.aws_caller_identity.current.account_id
-  transform_siri_lambda_arn = module.avl_lambda_transform_siri.avl_transform_siri_lambda_arn
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+  alarm_topic_arn    = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn       = module.integrated_data_monitoring_dev.ok_topic_arn
 }
 
 locals {

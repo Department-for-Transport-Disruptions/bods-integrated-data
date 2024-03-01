@@ -103,7 +103,8 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "dynamodb:*",
           "events:*",
           "logs:*",
-          "sns:*"
+          "sns:*",
+          "sqs:*"
         ],
         Effect   = "Allow",
         Resource = "*",

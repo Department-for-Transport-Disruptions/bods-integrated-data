@@ -4,8 +4,9 @@
     "description": "",
     "scripts": {
         "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",
-        "test-all": "pnpm -r --if-present test",
-        "lint": "eslint ."
+        "test:ci": "vitest run",
+        "lint": "eslint .",
+        "test": "vitest"
     },
     "type": "module",
     "keywords": [],

@@ -1,5 +1,5 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { Kysely, PostgresDialect, Insertable, Selectable, Updateable } from "kysely";
+import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
@@ -103,30 +103,33 @@ export interface NaptanStopTable {
     status: string | null;
 }
 
+export type NaptanStop = Selectable<NaptanStopTable>;
+export type NewNaptanStop = Insertable<NaptanStopTable>;
+export type NaptanStopUpdate = Updateable<NaptanStopTable>;
+
 export interface AvlTable {
-    id: string;
-    responseTimeStamp: string | null;
-    producerRef: string | null;
-    recordedAtTime: string | null;
+    id: Generated<number>;
+    responseTimeStamp: string;
+    producerRef: string;
+    recordedAtTime: string;
     validUntilTime: string;
     lineRef: string | null;
-    directionRef: string | null;
-    operatorRef: string | null;
+    directionRef: string;
+    operatorRef: string;
     datedVehicleJourneyRef: string | null;
-    vehicleRef: string | null;
+    vehicleRef: string;
     dataSource: string | null;
-    longitude: string | null;
-    latitude: string | null;
+    longitude: number;
+    latitude: number;
     bearing: string | null;
     delay: string | null;
-    isCompleteStopSequence: string | null;
-    publishedLineRef: string | null;
+    isCompleteStopSequence: boolean | null;
+    publishedLineName: string | null;
     originRef: string | null;
     destinationRef: string | null;
     blockRef: string | null;
 }
 
-export type NaptanStop = Selectable<NaptanStopTable>;
-export type NewNaptanStop = Insertable<NaptanStopTable>;
-export type NaptanStopUpdate = Updateable<NaptanStopTable>;
 export type Avl = Selectable<AvlTable>;
+export type NewAvl = Insertable<AvlTable>;
+export type AvlUpdate = Updateable<AvlTable>;

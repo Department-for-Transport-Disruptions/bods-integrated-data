@@ -9,37 +9,6 @@ terraform {
   }
 }
 
-resource "aws_sns_topic" "integrated_data_rds_ok_topic" {
-  name              = "integrated-data-rds-ok-topic-${var.environment}"
-  kms_master_key_id = "alias/aws/sns"
-
-  tags = {
-    "STAGE" = var.environment
-  }
-  tags_all = {
-    "STAGE" = var.environment
-  }
-}
-
-resource "aws_sns_topic" "integrated_data_rds_alarm_topic" {
-  name              = "integrated-data-rds-alarm-topic-${var.environment}"
-  kms_master_key_id = "alias/aws/sns"
-
-  tags = {
-    "STAGE" = var.environment
-  }
-  tags_all = {
-    "STAGE" = var.environment
-  }
-}
-
-resource "aws_sns_topic_subscription" "integrated_data_rds_alarm" {
-  count     = length(var.email_addresses)
-  topic_arn = aws_sns_topic.integrated_data_rds_alarm_topic.arn
-  protocol  = "email"
-  endpoint  = var.email_addresses[count.index]
-}
-
 resource "aws_cloudwatch_metric_alarm" "low_memory" {
   count               = var.multi_az ? 2 : 1
   alarm_name          = "integrated-data-db-${count.index == 0 ? "writer" : "reader"}-low-memory-${var.environment}"
@@ -51,8 +20,8 @@ resource "aws_cloudwatch_metric_alarm" "low_memory" {
   statistic           = "Average"
   threshold           = var.freeable_memory_threshold
   alarm_description   = "Database instance memory below threshold"
-  alarm_actions       = [aws_sns_topic.integrated_data_rds_alarm_topic.arn]
-  ok_actions          = [aws_sns_topic.integrated_data_rds_ok_topic.arn]
+  alarm_actions       = [var.alarm_topic_arn]
+  ok_actions          = [var.ok_topic_arn]
 
   dimensions = {
     DBClusterIdentifier = var.db_cluster_id
@@ -71,8 +40,8 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   statistic           = "Average"
   threshold           = var.cpu_utilization_threshold
   alarm_description   = "Database instance CPU above threshold"
-  alarm_actions       = [aws_sns_topic.integrated_data_rds_alarm_topic.arn]
-  ok_actions          = [aws_sns_topic.integrated_data_rds_ok_topic.arn]
+  alarm_actions       = [var.alarm_topic_arn]
+  ok_actions          = [var.ok_topic_arn]
 
   dimensions = {
     DBClusterIdentifier = var.db_cluster_id

@@ -44,7 +44,7 @@ lint-functions:
 	cd src && pnpm lint
 
 test-functions:
-	cd src && pnpm test-all
+	cd src && pnpm test:ci
 
 # Secrets
 
