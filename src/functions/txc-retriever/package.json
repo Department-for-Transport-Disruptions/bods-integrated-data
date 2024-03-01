@@ -1,0 +1,23 @@
+{
+    "name": "@bods-integrated-data/txc-retriever",
+    "version": "0.1.0",
+    "description": "Clears down existing data and triggers the BODS and TNDS retrievers",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./txc-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/txc-retriever.zip ../dist"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@aws-sdk/client-lambda": "^3.523.0",
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "kysely": "^0.27.2"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}
