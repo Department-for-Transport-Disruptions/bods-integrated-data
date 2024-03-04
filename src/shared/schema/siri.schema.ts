@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 const vehicleActivitySchema = z.object({
-    RecordedAtTime: z.string().datetime(),
-    ValidUntilTime: z.string().datetime(),
+    RecordedAtTime: z.string(),
+    ValidUntilTime: z.string(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.string().optional(),
         DirectionRef: z.string(),
@@ -31,12 +31,12 @@ const vehicleActivitySchema = z.object({
 
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
-        ResponseTimestamp: z.string().datetime(),
+        ResponseTimestamp: z.string(),
         ProducerRef: z.string(),
         VehicleMonitoringDelivery: z.object({
-            ResponseTimestamp: z.string().datetime(),
-            ValidUntil: z.string().datetime(),
-            RequestMessageRef: z.string().uuid(),
+            ResponseTimestamp: z.string(),
+            ValidUntil: z.string().optional(),
+            RequestMessageRef: z.string().uuid().optional(),
             VehicleActivity: vehicleActivitySchema.array(),
         }),
     }),
