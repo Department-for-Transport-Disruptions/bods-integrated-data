@@ -1,13 +1,7 @@
+import { Database, Logger, notEmpty } from "@bods-integrated-data/shared";
+import { avlSchema } from "@bods-integrated-data/shared/schema/siri.schema";
 import { Kysely, sql } from "kysely";
-import { Database, notEmpty } from "../../shared";
-import { avlSchema } from "../../shared/schema/siri.schema";
 
-export type Logger = {
-    info: (message: string) => void;
-    error: (message: string) => void;
-    warn: (message: string) => void;
-    debug: (message: string) => void;
-};
 export const getCurrentAvlData = async (db: Kysely<Database>, logger: Logger) => {
     logger.info("Getting data from avl table...");
 

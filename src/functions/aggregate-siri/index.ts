@@ -123,7 +123,7 @@ export const handler = async () => {
         const avl = await getCurrentAvlData(db, logger);
 
         if (!avl || avl.length === 0) {
-            logger.warn("No recent AVL data found in the database...");
+            logger.warn("No valid AVL data found in the database...");
             return;
         }
 

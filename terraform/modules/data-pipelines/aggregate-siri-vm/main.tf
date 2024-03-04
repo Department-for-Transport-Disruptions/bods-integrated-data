@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "aws_security_group" "avl_aggregate_siri_sg" {
-  name   = "integrated-data-db-migrator-sg-${var.environment}"
+  name   = "integrated-data-aggregate-siri-sg-${var.environment}"
   vpc_id = var.vpc_id
 }
 
