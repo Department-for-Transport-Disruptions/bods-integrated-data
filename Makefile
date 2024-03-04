@@ -1,4 +1,5 @@
 NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
+AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets migrate-local-db-to-latest
@@ -55,6 +56,7 @@ edit-secrets-%:
 
 create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${NAPTAN_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 # Database
 
@@ -80,4 +82,4 @@ run-full-local-naptan-pipeline: run-local-naptan-retriever run-local-naptan-uplo
 # AVL
 
 run-avl-aggregate-siri:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/aggregate-siri'; handler()"
+	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/aggregate-siri'; handler()"

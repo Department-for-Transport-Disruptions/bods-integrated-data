@@ -1,11 +1,10 @@
 import { Kysely, sql } from "kysely";
-import { Database } from "../../shared";
+import { Database, notEmpty } from "../../shared";
 import { avlSchema } from "../../shared/schema/siri.schema";
-import { notEmpty } from "../../shared/util";
 
 export type Logger = {
     info: (message: string) => void;
-    error: (message: string | Error) => void;
+    error: (message: string) => void;
     warn: (message: string) => void;
     debug: (message: string) => void;
 };

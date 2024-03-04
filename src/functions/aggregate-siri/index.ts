@@ -1,11 +1,11 @@
+import { logger } from "@baselime/lambda-logger";
+import { getDatabaseClient, putS3Object } from "@bods-integrated-data/shared";
+import { Avl, siriSchema } from "@bods-integrated-data/shared/schema/siri.schema";
 import { parse } from "js2xmlparser";
-import * as logger from "lambda-log";
 import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
-import { getDatabaseClient } from "../../shared";
-import { Avl, siriSchema } from "../../shared/schema/siri.schema";
 
-const createVehicleActvities = (avl: Avl[], currentTime: string, validUntilTime: string) => {
+const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime: string) => {
     return avl.map((record) => {
         const monitoredVehicleJourney = {
             LineRef: record.lineRef,
@@ -30,7 +30,7 @@ const createVehicleActvities = (avl: Avl[], currentTime: string, validUntilTime:
         };
 
         const monitoredVehicleJourneyWithNullEntriesRemoved = Object.fromEntries(
-            Object.entries(monitoredVehicleJourney).filter(([_, v]) => v != null),
+            Object.entries(monitoredVehicleJourney).filter(([, value]) => value != null),
         );
 
         return {
@@ -41,15 +41,13 @@ const createVehicleActvities = (avl: Avl[], currentTime: string, validUntilTime:
     });
 };
 
-const convertJsonToSiri = (
+export const convertJsonToSiri = (
     avl: Avl[],
     currentTime: string,
     validUntilTime: string,
-    requestMessageIdentifier: string,
+    RequestMessageRef: string,
 ) => {
-    const vehicleActivity = createVehicleActvities(avl, currentTime, validUntilTime);
-
-    // console.log(vehicleActivity);
+    const vehicleActivity = createVehicleActivities(avl, currentTime, validUntilTime);
 
     const jsonToXmlObject = {
         ServiceDelivery: {
@@ -57,7 +55,7 @@ const convertJsonToSiri = (
             ProducerRef: "DepartmentForTransport",
             VehicleMonitoringDelivery: {
                 ResponseTimestamp: currentTime,
-                RequestMessageIdentifier: requestMessageIdentifier,
+                RequestMessageRef: RequestMessageRef,
                 ValidUntil: validUntilTime,
                 VehicleActivity: vehicleActivity,
             },
@@ -87,18 +85,36 @@ const convertJsonToSiri = (
     });
 };
 
+export const generateSiriVmAndUploadToS3 = async (
+    avl: Avl[],
+    currentTime: string,
+    validUntilTime: string,
+    requestMessageRef: string,
+    bucketName: string,
+) => {
+    const siri = convertJsonToSiri(avl, currentTime, validUntilTime, requestMessageRef);
+
+    logger.info("Uploading SIRI-VM data to S3");
+
+    await putS3Object({
+        Bucket: bucketName,
+        Key: "SIRI-VM.xml",
+        ContentType: "application/xml",
+        Body: JSON.stringify(siri),
+    });
+};
+
 export const handler = async () => {
     try {
-        logger.options.dev = process.env.NODE_ENV !== "production";
-        logger.options.debug = process.env.ENABLE_DEBUG_LOGS === "true" || process.env.NODE_ENV !== "production";
-
-        logger.options.meta = {
-            id: randomUUID(),
-        };
-
         logger.info("Starting SIRI-VM generator...");
 
-        const responseMessageIdentifier = randomUUID();
+        const { BUCKET_NAME: bucketName } = process.env;
+
+        if (!bucketName) {
+            throw new Error("Missing env vars - BUCKET_NAME must be set");
+        }
+
+        const requestMessageRef = randomUUID();
         const currentTime = new Date();
         const validUntilTime = new Date(currentTime.getTime() + 5 * 60000);
 
@@ -111,17 +127,18 @@ export const handler = async () => {
             return;
         }
 
-        const siri = convertJsonToSiri(
+        await generateSiriVmAndUploadToS3(
             avl,
             currentTime.toISOString(),
             validUntilTime.toISOString(),
-            responseMessageIdentifier,
+            requestMessageRef,
+            bucketName,
         );
 
-        console.log(JSON.stringify(siri));
+        logger.info("Successfully uploaded SIRI-VM data to S3");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e);
+            logger.error(e.toString());
 
             throw e;
         }

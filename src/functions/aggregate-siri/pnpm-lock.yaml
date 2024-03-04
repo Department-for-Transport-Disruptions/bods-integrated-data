@@ -5,40 +5,41 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@baselime/lambda-logger':
+    specifier: ^0.2.2
+    version: 0.2.2
+  '@bods-integrated-data/shared':
+    specifier: workspace:^
+    version: link:../../shared
   kysely:
     specifier: ^0.27.2
     version: 0.27.2
-  lambda-log:
-    specifier: ^3.1.0
-    version: 3.1.0
 
 devDependencies:
   '@types/aws-lambda':
     specifier: ^8.10.110
     version: 8.10.134
-  '@types/lambda-log':
-    specifier: ^2.2.1
-    version: 2.2.1
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.20
   js2xmlparser:
     specifier: ^5.0.0
     version: 5.0.0
+  mockdate:
+    specifier: ^3.0.5
+    version: 3.0.5
   zod:
     specifier: ^3.22.4
     version: 3.22.4
 
 packages:
 
+  /@baselime/lambda-logger@0.2.2:
+    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
+    dev: false
+
   /@types/aws-lambda@8.10.134:
     resolution: {integrity: sha512-cfv422ivDMO+EeA3N4YcshbTHBL+5lLXe+Uz+4HXvIcsCuWvqNFpOs28ZprL8NA3qRCzt95ETiNAJDn4IcC/PA==}
-    dev: true
-
-  /@types/lambda-log@2.2.1:
-    resolution: {integrity: sha512-+EEBg+jwPTjqRlnNRAUr2zP3HA7Vq75hSChjDpQ/wJCAGmTZQ7ZfG0m3eR4bvVmDY/z005iIkcnOBVpwkWgXgA==}
-    dependencies:
-      '@types/node': 20.11.20
     dev: true
 
   /@types/node@20.11.20:
@@ -46,10 +47,6 @@ packages:
     dependencies:
       undici-types: 5.26.5
     dev: true
-
-  /fast-safe-stringify@2.1.1:
-    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
-    dev: false
 
   /js2xmlparser@5.0.0:
     resolution: {integrity: sha512-ckXs0Fzd6icWurbeAXuqo+3Mhq2m8pOPygsQjTPh8K5UWgKaUgDSHrdDxAfexmT11xvBKOQ6sgYwPkYc5RW/bg==}
@@ -62,12 +59,9 @@ packages:
     engines: {node: '>=14.0.0'}
     dev: false
 
-  /lambda-log@3.1.0:
-    resolution: {integrity: sha512-dfkFw+e0CoFftuOjxkufhi1srIpa4dM3sbbe+0KtfjX11auNl7Kok+5/+07IffjXUuspKAFeiHlHUPAHJzcL3A==}
-    engines: {node: '>=10.0.0'}
-    dependencies:
-      fast-safe-stringify: 2.1.1
-    dev: false
+  /mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
+    dev: true
 
   /undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}

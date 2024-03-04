@@ -4,22 +4,24 @@ const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string().datetime(),
     ValidUntilTime: z.string().datetime(),
     MonitoredVehicleJourney: z.object({
-        LineRef: z.string(),
+        LineRef: z.string().optional(),
         DirectionRef: z.string(),
         OperatorRef: z.string(),
-        FramedVehicleJourneyRef: z.object({
-            DataFrameRef: z.string().optional(),
-            DatedVehicleJourneyRef: z.string(),
-        }),
+        FramedVehicleJourneyRef: z
+            .object({
+                DataFrameRef: z.string().optional(),
+                DatedVehicleJourneyRef: z.string(),
+            })
+            .optional(),
         VehicleRef: z.string(),
-        DataSource: z.string(),
+        DataSource: z.string().optional(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
-        Bearing: z.string(),
-        Delay: z.string(),
-        IsCompleteStopSequence: z.coerce.boolean(),
+        Bearing: z.string().optional(),
+        Delay: z.string().optional(),
+        IsCompleteStopSequence: z.coerce.boolean().optional(),
         PublishedLineName: z.string().optional(),
         OriginRef: z.string().optional(),
         DestinationRef: z.string().optional(),
@@ -33,51 +35,39 @@ export const siriSchema = z.object({
         ProducerRef: z.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string().datetime(),
-            VehicleActivity: z.array(vehicleActivitySchema),
+            ValidUntil: z.string().datetime(),
+            RequestMessageRef: z.string().uuid(),
+            VehicleActivity: vehicleActivitySchema.array(),
         }),
     }),
 });
 
 export const siriSchemaTransformed = siriSchema.transform((item) => {
-    return {
+    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
         responseTimeStamp: item.ServiceDelivery.ResponseTimestamp,
         producerRef: item.ServiceDelivery.ProducerRef,
-        recordedAtTime: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.RecordedAtTime,
-        validUntilTime: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.ValidUntilTime,
-        lineRef: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.LineRef,
-        directionRef:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.DirectionRef,
-        operatorRef: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.OperatorRef,
+        recordedAtTime: vehicleActivity.RecordedAtTime,
+        validUntilTime: vehicleActivity.ValidUntilTime,
+        lineRef: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+        directionRef: vehicleActivity.MonitoredVehicleJourney.DirectionRef,
+        operatorRef: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
         datedVehicleJourneyRef:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney
-                .FramedVehicleJourneyRef.DatedVehicleJourneyRef,
-        vehicleRef: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.VehicleRef,
-        dataSource: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.DataSource,
-        longitude:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.VehicleLocation
-                .Longitude,
-        latitude:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.VehicleLocation
-                .Latitude,
-        bearing: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.Bearing,
-        delay: item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.Delay,
-        isCompleteStopSequence:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney
-                .IsCompleteStopSequence,
-        publishedLineName:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.PublishedLineName ??
-            null,
-        originRef:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-        destinationRef:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.DestinationRef ??
-            null,
-        blockRef:
-            item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-    };
+            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
+        vehicleRef: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+        dataSource: vehicleActivity.MonitoredVehicleJourney.DataSource ?? null,
+        longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+        latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+        bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+        delay: vehicleActivity.MonitoredVehicleJourney.Delay ?? null,
+        isCompleteStopSequence: vehicleActivity.MonitoredVehicleJourney.IsCompleteStopSequence ?? null,
+        publishedLineName: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+        originRef: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+        destinationRef: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+        blockRef: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+    }));
 });
 
-export type TransformedSiriSchema = z.infer<typeof siriSchemaTransformed>;
+export type VehicleActivity = z.infer<typeof siriSchemaTransformed>;
 
 export const avlSchema = z.object({
     id: z.number(),
@@ -85,17 +75,17 @@ export const avlSchema = z.object({
     producerRef: z.string(),
     recordedAtTime: z.string(),
     validUntilTime: z.string(),
-    lineRef: z.string(),
+    lineRef: z.string().nullish(),
     directionRef: z.string(),
     operatorRef: z.string(),
     datedVehicleJourneyRef: z.string(),
     vehicleRef: z.string(),
-    dataSource: z.string(),
-    longitude: z.string(),
-    latitude: z.string(),
-    bearing: z.string(),
-    delay: z.string(),
-    isCompleteStopSequence: z.string(),
+    dataSource: z.string().nullish(),
+    longitude: z.number(),
+    latitude: z.number(),
+    bearing: z.string().nullish(),
+    delay: z.string().nullish(),
+    isCompleteStopSequence: z.boolean().nullish(),
     publishedLineName: z.string().nullish(),
     originRef: z.string().nullish(),
     destinationRef: z.string().nullish(),

@@ -78,6 +78,26 @@ resource "aws_iam_role" "avl_aggregate_siri_role" {
   })
 }
 
+resource "aws_s3_bucket" "siri_vm_bucket" {
+  bucket = "avl-siri-vm-${var.environment}"
+}
+
+resource "aws_s3_bucket_public_access_block" "siri_vm_block_public" {
+  bucket = aws_s3_bucket.siri_vm_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_versioning" "versioning_example" {
+  bucket = aws_s3_bucket.siri_vm_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 module "avl_aggregate_siri" {
   source = "../../shared/lambda-function"
 
@@ -90,12 +110,14 @@ module "avl_aggregate_siri" {
   timeout            = 120
   subnet_ids         = var.private_subnet_ids
   security_group_ids = [aws_security_group.avl_aggregate_siri_sg.arn]
+  schedule           = "rate(10 seconds)"
 
   env_vars = {
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
+    BUCKET_NAME = aws_s3_bucket.siri_vm_bucket.bucket
     }
 }
 
