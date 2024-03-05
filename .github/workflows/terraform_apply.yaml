@@ -82,3 +82,9 @@ jobs:
               if: steps.plan.outcome == 'success'
               id: apply
               run: terraform -chdir=$stage apply -input=false -no-color tfplan
+
+            - name: Invoke dbmigrator Lambda
+              run: |
+                aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ matrix.stage }} --cli-binary-format raw-in-base64-out response.json
+
+
