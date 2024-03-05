@@ -1,7 +1,7 @@
 {
     "name": "@bods-integrated-data/bods-txc-retriever",
     "version": "0.1.0",
-    "description": "This function is to process SIRI-VM AVL data and upload it to the database",
+    "description": "This function retrieves TXC data from BODS and stores it in an S3 bucket",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-txc-retriever.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-txc-retriever.zip ../../dist",
@@ -18,9 +18,6 @@
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^20.11.19",
-        "@types/xml2js": "^0.4.14",
-        "xml2js": "^0.6.2",
-        "zod": "^3.22.4"
+        "@types/node": "^20.11.19"
     }
 }

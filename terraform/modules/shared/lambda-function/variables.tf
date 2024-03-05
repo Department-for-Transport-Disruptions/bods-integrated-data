@@ -1,3 +1,8 @@
+variable "environment" {
+  type        = string
+  description = "Environment"
+}
+
 variable "function_name" {
   type     = string
   nullable = false
@@ -8,9 +13,11 @@ variable "zip_path" {
   nullable = false
 }
 
-variable "role_arn" {
-  type     = string
-  nullable = false
+variable "permissions" {
+  type        = any
+  nullable    = true
+  default     = null
+  description = "Permissions to apply to lambda function"
 }
 
 variable "handler" {
@@ -40,6 +47,13 @@ variable "env_vars" {
   description = "Map of environment variables"
 }
 
+variable "vpc_id" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = "ID of the VPC, if a VPC lambda is required"
+}
+
 variable "subnet_ids" {
   type        = list(string)
   nullable    = true
@@ -47,11 +61,11 @@ variable "subnet_ids" {
   description = "List of subnet IDs to use for a VPC lambda"
 }
 
-variable "security_group_ids" {
-  type        = list(string)
+variable "database_sg_id" {
+  type        = string
   nullable    = true
   default     = null
-  description = "List of Security Group IDs to use for a VPC lambda"
+  description = "ID of the Database security group, if the lambda needs access to it"
 }
 
 variable "schedule" {
