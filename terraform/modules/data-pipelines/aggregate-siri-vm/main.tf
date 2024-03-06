@@ -59,7 +59,7 @@ module "avl_aggregate_siri" {
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
-    BUCKET_NAME = aws_s3_bucket.siri_vm_bucket.bucket
+    BUCKET_NAME = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
     }
 
 }
