@@ -9,65 +9,29 @@ terraform {
   }
 }
 
-resource "aws_security_group" "integrated_data_db_migrator_sg" {
-  name   = "integrated-data-db-migrator-sg-${var.environment}"
-  vpc_id = var.vpc_id
-}
-
-resource "aws_vpc_security_group_egress_rule" "integrated_data_db_migrator_sg_allow_all_egress_ipv4" {
-  security_group_id = aws_security_group.integrated_data_db_migrator_sg.id
-
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = "-1"
-}
-
-resource "aws_vpc_security_group_egress_rule" "integrated_data_db_migrator_sg_allow_all_egress_ipv6" {
-  security_group_id = aws_security_group.integrated_data_db_migrator_sg.id
-
-  cidr_ipv6   = "::/0"
-  ip_protocol = "-1"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "integrated_data_db_sg_allow_lambda_ingress" {
-  security_group_id            = var.db_sg_id
-  referenced_security_group_id = aws_security_group.integrated_data_db_migrator_sg.id
-
-  from_port = 5432
-  to_port   = 5432
-
-  ip_protocol = "tcp"
-}
-
-resource "aws_iam_role" "integrated_data_db_migrator_role" {
-  name = "integrated-data-db-migrator-role-${var.environment}"
-
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"]
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "lambda.amazonaws.com"
-        },
-        "Action" : "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
 module "integrated_data_db_migrator_migrate_function" {
   source = "../../shared/lambda-function"
 
-  function_name      = "integrated-data-db-migrator-migrate-${var.environment}"
-  zip_path           = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
-  role_arn           = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler            = "index.handler"
-  runtime            = "nodejs20.x"
-  timeout            = 120
-  memory             = 1024
-  subnet_ids         = var.private_subnet_ids
-  security_group_ids = [aws_security_group.integrated_data_db_migrator_sg.id]
+  environment    = var.environment
+  function_name  = "integrated-data-db-migrator-migrate"
+  zip_path       = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 120
+  memory         = 1024
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+
+  permissions = [{
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn
+    ]
+  }]
 
   env_vars = {
     DB_HOST       = var.db_host
@@ -80,15 +44,26 @@ module "integrated_data_db_migrator_migrate_function" {
 module "integrated_data_db_migrator_rollback_function" {
   source = "../../shared/lambda-function"
 
-  function_name      = "integrated-data-db-migrator-rollback-${var.environment}"
-  zip_path           = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
-  role_arn           = aws_iam_role.integrated_data_db_migrator_role.arn
-  handler            = "index.handler"
-  runtime            = "nodejs20.x"
-  timeout            = 120
-  memory             = 1024
-  subnet_ids         = var.private_subnet_ids
-  security_group_ids = [aws_security_group.integrated_data_db_migrator_sg.id]
+  environment    = var.environment
+  function_name  = "integrated-data-db-migrator-rollback"
+  zip_path       = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 120
+  memory         = 1024
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+
+  permissions = [{
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn
+    ]
+  }]
 
   env_vars = {
     DB_HOST       = var.db_host

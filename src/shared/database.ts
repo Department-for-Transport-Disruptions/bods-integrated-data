@@ -55,6 +55,9 @@ export interface Database {
     naptan_stop_new: NaptanStopTable;
     naptan_stop_old: NaptanStopTable;
     avl: AvlTable;
+    agency: GtfsAgencyTable;
+    agency_new: GtfsAgencyTable;
+    agency_old: GtfsAgencyTable;
 }
 
 export interface NaptanStopTable {
@@ -133,3 +136,15 @@ export interface AvlTable {
 export type Avl = Selectable<AvlTable>;
 export type NewAvl = Insertable<AvlTable>;
 export type AvlUpdate = Updateable<AvlTable>;
+
+export interface GtfsAgencyTable {
+    id: Generated<number>;
+    name: string;
+    url: string;
+    phone: string | null;
+    noc: string;
+}
+
+export type Agency = Selectable<GtfsAgencyTable>;
+export type NewAgency = Insertable<GtfsAgencyTable>;
+export type AgencyUpdate = Updateable<GtfsAgencyTable>;

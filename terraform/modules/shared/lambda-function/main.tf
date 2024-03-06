@@ -11,17 +11,93 @@ terraform {
 
 locals {
   source_code_hash = fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].source_code_hash
+  function_name    = "${var.function_name}-${var.environment}"
+  needs_db_access  = var.vpc_id != null && var.database_sg_id != null
 }
 
 data "aws_lambda_function" "existing_function" {
   count         = fileexists(var.zip_path) ? 0 : 1
-  function_name = var.function_name
+  function_name = local.function_name
+}
+
+resource "aws_security_group" "db_sg" {
+  count  = local.needs_db_access ? 1 : 0
+  name   = "${var.function_name}-sg-${var.environment}"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "db_sg_allow_all_egress_ipv4" {
+  count             = local.needs_db_access ? 1 : 0
+  security_group_id = aws_security_group.db_sg[0].id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_vpc_security_group_egress_rule" "db_sg_allow_all_egress_ipv6" {
+  count             = local.needs_db_access ? 1 : 0
+  security_group_id = aws_security_group.db_sg[0].id
+
+  cidr_ipv6   = "::/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
+  count                        = local.needs_db_access ? 1 : 0
+  security_group_id            = var.database_sg_id
+  referenced_security_group_id = aws_security_group.db_sg[0].id
+
+  from_port = 5432
+  to_port   = 5432
+
+  ip_protocol = "tcp"
+}
+
+resource "aws_iam_policy" "lambda_policy" {
+  count = var.permissions != null ? 1 : 0
+
+  name = "${var.function_name}-policy-${var.environment}"
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = var.permissions
+  })
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name = "${var.function_name}-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "lambda.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {
+  count = var.permissions != null ? 1 : 0
+
+  role       = aws_iam_role.lambda_role.id
+  policy_arn = var.subnet_ids != null ? "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" : "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_role_custom_policy_attachment" {
+  count = var.permissions != null ? 1 : 0
+
+  role       = aws_iam_role.lambda_role.id
+  policy_arn = aws_iam_policy.lambda_policy[0].arn
 }
 
 resource "aws_lambda_function" "function" {
-  function_name    = var.function_name
+  function_name    = local.function_name
   filename         = var.zip_path
-  role             = var.role_arn
+  role             = aws_iam_role.lambda_role.arn
   handler          = var.handler
   source_code_hash = local.source_code_hash
 
@@ -30,11 +106,13 @@ resource "aws_lambda_function" "function" {
   memory_size = var.memory
 
   dynamic "vpc_config" {
-    for_each = var.security_group_ids != null && var.subnet_ids != null ? [1] : []
+    for_each = local.needs_db_access ? [1] : []
 
     content {
-      subnet_ids         = var.subnet_ids
-      security_group_ids = var.security_group_ids
+      subnet_ids = var.subnet_ids
+      security_group_ids = [
+        aws_security_group.db_sg[0].id
+      ]
     }
   }
 
