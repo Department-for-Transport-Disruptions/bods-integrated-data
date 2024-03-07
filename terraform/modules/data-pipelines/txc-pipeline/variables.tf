@@ -36,3 +36,8 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "tnds_ftp_arn" {
+  type        = string
+  description = "ARN of the secret containing the TNDS FTP credentials"
+}
