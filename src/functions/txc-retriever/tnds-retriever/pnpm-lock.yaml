@@ -25,9 +25,6 @@ devDependencies:
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.24
-  zod:
-    specifier: ^3.22.4
-    version: 3.22.4
 
 packages:
 
@@ -843,7 +840,3 @@ packages:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
     dev: false
-
-  /zod@3.22.4:
-    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-    dev: true
