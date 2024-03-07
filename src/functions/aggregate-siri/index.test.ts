@@ -1,3 +1,4 @@
+import { addIntervalToDate, getDate } from "@bods-integrated-data/shared";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
 import { describe, it, expect, afterEach, vi } from "vitest";
@@ -16,12 +17,9 @@ const mockAvl = [
         operatorRef: "NATX",
         datedVehicleJourneyRef: "784105",
         vehicleRef: "191D44717",
-        dataSource: "",
         longitude: -6.238029,
         latitude: 53.42605,
         bearing: "119",
-        delay: "",
-        isCompleteStopSequence: false,
         publishedLineName: "784",
         originRef: "98010",
         destinationRef: "98045",
@@ -38,12 +36,9 @@ const mockAvl = [
         operatorRef: "TBTN",
         datedVehicleJourneyRef: "101405",
         vehicleRef: "0717_-_FJ58_KKL",
-        dataSource: "",
         longitude: -1.471941,
         latitude: 52.92178,
-        bearing: "",
-        delay: "",
-        isCompleteStopSequence: false,
+        bearing: null,
         publishedLineName: "ra",
         originRef: "3390VB01",
         destinationRef: "1090BSTN05",
@@ -62,8 +57,8 @@ describe("generateSiriVmAndUploadToS3", () => {
 
     MockDate.set("2024-02-26T14:36:11+00:00");
 
-    const currentTime = new Date();
-    const validUntilTime = new Date(currentTime.getTime() + 5 * 60000);
+    const currentTime = getDate();
+    const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
     const requestMessageRef = "acde070d-8c4c-4f0d-9d8a-162843c10333";
 
     it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
@@ -80,7 +75,7 @@ describe("generateSiriVmAndUploadToS3", () => {
             Bucket: "test-bucket",
             Key: "SIRI-VM.xml",
             ContentType: "application/xml",
-            Body: JSON.stringify(mockSiriResult),
+            Body: mockSiriResult,
         });
     });
 });

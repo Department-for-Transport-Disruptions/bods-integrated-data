@@ -1,9 +1,13 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDatabaseClient, putS3Object } from "@bods-integrated-data/shared";
+import { addIntervalToDate, getDatabaseClient, getDate, putS3Object } from "@bods-integrated-data/shared";
 import { Avl, siriSchema } from "@bods-integrated-data/shared/schema/siri.schema";
 import { parse } from "js2xmlparser";
 import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
+
+const currentTime = getDate();
+//SIRI-VM ValidUntilTime field is defined as 5 minutes after the current timestamp
+const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
 
 const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime: string) => {
     return avl.map((record) => {
@@ -97,6 +101,8 @@ export const generateSiriVmAndUploadToS3 = async (
 
     logger.info("Uploading SIRI-VM data to S3");
 
+    console.log(siri);
+
     await putS3Object({
         Bucket: bucketName,
         Key: "SIRI-VM.xml",
@@ -116,8 +122,6 @@ export const handler = async () => {
         }
 
         const requestMessageRef = randomUUID();
-        const currentTime = new Date();
-        const validUntilTime = new Date(currentTime.getTime() + 5 * 60000);
 
         const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
 

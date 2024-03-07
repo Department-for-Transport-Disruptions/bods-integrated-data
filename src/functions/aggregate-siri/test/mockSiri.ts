@@ -13,23 +13,17 @@ export const mockSiriResult = `<?xml version='1.0' encoding='UTF-8' standalone='
                 <MonitoredVehicleJourney>
                     <LineRef>784</LineRef>
                     <DirectionRef>OUT</DirectionRef>
+                    <PublishedLineName>784</PublishedLineName>
                     <OperatorRef>NATX</OperatorRef>
-                    <FramedVehicleJourneyRef>
-                        <DatedVehicleJourneyRef>784105</DatedVehicleJourneyRef>
-                    </FramedVehicleJourneyRef>
-                    <VehicleRef>191D44717</VehicleRef>
-                    <DataSource/>
+                    <OriginRef>98010</OriginRef>
+                    <DestinationRef>98045</DestinationRef>
                     <VehicleLocation>
                         <Longitude>-6.238029</Longitude>
                         <Latitude>53.42605</Latitude>
                     </VehicleLocation>
                     <Bearing>119</Bearing>
-                    <Delay/>
-                    <IsCompleteStopSequence>false</IsCompleteStopSequence>
-                    <PublishedLineName>784</PublishedLineName>
-                    <OriginRef>98010</OriginRef>
-                    <DestinationRef>98045</DestinationRef>
                     <BlockRef>784105</BlockRef>
+                    <VehicleRef>191D44717</VehicleRef>
                 </MonitoredVehicleJourney>
             </VehicleActivity>
             <VehicleActivity>
@@ -38,23 +32,16 @@ export const mockSiriResult = `<?xml version='1.0' encoding='UTF-8' standalone='
                 <MonitoredVehicleJourney>
                     <LineRef>ra</LineRef>
                     <DirectionRef>outbound</DirectionRef>
+                    <PublishedLineName>ra</PublishedLineName>
                     <OperatorRef>TBTN</OperatorRef>
-                    <FramedVehicleJourneyRef>
-                        <DatedVehicleJourneyRef>101405</DatedVehicleJourneyRef>
-                    </FramedVehicleJourneyRef>
-                    <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
-                    <DataSource/>
+                    <OriginRef>3390VB01</OriginRef>
+                    <DestinationRef>1090BSTN05</DestinationRef>
                     <VehicleLocation>
                         <Longitude>-1.471941</Longitude>
                         <Latitude>52.92178</Latitude>
                     </VehicleLocation>
-                    <Bearing/>
-                    <Delay/>
-                    <IsCompleteStopSequence>false</IsCompleteStopSequence>
-                    <PublishedLineName>ra</PublishedLineName>
-                    <OriginRef>3390VB01</OriginRef>
-                    <DestinationRef>1090BSTN05</DestinationRef>
                     <BlockRef>DY04</BlockRef>
+                    <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
                 </MonitoredVehicleJourney>
             </VehicleActivity>
         </VehicleMonitoringDelivery>

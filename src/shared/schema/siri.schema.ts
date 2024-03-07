@@ -6,23 +6,23 @@ const vehicleActivitySchema = z.object({
     MonitoredVehicleJourney: z.object({
         LineRef: z.string().optional(),
         DirectionRef: z.string(),
-        OperatorRef: z.string(),
         FramedVehicleJourneyRef: z
             .object({
                 DataFrameRef: z.string(),
                 DatedVehicleJourneyRef: z.string(),
             })
             .optional(),
-        VehicleRef: z.string(),
+        PublishedLineName: z.string().optional(),
+        OperatorRef: z.string(),
+        OriginRef: z.string().optional(),
+        DestinationRef: z.string().optional(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
         Bearing: z.string().optional(),
-        PublishedLineName: z.string().optional(),
-        OriginRef: z.string().optional(),
-        DestinationRef: z.string().optional(),
         BlockRef: z.string().optional(),
+        VehicleRef: z.string(),
     }),
 });
 
