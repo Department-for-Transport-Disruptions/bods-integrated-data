@@ -1,9 +1,15 @@
 import { logger } from "@baselime/lambda-logger";
 
-export const handler = () => {
+export const handler = async () => {
     try {
         if (process.env.IS_LOCAL === "true") {
-            logger.info(`Hello world!`);
+            const message: string = await new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve("Hello world");
+                }, 100);
+            });
+
+            logger.info(message);
         }
     } catch (e) {
         if (e instanceof Error) {

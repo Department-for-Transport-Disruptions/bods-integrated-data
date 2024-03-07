@@ -20,6 +20,8 @@ This repo uses asdf to manage the versions of various dependencies, install that
     -   https://rancherdesktop.io/
 -   awslocal
     -   https://github.com/localstack/awscli-local
+-   pnpm
+    -   https://pnpm.io/installation
 
 ### Local Setup
 
