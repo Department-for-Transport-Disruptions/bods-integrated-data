@@ -88,3 +88,9 @@ run-local-bods-txc-retriever:
 
 run-txc-unzipper:
 	FILE=${FILE} IS_LOCAL=true UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:'${FILE}'}}}]}).catch(e => console.error(e))"
+
+#AVL
+
+run-avl-subscriber:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler().catch(e => console.error(e))"
+
