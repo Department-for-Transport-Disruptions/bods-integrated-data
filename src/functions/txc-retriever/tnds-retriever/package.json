@@ -1,7 +1,7 @@
 {
   "name": "@bods-integrated-data/tnds-txc-retriever",
   "version": "0.1.0",
-  "description": "This function is to retrieve TNDS TXC data and store it in S3",
+  "description": "This function retrieves TNDS TXC data and stores it in an S3 bucket",
   "scripts": {
       "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tnds-txc-retriever.zip .",
       "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tnds-txc-retriever.zip ../../dist",
@@ -19,7 +19,6 @@
   },
   "devDependencies": {
       "@types/aws-lambda": "^8.10.110",
-      "@types/node": "^20.11.19",
-      "zod": "^3.22.4"
+      "@types/node": "^20.11.19"
   }
 }
