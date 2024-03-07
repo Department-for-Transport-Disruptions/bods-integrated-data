@@ -1,5 +1,5 @@
 {
-    "name": "@bods-integrated-data/unzipper",
+    "name": "@bods-integrated-data/template-lambda",
     "version": "0.1.0",
     "description": "Template for a typescript lambda",
     "scripts": {

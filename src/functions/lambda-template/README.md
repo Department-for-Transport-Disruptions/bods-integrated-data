@@ -5,22 +5,27 @@ running.
 
 When using this template make sure to complete the following actions:
 
-### Update the build scripts in the `package.json` file
+### Update the `package.json` file
 
-After copying the lambda-template directory and renaming it to your function name, replace `lamda-template.zip` with
-`{YOUR_FUNCTION_DIRECTORY_NAME}.zip` for the `build:ci` and `build:local` scripts.
+After copying the lambda-template directory and renaming it to your function name update the following in your `package.json`:
+- Update name to your function's name
+- Update description to describe what your function is doing
+- Update `lamda-template.zip` with `{YOUR_FUNCTION_DIRECTORY_NAME}.zip` for the `build:ci` and `build:local` scripts.
 
 ```JSON
-"scripts": {
+"name": "@bods-integrated-data/lambda-template",
+    "version": "0.1.0",
+    "description": "Template for a typescript lambda",
+    "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./lambda-template.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/lambda-template.zip ../dist",
         "test": "vitest run"
-},
+    },
 ```
 
 ### Create a `Makefile` command
 
-To make it easy to test the lambda function locally create a make command. It should follow a similar structure to
+To make it easy to test the lambda function locally create a make command. You can follow a similar structure to
 the below command:
 
 ```makefile
