@@ -5,30 +5,30 @@ import { Client } from "basic-ftp";
 import { Writable } from "stream";
 
 interface FtpCredentials {
-    host: string,
-    user: string,
-    password: string
+    host: string;
+    user: string;
+    password: string;
 }
 
-const isLocal = process.env.IS_LOCAL === 'true';
+const isLocal = process.env.IS_LOCAL === "true";
 
 const secretsClient = new SecretsManagerClient({
-    endpoint: isLocal ? 'http://localhost:4566' : undefined,
+    endpoint: isLocal ? "http://localhost:4566" : undefined,
     region: "eu-west-2",
 });
 
-const getZipFilesFromFTP = async(client: Client): Promise<Map<string, Uint8Array>> => {
+const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Array>> => {
     const downloadedFiles: Map<string, Uint8Array> = new Map();
     const allFiles = await client.list();
-    const zipFiles = allFiles.filter((file) => file.name.includes('.zip'));
+    const zipFiles = allFiles.filter((file) => file.name.includes(".zip"));
 
-    for(const file of zipFiles){
+    for (const file of zipFiles) {
         const chunks: Buffer[] = [];
         const writableStream = new Writable({
-            write(chunk, encoding, callback) {
+            write(chunk: Buffer, encoding, callback) {
                 chunks.push(chunk);
                 callback();
-            }
+            },
         });
         await client.downloadTo(writableStream, file.name);
         const buffer = Buffer.concat(chunks);
@@ -36,14 +36,14 @@ const getZipFilesFromFTP = async(client: Client): Promise<Map<string, Uint8Array
     }
 
     return downloadedFiles;
-}
+};
 
 const uploadZipFilesToS3 = async (files: Map<string, Uint8Array>, bucket: string) => {
-    for(const [fileName, content] of files.entries()){
+    for (const [fileName, content] of files.entries()) {
         const upload = startS3Upload(bucket, fileName, content, "application/zip");
         await upload.done();
     }
-}
+};
 
 const getFtpCredentials = async (ftpCredentialsArn: string): Promise<FtpCredentials> => {
     const ftpCredentialsSecret = await secretsClient.send(
@@ -57,7 +57,7 @@ const getFtpCredentials = async (ftpCredentialsArn: string): Promise<FtpCredenti
     }
 
     return JSON.parse(ftpCredentialsSecret.SecretString) as FtpCredentials;
-}
+};
 
 const getTndsDataAndUploadToS3 = async (txcZippedBucketName: string, ftpCredentials: FtpCredentials) => {
     const { host, user, password } = ftpCredentials;
@@ -74,7 +74,6 @@ const getTndsDataAndUploadToS3 = async (txcZippedBucketName: string, ftpCredenti
         logger.info("Zip files recieved, uploading to S3");
 
         await uploadZipFilesToS3(zipFiles, txcZippedBucketName);
-
     } finally {
         client.close();
     }

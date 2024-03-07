@@ -19,8 +19,11 @@ export const handler = async () => {
     logger.info("Starting TXC Retriever");
 
     try {
-        const { BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName, TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName, IS_LOCAL: isLocal = "false" } =
-            process.env;
+        const {
+            BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName,
+            TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName,
+            IS_LOCAL: isLocal = "false",
+        } = process.env;
 
         if (!bodsTxcRetrieverFunctionName) {
             throw new Error("Missing env vars: BODS_RETRIEVER_FUNCTION_NAME required");
