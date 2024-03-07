@@ -1,15 +1,16 @@
-import { Database, Logger, notEmpty } from "@bods-integrated-data/shared";
+import { logger } from "@baselime/lambda-logger";
+import { Database, notEmpty } from "@bods-integrated-data/shared";
 import { avlSchema } from "@bods-integrated-data/shared/schema/siri.schema";
-import { Kysely, sql } from "kysely";
+import { Kysely } from "kysely";
 
-export const getCurrentAvlData = async (db: Kysely<Database>, logger: Logger) => {
+export const getCurrentAvlData = async (db: Kysely<Database>) => {
     logger.info("Getting data from avl table...");
 
     const avl = await db
         .selectFrom("avl")
         .distinctOn(["operatorRef", "vehicleRef"])
         .selectAll("avl")
-        .orderBy(sql`"operatorRef", "vehicleRef", "responseTimeStamp" DESC`)
+        .orderBy(["operatorRef", "vehicleRef", "responseTimeStamp desc"])
         .execute();
 
     const parsedAvl = avl.map((record) => {

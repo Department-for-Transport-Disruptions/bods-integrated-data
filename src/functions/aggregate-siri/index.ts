@@ -10,23 +10,24 @@ const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime
         const monitoredVehicleJourney = {
             LineRef: record.lineRef,
             DirectionRef: record.directionRef,
+            FramedVehicleJourneyRef:
+                record.dataFrameRef && record.datedVehicleJourneyRef
+                    ? {
+                          DataFrameRef: record.dataFrameRef,
+                          DatedVehicleJourneyRef: record.datedVehicleJourneyRef,
+                      }
+                    : null,
+            PublishedLineName: record.publishedLineName,
             OperatorRef: record.operatorRef,
-            FramedVehicleJourneyRef: {
-                DatedVehicleJourneyRef: record.datedVehicleJourneyRef,
-            },
-            VehicleRef: record.vehicleRef,
-            DataSource: record.dataSource,
+            OriginRef: record.originRef,
+            DestinationRef: record.destinationRef,
             VehicleLocation: {
                 Longitude: record.longitude,
                 Latitude: record.latitude,
             },
             Bearing: record.bearing,
-            Delay: record.delay,
-            IsCompleteStopSequence: record.isCompleteStopSequence,
-            PublishedLineName: record.publishedLineName,
-            OriginRef: record.originRef,
-            DestinationRef: record.destinationRef,
             BlockRef: record.blockRef,
+            VehicleRef: record.vehicleRef,
         };
 
         const monitoredVehicleJourneyWithNullEntriesRemoved = Object.fromEntries(
@@ -100,7 +101,7 @@ export const generateSiriVmAndUploadToS3 = async (
         Bucket: bucketName,
         Key: "SIRI-VM.xml",
         ContentType: "application/xml",
-        Body: JSON.stringify(siri),
+        Body: siri,
     });
 };
 
@@ -120,7 +121,7 @@ export const handler = async () => {
 
         const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
-        const avl = await getCurrentAvlData(db, logger);
+        const avl = await getCurrentAvlData(db);
 
         if (!avl || avl.length === 0) {
             logger.warn("No valid AVL data found in the database...");
@@ -138,9 +139,7 @@ export const handler = async () => {
         logger.info("Successfully uploaded SIRI-VM data to S3");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e.toString());
-
-            throw e;
+            logger.error("Error aggregating AVL data", e);
         }
 
         throw e;

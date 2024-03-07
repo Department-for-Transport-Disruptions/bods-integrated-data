@@ -119,14 +119,12 @@ export interface AvlTable {
     lineRef: string | null;
     directionRef: string;
     operatorRef: string;
+    dataFrameRef: string | null;
     datedVehicleJourneyRef: string | null;
     vehicleRef: string;
-    dataSource: string | null;
     longitude: number;
     latitude: number;
     bearing: string | null;
-    delay: string | null;
-    isCompleteStopSequence: boolean | null;
     publishedLineName: string | null;
     originRef: string | null;
     destinationRef: string | null;
