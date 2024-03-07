@@ -29,6 +29,10 @@ data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
 }
 
+data "aws_secretsmanager_secret" "tnds_ftp" {
+  name = data.sops_file.secrets.data["tnds_ftp"]
+}
+
 module "integrated_data_monitoring_dev" {
   source = "../modules/monitoring"
 
@@ -112,6 +116,7 @@ module "integrated_data_txc_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+  tnds_ftp_arn       = data.aws_secretsmanager_secret.tnds_ftp.arn
 }
 
 module "integrated_data_avl_pipeline" {
