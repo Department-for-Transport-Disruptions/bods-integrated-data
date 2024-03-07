@@ -19,17 +19,24 @@ export const handler = async () => {
     logger.info("Starting TXC Retriever");
 
     try {
+<<<<<<< HEAD
         const { BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName, TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName, IS_LOCAL: isLocal = "false" } =
+=======
+        const { BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName, IS_LOCAL: isLocal = "false" } =
+>>>>>>> a57e97a0c5dbd176838ee72ca16f659e2e493cef
             process.env;
 
         if (!bodsTxcRetrieverFunctionName) {
             throw new Error("Missing env vars: BODS_RETRIEVER_FUNCTION_NAME required");
         }
 
+<<<<<<< HEAD
         if (!tndsTxcRetrieverFunctionName) {
             throw new Error("Missing env vars: TNDS_TXC_RETRIEVER_FUNCTION_NAME required");
         }
 
+=======
+>>>>>>> a57e97a0c5dbd176838ee72ca16f659e2e493cef
         const dbClient = await getDatabaseClient(isLocal === "true");
         await cleardownDatabase(dbClient);
 
@@ -41,6 +48,7 @@ export const handler = async () => {
                 InvocationType: InvocationType.Event,
             }),
         );
+<<<<<<< HEAD
 
         await lambdaClient.send(
             new InvokeCommand({
@@ -48,6 +56,8 @@ export const handler = async () => {
                 InvocationType: InvocationType.Event,
             }),
         );
+=======
+>>>>>>> a57e97a0c5dbd176838ee72ca16f659e2e493cef
     } catch (e) {
         if (e instanceof Error) {
             logger.error("Error running the TXC Retriever", e);

@@ -1,9 +1,12 @@
 NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
+<<<<<<< HEAD
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_TXC_FTP_CREDS_ARN=""
+=======
+>>>>>>> a57e97a0c5dbd176838ee72ca16f659e2e493cef
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets migrate-local-db-to-latest
@@ -62,8 +65,11 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${NAPTAN_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+<<<<<<< HEAD
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${TNDS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${TNDS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+=======
+>>>>>>> a57e97a0c5dbd176838ee72ca16f659e2e493cef
 
 # Database
 
@@ -91,6 +97,7 @@ run-full-local-naptan-pipeline: run-local-naptan-retriever run-local-naptan-uplo
 run-local-bods-txc-retriever:
 	IS_LOCAL=true TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/txc-retriever/bods-retriever'; handler().catch(e => console.error(e))"
 
+<<<<<<< HEAD
 run-local-tnds-txc-retriever:
 	IS_LOCAL=true TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN} npx tsx -e "import {handler} from './src/functions/txc-retriever/tnds-retriever'; handler().catch(e => console.error(e))"
 
@@ -99,3 +106,7 @@ run-bods-txc-unzipper:
 
 run-tnds-txc-unzipper:
 	FILE=${FILE} IS_LOCAL=true UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${TNDS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:'${FILE}'}}}]}).catch(e => console.error(e))"
+=======
+run-txc-unzipper:
+	FILE=${FILE} IS_LOCAL=true UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:'${FILE}'}}}]}).catch(e => console.error(e))"
+>>>>>>> a57e97a0c5dbd176838ee72ca16f659e2e493cef
