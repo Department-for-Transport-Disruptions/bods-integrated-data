@@ -128,6 +128,17 @@ module "integrated_data_avl_pipeline" {
   ok_topic_arn       = module.integrated_data_monitoring_dev.ok_topic_arn
 }
 
+module "integrated_data_avl_aggregator" {
+  source = "../modules/data-pipelines/avl-aggregate-siri-vm"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
 locals {
   env     = "dev"
   secrets = jsondecode(data.sops_file.secrets.raw)
