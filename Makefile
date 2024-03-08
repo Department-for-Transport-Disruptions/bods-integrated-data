@@ -93,5 +93,5 @@ run-txc-unzipper:
 
 # AVL
 
-run-avl-aggregate-siri:
-	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/aggregate-siri'; handler()"
+run-avl-aggregate-siri-vm:
+	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"

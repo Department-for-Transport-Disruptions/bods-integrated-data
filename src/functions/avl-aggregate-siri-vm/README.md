@@ -15,7 +15,7 @@ Ensure that your local database has some data in the AVL table.
 Then run the following make command:
 
 ```bash
-make run-avl-aggregate-siri
+make run-avl-aggregate-siri-vm
 ```
 If successful there will be a `SIRI-VM.xml` file stored in your local S3 bucket. To verify this you can run:
 ```bash

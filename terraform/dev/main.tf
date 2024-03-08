@@ -128,7 +128,7 @@ module "integrated_data_avl_pipeline" {
 }
 
 module "integrated_data_avl_aggregator" {
-  source = "../modules/data-pipelines/aggregate-siri-vm"
+  source = "../modules/data-pipelines/avl-aggregate-siri-vm"
 
   environment        = local.env
   vpc_id             = module.integrated_data_vpc_dev.vpc_id

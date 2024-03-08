@@ -33,8 +33,8 @@ module "avl_aggregate_siri" {
   source = "../../shared/lambda-function"
 
   environment = var.environment
-  function_name      = local.lambda_name
-  zip_path           = "${path.module}/../../../../src/functions/dist/transform-siri.zip"
+  function_name      = "avl-aggregate-siri-vm"
+  zip_path           = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
   handler            = "index.handler"
   memory             = 1024
   runtime            = "nodejs20.x"
@@ -42,7 +42,7 @@ module "avl_aggregate_siri" {
   vpc_id             = var.vpc_id
   subnet_ids         = var.private_subnet_ids
   database_sg_id     = var.db_sg_id
-  schedule           = "rate(10 seconds)"
+  schedule           = var.environment == "dev" ? "rate(1 minute)" : "rate(10 seconds)"
 
   permissions = [{
     Action = [
@@ -62,8 +62,4 @@ module "avl_aggregate_siri" {
     BUCKET_NAME = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
     }
 
-}
-
-locals {
-  lambda_name = "avl-aggregate-siri-${var.environment}"
 }
