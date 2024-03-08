@@ -9,11 +9,11 @@ terraform {
   }
 }
 
-module "integrated_data_bods_unzipper_function" {
+module "integrated_data_unzipper_function" {
   source = "../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "integrated-data-bods-unzipper"
+  function_name = var.function_name
   zip_path      = "${path.module}/../../../src/functions/dist/unzipper.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"

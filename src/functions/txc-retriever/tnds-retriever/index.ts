@@ -61,7 +61,8 @@ const getFtpCredentials = async (ftpCredentialsArn: string): Promise<FtpCredenti
 
 const getTndsDataAndUploadToS3 = async (txcZippedBucketName: string, ftpCredentials: FtpCredentials) => {
     const { host, user, password } = ftpCredentials;
-    const client = new Client(600000);
+    const timeoutMs = 600000;
+    const client = new Client(timeoutMs);
     try {
         await client.access({
             host,

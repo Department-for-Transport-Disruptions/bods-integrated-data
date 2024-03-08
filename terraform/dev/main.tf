@@ -29,10 +29,6 @@ data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
 }
 
-data "aws_secretsmanager_secret" "tnds_ftp" {
-  name = data.sops_file.secrets.data["tnds_ftp"]
-}
-
 module "integrated_data_monitoring_dev" {
   source = "../modules/monitoring"
 
@@ -110,13 +106,13 @@ module "integrated_data_naptan_pipeline" {
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
-  tnds_ftp_arn       = data.aws_secretsmanager_secret.tnds_ftp.arn
+  environment          = local.env
+  vpc_id               = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids   = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn        = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id             = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host              = module.integrated_data_aurora_db_dev.db_host
+  tnds_ftp_credentials = local.secrets["tnds_ftp"]
 }
 
 module "integrated_data_avl_pipeline" {

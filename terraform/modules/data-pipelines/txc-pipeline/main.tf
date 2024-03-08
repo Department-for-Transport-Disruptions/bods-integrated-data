@@ -61,6 +61,15 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_bl
   restrict_public_buckets = true
 }
 
+resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
+  name = "tnds_ftp"
+}
+
+resource "aws_secretsmanager_secret_version" "tnds_ftp_credentials_secret_version" {
+  secret_id     = aws_secretsmanager_secret.tnds_ftp_credentials_secret.id
+  secret_string = jsonencode(var.tnds_ftp_credentials)
+}
+
 module "integrated_data_bods_txc_retriever_function" {
   source = "../../shared/lambda-function"
 
@@ -110,7 +119,7 @@ module "integrated_data_tnds_txc_retriever_function" {
 
   env_vars = {
     TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
-    TNDS_FTP_ARN           = var.tnds_ftp_arn
+    TNDS_FTP_ARN           = aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
   }
 }
 
@@ -136,7 +145,7 @@ module "integrated_data_txc_retriever_function" {
     Effect = "Allow",
     Resource = [
       var.db_secret_arn,
-      var.tnds_ftp_arn
+      aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
     ]
     },
     {
@@ -160,6 +169,7 @@ module "integrated_data_txc_retriever_function" {
 module "integrated_data_bods_txc_unzipper_function" {
   source = "../../unzipper"
 
+  function_name        = "integrated-data-bods-unzipper"
   environment          = var.environment
   unzipped_bucket_arn  = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
   unzipped_bucket_name = aws_s3_bucket.integrated_data_bods_txc_bucket.bucket
@@ -170,6 +180,7 @@ module "integrated_data_bods_txc_unzipper_function" {
 module "integrated_data_tnds_txc_unzipper_function" {
   source = "../../unzipper"
 
+  function_name        = "integrated-data-tnds-unzipper"
   environment          = var.environment
   unzipped_bucket_arn  = aws_s3_bucket.integrated_data_tnds_txc_bucket.arn
   unzipped_bucket_name = aws_s3_bucket.integrated_data_tnds_txc_bucket.bucket
