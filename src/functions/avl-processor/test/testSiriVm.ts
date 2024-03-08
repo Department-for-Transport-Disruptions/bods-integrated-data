@@ -23,13 +23,10 @@ export const testSiri = `
                     </FramedVehicleJourneyRef>
                     <VehicleRef>200141</VehicleRef>
                     <Bearing>0</Bearing>
-                    <DataSource>ATB</DataSource>
                     <VehicleLocation>
                         <Longitude>10.40261</Longitude>
                         <Latitude>63.43613</Latitude>
                     </VehicleLocation>
-                    <Delay>PT0S</Delay>
-                    <IsCompleteStopSequence>false</IsCompleteStopSequence>
                     <BlockRef>blockRef</BlockRef>
                     <OriginRef>originRef</OriginRef>
                     <DestinationRef>destinationRef</DestinationRef>
@@ -49,13 +46,10 @@ export const testSiri = `
                     </FramedVehicleJourneyRef>
                     <VehicleRef>200141</VehicleRef>
                     <Bearing>0</Bearing>
-                    <DataSource>ATB</DataSource>
                     <VehicleLocation>
                         <Longitude>10.40361</Longitude>
                         <Latitude>63.42613</Latitude>
                     </VehicleLocation>
-                    <Delay>PT0S</Delay>
-                    <IsCompleteStopSequence>false</IsCompleteStopSequence>
                     <BlockRef>blockRef</BlockRef>
                     <OriginRef>originRef</OriginRef>
                     <DestinationRef>destinationRef</DestinationRef>
@@ -118,14 +112,12 @@ export const parsedSiri = [
         lineRef: "ATB:Line:60",
         directionRef: "2",
         operatorRef: "placeholder",
+        dataFrameRef: "2018-08-17",
         datedVehicleJourneyRef: "ATB:ServiceJourney:00600027",
         vehicleRef: "200141",
-        dataSource: "ATB",
         longitude: 10.40261,
         latitude: 63.43613,
         bearing: "0",
-        delay: "PT0S",
-        isCompleteStopSequence: false,
         publishedLineName: "1",
         originRef: "originRef",
         destinationRef: "destinationRef",
@@ -139,14 +131,12 @@ export const parsedSiri = [
         lineRef: "ATB:Line:60",
         directionRef: "2",
         operatorRef: "placeholder",
+        dataFrameRef: "2018-08-17",
         datedVehicleJourneyRef: "ATB:ServiceJourney:00600027",
         vehicleRef: "200141",
-        dataSource: "ATB",
         longitude: 10.40361,
         latitude: 63.42613,
         bearing: "0",
-        delay: "PT0S",
-        isCompleteStopSequence: false,
         publishedLineName: "1",
         originRef: "originRef",
         destinationRef: "destinationRef",

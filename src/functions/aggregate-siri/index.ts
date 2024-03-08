@@ -101,8 +101,6 @@ export const generateSiriVmAndUploadToS3 = async (
 
     logger.info("Uploading SIRI-VM data to S3");
 
-    console.log(siri);
-
     await putS3Object({
         Bucket: bucketName,
         Key: "SIRI-VM.xml",

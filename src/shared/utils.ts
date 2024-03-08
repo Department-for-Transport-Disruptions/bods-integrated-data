@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import dayjs, { Dayjs, ManipulateType } from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
