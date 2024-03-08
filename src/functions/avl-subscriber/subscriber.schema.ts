@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { randomUUID } from "crypto";
 
 export const avlSubscribeMessageSchema = z.object({
     dataProducerEndpoint: z.string().url(),
@@ -28,3 +27,20 @@ export const subscriptionRequestSchema = z.object({
         }),
     }),
 });
+
+export const subscriptionResponseSchema = z.object({
+    SubscriptionRequest: z.object({
+        ResponseTimeStamp: z.string(),
+        ResponderRef: z.string(),
+        RequestMessageRef: z.string(),
+        ResponseStatus: z.object({
+            ResponseTimestamp: z.string(),
+            RequestMessageRef: z.string(),
+            SubscriptionRef: z.string(),
+            Status: z.coerce.boolean(),
+        }),
+        ServiceStartedTime: z.string(),
+    }),
+});
+
+export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
