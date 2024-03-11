@@ -233,4 +233,11 @@ module "integrated_data_txc_processor_function" {
         "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*"
       ]
   }]
+
+  env_vars = {
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
 }
