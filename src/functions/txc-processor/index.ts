@@ -39,7 +39,7 @@ const getAndParseTxcData = async (event: S3Event) => {
     const xml = await file.Body?.transformToString();
 
     if (!xml) {
-        return null;
+        throw new Error("No xml data");
     }
 
     const parsedTxc = parser.parse(xml) as Record<string, unknown>;
@@ -54,10 +54,6 @@ export const handler = async (event: S3Event) => {
         logger.info(`Starting txc processor`);
 
         const txcData = await getAndParseTxcData(event);
-
-        if (!txcData) {
-            throw new Error("No xml data");
-        }
 
         const agencyData = await insertAgencies(dbClient, txcData.TransXChange.Operators.Operator);
 
