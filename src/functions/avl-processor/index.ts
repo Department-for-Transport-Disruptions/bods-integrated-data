@@ -1,10 +1,10 @@
 import { logger } from "@baselime/lambda-logger";
 import { Database, chunkArray, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
+import { VehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { Kysely } from "kysely";
 import { parseStringPromise } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors.js";
-import { VehicleActivity, siriSchema } from "./schema/siri.schema";
 
 const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Kysely<Database>) => {
     const insertChunks = chunkArray(vehicleActivity, 3000);
@@ -29,7 +29,7 @@ const parseXml = async (xml: string) => {
         ignoreAttrs: true,
     })) as Record<string, object>;
 
-    const parsedJson = siriSchema.safeParse(parsedXml.Siri);
+    const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());

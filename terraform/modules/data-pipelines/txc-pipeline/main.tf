@@ -126,6 +126,11 @@ module "integrated_data_txc_processor_function" {
   subnet_ids     = var.private_subnet_ids
   database_sg_id = var.db_sg_id
 
+  s3_bucket_trigger = {
+    id  = aws_s3_bucket.integrated_data_bods_txc_bucket.id
+    arn = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
+  }
+
   permissions = [{
     Action = [
       "secretsmanager:GetSecretValue",
