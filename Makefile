@@ -4,7 +4,7 @@ BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets migrate-local-db-to-latest
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest
 
 # Dev
 
