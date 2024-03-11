@@ -1,0 +1,23 @@
+{
+    "name": "@bods-integrated-data/txc-processor",
+    "version": "0.1.0",
+    "description": "Processes TXC files and stores the data in a database",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./txc-processor.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/txc-processor.zip ../dist/txc-processor.zip"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.3.5",
+        "kysely": "^0.27.2"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.134",
+        "@types/node": "^20.11.19"
+    }
+}

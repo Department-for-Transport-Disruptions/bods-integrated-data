@@ -195,3 +195,42 @@ module "integrated_data_tnds_txc_unzipper_function" {
   zipped_bucket_arn    = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.arn
   zipped_bucket_name   = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
 }
+
+module "integrated_data_txc_processor_function" {
+  source = "../../shared/lambda-function"
+
+  environment    = var.environment
+  function_name  = "integrated-data-txc-processor"
+  zip_path       = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 300
+  memory         = 1024
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+
+  s3_bucket_trigger = {
+    id  = aws_s3_bucket.integrated_data_bods_txc_bucket.id
+    arn = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
+  }
+
+  permissions = [{
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn,
+    ]
+    },
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*"
+      ]
+  }]
+}
