@@ -1,6 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared";
-import axios from "axios";
 import { parse } from "js2xmlparser";
 import { parseStringPromise } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors";
