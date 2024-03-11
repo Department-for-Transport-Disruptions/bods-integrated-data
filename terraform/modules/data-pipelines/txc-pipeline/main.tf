@@ -169,7 +169,7 @@ module "integrated_data_txc_retriever_function" {
 module "integrated_data_bods_txc_unzipper_function" {
   source = "../../unzipper"
 
-  function_name        = "integrated-data-bods-unzipper"
+  function_name        = "integrated-data-bods-txc-unzipper"
   environment          = var.environment
   unzipped_bucket_arn  = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
   unzipped_bucket_name = aws_s3_bucket.integrated_data_bods_txc_bucket.bucket
@@ -180,7 +180,7 @@ module "integrated_data_bods_txc_unzipper_function" {
 module "integrated_data_tnds_txc_unzipper_function" {
   source = "../../unzipper"
 
-  function_name        = "integrated-data-tnds-unzipper"
+  function_name        = "integrated-data-tnds-txc-unzipper"
   environment          = var.environment
   unzipped_bucket_arn  = aws_s3_bucket.integrated_data_tnds_txc_bucket.arn
   unzipped_bucket_name = aws_s3_bucket.integrated_data_tnds_txc_bucket.bucket
