@@ -35,25 +35,24 @@ Log in to the AWS CLI:
 
 ```bash
 aws configure sso
-# SSO session name (Recommended): dft
+# SSO session name (Recommended): bods-integrated-data
 # SSO start URL [None]: https://dft-create-data.awsapps.com/start
 # SSO region [None]: eu-west-2
 # SSO registration scopes [None]: sso:account:access
 ```
 
-Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a user-friendly name, e.g.
+Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a user-friendly name and set the region:
 
 ```bash
-# ~/.aws/config
+[profile bods-integrated-data-dev]
 ...
-[profile dft]
-...
+region = eu-west-2
 ```
 
 Then export the profile as a shell variable:
 
 ```bash
-export AWS_PROFILE=dft
+export AWS_PROFILE=bods-integrated-data-dev
 ```
 
 ### Terraform
