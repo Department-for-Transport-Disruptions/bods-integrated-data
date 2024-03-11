@@ -101,7 +101,7 @@ module "integrated_data_tnds_txc_retriever_function" {
 
   environment   = var.environment
   function_name = "integrated-data-tnds-txc-retriever"
-  zip_path      = "${path.module}/../../../../src/functions/dist/tnds-txc-retriever.zip"
+  zip_path      = "${path.module}/../../../../src/functions/dist/tnds-retriever.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 120

@@ -26,12 +26,6 @@ jobs:
           version: 8
           run_install: false
 
-      - name: Remove parent directories
-        id: no_parent_dir
-        shell: bash
-        run: |
-          echo "directory=$(basename ${{ inputs.function_dir }})" >> $GITHUB_OUTPUT
-
       - name: Get pnpm store directory
         shell: bash
         run: |
@@ -54,4 +48,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.function_dir }}
-          path: ./src/functions/${{ inputs.function_dir }}/dist/${{ steps.no_parent_dir.outputs.directory }}.zip
+          path: ./src/functions/${{ inputs.function_dir }}/dist/${{ inputs.function_dir }}.zip
