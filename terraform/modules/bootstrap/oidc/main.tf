@@ -92,6 +92,7 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "secretsmanager:DescribeSecret",
           "secretsmanager:TagResource",
           "secretsmanager:UntagResource",
+          "secretsmanager:GetResourcePolicy"
         ]
         Effect   = "Allow"
         Resource = "*"
