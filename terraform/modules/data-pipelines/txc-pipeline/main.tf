@@ -62,7 +62,7 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_bl
 }
 
 resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
-  name = "tnds_ftp"
+  name = "integrated-data-tnds-ftp-credentials-${var.environment}"
 }
 
 resource "aws_secretsmanager_secret_version" "tnds_ftp_credentials_secret_version" {
