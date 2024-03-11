@@ -115,6 +115,14 @@ module "integrated_data_tnds_txc_retriever_function" {
     Resource = [
       "${aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.arn}/*"
     ]
+    }, {
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      "${aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn}"
+    ]
   }]
 
   env_vars = {
