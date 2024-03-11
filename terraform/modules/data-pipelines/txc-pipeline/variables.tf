@@ -36,3 +36,8 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "tnds_ftp_credentials" {
+  type        = map(string)
+  description = "TNDS FTP credentials"
+}
