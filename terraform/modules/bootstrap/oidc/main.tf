@@ -86,6 +86,7 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "iam:UpdateRoleDescription",
           "route53:*",
           "secretsmanager:CreateSecret",
+          "secretsmanager:GetSecretValue",
           "secretsmanager:PutSecretValue",
           "secretsmanager:UpdateSecret",
           "secretsmanager:DeleteSecret",
