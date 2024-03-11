@@ -25,17 +25,46 @@ This repo uses asdf to manage the versions of various dependencies, install that
 
 ### Local Setup
 
-After installing the above dependencies, run the following:
+After installing the above dependencies, run the following to install the required asdf plugins and install the desired versions. It will then start the docker containers for postgres and localstack, create the needed localstack resources and then run the local DB migrations:
 
 ```bash
 make asdf setup
 ```
 
-to install the required asdf plugins and install the desired versions. It will then start the docker containers for postgres and localstack, create the needed localstack resources and then run the local DB migrations.
+Log in to the AWS CLI:
+
+```bash
+aws configure sso
+# SSO session name (Recommended): dft
+# SSO start URL [None]: https://dft-create-data.awsapps.com/start
+# SSO region [None]: eu-west-2
+# SSO registration scopes [None]: sso:account:access
+```
+
+Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a user-friendly name, e.g.
+
+```bash
+# ~/.aws/config
+...
+[profile dft]
+...
+```
+
+Then export the profile as a shell variable:
+
+```bash
+export AWS_PROFILE=dft
+```
 
 ### Terraform
 
-To run terraform plans and applies locally, use the provided Make commands:
+To run terraform plans and applies locally, first init the Terraform workspace:
+
+```bash
+make tf-init-{ENV}
+```
+
+then use the provided Make commands:
 
 ```bash
 make tf-plan-{ENV}
