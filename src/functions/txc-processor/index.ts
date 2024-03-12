@@ -3,8 +3,8 @@ import { getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
 import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { insertAgencies, insertRoutes } from "./data/database";
 import { fromZodError } from "zod-validation-error";
+import { insertAgencies, insertRoutes } from "./data/database";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
