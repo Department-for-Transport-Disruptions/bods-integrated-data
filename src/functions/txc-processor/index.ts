@@ -3,6 +3,7 @@ import { getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
 import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { fromZodError } from "zod-validation-error";
 import { insertAgencies } from "./data/database";
 
 const txcArrayProperties = [
@@ -42,7 +43,16 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 
     const parsedTxc = parser.parse(xml) as Record<string, unknown>;
 
-    return txcSchema.parse(parsedTxc);
+    const txcJson = txcSchema.safeParse(parsedTxc);
+
+    if (!txcJson.success) {
+        const validationError = fromZodError(txcJson.error);
+        logger.error("Error validating TXC", validationError);
+
+        throw validationError;
+    }
+
+    return txcJson.data;
 };
 
 export const handler = async (event: S3Event) => {
@@ -51,7 +61,7 @@ export const handler = async (event: S3Event) => {
     try {
         const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
-        logger.info(`Starting txc processor`);
+        logger.info(`Starting txc processor for file: ${object.key}`);
 
         const txcData = await getAndParseTxcData(bucket.name, object.key);
 

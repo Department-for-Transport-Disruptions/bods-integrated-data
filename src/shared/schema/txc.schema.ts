@@ -1,16 +1,9 @@
 import { z } from "zod";
 
-export const operatorSchema = z
-    .object({
-        NationalOperatorCode: z.coerce.string().optional(),
-        OperatorCode: z.coerce.string().optional(),
-        OperatorShortName: z.string(),
-    })
-    .refine((op) => op.NationalOperatorCode || op.OperatorCode)
-    .transform((op) => ({
-        ...op,
-        NationalOperatorCode: op.NationalOperatorCode || op.OperatorCode,
-    }));
+export const operatorSchema = z.object({
+    NationalOperatorCode: z.coerce.string(),
+    OperatorShortName: z.string(),
+});
 
 export type Operator = z.infer<typeof operatorSchema>;
 
