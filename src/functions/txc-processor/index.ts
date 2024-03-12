@@ -32,6 +32,10 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
+        numberParseOptions: {
+            hex: false,
+            leadingZeros: false,
+        },
         isArray: (tagName) => txcArrayProperties.some((element) => element === tagName),
     });
 
@@ -47,7 +51,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 
     if (!txcJson.success) {
         const validationError = fromZodError(txcJson.error);
-        logger.error("Error validating TXC", validationError);
+        logger.error(validationError.toString());
 
         throw validationError;
     }

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const operatorSchema = z.object({
-    NationalOperatorCode: z.coerce.string(),
+    NationalOperatorCode: z.string(),
     OperatorShortName: z.string(),
 });
 
