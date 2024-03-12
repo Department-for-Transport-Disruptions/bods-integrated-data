@@ -9,7 +9,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("route_short_name", "text")
         .addColumn("route_long_name", "text")
         .addColumn("route_type", "integer")
-        .addColumn("line_id", "text")
+        .addColumn("line_id", "text", (col) => col.unique())
         .execute();
 }
 
