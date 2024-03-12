@@ -11,6 +11,8 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("route_type", "integer")
         .addColumn("line_id", "text", (col) => col.unique())
         .execute();
+
+    await db.schema.createIndex("idx_route_agency_id").on("route").column("agency_id").execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
