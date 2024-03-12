@@ -58,6 +58,12 @@ export interface Database {
     agency: GtfsAgencyTable;
     agency_new: GtfsAgencyTable;
     agency_old: GtfsAgencyTable;
+    service: ServiceTable;
+    service_new: ServiceTable;
+    service_old: ServiceTable;
+    calendar: GtfsCalendarTable;
+    calendar_new: GtfsCalendarTable;
+    calendar_old: GtfsCalendarTable;
 }
 
 export interface NaptanStopTable {
@@ -146,3 +152,30 @@ export interface GtfsAgencyTable {
 export type Agency = Selectable<GtfsAgencyTable>;
 export type NewAgency = Insertable<GtfsAgencyTable>;
 export type AgencyUpdate = Updateable<GtfsAgencyTable>;
+
+export interface ServiceTable {
+    id: Generated<number>;
+    serviceCode: string;
+}
+
+export type Service = Selectable<ServiceTable>;
+export type NewService = Insertable<ServiceTable>;
+export type ServiceUpdate = Updateable<ServiceTable>;
+
+export interface GtfsCalendarTable {
+    id: Generated<number>;
+    serviceId: number;
+    monday: 0 | 1;
+    tuesday: 0 | 1;
+    wednesday: 0 | 1;
+    thursday: 0 | 1;
+    friday: 0 | 1;
+    saturday: 0 | 1;
+    sunday: 0 | 1;
+    startDate: string;
+    endDate: string | null;
+}
+
+export type Calendar = Selectable<GtfsCalendarTable>;
+export type NewCalendar = Insertable<GtfsCalendarTable>;
+export type AgencyCalendar = Updateable<GtfsCalendarTable>;
