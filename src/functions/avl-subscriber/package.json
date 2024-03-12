@@ -4,7 +4,8 @@
     "description": "",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-subscriber.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/naptan-retriever.zip ../dist/avl-subscriber.zip"
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-subscriber.zip ../dist/avl-subscriber.zip",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",
@@ -13,7 +14,8 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "axios": "^1.6.7"
+        "axios": "^1.6.7",
+        "mockdate": "^3.0.5"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

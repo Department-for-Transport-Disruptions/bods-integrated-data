@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared";
+import { APIGatewayEvent } from "aws-lambda";
 import { parse } from "js2xmlparser";
 import { parseStringPromise } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors";
@@ -8,33 +9,22 @@ import {
     AvlSubscribeMessage,
     avlSubscribeMessageSchema,
     subscriptionRequestSchema,
-    SubscriptionResponse,
     subscriptionResponseSchema,
 } from "./subscriber.schema";
 
-const currentTimestamp = getDate().toISOString();
-// Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
-const initialTerminationTime = addIntervalToDate(currentTimestamp, 10, "years").toISOString();
-
-const mockEvent: { body: string } = {
-    body: JSON.stringify({
-        dataProducerEndpoint: "https://google.com",
-        description: "description",
-        shortDescription: "shortDescription",
-    }),
-};
-
-const generateSubscriptionRequestXml = (
+export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
     subscriptionId: string,
     currentTimestamp: string,
+    initialTerminationTime: string,
+    messageIdentifier: string,
 ) => {
     const subscriptionRequestJson = {
         SubscriptionRequest: {
             RequestTimeStamp: currentTimestamp,
             Address: `${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`,
             RequestorRef: "BODS",
-            MessageIdentifier: randomUUID(),
+            MessageIdentifier: messageIdentifier,
             SubscriptionRequestContext: {
                 HeartbeatInterval: "PT30M",
             },
@@ -109,7 +99,7 @@ const parseXml = async (xml: string) => {
     return parsedJson.data;
 };
 
-export const handler = async (event: { body: string } = mockEvent) => {
+export const handler = async (event: APIGatewayEvent) => {
     try {
         logger.info("Starting AVL subscriber");
 
@@ -117,21 +107,29 @@ export const handler = async (event: { body: string } = mockEvent) => {
 
         if (!parsedBody.success) {
             logger.error(JSON.stringify(parsedBody.error));
-            return;
+            throw new Error("Invalid subscribe message from event body.");
         }
 
         const avlSubscribeMessage = parsedBody.data;
 
+        const currentTimestamp = getDate().toISOString();
+        // Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
+        const initialTerminationTime = addIntervalToDate(currentTimestamp, 10, "years").toISOString();
+
         const subscriptionId = randomUUID();
+        const messageIdentifier = randomUUID();
 
         const subscriptionRequestMessage = generateSubscriptionRequestXml(
             avlSubscribeMessage,
             subscriptionId,
             currentTimestamp,
+            initialTerminationTime,
+            messageIdentifier,
         );
 
         const subscriptionResponse = await fetch(`${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`, {
             method: "POST",
+            body: subscriptionRequestMessage,
         });
 
         if (!subscriptionResponse.ok) {
@@ -140,13 +138,21 @@ export const handler = async (event: { body: string } = mockEvent) => {
             );
         }
 
-        if (!subscriptionResponse.body) {
+        const subscriptionResponseBody = await subscriptionResponse.text();
+
+        if (!subscriptionResponseBody) {
             throw new Error("No response body received from the data producer.");
         }
 
-        const parsedResponseBody = await parseXml(JSON.parse(subscriptionResponse.body as SubscriptionResponse));
+        const parsedResponseBody = await parseXml(subscriptionResponseBody);
 
-        console.log(subscriptionRequestMessage);
+        if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
+            throw new Error(
+                `The data producer: ${avlSubscribeMessage.dataProducerEndpoint} did not return a status of true.`,
+            );
+        }
+
+        logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem subscribing to the AVL feed.", e);

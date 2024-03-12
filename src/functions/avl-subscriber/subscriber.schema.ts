@@ -29,8 +29,8 @@ export const subscriptionRequestSchema = z.object({
 });
 
 export const subscriptionResponseSchema = z.object({
-    SubscriptionRequest: z.object({
-        ResponseTimeStamp: z.string(),
+    SubscriptionResponse: z.object({
+        ResponseTimestamp: z.string(),
         ResponderRef: z.string(),
         RequestMessageRef: z.string(),
         ResponseStatus: z.object({
