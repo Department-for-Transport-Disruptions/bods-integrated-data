@@ -13,8 +13,21 @@ resource "aws_s3_bucket" "integrated_data_bods_txc_zipped_bucket" {
   bucket = "integrated-data-bods-txc-zipped-${var.environment}"
 }
 
+resource "aws_s3_bucket" "integrated_data_tnds_txc_zipped_bucket" {
+  bucket = "integrated-data-tnds-txc-zipped-${var.environment}"
+}
+
 resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_zipped_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_zipped_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -26,6 +39,10 @@ resource "aws_s3_bucket" "integrated_data_bods_txc_bucket" {
   bucket = "integrated-data-bods-txc-${var.environment}"
 }
 
+resource "aws_s3_bucket" "integrated_data_tnds_txc_bucket" {
+  bucket = "integrated-data-tnds-txc-${var.environment}"
+}
+
 resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_bods_txc_bucket.id
 
@@ -33,6 +50,24 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_bucket_bl
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_tnds_txc_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
+  description = "Integrated data tnds ftp credentials - ${var.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "tnds_ftp_credentials_secret_version" {
+  secret_id     = aws_secretsmanager_secret.tnds_ftp_credentials_secret.id
+  secret_string = jsonencode(var.tnds_ftp_credentials)
 }
 
 module "integrated_data_bods_txc_retriever_function" {
@@ -61,6 +96,41 @@ module "integrated_data_bods_txc_retriever_function" {
   }
 }
 
+module "integrated_data_tnds_txc_retriever_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-tnds-txc-retriever"
+  zip_path      = "${path.module}/../../../../src/functions/dist/tnds-txc-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 120
+  memory        = 1024
+
+  permissions = [{
+    Action = [
+      "s3:PutObject",
+    ],
+    Effect = "Allow",
+    Resource = [
+      "${aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.arn}/*"
+    ]
+    }, {
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      "${aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn}"
+    ]
+  }]
+
+  env_vars = {
+    TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
+    TNDS_FTP_ARN           = aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
+  }
+}
+
 module "integrated_data_txc_retriever_function" {
   source = "../../shared/lambda-function"
 
@@ -82,7 +152,8 @@ module "integrated_data_txc_retriever_function" {
     ],
     Effect = "Allow",
     Resource = [
-      var.db_secret_arn
+      var.db_secret_arn,
+      aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
     ]
     },
     {
@@ -95,6 +166,7 @@ module "integrated_data_txc_retriever_function" {
 
   env_vars = {
     BODS_TXC_RETRIEVER_FUNCTION_NAME = module.integrated_data_bods_txc_retriever_function.function_name
+    TNDS_TXC_RETRIEVER_FUNCTION_NAME = module.integrated_data_tnds_txc_retriever_function.function_name
     DB_HOST                          = var.db_host
     DB_PORT                          = var.db_port
     DB_SECRET_ARN                    = var.db_secret_arn
@@ -105,9 +177,67 @@ module "integrated_data_txc_retriever_function" {
 module "integrated_data_bods_txc_unzipper_function" {
   source = "../../unzipper"
 
+  function_name        = "integrated-data-bods-txc-unzipper"
   environment          = var.environment
   unzipped_bucket_arn  = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
   unzipped_bucket_name = aws_s3_bucket.integrated_data_bods_txc_bucket.bucket
   zipped_bucket_arn    = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.arn
   zipped_bucket_name   = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.bucket
+}
+
+module "integrated_data_tnds_txc_unzipper_function" {
+  source = "../../unzipper"
+
+  function_name        = "integrated-data-tnds-txc-unzipper"
+  environment          = var.environment
+  unzipped_bucket_arn  = aws_s3_bucket.integrated_data_tnds_txc_bucket.arn
+  unzipped_bucket_name = aws_s3_bucket.integrated_data_tnds_txc_bucket.bucket
+  zipped_bucket_arn    = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.arn
+  zipped_bucket_name   = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
+}
+
+module "integrated_data_txc_processor_function" {
+  source = "../../shared/lambda-function"
+
+  environment    = var.environment
+  function_name  = "integrated-data-txc-processor"
+  zip_path       = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 300
+  memory         = 1024
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+
+  s3_bucket_trigger = {
+    id  = aws_s3_bucket.integrated_data_bods_txc_bucket.id
+    arn = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
+  }
+
+  permissions = [{
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn,
+    ]
+    },
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*"
+      ]
+  }]
+
+  env_vars = {
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
 }

@@ -22,3 +22,8 @@ variable "zipped_bucket_arn" {
   type        = string
   description = "ARN of the zipped bucket"
 }
+
+variable "function_name" {
+  type        = string
+  description = "value"
+}

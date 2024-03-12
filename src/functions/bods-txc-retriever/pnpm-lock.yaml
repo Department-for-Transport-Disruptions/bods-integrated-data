@@ -10,7 +10,7 @@ dependencies:
     version: 0.2.2
   '@bods-integrated-data/shared':
     specifier: workspace:^
-    version: link:../../../shared
+    version: link:../../shared
   axios:
     specifier: ^1.6.7
     version: 1.6.7
