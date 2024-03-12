@@ -69,16 +69,16 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform -chdir=$stage init
+        run: terraform -chdir=terraform/$stage init
 
       - name: Terraform Plan
         id: plan
-        run: terraform -chdir=$stage plan -input=false -no-color -out=tfplan
+        run: terraform -chdir=terraform/$stage plan -input=false -no-color -out=tfplan
 
       - name: Terraform Apply
         if: steps.plan.outcome == 'success'
         id: apply
-        run: terraform -chdir=$stage apply -input=false -no-color tfplan
+        run: terraform -chdir=terraform/$stage apply -input=false -no-color tfplan
 
       - name: Invoke dbmigrator Lambda
         run: |
