@@ -3,7 +3,7 @@ import { getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
 import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { insertAgencies } from "./data/database";
+import { insertAgencies, insertRoutes } from "./data/database";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -57,7 +57,11 @@ export const handler = async (event: S3Event) => {
 
         const agencyData = await insertAgencies(dbClient, txcData.TransXChange.Operators.Operator);
 
-        logger.info("data", agencyData);
+        logger.info("agency data", agencyData);
+
+        const routeData = await insertRoutes(dbClient, txcData.TransXChange.Services.Service, agencyData);
+
+        logger.info("route data", routeData);
 
         logger.info("TXC processor successful");
     } catch (e) {
