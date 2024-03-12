@@ -22,12 +22,10 @@ const txcArrayProperties = [
     "VehicleJourneyTimingLink",
 ];
 
-const getAndParseTxcData = async (event: S3Event) => {
-    const { object, bucket } = event.Records[0].s3;
-
+const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
-        Bucket: bucket.name,
-        Key: object.key,
+        Bucket: bucketName,
+        Key: objectKey,
     });
 
     const parser = new XMLParser({
@@ -48,12 +46,14 @@ const getAndParseTxcData = async (event: S3Event) => {
 };
 
 export const handler = async (event: S3Event) => {
+    const { bucket, object } = event.Records[0].s3;
+
     try {
         const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
         logger.info(`Starting txc processor`);
 
-        const txcData = await getAndParseTxcData(event);
+        const txcData = await getAndParseTxcData(bucket.name, object.key);
 
         const agencyData = await insertAgencies(dbClient, txcData.TransXChange.Operators.Operator);
 
@@ -62,7 +62,7 @@ export const handler = async (event: S3Event) => {
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the txc processor", e);
+            logger.error(`There was a problem with the bods txc processor for file: ${object.key}`, e);
         }
 
         throw e;

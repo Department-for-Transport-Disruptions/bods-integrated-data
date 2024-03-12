@@ -160,7 +160,8 @@ module "integrated_data_txc_retriever_function" {
       Action = ["lambda:invokeAsync", "lambda:invokeFunction"],
       Effect = "Allow",
       Resource = [
-        module.integrated_data_bods_txc_retriever_function.function_arn
+        module.integrated_data_bods_txc_retriever_function.function_arn,
+        module.integrated_data_tnds_txc_retriever_function.function_arn
       ]
   }]
 
