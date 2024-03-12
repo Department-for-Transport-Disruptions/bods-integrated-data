@@ -17,6 +17,7 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
                     name: operator.OperatorShortName,
                     noc: operator.NationalOperatorCode,
                     url: "",
+                    registeredOperatorRef: operator["@_id"],
                 },
             )
             .onConflict((oc) => oc.column("noc").doUpdateSet({ name: operator.OperatorShortName }))
