@@ -43,3 +43,9 @@ variable "max_db_capacity" {
   type    = number
   default = 1
 }
+
+variable "enable_rds_proxy" {
+  type        = bool
+  default     = false
+  description = "Whether to enable RDS proxy or not"
+}
