@@ -11,7 +11,6 @@ import {
     subscriptionRequestSchema,
     subscriptionResponseSchema,
 } from "./subscriber.schema";
-import { mockSubscriptionResponseBody } from "./test/mockData";
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
