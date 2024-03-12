@@ -15,11 +15,11 @@ describe("AVL-data-endpoint", () => {
         vi.resetAllMocks();
     });
     it("Should add valid XML to S3", async () => {
-        // const mockEvent = {
-        //     body: "<?xml version='1.0' encoding='UTF-8' standalone='yes'?> <SubscriptionRequest><VehicleMonitoringSubscriptionRequest><SubscriptionIdentifier>1234</SubscriptionIdentifier></VehicleMonitoringSubscriptionRequest></SubscriptionRequest>",
-        // } as APIGatewayEvent
-        // await handler(mockEvent)
-        // expect(s3.putS3Object).toBeCalled();
+        const mockEvent = {
+            body: "<?xml version='1.0' encoding='UTF-8' standalone='yes'?><ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>",
+        } as APIGatewayEvent
+        await handler(mockEvent)
+        expect(s3.putS3Object).toBeCalled();
     });
     it("Should throw an error if the body is empty", async () => {
         const mockEvent = {
@@ -32,7 +32,7 @@ describe("AVL-data-endpoint", () => {
     });
     it("Should throw an error if invalid XML is parsed", async () => {
         const mockEvent = {
-            body: "invalid xml test"
+            body: "abc",
         } as APIGatewayEvent
         await expect(async () => await handler(mockEvent)).rejects.toThrowError(
             "Not a valid XML",

@@ -6,32 +6,9 @@ import { parseBooleans } from "xml2js/lib/processors";
 import parser from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
-
-const mockSnsEventInvalid = {
-    headers: {
-        "x-amz-sns-message-type": "Notification",
-    },
-    body: "abc",
-} as unknown as APIGatewayEvent;
-
-
-const mockSnsEventValid = {
-    headers: {
-        "x-amz-sns-message-type": "Notification",
-    },
-    body:
-        "<?xml version='1.0' encoding='UTF-8' standalone='yes'?> <SubscriptionRequest><VehicleMonitoringSubscriptionRequest><SubscriptionIdentifier>1234</SubscriptionIdentifier></VehicleMonitoringSubscriptionRequest></SubscriptionRequest>",
-} as unknown as APIGatewayEvent;
-
 export const parseBody = async (xml: string, bucketName: string) => {
     const currentTime = getDate();
     const result = parser.validate(xml)
-    // try {
-    //     const result = parser.validate(xml);
-    // } catch (err) {
-    //     console.log(JSON.stringify(err))
-    // }
-
     if (result === true) {
         logger.info("Valid XML");
 
@@ -45,7 +22,7 @@ export const parseBody = async (xml: string, bucketName: string) => {
             Body: xml as string,
         });
     }
-    throw new Error("Not a valid XML");
+    else throw new Error("Not a valid XML");
 };
 
 export const handler = async (event: APIGatewayEvent) => {
