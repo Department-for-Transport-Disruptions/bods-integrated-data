@@ -36,7 +36,7 @@ Log in to the AWS CLI:
 ```bash
 aws configure sso
 # SSO session name (Recommended): bods-integrated-data
-# SSO start URL [None]: https://dft-create-data.awsapps.com/start
+# SSO start URL [None]: {RETRIEVE FROM AWS SSO CONFIG}
 # SSO region [None]: eu-west-2
 # SSO registration scopes [None]: sso:account:access
 ```
