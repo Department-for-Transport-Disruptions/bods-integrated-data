@@ -35,31 +35,7 @@ describe("avl-subscriber", () => {
         );
     });
 
-    it("should throw an error if we do not receive a subscription response from the data producer", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
-            status: 500,
-            ok: false,
-        } as unknown as Response);
-
-        await expect(async () => await handler(mockSubscribeEvent)).rejects.toThrowError(
-            "There was an error when sending the subscription request to the data producer: 500",
-        );
-    });
-
-    it("should throw an error if no xml is received from the response", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(null),
-            status: 200,
-            ok: true,
-        } as unknown as Response);
-
-        await expect(async () => await handler(mockSubscribeEvent)).rejects.toThrowError(
-            "No response body received from the data producer.",
-        );
-    });
-
-    it("should throw an error if the body from the API gateway event does not match the schema.", async () => {
+    it("should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.", async () => {
         const invalidEvent = {
             body: JSON.stringify({
                 test: "invalid event",
@@ -68,6 +44,30 @@ describe("avl-subscriber", () => {
 
         await expect(async () => await handler(invalidEvent)).rejects.toThrowError(
             "Invalid subscribe message from event body.",
+        );
+    });
+
+    it("should throw an error if we do not receive a 200 response from the data producer", async () => {
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+            status: 500,
+            ok: false,
+        } as unknown as Response);
+
+        await expect(async () => await handler(mockSubscribeEvent)).rejects.toThrowError(
+            "There was an error when sending the subscription request to the data producer: https://mock-data-producer.com, status code: 500",
+        );
+    });
+
+    it("should throw an error if we receive an empty response from the data producer", async () => {
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue(null),
+            status: 200,
+            ok: true,
+        } as unknown as Response);
+
+        await expect(async () => await handler(mockSubscribeEvent)).rejects.toThrowError(
+            "No response body received from the data producer: https://mock-data-producer.com",
         );
     });
 });

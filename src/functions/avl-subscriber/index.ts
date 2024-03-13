@@ -134,14 +134,16 @@ export const handler = async (event: APIGatewayEvent) => {
 
         if (!subscriptionResponse.ok) {
             throw new Error(
-                `There was an error when sending the subscription request to the data producer: ${subscriptionResponse.status}`,
+                `There was an error when sending the subscription request to the data producer: ${avlSubscribeMessage.dataProducerEndpoint}, status code: ${subscriptionResponse.status}`,
             );
         }
 
         const subscriptionResponseBody = await subscriptionResponse.text();
 
         if (!subscriptionResponseBody) {
-            throw new Error("No response body received from the data producer.");
+            throw new Error(
+                `No response body received from the data producer: ${avlSubscribeMessage.dataProducerEndpoint}`,
+            );
         }
 
         const parsedResponseBody = await parseXml(subscriptionResponseBody);
