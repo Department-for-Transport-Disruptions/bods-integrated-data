@@ -39,7 +39,7 @@ export const handler = async (event: APIGatewayEvent) => {
 
             throw new Error("No body sent with event");
         }
-        await parseBody(event.body, bucketName);
+        await validateXmlAndUploadToS3(event.body, bucketName);
     } catch (e) {
         if (e instanceof Error) {
 
