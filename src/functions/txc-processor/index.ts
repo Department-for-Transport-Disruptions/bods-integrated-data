@@ -4,7 +4,7 @@ import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendarRecords } from "./data/database";
+import { insertAgencies, insertCalendarRecords, insertRoutes } from "./data/database";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -32,10 +32,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
-        numberParseOptions: {
-            hex: false,
-            leadingZeros: false,
-        },
+        parseTagValue: false,
         isArray: (tagName) => txcArrayProperties.some((element) => element === tagName),
     });
 
@@ -80,6 +77,11 @@ export const handler = async (event: S3Event) => {
             TransXChange.Services.Service,
             TransXChange.VehicleJourneys.VehicleJourney,
         );
+        logger.info("agency data", agencyData);
+
+        const routeData = await insertRoutes(dbClient, txcData.TransXChange.Services.Service, agencyData);
+
+        logger.info("route data", routeData);
 
         logger.info("TXC processor successful");
     } catch (e) {

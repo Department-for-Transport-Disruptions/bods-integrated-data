@@ -7,7 +7,7 @@ TNDS_TXC_FTP_CREDS_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets migrate-local-db-to-latest
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest
 
 # Dev
 

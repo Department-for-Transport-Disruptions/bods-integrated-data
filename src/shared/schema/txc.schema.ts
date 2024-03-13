@@ -3,6 +3,7 @@ import { z } from "zod";
 export const operatorSchema = z.object({
     NationalOperatorCode: z.string(),
     OperatorShortName: z.string(),
+    "@_id": z.string(),
 });
 
 export type Operator = z.infer<typeof operatorSchema>;
@@ -39,6 +40,16 @@ export const serviceSchema = z.object({
     ServiceCode: z.string(),
     OperatingPeriod: operatingPeriodSchema,
     OperatingProfile: operatingProfileSchema.optional(),
+    Lines: z.object({
+        Line: z.array(
+            z.object({
+                "@_id": z.string(),
+                LineName: z.string(),
+            }),
+        ),
+    }),
+    Mode: z.string(),
+    RegisteredOperatorRef: z.string(),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
