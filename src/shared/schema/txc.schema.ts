@@ -8,6 +8,25 @@ export const operatorSchema = z.object({
 
 export type Operator = z.infer<typeof operatorSchema>;
 
+export const routeSectionSchema = z.object({
+    RouteLink: z.object({
+        Track: z.object({
+            Mapping: z.object({
+                Location: z.array(
+                    z.object({
+                        Translation: z.object({
+                            Latitude: z.number(),
+                            Longitude: z.number(),
+                        }),
+                    }),
+                ),
+            }),
+        }),
+    }),
+});
+
+export type RouteSection = z.infer<typeof routeSectionSchema>;
+
 export const serviceSchema = z.object({
     Lines: z.object({
         Line: z.array(
@@ -27,6 +46,9 @@ export const txcSchema = z.object({
     TransXChange: z.object({
         Operators: z.object({
             Operator: z.array(operatorSchema),
+        }),
+        RouteSections: z.object({
+            RouteSection: z.array(routeSectionSchema),
         }),
         Services: z.object({
             Service: z.array(serviceSchema),

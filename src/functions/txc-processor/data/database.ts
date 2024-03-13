@@ -1,6 +1,13 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, NewRoute, getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared";
-import { Operator, Service } from "@bods-integrated-data/shared/schema";
+import {
+    Agency,
+    Database,
+    NewRoute,
+    NewShape,
+    getRouteTypeFromServiceMode,
+    notEmpty,
+} from "@bods-integrated-data/shared";
+import { Operator, RouteSection, Service } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
@@ -73,4 +80,25 @@ export const insertRoutes = async (dbClient: Kysely<Database>, services: Service
     const routeData = await Promise.all(routePromises);
 
     return routeData.filter(notEmpty);
+};
+
+export const insertShapes = async (dbClient: Kysely<Database>, routeSections: RouteSection[]) => {
+    let current_pt_sequence = 0;
+
+    const shapePromises = routeSections.flatMap((routeSection) => {
+        return routeSection.RouteLink.Track.Mapping.Location.map(async (location) => {
+            const newShape: NewShape = {
+                shape_pt_lat: location.Translation.Latitude,
+                shape_pt_lon: location.Translation.Longitude,
+                shape_pt_sequence: current_pt_sequence++,
+                shape_dist_traveled: 0,
+            };
+
+            return dbClient.insertInto("shape_new").values(newShape).returningAll().executeTakeFirst();
+        });
+    });
+
+    const shapeData = await Promise.all(shapePromises);
+
+    return shapeData.filter(notEmpty);
 };
