@@ -20,7 +20,5 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
         "@types/node": "^20.11.19",
-        "xml2js": "^0.6.2",
-        "@types/xml2js": "^0.4.14"
     }
 }
