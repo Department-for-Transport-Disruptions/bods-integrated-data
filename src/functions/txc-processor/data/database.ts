@@ -18,7 +18,7 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
                     name: operator.OperatorShortName,
                     noc: operator.NationalOperatorCode,
                     url: "",
-                    registeredOperatorRef: operator["@_id"],
+                    registered_operator_ref: operator["@_id"],
                 },
             )
             .onConflict((oc) => oc.column("noc").doUpdateSet({ name: operator.OperatorShortName }))
@@ -42,7 +42,9 @@ export const insertRoutes = async (dbClient: Kysely<Database>, services: Service
                 .where("line_id", "=", line["@_id"])
                 .executeTakeFirst();
 
-            const agency = agencyData.find((agency) => agency.registeredOperatorRef === service.RegisteredOperatorRef);
+            const agency = agencyData.find(
+                (agency) => agency.registered_operator_ref === service.RegisteredOperatorRef,
+            );
 
             if (!agency) {
                 logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);

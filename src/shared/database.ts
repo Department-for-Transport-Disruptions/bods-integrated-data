@@ -143,7 +143,7 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
-    registeredOperatorRef: string;
+    registered_operator_ref: string;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;
