@@ -143,6 +143,8 @@ export const handler = async (event: S3Event) => {
 
         await insertNaptanData(dbClient, naptanDataWithLonsAndLats);
 
+        await dbClient.destroy();
+
         logger.info("Naptan uploader successful");
     } catch (e) {
         if (e instanceof Error) {

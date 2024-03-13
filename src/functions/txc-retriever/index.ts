@@ -41,6 +41,8 @@ export const handler = async () => {
 
         logger.info("Database preparation complete");
 
+        await dbClient.destroy();
+
         if (isLocal) {
             return;
         }

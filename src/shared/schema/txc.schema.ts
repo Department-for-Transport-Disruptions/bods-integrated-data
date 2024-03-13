@@ -6,20 +6,20 @@ export const operatorSchema = z.object({
     "@_id": z.string(),
 });
 
+export type Operator = z.infer<typeof operatorSchema>;
+
 export const stopSchema = z.object({
     StopPointRef: z.coerce.string(),
     CommonName: z.string(),
-    Location: z.optional(
-        z.object({
-            Longitude: z.number(),
-            Latitude: z.number(),
-        }),
-    ),
+    Location: z
+        .object({
+            Longitude: z.coerce.number(),
+            Latitude: z.coerce.number(),
+        })
+        .optional(),
 });
 
 export type TxcStop = z.infer<typeof stopSchema>;
-
-export type Operator = z.infer<typeof operatorSchema>;
 
 export const operatingPeriodSchema = z.object({
     StartDate: z.string(),
@@ -61,15 +61,17 @@ export const serviceSchema = z.object({
             }),
         ),
     }),
-    Mode: z.string(),
+    Mode: z.string().default("bus"),
     RegisteredOperatorRef: z.string(),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
 
 export const vehicleJourneySchema = z.object({
+    VehicleJourneyCode: z.string(),
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
+    LineRef: z.string(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;

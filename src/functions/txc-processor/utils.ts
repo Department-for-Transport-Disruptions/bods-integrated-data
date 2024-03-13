@@ -1,10 +1,22 @@
-import { NewCalendar } from "@bods-integrated-data/shared";
+import { NewCalendar, getCurrentDate, getDateWithCustomFormat } from "@bods-integrated-data/shared";
 import { OperatingPeriod, OperatingProfile } from "@bods-integrated-data/shared/schema";
+import { ServiceExpiredError } from "./errors";
 
 export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeriod: OperatingPeriod): NewCalendar => {
     const {
         RegularDayType: { DaysOfWeek: day },
     } = operatingProfile;
+
+    const currentDate = getCurrentDate();
+    const startDate = getDateWithCustomFormat(operatingPeriod.StartDate, "YYYY-MM-DD");
+    const endDate = operatingPeriod.EndDate ? getDateWithCustomFormat(operatingPeriod.EndDate, "YYYY-MM-DD") : null;
+
+    if (endDate?.isBefore(currentDate)) {
+        throw new ServiceExpiredError();
+    }
+
+    const startDateToUse = startDate.isBefore(currentDate) ? currentDate : startDate;
+    const endDateToUse = endDate ?? startDateToUse.add(9, "months");
 
     return {
         monday:
@@ -61,7 +73,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
             day.Weekend !== undefined
                 ? 1
                 : 0,
-        startDate: operatingPeriod.StartDate,
-        endDate: operatingPeriod.EndDate ?? null,
+        start_date: startDateToUse.format("YYYYMMDD"),
+        end_date: endDateToUse.format("YYYYMMDD"),
     };
 };

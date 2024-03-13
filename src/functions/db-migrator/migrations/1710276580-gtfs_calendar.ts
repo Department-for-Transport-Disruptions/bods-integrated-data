@@ -12,8 +12,8 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("friday", "integer")
         .addColumn("saturday", "integer")
         .addColumn("sunday", "integer")
-        .addColumn("startDate", "text")
-        .addColumn("endDate", "text")
+        .addColumn("start_date", "text")
+        .addColumn("end_date", "text")
         .execute();
 }
 

@@ -164,8 +164,8 @@ export interface GtfsCalendarTable {
     friday: 0 | 1;
     saturday: 0 | 1;
     sunday: 0 | 1;
-    startDate: string;
-    endDate: string | null;
+    start_date: string;
+    end_date: string;
 }
 
 export type Calendar = Selectable<GtfsCalendarTable>;
