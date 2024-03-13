@@ -19,7 +19,7 @@ export const parseBody = async (xml: string, bucketName: string) => {
             Bucket: bucketName,
             Key: `${subId}/${currentTime.toISOString()}`,
             ContentType: "application/xml",
-            Body: xml as string,
+            Body: xml,
         });
     }
     else throw new Error("Not a valid XML");
