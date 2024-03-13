@@ -23,6 +23,19 @@ export const serviceSchema = z.object({
 
 export type Service = z.infer<typeof serviceSchema>;
 
+export const stopSchema = z.object({
+    StopPointRef: z.coerce.string(),
+    CommonName: z.string(),
+    Location: z.optional(
+        z.object({
+            Longitude: z.number(),
+            Latitude: z.number(),
+        }),
+    ),
+});
+
+export type Stop = z.infer<typeof stopSchema>;
+
 export const txcSchema = z.object({
     TransXChange: z.object({
         Operators: z.object({
@@ -30,6 +43,9 @@ export const txcSchema = z.object({
         }),
         Services: z.object({
             Service: z.array(serviceSchema),
+        }),
+        StopPoints: z.object({
+            AnnotatedStopPointRef: z.array(stopSchema),
         }),
     }),
 });

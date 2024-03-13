@@ -60,6 +60,8 @@ export interface Database {
     agency_old: GtfsAgencyTable;
     route: GtfsRouteTable;
     route_new: GtfsRouteTable;
+    stop: GtfsStopTable;
+    stop_new: GtfsStopTable;
 }
 
 export interface NaptanStopTable {
@@ -170,3 +172,25 @@ export interface GtfsRouteTable {
 export type Route = Selectable<GtfsRouteTable>;
 export type NewRoute = Insertable<GtfsRouteTable>;
 export type RouteUpdate = Updateable<GtfsRouteTable>;
+
+export enum LocationType {
+    None = 0,
+    StopAreas = 1,
+    RealStationEntrance = 2,
+}
+
+export interface GtfsStopTable {
+    id: string;
+    stop_code: string | null;
+    stop_name: string | null;
+    stop_lat: number | null;
+    stop_lon: number | null;
+    wheelchair_boarding: number;
+    location_type: number;
+    parent_station: string;
+    platform_code: string;
+}
+
+export type Stop = Selectable<GtfsStopTable>;
+export type NewStop = Insertable<GtfsStopTable>;
+export type StopUpdate = Updateable<GtfsStopTable>;
