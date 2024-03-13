@@ -26,7 +26,7 @@ export const getDate = (input?: string) => (input ? dayjs.tz(input, "Europe/Lond
 export const addIntervalToDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
     dayjs.tz(date, "Europe/London").add(interval, intervalUnit);
 
-export const getRouteTypeFromService = (mode: string) => {
+export const getRouteTypeFromServiceMode = (mode: string) => {
     switch (mode) {
         case "bus":
             return RouteType.Bus;

@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, NewRoute, getRouteTypeFromService, notEmpty } from "@bods-integrated-data/shared";
+import { Agency, Database, NewRoute, getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared";
 import { Operator, Service } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 
@@ -33,7 +33,7 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
 
 export const insertRoutes = async (dbClient: Kysely<Database>, services: Service[], agencyData: Agency[]) => {
     const routePromises = services.flatMap((service) => {
-        const routeType = getRouteTypeFromService(service.Mode);
+        const routeType = getRouteTypeFromServiceMode(service.Mode);
 
         return service.Lines.Line.map(async (line) => {
             const existingRoute = await dbClient
