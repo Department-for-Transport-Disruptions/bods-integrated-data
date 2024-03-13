@@ -32,10 +32,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
-        numberParseOptions: {
-            hex: false,
-            leadingZeros: false,
-        },
+        parseTagValue: false,
         isArray: (tagName) => txcArrayProperties.some((element) => element === tagName),
     });
 
