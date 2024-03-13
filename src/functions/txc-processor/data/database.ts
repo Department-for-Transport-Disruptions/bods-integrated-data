@@ -33,6 +33,13 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
 
 export const insertRoutes = async (dbClient: Kysely<Database>, services: Service[], agencyData: Agency[]) => {
     const routePromises = services.flatMap((service) => {
+        const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
+
+        if (!agency) {
+            logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);
+            return null;
+        }
+
         const routeType = getRouteTypeFromServiceMode(service.Mode);
 
         return service.Lines.Line.map(async (line) => {
@@ -41,15 +48,6 @@ export const insertRoutes = async (dbClient: Kysely<Database>, services: Service
                 .selectAll()
                 .where("line_id", "=", line["@_id"])
                 .executeTakeFirst();
-
-            const agency = agencyData.find(
-                (agency) => agency.registered_operator_ref === service.RegisteredOperatorRef,
-            );
-
-            if (!agency) {
-                logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);
-                return null;
-            }
 
             const newRoute: NewRoute = {
                 agency_id: agency.id,
