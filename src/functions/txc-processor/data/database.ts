@@ -35,7 +35,7 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: Stop[]) => 
         const naptanStop = await dbClient
             .selectFrom("naptan_stop")
             .selectAll()
-            .where("atcoCode", "=", stop.StopPointRef)
+            .where("atco_code", "=", stop.StopPointRef)
             .executeTakeFirst();
 
         const newStop = {
@@ -45,14 +45,16 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: Stop[]) => 
 
             ...(naptanStop
                 ? {
-                      stop_code: naptanStop.naptanCode,
-                      stop_name: naptanStop.commonName || stop.CommonName,
+                      stop_code: naptanStop.naptan_code,
+                      stop_name: naptanStop.common_name || stop.CommonName,
                       stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : stop.Location?.Latitude,
                       stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : stop.Location?.Longitude,
                       location_type:
-                          naptanStop.stopType === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
+                          naptanStop.stop_type === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
                       platform_code:
-                          naptanStop.stopType && platformCodes.includes(naptanStop.stopType) ? naptanStop.stopType : "",
+                          naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)
+                              ? naptanStop.stop_type
+                              : "",
                   }
                 : {
                       stop_name: stop.CommonName,
