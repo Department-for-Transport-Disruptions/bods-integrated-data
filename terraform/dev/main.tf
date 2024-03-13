@@ -139,7 +139,7 @@ module "integrated_data_avl_aggregator" {
 }
 
 module "integrated_data_avl_data_endpoint" {
-  source = "../modules/avl-data-endpoint"
+  source = "../modules/avl-producer-endpoint/avl-data-endpoint"
 
   environment = local.env
 }

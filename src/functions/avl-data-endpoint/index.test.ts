@@ -16,7 +16,7 @@ describe("AVL-data-endpoint", () => {
     });
     it("Should add valid XML to S3", async () => {
         const mockEvent = {
-            body: "<?xml version='1.0' encoding='UTF-8' standalone='yes'?><ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>",
+            body: testSiri
         } as APIGatewayEvent
         await handler(mockEvent)
         expect(s3.putS3Object).toBeCalled();

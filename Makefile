@@ -2,7 +2,7 @@ NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
-INTEGRATED_SIRI_VM_BUCKET_NAME="integrated-data-siri-vm-local"
+AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets migrate-local-db-to-latest
@@ -62,7 +62,7 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${INTEGRATED_SIRI_VM_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 # Database
 
@@ -101,4 +101,4 @@ run-avl-aggregate-siri-vm:
 # Endpoint
 
 run-local-avl-data-endpoint:
-	IS_LOCAL=true BUCKET_NAME=${INTEGRATED_SIRI_VM_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler()"
+	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler()"

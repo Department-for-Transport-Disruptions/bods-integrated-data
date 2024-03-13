@@ -6,9 +6,12 @@ import { parseBooleans } from "xml2js/lib/processors";
 import parser from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
-export const parseBody = async (xml: string, bucketName: string) => {
+export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string) => {
     const currentTime = getDate();
-    const result = parser.validate(xml)
+    const result = parser.validate(xml, {
+        allowBooleanAttributes: true
+    });
+    console.log(result)
     if (result === true) {
         logger.info("Valid XML");
 
@@ -21,6 +24,7 @@ export const parseBody = async (xml: string, bucketName: string) => {
             ContentType: "application/xml",
             Body: xml,
         });
+        logger.info("Successfully uploaded SIRI-VM to S3")
     }
     else throw new Error("Not a valid XML");
 };
