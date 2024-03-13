@@ -14,7 +14,6 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "axios": "^1.6.7",
         "fast-xml-parser": "^3.12.0"
     },
     "devDependencies": {
