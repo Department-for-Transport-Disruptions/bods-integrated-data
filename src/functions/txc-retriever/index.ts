@@ -6,7 +6,7 @@ import { Kysely, sql } from "kysely";
 const lambdaClient = new LambdaClient({ region: "eu-west-2" });
 
 const cleardownDatabase = async (dbClient: Kysely<Database>) => {
-    const tables: (keyof Database)[] = ["agency"];
+    const tables: (keyof Database)[] = ["agency", "calendar"];
 
     for (const table of tables) {
         await dbClient.schema.dropTable(`${table}_new`).ifExists().execute();
@@ -26,7 +26,7 @@ export const handler = async () => {
         } = process.env;
 
         if (!bodsTxcRetrieverFunctionName) {
-            throw new Error("Missing env vars: BODS_RETRIEVER_FUNCTION_NAME required");
+            throw new Error("Missing env vars: BODS_TXC_RETRIEVER_FUNCTION_NAME required");
         }
 
         if (!tndsTxcRetrieverFunctionName) {
@@ -34,7 +34,16 @@ export const handler = async () => {
         }
 
         const dbClient = await getDatabaseClient(isLocal === "true");
+
+        logger.info("Preparing database...");
+
         await cleardownDatabase(dbClient);
+
+        logger.info("Database preparation complete");
+
+        if (isLocal) {
+            return;
+        }
 
         logger.info("Invoking BODS Retriever Function");
 
@@ -44,6 +53,8 @@ export const handler = async () => {
                 InvocationType: InvocationType.Event,
             }),
         );
+
+        logger.info("Invoking TNDS Retriever Function");
 
         await lambdaClient.send(
             new InvokeCommand({
