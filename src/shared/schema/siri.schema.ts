@@ -41,24 +41,24 @@ export const siriSchema = z.object({
 
 export const siriSchemaTransformed = siriSchema.transform((item) => {
     return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
-        responseTimeStamp: item.ServiceDelivery.ResponseTimestamp,
-        producerRef: item.ServiceDelivery.ProducerRef,
-        recordedAtTime: vehicleActivity.RecordedAtTime,
-        validUntilTime: vehicleActivity.ValidUntilTime,
-        lineRef: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-        directionRef: vehicleActivity.MonitoredVehicleJourney.DirectionRef,
-        operatorRef: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-        dataFrameRef: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
-        datedVehicleJourneyRef:
+        response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+        producer_ref: item.ServiceDelivery.ProducerRef,
+        recorded_at_time: vehicleActivity.RecordedAtTime,
+        valid_until_time: vehicleActivity.ValidUntilTime,
+        line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef,
+        operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
+        data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
+        dated_vehicle_journey_ref:
             vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
-        vehicleRef: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
         longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
         latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
         bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-        publishedLineName: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-        originRef: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-        destinationRef: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-        blockRef: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+        published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+        origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+        destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+        block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
     }));
 });
 
