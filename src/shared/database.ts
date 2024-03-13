@@ -60,7 +60,6 @@ export interface Database {
     agency_old: GtfsAgencyTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
-    stop_old: GtfsStopTable;
 }
 
 export interface NaptanStopTable {
@@ -149,6 +148,12 @@ export interface GtfsAgencyTable {
 export type Agency = Selectable<GtfsAgencyTable>;
 export type NewAgency = Insertable<GtfsAgencyTable>;
 export type AgencyUpdate = Updateable<GtfsAgencyTable>;
+
+export enum LocationType {
+    None = 0,
+    StopAreas = 1,
+    RealStationEntrance = 2,
+}
 
 export interface GtfsStopTable {
     id: string;

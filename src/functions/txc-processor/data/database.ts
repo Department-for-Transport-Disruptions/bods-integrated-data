@@ -1,4 +1,4 @@
-import { Database, notEmpty } from "@bods-integrated-data/shared";
+import { Database, LocationType, notEmpty } from "@bods-integrated-data/shared";
 import { Operator, Stop } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 
@@ -49,7 +49,8 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: Stop[]) => 
                       stop_name: naptanStop.commonName || stop.CommonName,
                       stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : stop.Location?.Latitude,
                       stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : stop.Location?.Longitude,
-                      location_type: naptanStop.stopType === "RSE" ? 2 : 0,
+                      location_type:
+                          naptanStop.stopType === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
                       platform_code:
                           naptanStop.stopType && platformCodes.includes(naptanStop.stopType) ? naptanStop.stopType : "",
                   }
@@ -57,7 +58,7 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: Stop[]) => 
                       stop_name: stop.CommonName,
                       stop_lat: stop.Location?.Latitude,
                       stop_lon: stop.Location?.Longitude,
-                      location_type: 0,
+                      location_type: LocationType.None,
                       platform_code: "",
                   }),
         };
