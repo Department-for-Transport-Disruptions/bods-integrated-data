@@ -6,6 +6,19 @@ export const operatorSchema = z.object({
     "@_id": z.string(),
 });
 
+export const stopSchema = z.object({
+    StopPointRef: z.coerce.string(),
+    CommonName: z.string(),
+    Location: z.optional(
+        z.object({
+            Longitude: z.number(),
+            Latitude: z.number(),
+        }),
+    ),
+});
+
+export type TxcStop = z.infer<typeof stopSchema>;
+
 export type Operator = z.infer<typeof operatorSchema>;
 
 export const operatingPeriodSchema = z.object({
@@ -71,6 +84,9 @@ export const txcSchema = z.object({
         }),
         VehicleJourneys: z.object({
             VehicleJourney: z.array(vehicleJourneySchema),
+        }),
+        StopPoints: z.object({
+            AnnotatedStopPointRef: z.array(stopSchema),
         }),
     }),
 });

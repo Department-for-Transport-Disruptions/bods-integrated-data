@@ -4,7 +4,7 @@ import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendarRecords, insertRoutes } from "./data/database";
+import { insertAgencies, insertCalendarRecords, insertRoutes, insertStops } from "./data/database";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -70,7 +70,15 @@ export const handler = async (event: S3Event) => {
 
         const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
-        logger.info("agencyData", agencyData);
+        logger.info("Agency data", agencyData);
+
+        const stopData = await insertStops(dbClient, txcData.TransXChange.StopPoints.AnnotatedStopPointRef);
+
+        logger.info("Stop data", stopData);
+
+        const routeData = await insertRoutes(dbClient, txcData.TransXChange.Services.Service, agencyData);
+
+        logger.info("Route data", routeData);
 
         await insertCalendarRecords(
             dbClient,
@@ -78,10 +86,6 @@ export const handler = async (event: S3Event) => {
             TransXChange.VehicleJourneys.VehicleJourney,
         );
         logger.info("agency data", agencyData);
-
-        const routeData = await insertRoutes(dbClient, txcData.TransXChange.Services.Service, agencyData);
-
-        logger.info("route data", routeData);
 
         logger.info("TXC processor successful");
     } catch (e) {
