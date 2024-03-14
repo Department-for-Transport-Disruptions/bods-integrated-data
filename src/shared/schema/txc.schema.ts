@@ -9,8 +9,8 @@ export const operatorSchema = z.object({
 export type Operator = z.infer<typeof operatorSchema>;
 
 export const routeSectionSchema = z.object({
-    "@_id": z.string(),
     RouteLink: z.object({
+        "@_id": z.string(),
         Track: z.object({
             Mapping: z.object({
                 Location: z.array(

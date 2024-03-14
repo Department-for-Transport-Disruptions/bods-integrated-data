@@ -87,7 +87,7 @@ export const insertShapes = async (dbClient: Kysely<Database>, routeSections: Ro
     const shapePromises = routeSections.flatMap((routeSection) => {
         return routeSection.RouteLink.Track.Mapping.Location.map(async (location) => {
             const newShape: NewShape = {
-                shape_id: routeSection["@_id"],
+                shape_id: routeSection.RouteLink["@_id"],
                 shape_pt_lat: location.Translation.Latitude,
                 shape_pt_lon: location.Translation.Longitude,
                 shape_pt_sequence: current_pt_sequence++,
