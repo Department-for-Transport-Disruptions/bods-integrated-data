@@ -177,6 +177,7 @@ export type RouteUpdate = Updateable<GtfsRouteTable>;
 
 export interface GtfsShapeTable {
     id: Generated<number>;
+    shape_id: string;
     shape_pt_lat: number;
     shape_pt_lon: number;
     shape_pt_sequence: number;
