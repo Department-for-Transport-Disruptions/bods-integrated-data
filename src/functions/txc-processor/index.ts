@@ -4,7 +4,7 @@ import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertStops } from "./data/database";
+import { insertAgencies, insertRoutes, insertStops } from "./data/database";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -32,10 +32,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
-        numberParseOptions: {
-            hex: false,
-            leadingZeros: false,
-        },
+        parseTagValue: false,
         isArray: (tagName) => txcArrayProperties.some((element) => element === tagName),
     });
 
@@ -70,9 +67,12 @@ export const handler = async (event: S3Event) => {
         const txcData = await getAndParseTxcData(bucket.name, object.key);
 
         const agencyData = await insertAgencies(dbClient, txcData.TransXChange.Operators.Operator);
-        const stopData = await insertStops(dbClient, txcData.TransXChange.StopPoints.AnnotatedStopPointRef);
-
         logger.info("Agency data", agencyData);
+
+        const routeData = await insertRoutes(dbClient, txcData.TransXChange.Services.Service, agencyData);
+        logger.info("Route data", routeData);
+
+        const stopData = await insertStops(dbClient, txcData.TransXChange.StopPoints.AnnotatedStopPointRef);
         logger.info("Stop data", stopData);
 
         logger.info("TXC processor successful");

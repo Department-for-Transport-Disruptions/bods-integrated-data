@@ -58,6 +58,8 @@ export interface Database {
     agency: GtfsAgencyTable;
     agency_new: GtfsAgencyTable;
     agency_old: GtfsAgencyTable;
+    route: GtfsRouteTable;
+    route_new: GtfsRouteTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
 }
@@ -143,11 +145,33 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
+    registered_operator_ref: string;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;
 export type NewAgency = Insertable<GtfsAgencyTable>;
 export type AgencyUpdate = Updateable<GtfsAgencyTable>;
+
+export enum RouteType {
+    TramOrMetro = 0,
+    Underground = 1,
+    Bus = 3,
+    Ferry = 4,
+    Coach = 200,
+}
+
+export interface GtfsRouteTable {
+    id: Generated<number>;
+    agency_id: number;
+    route_short_name: string;
+    route_long_name: string;
+    route_type: RouteType;
+    line_id: string;
+}
+
+export type Route = Selectable<GtfsRouteTable>;
+export type NewRoute = Insertable<GtfsRouteTable>;
+export type RouteUpdate = Updateable<GtfsRouteTable>;
 
 export enum LocationType {
     None = 0,
