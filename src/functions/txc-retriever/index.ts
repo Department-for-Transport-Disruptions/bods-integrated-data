@@ -6,7 +6,7 @@ import { Kysely, sql } from "kysely";
 const lambdaClient = new LambdaClient({ region: "eu-west-2" });
 
 const cleardownDatabase = async (dbClient: Kysely<Database>) => {
-    const tables: (keyof Database)[] = ["agency", "route", "shape", "stop"];
+    const tables: (keyof Database)[] = ["agency", "calendar", "route", "shape", "stop"];
 
     for (const table of tables) {
         await dbClient.schema.dropTable(`${table}_new`).ifExists().execute();
@@ -18,23 +18,32 @@ const cleardownDatabase = async (dbClient: Kysely<Database>) => {
 export const handler = async () => {
     logger.info("Starting TXC Retriever");
 
-    try {
-        const {
-            BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName,
-            TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName,
-            IS_LOCAL: isLocal = "false",
-        } = process.env;
+    const {
+        BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName,
+        TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName,
+        IS_LOCAL: isLocal = "false",
+    } = process.env;
 
+    const dbClient = await getDatabaseClient(isLocal === "true");
+
+    try {
         if (!bodsTxcRetrieverFunctionName) {
-            throw new Error("Missing env vars: BODS_RETRIEVER_FUNCTION_NAME required");
+            throw new Error("Missing env vars: BODS_TXC_RETRIEVER_FUNCTION_NAME required");
         }
 
         if (!tndsTxcRetrieverFunctionName) {
             throw new Error("Missing env vars: TNDS_TXC_RETRIEVER_FUNCTION_NAME required");
         }
 
-        const dbClient = await getDatabaseClient(isLocal === "true");
+        logger.info("Preparing database...");
+
         await cleardownDatabase(dbClient);
+
+        logger.info("Database preparation complete");
+
+        if (isLocal === "true") {
+            return;
+        }
 
         logger.info("Invoking BODS Retriever Function");
 
@@ -44,6 +53,8 @@ export const handler = async () => {
                 InvocationType: InvocationType.Event,
             }),
         );
+
+        logger.info("Invoking TNDS Retriever Function");
 
         await lambdaClient.send(
             new InvokeCommand({
@@ -57,5 +68,7 @@ export const handler = async () => {
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };

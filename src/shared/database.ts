@@ -58,6 +58,9 @@ export interface Database {
     agency: GtfsAgencyTable;
     agency_new: GtfsAgencyTable;
     agency_old: GtfsAgencyTable;
+    calendar: GtfsCalendarTable;
+    calendar_new: GtfsCalendarTable;
+    calendar_old: GtfsCalendarTable;
     route: GtfsRouteTable;
     route_new: GtfsRouteTable;
     shape: GtfsShapeTable;
@@ -153,6 +156,23 @@ export interface GtfsAgencyTable {
 export type Agency = Selectable<GtfsAgencyTable>;
 export type NewAgency = Insertable<GtfsAgencyTable>;
 export type AgencyUpdate = Updateable<GtfsAgencyTable>;
+
+export interface GtfsCalendarTable {
+    id: Generated<number>;
+    monday: 0 | 1;
+    tuesday: 0 | 1;
+    wednesday: 0 | 1;
+    thursday: 0 | 1;
+    friday: 0 | 1;
+    saturday: 0 | 1;
+    sunday: 0 | 1;
+    start_date: string;
+    end_date: string;
+}
+
+export type Calendar = Selectable<GtfsCalendarTable>;
+export type NewCalendar = Insertable<GtfsCalendarTable>;
+export type AgencyCalendar = Updateable<GtfsCalendarTable>;
 
 export enum RouteType {
     TramOrMetro = 0,
