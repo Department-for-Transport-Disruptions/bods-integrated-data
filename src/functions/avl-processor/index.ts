@@ -43,7 +43,7 @@ const parseXml = async (xml: string) => {
 export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
     const data = await getS3Object({
         Bucket: record.s3.bucket.name,
-        Key: decodeURIComponent(record.s3.object.key.replace(/\+/g, " ")),
+        Key: record.s3.object.key,
     });
 
     const body = data.Body;

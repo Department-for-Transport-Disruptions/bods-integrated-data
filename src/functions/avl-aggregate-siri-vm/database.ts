@@ -8,9 +8,9 @@ export const getCurrentAvlData = async (db: Kysely<Database>) => {
 
     const avl = await db
         .selectFrom("avl")
-        .distinctOn(["operatorRef", "vehicleRef"])
+        .distinctOn(["operator_ref", "vehicle_ref"])
         .selectAll("avl")
-        .orderBy(["operatorRef", "vehicleRef", "responseTimeStamp desc"])
+        .orderBy(["operator_ref", "vehicle_ref", "response_time_stamp desc"])
         .execute();
 
     const parsedAvl = avl.map((record) => {
