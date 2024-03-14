@@ -1,8 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { putS3Object, getDate } from "@bods-integrated-data/shared";
 import { APIGatewayEvent } from "aws-lambda";
-import { parseStringPromise } from "xml2js";
-import { parseBooleans } from "xml2js/lib/processors";
 import parser from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
