@@ -141,7 +141,9 @@ module "integrated_data_avl_aggregator" {
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-endpoint/avl-data-endpoint"
 
-  environment = local.env
+  environment     = local.env
+  alarm_topic_arn = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn    = module.integrated_data_monitoring_dev.ok_topic_arn
 }
 
 locals {

@@ -9,8 +9,14 @@ terraform {
   }
 }
 
-resource "aws_s3_bucket" "integrated_data_endpoint_s3_bucket" {
-  bucket = "integrated-data-siri-vm-${var.environment}"
+module "integrated_data_avl_s3_sqs" {
+  source = "../../shared/s3-sqs"
+
+  bucket_name     = "integrated-data-avl-${var.environment}"
+  sqs_name        = "integrated-data-avl-queue-${var.environment}"
+  dlq_name        = "integrated-data-avl-dlq-${var.environment}"
+  alarm_topic_arn = var.alarm_topic_arn
+  ok_topic_arn    = var.ok_topic_arn
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_endpoint_s3_bucket_block_public" {
@@ -40,7 +46,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       ],
       Effect = "Allow",
       Resource = [
-        "integrated-data-siri-vm-${var.environment}/*"
+        "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
     }
   ]
