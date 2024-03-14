@@ -8,19 +8,6 @@ export const operatorSchema = z.object({
 
 export type Operator = z.infer<typeof operatorSchema>;
 
-export const stopSchema = z.object({
-    StopPointRef: z.coerce.string(),
-    CommonName: z.string(),
-    Location: z
-        .object({
-            Longitude: z.coerce.number(),
-            Latitude: z.coerce.number(),
-        })
-        .optional(),
-});
-
-export type TxcStop = z.infer<typeof stopSchema>;
-
 export const operatingPeriodSchema = z.object({
     StartDate: z.string(),
     EndDate: z.string().optional(),
@@ -75,6 +62,19 @@ export const vehicleJourneySchema = z.object({
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
+
+export const stopSchema = z.object({
+    StopPointRef: z.coerce.string(),
+    CommonName: z.string(),
+    Location: z
+        .object({
+            Longitude: z.coerce.number(),
+            Latitude: z.coerce.number(),
+        })
+        .optional(),
+});
+
+export type TxcStop = z.infer<typeof stopSchema>;
 
 export const txcSchema = z.object({
     TransXChange: z.object({

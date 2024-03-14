@@ -25,19 +25,21 @@ const txcArrayProperties = [
     "VehicleJourneyTimingLink",
 ];
 
+const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
+    RegularDayType: {
+        DaysOfWeek: {
+            MondayToSunday: "",
+        },
+    },
+};
+
 const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
     const operatingPeriod = service.OperatingPeriod;
     const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
     const serviceOperatingProfile = service.OperatingProfile;
 
-    const operatingProfileToUse: OperatingProfile = vehicleJourneyOperatingProfile ||
-        serviceOperatingProfile || {
-            RegularDayType: {
-                DaysOfWeek: {
-                    MondayToSunday: "",
-                },
-            },
-        };
+    const operatingProfileToUse =
+        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
 
     return formatCalendar(operatingProfileToUse, operatingPeriod);
 };
@@ -132,10 +134,9 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 
 export const handler = async (event: S3Event) => {
     const { bucket, object } = event.Records[0].s3;
+    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
-
         logger.info(`Starting txc processor for file: ${object.key}`);
 
         const txcData = await getAndParseTxcData(bucket.name, object.key);
@@ -153,8 +154,6 @@ export const handler = async (event: S3Event) => {
             agencyData,
         );
 
-        await dbClient.destroy();
-
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
@@ -162,5 +161,7 @@ export const handler = async (event: S3Event) => {
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };

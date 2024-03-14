@@ -192,6 +192,7 @@ export interface GtfsRouteTable {
 export type Route = Selectable<GtfsRouteTable>;
 export type NewRoute = Insertable<GtfsRouteTable>;
 export type RouteUpdate = Updateable<GtfsRouteTable>;
+
 export enum LocationType {
     None = 0,
     StopAreas = 1,

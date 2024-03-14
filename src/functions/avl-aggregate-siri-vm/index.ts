@@ -110,6 +110,8 @@ export const generateSiriVmAndUploadToS3 = async (
 };
 
 export const handler = async () => {
+    const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
+
     try {
         logger.info("Starting SIRI-VM generator...");
 
@@ -120,8 +122,6 @@ export const handler = async () => {
         }
 
         const requestMessageRef = randomUUID();
-
-        const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
         const avl = await getCurrentAvlData(db);
 
@@ -145,5 +145,7 @@ export const handler = async () => {
         }
 
         throw e;
+    } finally {
+        await db.destroy();
     }
 };

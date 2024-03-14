@@ -18,13 +18,15 @@ const cleardownDatabase = async (dbClient: Kysely<Database>) => {
 export const handler = async () => {
     logger.info("Starting TXC Retriever");
 
-    try {
-        const {
-            BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName,
-            TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName,
-            IS_LOCAL: isLocal = "false",
-        } = process.env;
+    const {
+        BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName,
+        TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName,
+        IS_LOCAL: isLocal = "false",
+    } = process.env;
 
+    const dbClient = await getDatabaseClient(isLocal === "true");
+
+    try {
         if (!bodsTxcRetrieverFunctionName) {
             throw new Error("Missing env vars: BODS_TXC_RETRIEVER_FUNCTION_NAME required");
         }
@@ -33,15 +35,11 @@ export const handler = async () => {
             throw new Error("Missing env vars: TNDS_TXC_RETRIEVER_FUNCTION_NAME required");
         }
 
-        const dbClient = await getDatabaseClient(isLocal === "true");
-
         logger.info("Preparing database...");
 
         await cleardownDatabase(dbClient);
 
         logger.info("Database preparation complete");
-
-        await dbClient.destroy();
 
         if (isLocal) {
             return;
@@ -70,5 +68,7 @@ export const handler = async () => {
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };
