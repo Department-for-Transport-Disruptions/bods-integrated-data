@@ -34,6 +34,8 @@ export const handler = async () => {
         }
     });
 
+    await db.destroy();
+
     if (error) {
         logger.error(`Failed to ${isRollback ? "rollback" : "migrate"}`, error);
         process.exit(1);
