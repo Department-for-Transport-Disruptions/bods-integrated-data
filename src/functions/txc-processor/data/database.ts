@@ -84,12 +84,16 @@ export const insertRoutes = async (dbClient: Kysely<Database>, service: Service,
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) => {
     const platformCodes = ["BCS", "PLT", "FBT"];
+    const atcoCodes = stops.map((stop) => stop.StopPointRef);
+
+    const naptanStops = await dbClient
+        .selectFrom("naptan_stop_new")
+        .selectAll()
+        .where("atco_code", "in", atcoCodes)
+        .execute();
+
     const stopsPromises = stops.map(async (stop) => {
-        const naptanStop = await dbClient
-            .selectFrom("naptan_stop_new")
-            .selectAll()
-            .where("atco_code", "=", stop.StopPointRef)
-            .executeTakeFirst();
+        const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
 
         const newStop = {
             id: stop.StopPointRef,

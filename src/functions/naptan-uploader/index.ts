@@ -115,7 +115,7 @@ const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[
 
     await dbClient.schema.dropTable("naptan_stop_new").ifExists().execute();
 
-    await sql`create table naptan_stop_new as (select * from naptan_stop) with no data;`.execute(dbClient);
+    await sql`create table naptan_stop_new (LIKE naptan_stop INCLUDING ALL);`.execute(dbClient);
 
     await BluebirdPromise.map(
         batches,
