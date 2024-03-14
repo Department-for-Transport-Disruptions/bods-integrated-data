@@ -41,7 +41,7 @@ export const handler = async () => {
 
         logger.info("Database preparation complete");
 
-        if (isLocal) {
+        if (isLocal === "true") {
             return;
         }
 
