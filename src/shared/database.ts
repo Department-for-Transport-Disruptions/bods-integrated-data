@@ -60,6 +60,8 @@ export interface Database {
     agency_old: GtfsAgencyTable;
     route: GtfsRouteTable;
     route_new: GtfsRouteTable;
+    shape: GtfsShapeTable;
+    shape_new: GtfsShapeTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
 }
@@ -172,6 +174,18 @@ export interface GtfsRouteTable {
 export type Route = Selectable<GtfsRouteTable>;
 export type NewRoute = Insertable<GtfsRouteTable>;
 export type RouteUpdate = Updateable<GtfsRouteTable>;
+
+export interface GtfsShapeTable {
+    id: Generated<number>;
+    shape_pt_lat: number;
+    shape_pt_lon: number;
+    shape_pt_sequence: number;
+    shape_dist_traveled: number;
+}
+
+export type Shape = Selectable<GtfsShapeTable>;
+export type NewShape = Insertable<GtfsShapeTable>;
+export type ShapeUpdate = Updateable<GtfsShapeTable>;
 
 export enum LocationType {
     None = 0,
