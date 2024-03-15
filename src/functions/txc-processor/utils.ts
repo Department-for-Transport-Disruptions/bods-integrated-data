@@ -4,8 +4,19 @@ import { ServiceExpiredError } from "./errors";
 
 export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeriod: OperatingPeriod): NewCalendar => {
     const {
-        RegularDayType: { DaysOfWeek: day },
+        RegularDayType: { DaysOfWeek: day, HolidaysOnly: holidaysOnly },
     } = operatingProfile;
+
+    if (holidaysOnly !== undefined) {
+        // TODO: implement this as part of the calendar_dates table
+        throw new Error();
+    }
+
+    if (day === undefined) {
+        throw new Error("Invalid operating profile");
+    }
+
+    const defaultAllDays = day === "";
 
     const currentDate = getCurrentDate();
     const startDate = getDateWithCustomFormat(operatingPeriod.StartDate, "YYYY-MM-DD");
@@ -20,6 +31,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
 
     return {
         monday:
+            defaultAllDays ||
             day.Monday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -28,6 +40,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
                 ? 1
                 : 0,
         tuesday:
+            defaultAllDays ||
             day.Tuesday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -36,6 +49,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
                 ? 1
                 : 0,
         wednesday:
+            defaultAllDays ||
             day.Wednesday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -44,6 +58,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
                 ? 1
                 : 0,
         thursday:
+            defaultAllDays ||
             day.Thursday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -52,6 +67,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
                 ? 1
                 : 0,
         friday:
+            defaultAllDays ||
             day.Friday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -60,6 +76,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
                 ? 1
                 : 0,
         saturday:
+            defaultAllDays ||
             day.Saturday !== undefined ||
             day.MondayToSaturday !== undefined ||
             day.MondayToSunday !== undefined ||
@@ -67,6 +84,7 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
                 ? 1
                 : 0,
         sunday:
+            defaultAllDays ||
             day.Sunday !== undefined ||
             day.NotSaturday !== undefined ||
             day.MondayToSunday !== undefined ||

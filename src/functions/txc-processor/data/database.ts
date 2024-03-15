@@ -5,6 +5,7 @@ import {
     LocationType,
     NewCalendar,
     NewRoute,
+    NewStop,
     getRouteTypeFromServiceMode,
     notEmpty,
 } from "@bods-integrated-data/shared";
@@ -92,10 +93,10 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         .where("atco_code", "in", atcoCodes)
         .execute();
 
-    const stopsPromises = stops.map(async (stop) => {
+    const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
 
-        const newStop = {
+        return {
             id: stop.StopPointRef,
             wheelchair_boarding: 0,
             parent_station: "",
@@ -121,15 +122,12 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
                       platform_code: "",
                   }),
         };
-
-        return dbClient
-            .insertInto("stop_new")
-            .values(newStop)
-            .onConflict((oc) => oc.column("id").doUpdateSet(newStop))
-            .returningAll()
-            .executeTakeFirst();
     });
 
-    const stopData = await Promise.all(stopsPromises);
-    return stopData.filter(notEmpty);
+    await dbClient
+        .insertInto("stop_new")
+        .values(stopsToInsert)
+        .onConflict((oc) => oc.column("id").doNothing())
+        .returningAll()
+        .executeTakeFirst();
 };
