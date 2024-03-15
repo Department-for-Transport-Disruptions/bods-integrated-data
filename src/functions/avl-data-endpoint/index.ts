@@ -1,10 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
 import { putS3Object, getDate } from "@bods-integrated-data/shared";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { validate } from "fast-xml-parser";
-import { randomUUID } from "crypto";
 
-export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string) => {
+export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, subscriptionId: string) => {
     const currentTime = getDate();
     const result = validate(xml, {
         allowBooleanAttributes: true,
@@ -12,20 +11,16 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string) 
     if (result === true) {
         logger.info("Valid XML");
 
-        //  TODO this needs to be sorted after AVL subscriber
-
-        const subId = randomUUID();
         await putS3Object({
             Bucket: bucketName,
-            Key: `${subId}/${currentTime.toISOString()}`,
+            Key: `${subscriptionId}/${currentTime.toISOString()}`,
             ContentType: "application/xml",
             Body: xml,
         });
-        logger.info("Successfully uploaded SIRI-VM to S3");
-    } else throw new Error("Not a valid XML");
+    } else throw new Error("Invalid XML provided.");
 };
 
-export const handler = async (event: APIGatewayEvent) => {
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 
@@ -33,12 +28,24 @@ export const handler = async (event: APIGatewayEvent) => {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
+        const subscriptionId = event?.pathParameters?.subscriptionId;
+
+        if (!subscriptionId) {
+            throw new Error("Subscription ID missing from path parameters.");
+        }
+
         logger.info("Starting Data Endpoint");
 
         if (!event.body) {
             throw new Error("No body sent with event");
         }
-        await validateXmlAndUploadToS3(event.body, bucketName);
+        await validateXmlAndUploadToS3(event.body, bucketName, subscriptionId);
+
+        logger.info("Successfully uploaded SIRI-VM to S3");
+
+        return {
+            statusCode: 200,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem with the Data endpoint", e);

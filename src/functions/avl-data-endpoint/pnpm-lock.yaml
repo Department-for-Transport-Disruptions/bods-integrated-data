@@ -14,6 +14,9 @@ dependencies:
   fast-xml-parser:
     specifier: ^3.12.0
     version: 3.21.1
+  mockdate:
+    specifier: ^3.0.5
+    version: 3.0.5
 
 devDependencies:
   '@types/aws-lambda':
@@ -44,6 +47,10 @@ packages:
     hasBin: true
     dependencies:
       strnum: 1.0.5
+    dev: false
+
+  /mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
     dev: false
 
   /strnum@1.0.5:
