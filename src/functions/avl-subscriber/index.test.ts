@@ -58,6 +58,7 @@ describe("avl-subscriber", () => {
             "SUBSCRIPTION",
             {
                 description: "description",
+                requestorRef: null,
                 shortDescription: "description",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
@@ -110,6 +111,7 @@ describe("avl-subscriber", () => {
             "SUBSCRIPTION",
             {
                 description: "description",
+                requestorRef: null,
                 shortDescription: "description",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
@@ -149,6 +151,7 @@ describe("avl-subscriber", () => {
             "SUBSCRIPTION",
             {
                 description: "description",
+                requestorRef: null,
                 shortDescription: "description",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",

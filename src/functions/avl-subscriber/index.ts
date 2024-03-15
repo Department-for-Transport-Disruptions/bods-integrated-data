@@ -112,7 +112,7 @@ const updateDynamoWithSubscriptionInfo = async (
         status: status,
         description: avlSubscribeMessage.description,
         shortDescription: avlSubscribeMessage.description,
-        requestorRef: avlSubscribeMessage.requestorRef ?? "",
+        requestorRef: avlSubscribeMessage.requestorRef ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");
