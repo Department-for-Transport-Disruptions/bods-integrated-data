@@ -139,6 +139,12 @@ module "integrated_data_avl_aggregator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_avl_subscription_table" {
+  source = "../modules/database/dynamo"
+
+  environment        = local.env
+}
+
 module "integrated_data_avl_subscriber" {
   source = "../modules/data-pipelines/avl-subscriber"
 
