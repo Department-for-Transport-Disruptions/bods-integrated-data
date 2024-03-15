@@ -49,11 +49,53 @@ const getAndParseNaptanFile = async (event: S3Event) => {
         skipEmptyLines: "greedy",
         header: true,
         transformHeader: (header) => {
-            const headerMap: { [key: string]: string } = {
-                ATCOCode: "atcoCode",
+            const headerMap: Record<string, string> = {
+                ATCOCode: "atco_code",
+                NaptanCode: "naptan_code",
+                PlateCode: "plate_code",
+                CleardownCode: "cleardown_code",
+                CommonName: "common_name",
+                CommonNameLang: "common_name_lang",
+                ShortCommonName: "short_common_name",
+                ShortCommonNameLang: "short_common_name_lang",
+                Landmark: "landmark",
+                LandmarkLang: "landmark_lang",
+                Street: "street",
+                StreetLang: "street_lang",
+                Crossing: "crossing",
+                CrossingLang: "crossing_lang",
+                Indicator: "indicator",
+                IndicatorLang: "indicator_lang",
+                Bearing: "bearing",
+                NptgLocalityCode: "nptg_locality_code",
+                LocalityName: "locality_name",
+                ParentLocalityName: "parent_locality_name",
+                GrandParentLocalityName: "grand_parent_locality_name",
+                Town: "town",
+                TownLang: "town_lang",
+                Suburb: "suburb",
+                SuburbLang: "suburb_lang",
+                LocalityCentre: "locality_centre",
+                GridType: "grid_type",
+                Easting: "easting",
+                Northing: "northing",
+                Longitude: "longitude",
+                Latitude: "latitude",
+                StopType: "stop_type",
+                BusStopType: "bus_stop_type",
+                TimingStatus: "timing_status",
+                DefaultWaitTime: "default_wait_time",
+                Notes: "notes",
+                NotesLang: "notes_lang",
+                AdministrativeAreaCode: "administrative_area_code",
+                CreationDateTime: "creation_date_time",
+                ModificationDateTime: "modification_date_time",
+                RevisionNumber: "revision_number",
+                Modification: "modification",
+                Status: "status",
             };
 
-            return headerMap[header] ?? header.charAt(0).toLowerCase() + header.slice(1);
+            return headerMap[header];
         },
     });
 
@@ -73,7 +115,7 @@ const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[
 
     await dbClient.schema.dropTable("naptan_stop_new").ifExists().execute();
 
-    await sql`create table naptan_stop_new as (select * from naptan_stop) with no data;`.execute(dbClient);
+    await sql`create table naptan_stop_new (LIKE naptan_stop INCLUDING ALL);`.execute(dbClient);
 
     await BluebirdPromise.map(
         batches,
@@ -91,9 +133,9 @@ const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[
 };
 
 export const handler = async (event: S3Event) => {
-    try {
-        const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
+    try {
         logger.info(`Starting naptan uploader`);
 
         const naptanData = await getAndParseNaptanFile(event);
@@ -108,5 +150,7 @@ export const handler = async (event: S3Event) => {
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };

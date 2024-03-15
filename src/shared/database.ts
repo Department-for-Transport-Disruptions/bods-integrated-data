@@ -58,50 +58,57 @@ export interface Database {
     agency: GtfsAgencyTable;
     agency_new: GtfsAgencyTable;
     agency_old: GtfsAgencyTable;
+    calendar: GtfsCalendarTable;
+    calendar_new: GtfsCalendarTable;
+    calendar_old: GtfsCalendarTable;
+    route: GtfsRouteTable;
+    route_new: GtfsRouteTable;
+    stop: GtfsStopTable;
+    stop_new: GtfsStopTable;
 }
 
 export interface NaptanStopTable {
-    atcoCode: string;
-    naptanCode: string | null;
-    plateCode: string | null;
-    cleardownCode: string | null;
-    commonName: string | null;
-    commonNameLang: string | null;
-    shortCommonName: string | null;
-    shortCommonNameLang: string | null;
+    atco_code: string;
+    naptan_code: string | null;
+    plate_code: string | null;
+    cleardown_code: string | null;
+    common_name: string | null;
+    common_name_lang: string | null;
+    short_common_name: string | null;
+    short_common_name_lang: string | null;
     landmark: string | null;
-    landmarkLang: string | null;
+    landmark_lang: string | null;
     street: string | null;
-    streetLang: string | null;
+    street_lang: string | null;
     crossing: string | null;
-    crossingLang: string | null;
+    crossing_lang: string | null;
     indicator: string | null;
-    indicatorLang: string | null;
+    indicator_lang: string | null;
     bearing: string | null;
-    nptgLocalityCode: string | null;
-    localityName: string | null;
-    parentLocalityName: string | null;
-    grandParentLocalityName: string | null;
+    nptg_locality_code: string | null;
+    locality_name: string | null;
+    parent_locality_name: string | null;
+    grand_parent_locality_name: string | null;
     town: string | null;
-    townLang: string | null;
+    town_lang: string | null;
     suburb: string | null;
-    suburbLang: string | null;
-    localityCentre: string | null;
-    gridType: string | null;
+    suburb_lang: string | null;
+    locality_centre: string | null;
+    grid_type: string | null;
     easting: string | null;
     northing: string | null;
     longitude: string | null;
     latitude: string | null;
-    stopType: string | null;
-    busStopType: string | null;
-    timingStatus: string | null;
-    defaultWaitTime: string | null;
+    stop_type: string | null;
+    bus_stop_type: string | null;
+    timing_status: string | null;
+    default_wait_time: string | null;
     notes: string | null;
-    notesLang: string | null;
-    administrativeAreaCode: string | null;
-    creationDateTime: string | null;
-    modificationDateTime: string | null;
-    revisionNumber: string | null;
+    notes_lang: string | null;
+    administrative_area_code: string | null;
+    creation_date_time: string | null;
+    modification_date_time: string | null;
+    revision_number: string | null;
     modification: string | null;
     status: string | null;
 }
@@ -112,23 +119,23 @@ export type NaptanStopUpdate = Updateable<NaptanStopTable>;
 
 export interface AvlTable {
     id: Generated<number>;
-    responseTimeStamp: string;
-    producerRef: string;
-    recordedAtTime: string;
-    validUntilTime: string;
-    lineRef: string | null;
-    directionRef: string;
-    operatorRef: string;
-    dataFrameRef: string | null;
-    datedVehicleJourneyRef: string | null;
-    vehicleRef: string;
+    response_time_stamp: string;
+    producer_ref: string;
+    recorded_at_time: string;
+    valid_until_time: string;
+    line_ref: string | null;
+    direction_ref: string;
+    operator_ref: string;
+    data_frame_ref: string | null;
+    dated_vehicle_journey_ref: string | null;
+    vehicle_ref: string;
     longitude: number;
     latitude: number;
     bearing: string | null;
-    publishedLineName: string | null;
-    originRef: string | null;
-    destinationRef: string | null;
-    blockRef: string | null;
+    published_line_name: string | null;
+    origin_ref: string | null;
+    destination_ref: string | null;
+    block_ref: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;
@@ -141,8 +148,69 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
+    registered_operator_ref: string;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;
 export type NewAgency = Insertable<GtfsAgencyTable>;
 export type AgencyUpdate = Updateable<GtfsAgencyTable>;
+
+export interface GtfsCalendarTable {
+    id: Generated<number>;
+    monday: 0 | 1;
+    tuesday: 0 | 1;
+    wednesday: 0 | 1;
+    thursday: 0 | 1;
+    friday: 0 | 1;
+    saturday: 0 | 1;
+    sunday: 0 | 1;
+    start_date: string;
+    end_date: string;
+}
+
+export type Calendar = Selectable<GtfsCalendarTable>;
+export type NewCalendar = Insertable<GtfsCalendarTable>;
+export type AgencyCalendar = Updateable<GtfsCalendarTable>;
+
+export enum RouteType {
+    TramOrMetro = 0,
+    Underground = 1,
+    Bus = 3,
+    Ferry = 4,
+    Coach = 200,
+}
+
+export interface GtfsRouteTable {
+    id: Generated<number>;
+    agency_id: number;
+    route_short_name: string;
+    route_long_name: string;
+    route_type: RouteType;
+    line_id: string;
+}
+
+export type Route = Selectable<GtfsRouteTable>;
+export type NewRoute = Insertable<GtfsRouteTable>;
+export type RouteUpdate = Updateable<GtfsRouteTable>;
+
+export enum LocationType {
+    None = 0,
+    StopAreas = 1,
+    RealStationEntrance = 2,
+}
+
+export interface GtfsStopTable {
+    id: string;
+    stop_code: string | null;
+    stop_name: string | null;
+    stop_lat: number | null;
+    stop_lon: number | null;
+    wheelchair_boarding: number;
+    location_type: number;
+    parent_station: string;
+    platform_code: string;
+}
+
+export type Stop = Selectable<GtfsStopTable>;
+export type NewStop = Insertable<GtfsStopTable>;
+export type StopUpdate = Updateable<GtfsStopTable>;

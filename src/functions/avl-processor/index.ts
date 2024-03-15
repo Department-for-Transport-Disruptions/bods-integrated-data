@@ -43,7 +43,7 @@ const parseXml = async (xml: string) => {
 export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
     const data = await getS3Object({
         Bucket: record.s3.bucket.name,
-        Key: decodeURIComponent(record.s3.object.key.replace(/\+/g, " ")),
+        Key: record.s3.object.key,
     });
 
     const body = data.Body;
@@ -55,9 +55,9 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<D
 };
 
 export const handler = async (event: SQSEvent) => {
-    try {
-        const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
+    try {
         logger.info(`Starting processing of SIRI-VM. Number of records to process: ${event.Records.length}`);
 
         await Promise.all(
@@ -74,10 +74,10 @@ export const handler = async (event: SQSEvent) => {
     } catch (e) {
         if (e instanceof Error) {
             logger.error("AVL Processor has failed", e);
-
-            throw e;
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };
