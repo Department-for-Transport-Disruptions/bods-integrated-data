@@ -8,7 +8,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("name", "text")
         .addColumn("url", "text")
         .addColumn("phone", "text")
-        .addColumn("noc", "text")
+        .addColumn("noc", "text", (col) => col.unique())
         .execute();
 }
 

@@ -144,7 +144,6 @@ module "integrated_data_txc_retriever_function" {
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
   database_sg_id = var.db_sg_id
-  schedule       = "cron(30 2 * * ? *)"
 
   permissions = [{
     Action = [
@@ -160,7 +159,8 @@ module "integrated_data_txc_retriever_function" {
       Action = ["lambda:invokeAsync", "lambda:invokeFunction"],
       Effect = "Allow",
       Resource = [
-        module.integrated_data_bods_txc_retriever_function.function_arn
+        module.integrated_data_bods_txc_retriever_function.function_arn,
+        module.integrated_data_tnds_txc_retriever_function.function_arn
       ]
   }]
 

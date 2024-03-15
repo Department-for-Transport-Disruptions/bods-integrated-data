@@ -21,8 +21,6 @@ export const handler = async (event: S3Event) => {
         object: { key },
     } = event.Records[0].s3;
 
-    const objectKey = decodeURIComponent(key.replace(/\+/g, " "));
-
     logger.info("event", event);
 
     try {
@@ -32,13 +30,13 @@ export const handler = async (event: S3Event) => {
             throw new Error("Missing env vars - UNZIPPED_BUCKET_NAME must be set");
         }
 
-        if (!bucketName || !objectKey) {
+        if (!bucketName || !key) {
             throw new Error("Bucket name or object key not in event");
         }
 
         const object = await getS3Object({
             Bucket: bucketName,
-            Key: decodeURIComponent(objectKey),
+            Key: key,
         });
 
         if (!object.Body || !(object.Body instanceof Readable)) {
@@ -69,7 +67,7 @@ export const handler = async (event: S3Event) => {
                 } else if (fileName.endsWith(".xml")) {
                     upload = startS3Upload(
                         unzippedBucketName,
-                        `${getFilePath(objectKey)}${fileName}`,
+                        `${getFilePath(key)}${fileName}`,
                         entry,
                         "application/xml",
                     );
@@ -85,7 +83,7 @@ export const handler = async (event: S3Event) => {
         await Promise.all(promises);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`Error unzipping file at s3://${bucketName}/${objectKey}`, e);
+            logger.error(`Error unzipping file at s3://${bucketName}/${key}`, e);
         }
 
         throw e;
