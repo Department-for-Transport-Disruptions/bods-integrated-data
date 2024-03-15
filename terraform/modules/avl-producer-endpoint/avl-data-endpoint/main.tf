@@ -33,7 +33,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
 
   environment   = var.environment
   function_name = "integrated-data-bods-avl-data-endpoint"
-  zip_path      = "${path.module}/../../../src/functions/dist/avl-data-endpoint.zip"
+  zip_path      = "${path.module}/../../../../src/functions/dist/avl-data-endpoint.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 120
