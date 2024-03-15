@@ -2,6 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import { putS3Object, getDate } from "@bods-integrated-data/shared";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { validate } from "fast-xml-parser";
+import { ClientError } from "./errors";
 
 export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, subscriptionId: string) => {
     const currentTime = getDate();
@@ -17,7 +18,9 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, 
             ContentType: "application/xml",
             Body: xml,
         });
-    } else throw new Error("Invalid XML provided.");
+    } else {
+        throw new ClientError();
+    }
 };
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
@@ -47,9 +50,15 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             statusCode: 200,
         };
     } catch (e) {
+        if (e instanceof ClientError) {
+            logger.warn("Invalid XML provided.", e);
+            return { statusCode: 400 };
+        }
+
         if (e instanceof Error) {
             logger.error("There was a problem with the Data endpoint", e);
         }
+
         throw e;
     }
 };

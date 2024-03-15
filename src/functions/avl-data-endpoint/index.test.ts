@@ -32,7 +32,9 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
-        await handler(mockEvent);
+
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
+
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Body: `${testSiri}`,
@@ -41,6 +43,7 @@ describe("AVL-data-endpoint", () => {
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z`,
         });
     });
+
     it("Should throw an error if the body is empty", async () => {
         const mockEvent = {
             body: null,
@@ -48,9 +51,10 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
-        await expect(async () => await handler(mockEvent)).rejects.toThrowError("No body sent with event");
+        await expect(handler(mockEvent)).rejects.toThrowError("No body sent with event");
         expect(s3.putS3Object).not.toBeCalled();
     });
+
     it("Should throw an error if invalid XML is parsed", async () => {
         const mockEvent = {
             body: "abc",
@@ -58,7 +62,8 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
-        await expect(async () => await handler(mockEvent)).rejects.toThrowError("Not a valid XML");
+
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 400 });
         expect(s3.putS3Object).not.toBeCalled();
     });
 });

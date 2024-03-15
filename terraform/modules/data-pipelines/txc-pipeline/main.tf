@@ -121,7 +121,7 @@ module "integrated_data_tnds_txc_retriever_function" {
     ],
     Effect = "Allow",
     Resource = [
-      "${aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn}"
+      aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
     ]
   }]
 
@@ -144,7 +144,6 @@ module "integrated_data_txc_retriever_function" {
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
   database_sg_id = var.db_sg_id
-  schedule       = "cron(30 2 * * ? *)"
 
   permissions = [{
     Action = [

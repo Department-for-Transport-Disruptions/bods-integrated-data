@@ -1,11 +1,15 @@
 /* eslint-disable import/no-named-as-default-member */
 import dayjs, { Dayjs, ManipulateType } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { RouteType } from "./database";
 
 dayjs.extend(timezone);
 dayjs.extend(utc);
+dayjs.extend(customParseFormat);
+
+dayjs.tz.setDefault("Europe/London");
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -44,3 +48,6 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
             return RouteType.Bus;
     }
 };
+
+export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
+export const getCurrentDate = () => dayjs();

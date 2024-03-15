@@ -1,17 +1,19 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
-import { txcSchema } from "@bods-integrated-data/shared/schema";
+import { Agency, Database, Route, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
+import { OperatingProfile, Service, VehicleJourney, txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertRoutes, insertStops } from "./data/database";
+import { insertAgencies, insertCalendar, insertRoutes, insertStops } from "./data/database";
+import { ServiceExpiredError } from "./errors";
+import { formatCalendar } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
     "RouteSection",
     "Route",
-    "Location",
     "JourneyPatternSection",
     "Operator",
     "Garage",
@@ -22,6 +24,86 @@ const txcArrayProperties = [
     "VehicleJourney",
     "VehicleJourneyTimingLink",
 ];
+
+const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
+    RegularDayType: {
+        DaysOfWeek: {
+            MondayToSunday: "",
+        },
+    },
+};
+
+const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
+    const operatingPeriod = service.OperatingPeriod;
+    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
+    const serviceOperatingProfile = service.OperatingProfile;
+
+    const operatingProfileToUse =
+        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
+
+    return formatCalendar(operatingProfileToUse, operatingPeriod);
+};
+
+const processVehicleJourneys = async (
+    dbClient: Kysely<Database>,
+    service: Service,
+    routes: Route[],
+    vehicleJourneys: VehicleJourney[],
+) => {
+    const serviceCalendar = service.OperatingProfile
+        ? await insertCalendar(dbClient, formatCalendar(service.OperatingProfile, service.OperatingPeriod))
+        : null;
+
+    const promises = routes.flatMap((route) => {
+        const vehicleJourneysForLine = vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
+
+        return vehicleJourneysForLine.flatMap(async (journey) => {
+            try {
+                let journeyCalendar = serviceCalendar;
+
+                if (journey.OperatingProfile || !serviceCalendar) {
+                    journeyCalendar = await insertCalendar(dbClient, getOperatingProfile(service, journey));
+                }
+
+                if (!journeyCalendar) {
+                    return null;
+                }
+            } catch (e) {
+                if (e instanceof ServiceExpiredError) {
+                    logger.warn(`Service expired: ${service.ServiceCode}`);
+                }
+
+                return null;
+            }
+        });
+    });
+
+    await Promise.all(promises);
+};
+
+const processServices = (
+    dbClient: Kysely<Database>,
+    services: Service[],
+    vehicleJourneys: VehicleJourney[],
+    agencyData: Agency[],
+) => {
+    const promises = services.flatMap(async (service) => {
+        const routeData = await insertRoutes(dbClient, service, agencyData);
+
+        if (!routeData) {
+            logger.warn("No route data found for service", {
+                service: service.ServiceCode,
+                operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        await processVehicleJourneys(dbClient, service, routeData, vehicleJourneys);
+    });
+
+    return Promise.all(promises);
+};
 
 const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
@@ -58,22 +140,25 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 
 export const handler = async (event: S3Event) => {
     const { bucket, object } = event.Records[0].s3;
+    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
-
         logger.info(`Starting txc processor for file: ${object.key}`);
 
         const txcData = await getAndParseTxcData(bucket.name, object.key);
 
-        const agencyData = await insertAgencies(dbClient, txcData.TransXChange.Operators.Operator);
-        logger.info("Agency data", agencyData);
+        const { TransXChange } = txcData;
 
-        const routeData = await insertRoutes(dbClient, txcData.TransXChange.Services.Service, agencyData);
-        logger.info("Route data", routeData);
+        const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
-        const stopData = await insertStops(dbClient, txcData.TransXChange.StopPoints.AnnotatedStopPointRef);
-        logger.info("Stop data", stopData);
+        await insertStops(dbClient, txcData.TransXChange.StopPoints.AnnotatedStopPointRef);
+
+        await processServices(
+            dbClient,
+            TransXChange.Services.Service,
+            TransXChange.VehicleJourneys.VehicleJourney,
+            agencyData,
+        );
 
         logger.info("TXC processor successful");
     } catch (e) {
@@ -82,5 +167,7 @@ export const handler = async (event: S3Event) => {
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };
