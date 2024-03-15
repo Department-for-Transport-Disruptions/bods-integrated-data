@@ -3,13 +3,8 @@ variable "environment" {
   description = "Environment"
 }
 
-
-variable "ok_topic_arn" {
+variable "bucket_arn" {
   type        = string
-  description = "ARN of the SNS topic to use for ok notifications"
+  description = "The ARN of the bucket to put unprocessed SIRI-VM files into."
 }
 
-variable "alarm_topic_arn" {
-  type        = string
-  description = "ARN of the SNS topic to use for alarm notifications"
-}
