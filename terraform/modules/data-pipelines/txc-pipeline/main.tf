@@ -121,7 +121,7 @@ module "integrated_data_tnds_txc_retriever_function" {
     ],
     Effect = "Allow",
     Resource = [
-      "${aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn}"
+      aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
     ]
   }]
 
