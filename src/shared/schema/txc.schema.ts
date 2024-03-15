@@ -17,20 +17,24 @@ export type OperatingPeriod = z.infer<typeof operatingPeriodSchema>;
 
 export const operatingProfileSchema = z.object({
     RegularDayType: z.object({
-        DaysOfWeek: z.object({
-            Monday: z.string().optional(),
-            Tuesday: z.string().optional(),
-            Wednesday: z.string().optional(),
-            Thursday: z.string().optional(),
-            Friday: z.string().optional(),
-            Saturday: z.string().optional(),
-            Sunday: z.string().optional(),
-            MondayToFriday: z.string().optional(),
-            MondayToSaturday: z.string().optional(),
-            MondayToSunday: z.string().optional(),
-            NotSaturday: z.string().optional(),
-            Weekend: z.string().optional(),
-        }),
+        DaysOfWeek: z
+            .object({
+                Monday: z.literal("").optional(),
+                Tuesday: z.literal("").optional(),
+                Wednesday: z.literal("").optional(),
+                Thursday: z.literal("").optional(),
+                Friday: z.literal("").optional(),
+                Saturday: z.literal("").optional(),
+                Sunday: z.literal("").optional(),
+                MondayToFriday: z.literal("").optional(),
+                MondayToSaturday: z.literal("").optional(),
+                MondayToSunday: z.literal("").optional(),
+                NotSaturday: z.literal("").optional(),
+                Weekend: z.literal("").optional(),
+            })
+            .or(z.literal(""))
+            .optional(),
+        HolidaysOnly: z.literal("").optional(),
     }),
 });
 

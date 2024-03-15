@@ -5,6 +5,7 @@ import {
     LocationType,
     NewRoute,
     NewShape,
+    NewStop,
     getRouteTypeFromServiceMode,
     notEmpty,
 } from "@bods-integrated-data/shared";
@@ -170,14 +171,18 @@ export const insertShapes = async (
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) => {
     const platformCodes = ["BCS", "PLT", "FBT"];
-    const stopsPromises = stops.map(async (stop) => {
-        const naptanStop = await dbClient
-            .selectFrom("naptan_stop_new")
-            .selectAll()
-            .where("atco_code", "=", stop.StopPointRef)
-            .executeTakeFirst();
+    const atcoCodes = stops.map((stop) => stop.StopPointRef);
 
-        const newStop = {
+    const naptanStops = await dbClient
+        .selectFrom("naptan_stop_new")
+        .selectAll()
+        .where("atco_code", "in", atcoCodes)
+        .execute();
+
+    const stopsToInsert = stops.map((stop): NewStop => {
+        const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
+
+        return {
             id: stop.StopPointRef,
             wheelchair_boarding: 0,
             parent_station: "",
@@ -203,17 +208,14 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
                       platform_code: "",
                   }),
         };
-
-        return dbClient
-            .insertInto("stop_new")
-            .values(newStop)
-            .onConflict((oc) => oc.column("id").doUpdateSet(newStop))
-            .returningAll()
-            .executeTakeFirst();
     });
 
-    const stopData = await Promise.all(stopsPromises);
-    return stopData.filter(notEmpty);
+    await dbClient
+        .insertInto("stop_new")
+        .values(stopsToInsert)
+        .onConflict((oc) => oc.column("id").doNothing())
+        .returningAll()
+        .executeTakeFirst();
 };
 
 const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {

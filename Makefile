@@ -110,5 +110,8 @@ run-local-bods-txc-processor:
 
 # AVL
 
+run-local-avl-subscriber:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"https://mock-data-producer.com\",\"description\":\"description\",\"shortDescription\":\"shortDescription\"\}' }).catch(e => console.error(e))"
+
 run-local-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
