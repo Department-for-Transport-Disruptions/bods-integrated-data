@@ -3,14 +3,23 @@ import {
     Agency,
     Database,
     LocationType,
-    NewCalendar,
     NewRoute,
     NewShape,
     getRouteTypeFromServiceMode,
     notEmpty,
 } from "@bods-integrated-data/shared";
-import { Operator, RouteSection, Service, TxcStop } from "@bods-integrated-data/shared/schema";
+import {
+    Operator,
+    TxcRouteSection,
+    Service,
+    TxcStop,
+    VehicleJourney,
+    OperatingProfile,
+    TxcRoute,
+} from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
+import { ServiceExpiredError } from "../errors";
+import { formatCalendar } from "../utils";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -40,8 +49,37 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
     return agencyData.filter(notEmpty);
 };
 
-export const insertCalendar = async (dbClient: Kysely<Database>, calendar: NewCalendar) =>
-    dbClient.insertInto("calendar_new").values(calendar).returningAll().executeTakeFirst();
+export const insertCalendars = async (
+    dbClient: Kysely<Database>,
+    service: Service,
+    vehicleJourneys: VehicleJourney[],
+) => {
+    const promises = vehicleJourneys.flatMap(async (journey) => {
+        try {
+            const calendar = getOperatingProfile(service, journey);
+
+            const journeyCalendar = await dbClient
+                .insertInto("calendar_new")
+                .values(calendar)
+                .returningAll()
+                .executeTakeFirst();
+
+            if (!journeyCalendar) {
+                return null;
+            }
+        } catch (e) {
+            if (e instanceof ServiceExpiredError) {
+                logger.warn(`Service expired: ${service.ServiceCode}`);
+            }
+
+            return null;
+        }
+    });
+
+    const calendarData = await Promise.all(promises);
+
+    return calendarData.filter(notEmpty);
+};
 
 export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
     const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
@@ -83,26 +121,50 @@ export const insertRoutes = async (dbClient: Kysely<Database>, service: Service,
     return routeData.filter(notEmpty);
 };
 
-export const insertShapes = async (dbClient: Kysely<Database>, routeSections: RouteSection[]) => {
-    let current_pt_sequence = 0;
+export const insertShapes = async (
+    dbClient: Kysely<Database>,
+    services: Service[],
+    routes: TxcRoute[],
+    routeSections: TxcRouteSection[],
+    vehicleJourneys: VehicleJourney[],
+) => {
+    const shapes = vehicleJourneys.flatMap<NewShape>((journey) => {
+        const service = services.find((s) => s.StandardService.JourneyPattern["@_id"] === journey.JourneyPatternRef);
 
-    const shapePromises = routeSections.flatMap((routeSection) => {
-        return routeSection.RouteLink.Track.Mapping.Location.map(async (location) => {
-            const newShape: NewShape = {
+        if (!service) {
+            logger.warn(`Unable to find service with journey pattern ref: ${journey.JourneyPatternRef}`);
+            return [];
+        }
+
+        const routeRef = service.StandardService.JourneyPattern.RouteRef;
+        const txcRoute = routes.find((r) => r["@_id"] === routeRef);
+
+        if (!txcRoute) {
+            logger.warn(`Unable to find route with route ref: ${routeRef}`);
+            return [];
+        }
+
+        return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
+            const routeSection = routeSections.find((rs) => rs["@_id"] === routeSectionRef);
+
+            if (!routeSection) {
+                logger.warn(`Unable to find route section with route section ref: ${routeSectionRef}`);
+                return [];
+            }
+
+            let current_pt_sequence = 0;
+
+            return routeSection.RouteLink.Track.Mapping.Location.map<NewShape>((location) => ({
                 shape_id: routeSection.RouteLink["@_id"],
                 shape_pt_lat: location.Translation.Latitude,
                 shape_pt_lon: location.Translation.Longitude,
                 shape_pt_sequence: current_pt_sequence++,
                 shape_dist_traveled: 0,
-            };
-
-            return dbClient.insertInto("shape_new").values(newShape).returningAll().executeTakeFirst();
+            }));
         });
     });
 
-    const shapeData = await Promise.all(shapePromises);
-
-    return shapeData.filter(notEmpty);
+    await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
 };
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) => {
@@ -151,4 +213,23 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
 
     const stopData = await Promise.all(stopsPromises);
     return stopData.filter(notEmpty);
+};
+
+const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
+    const operatingPeriod = service.OperatingPeriod;
+    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
+    const serviceOperatingProfile = service.OperatingProfile;
+
+    const operatingProfileToUse =
+        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
+
+    return formatCalendar(operatingProfileToUse, operatingPeriod);
+};
+
+const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
+    RegularDayType: {
+        DaysOfWeek: {
+            MondayToSunday: "",
+        },
+    },
 };

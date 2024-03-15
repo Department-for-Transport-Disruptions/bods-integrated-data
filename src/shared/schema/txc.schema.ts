@@ -37,6 +37,7 @@ export const operatingProfileSchema = z.object({
 export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 
 export const routeSectionSchema = z.object({
+    "@_id": z.string(),
     RouteLink: z.object({
         "@_id": z.string(),
         Track: z.object({
@@ -54,7 +55,14 @@ export const routeSectionSchema = z.object({
     }),
 });
 
-export type RouteSection = z.infer<typeof routeSectionSchema>;
+export type TxcRouteSection = z.infer<typeof routeSectionSchema>;
+
+export const routeSchema = z.object({
+    "@_id": z.string(),
+    RouteSectionRef: z.array(z.string()),
+});
+
+export type TxcRoute = z.infer<typeof routeSchema>;
 
 export const serviceSchema = z.object({
     ServiceCode: z.string(),
@@ -70,6 +78,12 @@ export const serviceSchema = z.object({
     }),
     Mode: z.string().default("bus"),
     RegisteredOperatorRef: z.string(),
+    StandardService: z.object({
+        JourneyPattern: z.object({
+            "@_id": z.string(),
+            RouteRef: z.string(),
+        }),
+    }),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
@@ -79,6 +93,7 @@ export const vehicleJourneySchema = z.object({
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
     LineRef: z.string(),
+    JourneyPatternRef: z.string(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
@@ -103,6 +118,9 @@ export const txcSchema = z.object({
         }),
         RouteSections: z.object({
             RouteSection: z.array(routeSectionSchema),
+        }),
+        Routes: z.object({
+            Route: z.array(routeSchema),
         }),
         Services: z.object({
             Service: z.array(serviceSchema),
