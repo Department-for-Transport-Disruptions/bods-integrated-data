@@ -50,14 +50,20 @@ const processVehicleJourneys = async (
     routes: Route[],
     vehicleJourneys: VehicleJourney[],
 ) => {
+    const serviceCalendar = service.OperatingProfile
+        ? await insertCalendar(dbClient, formatCalendar(service.OperatingProfile, service.OperatingPeriod))
+        : null;
+
     const promises = routes.flatMap((route) => {
         const vehicleJourneysForLine = vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
 
         return vehicleJourneysForLine.flatMap(async (journey) => {
             try {
-                const calendar = getOperatingProfile(service, journey);
+                let journeyCalendar = serviceCalendar;
 
-                const journeyCalendar = await insertCalendar(dbClient, calendar);
+                if (journey.OperatingProfile || !serviceCalendar) {
+                    journeyCalendar = await insertCalendar(dbClient, getOperatingProfile(service, journey));
+                }
 
                 if (!journeyCalendar) {
                     return null;
