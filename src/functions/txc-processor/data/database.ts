@@ -129,20 +129,23 @@ export const insertShapes = async (
     vehicleJourneys: VehicleJourney[],
 ) => {
     const shapes = vehicleJourneys.flatMap<NewShape>((journey) => {
-        const service = services.find((s) => s.StandardService.JourneyPattern["@_id"] === journey.JourneyPatternRef);
+        const journeyPattern = services
+            .flatMap((s) => s.StandardService.JourneyPattern)
+            .find((journeyPattern) => journeyPattern["@_id"] === journey.JourneyPatternRef);
 
-        if (!service) {
-            logger.warn(`Unable to find service with journey pattern ref: ${journey.JourneyPatternRef}`);
+        if (!journeyPattern) {
+            logger.warn(`Unable to find journey pattern with journey pattern ref: ${journey.JourneyPatternRef}`);
             return [];
         }
 
-        const routeRef = service.StandardService.JourneyPattern.RouteRef;
-        const txcRoute = routes.find((r) => r["@_id"] === routeRef);
+        const txcRoute = routes.find((r) => r["@_id"] === journeyPattern.RouteRef);
 
         if (!txcRoute) {
-            logger.warn(`Unable to find route with route ref: ${routeRef}`);
+            logger.warn(`Unable to find route with route ref: ${journeyPattern.RouteRef}`);
             return [];
         }
+
+        let current_pt_sequence = 0;
 
         return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
             const routeSection = routeSections.find((rs) => rs["@_id"] === routeSectionRef);
@@ -152,10 +155,8 @@ export const insertShapes = async (
                 return [];
             }
 
-            let current_pt_sequence = 0;
-
             return routeSection.RouteLink.Track.Mapping.Location.map<NewShape>((location) => ({
-                shape_id: routeSection.RouteLink["@_id"],
+                shape_id: txcRoute["@_id"],
                 shape_pt_lat: location.Translation.Latitude,
                 shape_pt_lon: location.Translation.Longitude,
                 shape_pt_sequence: current_pt_sequence++,

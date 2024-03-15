@@ -18,7 +18,6 @@ const txcArrayProperties = [
     "Service",
     "Line",
     "JourneyPattern",
-    "StandardService",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
 ];

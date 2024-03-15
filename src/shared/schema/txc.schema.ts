@@ -39,7 +39,6 @@ export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
     RouteLink: z.object({
-        "@_id": z.string(),
         Track: z.object({
             Mapping: z.object({
                 Location: z.array(
@@ -79,10 +78,12 @@ export const serviceSchema = z.object({
     Mode: z.string().default("bus"),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
-        JourneyPattern: z.object({
-            "@_id": z.string(),
-            RouteRef: z.string(),
-        }),
+        JourneyPattern: z.array(
+            z.object({
+                "@_id": z.string(),
+                RouteRef: z.string(),
+            }),
+        ),
     }),
 });
 
