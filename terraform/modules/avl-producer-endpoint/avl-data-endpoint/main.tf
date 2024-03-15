@@ -29,7 +29,7 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_endpoint_s3_bucket
 }
 
 module "integrated_data_bods_avl_data_endpoint_function" {
-  source = "../shared/lambda-function"
+  source = "../../shared/lambda-function"
 
   environment   = var.environment
   function_name = "integrated-data-bods-avl-data-endpoint"
