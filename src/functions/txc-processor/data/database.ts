@@ -55,15 +55,25 @@ export const insertCalendars = async (
     service: Service,
     vehicleJourneys: VehicleJourney[],
 ) => {
+    const serviceCalendar = service.OperatingProfile
+        ? await dbClient
+              .insertInto("calendar_new")
+              .values(formatCalendar(service.OperatingProfile, service.OperatingPeriod))
+              .returningAll()
+              .executeTakeFirst()
+        : null;
+
     const promises = vehicleJourneys.flatMap(async (journey) => {
         try {
-            const calendar = getOperatingProfile(service, journey);
+            let journeyCalendar = serviceCalendar;
 
-            const journeyCalendar = await dbClient
-                .insertInto("calendar_new")
-                .values(calendar)
-                .returningAll()
-                .executeTakeFirst();
+            if (journey.OperatingProfile || !serviceCalendar) {
+                journeyCalendar = await dbClient
+                    .insertInto("calendar_new")
+                    .values(getOperatingProfile(service, journey))
+                    .returningAll()
+                    .executeTakeFirst();
+            }
 
             if (!journeyCalendar) {
                 return null;
