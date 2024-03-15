@@ -147,7 +147,7 @@ module "integrated_data_avl_subscription_table" {
 }
 
 module "integrated_data_avl_subscriber" {
-  source = "../modules/data-pipelines/avl-subscriber"
+  source = "../modules/avl-producer-api/avl-subscriber"
 
   environment        = local.env
 }
