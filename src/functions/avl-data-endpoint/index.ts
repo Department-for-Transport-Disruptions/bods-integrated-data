@@ -7,24 +7,22 @@ import { randomUUID } from "crypto";
 export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string) => {
     const currentTime = getDate();
     const result = parser.validate(xml, {
-        allowBooleanAttributes: true
+        allowBooleanAttributes: true,
     });
-    console.log(result)
     if (result === true) {
         logger.info("Valid XML");
 
         //  TODO this needs to be sorted after AVL subscriber
 
-        const subId = randomUUID()
+        const subId = randomUUID();
         await putS3Object({
             Bucket: bucketName,
             Key: `${subId}/${currentTime.toISOString()}`,
             ContentType: "application/xml",
             Body: xml,
         });
-        logger.info("Successfully uploaded SIRI-VM to S3")
-    }
-    else throw new Error("Not a valid XML");
+        logger.info("Successfully uploaded SIRI-VM to S3");
+    } else throw new Error("Not a valid XML");
 };
 
 export const handler = async (event: APIGatewayEvent) => {
@@ -38,13 +36,11 @@ export const handler = async (event: APIGatewayEvent) => {
         logger.info("Starting Data Endpoint");
 
         if (!event.body) {
-
             throw new Error("No body sent with event");
         }
         await validateXmlAndUploadToS3(event.body, bucketName);
     } catch (e) {
         if (e instanceof Error) {
-
             logger.error("There was a problem with the Data endpoint", e);
         }
         throw e;
