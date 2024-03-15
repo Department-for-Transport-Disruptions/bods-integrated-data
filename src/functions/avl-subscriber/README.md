@@ -14,7 +14,7 @@ On BODS a data producer can register an AVL Feed. They will go through the follo
 
 ![avl-subscriber-user-flow.png](avl-subscriber-user-flow.png)
 
-When a user follows submits their feed, it will be sent to this subscribe endpoint and will receive the following
+When a user submits their feed, it will be sent to this subscribe endpoint and will receive the following
 information:
 
 - URL for the data producer endpoint

@@ -1,7 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 
-const ddbDocClient = DynamoDBDocumentClient.from(
+const dynamoDbDocClient = DynamoDBDocumentClient.from(
     new DynamoDBClient({
         region: "eu-west-2",
         ...(process.env.IS_LOCAL === "true"
@@ -13,7 +13,7 @@ const ddbDocClient = DynamoDBDocumentClient.from(
 );
 
 export const putDynamoItem = async (tableName: string, pk: string, sk: string, tableItems: Record<string, unknown>) => {
-    await ddbDocClient.send(
+    await dynamoDbDocClient.send(
         new PutCommand({
             TableName: tableName,
             Item: {

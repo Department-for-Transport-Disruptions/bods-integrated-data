@@ -8,7 +8,7 @@ AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets migrate-local-db-to-latest create-dynamodb-table
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table
 
 # Dev
 
