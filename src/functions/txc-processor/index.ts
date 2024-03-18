@@ -23,6 +23,7 @@ const txcArrayProperties = [
     "StandardService",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
+    "OtherPublicHoliday",
 ];
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
@@ -65,15 +66,15 @@ const processVehicleJourneys = async (
                     journeyCalendar = await insertCalendar(dbClient, getOperatingProfile(service, journey));
                 }
 
-                if (!journeyCalendar) {
-                    return null;
-                }
+                return journeyCalendar;
             } catch (e) {
                 if (e instanceof ServiceExpiredError) {
                     logger.warn(`Service expired: ${service.ServiceCode}`);
+
+                    return null;
                 }
 
-                return null;
+                throw e;
             }
         });
     });

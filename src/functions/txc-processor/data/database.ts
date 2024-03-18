@@ -4,6 +4,7 @@ import {
     Database,
     LocationType,
     NewCalendar,
+    NewCalendarDate,
     NewRoute,
     NewStop,
     getRouteTypeFromServiceMode,
@@ -11,6 +12,7 @@ import {
 } from "@bods-integrated-data/shared";
 import { Operator, Service, TxcStop } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
+import { hasher } from "node-object-hash";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -40,8 +42,40 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
     return agencyData.filter(notEmpty);
 };
 
-export const insertCalendar = async (dbClient: Kysely<Database>, calendar: NewCalendar) =>
-    dbClient.insertInto("calendar_new").values(calendar).returningAll().executeTakeFirst();
+export const insertCalendar = async (
+    dbClient: Kysely<Database>,
+    calendarData: {
+        calendar: NewCalendar;
+        calendarDates: NewCalendarDate[];
+    },
+) => {
+    const calendarHash = hasher().hash(calendarData);
+
+    const insertedCalendar = await dbClient
+        .insertInto("calendar_new")
+        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
+        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
+        .returningAll()
+        .executeTakeFirst();
+
+    if (!insertedCalendar?.id) {
+        throw new Error("Calendar failed to insert");
+    }
+
+    await dbClient
+        .insertInto("calendar_date_new")
+        .values(
+            calendarData.calendarDates.map((date) => ({
+                date: date.date,
+                exception_type: date.exception_type,
+                service_id: insertedCalendar.id,
+            })),
+        )
+        .onConflict((oc) => oc.doNothing())
+        .execute();
+
+    return insertedCalendar;
+};
 
 export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
     const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);

@@ -124,3 +124,8 @@ run-local-avl-subscriber:
 
 run-local-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
+
+# Dates
+
+get-bank-holiday-dates:
+	curl https://www.gov.uk/bank-holidays.json --output src/shared/uk-bank-holidays.json
