@@ -5,4 +5,5 @@ export type VehicleJourneyMapping = {
     routeId: number;
     serviceId: number;
     shapeId: string;
+    tripId: number;
 };

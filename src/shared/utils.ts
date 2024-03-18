@@ -1,11 +1,13 @@
 /* eslint-disable import/no-named-as-default-member */
 import dayjs, { Dayjs, ManipulateType } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import duration from "dayjs/plugin/duration";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { VehicleType } from "./schema";
 
+dayjs.extend(duration);
 dayjs.extend(timezone);
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -52,6 +54,7 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
 
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
 export const getCurrentDate = () => dayjs();
+export const getDurationInSeconds = (duration: string) => dayjs.duration(duration).asSeconds();
 
 export const getWheelchairAccessibilityFromVehicleType = (vehicleType: VehicleType) => {
     const hasWheelchairEquipment = !!vehicleType.VehicleEquipment.WheelchairEquipment;

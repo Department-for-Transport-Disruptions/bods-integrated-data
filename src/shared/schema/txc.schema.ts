@@ -109,7 +109,18 @@ export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 
 export const vehicleJourneySchema = z.object({
     VehicleJourneyCode: z.string(),
+    DepartureTime: z.string(),
     DestinationDisplay: z.string(),
+    Frequency: z
+        .object({
+            EndTime: z.string(),
+            Interval: z
+                .object({
+                    ScheduledFrequency: z.string(),
+                })
+                .optional(),
+        })
+        .optional(),
     Operational: z.object({
         Block: z.object({
             BlockNumber: z.coerce.number(),

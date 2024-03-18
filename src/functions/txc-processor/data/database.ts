@@ -3,11 +3,14 @@ import {
     Agency,
     Database,
     LocationType,
+    NewFrequency,
     NewRoute,
     NewShape,
     NewStop,
     NewTrip,
     Route,
+    ServiceType,
+    getDurationInSeconds,
     getRouteTypeFromServiceMode,
     getWheelchairAccessibilityFromVehicleType,
     notEmpty,
@@ -91,6 +94,39 @@ export const insertCalendars = async (
     const calendarData = await Promise.all(promises);
 
     return calendarData.filter(notEmpty);
+};
+
+export const insertFrequencies = async (
+    dbClient: Kysely<Database>,
+    vehicleJourneyMappings: VehicleJourneyMapping[],
+) => {
+    const promises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+        const { vehicleJourney } = vehicleJourneyMapping;
+        let headwaySecs = 0;
+        let exactTimes = ServiceType.ScheduleBased;
+
+        if (vehicleJourney.Frequency?.Interval?.ScheduledFrequency) {
+            headwaySecs = getDurationInSeconds(vehicleJourney.Frequency.Interval.ScheduledFrequency);
+
+            if (vehicleJourney.Frequency?.EndTime) {
+                exactTimes = ServiceType.FrequencyBased;
+            }
+        }
+
+        const newFrequency: NewFrequency = {
+            trip_id: vehicleJourneyMapping.tripId,
+            start_time: vehicleJourney.DepartureTime,
+            end_time: vehicleJourney.Frequency?.EndTime || "",
+            headway_secs: headwaySecs,
+            exact_times: exactTimes,
+        };
+
+        return dbClient.insertInto("frequencies_new").values(newFrequency).returningAll().executeTakeFirst();
+    });
+
+    const tripData = await Promise.all(promises);
+
+    return tripData.filter(notEmpty);
 };
 
 export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {

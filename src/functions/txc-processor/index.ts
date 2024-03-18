@@ -5,7 +5,15 @@ import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendars, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
+import {
+    insertAgencies,
+    insertCalendars,
+    insertFrequencies,
+    insertRoutes,
+    insertShapes,
+    insertStops,
+    insertTrips,
+} from "./data/database";
 import { VehicleJourneyMapping } from "./types";
 
 const txcArrayProperties = [
@@ -53,6 +61,7 @@ const processServices = (
                 routeId: 0,
                 serviceId: 0,
                 shapeId: "",
+                tripId: 0,
             };
 
             const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
@@ -68,7 +77,19 @@ const processServices = (
 
         await insertCalendars(dbClient, service, vehicleJourneyMappings);
         await insertShapes(dbClient, services, txcRoutes, txcRouteSections, vehicleJourneyMappings);
-        await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
+        const tripData = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
+
+        vehicleJourneyMappings.forEach((vehicleJourneyMapping) => {
+            const trip = tripData.find((t) => t.route_id === vehicleJourneyMapping.routeId);
+
+            if (trip) {
+                vehicleJourneyMapping.tripId = trip.id;
+            } else {
+                logger.warn(`Unable to find trip with route ID: ${vehicleJourneyMapping.routeId}`);
+            }
+        });
+
+        await insertFrequencies(dbClient, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
