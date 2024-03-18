@@ -11,15 +11,14 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, 
     });
     if (result !== true) {
         throw new ClientError();
-    } else {
-        logger.info("Valid XML");
-        await putS3Object({
-            Bucket: bucketName,
-            Key: `${subscriptionId}/${currentTime.toISOString()}`,
-            ContentType: "application/xml",
-            Body: xml,
-        });
     }
+    logger.info("Valid XML");
+    await putS3Object({
+        Bucket: bucketName,
+        Key: `${subscriptionId}/${currentTime.toISOString()}`,
+        ContentType: "application/xml",
+        Body: xml,
+    });
 };
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
