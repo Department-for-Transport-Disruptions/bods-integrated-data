@@ -47,7 +47,7 @@ const processServices = (
             return vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
         });
 
-        const vehicleJourneyMappings = vehicleJourneysForLine.map((vehicleJourney) => {
+        let vehicleJourneyMappings = vehicleJourneysForLine.map((vehicleJourney) => {
             const vehicleJourneyMapping: VehicleJourneyMapping = {
                 vehicleJourney,
                 routeId: 0,
@@ -66,7 +66,7 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        await insertCalendars(dbClient, service, vehicleJourneyMappings);
+        vehicleJourneyMappings = await insertCalendars(dbClient, service, vehicleJourneyMappings);
         await insertShapes(dbClient, services, routes, routeSections, vehicleJourneyMappings);
     });
 

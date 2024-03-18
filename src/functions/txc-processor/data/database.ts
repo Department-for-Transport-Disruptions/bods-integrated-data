@@ -57,6 +57,8 @@ export const insertCalendars = async (
               .executeTakeFirst()
         : null;
 
+    const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
+
     const promises = vehicleJourneyMappings.flatMap(async (vehicleJourneyMapping, index) => {
         const journey = vehicleJourneyMapping.vehicleJourney;
 
@@ -72,7 +74,7 @@ export const insertCalendars = async (
             }
 
             if (journeyCalendar) {
-                vehicleJourneyMappings[index].serviceId = journeyCalendar?.id;
+                updatedVehicleJourneyMappings[index].serviceId = journeyCalendar?.id;
             }
 
             return journeyCalendar;
@@ -85,9 +87,9 @@ export const insertCalendars = async (
         }
     });
 
-    const calendarData = await Promise.all(promises);
+    await Promise.all(promises);
 
-    return calendarData.filter(notEmpty);
+    return updatedVehicleJourneyMappings;
 };
 
 export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
@@ -137,6 +139,8 @@ export const insertShapes = async (
     routeSections: TxcRouteSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
+    const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
+
     const shapes = vehicleJourneyMappings.flatMap<NewShape>((vehicleJourneyMapping, index) => {
         const journey = vehicleJourneyMapping.vehicleJourney;
 
@@ -157,7 +161,7 @@ export const insertShapes = async (
         }
 
         const shapeId = randomUUID();
-        vehicleJourneyMappings[index].shapeId = shapeId;
+        updatedVehicleJourneyMappings[index].shapeId = shapeId;
 
         let current_pt_sequence = 0;
 
@@ -180,6 +184,8 @@ export const insertShapes = async (
     });
 
     await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
+
+    return updatedVehicleJourneyMappings;
 };
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) => {
