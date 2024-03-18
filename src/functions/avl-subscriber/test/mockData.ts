@@ -5,6 +5,8 @@ export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
     dataProducerEndpoint: "https://mock-data-producer.com",
     description: "description",
     shortDescription: "shortDescription",
+    username: "test-user",
+    password: "dummy-password",
 };
 
 export const mockSubscribeEvent = {
