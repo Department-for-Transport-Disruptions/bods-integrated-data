@@ -6,6 +6,7 @@ import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 import { insertAgencies, insertCalendars, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
+import { VehicleJourneyMapping } from "./types";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -46,8 +47,27 @@ const processServices = (
             return vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
         });
 
-        await insertCalendars(dbClient, service, vehicleJourneysForLine);
-        await insertShapes(dbClient, services, txcRoutes, txcRouteSections, vehicleJourneysForLine);
+        const vehicleJourneyMappings = vehicleJourneysForLine.map((vehicleJourney) => {
+            const vehicleJourneyMapping: VehicleJourneyMapping = {
+                vehicleJourney,
+                routeId: 0,
+                serviceId: 0,
+                shapeId: "",
+            };
+
+            const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
+
+            if (route) {
+                vehicleJourneyMapping.routeId = route.id;
+            } else {
+                logger.warn(`Unable to find route with line ref: ${vehicleJourney.LineRef}`);
+            }
+
+            return vehicleJourneyMapping;
+        });
+
+        await insertCalendars(dbClient, service, vehicleJourneyMappings);
+        await insertShapes(dbClient, services, txcRoutes, txcRouteSections, vehicleJourneyMappings);
         await insertTrips(dbClient, services, txcRoutes, vehicleJourneysForLine, routeData);
     });
 

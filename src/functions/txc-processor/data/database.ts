@@ -17,13 +17,14 @@ import {
     TxcRouteSection,
     Service,
     TxcStop,
-    VehicleJourney,
-    OperatingProfile,
     TxcRoute,
+    VehicleJourney,
 } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
+import { randomUUID } from "crypto";
 import { ServiceExpiredError } from "../errors";
-import { formatCalendar } from "../utils";
+import { VehicleJourneyMapping } from "../types";
+import { formatCalendar, getOperatingProfile } from "../utils";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -56,7 +57,7 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
 export const insertCalendars = async (
     dbClient: Kysely<Database>,
     service: Service,
-    vehicleJourneys: VehicleJourney[],
+    vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
     const serviceCalendar = service.OperatingProfile
         ? await dbClient
@@ -66,7 +67,9 @@ export const insertCalendars = async (
               .executeTakeFirst()
         : null;
 
-    const promises = vehicleJourneys.flatMap(async (journey) => {
+    const promises = vehicleJourneyMappings.flatMap(async (vehicleJourneyMapping, index) => {
+        const journey = vehicleJourneyMapping.vehicleJourney;
+
         try {
             let journeyCalendar = serviceCalendar;
 
@@ -78,9 +81,11 @@ export const insertCalendars = async (
                     .executeTakeFirst();
             }
 
-            if (!journeyCalendar) {
-                return null;
+            if (journeyCalendar) {
+                vehicleJourneyMappings[index].serviceId = journeyCalendar?.id;
             }
+
+            return journeyCalendar;
         } catch (e) {
             if (e instanceof ServiceExpiredError) {
                 logger.warn(`Service expired: ${service.ServiceCode}`);
@@ -140,9 +145,11 @@ export const insertShapes = async (
     services: Service[],
     routes: TxcRoute[],
     routeSections: TxcRouteSection[],
-    vehicleJourneys: VehicleJourney[],
+    vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
-    const shapes = vehicleJourneys.flatMap<NewShape>((journey) => {
+    const shapes = vehicleJourneyMappings.flatMap<NewShape>((vehicleJourneyMapping, index) => {
+        const journey = vehicleJourneyMapping.vehicleJourney;
+
         const journeyPattern = services
             .flatMap((s) => s.StandardService.JourneyPattern)
             .find((journeyPattern) => journeyPattern["@_id"] === journey.JourneyPatternRef);
@@ -159,6 +166,9 @@ export const insertShapes = async (
             return [];
         }
 
+        const shapeId = randomUUID();
+        vehicleJourneyMappings[index].shapeId = shapeId;
+
         let current_pt_sequence = 0;
 
         return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
@@ -170,7 +180,7 @@ export const insertShapes = async (
             }
 
             return routeSection.RouteLink.Track.Mapping.Location.map<NewShape>((location) => ({
-                shape_id: txcRoute["@_id"],
+                shape_id: shapeId,
                 shape_pt_lat: location.Translation.Latitude,
                 shape_pt_lon: location.Translation.Longitude,
                 shape_pt_sequence: current_pt_sequence++,
@@ -278,23 +288,4 @@ export const insertTrips = async (
     const tripData = await Promise.all(promises);
 
     return tripData.filter(notEmpty);
-};
-
-const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
-    const operatingPeriod = service.OperatingPeriod;
-    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
-    const serviceOperatingProfile = service.OperatingProfile;
-
-    const operatingProfileToUse =
-        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
-
-    return formatCalendar(operatingProfileToUse, operatingPeriod);
-};
-
-const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
-    RegularDayType: {
-        DaysOfWeek: {
-            MondayToSunday: "",
-        },
-    },
 };
