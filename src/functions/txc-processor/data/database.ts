@@ -9,20 +9,12 @@ import {
     getRouteTypeFromServiceMode,
     notEmpty,
 } from "@bods-integrated-data/shared";
-import {
-    Operator,
-    TxcRouteSection,
-    Service,
-    TxcStop,
-    VehicleJourney,
-    OperatingProfile,
-    TxcRoute,
-} from "@bods-integrated-data/shared/schema";
+import { Operator, TxcRouteSection, Service, TxcStop, TxcRoute } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { randomUUID } from "crypto";
 import { ServiceExpiredError } from "../errors";
 import { VehicleJourneyMapping } from "../types";
-import { formatCalendar } from "../utils";
+import { formatCalendar, getOperatingProfile } from "../utils";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -237,23 +229,4 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         .onConflict((oc) => oc.column("id").doNothing())
         .returningAll()
         .executeTakeFirst();
-};
-
-const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
-    const operatingPeriod = service.OperatingPeriod;
-    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
-    const serviceOperatingProfile = service.OperatingProfile;
-
-    const operatingProfileToUse =
-        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
-
-    return formatCalendar(operatingProfileToUse, operatingPeriod);
-};
-
-const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
-    RegularDayType: {
-        DaysOfWeek: {
-            MondayToSunday: "",
-        },
-    },
 };
