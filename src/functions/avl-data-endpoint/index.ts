@@ -9,17 +9,16 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, 
     const result = validate(xml, {
         allowBooleanAttributes: true,
     });
-    if (result === true) {
+    if (result !== true) {
+        throw new ClientError();
+    } else {
         logger.info("Valid XML");
-
         await putS3Object({
             Bucket: bucketName,
             Key: `${subscriptionId}/${currentTime.toISOString()}`,
             ContentType: "application/xml",
             Body: xml,
         });
-    } else {
-        throw new ClientError();
     }
 };
 
