@@ -53,7 +53,11 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
 export const getCurrentDate = () => dayjs();
 
-export const getWheelchairAccessibilityFromVehicleType = (vehicleType: VehicleType) => {
+export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleType) => {
+    if (!vehicleType) {
+        return WheelchairAccessibility.NoAccessibilityInformation;
+    }
+
     const hasWheelchairEquipment = !!vehicleType.VehicleEquipment.WheelchairEquipment;
     const numberOfWheelChairAreas = vehicleType.VehicleEquipment.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
 

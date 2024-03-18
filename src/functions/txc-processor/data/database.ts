@@ -261,10 +261,10 @@ export const insertTrips = async (
         const newTrip: NewTrip = {
             route_id: vehicleJourneyMapping.routeId,
             service_id: vehicleJourneyMapping.serviceId,
-            block_id: vehicleJourney.Operational.Block.BlockNumber,
+            block_id: vehicleJourney.Operational?.Block?.BlockNumber || 0,
             shape_id: vehicleJourneyMapping.shapeId,
             trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
-            wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(vehicleJourney.Operational.VehicleType),
+            wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(vehicleJourney.Operational?.VehicleType),
             vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
         };
 
