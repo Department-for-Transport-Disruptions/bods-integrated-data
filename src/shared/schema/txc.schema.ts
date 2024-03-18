@@ -85,6 +85,7 @@ export const serviceSchema = z.object({
         JourneyPattern: z.array(
             z.object({
                 "@_id": z.string(),
+                DestinationDisplay: z.string(),
                 RouteRef: z.string(),
             }),
         ),
@@ -93,8 +94,28 @@ export const serviceSchema = z.object({
 
 export type Service = z.infer<typeof serviceSchema>;
 
+export const vehicleTypeSchema = z.object({
+    WheelChairAccessible: z.boolean().optional(),
+    VehicleEquipment: z.object({
+        WheelchairEquipment: z
+            .object({
+                NumberOfWheelChairAreas: z.coerce.number(),
+            })
+            .optional(),
+    }),
+});
+
+export type VehicleType = z.infer<typeof vehicleTypeSchema>;
+
 export const vehicleJourneySchema = z.object({
     VehicleJourneyCode: z.string(),
+    DestinationDisplay: z.string(),
+    Operational: z.object({
+        Block: z.object({
+            BlockNumber: z.coerce.number(),
+        }),
+        VehicleType: vehicleTypeSchema,
+    }),
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
     LineRef: z.string(),

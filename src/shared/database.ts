@@ -67,6 +67,8 @@ export interface Database {
     shape_new: GtfsShapeTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
+    trip: GtfsTripTable;
+    trip_new: GtfsTripTable;
 }
 
 export interface NaptanStopTable {
@@ -229,3 +231,24 @@ export interface GtfsStopTable {
 export type Stop = Selectable<GtfsStopTable>;
 export type NewStop = Insertable<GtfsStopTable>;
 export type StopUpdate = Updateable<GtfsStopTable>;
+
+export enum WheelchairAccessibility {
+    NoAccessibilityInformation = 0,
+    Accessible = 1,
+    NotAccessible = 2,
+}
+
+export interface GtfsTripTable {
+    id: Generated<number>;
+    route_id: number;
+    service_id: number;
+    block_id: number;
+    shape_id: string;
+    trip_headsign: string;
+    wheelchair_accessible: WheelchairAccessibility;
+    vehicle_journey_code: string;
+}
+
+export type Trip = Selectable<GtfsTripTable>;
+export type NewTrip = Insertable<GtfsTripTable>;
+export type TripUpdate = Updateable<GtfsTripTable>;

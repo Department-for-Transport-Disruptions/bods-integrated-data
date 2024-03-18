@@ -5,7 +5,7 @@ import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendars, insertRoutes, insertShapes, insertStops } from "./data/database";
+import { insertAgencies, insertCalendars, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -26,8 +26,8 @@ const processServices = (
     dbClient: Kysely<Database>,
     services: Service[],
     vehicleJourneys: VehicleJourney[],
-    routeSections: TxcRouteSection[],
-    routes: TxcRoute[],
+    txcRouteSections: TxcRouteSection[],
+    txcRoutes: TxcRoute[],
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -47,7 +47,8 @@ const processServices = (
         });
 
         await insertCalendars(dbClient, service, vehicleJourneysForLine);
-        await insertShapes(dbClient, services, routes, routeSections, vehicleJourneysForLine);
+        await insertShapes(dbClient, services, txcRoutes, txcRouteSections, vehicleJourneysForLine);
+        await insertTrips(dbClient, services, txcRoutes, vehicleJourneysForLine, routeData);
     });
 
     return Promise.all(promises);

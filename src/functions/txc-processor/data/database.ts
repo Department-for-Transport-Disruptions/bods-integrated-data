@@ -6,7 +6,10 @@ import {
     NewRoute,
     NewShape,
     NewStop,
+    NewTrip,
+    Route,
     getRouteTypeFromServiceMode,
+    getWheelchairAccessibilityFromVehicleType,
     notEmpty,
 } from "@bods-integrated-data/shared";
 import {
@@ -226,6 +229,55 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         .onConflict((oc) => oc.column("id").doNothing())
         .returningAll()
         .executeTakeFirst();
+};
+
+export const insertTrips = async (
+    dbClient: Kysely<Database>,
+    txcServices: Service[],
+    txcRoutes: TxcRoute[],
+    vehicleJourneys: VehicleJourney[],
+    routes: Route[],
+) => {
+    const promises = vehicleJourneys.map(async (vehicleJourney) => {
+        const route = routes.find((route) => route.line_id === vehicleJourney.LineRef);
+
+        if (!route) {
+            logger.warn(`Unable to find route with line ref: ${vehicleJourney.LineRef}`);
+            return null;
+        }
+
+        const journeyPattern = txcServices
+            .flatMap((s) => s.StandardService.JourneyPattern)
+            .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+
+        if (!journeyPattern) {
+            logger.warn(`Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`);
+            return null;
+        }
+
+        const txcRoute = txcRoutes.find((r) => r["@_id"] === journeyPattern.RouteRef);
+
+        if (!txcRoute) {
+            logger.warn(`Unable to find route with route ref: ${journeyPattern.RouteRef}`);
+            return null;
+        }
+
+        const newTrip: NewTrip = {
+            route_id: route.id,
+            service_id: 0, // todo
+            block_id: vehicleJourney.Operational.Block.BlockNumber,
+            shape_id: txcRoute["@_id"],
+            trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
+            wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(vehicleJourney.Operational.VehicleType),
+            vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
+        };
+
+        return dbClient.insertInto("trip_new").values(newTrip).returningAll().executeTakeFirst(); // todo: handle onConflict
+    });
+
+    const tripData = await Promise.all(promises);
+
+    return tripData.filter(notEmpty);
 };
 
 const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {

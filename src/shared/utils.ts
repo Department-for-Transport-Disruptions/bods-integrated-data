@@ -3,7 +3,8 @@ import dayjs, { Dayjs, ManipulateType } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { RouteType } from "./database";
+import { RouteType, WheelchairAccessibility } from "./database";
+import { VehicleType } from "./schema";
 
 dayjs.extend(timezone);
 dayjs.extend(utc);
@@ -51,3 +52,18 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
 
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
 export const getCurrentDate = () => dayjs();
+
+export const getWheelchairAccessibilityFromVehicleType = (vehicleType: VehicleType) => {
+    const hasWheelchairEquipment = !!vehicleType.VehicleEquipment.WheelchairEquipment;
+    const numberOfWheelChairAreas = vehicleType.VehicleEquipment.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
+
+    if (vehicleType.WheelChairAccessible || (hasWheelchairEquipment && numberOfWheelChairAreas > 0)) {
+        return WheelchairAccessibility.Accessible;
+    }
+
+    if (vehicleType.WheelChairAccessible === false || (hasWheelchairEquipment && numberOfWheelChairAreas === 0)) {
+        return WheelchairAccessibility.NotAccessible;
+    }
+
+    return WheelchairAccessibility.NoAccessibilityInformation;
+};
