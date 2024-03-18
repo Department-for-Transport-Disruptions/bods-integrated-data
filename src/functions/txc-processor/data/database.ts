@@ -19,6 +19,7 @@ import {
     TxcRoute,
 } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
+import { randomUUID } from "crypto";
 import { ServiceExpiredError } from "../errors";
 import { formatCalendar } from "../utils";
 
@@ -156,6 +157,7 @@ export const insertShapes = async (
             return [];
         }
 
+        const shape_id = randomUUID();
         let current_pt_sequence = 0;
 
         return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
@@ -167,7 +169,7 @@ export const insertShapes = async (
             }
 
             return routeSection.RouteLink.Track.Mapping.Location.map<NewShape>((location) => ({
-                shape_id: txcRoute["@_id"],
+                shape_id,
                 shape_pt_lat: location.Translation.Latitude,
                 shape_pt_lon: location.Translation.Longitude,
                 shape_pt_sequence: current_pt_sequence++,
