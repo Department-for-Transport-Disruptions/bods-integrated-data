@@ -268,7 +268,7 @@ export const insertTrips = async (
             vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
         };
 
-        return dbClient.insertInto("trip_new").values(newTrip).returningAll().executeTakeFirst(); // todo: handle onConflict
+        return dbClient.insertInto("trip_new").values(newTrip).returningAll().executeTakeFirst();
     });
 
     const tripData = await Promise.all(promises);
