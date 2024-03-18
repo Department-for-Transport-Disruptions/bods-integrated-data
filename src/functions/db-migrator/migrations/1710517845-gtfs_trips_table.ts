@@ -13,8 +13,6 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("wheelchair_accessible", "integer")
         .addColumn("vehicle_journey_code", "text")
         .execute();
-
-    await db.schema.createIndex("idx_trip_route_id").on("trip").column("route_id").execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
