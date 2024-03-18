@@ -3,12 +3,31 @@ BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
-TNDS_TXC_FTP_CREDS_ARN=""
+TNDS_TXC_FTP_CREDS_ARN="arn:aws:secretsmanager:eu-west-2:000000000000:secret:tnds_ftp-ThzXGc"
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
+LAMBDA_ZIP_LOCATION="src/functions/dist"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table
+
+dev: dev-containers-up
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-lambdas
+
+comma:= ,
+
+define create_lambda
+
+	awslocal lambda create-function \
+	 --function-name $(1) \
+	 --runtime nodejs20.x \
+	 --zip-file fileb://${LAMBDA_ZIP_LOCATION}/$(2).zip \
+	 --handler index.handler \
+	 --role arn:aws:iam::000000000000:role/lambda-role \
+	 --environment "Variables={$(subst ;,$(comma),$(3))}" \
+	 --timeout 600 \
+	 || true
+endef
 
 # Dev
 
@@ -97,6 +116,14 @@ run-local-naptan-uploader:
 
 run-full-local-naptan-pipeline: run-local-naptan-retriever run-local-naptan-uploader
 
+invoke-local-naptan-retriever:
+	awslocal lambda invoke --function-name naptan-retriever-local --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-naptan-uploader:
+	awslocal lambda invoke --function-name naptan-uploader-local --payload '{"Records":[{"s3":{"bucket":{"name":${NAPTAN_BUCKET_NAME}},"object":{"key":"Stops.csv"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+
+invoke-full-local-naptan-pipeline: invoke-local-naptan-retriever invoke-local-naptan-uploader
+
 # TXC
 
 run-local-bods-txc-retriever:
@@ -117,6 +144,26 @@ run-tnds-txc-unzipper:
 run-local-bods-txc-processor:
 	FILE=${FILE} IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_UNZIPPED_BUCKET_NAME}'},object:{key:'${FILE}'}}}]}).catch(e => console.error(e))"
 
+invoke-local-bods-txc-retriever:
+	awslocal lambda invoke --function-name bods-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-tnds-txc-retriever:
+	awslocal lambda invoke --function-name tnds-txc-retriever-local  --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-txc-retriever:
+	awslocal lambda invoke --function-name txc-retriever-local  --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-bods-txc-unzipper:
+	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-unzipper-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_ZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-tnds-txc-unzipper:
+	FILE=${FILE} awslocal lambda invoke --function-name tnds-txc-unzipper-local --payload '{"Records":[{"s3":{"bucket":{"name":${TNDS_TXC_ZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-bods-txc-processor:
+	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+
+
+
 # AVL
 
 run-local-avl-subscriber:
@@ -124,3 +171,65 @@ run-local-avl-subscriber:
 
 run-local-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
+
+invoke-local-avl-aggregate-siri-vm:
+	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
+
+# Lambdas
+create-lambdas: \
+	create-lambda-avl-aggregate-siri-vm \
+	create-lambda-naptan-retriever \
+	create-lambda-naptan-uploader \
+	create-lambda-bods-txc-retriever \
+	create-lambda-bods-txc-unzipper \
+	create-lambda-tnds-txc-retriever \
+	create-lambda-tnds-txc-unzipper \
+	create-lambda-txc-retriever \
+	create-lambda-txc-processor
+
+delete-lambdas: \
+	delete-lambda-avl-aggregate-siri-vm \
+	delete-lambda-naptan-retriever \
+	delete-lambda-naptan-uploader \
+	delete-lambda-bods-txc-retriever \
+	delete-lambda-bods-txc-unzipper \
+	delete-lambda-tnds-txc-retriever \
+	delete-lambda-tnds-txc-unzipper \
+	delete-lambda-txc-retriever \
+	delete-lambda-txc-processor
+
+remake-lambdas: delete-lambdas create-lambdas
+
+remake-lambda-%:
+	@$(MAKE) delete-lambda-$*
+	@$(MAKE) create-lambda-$*
+
+delete-lambda-%:
+	awslocal lambda delete-function --function-name $*-local || true
+
+create-lambda-avl-aggregate-siri-vm:
+	$(call create_lambda,avl-aggregate-siri-vm-local,avl-aggregate-siri-vm,IS_LOCAL=true;BUCKET_NAME=${AVL_SIRI_BUCKET_NAME})
+
+create-lambda-naptan-retriever:
+	$(call create_lambda,naptan-retriever-local,naptan-retriever,IS_LOCAL=true;BUCKET_NAME=${NAPTAN_BUCKET_NAME})
+
+create-lambda-naptan-uploader:
+	$(call create_lambda,naptan-uploader-local,naptan-uploader,IS_LOCAL=true)
+
+create-lambda-bods-txc-retriever:
+	$(call create_lambda,bods-txc-retriever-local,bods-txc-retriever,IS_LOCAL=true;TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME})
+
+create-lambda-bods-txc-unzipper:
+	$(call create_lambda,bods-txc-unzipper-local,unzipper,IS_LOCAL=true;UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME})
+
+create-lambda-tnds-txc-retriever:
+	$(call create_lambda,tnds-txc-retriever-local,tnds-txc-retriever,IS_LOCAL=true;TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME};TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN})
+
+create-lambda-tnds-txc-unzipper:
+	$(call create_lambda,tnds-txc-unzipper-local,unzipper,IS_LOCAL=true;UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME})
+
+create-lambda-txc-retriever:
+	$(call create_lambda,txc-retriever-local,txc-retriever,IS_LOCAL=true;BODS_TXC_RETRIEVER_FUNCTION_NAME=bods-txc-retriever-local;TNDS_TXC_RETRIEVER_FUNCTION_NAME=tnds-txc-retriever-local)
+
+create-lambda-txc-processor:
+	$(call create_lambda,txc-processor-local,txc-processor,IS_LOCAL=true)
