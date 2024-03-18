@@ -3,16 +3,13 @@ BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
-TNDS_TXC_FTP_CREDS_ARN="arn:aws:secretsmanager:eu-west-2:000000000000:secret:tnds_ftp-ThzXGc"
+TNDS_TXC_FTP_CREDS_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table
-
-dev: dev-containers-up
-setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-lambdas
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
 
 comma:= ,
 
