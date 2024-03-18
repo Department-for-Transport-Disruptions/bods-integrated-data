@@ -12,14 +12,7 @@ import {
     getWheelchairAccessibilityFromVehicleType,
     notEmpty,
 } from "@bods-integrated-data/shared";
-import {
-    Operator,
-    TxcRouteSection,
-    Service,
-    TxcStop,
-    TxcRoute,
-    VehicleJourney,
-} from "@bods-integrated-data/shared/schema";
+import { Operator, TxcRouteSection, Service, TxcStop, TxcRoute } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { randomUUID } from "crypto";
 import { ServiceExpiredError } from "../errors";
@@ -244,11 +237,11 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
 export const insertTrips = async (
     dbClient: Kysely<Database>,
     txcServices: Service[],
-    txcRoutes: TxcRoute[],
-    vehicleJourneys: VehicleJourney[],
+    vehicleJourneyMappings: VehicleJourneyMapping[],
     routes: Route[],
 ) => {
-    const promises = vehicleJourneys.map(async (vehicleJourney) => {
+    const promises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+        const { vehicleJourney } = vehicleJourneyMapping;
         const route = routes.find((route) => route.line_id === vehicleJourney.LineRef);
 
         if (!route) {
@@ -265,18 +258,11 @@ export const insertTrips = async (
             return null;
         }
 
-        const txcRoute = txcRoutes.find((r) => r["@_id"] === journeyPattern.RouteRef);
-
-        if (!txcRoute) {
-            logger.warn(`Unable to find route with route ref: ${journeyPattern.RouteRef}`);
-            return null;
-        }
-
         const newTrip: NewTrip = {
-            route_id: route.id,
-            service_id: 0, // todo
+            route_id: vehicleJourneyMapping.routeId,
+            service_id: vehicleJourneyMapping.serviceId,
             block_id: vehicleJourney.Operational.Block.BlockNumber,
-            shape_id: txcRoute["@_id"],
+            shape_id: vehicleJourneyMapping.shapeId,
             trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
             wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(vehicleJourney.Operational.VehicleType),
             vehicle_journey_code: vehicleJourney.VehicleJourneyCode,

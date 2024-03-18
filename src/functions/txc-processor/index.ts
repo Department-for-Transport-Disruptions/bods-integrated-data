@@ -68,7 +68,7 @@ const processServices = (
 
         await insertCalendars(dbClient, service, vehicleJourneyMappings);
         await insertShapes(dbClient, services, txcRoutes, txcRouteSections, vehicleJourneyMappings);
-        await insertTrips(dbClient, services, txcRoutes, vehicleJourneysForLine, routeData);
+        await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
     });
 
     return Promise.all(promises);
