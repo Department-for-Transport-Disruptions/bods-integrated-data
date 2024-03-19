@@ -1,12 +1,12 @@
 import { logger } from "@baselime/lambda-logger";
 import { putS3Object, getDate } from "@bods-integrated-data/shared";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
-import { validate } from "fast-xml-parser";
+import { XMLValidator } from "fast-xml-parser";
 import { ClientError } from "./errors";
 
 export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, subscriptionId: string) => {
     const currentTime = getDate();
-    const result = validate(xml, {
+    const result = XMLValidator.validate(xml, {
         allowBooleanAttributes: true,
     });
     if (result !== true) {

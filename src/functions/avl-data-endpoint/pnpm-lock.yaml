@@ -12,8 +12,8 @@ dependencies:
     specifier: workspace:^
     version: link:../../shared
   fast-xml-parser:
-    specifier: ^3.12.0
-    version: 3.21.1
+    specifier: ^4.1.2
+    version: 4.1.2
   mockdate:
     specifier: ^3.0.5
     version: 3.0.5
@@ -42,8 +42,8 @@ packages:
       undici-types: 5.26.5
     dev: true
 
-  /fast-xml-parser@3.21.1:
-    resolution: {integrity: sha512-FTFVjYoBOZTJekiUsawGsSYV9QL0A+zDYCRj7y34IO6Jg+2IMYEtQa+bbictpdpV8dHxXywqU7C0gRDEOFtBFg==}
+  /fast-xml-parser@4.1.2:
+    resolution: {integrity: sha512-CDYeykkle1LiA/uqQyNwYpFbyF6Axec6YapmpUP+/RHWIoR1zKjocdvNaTsxCxZzQ6v9MLXaSYm9Qq0thv0DHg==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
