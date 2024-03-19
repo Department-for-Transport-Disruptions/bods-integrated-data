@@ -56,4 +56,7 @@ resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
   }
 }
 
-
+output "endpoint" {
+  description = "HTTP API endpoint URL"
+  value       = aws_apigatewayv2_api.bods_integrated_data_api.api_endpoint
+}
