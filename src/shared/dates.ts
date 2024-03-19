@@ -42,9 +42,9 @@ const mappedScottishHolidays = [...ukBankHolidays["scotland"].events].map((holid
     return holiday;
 });
 
-const bankHolidays = [...ukBankHolidays["england-and-wales"].events, ...mappedScottishHolidays].sort((a, b) =>
-    a.date.localeCompare(b.date),
-);
+const bankHolidays = [...ukBankHolidays["england-and-wales"].events, ...mappedScottishHolidays]
+    .filter((value, index, self) => index === self.findIndex((t) => t.date === value.date && t.title === value.title))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
 const futureBankHolidays = bankHolidays.slice(
     bankHolidays.findIndex((holiday) => getDate(holiday.date).isSameOrAfter(getDate())) - 1,
@@ -57,14 +57,15 @@ export const getNextOccurrenceOfBankHoliday = (bankHoliday: BankHolidayName) => 
         throw new Error("Bank holiday not found");
     }
 
-    return getDate(date);
+    return dayjs.utc(date);
 };
 
 export const getNextOccurrenceOfDate = (dateOfMonth: number, month: number) => {
-    const date = getDate().set("date", dateOfMonth).set("month", month).set("hour", 5);
+    const currentDate = dayjs.utc();
+    const date = currentDate.set("date", dateOfMonth).set("month", month);
 
-    if (date.isBefore(getDate())) {
-        return date.set("year", date.get("year") + 1);
+    if (date.isBefore(currentDate)) {
+        return date.add(1, "year");
     }
 
     return date;
