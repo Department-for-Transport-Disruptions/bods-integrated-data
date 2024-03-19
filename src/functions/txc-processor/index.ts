@@ -1,6 +1,13 @@
 import { logger } from "@baselime/lambda-logger";
 import { Agency, Database, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
-import { TxcRouteSection, Service, VehicleJourney, txcSchema, TxcRoute } from "@bods-integrated-data/shared/schema";
+import {
+    TxcRouteSection,
+    Service,
+    VehicleJourney,
+    txcSchema,
+    TxcRoute,
+    TxcStop,
+} from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
@@ -32,6 +39,7 @@ const processServices = (
     vehicleJourneys: VehicleJourney[],
     routeSections: TxcRouteSection[],
     routes: TxcRoute[],
+    stops: TxcStop[],
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -70,7 +78,7 @@ const processServices = (
         });
 
         vehicleJourneyMappings = await insertCalendars(dbClient, service, vehicleJourneyMappings);
-        await insertShapes(dbClient, services, routes, routeSections, vehicleJourneyMappings);
+        await insertShapes(dbClient, services, routes, routeSections, stops, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -130,6 +138,7 @@ export const handler = async (event: S3Event) => {
             TransXChange.VehicleJourneys.VehicleJourney,
             TransXChange.RouteSections.RouteSection,
             TransXChange.Routes.Route,
+            TransXChange.StopPoints.AnnotatedStopPointRef,
             agencyData,
         );
 
