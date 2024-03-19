@@ -8,7 +8,7 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, 
     const currentTime = getDate();
     const result = XMLValidator.validate(xml, {
         allowBooleanAttributes: true,
-    }) as boolean;
+    });
     if (result !== true) {
         throw new ClientError();
     }
