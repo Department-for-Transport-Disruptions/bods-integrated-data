@@ -3,8 +3,14 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "lambda_arn" {
+variable "subscribe_lambda_arn" {
   type        = string
-  description = "Lambda ARN"
+  description = "Subscribe Lambda ARN"
 }
+
+variable "data_endpoint_lambda_arn" {
+  type        = string
+  description = "Data endpoint Lambda ARN"
+}
+
 
