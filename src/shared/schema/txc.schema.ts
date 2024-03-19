@@ -85,7 +85,7 @@ export const serviceSchema = z.object({
         JourneyPattern: z.array(
             z.object({
                 "@_id": z.string(),
-                DestinationDisplay: z.string(),
+                DestinationDisplay: z.string().optional(),
                 RouteRef: z.string(),
             }),
         ),
@@ -110,7 +110,7 @@ export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 export const vehicleJourneySchema = z.object({
     VehicleJourneyCode: z.string(),
     DepartureTime: z.string(),
-    DestinationDisplay: z.string(),
+    DestinationDisplay: z.string().optional(),
     Frequency: z
         .object({
             EndTime: z.string(),
@@ -121,12 +121,16 @@ export const vehicleJourneySchema = z.object({
                 .optional(),
         })
         .optional(),
-    Operational: z.object({
-        Block: z.object({
-            BlockNumber: z.coerce.number(),
-        }),
-        VehicleType: vehicleTypeSchema,
-    }),
+    Operational: z
+        .object({
+            Block: z
+                .object({
+                    BlockNumber: z.coerce.string(),
+                })
+                .optional(),
+            VehicleType: vehicleTypeSchema.optional(),
+        })
+        .optional(),
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
     LineRef: z.string(),

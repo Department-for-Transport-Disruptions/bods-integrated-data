@@ -261,7 +261,7 @@ export interface GtfsTripTable {
     id: Generated<number>;
     route_id: number;
     service_id: number;
-    block_id: number;
+    block_id: string;
     shape_id: string;
     trip_headsign: string;
     wheelchair_accessible: WheelchairAccessibility;

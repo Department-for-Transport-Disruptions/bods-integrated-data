@@ -56,7 +56,11 @@ export const getDateWithCustomFormat = (date: string, format: string) => dayjs(d
 export const getCurrentDate = () => dayjs();
 export const getDurationInSeconds = (duration: string) => dayjs.duration(duration).asSeconds();
 
-export const getWheelchairAccessibilityFromVehicleType = (vehicleType: VehicleType) => {
+export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleType) => {
+    if (!vehicleType) {
+        return WheelchairAccessibility.NoAccessibilityInformation;
+    }
+
     const hasWheelchairEquipment = !!vehicleType.VehicleEquipment.WheelchairEquipment;
     const numberOfWheelChairAreas = vehicleType.VehicleEquipment.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
 
