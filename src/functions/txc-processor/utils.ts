@@ -1,5 +1,5 @@
 import { NewCalendar, getCurrentDate, getDateWithCustomFormat } from "@bods-integrated-data/shared";
-import { OperatingPeriod, OperatingProfile } from "@bods-integrated-data/shared/schema";
+import { OperatingPeriod, OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { ServiceExpiredError } from "./errors";
 
 export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeriod: OperatingPeriod): NewCalendar => {
@@ -94,4 +94,23 @@ export const formatCalendar = (operatingProfile: OperatingProfile, operatingPeri
         start_date: startDateToUse.format("YYYYMMDD"),
         end_date: endDateToUse.format("YYYYMMDD"),
     };
+};
+
+export const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
+    const operatingPeriod = service.OperatingPeriod;
+    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
+    const serviceOperatingProfile = service.OperatingProfile;
+
+    const operatingProfileToUse =
+        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
+
+    return formatCalendar(operatingProfileToUse, operatingPeriod);
+};
+
+const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
+    RegularDayType: {
+        DaysOfWeek: {
+            MondayToSunday: "",
+        },
+    },
 };

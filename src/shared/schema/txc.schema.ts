@@ -40,6 +40,41 @@ export const operatingProfileSchema = z.object({
 
 export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 
+const locationSchema = z.object({
+    Translation: z
+        .object({
+            Latitude: z.coerce.number(),
+            Longitude: z.coerce.number(),
+        })
+        .optional(),
+    Latitude: z.coerce.number().optional(),
+    Longitude: z.coerce.number().optional(),
+});
+
+const trackSchema = z.object({
+    Mapping: z.object({
+        Location: z.array(locationSchema),
+    }),
+});
+
+const routeLinkSchema = z.object({
+    Track: z.array(trackSchema).optional(),
+});
+
+export const routeSectionSchema = z.object({
+    "@_id": z.string(),
+    RouteLink: z.array(routeLinkSchema),
+});
+
+export type TxcRouteSection = z.infer<typeof routeSectionSchema>;
+
+export const routeSchema = z.object({
+    "@_id": z.string(),
+    RouteSectionRef: z.array(z.string()),
+});
+
+export type TxcRoute = z.infer<typeof routeSchema>;
+
 export const serviceSchema = z.object({
     ServiceCode: z.string(),
     OperatingPeriod: operatingPeriodSchema,
@@ -54,6 +89,14 @@ export const serviceSchema = z.object({
     }),
     Mode: z.string().default("bus"),
     RegisteredOperatorRef: z.string(),
+    StandardService: z.object({
+        JourneyPattern: z.array(
+            z.object({
+                "@_id": z.string(),
+                RouteRef: z.string().optional(),
+            }),
+        ),
+    }),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
@@ -63,6 +106,7 @@ export const vehicleJourneySchema = z.object({
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
     LineRef: z.string(),
+    JourneyPatternRef: z.string(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
@@ -84,6 +128,12 @@ export const txcSchema = z.object({
     TransXChange: z.object({
         Operators: z.object({
             Operator: z.array(operatorSchema),
+        }),
+        RouteSections: z.object({
+            RouteSection: z.array(routeSectionSchema),
+        }),
+        Routes: z.object({
+            Route: z.array(routeSchema),
         }),
         Services: z.object({
             Service: z.array(serviceSchema),
