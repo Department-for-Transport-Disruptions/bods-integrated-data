@@ -89,7 +89,7 @@ export const serviceSchema = z.object({
         JourneyPattern: z.array(
             z.object({
                 "@_id": z.string(),
-                RouteRef: z.string(),
+                RouteRef: z.string().optional(),
             }),
         ),
     }),
