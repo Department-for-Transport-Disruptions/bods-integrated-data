@@ -156,7 +156,7 @@ module "integrated_data_avl_api_gateway" {
   source = "../modules/api-gateway"
 
   environment = local.env
-  lambda_arn  = "TODO Lambda ARN"
+  lambda_arn  = module.integrated_data_avl_subscriber.lambda_arn
 }
 
 locals {
