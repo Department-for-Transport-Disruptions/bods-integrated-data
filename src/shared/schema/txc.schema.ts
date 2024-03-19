@@ -59,7 +59,7 @@ const routeLinkSchema = z.object({
 
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
-    RouteLink: z.array(routeLinkSchema).optional(),
+    RouteLink: z.array(routeLinkSchema),
 });
 
 export type TxcRouteSection = z.infer<typeof routeSectionSchema>;

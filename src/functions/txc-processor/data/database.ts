@@ -173,10 +173,6 @@ export const insertShapes = async (
                 return [];
             }
 
-            if (!routeSection.RouteLink) {
-                return [];
-            }
-
             return routeSection.RouteLink.flatMap<NewShape>((routeLink) => {
                 if (!routeLink.Track) {
                     return [];
@@ -195,7 +191,9 @@ export const insertShapes = async (
         });
     });
 
-    await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
+    if (shapes.length > 0) {
+        await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
+    }
 
     return updatedVehicleJourneyMappings;
 };
