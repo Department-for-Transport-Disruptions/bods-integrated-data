@@ -176,17 +176,37 @@ export const insertShapes = async (
                 return [];
             }
 
-            return routeSection.RouteLink.Track.Mapping.Location.map<NewShape>((location) => ({
-                shape_id: shapeId,
-                shape_pt_lat: location.Translation.Latitude,
-                shape_pt_lon: location.Translation.Longitude,
-                shape_pt_sequence: current_pt_sequence++,
-                shape_dist_traveled: 0,
-            }));
+            return routeSection.RouteLink.flatMap<NewShape>((routeLink) => {
+                if (!routeLink.Track) {
+                    return [];
+                }
+
+                return routeLink.Track.flatMap<NewShape>((track) => {
+                    // Shape data will only be mapped if both latitude and longitude are defined in either translation data or location data
+                    return track.Mapping.Location.flatMap<NewShape>((location) => {
+                        const latitude = location.Translation ? location.Translation.Latitude : location.Latitude;
+                        const longitude = location.Translation ? location.Translation.Longitude : location.Longitude;
+
+                        if (latitude === undefined || longitude === undefined) {
+                            return [];
+                        }
+
+                        return {
+                            shape_id: shapeId,
+                            shape_pt_lat: latitude,
+                            shape_pt_lon: longitude,
+                            shape_pt_sequence: current_pt_sequence++,
+                            shape_dist_traveled: 0,
+                        };
+                    });
+                });
+            });
         });
     });
 
-    await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
+    if (shapes.length > 0) {
+        await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
+    }
 
     return updatedVehicleJourneyMappings;
 };
