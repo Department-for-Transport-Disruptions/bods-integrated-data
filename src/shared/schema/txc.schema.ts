@@ -104,13 +104,15 @@ export type Service = z.infer<typeof serviceSchema>;
 
 export const vehicleTypeSchema = z.object({
     WheelChairAccessible: z.boolean().optional(),
-    VehicleEquipment: z.object({
-        WheelchairEquipment: z
-            .object({
-                NumberOfWheelChairAreas: z.coerce.number(),
-            })
-            .optional(),
-    }),
+    VehicleEquipment: z
+        .object({
+            WheelchairEquipment: z
+                .object({
+                    NumberOfWheelChairAreas: z.coerce.number(),
+                })
+                .optional(),
+        })
+        .optional(),
 });
 
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
