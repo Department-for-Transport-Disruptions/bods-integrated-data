@@ -41,10 +41,14 @@ export const operatingProfileSchema = z.object({
 export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 
 const locationSchema = z.object({
-    Translation: z.object({
-        Latitude: z.coerce.number(),
-        Longitude: z.coerce.number(),
-    }),
+    Translation: z
+        .object({
+            Latitude: z.coerce.number(),
+            Longitude: z.coerce.number(),
+        })
+        .optional(),
+    Latitude: z.coerce.number().optional(),
+    Longitude: z.coerce.number().optional(),
 });
 
 const trackSchema = z.object({
