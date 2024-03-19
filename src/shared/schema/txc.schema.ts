@@ -55,16 +55,11 @@ const trackSchema = z.object({
 
 const routeLinkSchema = z.object({
     Track: z.array(trackSchema).optional(),
-    From: z
-        .object({
-            StopPointRef: z.coerce.string(),
-        })
-        .optional(),
 });
 
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
-    RouteLink: z.array(routeLinkSchema),
+    RouteLink: z.array(routeLinkSchema).optional(),
 });
 
 export type TxcRouteSection = z.infer<typeof routeSectionSchema>;

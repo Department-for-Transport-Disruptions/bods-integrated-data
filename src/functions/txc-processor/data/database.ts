@@ -137,7 +137,6 @@ export const insertShapes = async (
     services: Service[],
     routes: TxcRoute[],
     routeSections: TxcRouteSection[],
-    stops: TxcStop[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
     const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
@@ -174,33 +173,24 @@ export const insertShapes = async (
                 return [];
             }
 
+            if (!routeSection.RouteLink) {
+                return [];
+            }
+
             return routeSection.RouteLink.flatMap<NewShape>((routeLink) => {
-                if (routeLink.Track) {
-                    return routeLink.Track.flatMap<NewShape>((track) => {
-                        return track.Mapping.Location.map<NewShape>((location) => ({
-                            shape_id: shapeId,
-                            shape_pt_lat: location.Translation.Latitude,
-                            shape_pt_lon: location.Translation.Longitude,
-                            shape_pt_sequence: current_pt_sequence++,
-                            shape_dist_traveled: 0,
-                        }));
-                    });
+                if (!routeLink.Track) {
+                    return [];
                 }
 
-                // If track locations aren't present, fall back to stop point locations
-                const annotatedStopPointRef = stops.find((stop) => stop.StopPointRef === routeLink.From?.StopPointRef);
-
-                if (annotatedStopPointRef?.Location) {
-                    return {
+                return routeLink.Track.flatMap<NewShape>((track) => {
+                    return track.Mapping.Location.map<NewShape>((location) => ({
                         shape_id: shapeId,
-                        shape_pt_lat: annotatedStopPointRef.Location.Latitude,
-                        shape_pt_lon: annotatedStopPointRef.Location.Longitude,
+                        shape_pt_lat: location.Translation.Latitude,
+                        shape_pt_lon: location.Translation.Longitude,
                         shape_pt_sequence: current_pt_sequence++,
                         shape_dist_traveled: 0,
-                    };
-                }
-
-                return [];
+                    }));
+                });
             });
         });
     });
