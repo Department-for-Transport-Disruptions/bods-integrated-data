@@ -8,6 +8,7 @@ import {
     NewStop,
     NewTrip,
     Route,
+    chunkArray,
     getRouteTypeFromServiceMode,
     getWheelchairAccessibilityFromVehicleType,
     notEmpty,
@@ -205,7 +206,8 @@ export const insertShapes = async (
     });
 
     if (shapes.length > 0) {
-        await dbClient.insertInto("shape_new").values(shapes).returningAll().executeTakeFirst();
+        const insertChunks = chunkArray(shapes, 3000);
+        await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("shape_new").values(chunk).execute()));
     }
 
     return updatedVehicleJourneyMappings;
