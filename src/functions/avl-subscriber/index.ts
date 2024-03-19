@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared";
+import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";

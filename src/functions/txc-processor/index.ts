@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, Route, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
+import { Agency, Database, Route, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { OperatingProfile, Service, VehicleJourney, txcSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";

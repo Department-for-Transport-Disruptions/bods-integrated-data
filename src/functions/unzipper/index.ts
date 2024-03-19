@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { getS3Object, startS3Upload } from "@bods-integrated-data/shared";
+import { getS3Object, startS3Upload } from "@bods-integrated-data/shared/s3";
 
 import { S3Event } from "aws-lambda";
 import { Entry, Parse } from "unzipper";

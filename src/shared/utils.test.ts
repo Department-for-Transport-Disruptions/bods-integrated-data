@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkArray, notEmpty } from ".";
+import { chunkArray, notEmpty } from "./utils";
 
 describe("chunkArray", () => {
     it.each([

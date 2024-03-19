@@ -7,10 +7,9 @@ import {
     NewCalendarDate,
     NewRoute,
     NewStop,
-    getRouteTypeFromServiceMode,
-    notEmpty,
-} from "@bods-integrated-data/shared";
+} from "@bods-integrated-data/shared/database";
 import { Operator, Service, TxcStop } from "@bods-integrated-data/shared/schema";
+import { getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 

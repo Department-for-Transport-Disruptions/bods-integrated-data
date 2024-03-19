@@ -1,10 +1,5 @@
-import {
-    NewCalendar,
-    NewCalendarDate,
-    getDate,
-    getDateWithCustomFormat,
-    isDateBetween,
-} from "@bods-integrated-data/shared";
+import { NewCalendar, NewCalendarDate } from "@bods-integrated-data/shared/database";
+import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
 import { OperatingPeriod, OperatingProfile } from "@bods-integrated-data/shared/schema";
 import type { Dayjs } from "dayjs";
 import { ServiceExpiredError } from "./errors";

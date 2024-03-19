@@ -1,6 +1,6 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { logger } from "@baselime/lambda-logger";
-import { startS3Upload } from "@bods-integrated-data/shared";
+import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { Client } from "basic-ftp";
 import { Writable } from "stream";
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { getDate, getNextOccurrenceOfBankHoliday, getNextOccurrenceOfDate, notEmpty, txcSelfClosingProperty } from "..";
+import { getDate, getNextOccurrenceOfBankHoliday, getNextOccurrenceOfDate } from "../dates";
+import { notEmpty, txcSelfClosingProperty } from "../utils";
 
 const fixedBankHolidaysSchema = z.object({
     BoxingDay: txcSelfClosingProperty.optional(),

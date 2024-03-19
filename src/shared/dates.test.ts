@@ -1,7 +1,13 @@
 import { Dayjs } from "dayjs";
 import Mockdate from "mockdate";
 import { describe, expect, it, vi } from "vitest";
-import { BankHolidayName, getDate, getDateRange, getNextOccurrenceOfBankHoliday, getNextOccurrenceOfDate } from ".";
+import {
+    BankHolidayName,
+    getDate,
+    getDateRange,
+    getNextOccurrenceOfBankHoliday,
+    getNextOccurrenceOfDate,
+} from "./dates";
 
 vi.mock("./uk-bank-holidays.json", () => ({
     default: {

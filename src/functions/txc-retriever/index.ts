@@ -1,6 +1,6 @@
 import { InvocationType, InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { logger } from "@baselime/lambda-logger";
-import { Database, getDatabaseClient } from "@bods-integrated-data/shared";
+import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { Kysely, sql } from "kysely";
 
 const lambdaClient = new LambdaClient({ region: "eu-west-2" });
