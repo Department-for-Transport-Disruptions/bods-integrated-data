@@ -143,13 +143,20 @@ module "integrated_data_avl_aggregator" {
 module "integrated_data_avl_subscription_table" {
   source = "../modules/database/dynamo"
 
-  environment        = local.env
+  environment = local.env
 }
 
 module "integrated_data_avl_subscriber" {
   source = "../modules/avl-producer-api/avl-subscriber"
 
-  environment        = local.env
+  environment = local.env
+}
+
+module "integrated_data_avl_api_gateway" {
+  source = "../modules/api-gateway"
+
+  environment = local.env
+  lambda_arn  = "TODO Lambda ARN"
 }
 
 locals {
