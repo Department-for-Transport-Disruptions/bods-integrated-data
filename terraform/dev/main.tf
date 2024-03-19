@@ -152,9 +152,14 @@ module "integrated_data_avl_subscriber" {
   environment        = local.env
 }
 
+module "integrated_data_avl_data_endpoint" {
+  source = "../modules/avl-producer-endpoint/avl-data-endpoint"
+
+  environment     = local.env
+  bucket_arn      = module.integrated_data_avl_pipeline.bucket_arn
+}
+
 locals {
   env     = "dev"
   secrets = jsondecode(data.sops_file.secrets.raw)
 }
-
-
