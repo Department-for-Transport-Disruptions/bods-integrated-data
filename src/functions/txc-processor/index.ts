@@ -19,13 +19,16 @@ import { VehicleJourneyMapping } from "./types";
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
+    "RouteSectionRef",
     "RouteSection",
     "Route",
+    "RouteLink",
     "JourneyPatternSection",
     "Operator",
     "Garage",
     "Service",
     "Line",
+    "Track",
     "JourneyPattern",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
@@ -75,7 +78,6 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        await insertCalendars(dbClient, service, vehicleJourneyMappings);
         vehicleJourneyMappings = await insertCalendars(dbClient, service, vehicleJourneyMappings);
         vehicleJourneyMappings = await insertShapes(
             dbClient,

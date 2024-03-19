@@ -1,6 +1,8 @@
+import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
-import { describe, it, expect, vi, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import { expectedSubscriptionRequest, mockSubscribeEvent, mockSubscriptionResponseBody } from "./test/mockData";
 import { handler } from "./index";
 vi.mock("crypto", () => ({
@@ -8,19 +10,34 @@ vi.mock("crypto", () => ({
 }));
 
 describe("avl-subscriber", () => {
+    beforeAll(() => {
+        process.env.TABLE_NAME = "test-dynamo-table";
+    });
+
+    vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+        putDynamoItem: vi.fn(),
+    }));
+
+    vi.mock("@bods-integrated-data/shared/ssm", () => ({
+        putParameter: vi.fn(),
+    }));
+
+    const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
+    const putParameterSpy = vi.spyOn(ssm, "putParameter");
+
     const fetchSpy = vi.spyOn(global, "fetch");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
     beforeEach(() => {
-        vi.resetAllMocks;
+        vi.resetAllMocks();
     });
 
     afterAll(() => {
         MockDate.reset();
     });
 
-    it("should generate a valid subscription request if a valid input is passed", async () => {
+    it("should process a subscription request if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
         fetchSpy.mockResolvedValue({
             text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
             status: 200,
@@ -33,6 +50,34 @@ describe("avl-subscriber", () => {
             "https://mock-data-producer.com/5965q7gh-5428-43e2-a75c-1782a48637d5",
             expectedSubscriptionRequest,
         );
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: null,
+                shortDescription: "description",
+                status: "ACTIVE",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
+        );
     });
 
     it("should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.", async () => {
@@ -42,20 +87,49 @@ describe("avl-subscriber", () => {
             }),
         } as unknown as APIGatewayEvent;
 
-        await expect(async () => await handler(invalidEvent)).rejects.toThrowError(
-            "Invalid subscribe message from event body.",
-        );
+        await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
+
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
     });
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
         fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+            text: "failed",
             status: 500,
             ok: false,
         } as unknown as Response);
 
-        await expect(async () => await handler(mockSubscribeEvent)).rejects.toThrowError(
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
             "There was an error when sending the subscription request to the data producer: https://mock-data-producer.com, status code: 500",
+        );
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: null,
+                shortDescription: "description",
+                status: "FAILED",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
         );
     });
 
@@ -66,8 +140,36 @@ describe("avl-subscriber", () => {
             ok: true,
         } as unknown as Response);
 
-        await expect(async () => await handler(mockSubscribeEvent)).rejects.toThrowError(
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
             "No response body received from the data producer: https://mock-data-producer.com",
+        );
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: null,
+                shortDescription: "description",
+                status: "FAILED",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
         );
     });
 });
