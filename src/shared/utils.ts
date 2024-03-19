@@ -58,8 +58,8 @@ export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleT
         return WheelchairAccessibility.NoAccessibilityInformation;
     }
 
-    const hasWheelchairEquipment = !!vehicleType.VehicleEquipment.WheelchairEquipment;
-    const numberOfWheelChairAreas = vehicleType.VehicleEquipment.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
+    const hasWheelchairEquipment = !!vehicleType.VehicleEquipment?.WheelchairEquipment;
+    const numberOfWheelChairAreas = vehicleType.VehicleEquipment?.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
 
     if (vehicleType.WheelChairAccessible || (hasWheelchairEquipment && numberOfWheelChairAreas > 0)) {
         return WheelchairAccessibility.Accessible;
