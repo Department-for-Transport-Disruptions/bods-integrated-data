@@ -157,14 +157,14 @@ module "integrated_data_avl_api_gateway" {
 
   environment              = local.env
   subscribe_lambda_arn     = module.integrated_data_avl_subscriber.lambda_arn
-  data_endpoint_lambda_arn = module.integrated_data_avl_subscriber.lambda_arn //TODO change this to data endpoint lambda
+  data_endpoint_lambda_arn = module.integrated_data_avl_data_endpoint.lambda_arn
 }
 
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-endpoint/avl-data-endpoint"
 
-  environment     = local.env
-  bucket_arn      = module.integrated_data_avl_pipeline.bucket_arn
+  environment = local.env
+  bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
 }
 
 locals {
