@@ -7,7 +7,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("id", "serial", (col) => col.primaryKey())
         .addColumn("route_id", "integer")
         .addColumn("service_id", "integer")
-        .addColumn("block_id", "integer")
+        .addColumn("block_id", "text")
         .addColumn("shape_id", "text")
         .addColumn("trip_headsign", "text")
         .addColumn("wheelchair_accessible", "integer")

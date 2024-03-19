@@ -114,7 +114,7 @@ export const vehicleJourneySchema = z.object({
         .object({
             Block: z
                 .object({
-                    BlockNumber: z.coerce.number(),
+                    BlockNumber: z.coerce.string(),
                 })
                 .optional(),
             VehicleType: vehicleTypeSchema.optional(),
