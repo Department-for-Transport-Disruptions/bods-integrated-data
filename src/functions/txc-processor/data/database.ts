@@ -173,13 +173,25 @@ export const insertShapes = async (
                 return [];
             }
 
-            return routeSection.RouteLink.Track.Mapping.Location.map<NewShape>((location) => ({
-                shape_id: shapeId,
-                shape_pt_lat: location.Translation.Latitude,
-                shape_pt_lon: location.Translation.Longitude,
-                shape_pt_sequence: current_pt_sequence++,
-                shape_dist_traveled: 0,
-            }));
+            if (!routeSection.RouteLink) {
+                return [];
+            }
+
+            return routeSection.RouteLink.flatMap<NewShape>((routeLink) => {
+                if (!routeLink.Track) {
+                    return [];
+                }
+
+                return routeLink.Track.flatMap<NewShape>((track) => {
+                    return track.Mapping.Location.map<NewShape>((location) => ({
+                        shape_id: shapeId,
+                        shape_pt_lat: location.Translation.Latitude,
+                        shape_pt_lon: location.Translation.Longitude,
+                        shape_pt_sequence: current_pt_sequence++,
+                        shape_dist_traveled: 0,
+                    }));
+                });
+            });
         });
     });
 

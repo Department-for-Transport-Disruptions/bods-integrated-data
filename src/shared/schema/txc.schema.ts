@@ -40,22 +40,26 @@ export const operatingProfileSchema = z.object({
 
 export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 
+const locationSchema = z.object({
+    Translation: z.object({
+        Latitude: z.coerce.number(),
+        Longitude: z.coerce.number(),
+    }),
+});
+
+const trackSchema = z.object({
+    Mapping: z.object({
+        Location: z.array(locationSchema),
+    }),
+});
+
+const routeLinkSchema = z.object({
+    Track: z.array(trackSchema).optional(),
+});
+
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
-    RouteLink: z.object({
-        Track: z.object({
-            Mapping: z.object({
-                Location: z.array(
-                    z.object({
-                        Translation: z.object({
-                            Latitude: z.coerce.number(),
-                            Longitude: z.coerce.number(),
-                        }),
-                    }),
-                ),
-            }),
-        }),
-    }),
+    RouteLink: z.array(routeLinkSchema).optional(),
 });
 
 export type TxcRouteSection = z.infer<typeof routeSectionSchema>;
