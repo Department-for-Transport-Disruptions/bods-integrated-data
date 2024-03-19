@@ -69,7 +69,6 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        await insertCalendars(dbClient, service, vehicleJourneyMappings);
         vehicleJourneyMappings = await insertCalendars(dbClient, service, vehicleJourneyMappings);
         vehicleJourneyMappings = await insertShapes(
             dbClient,
