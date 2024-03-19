@@ -160,9 +160,14 @@ module "integrated_data_avl_api_gateway" {
   data_endpoint_lambda_arn = module.integrated_data_avl_subscriber.lambda_arn //TODO change this to data endpoint lambda
 }
 
+module "integrated_data_avl_data_endpoint" {
+  source = "../modules/avl-producer-endpoint/avl-data-endpoint"
+
+  environment     = local.env
+  bucket_arn      = module.integrated_data_avl_pipeline.bucket_arn
+}
+
 locals {
   env     = "dev"
   secrets = jsondecode(data.sops_file.secrets.raw)
 }
-
-

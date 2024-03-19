@@ -77,3 +77,4 @@ resource "aws_lambda_event_source_mapping" "integrated_data_avl_processor_sqs_tr
   event_source_arn = module.integrated_data_avl_s3_sqs.sqs_arn
   function_name    = module.integrated_data_avl_processor_function.lambda_arn
 }
+
