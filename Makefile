@@ -11,6 +11,7 @@ LAMBDA_ZIP_LOCATION="src/functions/dist"
 dev: dev-containers-up
 setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
 
+# This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
 
 define create_lambda
