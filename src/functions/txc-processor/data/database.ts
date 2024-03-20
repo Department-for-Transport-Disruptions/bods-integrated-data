@@ -105,10 +105,15 @@ export const insertFrequencies = async (
 ) => {
     const promises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
         const { vehicleJourney } = vehicleJourneyMapping;
+
+        if (!vehicleJourney.Frequency) {
+            return null;
+        }
+
         let headwaySecs = 0;
         let exactTimes = ServiceType.ScheduleBased;
 
-        if (vehicleJourney.Frequency?.Interval?.ScheduledFrequency) {
+        if (vehicleJourney.Frequency.Interval?.ScheduledFrequency) {
             headwaySecs = getDurationInSeconds(vehicleJourney.Frequency.Interval.ScheduledFrequency);
 
             if (vehicleJourney.Frequency?.EndTime) {
