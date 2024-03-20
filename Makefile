@@ -89,6 +89,9 @@ rollback-last-local-db-migration:
 bastion-tunnel:
 	./scripts/bastion-tunnel.sh
 
+get-db-credentials:
+	./scripts/get-db-credentials.sh
+
 # Naptan
 
 run-local-naptan-retriever:
