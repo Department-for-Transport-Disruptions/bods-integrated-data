@@ -129,7 +129,7 @@ export const insertFrequencies = async (
             exact_times: exactTimes,
         };
 
-        return dbClient.insertInto("frequencies_new").values(newFrequency).returningAll().executeTakeFirst();
+        return dbClient.insertInto("frequency_new").values(newFrequency).returningAll().executeTakeFirst();
     });
 
     const tripData = await Promise.all(promises);
