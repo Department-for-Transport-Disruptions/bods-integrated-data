@@ -1,0 +1,25 @@
+{
+    "name": "@bods-integrated-data/avl-data-endpoint",
+    "version": "0.1.0",
+    "description": "Consumer data endpoint for AVL data pipeline",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-data-endpoint.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-data-endpoint.zip ../dist",
+        "test": "vitest run",
+        "lint": "eslint ."
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.1.2",
+        "mockdate": "^3.0.5"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

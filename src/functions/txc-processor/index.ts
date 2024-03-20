@@ -1,92 +1,92 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, Route, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { OperatingProfile, Service, VehicleJourney, txcSchema } from "@bods-integrated-data/shared/schema";
+import { TxcRouteSection, Service, VehicleJourney, txcSchema, TxcRoute } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendar, insertRoutes, insertStops } from "./data/database";
-import { ServiceExpiredError } from "./errors";
-import { formatCalendar } from "./utils";
+import { insertAgencies, insertCalendar, insertRoutes, insertShapes, insertStops } from "./data/database";
+import { VehicleJourneyMapping } from "./types";
+import { DEFAULT_OPERATING_PROFILE, formatCalendar } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
+    "RouteSectionRef",
     "RouteSection",
     "Route",
+    "RouteLink",
     "JourneyPatternSection",
     "Operator",
     "Garage",
     "Service",
     "Line",
+    "Track",
     "JourneyPattern",
-    "StandardService",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
 ];
 
-const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
-    RegularDayType: {
-        DaysOfWeek: {
-            MondayToSunday: "",
-        },
-    },
-};
-
-const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
-    const operatingPeriod = service.OperatingPeriod;
-    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
-    const serviceOperatingProfile = service.OperatingProfile;
-
-    const operatingProfileToUse =
-        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
-
-    return formatCalendar(operatingProfileToUse, operatingPeriod);
-};
-
-const processVehicleJourneys = async (
+export const processCalendars = async (
     dbClient: Kysely<Database>,
     service: Service,
-    routes: Route[],
-    vehicleJourneys: VehicleJourney[],
+    vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
-    const serviceCalendar = service.OperatingProfile
-        ? await insertCalendar(dbClient, formatCalendar(service.OperatingProfile, service.OperatingPeriod))
-        : null;
+    let serviceCalendarId: number | null = null;
 
-    const promises = routes.flatMap((route) => {
-        const vehicleJourneysForLine = vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
+    if (service.OperatingProfile) {
+        const serviceCalendar = await insertCalendar(
+            dbClient,
+            formatCalendar(service.OperatingProfile, service.OperatingPeriod),
+        );
 
-        return vehicleJourneysForLine.flatMap(async (journey) => {
-            try {
-                let journeyCalendar = serviceCalendar;
+        serviceCalendarId = serviceCalendar.id;
+    }
 
-                if (journey.OperatingProfile || !serviceCalendar) {
-                    journeyCalendar = await insertCalendar(dbClient, getOperatingProfile(service, journey));
-                }
+    const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
+            return {
+                ...vehicleJourneyMapping,
+                serviceId: serviceCalendarId,
+            };
+        }
 
-                return journeyCalendar;
-            } catch (e) {
-                if (e instanceof ServiceExpiredError) {
-                    logger.warn(`Service expired: ${service.ServiceCode}`);
+        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
+            const defaultCalendar = await insertCalendar(
+                dbClient,
+                formatCalendar(DEFAULT_OPERATING_PROFILE, service.OperatingPeriod),
+            );
 
-                    return null;
-                }
+            return {
+                ...vehicleJourneyMapping,
+                serviceId: defaultCalendar.id,
+            };
+        }
 
-                throw e;
-            }
-        });
+        const calendarData = formatCalendar(
+            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
+            service.OperatingPeriod,
+        );
+
+        const calendar = await insertCalendar(dbClient, calendarData);
+
+        return {
+            ...vehicleJourneyMapping,
+            serviceId: calendar.id,
+        };
     });
 
-    await Promise.all(promises);
+    return Promise.all(updatedVehicleJourneyMappingsPromises);
 };
 
 const processServices = (
     dbClient: Kysely<Database>,
     services: Service[],
     vehicleJourneys: VehicleJourney[],
+    routeSections: TxcRouteSection[],
+    routes: TxcRoute[],
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -101,7 +101,31 @@ const processServices = (
             return null;
         }
 
-        await processVehicleJourneys(dbClient, service, routeData, vehicleJourneys);
+        const vehicleJourneysForLine = routeData.flatMap((route) => {
+            return vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
+        });
+
+        let vehicleJourneyMappings = vehicleJourneysForLine.map((vehicleJourney) => {
+            const vehicleJourneyMapping: VehicleJourneyMapping = {
+                vehicleJourney,
+                routeId: 0,
+                serviceId: 0,
+                shapeId: "",
+            };
+
+            const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
+
+            if (route) {
+                vehicleJourneyMapping.routeId = route.id;
+            } else {
+                logger.warn(`Unable to find route with line ref: ${vehicleJourney.LineRef}`);
+            }
+
+            return vehicleJourneyMapping;
+        });
+
+        vehicleJourneyMappings = await processCalendars(dbClient, service, vehicleJourneyMappings);
+        await insertShapes(dbClient, services, routes, routeSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -153,12 +177,14 @@ export const handler = async (event: S3Event) => {
 
         const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
-        await insertStops(dbClient, txcData.TransXChange.StopPoints.AnnotatedStopPointRef);
+        await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
 
         await processServices(
             dbClient,
             TransXChange.Services.Service,
             TransXChange.VehicleJourneys.VehicleJourney,
+            TransXChange.RouteSections.RouteSection,
+            TransXChange.Routes.Route,
             agencyData,
         );
 

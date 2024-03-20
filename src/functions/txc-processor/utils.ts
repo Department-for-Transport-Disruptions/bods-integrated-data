@@ -1,6 +1,6 @@
 import { NewCalendar, NewCalendarDate } from "@bods-integrated-data/shared/database";
 import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
-import { OperatingPeriod, OperatingProfile } from "@bods-integrated-data/shared/schema";
+import { OperatingPeriod, OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import type { Dayjs } from "dayjs";
 import { ServiceExpiredError } from "./errors";
 
@@ -153,4 +153,23 @@ export const formatCalendar = (
         calendar: calculateDaysOfOperation(day, startDateToUse, endDateToUse),
         calendarDates: [...formattedExtraDaysOfOperation, ...formattedExtraDaysOfNonOperation],
     };
+};
+
+export const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
+    const operatingPeriod = service.OperatingPeriod;
+    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
+    const serviceOperatingProfile = service.OperatingProfile;
+
+    const operatingProfileToUse =
+        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
+
+    return formatCalendar(operatingProfileToUse, operatingPeriod);
+};
+
+export const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
+    RegularDayType: {
+        DaysOfWeek: {
+            MondayToSunday: "",
+        },
+    },
 };
