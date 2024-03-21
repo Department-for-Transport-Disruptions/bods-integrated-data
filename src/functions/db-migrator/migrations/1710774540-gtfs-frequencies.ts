@@ -5,7 +5,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
         .createTable("frequency")
         .addColumn("id", "serial", (col) => col.primaryKey())
-        .addColumn("trip_id", "integer")
+        .addColumn("trip_id", "text")
         .addColumn("start_time", "text")
         .addColumn("end_time", "text")
         .addColumn("headway_secs", "integer")
