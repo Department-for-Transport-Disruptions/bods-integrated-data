@@ -6,7 +6,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .createTable("stop_time")
         .addColumn("id", "serial", (col) => col.primaryKey())
         .addColumn("trip_id", "integer")
-        .addColumn("stop_id", "integer")
+        .addColumn("stop_id", "text")
         .addColumn("arrival_time", "text")
         .addColumn("departure_time", "text")
         .addColumn("stop_sequence", "integer")

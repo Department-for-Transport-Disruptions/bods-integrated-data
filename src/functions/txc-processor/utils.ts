@@ -151,8 +151,8 @@ export const getDropOffTypeFromStopActivity = (activity?: string) => {
 export const getTimepointFromTimingStatus = (timingStatus?: string) => {
     switch (timingStatus) {
         case "principalPoint":
-            return Timepoint.Approximate;
         case "timeInfoPoint":
+            return Timepoint.Approximate;
         case "principalTimingPoint":
             return Timepoint.Exact;
         default:

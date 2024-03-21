@@ -275,7 +275,7 @@ export enum Timepoint {
 export interface GtfsStopTimeTable {
     id: Generated<number>;
     trip_id: number;
-    stop_id: number;
+    stop_id: string;
     arrival_time: string;
     departure_time: string;
     stop_sequence: number;

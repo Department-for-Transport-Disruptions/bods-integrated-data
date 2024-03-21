@@ -108,7 +108,7 @@ export const journeyPatternSectionSchema = z.object({
         From: z.object({
             "@_SequenceNumber": z.coerce.number(),
             Activity: z.string().optional(),
-            StopPointRef: z.coerce.number(),
+            StopPointRef: z.string(),
             TimingStatus: z.string().optional(),
         }),
     }),
