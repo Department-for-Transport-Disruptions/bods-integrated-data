@@ -2,6 +2,8 @@ import { z } from "zod";
 import { getDate, getNextOccurrenceOfBankHoliday, getNextOccurrenceOfDate } from "../dates";
 import { notEmpty, txcSelfClosingProperty } from "../utils";
 
+export const DEFAULT_DATE_FORMAT = "YYYYMMDD";
+
 const fixedBankHolidaysSchema = z.object({
     BoxingDay: txcSelfClosingProperty.optional(),
     ChristmasDay: txcSelfClosingProperty.optional(),
@@ -64,24 +66,25 @@ export const bankHolidayOperationSchema = fixedBankHolidaysSchema
 export type BankHolidayOperation = z.infer<typeof bankHolidayOperationSchema>;
 
 const allBankHolidays: Record<keyof (FixedBankHoliday & VariableBankHoliday), string> = {
-    StAndrewsDay: getNextOccurrenceOfDate(30, 10).format("YYYYMMDD"),
-    ChristmasEve: getNextOccurrenceOfDate(24, 11).format("YYYYMMDD"),
-    ChristmasDay: getNextOccurrenceOfDate(25, 11).format("YYYYMMDD"),
-    BoxingDay: getNextOccurrenceOfDate(26, 11).format("YYYYMMDD"),
-    NewYearsEve: getNextOccurrenceOfDate(31, 11).format("YYYYMMDD"),
-    NewYearsDay: getNextOccurrenceOfDate(1, 0).format("YYYYMMDD"),
-    Jan2ndScotland: getNextOccurrenceOfDate(2, 0).format("YYYYMMDD"),
-    AugustBankHolidayScotland: getNextOccurrenceOfBankHoliday("Scotland Summer bank holiday").format("YYYYMMDD"),
-    BoxingDayHoliday: getNextOccurrenceOfBankHoliday("Boxing Day").format("YYYYMMDD"),
-    ChristmasDayHoliday: getNextOccurrenceOfBankHoliday("Christmas Day").format("YYYYMMDD"),
-    EasterMonday: getNextOccurrenceOfBankHoliday("Easter Monday").format("YYYYMMDD"),
-    GoodFriday: getNextOccurrenceOfBankHoliday("Good Friday").format("YYYYMMDD"),
-    Jan2ndScotlandHoliday: getNextOccurrenceOfBankHoliday("2nd January").format("YYYYMMDD"),
-    LateSummerBankHolidayNotScotland: getNextOccurrenceOfBankHoliday("Summer bank holiday").format("YYYYMMDD"),
-    MayDay: getNextOccurrenceOfBankHoliday("Early May bank holiday").format("YYYYMMDD"),
-    NewYearsDayHoliday: getNextOccurrenceOfBankHoliday("New Year’s Day").format("YYYYMMDD"),
-    SpringBank: getNextOccurrenceOfBankHoliday("Spring bank holiday").format("YYYYMMDD"),
-    StAndrewsDayHoliday: getNextOccurrenceOfBankHoliday("St Andrew’s Day").format("YYYYMMDD"),
+    StAndrewsDay: getNextOccurrenceOfDate(30, 10).format(DEFAULT_DATE_FORMAT),
+    ChristmasEve: getNextOccurrenceOfDate(24, 11).format(DEFAULT_DATE_FORMAT),
+    ChristmasDay: getNextOccurrenceOfDate(25, 11).format(DEFAULT_DATE_FORMAT),
+    BoxingDay: getNextOccurrenceOfDate(26, 11).format(DEFAULT_DATE_FORMAT),
+    NewYearsEve: getNextOccurrenceOfDate(31, 11).format(DEFAULT_DATE_FORMAT),
+    NewYearsDay: getNextOccurrenceOfDate(1, 0).format(DEFAULT_DATE_FORMAT),
+    Jan2ndScotland: getNextOccurrenceOfDate(2, 0).format(DEFAULT_DATE_FORMAT),
+    AugustBankHolidayScotland:
+        getNextOccurrenceOfBankHoliday("Scotland Summer bank holiday").format(DEFAULT_DATE_FORMAT),
+    BoxingDayHoliday: getNextOccurrenceOfBankHoliday("Boxing Day").format(DEFAULT_DATE_FORMAT),
+    ChristmasDayHoliday: getNextOccurrenceOfBankHoliday("Christmas Day").format(DEFAULT_DATE_FORMAT),
+    EasterMonday: getNextOccurrenceOfBankHoliday("Easter Monday").format(DEFAULT_DATE_FORMAT),
+    GoodFriday: getNextOccurrenceOfBankHoliday("Good Friday").format(DEFAULT_DATE_FORMAT),
+    Jan2ndScotlandHoliday: getNextOccurrenceOfBankHoliday("2nd January").format(DEFAULT_DATE_FORMAT),
+    LateSummerBankHolidayNotScotland: getNextOccurrenceOfBankHoliday("Summer bank holiday").format(DEFAULT_DATE_FORMAT),
+    MayDay: getNextOccurrenceOfBankHoliday("Early May bank holiday").format(DEFAULT_DATE_FORMAT),
+    NewYearsDayHoliday: getNextOccurrenceOfBankHoliday("New Year’s Day").format(DEFAULT_DATE_FORMAT),
+    SpringBank: getNextOccurrenceOfBankHoliday("Spring bank holiday").format(DEFAULT_DATE_FORMAT),
+    StAndrewsDayHoliday: getNextOccurrenceOfBankHoliday("St Andrew’s Day").format(DEFAULT_DATE_FORMAT),
 };
 
 const bankHolidaySubGroupMapping: Record<keyof BankHolidayOperationSubGroup, string[]> = {
@@ -128,6 +131,10 @@ const completeBankHolidayMapping: Record<string, string[] | string> = {
     ...bankHolidayGroupMapping,
 };
 
+/**
+ * This function transforms the TXC bank holidays into actual dates to be used in the GTFS calendar_dates file, it also
+ * extracts the dates of any OtherPublicHoliday items that may be in the TXC
+ */
 export const transformedBankHolidayOperationSchema = bankHolidayOperationSchema.transform((op) => [
     ...new Set(
         Object.keys(op)
@@ -137,7 +144,9 @@ export const transformedBankHolidayOperationSchema = bankHolidayOperationSchema.
                 }
 
                 if (op.OtherPublicHoliday) {
-                    return op.OtherPublicHoliday.flatMap((holiday) => getDate(holiday.Date).format("YYYYMMDD"));
+                    return op.OtherPublicHoliday.flatMap((holiday) =>
+                        getDate(holiday.Date).format(DEFAULT_DATE_FORMAT),
+                    );
                 }
             })
             .filter(notEmpty),

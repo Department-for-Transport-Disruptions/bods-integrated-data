@@ -177,11 +177,16 @@ export type Calendar = Selectable<GtfsCalendarTable>;
 export type NewCalendar = Insertable<GtfsCalendarTable>;
 export type CalendarUpdate = Updateable<GtfsCalendarTable>;
 
+export enum CalendarDateExceptionType {
+    ServiceAdded = 1,
+    ServiceRemoved = 2,
+}
+
 export interface GtfsCalendarDateTable {
     id: Generated<number>;
     service_id: number | null;
     date: string;
-    exception_type: 1 | 2;
+    exception_type: CalendarDateExceptionType;
 }
 
 export type CalendarDate = Selectable<GtfsCalendarDateTable>;

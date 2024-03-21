@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { transformedBankHolidayOperationSchema } from "./dates.schema";
+import { DEFAULT_DATE_FORMAT, transformedBankHolidayOperationSchema } from "./dates.schema";
 import { getDate, getDateRange } from "../dates";
 import { txcSelfClosingProperty } from "../utils";
 
@@ -24,7 +24,7 @@ const dateRange = z
         EndDate: z.string(),
     })
     .transform((range) =>
-        getDateRange(getDate(range.StartDate), getDate(range.EndDate)).map((date) => date.format("YYYYMMDD")),
+        getDateRange(getDate(range.StartDate), getDate(range.EndDate)).map((date) => date.format(DEFAULT_DATE_FORMAT)),
     );
 
 export const operatingProfileSchema = z.object({
@@ -85,24 +85,24 @@ const locationSchema = z.object({
 
 const trackSchema = z.object({
     Mapping: z.object({
-        Location: z.array(locationSchema),
+        Location: locationSchema.array(),
     }),
 });
 
 const routeLinkSchema = z.object({
-    Track: z.array(trackSchema).optional(),
+    Track: trackSchema.array().optional(),
 });
 
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
-    RouteLink: z.array(routeLinkSchema),
+    RouteLink: routeLinkSchema.array(),
 });
 
 export type TxcRouteSection = z.infer<typeof routeSectionSchema>;
 
 export const routeSchema = z.object({
     "@_id": z.string(),
-    RouteSectionRef: z.array(z.string()),
+    RouteSectionRef: z.string().array(),
 });
 
 export type TxcRoute = z.infer<typeof routeSchema>;
@@ -122,12 +122,12 @@ export const serviceSchema = z.object({
     Mode: z.string().default("bus"),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
-        JourneyPattern: z.array(
-            z.object({
+        JourneyPattern: z
+            .object({
                 "@_id": z.string(),
                 RouteRef: z.string().optional(),
-            }),
-        ),
+            })
+            .array(),
     }),
 });
 
@@ -162,10 +162,10 @@ export const txcSchema = z.object({
             Operator: operatorSchema.array(),
         }),
         RouteSections: z.object({
-            RouteSection: z.array(routeSectionSchema),
+            RouteSection: routeSectionSchema.array(),
         }),
         Routes: z.object({
-            Route: z.array(routeSchema),
+            Route: routeSchema.array(),
         }),
         Services: z.object({
             Service: serviceSchema.array(),

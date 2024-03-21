@@ -1,6 +1,7 @@
-import { NewCalendar, NewCalendarDate } from "@bods-integrated-data/shared/database";
+import { CalendarDateExceptionType, NewCalendar, NewCalendarDate } from "@bods-integrated-data/shared/database";
 import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
 import { OperatingPeriod, OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/schema/dates.schema";
 import type { Dayjs } from "dayjs";
 import { ServiceExpiredError } from "./errors";
 
@@ -8,10 +9,10 @@ const formatCalendarDates = (
     days: string[],
     startDate: Dayjs,
     endDate: Dayjs,
-    exceptionType: NewCalendarDate["exception_type"],
+    exceptionType: CalendarDateExceptionType,
 ) =>
     days
-        .filter((day) => isDateBetween(getDateWithCustomFormat(day, "YYYYMMDD"), startDate, endDate))
+        .filter((day) => isDateBetween(getDateWithCustomFormat(day, DEFAULT_DATE_FORMAT), startDate, endDate))
         .map(
             (day): NewCalendarDate => ({
                 date: day,
@@ -92,8 +93,8 @@ const calculateDaysOfOperation = (
             day.Weekend !== undefined
                 ? 1
                 : 0,
-        start_date: startDate.format("YYYYMMDD"),
-        end_date: endDate.format("YYYYMMDD"),
+        start_date: startDate.format(DEFAULT_DATE_FORMAT),
+        end_date: endDate.format(DEFAULT_DATE_FORMAT),
     };
 };
 
@@ -129,8 +130,18 @@ export const formatCalendar = (
         ...(operatingProfile.SpecialDaysOperation?.DaysOfNonOperation?.DateRange.flat() ?? []),
     ];
 
-    const formattedExtraDaysOfOperation = formatCalendarDates(daysOfOperation, startDateToUse, endDateToUse, 1);
-    const formattedExtraDaysOfNonOperation = formatCalendarDates(daysOfNonOperation, startDateToUse, endDateToUse, 2);
+    const formattedExtraDaysOfOperation = formatCalendarDates(
+        daysOfOperation,
+        startDateToUse,
+        endDateToUse,
+        CalendarDateExceptionType.ServiceAdded,
+    );
+    const formattedExtraDaysOfNonOperation = formatCalendarDates(
+        daysOfNonOperation,
+        startDateToUse,
+        endDateToUse,
+        CalendarDateExceptionType.ServiceRemoved,
+    );
 
     if (holidaysOnly !== undefined) {
         return {
@@ -142,8 +153,8 @@ export const formatCalendar = (
                 friday: 0,
                 saturday: 0,
                 sunday: 0,
-                start_date: startDateToUse.format("YYYYMMDD"),
-                end_date: endDateToUse.format("YYYYMMDD"),
+                start_date: startDateToUse.format(DEFAULT_DATE_FORMAT),
+                end_date: endDateToUse.format(DEFAULT_DATE_FORMAT),
             },
             calendarDates: [...formattedExtraDaysOfOperation, ...formattedExtraDaysOfNonOperation],
         };
