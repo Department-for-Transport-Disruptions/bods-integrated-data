@@ -103,15 +103,26 @@ export const serviceSchema = z.object({
 export type Service = z.infer<typeof serviceSchema>;
 
 export const journeyPatternSectionSchema = z.object({
-    JourneyPatternTimingLink: z.object({
-        "@_id": z.string(),
-        From: z.object({
-            "@_SequenceNumber": z.coerce.number(),
-            Activity: z.string().optional(),
-            StopPointRef: z.string(),
-            TimingStatus: z.string().optional(),
-        }),
-    }),
+    JourneyPatternTimingLink: z
+        .object({
+            "@_id": z.string(),
+            From: z
+                .object({
+                    "@_SequenceNumber": z.coerce.number(),
+                    Activity: z.string().optional(),
+                    StopPointRef: z.string(),
+                    TimingStatus: z.string().optional(),
+                    WaitTime: z.string().optional(),
+                })
+                .optional(),
+            To: z
+                .object({
+                    WaitTime: z.string().optional(),
+                })
+                .optional(),
+            RunTime: z.string().optional(),
+        })
+        .array(),
 });
 
 export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
@@ -133,6 +144,20 @@ export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 
 export const vehicleJourneyTimingLinkSchema = z.object({
     JourneyPatternTimingLinkRef: z.string(),
+    From: z
+        .object({
+            "@_SequenceNumber": z.coerce.number(),
+            Activity: z.string().optional(),
+            StopPointRef: z.string(),
+            TimingStatus: z.string().optional(),
+            WaitTime: z.string().optional(),
+        })
+        .optional(),
+    To: z
+        .object({
+            WaitTime: z.string().optional(),
+        })
+        .optional(),
     RunTime: z.string().optional(),
 });
 

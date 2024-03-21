@@ -333,38 +333,75 @@ export const insertStopTimes = async (
             return [];
         }
 
-        const currentDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
+        let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss"); // todo: check if this format works for all data
 
         return vehicleJourney.VehicleJourneyTimingLink.flatMap<NewStopTime>((timingLink) => {
-            const journeyPatternSection = txcJourneyPatternSections
+            const journeyPatternTimingLink = txcJourneyPatternSections
                 .flatMap((s) => s.JourneyPatternTimingLink)
                 .find((link) => link["@_id"] === timingLink.JourneyPatternTimingLinkRef);
 
-            if (!journeyPatternSection) {
+            if (!journeyPatternTimingLink) {
                 logger.warn(
-                    `Unable to find journey pattern section with ref: ${timingLink.JourneyPatternTimingLinkRef}`,
+                    `Unable to find journey pattern timing link with ref: ${timingLink.JourneyPatternTimingLinkRef}`,
                 );
                 return [];
             }
 
-            if (timingLink.RunTime) {
-                currentDepartureTime.add(getDuration(timingLink.RunTime));
+            const stopPointRef = journeyPatternTimingLink.From?.StopPointRef || timingLink.From?.StopPointRef;
+
+            if (!stopPointRef) {
+                logger.warn(
+                    `Missing stop point ref for journey pattern timing link with ref: ${timingLink.JourneyPatternTimingLinkRef}`,
+                );
+                return [];
             }
 
-            const arrivalTime = currentDepartureTime.format("HH:mm:ss");
-            const departureTime = arrivalTime;
+            const sequenceNumber =
+                journeyPatternTimingLink.From?.["@_SequenceNumber"] || timingLink.From?.["@_SequenceNumber"];
+            const activity = journeyPatternTimingLink.From?.Activity || timingLink.From?.Activity;
+            const timingStatus = journeyPatternTimingLink.From?.TimingStatus || timingLink.From?.TimingStatus;
+            const fromWaitTime = journeyPatternTimingLink.From?.WaitTime || timingLink.From?.WaitTime;
+            const toWaitTime = journeyPatternTimingLink.To?.WaitTime || timingLink.To?.WaitTime;
+
+            const arrivalTime = currentStopDepartureTime.clone();
+            let departureTime = arrivalTime.clone();
+
+            if (fromWaitTime) {
+                departureTime = departureTime.add(getDuration(fromWaitTime));
+            } else if (toWaitTime) {
+                departureTime = departureTime.add(getDuration(toWaitTime));
+            }
+
+            let hasAddedRunTime = false;
+
+            if (journeyPatternTimingLink.RunTime) {
+                const journeyPatternTimingLinkRunTime = getDuration(journeyPatternTimingLink.RunTime);
+
+                if (journeyPatternTimingLinkRunTime.asSeconds() > 0) {
+                    currentStopDepartureTime = currentStopDepartureTime.add(journeyPatternTimingLinkRunTime);
+                    hasAddedRunTime = true;
+                }
+            }
+
+            if (timingLink.RunTime && !hasAddedRunTime) {
+                const vehicleJourneyTimingLinkRunTime = getDuration(timingLink.RunTime);
+
+                if (vehicleJourneyTimingLinkRunTime.asSeconds() > 0) {
+                    currentStopDepartureTime = currentStopDepartureTime.add(vehicleJourneyTimingLinkRunTime);
+                }
+            }
 
             const newStopTime: NewStopTime = {
                 trip_id: vehicleJourneyMapping.tripId,
-                stop_id: journeyPatternSection.From.StopPointRef,
-                arrival_time: arrivalTime,
-                departure_time: departureTime,
-                stop_sequence: journeyPatternSection.From["@_SequenceNumber"],
+                stop_id: stopPointRef,
+                arrival_time: arrivalTime.format("HH:mm:ss"),
+                departure_time: departureTime.format("HH:mm:ss"),
+                stop_sequence: sequenceNumber || 0,
                 stop_headsign: "",
-                pickup_type: getPickupTypeFromStopActivity(journeyPatternSection.From.Activity),
-                drop_off_type: getDropOffTypeFromStopActivity(journeyPatternSection.From.Activity),
+                pickup_type: getPickupTypeFromStopActivity(activity),
+                drop_off_type: getDropOffTypeFromStopActivity(activity),
                 shape_dist_traveled: 0,
-                timepoint: getTimepointFromTimingStatus(journeyPatternSection.From.TimingStatus),
+                timepoint: getTimepointFromTimingStatus(timingStatus),
             };
 
             return newStopTime;
