@@ -267,38 +267,49 @@ export const insertTrips = async (
     vehicleJourneyMappings: VehicleJourneyMapping[],
     routes: Route[],
 ) => {
-    const promises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
-        const { vehicleJourney } = vehicleJourneyMapping;
-        const route = routes.find((route) => route.line_id === vehicleJourney.LineRef);
+    const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
 
-        if (!route) {
-            logger.warn(`Unable to find route with line ref: ${vehicleJourney.LineRef}`);
-            return null;
-        }
+    const trips = vehicleJourneyMappings
+        .map<NewTrip | null>((vehicleJourneyMapping, index) => {
+            const { vehicleJourney } = vehicleJourneyMapping;
+            const route = routes.find((route) => route.line_id === vehicleJourney.LineRef);
 
-        const journeyPattern = txcServices
-            .flatMap((s) => s.StandardService.JourneyPattern)
-            .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+            if (!route) {
+                logger.warn(`Unable to find route with line ref: ${vehicleJourney.LineRef}`);
+                return null;
+            }
 
-        if (!journeyPattern) {
-            logger.warn(`Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`);
-            return null;
-        }
+            const journeyPattern = txcServices
+                .flatMap((s) => s.StandardService.JourneyPattern)
+                .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
 
-        const newTrip: NewTrip = {
-            route_id: vehicleJourneyMapping.routeId,
-            service_id: vehicleJourneyMapping.serviceId,
-            block_id: vehicleJourney.Operational?.Block?.BlockNumber || "",
-            shape_id: vehicleJourneyMapping.shapeId,
-            trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
-            wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(vehicleJourney.Operational?.VehicleType),
-            vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
-        };
+            if (!journeyPattern) {
+                logger.warn(
+                    `Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`,
+                );
+                return null;
+            }
 
-        return dbClient.insertInto("trip_new").values(newTrip).returningAll().executeTakeFirst();
-    });
+            const tripId = randomUUID();
 
-    const tripData = await Promise.all(promises);
+            updatedVehicleJourneyMappings[index].tripId = tripId;
 
-    return tripData.filter(notEmpty);
+            return {
+                id: tripId,
+                route_id: vehicleJourneyMapping.routeId,
+                service_id: vehicleJourneyMapping.serviceId,
+                block_id: vehicleJourney.Operational?.Block?.BlockNumber || "",
+                shape_id: vehicleJourneyMapping.shapeId,
+                trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
+                wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
+                    vehicleJourney.Operational?.VehicleType,
+                ),
+                vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
+            };
+        })
+        .filter(notEmpty);
+
+    await dbClient.insertInto("trip_new").values(trips).execute();
+
+    return updatedVehicleJourneyMappings;
 };

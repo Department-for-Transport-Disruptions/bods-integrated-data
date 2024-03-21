@@ -4,7 +4,7 @@ import { Kysely } from "kysely";
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
         .createTable("trip")
-        .addColumn("id", "serial", (col) => col.primaryKey())
+        .addColumn("id", "text", (col) => col.primaryKey())
         .addColumn("route_id", "integer")
         .addColumn("service_id", "integer")
         .addColumn("block_id", "text")

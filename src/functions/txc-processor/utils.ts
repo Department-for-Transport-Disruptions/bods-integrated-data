@@ -29,11 +29,26 @@ const calculateDaysOfOperation = (
         throw new Error("Invalid operating profile");
     }
 
-    const defaultAllDays = day === "";
+    const formattedStartDate = startDate.format(DEFAULT_DATE_FORMAT);
+    const formattedEndDate = endDate.format(DEFAULT_DATE_FORMAT);
+
+    // In the case where <DaysOfWeek> is empty, default to the service not running on any day of the week
+    if (day === "") {
+        return {
+            monday: 0,
+            tuesday: 0,
+            wednesday: 0,
+            thursday: 0,
+            friday: 0,
+            saturday: 0,
+            sunday: 0,
+            start_date: formattedStartDate,
+            end_date: formattedEndDate,
+        };
+    }
 
     return {
         monday:
-            defaultAllDays ||
             day.Monday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -42,7 +57,6 @@ const calculateDaysOfOperation = (
                 ? 1
                 : 0,
         tuesday:
-            defaultAllDays ||
             day.Tuesday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -51,7 +65,6 @@ const calculateDaysOfOperation = (
                 ? 1
                 : 0,
         wednesday:
-            defaultAllDays ||
             day.Wednesday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -60,7 +73,6 @@ const calculateDaysOfOperation = (
                 ? 1
                 : 0,
         thursday:
-            defaultAllDays ||
             day.Thursday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -69,7 +81,6 @@ const calculateDaysOfOperation = (
                 ? 1
                 : 0,
         friday:
-            defaultAllDays ||
             day.Friday !== undefined ||
             day.MondayToFriday !== undefined ||
             day.MondayToSaturday !== undefined ||
@@ -78,7 +89,6 @@ const calculateDaysOfOperation = (
                 ? 1
                 : 0,
         saturday:
-            defaultAllDays ||
             day.Saturday !== undefined ||
             day.MondayToSaturday !== undefined ||
             day.MondayToSunday !== undefined ||
@@ -86,15 +96,14 @@ const calculateDaysOfOperation = (
                 ? 1
                 : 0,
         sunday:
-            defaultAllDays ||
             day.Sunday !== undefined ||
             day.NotSaturday !== undefined ||
             day.MondayToSunday !== undefined ||
             day.Weekend !== undefined
                 ? 1
                 : 0,
-        start_date: startDate.format(DEFAULT_DATE_FORMAT),
-        end_date: endDate.format(DEFAULT_DATE_FORMAT),
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
     };
 };
 

@@ -111,6 +111,7 @@ const processServices = (
                 routeId: 0,
                 serviceId: 0,
                 shapeId: "",
+                tripId: "",
             };
 
             const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);

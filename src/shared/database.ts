@@ -258,7 +258,7 @@ export enum WheelchairAccessibility {
 }
 
 export interface GtfsTripTable {
-    id: Generated<number>;
+    id: string;
     route_id: number;
     service_id: number;
     block_id: string;
