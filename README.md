@@ -2,9 +2,9 @@
 
 This repo contains the code for the BODS Integrated Data platform, this encompasses the following functionality:
 
--   GTFS and GTFS-RT generation
--   AVL Data Pipeline
--   Data Warehouse
+- GTFS and GTFS-RT generation
+- AVL Data Pipeline
+- Data Warehouse
 
 ## Local Development
 
@@ -12,16 +12,16 @@ This repo contains the code for the BODS Integrated Data platform, this encompas
 
 This repo uses asdf to manage the versions of various dependencies, install that first before proceeding with the setup.
 
--   asdf
-    -   https://asdf-vm.com/guide/getting-started.html
--   AWS CLI Session Manager Plugin
-    -   https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
--   Docker
-    -   https://rancherdesktop.io/
--   awslocal
-    -   https://github.com/localstack/awscli-local
--   pnpm
-    -   https://pnpm.io/installation
+- asdf
+  - https://asdf-vm.com/guide/getting-started.html
+- AWS CLI Session Manager Plugin
+  - https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+- Docker
+  - https://rancherdesktop.io/
+- awslocal
+  - https://github.com/localstack/awscli-local
+- pnpm
+  - https://pnpm.io/installation
 
 ### Local Setup
 
@@ -53,6 +53,55 @@ Then export the profile as a shell variable:
 
 ```bash
 export AWS_PROFILE=bods-integrated-data-dev
+```
+
+### Creating and invoking lambda functions locally
+
+All the current lambda functions should be created when running the `make setup` command.
+
+If you wish to create them all manually you can run:
+
+```bash
+make create-lambdas
+```
+
+Similarly, if you wish to delete all the lambdas:
+
+```bash
+make delete-lambdas
+```
+
+And if you want to delete and recreate all lambdas:
+
+```bash
+make remake-lambdas
+```
+
+These commands can also be run for individual lambdas:
+
+```bash
+make create-lambda-{LAMBDA_NAME}
+make delete-lambda-{LAMBDA_NAME}
+make remake-lambda-{LAMBDA_NAME}
+```
+
+So if you wanted to update a lambda after changing the code, you could run:
+
+```bash
+make build-functions
+
+make remake-lambda-{LAMBDA_NAME}
+# OR
+make remake-lambdas
+```
+
+To invoke a lambda, simply run:
+
+```bash
+make invoke-local-{LAMBDA_NAME}
+
+# Some lambdas require a variable to be passed
+FILE=bods.zip make invoke-local-bods-txc-unzipper
 ```
 
 ### Terraform

@@ -63,6 +63,8 @@ export interface Database {
     calendar_old: GtfsCalendarTable;
     frequency: GtfsFrequencyTable;
     frequency_new: GtfsFrequencyTable;
+    calendar_date: GtfsCalendarDateTable;
+    calendar_date_new: GtfsCalendarDateTable;
     route: GtfsRouteTable;
     route_new: GtfsRouteTable;
     shape: GtfsShapeTable;
@@ -172,11 +174,28 @@ export interface GtfsCalendarTable {
     sunday: 0 | 1;
     start_date: string;
     end_date: string;
+    calendar_hash: string | null;
 }
 
 export type Calendar = Selectable<GtfsCalendarTable>;
 export type NewCalendar = Insertable<GtfsCalendarTable>;
-export type AgencyCalendar = Updateable<GtfsCalendarTable>;
+export type CalendarUpdate = Updateable<GtfsCalendarTable>;
+
+export enum CalendarDateExceptionType {
+    ServiceAdded = 1,
+    ServiceRemoved = 2,
+}
+
+export interface GtfsCalendarDateTable {
+    id: Generated<number>;
+    service_id: number | null;
+    date: string;
+    exception_type: CalendarDateExceptionType;
+}
+
+export type CalendarDate = Selectable<GtfsCalendarDateTable>;
+export type NewCalendarDate = Insertable<GtfsCalendarDateTable>;
+export type CalendarDateUpdate = Updateable<GtfsCalendarDateTable>;
 
 export enum ServiceType {
     FrequencyBased = 0,
@@ -185,7 +204,7 @@ export enum ServiceType {
 
 export interface GtfsFrequencyTable {
     id: Generated<number>;
-    trip_id: number;
+    trip_id: string;
     start_time: string;
     end_time: string;
     headway_secs: number;
@@ -258,7 +277,7 @@ export enum WheelchairAccessibility {
 }
 
 export interface GtfsTripTable {
-    id: Generated<number>;
+    id: string;
     route_id: number;
     service_id: number;
     block_id: string;

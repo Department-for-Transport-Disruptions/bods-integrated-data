@@ -40,6 +40,9 @@ devDependencies:
   '@types/pg':
     specifier: ^8.11.0
     version: 8.11.0
+  mockdate:
+    specifier: ^3.0.5
+    version: 3.0.5
   zod:
     specifier: ^3.22.4
     version: 3.22.4
@@ -3122,6 +3125,10 @@ packages:
     dependencies:
       obliterator: 1.6.1
     dev: false
+
+  /mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
+    dev: true
 
   /obliterator@1.6.1:
     resolution: {integrity: sha512-9WXswnqINnnhOG/5SLimUlzuU1hFJUc8zkwyD59Sd+dPOMf05PmnYG/d6Q7HZ+KmgkZJa1PxRso6QdM3sTNHig==}

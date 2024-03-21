@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, NaptanStop, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
+import { Database, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { S3Event } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
 import { sql, Kysely } from "kysely";
