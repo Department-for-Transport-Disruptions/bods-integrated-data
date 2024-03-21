@@ -116,7 +116,7 @@ export const insertFrequencies = async (
         if (vehicleJourney.Frequency.Interval?.ScheduledFrequency) {
             headwaySecs = getDurationInSeconds(vehicleJourney.Frequency.Interval.ScheduledFrequency);
 
-            if (vehicleJourney.Frequency?.EndTime) {
+            if (vehicleJourney.Frequency.EndTime) {
                 exactTimes = ServiceType.FrequencyBased;
             }
         }
@@ -124,7 +124,7 @@ export const insertFrequencies = async (
         const newFrequency: NewFrequency = {
             trip_id: vehicleJourneyMapping.tripId,
             start_time: vehicleJourney.DepartureTime,
-            end_time: vehicleJourney.Frequency?.EndTime || "",
+            end_time: vehicleJourney.Frequency.EndTime || "",
             headway_secs: headwaySecs,
             exact_times: exactTimes,
         };
