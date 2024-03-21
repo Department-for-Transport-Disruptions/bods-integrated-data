@@ -169,29 +169,34 @@ export const handler = async (event: S3Event) => {
     const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        logger.info(`Starting txc processor for file: ${object.key}`);
+        await dbClient.transaction().execute(async (trx) => {
+            logger.info(`Starting txc processor for file: ${object.key}`);
 
-        const txcData = await getAndParseTxcData(bucket.name, object.key);
+            const txcData = await getAndParseTxcData(bucket.name, object.key);
 
-        const { TransXChange } = txcData;
+            const { TransXChange } = txcData;
 
-        const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
+            const agencyData = await insertAgencies(trx, TransXChange.Operators.Operator);
 
-        await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+            await insertStops(trx, TransXChange.StopPoints.AnnotatedStopPointRef);
 
-        await processServices(
-            dbClient,
-            TransXChange.Services.Service,
-            TransXChange.VehicleJourneys.VehicleJourney,
-            TransXChange.RouteSections.RouteSection,
-            TransXChange.Routes.Route,
-            agencyData,
-        );
+            await processServices(
+                trx,
+                TransXChange.Services.Service,
+                TransXChange.VehicleJourneys.VehicleJourney,
+                TransXChange.RouteSections.RouteSection,
+                TransXChange.Routes.Route,
+                agencyData,
+            );
 
-        logger.info("TXC processor successful");
+            logger.info("TXC processor successful");
+        });
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor for file: ${object.key}`, e);
+            logger.error(
+                `There was a problem with the bods txc processor for file: ${object.key}, rolling back transaction`,
+                e,
+            );
         }
 
         throw e;
