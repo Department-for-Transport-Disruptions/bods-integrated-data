@@ -132,6 +132,8 @@ export const insertShapes = async (
 ) => {
     const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
 
+    const routeRefShapeIdMapping: Record<string, string> = {};
+
     const shapes = vehicleJourneyMappings.flatMap<NewShape>((vehicleJourneyMapping, index) => {
         const journey = vehicleJourneyMapping.vehicleJourney;
 
@@ -151,10 +153,13 @@ export const insertShapes = async (
             return [];
         }
 
-        const shapeId = randomUUID();
+        const shapeId = routeRefShapeIdMapping[txcRoute["@_id"]] ?? randomUUID();
+
+        routeRefShapeIdMapping[txcRoute["@_id"]] = shapeId;
+
         updatedVehicleJourneyMappings[index].shapeId = shapeId;
 
-        let current_pt_sequence = 0;
+        let currentPtSequence = 0;
 
         return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
             const routeSection = routeSections.find((rs) => rs["@_id"] === routeSectionRef);
@@ -183,7 +188,7 @@ export const insertShapes = async (
                             shape_id: shapeId,
                             shape_pt_lat: latitude,
                             shape_pt_lon: longitude,
-                            shape_pt_sequence: current_pt_sequence++,
+                            shape_pt_sequence: currentPtSequence++,
                             shape_dist_traveled: 0,
                         };
                     });
