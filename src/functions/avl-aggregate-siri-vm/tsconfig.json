@@ -4,7 +4,8 @@
         "outDir": "./dist",
         "rootDir": "../../",
         "moduleResolution": "node",
-        "module": "CommonJS"
+        "module": "CommonJS",
+        "resolveJsonModule": true
     },
     "include": ["../../shared", "."]
 }

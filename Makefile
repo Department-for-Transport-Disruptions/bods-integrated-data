@@ -109,6 +109,11 @@ bastion-tunnel:
 get-db-credentials:
 	./scripts/get-db-credentials.sh
 
+# Dates
+
+get-bank-holiday-dates:
+	curl https://www.gov.uk/bank-holidays.json --output src/shared/uk-bank-holidays.json
+
 # Naptan
 
 run-local-naptan-retriever:
@@ -180,6 +185,7 @@ run-avl-aggregate-siri-vm:
 
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
+
 
 # Lambdas
 create-lambdas: \

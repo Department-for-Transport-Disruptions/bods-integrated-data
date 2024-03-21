@@ -1,15 +1,5 @@
-/* eslint-disable import/no-named-as-default-member */
-import dayjs, { Dayjs, ManipulateType } from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
+import { z } from "zod";
 import { RouteType } from "./database";
-
-dayjs.extend(timezone);
-dayjs.extend(utc);
-dayjs.extend(customParseFormat);
-
-dayjs.tz.setDefault("Europe/London");
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -24,11 +14,6 @@ export const chunkArray = <T>(array: T[], chunkSize: number) => {
 export const notEmpty = <T>(value: T | null | undefined): value is T => {
     return value !== null && value !== undefined;
 };
-
-export const getDate = (input?: string) => (input ? dayjs.tz(input, "Europe/London") : dayjs().tz("Europe/London"));
-
-export const addIntervalToDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
-    dayjs.tz(date, "Europe/London").add(interval, intervalUnit);
 
 export const getRouteTypeFromServiceMode = (mode: string) => {
     switch (mode) {
@@ -49,5 +34,4 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
     }
 };
 
-export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
-export const getCurrentDate = () => dayjs();
+export const txcSelfClosingProperty = z.literal("");

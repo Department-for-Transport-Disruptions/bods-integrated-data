@@ -3,19 +3,18 @@ import {
     Agency,
     Database,
     LocationType,
+    NewCalendar,
+    NewCalendarDate,
     NewRoute,
     NewShape,
     NewStop,
-    chunkArray,
-    getRouteTypeFromServiceMode,
-    notEmpty,
-} from "@bods-integrated-data/shared";
-import { Operator, TxcRouteSection, Service, TxcStop, TxcRoute } from "@bods-integrated-data/shared/schema";
+} from "@bods-integrated-data/shared/database";
+import { Operator, Service, TxcRoute, TxcRouteSection, TxcStop } from "@bods-integrated-data/shared/schema";
+import { chunkArray, getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
+import { hasher } from "node-object-hash";
 import { randomUUID } from "crypto";
-import { ServiceExpiredError } from "../errors";
 import { VehicleJourneyMapping } from "../types";
-import { formatCalendar, getOperatingProfile } from "../utils";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -45,52 +44,43 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
     return agencyData.filter(notEmpty);
 };
 
-export const insertCalendars = async (
+export const insertCalendar = async (
     dbClient: Kysely<Database>,
-    service: Service,
-    vehicleJourneyMappings: VehicleJourneyMapping[],
+    calendarData: {
+        calendar: NewCalendar;
+        calendarDates: NewCalendarDate[];
+    },
 ) => {
-    const serviceCalendar = service.OperatingProfile
-        ? await dbClient
-              .insertInto("calendar_new")
-              .values(formatCalendar(service.OperatingProfile, service.OperatingPeriod))
-              .returningAll()
-              .executeTakeFirst()
-        : null;
+    const calendarHash = hasher().hash(calendarData);
 
-    const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
+    const insertedCalendar = await dbClient
+        .insertInto("calendar_new")
+        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
+        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
+        .returningAll()
+        .executeTakeFirst();
 
-    const promises = vehicleJourneyMappings.flatMap(async (vehicleJourneyMapping, index) => {
-        const journey = vehicleJourneyMapping.vehicleJourney;
+    if (!insertedCalendar?.id) {
+        throw new Error("Calendar failed to insert");
+    }
 
-        try {
-            let journeyCalendar = serviceCalendar;
+    if (!calendarData.calendarDates) {
+        return insertedCalendar;
+    }
 
-            if (journey.OperatingProfile || !serviceCalendar) {
-                journeyCalendar = await dbClient
-                    .insertInto("calendar_new")
-                    .values(getOperatingProfile(service, journey))
-                    .returningAll()
-                    .executeTakeFirst();
-            }
+    await dbClient
+        .insertInto("calendar_date_new")
+        .values(
+            calendarData.calendarDates.map((date) => ({
+                date: date.date,
+                exception_type: date.exception_type,
+                service_id: insertedCalendar.id,
+            })),
+        )
+        .onConflict((oc) => oc.doNothing())
+        .execute();
 
-            if (journeyCalendar) {
-                updatedVehicleJourneyMappings[index].serviceId = journeyCalendar?.id;
-            }
-
-            return journeyCalendar;
-        } catch (e) {
-            if (e instanceof ServiceExpiredError) {
-                logger.warn(`Service expired: ${service.ServiceCode}`);
-            }
-
-            return null;
-        }
-    });
-
-    await Promise.all(promises);
-
-    return updatedVehicleJourneyMappings;
+    return insertedCalendar;
 };
 
 export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
@@ -142,6 +132,8 @@ export const insertShapes = async (
 ) => {
     const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
 
+    const routeRefShapeIdMapping: Record<string, string> = {};
+
     const shapes = vehicleJourneyMappings.flatMap<NewShape>((vehicleJourneyMapping, index) => {
         const journey = vehicleJourneyMapping.vehicleJourney;
 
@@ -161,10 +153,13 @@ export const insertShapes = async (
             return [];
         }
 
-        const shapeId = randomUUID();
+        const shapeId = routeRefShapeIdMapping[txcRoute["@_id"]] ?? randomUUID();
+
+        routeRefShapeIdMapping[txcRoute["@_id"]] = shapeId;
+
         updatedVehicleJourneyMappings[index].shapeId = shapeId;
 
-        let current_pt_sequence = 0;
+        let currentPtSequence = 0;
 
         return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
             const routeSection = routeSections.find((rs) => rs["@_id"] === routeSectionRef);
@@ -193,7 +188,7 @@ export const insertShapes = async (
                             shape_id: shapeId,
                             shape_pt_lat: latitude,
                             shape_pt_lon: longitude,
-                            shape_pt_sequence: current_pt_sequence++,
+                            shape_pt_sequence: currentPtSequence++,
                             shape_dist_traveled: 0,
                         };
                     });
