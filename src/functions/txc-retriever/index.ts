@@ -6,7 +6,16 @@ import { Kysely, sql } from "kysely";
 const lambdaClient = new LambdaClient({ region: "eu-west-2" });
 
 const cleardownDatabase = async (dbClient: Kysely<Database>) => {
-    const tables: (keyof Database)[] = ["agency", "calendar", "frequency", "route", "shape", "stop", "trip"];
+    const tables: (keyof Database)[] = [
+        "agency",
+        "calendar",
+        "frequency",
+        "route",
+        "shape",
+        "stop",
+        "stop_time",
+        "trip",
+    ];
 
     for (const table of tables) {
         await dbClient.schema.dropTable(`${table}_new`).ifExists().execute();

@@ -54,7 +54,7 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
 
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
 export const getCurrentDate = () => dayjs();
-export const getDurationInSeconds = (duration: string) => dayjs.duration(duration).asSeconds();
+export const getDuration = (duration: string) => dayjs.duration(duration);
 
 export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleType) => {
     if (!vehicleType) {

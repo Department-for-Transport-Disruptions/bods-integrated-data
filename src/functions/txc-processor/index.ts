@@ -1,6 +1,13 @@
 import { logger } from "@baselime/lambda-logger";
 import { Agency, Database, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
-import { TxcRouteSection, Service, VehicleJourney, txcSchema, TxcRoute } from "@bods-integrated-data/shared/schema";
+import {
+    TxcRouteSection,
+    Service,
+    VehicleJourney,
+    txcSchema,
+    TxcRoute,
+    TxcJourneyPatternSection,
+} from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
@@ -11,6 +18,7 @@ import {
     insertFrequencies,
     insertRoutes,
     insertShapes,
+    insertStopTimes,
     insertStops,
     insertTrips,
 } from "./data/database";
@@ -40,6 +48,7 @@ const processServices = (
     vehicleJourneys: VehicleJourney[],
     txcRouteSections: TxcRouteSection[],
     txcRoutes: TxcRoute[],
+    txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -99,6 +108,7 @@ const processServices = (
         });
 
         await insertFrequencies(dbClient, vehicleJourneyMappings);
+        await insertStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -158,6 +168,7 @@ export const handler = async (event: S3Event) => {
             TransXChange.VehicleJourneys.VehicleJourney,
             TransXChange.RouteSections.RouteSection,
             TransXChange.Routes.Route,
+            TransXChange.JourneyPatternSections.JourneyPatternSection,
             agencyData,
         );
 

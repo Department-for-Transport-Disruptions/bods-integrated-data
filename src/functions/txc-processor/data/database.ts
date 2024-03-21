@@ -10,18 +10,33 @@ import {
     NewTrip,
     Route,
     ServiceType,
-    getDurationInSeconds,
+    getDuration,
     chunkArray,
     getRouteTypeFromServiceMode,
     getWheelchairAccessibilityFromVehicleType,
     notEmpty,
+    getDateWithCustomFormat,
+    NewStopTime,
 } from "@bods-integrated-data/shared";
-import { Operator, TxcRouteSection, Service, TxcStop, TxcRoute } from "@bods-integrated-data/shared/schema";
+import {
+    Operator,
+    TxcRouteSection,
+    Service,
+    TxcStop,
+    TxcRoute,
+    TxcJourneyPatternSection,
+} from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { randomUUID } from "crypto";
 import { ServiceExpiredError } from "../errors";
 import { VehicleJourneyMapping } from "../types";
-import { formatCalendar, getOperatingProfile } from "../utils";
+import {
+    formatCalendar,
+    getDropOffTypeFromStopActivity,
+    getOperatingProfile,
+    getPickupTypeFromStopActivity,
+    getTimepointFromTimingStatus,
+} from "../utils";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -114,7 +129,7 @@ export const insertFrequencies = async (
         let exactTimes = ServiceType.ScheduleBased;
 
         if (vehicleJourney.Frequency.Interval?.ScheduledFrequency) {
-            headwaySecs = getDurationInSeconds(vehicleJourney.Frequency.Interval.ScheduledFrequency);
+            headwaySecs = getDuration(vehicleJourney.Frequency.Interval.ScheduledFrequency).asSeconds();
 
             if (vehicleJourney.Frequency?.EndTime) {
                 exactTimes = ServiceType.FrequencyBased;
@@ -300,7 +315,66 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         .values(stopsToInsert)
         .onConflict((oc) => oc.column("id").doNothing())
         .returningAll()
-        .executeTakeFirst();
+        .execute();
+};
+
+export const insertStopTimes = async (
+    dbClient: Kysely<Database>,
+    txcJourneyPatternSections: TxcJourneyPatternSection[],
+    vehicleJourneyMappings: VehicleJourneyMapping[],
+) => {
+    const stopTimes = vehicleJourneyMappings.flatMap<NewStopTime>((vehicleJourneyMapping) => {
+        const { vehicleJourney } = vehicleJourneyMapping;
+
+        if (!vehicleJourney.VehicleJourneyTimingLink) {
+            logger.warn(
+                `No vehicle journey timing links found for vehicle journey with ref: ${vehicleJourney.LineRef}`,
+            );
+            return [];
+        }
+
+        const currentDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
+
+        return vehicleJourney.VehicleJourneyTimingLink.flatMap<NewStopTime>((timingLink) => {
+            const journeyPatternSection = txcJourneyPatternSections
+                .flatMap((s) => s.JourneyPatternTimingLink)
+                .find((link) => link["@_id"] === timingLink.JourneyPatternTimingLinkRef);
+
+            if (!journeyPatternSection) {
+                logger.warn(
+                    `Unable to find journey pattern section with ref: ${timingLink.JourneyPatternTimingLinkRef}`,
+                );
+                return [];
+            }
+
+            if (timingLink.RunTime) {
+                currentDepartureTime.add(getDuration(timingLink.RunTime));
+            }
+
+            const arrivalTime = currentDepartureTime.format("HH:mm:ss");
+            const departureTime = arrivalTime;
+
+            const newStopTime: NewStopTime = {
+                trip_id: vehicleJourneyMapping.tripId,
+                stop_id: journeyPatternSection.From.StopPointRef,
+                arrival_time: arrivalTime,
+                departure_time: departureTime,
+                stop_sequence: journeyPatternSection.From["@_SequenceNumber"],
+                stop_headsign: "",
+                pickup_type: getPickupTypeFromStopActivity(journeyPatternSection.From.Activity),
+                drop_off_type: getDropOffTypeFromStopActivity(journeyPatternSection.From.Activity),
+                shape_dist_traveled: 0,
+                timepoint: getTimepointFromTimingStatus(journeyPatternSection.From.TimingStatus),
+            };
+
+            return newStopTime;
+        });
+    });
+
+    if (stopTimes.length > 0) {
+        const insertChunks = chunkArray(stopTimes, 3000);
+        await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
+    }
 };
 
 export const insertTrips = async (

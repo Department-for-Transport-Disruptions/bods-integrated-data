@@ -102,6 +102,20 @@ export const serviceSchema = z.object({
 
 export type Service = z.infer<typeof serviceSchema>;
 
+export const journeyPatternSectionSchema = z.object({
+    JourneyPatternTimingLink: z.object({
+        "@_id": z.string(),
+        From: z.object({
+            "@_SequenceNumber": z.coerce.number(),
+            Activity: z.string().optional(),
+            StopPointRef: z.coerce.number(),
+            TimingStatus: z.string().optional(),
+        }),
+    }),
+});
+
+export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
+
 export const vehicleTypeSchema = z.object({
     WheelChairAccessible: z.boolean().optional(),
     VehicleEquipment: z
@@ -116,6 +130,11 @@ export const vehicleTypeSchema = z.object({
 });
 
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
+
+export const vehicleJourneyTimingLinkSchema = z.object({
+    JourneyPatternTimingLinkRef: z.string(),
+    RunTime: z.string().optional(),
+});
 
 export const vehicleJourneySchema = z.object({
     VehicleJourneyCode: z.string(),
@@ -145,6 +164,7 @@ export const vehicleJourneySchema = z.object({
     ServiceRef: z.string(),
     LineRef: z.string(),
     JourneyPatternRef: z.string(),
+    VehicleJourneyTimingLink: z.array(vehicleJourneyTimingLinkSchema).optional(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
@@ -172,6 +192,9 @@ export const txcSchema = z.object({
         }),
         Routes: z.object({
             Route: z.array(routeSchema),
+        }),
+        JourneyPatternSections: z.object({
+            JourneyPatternSection: z.array(journeyPatternSectionSchema),
         }),
         Services: z.object({
             Service: z.array(serviceSchema),

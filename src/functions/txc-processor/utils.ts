@@ -1,4 +1,11 @@
-import { NewCalendar, getCurrentDate, getDateWithCustomFormat } from "@bods-integrated-data/shared";
+import {
+    DropOffType,
+    NewCalendar,
+    PickupType,
+    Timepoint,
+    getCurrentDate,
+    getDateWithCustomFormat,
+} from "@bods-integrated-data/shared";
 import { OperatingPeriod, OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { ServiceExpiredError } from "./errors";
 
@@ -113,4 +120,42 @@ const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
             MondayToSunday: "",
         },
     },
+};
+
+export const getPickupTypeFromStopActivity = (activity?: string) => {
+    switch (activity) {
+        case "pickUp":
+        case "pickUpAndSetDown":
+            return PickupType.Pickup;
+        case "setDown":
+        case "pass":
+            return PickupType.NoPickup;
+        default:
+            return PickupType.Pickup;
+    }
+};
+
+export const getDropOffTypeFromStopActivity = (activity?: string) => {
+    switch (activity) {
+        case "setDown":
+        case "pickUpAndSetDown":
+            return DropOffType.DropOff;
+        case "pickUp":
+        case "pass":
+            return DropOffType.NoDropOff;
+        default:
+            return DropOffType.DropOff;
+    }
+};
+
+export const getTimepointFromTimingStatus = (timingStatus?: string) => {
+    switch (timingStatus) {
+        case "principalPoint":
+            return Timepoint.Approximate;
+        case "timeInfoPoint":
+        case "principalTimingPoint":
+            return Timepoint.Exact;
+        default:
+            return Timepoint.Approximate;
+    }
 };
