@@ -1,6 +1,6 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { logger } from "@baselime/lambda-logger";
-import { startS3Upload } from "@bods-integrated-data/shared";
+import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { Client } from "basic-ftp";
 import { Writable } from "stream";
 
@@ -11,9 +11,10 @@ interface FtpCredentials {
 }
 
 const isLocal = process.env.IS_LOCAL === "true";
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const secretsClient = new SecretsManagerClient({
-    endpoint: isLocal ? "http://localhost:4566" : undefined,
+    endpoint: isLocal ? (localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566") : undefined,
     region: "eu-west-2",
 });
 

@@ -1,12 +1,14 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
+import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { TxcRouteSection, Service, VehicleJourney, txcSchema, TxcRoute } from "@bods-integrated-data/shared/schema";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendars, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
+import { insertAgencies, insertCalendar, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
 import { VehicleJourneyMapping } from "./types";
+import { DEFAULT_OPERATING_PROFILE, formatCalendar } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -24,7 +26,60 @@ const txcArrayProperties = [
     "JourneyPattern",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
+    "OtherPublicHoliday",
 ];
+
+export const processCalendars = async (
+    dbClient: Kysely<Database>,
+    service: Service,
+    vehicleJourneyMappings: VehicleJourneyMapping[],
+) => {
+    let serviceCalendarId: number | null = null;
+
+    if (service.OperatingProfile) {
+        const serviceCalendar = await insertCalendar(
+            dbClient,
+            formatCalendar(service.OperatingProfile, service.OperatingPeriod),
+        );
+
+        serviceCalendarId = serviceCalendar.id;
+    }
+
+    const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
+            return {
+                ...vehicleJourneyMapping,
+                serviceId: serviceCalendarId,
+            };
+        }
+
+        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
+            const defaultCalendar = await insertCalendar(
+                dbClient,
+                formatCalendar(DEFAULT_OPERATING_PROFILE, service.OperatingPeriod),
+            );
+
+            return {
+                ...vehicleJourneyMapping,
+                serviceId: defaultCalendar.id,
+            };
+        }
+
+        const calendarData = formatCalendar(
+            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
+            service.OperatingPeriod,
+        );
+
+        const calendar = await insertCalendar(dbClient, calendarData);
+
+        return {
+            ...vehicleJourneyMapping,
+            serviceId: calendar.id,
+        };
+    });
+
+    return Promise.all(updatedVehicleJourneyMappingsPromises);
+};
 
 const processServices = (
     dbClient: Kysely<Database>,
@@ -69,7 +124,7 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        vehicleJourneyMappings = await insertCalendars(dbClient, service, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processCalendars(dbClient, service, vehicleJourneyMappings);
         vehicleJourneyMappings = await insertShapes(
             dbClient,
             services,
@@ -121,29 +176,34 @@ export const handler = async (event: S3Event) => {
     const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        logger.info(`Starting txc processor for file: ${object.key}`);
+        await dbClient.transaction().execute(async (trx) => {
+            logger.info(`Starting txc processor for file: ${object.key}`);
 
-        const txcData = await getAndParseTxcData(bucket.name, object.key);
+            const txcData = await getAndParseTxcData(bucket.name, object.key);
 
-        const { TransXChange } = txcData;
+            const { TransXChange } = txcData;
 
-        const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
+            const agencyData = await insertAgencies(trx, TransXChange.Operators.Operator);
 
-        await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+            await insertStops(trx, TransXChange.StopPoints.AnnotatedStopPointRef);
 
-        await processServices(
-            dbClient,
-            TransXChange.Services.Service,
-            TransXChange.VehicleJourneys.VehicleJourney,
-            TransXChange.RouteSections.RouteSection,
-            TransXChange.Routes.Route,
-            agencyData,
-        );
+            await processServices(
+                trx,
+                TransXChange.Services.Service,
+                TransXChange.VehicleJourneys.VehicleJourney,
+                TransXChange.RouteSections.RouteSection,
+                TransXChange.Routes.Route,
+                agencyData,
+            );
 
-        logger.info("TXC processor successful");
+            logger.info("TXC processor successful");
+        });
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor for file: ${object.key}`, e);
+            logger.error(
+                `There was a problem with the bods txc processor for file: ${object.key}, rolling back transaction`,
+                e,
+            );
         }
 
         throw e;

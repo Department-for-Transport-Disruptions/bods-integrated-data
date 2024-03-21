@@ -9,12 +9,13 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { PassThrough } from "stream";
 
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._\-!\*\'\(\)\/]/g, "_");
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const client = new S3Client({
     region: "eu-west-2",
     ...(process.env.IS_LOCAL === "true"
         ? {
-              endpoint: "http://localhost:4566",
+              endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
               forcePathStyle: true,
               credentials: {
                   accessKeyId: "DUMMY",

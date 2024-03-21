@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkArray } from ".";
+import { chunkArray, notEmpty } from "./utils";
 
 describe("chunkArray", () => {
     it.each([
@@ -28,4 +28,12 @@ describe("chunkArray", () => {
             expect(chunkArray(array, chunkSize)).toStrictEqual(expected);
         },
     );
+});
+
+describe("notEmpty", () => {
+    it("removes null and undefined elements from an array", () => {
+        const array = [1, 2, null, 3, undefined, 4];
+
+        expect(array.filter(notEmpty)).toEqual([1, 2, 3, 4]);
+    });
 });

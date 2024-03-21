@@ -1,7 +1,6 @@
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent } from "aws-lambda";
-// eslint-disable-next-line import/no-unresolved
-import * as MockDate from "mockdate";
+import MockDate from "mockdate";
 import { beforeAll, afterEach, afterAll, describe, expect, it, vi } from "vitest";
 import { testSiri } from "./testSiriVm";
 import { handler } from ".";

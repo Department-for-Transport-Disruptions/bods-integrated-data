@@ -1,5 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
-import { addIntervalToDate, getDatabaseClient, getDate, putS3Object } from "@bods-integrated-data/shared";
+import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
+import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { Avl, siriSchema } from "@bods-integrated-data/shared/schema/siri.schema";
 import { parse } from "js2xmlparser";
 import { randomUUID } from "crypto";

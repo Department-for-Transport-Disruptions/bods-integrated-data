@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { DEFAULT_DATE_FORMAT, transformedBankHolidayOperationSchema } from "./dates.schema";
+import { getDate, getDateRange } from "../dates";
+import { txcSelfClosingProperty } from "../utils";
 
 export const operatorSchema = z.object({
     NationalOperatorCode: z.string(),
@@ -15,27 +18,56 @@ export const operatingPeriodSchema = z.object({
 
 export type OperatingPeriod = z.infer<typeof operatingPeriodSchema>;
 
+const dateRange = z
+    .object({
+        StartDate: z.string(),
+        EndDate: z.string(),
+    })
+    .transform((range) =>
+        getDateRange(getDate(range.StartDate), getDate(range.EndDate)).map((date) => date.format(DEFAULT_DATE_FORMAT)),
+    );
+
 export const operatingProfileSchema = z.object({
     RegularDayType: z.object({
         DaysOfWeek: z
             .object({
-                Monday: z.literal("").optional(),
-                Tuesday: z.literal("").optional(),
-                Wednesday: z.literal("").optional(),
-                Thursday: z.literal("").optional(),
-                Friday: z.literal("").optional(),
-                Saturday: z.literal("").optional(),
-                Sunday: z.literal("").optional(),
-                MondayToFriday: z.literal("").optional(),
-                MondayToSaturday: z.literal("").optional(),
-                MondayToSunday: z.literal("").optional(),
-                NotSaturday: z.literal("").optional(),
-                Weekend: z.literal("").optional(),
+                Monday: txcSelfClosingProperty.optional(),
+                Tuesday: txcSelfClosingProperty.optional(),
+                Wednesday: txcSelfClosingProperty.optional(),
+                Thursday: txcSelfClosingProperty.optional(),
+                Friday: txcSelfClosingProperty.optional(),
+                Saturday: txcSelfClosingProperty.optional(),
+                Sunday: txcSelfClosingProperty.optional(),
+                MondayToFriday: txcSelfClosingProperty.optional(),
+                MondayToSaturday: txcSelfClosingProperty.optional(),
+                MondayToSunday: txcSelfClosingProperty.optional(),
+                NotSaturday: txcSelfClosingProperty.optional(),
+                Weekend: txcSelfClosingProperty.optional(),
             })
             .or(z.literal(""))
             .optional(),
-        HolidaysOnly: z.literal("").optional(),
+        HolidaysOnly: txcSelfClosingProperty.optional(),
     }),
+    SpecialDaysOperation: z
+        .object({
+            DaysOfOperation: z
+                .object({
+                    DateRange: dateRange.array(),
+                })
+                .optional(),
+            DaysOfNonOperation: z
+                .object({
+                    DateRange: dateRange.array(),
+                })
+                .optional(),
+        })
+        .optional(),
+    BankHolidayOperation: z
+        .object({
+            DaysOfOperation: transformedBankHolidayOperationSchema.optional(),
+            DaysOfNonOperation: transformedBankHolidayOperationSchema.optional(),
+        })
+        .optional(),
 });
 
 export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
@@ -53,24 +85,24 @@ const locationSchema = z.object({
 
 const trackSchema = z.object({
     Mapping: z.object({
-        Location: z.array(locationSchema),
+        Location: locationSchema.array(),
     }),
 });
 
 const routeLinkSchema = z.object({
-    Track: z.array(trackSchema).optional(),
+    Track: trackSchema.array().optional(),
 });
 
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
-    RouteLink: z.array(routeLinkSchema),
+    RouteLink: routeLinkSchema.array(),
 });
 
 export type TxcRouteSection = z.infer<typeof routeSectionSchema>;
 
 export const routeSchema = z.object({
     "@_id": z.string(),
-    RouteSectionRef: z.array(z.string()),
+    RouteSectionRef: z.string().array(),
 });
 
 export type TxcRoute = z.infer<typeof routeSchema>;
@@ -80,23 +112,23 @@ export const serviceSchema = z.object({
     OperatingPeriod: operatingPeriodSchema,
     OperatingProfile: operatingProfileSchema.optional(),
     Lines: z.object({
-        Line: z.array(
-            z.object({
+        Line: z
+            .object({
                 "@_id": z.string(),
                 LineName: z.string(),
-            }),
-        ),
+            })
+            .array(),
     }),
     Mode: z.string().default("bus"),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
-        JourneyPattern: z.array(
-            z.object({
+        JourneyPattern: z
+            .object({
                 "@_id": z.string(),
                 DestinationDisplay: z.string().optional(),
                 RouteRef: z.string().optional(),
-            }),
-        ),
+            })
+            .array(),
     }),
 });
 
@@ -154,22 +186,22 @@ export type TxcStop = z.infer<typeof stopSchema>;
 export const txcSchema = z.object({
     TransXChange: z.object({
         Operators: z.object({
-            Operator: z.array(operatorSchema),
+            Operator: operatorSchema.array(),
         }),
         RouteSections: z.object({
-            RouteSection: z.array(routeSectionSchema),
+            RouteSection: routeSectionSchema.array(),
         }),
         Routes: z.object({
-            Route: z.array(routeSchema),
+            Route: routeSchema.array(),
         }),
         Services: z.object({
-            Service: z.array(serviceSchema),
+            Service: serviceSchema.array(),
         }),
         VehicleJourneys: z.object({
-            VehicleJourney: z.array(vehicleJourneySchema),
+            VehicleJourney: vehicleJourneySchema.array(),
         }),
         StopPoints: z.object({
-            AnnotatedStopPointRef: z.array(stopSchema),
+            AnnotatedStopPointRef: stopSchema.array(),
         }),
     }),
 });
