@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { RouteType } from "./database";
+import { RouteType, WheelchairAccessibility } from "./database";
+import { VehicleType } from "./schema";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -32,6 +33,25 @@ export const getRouteTypeFromServiceMode = (mode: string) => {
         default:
             return RouteType.Bus;
     }
+};
+
+export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleType) => {
+    if (!vehicleType) {
+        return WheelchairAccessibility.NoAccessibilityInformation;
+    }
+
+    const hasWheelchairEquipment = !!vehicleType.VehicleEquipment?.WheelchairEquipment;
+    const numberOfWheelChairAreas = vehicleType.VehicleEquipment?.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
+
+    if (vehicleType.WheelChairAccessible || (hasWheelchairEquipment && numberOfWheelChairAreas > 0)) {
+        return WheelchairAccessibility.Accessible;
+    }
+
+    if (vehicleType.WheelChairAccessible === false || (hasWheelchairEquipment && numberOfWheelChairAreas === 0)) {
+        return WheelchairAccessibility.NotAccessible;
+    }
+
+    return WheelchairAccessibility.NoAccessibilityInformation;
 };
 
 export const txcSelfClosingProperty = z.literal("");

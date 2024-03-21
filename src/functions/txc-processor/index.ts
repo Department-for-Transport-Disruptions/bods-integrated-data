@@ -6,7 +6,7 @@ import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendar, insertRoutes, insertShapes, insertStops } from "./data/database";
+import { insertAgencies, insertCalendar, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
 import { VehicleJourneyMapping } from "./types";
 import { DEFAULT_OPERATING_PROFILE, formatCalendar } from "./utils";
 
@@ -85,8 +85,8 @@ const processServices = (
     dbClient: Kysely<Database>,
     services: Service[],
     vehicleJourneys: VehicleJourney[],
-    routeSections: TxcRouteSection[],
-    routes: TxcRoute[],
+    txcRouteSections: TxcRouteSection[],
+    txcRoutes: TxcRoute[],
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -111,6 +111,7 @@ const processServices = (
                 routeId: 0,
                 serviceId: 0,
                 shapeId: "",
+                tripId: "",
             };
 
             const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
@@ -125,7 +126,14 @@ const processServices = (
         });
 
         vehicleJourneyMappings = await processCalendars(dbClient, service, vehicleJourneyMappings);
-        await insertShapes(dbClient, services, routes, routeSections, vehicleJourneyMappings);
+        vehicleJourneyMappings = await insertShapes(
+            dbClient,
+            services,
+            txcRoutes,
+            txcRouteSections,
+            vehicleJourneyMappings,
+        );
+        await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
     });
 
     return Promise.all(promises);
