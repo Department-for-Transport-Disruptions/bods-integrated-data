@@ -56,7 +56,7 @@ export const bankHolidayOperationSchema = fixedBankHolidaysSchema
         z.object({
             OtherPublicHoliday: z
                 .object({
-                    Date: z.string(),
+                    Date: z.string().optional(),
                 })
                 .array()
                 .optional(),
@@ -145,7 +145,7 @@ export const transformedBankHolidayOperationSchema = bankHolidayOperationSchema.
 
                 if (op.OtherPublicHoliday) {
                     return op.OtherPublicHoliday.flatMap((holiday) =>
-                        getDate(holiday.Date).format(DEFAULT_DATE_FORMAT),
+                        holiday.Date ? getDate(holiday.Date).format(DEFAULT_DATE_FORMAT) : null,
                     );
                 }
             })

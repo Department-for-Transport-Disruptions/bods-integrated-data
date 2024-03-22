@@ -55,3 +55,4 @@ export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleT
 };
 
 export const txcSelfClosingProperty = z.literal("");
+export const txcEmptyProperty = txcSelfClosingProperty.transform(() => undefined);
