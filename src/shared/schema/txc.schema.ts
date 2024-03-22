@@ -104,7 +104,7 @@ export const serviceSchema = z.object({
 export type Service = z.infer<typeof serviceSchema>;
 
 const vehicleJourneyStopUsageSchema = z.object({
-    "@_id": z.string(),
+    "@_id": z.string().optional(),
     From: z
         .object({
             "@_SequenceNumber": z.coerce.number().optional(),
