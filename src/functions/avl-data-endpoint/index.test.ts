@@ -2,7 +2,7 @@ import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { beforeAll, afterEach, afterAll, describe, expect, it, vi } from "vitest";
-import { testSiri } from "./testSiriVm";
+import { eventtest } from "./testSiriVm";
 import { handler } from ".";
 
 describe("AVL-data-endpoint", () => {
@@ -24,10 +24,11 @@ describe("AVL-data-endpoint", () => {
         MockDate.reset();
     });
 
-    const mockSubscriptionId = "411e4495-4a57-4d2f-89d5-cf105441f321";
+    const mockSubscriptionId = eventtest?.pathParameters?.subscriptionId;
     it("Should add valid XML to S3", async () => {
         const mockEvent = {
-            body: testSiri,
+            body: eventtest.body,
+
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
@@ -37,7 +38,7 @@ describe("AVL-data-endpoint", () => {
 
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
-            Body: `${testSiri}`,
+            Body: `${eventtest.body}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z`,
