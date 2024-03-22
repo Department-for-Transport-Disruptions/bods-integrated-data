@@ -58,7 +58,7 @@ module "integrated_data_aurora_db_dev" {
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
   min_db_capacity          = 0.5
-  max_db_capacity          = 4
+  max_db_capacity          = 8
   enable_rds_proxy         = true
 }
 
@@ -143,20 +143,20 @@ module "integrated_data_avl_aggregator" {
 module "integrated_data_avl_subscription_table" {
   source = "../modules/database/dynamo"
 
-  environment        = local.env
+  environment = local.env
 }
 
 module "integrated_data_avl_subscriber" {
   source = "../modules/avl-producer-api/avl-subscriber"
 
-  environment        = local.env
+  environment = local.env
 }
 
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-endpoint/avl-data-endpoint"
 
-  environment     = local.env
-  bucket_arn      = module.integrated_data_avl_pipeline.bucket_arn
+  environment = local.env
+  bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
 }
 
 locals {
