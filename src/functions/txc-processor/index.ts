@@ -35,6 +35,7 @@ const txcArrayProperties = [
     "VehicleJourney",
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
+    "DateRange",
 ];
 
 export const processCalendars = async (
