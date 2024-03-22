@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDatabaseClient } from "@bods-integrated-data/shared";
+import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { FileMigrationProvider, Migrator } from "kysely";
 import { promises as fs } from "fs";
 import * as path from "path";

@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { putS3Object } from "@bods-integrated-data/shared";
+import { putS3Object } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 
 export const handler = async () => {

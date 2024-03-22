@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { putS3Object, getDate } from "@bods-integrated-data/shared";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLValidator } from "fast-xml-parser";
 import { ClientError } from "./errors";

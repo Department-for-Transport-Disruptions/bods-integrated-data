@@ -81,3 +81,10 @@ variable "s3_bucket_trigger" {
   default     = null
   description = "ID and ARN of the bucket which will trigger the function when new objects are uploaded"
 }
+
+variable "reserved_concurrency" {
+  type        = number
+  nullable    = true
+  default     = null
+  description = "Reserved concurrency for lambda"
+}

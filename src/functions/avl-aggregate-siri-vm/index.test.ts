@@ -1,4 +1,4 @@
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared";
+import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
 import { describe, it, expect, afterEach, vi } from "vitest";

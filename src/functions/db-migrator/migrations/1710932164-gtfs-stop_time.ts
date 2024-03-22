@@ -1,11 +1,11 @@
-import { Database } from "@bods-integrated-data/shared";
+import { Database } from "@bods-integrated-data/shared/database";
 import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
         .createTable("stop_time")
         .addColumn("id", "serial", (col) => col.primaryKey())
-        .addColumn("trip_id", "integer")
+        .addColumn("trip_id", "text")
         .addColumn("stop_id", "text")
         .addColumn("arrival_time", "text")
         .addColumn("departure_time", "text")
