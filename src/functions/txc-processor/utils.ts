@@ -3,7 +3,6 @@ import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrate
 import { OperatingPeriod, OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/schema/dates.schema";
 import type { Dayjs } from "dayjs";
-import { ServiceExpiredError } from "./errors";
 
 const formatCalendarDates = (
     days: string[],
@@ -122,10 +121,6 @@ export const formatCalendar = (
     const startDate = getDateWithCustomFormat(operatingPeriod.StartDate, "YYYY-MM-DD");
     const endDate = operatingPeriod.EndDate ? getDateWithCustomFormat(operatingPeriod.EndDate, "YYYY-MM-DD") : null;
 
-    if (endDate?.isBefore(currentDate)) {
-        throw new ServiceExpiredError();
-    }
-
     const startDateToUse = startDate.isBefore(currentDate) ? currentDate : startDate;
     const endDateToUse = endDate ?? startDateToUse.add(9, "months");
 
@@ -184,6 +179,13 @@ export const getOperatingProfile = (service: Service, vehicleJourney: VehicleJou
         vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
 
     return formatCalendar(operatingProfileToUse, operatingPeriod);
+};
+
+export const hasServiceExpired = (service: Service) => {
+    const currentDate = getDate();
+    const endDate = getDate(service.OperatingPeriod.EndDate);
+
+    return endDate?.isBefore(currentDate, "day");
 };
 
 export const DEFAULT_OPERATING_PROFILE: OperatingProfile = {

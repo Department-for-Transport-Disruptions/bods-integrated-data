@@ -61,6 +61,8 @@ export interface Database {
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
     calendar_old: GtfsCalendarTable;
+    frequency: GtfsFrequencyTable;
+    frequency_new: GtfsFrequencyTable;
     calendar_date: GtfsCalendarDateTable;
     calendar_date_new: GtfsCalendarDateTable;
     route: GtfsRouteTable;
@@ -194,6 +196,23 @@ export interface GtfsCalendarDateTable {
 export type CalendarDate = Selectable<GtfsCalendarDateTable>;
 export type NewCalendarDate = Insertable<GtfsCalendarDateTable>;
 export type CalendarDateUpdate = Updateable<GtfsCalendarDateTable>;
+
+export enum ServiceType {
+    FrequencyBased = 0,
+    ScheduleBased = 1,
+}
+
+export interface GtfsFrequencyTable {
+    id: Generated<number>;
+    trip_id: string;
+    start_time: string;
+    end_time: string;
+    headway_secs: number;
+    exact_times: number;
+}
+
+export type Frequency = Selectable<GtfsFrequencyTable>;
+export type NewFrequency = Insertable<GtfsFrequencyTable>;
 
 export enum RouteType {
     TramOrMetro = 0,

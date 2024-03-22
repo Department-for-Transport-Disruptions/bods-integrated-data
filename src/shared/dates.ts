@@ -1,5 +1,6 @@
 import dayjs, { extend as dayjsExtend, Dayjs, ManipulateType } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -7,6 +8,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import ukBankHolidays from "./uk-bank-holidays.json";
 
+dayjsExtend(duration);
 dayjsExtend(timezone);
 dayjsExtend(utc);
 dayjsExtend(customParseFormat);
@@ -77,6 +79,8 @@ export const addIntervalToDate = (date: string | Date | Dayjs, interval: number,
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
 
 export const isDateBetween = (date: Dayjs, startDate: Dayjs, endDate: Dayjs) => date.isBetween(startDate, endDate);
+
+export const getDurationInSeconds = (duration: string) => dayjs.duration(duration).asSeconds();
 
 export const getDateRange = (startDate: Dayjs, endDate: Dayjs) => {
     const dates = [];

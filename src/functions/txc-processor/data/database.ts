@@ -3,6 +3,7 @@ import {
     Agency,
     Database,
     LocationType,
+    NewFrequency,
     NewCalendar,
     NewCalendarDate,
     NewRoute,
@@ -10,7 +11,9 @@ import {
     NewStop,
     NewTrip,
     Route,
+    ServiceType,
 } from "@bods-integrated-data/shared/database";
+import { getDurationInSeconds } from "@bods-integrated-data/shared/dates";
 import { Operator, Service, TxcRoute, TxcRouteSection, TxcStop } from "@bods-integrated-data/shared/schema";
 import {
     chunkArray,
@@ -71,7 +74,7 @@ export const insertCalendar = async (
         throw new Error("Calendar failed to insert");
     }
 
-    if (!calendarData.calendarDates) {
+    if (!calendarData.calendarDates?.length) {
         return insertedCalendar;
     }
 
@@ -88,6 +91,46 @@ export const insertCalendar = async (
         .execute();
 
     return insertedCalendar;
+};
+
+export const insertFrequencies = async (
+    dbClient: Kysely<Database>,
+    vehicleJourneyMappings: VehicleJourneyMapping[],
+) => {
+    const frequencies = vehicleJourneyMappings
+        .map<NewFrequency | null>((vehicleJourneyMapping) => {
+            const { vehicleJourney } = vehicleJourneyMapping;
+
+            if (!vehicleJourney.Frequency) {
+                return null;
+            }
+
+            let headwaySecs = 0;
+            let exactTimes = ServiceType.ScheduleBased;
+
+            if (vehicleJourney.Frequency.Interval?.ScheduledFrequency) {
+                headwaySecs = getDurationInSeconds(vehicleJourney.Frequency.Interval.ScheduledFrequency);
+
+                if (vehicleJourney.Frequency.EndTime) {
+                    exactTimes = ServiceType.FrequencyBased;
+                }
+            }
+
+            return {
+                trip_id: vehicleJourneyMapping.tripId,
+                start_time: vehicleJourney.DepartureTime,
+                end_time: vehicleJourney.Frequency.EndTime || "",
+                headway_secs: headwaySecs,
+                exact_times: exactTimes,
+            };
+        })
+        .filter(notEmpty);
+
+    if (!frequencies.length) {
+        return;
+    }
+
+    await dbClient.insertInto("frequency_new").values(frequencies).execute();
 };
 
 export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {

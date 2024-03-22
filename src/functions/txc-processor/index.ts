@@ -6,9 +6,17 @@ import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies, insertCalendar, insertRoutes, insertShapes, insertStops, insertTrips } from "./data/database";
+import {
+    insertAgencies,
+    insertCalendar,
+    insertFrequencies,
+    insertRoutes,
+    insertShapes,
+    insertStops,
+    insertTrips,
+} from "./data/database";
 import { VehicleJourneyMapping } from "./types";
-import { DEFAULT_OPERATING_PROFILE, formatCalendar } from "./utils";
+import { DEFAULT_OPERATING_PROFILE, formatCalendar, hasServiceExpired } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -90,6 +98,28 @@ const processServices = (
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
+        if (hasServiceExpired(service)) {
+            logger.warn("Service has expired", {
+                service: service.ServiceCode,
+                operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        const vehicleJourneysForLines = service.Lines.Line.flatMap((line) =>
+            vehicleJourneys.filter((journey) => journey.LineRef === line["@_id"]),
+        );
+
+        if (!vehicleJourneysForLines.length) {
+            logger.warn("No vehicle journeys found for lines", {
+                service: service.ServiceCode,
+                operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
         const routeData = await insertRoutes(dbClient, service, agencyData);
 
         if (!routeData) {
@@ -101,11 +131,7 @@ const processServices = (
             return null;
         }
 
-        const vehicleJourneysForLine = routeData.flatMap((route) => {
-            return vehicleJourneys.filter((journey) => journey.LineRef === route.line_id);
-        });
-
-        let vehicleJourneyMappings = vehicleJourneysForLine.map((vehicleJourney) => {
+        let vehicleJourneyMappings = vehicleJourneysForLines.map((vehicleJourney) => {
             const vehicleJourneyMapping: VehicleJourneyMapping = {
                 vehicleJourney,
                 routeId: 0,
@@ -133,7 +159,8 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
+        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
+        await insertFrequencies(dbClient, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
