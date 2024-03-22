@@ -229,7 +229,7 @@ export const handler = async (event: S3Event) => {
             await insertStops(trx, TransXChange.StopPoints.AnnotatedStopPointRef);
 
             await processServices(
-                dbClient,
+                trx,
                 TransXChange.Services.Service,
                 TransXChange.VehicleJourneys.VehicleJourney,
                 TransXChange.RouteSections.RouteSection,

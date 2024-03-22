@@ -8,14 +8,14 @@ const lambdaClient = new LambdaClient({ region: "eu-west-2" });
 const cleardownDatabase = async (dbClient: Kysely<Database>) => {
     const tables: (keyof Database)[] = [
         "agency",
-        "calendar_date",
         "calendar",
-        "frequency",
+        "calendar_date",
         "route",
-        "shape",
-        "stop_time",
         "stop",
+        "shape",
         "trip",
+        "frequency",
+        "stop_time",
     ];
 
     for (const table of tables) {
