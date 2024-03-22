@@ -331,7 +331,7 @@ export const insertStopTimes = async (
             return [];
         }
 
-        let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss"); // todo: check if this format works for all data
+        let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
 
         return journeyPattern.JourneyPatternSectionRefs.flatMap<NewStopTime>((journeyPatternSectionRef) => {
             const journeyPatternSection = txcJourneyPatternSections.find(
