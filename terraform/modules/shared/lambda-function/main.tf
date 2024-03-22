@@ -100,6 +100,7 @@ resource "aws_lambda_function" "function" {
   role             = aws_iam_role.lambda_role.arn
   handler          = var.handler
   source_code_hash = local.source_code_hash
+  architectures    = var.architectures
 
   runtime     = var.runtime
   timeout     = var.timeout
