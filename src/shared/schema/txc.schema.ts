@@ -103,28 +103,28 @@ export const serviceSchema = z.object({
 
 export type Service = z.infer<typeof serviceSchema>;
 
+const vehicleJourneyStopUsageSchema = z.object({
+    "@_id": z.string(),
+    From: z
+        .object({
+            "@_SequenceNumber": z.coerce.number().optional(),
+            Activity: z.string().optional(),
+            StopPointRef: z.string().optional(),
+            TimingStatus: z.string().optional(),
+            WaitTime: z.string().optional(),
+        })
+        .optional(),
+    To: z
+        .object({
+            WaitTime: z.string().optional(),
+        })
+        .optional(),
+    RunTime: z.string().optional(),
+});
+
 export const journeyPatternSectionSchema = z.object({
     "@_id": z.string(),
-    JourneyPatternTimingLink: z
-        .object({
-            "@_id": z.string(),
-            From: z
-                .object({
-                    "@_SequenceNumber": z.coerce.number(),
-                    Activity: z.string().optional(),
-                    StopPointRef: z.string(),
-                    TimingStatus: z.string().optional(),
-                    WaitTime: z.string().optional(),
-                })
-                .optional(),
-            To: z
-                .object({
-                    WaitTime: z.string().optional(),
-                })
-                .optional(),
-            RunTime: z.string().optional(),
-        })
-        .array(),
+    JourneyPatternTimingLink: vehicleJourneyStopUsageSchema.array(),
 });
 
 export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
@@ -144,23 +144,8 @@ export const vehicleTypeSchema = z.object({
 
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 
-export const vehicleJourneyTimingLinkSchema = z.object({
+export const vehicleJourneyTimingLinkSchema = vehicleJourneyStopUsageSchema.extend({
     JourneyPatternTimingLinkRef: z.string(),
-    From: z
-        .object({
-            "@_SequenceNumber": z.coerce.number(),
-            Activity: z.string().optional(),
-            StopPointRef: z.string(),
-            TimingStatus: z.string().optional(),
-            WaitTime: z.string().optional(),
-        })
-        .optional(),
-    To: z
-        .object({
-            WaitTime: z.string().optional(),
-        })
-        .optional(),
-    RunTime: z.string().optional(),
 });
 
 export const vehicleJourneySchema = z.object({
