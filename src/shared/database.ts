@@ -61,12 +61,18 @@ export interface Database {
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
     calendar_old: GtfsCalendarTable;
+    frequency: GtfsFrequencyTable;
+    frequency_new: GtfsFrequencyTable;
+    calendar_date: GtfsCalendarDateTable;
+    calendar_date_new: GtfsCalendarDateTable;
     route: GtfsRouteTable;
     route_new: GtfsRouteTable;
     shape: GtfsShapeTable;
     shape_new: GtfsShapeTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
+    trip: GtfsTripTable;
+    trip_new: GtfsTripTable;
 }
 
 export interface NaptanStopTable {
@@ -168,11 +174,45 @@ export interface GtfsCalendarTable {
     sunday: 0 | 1;
     start_date: string;
     end_date: string;
+    calendar_hash: string | null;
 }
 
 export type Calendar = Selectable<GtfsCalendarTable>;
 export type NewCalendar = Insertable<GtfsCalendarTable>;
-export type AgencyCalendar = Updateable<GtfsCalendarTable>;
+export type CalendarUpdate = Updateable<GtfsCalendarTable>;
+
+export enum CalendarDateExceptionType {
+    ServiceAdded = 1,
+    ServiceRemoved = 2,
+}
+
+export interface GtfsCalendarDateTable {
+    id: Generated<number>;
+    service_id: number | null;
+    date: string;
+    exception_type: CalendarDateExceptionType;
+}
+
+export type CalendarDate = Selectable<GtfsCalendarDateTable>;
+export type NewCalendarDate = Insertable<GtfsCalendarDateTable>;
+export type CalendarDateUpdate = Updateable<GtfsCalendarDateTable>;
+
+export enum ServiceType {
+    FrequencyBased = 0,
+    ScheduleBased = 1,
+}
+
+export interface GtfsFrequencyTable {
+    id: Generated<number>;
+    trip_id: string;
+    start_time: string;
+    end_time: string;
+    headway_secs: number;
+    exact_times: number;
+}
+
+export type Frequency = Selectable<GtfsFrequencyTable>;
+export type NewFrequency = Insertable<GtfsFrequencyTable>;
 
 export enum RouteType {
     TramOrMetro = 0,
@@ -229,3 +269,24 @@ export interface GtfsStopTable {
 export type Stop = Selectable<GtfsStopTable>;
 export type NewStop = Insertable<GtfsStopTable>;
 export type StopUpdate = Updateable<GtfsStopTable>;
+
+export enum WheelchairAccessibility {
+    NoAccessibilityInformation = 0,
+    Accessible = 1,
+    NotAccessible = 2,
+}
+
+export interface GtfsTripTable {
+    id: string;
+    route_id: number;
+    service_id: number;
+    block_id: string;
+    shape_id: string;
+    trip_headsign: string;
+    wheelchair_accessible: WheelchairAccessibility;
+    vehicle_journey_code: string;
+}
+
+export type Trip = Selectable<GtfsTripTable>;
+export type NewTrip = Insertable<GtfsTripTable>;
+export type TripUpdate = Updateable<GtfsTripTable>;

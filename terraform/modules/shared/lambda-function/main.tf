@@ -105,6 +105,8 @@ resource "aws_lambda_function" "function" {
   timeout     = var.timeout
   memory_size = var.memory
 
+  reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
+
   dynamic "vpc_config" {
     for_each = local.needs_db_access ? [1] : []
 

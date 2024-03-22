@@ -1,4 +1,4 @@
-import { Database } from "@bods-integrated-data/shared";
+import { Database } from "@bods-integrated-data/shared/database";
 import { S3EventRecord } from "aws-lambda";
 import { Kysely } from "kysely";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,8 +12,8 @@ describe("avl-processor", () => {
         };
     });
 
-    vi.mock("@bods-integrated-data/shared", async (importOriginal) => ({
-        ...(await importOriginal<typeof import("@bods-integrated-data/shared")>()),
+    vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object.mockResolvedValue({ Body: { transformToString: () => testSiri } }),
     }));
 

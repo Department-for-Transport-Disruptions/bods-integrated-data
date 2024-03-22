@@ -49,3 +49,6 @@ operations/variable-scripts/variable.json
 
 # SOPS
 secrets.json
+
+# Local test data
+/data
