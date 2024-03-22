@@ -320,91 +320,104 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
 
 export const insertStopTimes = async (
     dbClient: Kysely<Database>,
+    services: Service[],
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
     const stopTimes = vehicleJourneyMappings.flatMap<NewStopTime>((vehicleJourneyMapping) => {
         const { vehicleJourney } = vehicleJourneyMapping;
 
-        if (!vehicleJourney.VehicleJourneyTimingLink) {
-            logger.warn(
-                `No vehicle journey timing links found for vehicle journey with ref: ${vehicleJourney.LineRef}`,
-            );
+        const journeyPattern = services
+            .flatMap((s) => s.StandardService.JourneyPattern)
+            .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+
+        if (!journeyPattern) {
+            logger.warn(`Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`);
             return [];
         }
 
         let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss"); // todo: check if this format works for all data
 
-        return vehicleJourney.VehicleJourneyTimingLink.flatMap<NewStopTime>((timingLink) => {
-            const journeyPatternTimingLink = txcJourneyPatternSections
-                .flatMap((s) => s.JourneyPatternTimingLink)
-                .find((link) => link["@_id"] === timingLink.JourneyPatternTimingLinkRef);
+        return journeyPattern.JourneyPatternSectionRefs.flatMap<NewStopTime>((journeyPatternSectionRef) => {
+            const journeyPatternSection = txcJourneyPatternSections.find(
+                (section) => section["@_id"] === journeyPatternSectionRef,
+            );
 
-            if (!journeyPatternTimingLink) {
+            if (!journeyPatternSection) {
                 logger.warn(
-                    `Unable to find journey pattern timing link with ref: ${timingLink.JourneyPatternTimingLinkRef}`,
+                    `Unable to find journey pattern section with journey pattern section ref: ${journeyPatternSectionRef}`,
                 );
                 return [];
             }
 
-            const stopPointRef = journeyPatternTimingLink.From?.StopPointRef || timingLink.From?.StopPointRef;
-
-            if (!stopPointRef) {
-                logger.warn(
-                    `Missing stop point ref for journey pattern timing link with ref: ${timingLink.JourneyPatternTimingLinkRef}`,
+            return journeyPatternSection.JourneyPatternTimingLink.flatMap<NewStopTime>((journeyPatternTimingLink) => {
+                const vehicleJourneyTimingLink = vehicleJourney.VehicleJourneyTimingLink?.find(
+                    (link) => link.JourneyPatternTimingLinkRef === journeyPatternTimingLink["@_id"],
                 );
-                return [];
-            }
 
-            const sequenceNumber =
-                journeyPatternTimingLink.From?.["@_SequenceNumber"] || timingLink.From?.["@_SequenceNumber"];
-            const activity = journeyPatternTimingLink.From?.Activity || timingLink.From?.Activity;
-            const timingStatus = journeyPatternTimingLink.From?.TimingStatus || timingLink.From?.TimingStatus;
-            const fromWaitTime = journeyPatternTimingLink.From?.WaitTime || timingLink.From?.WaitTime;
-            const toWaitTime = journeyPatternTimingLink.To?.WaitTime || timingLink.To?.WaitTime;
+                const stopPointRef =
+                    journeyPatternTimingLink.From?.StopPointRef || vehicleJourneyTimingLink?.From?.StopPointRef;
 
-            const arrivalTime = currentStopDepartureTime.clone();
-            let departureTime = arrivalTime.clone();
-
-            if (fromWaitTime) {
-                departureTime = departureTime.add(getDuration(fromWaitTime));
-            } else if (toWaitTime) {
-                departureTime = departureTime.add(getDuration(toWaitTime));
-            }
-
-            let hasAddedRunTime = false;
-
-            if (journeyPatternTimingLink.RunTime) {
-                const journeyPatternTimingLinkRunTime = getDuration(journeyPatternTimingLink.RunTime);
-
-                if (journeyPatternTimingLinkRunTime.asSeconds() > 0) {
-                    currentStopDepartureTime = currentStopDepartureTime.add(journeyPatternTimingLinkRunTime);
-                    hasAddedRunTime = true;
+                if (!stopPointRef) {
+                    logger.warn(
+                        `Missing stop point ref for journey pattern timing link with ref: ${journeyPatternTimingLink["@_id"]}`,
+                    );
+                    return [];
                 }
-            }
 
-            if (timingLink.RunTime && !hasAddedRunTime) {
-                const vehicleJourneyTimingLinkRunTime = getDuration(timingLink.RunTime);
+                const sequenceNumber =
+                    journeyPatternTimingLink.From?.["@_SequenceNumber"] ||
+                    vehicleJourneyTimingLink?.From?.["@_SequenceNumber"];
+                const activity = journeyPatternTimingLink.From?.Activity || vehicleJourneyTimingLink?.From?.Activity;
+                const timingStatus =
+                    journeyPatternTimingLink.From?.TimingStatus || vehicleJourneyTimingLink?.From?.TimingStatus;
+                const fromWaitTime =
+                    journeyPatternTimingLink.From?.WaitTime || vehicleJourneyTimingLink?.From?.WaitTime;
+                const toWaitTime = journeyPatternTimingLink.To?.WaitTime || vehicleJourneyTimingLink?.To?.WaitTime;
 
-                if (vehicleJourneyTimingLinkRunTime.asSeconds() > 0) {
-                    currentStopDepartureTime = currentStopDepartureTime.add(vehicleJourneyTimingLinkRunTime);
+                const arrivalTime = currentStopDepartureTime.clone();
+                let departureTime = arrivalTime.clone();
+
+                if (fromWaitTime) {
+                    departureTime = departureTime.add(getDuration(fromWaitTime));
+                } else if (toWaitTime) {
+                    departureTime = departureTime.add(getDuration(toWaitTime));
                 }
-            }
 
-            const newStopTime: NewStopTime = {
-                trip_id: vehicleJourneyMapping.tripId,
-                stop_id: stopPointRef,
-                arrival_time: arrivalTime.format("HH:mm:ss"),
-                departure_time: departureTime.format("HH:mm:ss"),
-                stop_sequence: sequenceNumber || 0,
-                stop_headsign: "",
-                pickup_type: getPickupTypeFromStopActivity(activity),
-                drop_off_type: getDropOffTypeFromStopActivity(activity),
-                shape_dist_traveled: 0,
-                timepoint: getTimepointFromTimingStatus(timingStatus),
-            };
+                let hasAddedRunTime = false;
 
-            return newStopTime;
+                if (journeyPatternTimingLink.RunTime) {
+                    const journeyPatternTimingLinkRunTime = getDuration(journeyPatternTimingLink.RunTime);
+
+                    if (journeyPatternTimingLinkRunTime.asSeconds() > 0) {
+                        currentStopDepartureTime = currentStopDepartureTime.add(journeyPatternTimingLinkRunTime);
+                        hasAddedRunTime = true;
+                    }
+                }
+
+                if (vehicleJourneyTimingLink?.RunTime && !hasAddedRunTime) {
+                    const vehicleJourneyTimingLinkRunTime = getDuration(vehicleJourneyTimingLink.RunTime);
+
+                    if (vehicleJourneyTimingLinkRunTime.asSeconds() > 0) {
+                        currentStopDepartureTime = currentStopDepartureTime.add(vehicleJourneyTimingLinkRunTime);
+                    }
+                }
+
+                const newStopTime: NewStopTime = {
+                    trip_id: vehicleJourneyMapping.tripId,
+                    stop_id: stopPointRef,
+                    arrival_time: arrivalTime.format("HH:mm:ss"),
+                    departure_time: departureTime.format("HH:mm:ss"),
+                    stop_sequence: sequenceNumber || 0,
+                    stop_headsign: "",
+                    pickup_type: getPickupTypeFromStopActivity(activity),
+                    drop_off_type: getDropOffTypeFromStopActivity(activity),
+                    shape_dist_traveled: 0,
+                    timepoint: getTimepointFromTimingStatus(timingStatus),
+                };
+
+                return newStopTime;
+            });
         });
     });
 

@@ -32,12 +32,14 @@ const txcArrayProperties = [
     "Route",
     "RouteLink",
     "JourneyPatternSection",
+    "JourneyPatternSectionRefs",
     "Operator",
     "Garage",
     "Service",
     "Line",
     "Track",
     "JourneyPattern",
+    "JourneyPatternTimingLink",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
 ];
@@ -108,7 +110,7 @@ const processServices = (
         });
 
         await insertFrequencies(dbClient, vehicleJourneyMappings);
-        await insertStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
+        await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);

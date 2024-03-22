@@ -95,6 +95,7 @@ export const serviceSchema = z.object({
                 "@_id": z.string(),
                 DestinationDisplay: z.string().optional(),
                 RouteRef: z.string().optional(),
+                JourneyPatternSectionRefs: z.string().array(),
             }),
         ),
     }),
@@ -103,6 +104,7 @@ export const serviceSchema = z.object({
 export type Service = z.infer<typeof serviceSchema>;
 
 export const journeyPatternSectionSchema = z.object({
+    "@_id": z.string(),
     JourneyPatternTimingLink: z
         .object({
             "@_id": z.string(),
