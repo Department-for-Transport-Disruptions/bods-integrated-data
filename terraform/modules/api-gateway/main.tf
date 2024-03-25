@@ -38,7 +38,7 @@ resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_data" {
 
 resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_subscribe" {
   api_id    = aws_apigatewayv2_api.bods_integrated_data_api.id
-  route_key = "/subscribe"
+  route_key = "POST /subscribe"
   target    = "integrations/${aws_apigatewayv2_integration.bods_integrated_data_api_integration_subscribe.id}"
 }
 
