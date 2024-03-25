@@ -15,7 +15,7 @@ resource "aws_apigatewayv2_api" "integrated_data_avl_producer_api" {
 }
 
 resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_subscribe" {
-  api_id                 = aws_apigatewayv2_api.bods_integrated_data_api.id
+  api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   integration_type       = "AWS_PROXY"
   integration_uri        = var.subscribe_lambda_arn
   integration_method     = "POST"
@@ -23,7 +23,7 @@ resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_su
 }
 
 resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_data" {
-  api_id                 = aws_apigatewayv2_api.bods_integrated_data_api.id
+  api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   integration_type       = "AWS_PROXY"
   integration_uri        = var.data_endpoint_lambda_arn
   integration_method     = "POST"
@@ -31,21 +31,21 @@ resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_da
 }
 
 resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_data" {
-  api_id    = aws_apigatewayv2_api.bods_integrated_data_api.id
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   route_key = "POST /data/{subscription_id}"
   target    = "integrations/${aws_apigatewayv2_integration.bods_integrated_data_api_integration_data.id}"
 }
 
 resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_subscribe" {
-  api_id    = aws_apigatewayv2_api.bods_integrated_data_api.id
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   route_key = "POST /subscribe"
   target    = "integrations/${aws_apigatewayv2_integration.bods_integrated_data_api_integration_subscribe.id}"
 }
 
 
 resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
-  api_id      = aws_apigatewayv2_api.bods_integrated_data_api.id
-  description = aws_apigatewayv2_api.bods_integrated_data_api.name
+  api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  description = aws_apigatewayv2_api.integrated_data_avl_producer_api.name
 
   lifecycle {
     create_before_destroy = true
@@ -54,5 +54,5 @@ resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
 
 output "endpoint" {
   description = "HTTP API endpoint URL"
-  value       = aws_apigatewayv2_api.bods_integrated_data_api.api_endpoint
+  value       = aws_apigatewayv2_api.integrated_data_avl_producer_api.api_endpoint
 }
