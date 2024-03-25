@@ -42,10 +42,6 @@ resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_subscribe" {
   target    = "integrations/${aws_apigatewayv2_integration.bods_integrated_data_api_integration_subscribe.id}"
 }
 
-resource "aws_apigatewayv2_stage" "bods_integrated_data_api_stage" {
-  api_id = aws_apigatewayv2_api.bods_integrated_data_api.id
-  name   = "bods integrated data api stage"
-}
 
 resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
   api_id      = aws_apigatewayv2_api.bods_integrated_data_api.id
