@@ -22,7 +22,7 @@ resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_su
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_data" {
+resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integration_data" {
   api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   integration_type       = "AWS_PROXY"
   integration_uri        = var.data_endpoint_lambda_arn
