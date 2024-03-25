@@ -153,7 +153,7 @@ module "integrated_data_avl_subscriber" {
 }
 
 module "integrated_data_avl_producer_api_gateway" {
-  source = "../modules/avl-producer-endpoint/api-gateway"
+  source = "../modules/avl-producer-api/api-gateway"
 
   environment              = local.env
   subscribe_lambda_arn     = module.integrated_data_avl_subscriber.lambda_arn
@@ -161,7 +161,7 @@ module "integrated_data_avl_producer_api_gateway" {
 }
 
 module "integrated_data_avl_data_endpoint" {
-  source = "../modules/avl-producer-endpoint/avl-data-endpoint"
+  source = "../modules/avl-producer-api/avl-data-endpoint"
 
   environment = local.env
   bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
