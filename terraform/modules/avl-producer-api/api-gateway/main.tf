@@ -47,6 +47,11 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deploym
   api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   description = aws_apigatewayv2_api.integrated_data_avl_producer_api.name
 
+  depends_on = [
+    aws_apigatewayv2_route.integrated_data_avl_producer_api_route_data,
+    aws_apigatewayv2_route.integrated_data_avl_producer_api_route_subscribe
+  ]
+
   lifecycle {
     create_before_destroy = true
   }
