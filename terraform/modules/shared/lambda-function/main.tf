@@ -100,10 +100,13 @@ resource "aws_lambda_function" "function" {
   role             = aws_iam_role.lambda_role.arn
   handler          = var.handler
   source_code_hash = local.source_code_hash
+  architectures    = var.architectures
 
   runtime     = var.runtime
   timeout     = var.timeout
   memory_size = var.memory
+
+  reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
 
   dynamic "vpc_config" {
     for_each = local.needs_db_access ? [1] : []

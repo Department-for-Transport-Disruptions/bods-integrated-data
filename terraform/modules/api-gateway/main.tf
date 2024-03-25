@@ -9,8 +9,8 @@ terraform {
   }
 }
 
-resource "aws_apigatewayv2_api" "bods_integrated_data_api" {
-  name          = "bods-integrated-data-api-${var.environment}"
+resource "aws_apigatewayv2_api" "integrated_data_avl_producer_api" {
+  name          = "integrated-data-avl-producer-api-${var.environment}"
   protocol_type = "HTTP"
 }
 
@@ -32,24 +32,20 @@ resource "aws_apigatewayv2_integration" "bods_integrated_data_api_integration_da
 
 resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_data" {
   api_id    = aws_apigatewayv2_api.bods_integrated_data_api.id
-  route_key = "/data/{subscription_id}"
+  route_key = "POST /data/{subscription_id}"
   target    = "integrations/${aws_apigatewayv2_integration.bods_integrated_data_api_integration_data.id}"
 }
 
 resource "aws_apigatewayv2_route" "bods_integrated_data_api_route_subscribe" {
   api_id    = aws_apigatewayv2_api.bods_integrated_data_api.id
-  route_key = "/subscribe"
+  route_key = "POST /subscribe"
   target    = "integrations/${aws_apigatewayv2_integration.bods_integrated_data_api_integration_subscribe.id}"
 }
 
-resource "aws_apigatewayv2_stage" "bods_integrated_data_api_stage" {
-  api_id = aws_apigatewayv2_api.bods_integrated_data_api.id
-  name   = "bods integrated data api stage"
-}
 
 resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
   api_id      = aws_apigatewayv2_api.bods_integrated_data_api.id
-  description = "bods integrated data api deployment"
+  description = aws_apigatewayv2_api.bods_integrated_data_api.name
 
   lifecycle {
     create_before_destroy = true

@@ -58,7 +58,7 @@ module "integrated_data_aurora_db_dev" {
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
   min_db_capacity          = 0.5
-  max_db_capacity          = 4
+  max_db_capacity          = 16
   enable_rds_proxy         = true
 }
 
@@ -152,7 +152,7 @@ module "integrated_data_avl_subscriber" {
   environment = local.env
 }
 
-module "integrated_data_avl_api_gateway" {
+module "integrated_data_avl_producer_api_gateway" {
   source = "../modules/api-gateway"
 
   environment              = local.env

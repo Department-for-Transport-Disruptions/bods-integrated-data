@@ -1,12 +1,21 @@
 import { InvocationType, InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { logger } from "@baselime/lambda-logger";
-import { Database, getDatabaseClient } from "@bods-integrated-data/shared";
+import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { Kysely, sql } from "kysely";
 
 const lambdaClient = new LambdaClient({ region: "eu-west-2" });
 
 const cleardownDatabase = async (dbClient: Kysely<Database>) => {
-    const tables: (keyof Database)[] = ["agency", "calendar", "route", "shape", "stop"];
+    const tables: (keyof Database)[] = [
+        "agency",
+        "calendar",
+        "calendar_date",
+        "route",
+        "stop",
+        "shape",
+        "trip",
+        "frequency",
+    ];
 
     for (const table of tables) {
         await dbClient.schema.dropTable(`${table}_new`).ifExists().execute();

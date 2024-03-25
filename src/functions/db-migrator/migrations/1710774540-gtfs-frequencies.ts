@@ -3,15 +3,16 @@ import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
-        .createTable("agency")
+        .createTable("frequency")
         .addColumn("id", "serial", (col) => col.primaryKey())
-        .addColumn("name", "text")
-        .addColumn("url", "text")
-        .addColumn("phone", "text")
-        .addColumn("noc", "text", (col) => col.unique())
+        .addColumn("trip_id", "text")
+        .addColumn("start_time", "text")
+        .addColumn("end_time", "text")
+        .addColumn("headway_secs", "integer")
+        .addColumn("exact_times", "integer")
         .execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
-    await db.schema.dropTable("agency").execute();
+    await db.schema.dropTable("frequency").execute();
 }

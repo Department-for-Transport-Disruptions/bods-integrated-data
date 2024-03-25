@@ -1,6 +1,8 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, chunkArray, getDatabaseClient, getS3Object } from "@bods-integrated-data/shared";
+import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { VehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
+import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { Kysely } from "kysely";
 import { parseStringPromise } from "xml2js";
