@@ -176,7 +176,7 @@ invoke-local-bods-txc-processor:
 # GTFS
 
 run-local-gtfs-downloader:
-	IS_LOCAL=true BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().catch(e => console.error(e))"
+	IS_LOCAL=true BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
 
 invoke-local-gtfs-downloader:
 	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0

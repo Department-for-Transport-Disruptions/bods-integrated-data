@@ -1,12 +1,14 @@
-import { NoSuchKey } from "@aws-sdk/client-s3";
+import { fromIni } from "@aws-sdk/credential-providers";
+import { S3RequestPresigner } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@baselime/lambda-logger";
-import { getS3Object } from "@bods-integrated-data/shared/s3";
+import { Hash } from "@smithy/hash-node";
+import { HttpRequest } from "@smithy/protocol-http";
+import { buildQueryString } from "@smithy/querystring-builder";
+import { parseUrl } from "@smithy/url-parser";
 import { APIGatewayProxyResultV2 } from "aws-lambda";
-import { Readable } from "stream";
 
 export const handler = async (): Promise<APIGatewayProxyResultV2> => {
     const { BUCKET_NAME: bucketName } = process.env;
-    const zippedFilename = "gtfs.zip";
 
     if (!bucketName) {
         logger.error("Missing env vars - BUCKET_NAME must be set");
@@ -17,44 +19,43 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
         };
     }
 
-    let s3Object = null;
+    const region = "eu-west-2";
+    const key = "gtfs.zip";
+    const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
 
     try {
-        s3Object = await getS3Object({ Bucket: bucketName, Key: zippedFilename });
-    } catch (error) {
-        if (error instanceof NoSuchKey) {
-            logger.error(`Missing GTFS file: ${zippedFilename}`, error);
+        logger.info("Generating a presigned URL for GTFS download");
 
-            return {
-                statusCode: 404,
-                body: "No GTFS data found",
-            };
+        const presigner = new S3RequestPresigner({
+            credentials: fromIni(),
+            region,
+            sha256: Hash.bind(null, "sha256"),
+        });
+
+        const presignedUrl = await presigner.presign(new HttpRequest(parseUrl(url)));
+
+        if (!presignedUrl.query) {
+            throw new Error("No presigned query parameters generated");
         }
 
+        const presignedUrlString = `${url}?${buildQueryString(presignedUrl.query)}`;
+
+        logger.info(`Presigned URL generated: ${presignedUrlString}`);
+
+        return {
+            statusCode: 302,
+            headers: {
+                Location: presignedUrlString,
+            },
+        };
+    } catch (error) {
         if (error instanceof Error) {
-            logger.error(`There was an error retrieving GTFS file: ${zippedFilename}`, error);
+            logger.error("There was an error generating a presigned URL for GTFS download", error);
         }
 
         return {
             statusCode: 500,
-            body: "An unknown error has occurred. Please try again.",
+            body: "An unknown error occurred. Please try again.",
         };
     }
-
-    if (!s3Object.Body || !(s3Object.Body instanceof Readable)) {
-        logger.error(`GTFS file is empty: ${zippedFilename}`);
-
-        return {
-            statusCode: 404,
-            body: "No GTFS data found",
-        };
-    }
-
-    // todo: return file as a download instead of a string
-    const fileContent = await s3Object.Body.transformToString();
-
-    return {
-        statusCode: 200,
-        body: fileContent,
-    };
 };
