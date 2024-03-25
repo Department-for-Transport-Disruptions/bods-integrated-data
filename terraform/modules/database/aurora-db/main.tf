@@ -49,6 +49,7 @@ resource "aws_rds_cluster" "integrated_data_rds_cluster" {
   deletion_protection         = var.enable_deletion_protection
   final_snapshot_identifier   = "integrated-data-rds-db-cluster-final-snapshot-${var.environment}"
   database_name               = "bods_integrated_data"
+  storage_type                = "aurora-iopt1"
 
   serverlessv2_scaling_configuration {
     max_capacity = var.max_db_capacity
