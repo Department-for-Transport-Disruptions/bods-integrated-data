@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "aws_apigatewayv2_api" "integrated_data_avl_producer_api" {
-  name          = "bods-integrated-data-api-${var.environment}"
+  name          = "integrated-data-avl-producer-api-${var.environment}"
   protocol_type = "HTTP"
 }
 
