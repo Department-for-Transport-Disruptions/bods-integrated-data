@@ -153,7 +153,7 @@ module "integrated_data_avl_subscriber" {
 }
 
 module "integrated_data_avl_producer_api_gateway" {
-  source = "../modules/api-gateway"
+  source = "../modules/avl-producer-endpoint/api-gateway"
 
   environment              = local.env
   subscribe_lambda_arn     = module.integrated_data_avl_subscriber.lambda_arn
