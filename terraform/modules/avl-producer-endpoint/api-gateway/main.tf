@@ -43,7 +43,7 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_subscr
 }
 
 
-resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
+resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   description = aws_apigatewayv2_api.integrated_data_avl_producer_api.name
 
