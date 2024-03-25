@@ -7,6 +7,7 @@ TNDS_TXC_FTP_CREDS_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
+GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
 
 dev: dev-containers-up
@@ -86,6 +87,7 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${TNDS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 create-dynamodb-table:
 	awslocal dynamodb create-table \
@@ -171,6 +173,13 @@ invoke-local-bods-txc-processor:
 	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 
+# GTFS
+
+run-local-gtfs-downloader:
+	IS_LOCAL=true BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().catch(e => console.error(e))"
+
+invoke-local-gtfs-downloader:
+	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0
 
 # AVL
 
@@ -197,7 +206,8 @@ create-lambdas: \
 	create-lambda-tnds-txc-retriever \
 	create-lambda-tnds-txc-unzipper \
 	create-lambda-txc-retriever \
-	create-lambda-txc-processor
+	create-lambda-txc-processor \
+	create-lambda-gtfs-downloader
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
@@ -208,7 +218,8 @@ delete-lambdas: \
 	delete-lambda-tnds-txc-retriever \
 	delete-lambda-tnds-txc-unzipper \
 	delete-lambda-txc-retriever \
-	delete-lambda-txc-processor
+	delete-lambda-txc-processor \
+	delete-lambda-gtfs-downloader
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -245,3 +256,6 @@ create-lambda-txc-retriever:
 
 create-lambda-txc-processor:
 	$(call create_lambda,txc-processor-local,txc-processor,IS_LOCAL=true)
+
+create-lambda-gtfs-downloader:
+	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,IS_LOCAL=true;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
