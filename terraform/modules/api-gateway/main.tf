@@ -49,7 +49,7 @@ resource "aws_apigatewayv2_stage" "bods_integrated_data_api_stage" {
 
 resource "aws_apigatewayv2_deployment" "bods_integrated_data_api_deployment" {
   api_id      = aws_apigatewayv2_api.bods_integrated_data_api.id
-  description = "bods integrated data api deployment"
+  description = aws_apigatewayv2_api.bods_integrated_data_api.name
 
   lifecycle {
     create_before_destroy = true
