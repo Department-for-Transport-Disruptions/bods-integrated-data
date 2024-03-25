@@ -276,6 +276,8 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
 
     const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
+        const latitude = stop.Location?.Translation ? stop.Location.Translation.Latitude : stop.Location?.Latitude;
+        const longitude = stop.Location?.Translation ? stop.Location?.Translation.Longitude : stop.Location?.Longitude;
 
         return {
             id: stop.StopPointRef,
@@ -286,8 +288,8 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
                 ? {
                       stop_code: naptanStop.naptan_code,
                       stop_name: naptanStop.common_name || stop.CommonName,
-                      stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : stop.Location?.Latitude,
-                      stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : stop.Location?.Longitude,
+                      stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : latitude,
+                      stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : longitude,
                       location_type:
                           naptanStop.stop_type === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
                       platform_code:

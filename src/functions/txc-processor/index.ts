@@ -224,6 +224,11 @@ export const handler = async (event: S3Event) => {
 
             const { TransXChange } = txcData;
 
+            if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
+                logger.warn(`No vehicle journeys found in file: ${object.key}`);
+                return;
+            }
+
             const agencyData = await insertAgencies(trx, TransXChange.Operators.Operator);
 
             await insertStops(trx, TransXChange.StopPoints.AnnotatedStopPointRef);

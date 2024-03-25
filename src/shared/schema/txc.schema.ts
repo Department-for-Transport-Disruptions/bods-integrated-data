@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DEFAULT_DATE_FORMAT, transformedBankHolidayOperationSchema } from "./dates.schema";
 import { getDate, getDateRange } from "../dates";
-import { txcSelfClosingProperty } from "../utils";
+import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
 export const operatorSchema = z.object({
     NationalOperatorCode: z.string(),
@@ -54,18 +54,21 @@ export const operatingProfileSchema = z.object({
                 .object({
                     DateRange: dateRange.array(),
                 })
+                .or(txcEmptyProperty)
                 .optional(),
             DaysOfNonOperation: z
                 .object({
                     DateRange: dateRange.array(),
                 })
+                .or(txcEmptyProperty)
                 .optional(),
         })
+        .or(txcEmptyProperty)
         .optional(),
     BankHolidayOperation: z
         .object({
-            DaysOfOperation: transformedBankHolidayOperationSchema.optional(),
-            DaysOfNonOperation: transformedBankHolidayOperationSchema.optional(),
+            DaysOfOperation: transformedBankHolidayOperationSchema.or(txcEmptyProperty).optional(),
+            DaysOfNonOperation: transformedBankHolidayOperationSchema.or(txcEmptyProperty).optional(),
         })
         .optional(),
 });
@@ -171,6 +174,7 @@ export const vehicleTypeSchema = z.object({
                 })
                 .optional(),
         })
+        .or(txcEmptyProperty)
         .optional(),
 });
 
@@ -203,6 +207,7 @@ export const vehicleJourneySchema = z.object({
                 .optional(),
             VehicleType: vehicleTypeSchema.optional(),
         })
+        .or(txcEmptyProperty)
         .optional(),
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
@@ -216,12 +221,7 @@ export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
 export const stopSchema = z.object({
     StopPointRef: z.coerce.string(),
     CommonName: z.string(),
-    Location: z
-        .object({
-            Longitude: z.coerce.number(),
-            Latitude: z.coerce.number(),
-        })
-        .optional(),
+    Location: locationSchema.optional(),
 });
 
 export type TxcStop = z.infer<typeof stopSchema>;
@@ -243,9 +243,11 @@ export const txcSchema = z.object({
         Services: z.object({
             Service: serviceSchema.array(),
         }),
-        VehicleJourneys: z.object({
-            VehicleJourney: vehicleJourneySchema.array(),
-        }),
+        VehicleJourneys: z
+            .object({
+                VehicleJourney: vehicleJourneySchema.array(),
+            })
+            .or(txcEmptyProperty),
         StopPoints: z.object({
             AnnotatedStopPointRef: stopSchema.array(),
         }),

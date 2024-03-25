@@ -88,3 +88,9 @@ variable "reserved_concurrency" {
   default     = null
   description = "Reserved concurrency for lambda"
 }
+
+variable "architectures" {
+  type        = list(string)
+  default     = ["arm64"]
+  description = "Arhcitectures to use for lambda function"
+}
