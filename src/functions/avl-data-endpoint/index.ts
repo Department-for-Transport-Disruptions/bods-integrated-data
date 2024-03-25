@@ -33,7 +33,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         const subscriptionId = event?.pathParameters?.subscriptionId;
 
         if (!subscriptionId) {
-            throw new Error("Subscription ID missing from path parameters.");
+            throw new Error("Subscription ID missing from path parameters");
         }
 
         logger.info("Starting Data Endpoint");
