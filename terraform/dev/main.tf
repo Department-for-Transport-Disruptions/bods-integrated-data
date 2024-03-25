@@ -152,7 +152,7 @@ module "integrated_data_avl_subscriber" {
   environment = local.env
 }
 
-module "integrated_data_avl_api_gateway" {
+module "integrated_data_avl_producer_api_gateway" {
   source = "../modules/api-gateway"
 
   environment              = local.env
