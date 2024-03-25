@@ -35,6 +35,7 @@ const txcArrayProperties = [
     "VehicleJourney",
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
+    "DateRange",
 ];
 
 export const processCalendars = async (
@@ -210,6 +211,11 @@ export const handler = async (event: S3Event) => {
             const txcData = await getAndParseTxcData(bucket.name, object.key);
 
             const { TransXChange } = txcData;
+
+            if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
+                logger.warn(`No vehicle journeys found in file: ${object.key}`);
+                return;
+            }
 
             const agencyData = await insertAgencies(trx, TransXChange.Operators.Operator);
 
