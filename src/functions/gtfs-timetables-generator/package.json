@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/db-migrator",
+    "name": "@bods-integrated-data/gtfs-timetables-generator",
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./db-migrator.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/db-migrator.zip ../dist/db-migrator.zip"
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-timetables-generator.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-timetables-generator.zip ../dist/"
     },
     "keywords": [],
     "author": "",
@@ -13,7 +13,7 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "kysely": "^0.27.3"
+        "kysely": "0.27.3"
     },
     "devDependencies": {
         "@types/node": "^20.11.19"

@@ -20,7 +20,7 @@
         "@aws-sdk/lib-dynamodb": "^3.529.1",
         "@aws-sdk/lib-storage": "^3.525.0",
         "dayjs": "^1.11.10",
-        "kysely": "^0.27.2",
+        "kysely": "^0.27.3",
         "pg": "^8.11.3"
     },
     "scripts": {
