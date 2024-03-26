@@ -3,20 +3,40 @@ import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { sql } from "kysely";
 
 export const handler = async () => {
-    try {
-        const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const { OUTPUT_BUCKET: outputBucket, IS_LOCAL: local } = process.env;
 
+    if (!outputBucket) {
+        throw new Error("Env vars must be set");
+    }
+
+    const isLocal = local === "true";
+
+    const dbClient = await getDatabaseClient(isLocal);
+
+    try {
         logger.info("Starting GTFS Timetable Generator");
 
-        const agencies = dbClient
+        const agenciesQuery = dbClient
             .selectFrom("agency_new")
-            .select(["agency_new.id as agency_id", "agency_new.name as agency_name", "agency_new.url as agency_url"])
-            .compile();
+            .select([
+                "agency_new.id as agency_id",
+                "agency_new.name as agency_name",
+                "agency_new.url as agency_url",
+                "agency_new.timezone as agency_timezone",
+                "agency_new.lang as agency_lang",
+                "agency_new.phone as agency_phone",
+                "agency_new.noc as agency_noc",
+            ])
+            .compile().sql;
 
-        await sql`
-        SELECT * from aws_s3.query_export_to_s3('select * from ${sql.table()}', 
-            aws_commons.create_s3_uri('sample-bucket', 'sample-filepath', 'us-west-2') 
-        );`.execute(dbClient);
+        const queries = [{ query: agenciesQuery, path: "agency.txt" }];
+
+        for await (const query of queries) {
+            await sql`
+                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.query)}', 
+                    aws_commons.create_s3_uri('${outputBucket}', '${sql.raw(query.path)}', 'eu-west-2') 
+                );`.execute(dbClient);
+        }
 
         logger.info("GTFS Timetable Generator successful");
     } catch (e) {
@@ -25,5 +45,7 @@ export const handler = async () => {
         }
 
         throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };

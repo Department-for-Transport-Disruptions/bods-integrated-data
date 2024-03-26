@@ -13,3 +13,7 @@ output "db_secret_arn" {
 output "db_cluster_id" {
   value = aws_rds_cluster.integrated_data_rds_cluster.id
 }
+
+output "s3_output_bucket_name" {
+  value = aws_s3_bucket.aurora_s3_output_bucket.bucket
+}

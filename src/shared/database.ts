@@ -156,6 +156,8 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
+    timezone: string | null;
+    lang: string | null;
     registered_operator_ref: string;
 }
 
