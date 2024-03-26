@@ -24,8 +24,6 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
     const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
 
     try {
-        logger.info("Generating a presigned URL for GTFS download");
-
         const presigner = new S3RequestPresigner({
             credentials: fromIni(),
             region,
@@ -46,8 +44,6 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
         }
 
         const presignedUrlString = `${url}?${queryString}`;
-
-        logger.info(`Presigned URL generated: ${presignedUrlString}`);
 
         return {
             statusCode: 302,

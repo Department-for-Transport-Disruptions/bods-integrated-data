@@ -1,11 +1,18 @@
-import * as s3RequestPresigner from "@aws-sdk/s3-request-presigner";
+import { S3RequestPresigner } from "@aws-sdk/s3-request-presigner";
+import { logger } from "@baselime/lambda-logger";
 import { HttpRequest } from "@smithy/protocol-http";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
 describe("gtfs-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
-    const presignMock = vi.spyOn(s3RequestPresigner.S3RequestPresigner.prototype, "presign");
+    const presignMock = vi.spyOn(S3RequestPresigner.prototype, "presign");
+
+    vi.mock("@baselime/lambda-logger", () => ({
+        logger: {
+            error: vi.fn(),
+        },
+    }));
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
@@ -22,15 +29,22 @@ describe("gtfs-downloader-endpoint", () => {
             statusCode: 500,
             body: "An internal error occurred.",
         });
+
+        expect(logger.error).toHaveBeenCalledWith("Missing env vars - BUCKET_NAME must be set");
     });
 
     it("returns a 500 when a presigned URL could not be generated", async () => {
-        presignMock.mockRejectedValueOnce({});
+        presignMock.mockRejectedValueOnce(new Error());
 
         await expect(handler()).resolves.toEqual({
             statusCode: 500,
             body: "An unknown error occurred. Please try again.",
         });
+
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was an error generating a presigned URL for GTFS download",
+            expect.any(Error),
+        );
     });
 
     it("returns a 500 when a presigned URL is generated but has no query parameters", async () => {
@@ -44,9 +58,14 @@ describe("gtfs-downloader-endpoint", () => {
             statusCode: 500,
             body: "An unknown error occurred. Please try again.",
         });
+
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was an error generating a presigned URL for GTFS download",
+            expect.any(Error),
+        );
     });
 
-    it.only("returns a presigned URL for downloading a gtfs.zip file", async () => {
+    it("returns a presigned URL for downloading a gtfs.zip file", async () => {
         presignMock.mockResolvedValueOnce(
             new HttpRequest({
                 query: {
@@ -61,5 +80,7 @@ describe("gtfs-downloader-endpoint", () => {
                 Location: `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`,
             },
         });
+
+        expect(logger.error).not.toHaveBeenCalled();
     });
 });
