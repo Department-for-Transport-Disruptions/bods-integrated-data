@@ -167,6 +167,12 @@ module "integrated_data_avl_data_endpoint" {
   bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
 }
 
+module "integrated_data_gtfs_downloader" {
+  source = "../modules/gtfs-downloader"
+
+  environment = local.env
+}
+
 locals {
   env     = "dev"
   secrets = jsondecode(data.sops_file.secrets.raw)
