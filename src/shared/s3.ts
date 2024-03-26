@@ -6,6 +6,7 @@ import {
     S3Client,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PassThrough } from "stream";
 
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._\-!\*\'\(\)\/]/g, "_");
@@ -32,6 +33,7 @@ export const getS3Object = async (input: GetObjectCommandInput) =>
             Key: input.Key ? decodeURIComponent(input.Key) : undefined,
         }),
     );
+
 export const putS3Object = (input: PutObjectCommandInput) =>
     client.send(
         new PutObjectCommand({
@@ -39,6 +41,7 @@ export const putS3Object = (input: PutObjectCommandInput) =>
             Key: input.Key ? replaceSpecialCharacters(input.Key) : undefined,
         }),
     );
+
 export const startS3Upload = (
     bucket: string,
     key: string,
@@ -60,3 +63,14 @@ export const startS3Upload = (
         partSize,
         leavePartsOnError,
     });
+
+export const getPresignedUrl = (input: GetObjectCommandInput, expiresIn: number) => {
+    return getSignedUrl(
+        client,
+        new GetObjectCommand({
+            ...input,
+            Key: input.Key ? decodeURIComponent(input.Key) : undefined,
+        }),
+        { expiresIn },
+    );
+};
