@@ -46,7 +46,7 @@ describe("gtfs-downloader-endpoint", () => {
         );
     });
 
-    it("returns a presigned URL for downloading a gtfs.zip file", async () => {
+    it("returns a 302 with a presigned URL when the URL is successfully generated", async () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
