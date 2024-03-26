@@ -12,14 +12,8 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@aws-sdk/credential-providers": "^3.540.0",
-        "@aws-sdk/s3-request-presigner": "^3.540.0",
         "@baselime/lambda-logger": "^0.2.2",
-        "@bods-integrated-data/shared": "workspace:^",
-        "@smithy/hash-node": "^2.2.0",
-        "@smithy/protocol-http": "^3.3.0",
-        "@smithy/querystring-builder": "^2.2.0",
-        "@smithy/url-parser": "^2.2.0"
+        "@bods-integrated-data/shared": "workspace:^"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

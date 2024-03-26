@@ -1,12 +1,11 @@
-import { S3RequestPresigner } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@baselime/lambda-logger";
-import { HttpRequest } from "@smithy/protocol-http";
+import * as s3 from "@bods-integrated-data/shared/s3";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
 describe("gtfs-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
-    const presignMock = vi.spyOn(S3RequestPresigner.prototype, "presign");
+    const getPresignedUrlMock = vi.spyOn(s3, "getPresignedUrl");
 
     vi.mock("@baselime/lambda-logger", () => ({
         logger: {
@@ -34,25 +33,7 @@ describe("gtfs-downloader-endpoint", () => {
     });
 
     it("returns a 500 when a presigned URL could not be generated", async () => {
-        presignMock.mockRejectedValueOnce(new Error());
-
-        await expect(handler()).resolves.toEqual({
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        });
-
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was an error generating a presigned URL for GTFS download",
-            expect.any(Error),
-        );
-    });
-
-    it("returns a 500 when a presigned URL is generated but has no query parameters", async () => {
-        presignMock.mockResolvedValueOnce(
-            new HttpRequest({
-                query: undefined,
-            }),
-        );
+        getPresignedUrlMock.mockRejectedValueOnce(new Error());
 
         await expect(handler()).resolves.toEqual({
             statusCode: 500,
@@ -66,18 +47,13 @@ describe("gtfs-downloader-endpoint", () => {
     });
 
     it("returns a presigned URL for downloading a gtfs.zip file", async () => {
-        presignMock.mockResolvedValueOnce(
-            new HttpRequest({
-                query: {
-                    hello: "world",
-                },
-            }),
-        );
+        const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
+        getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
         await expect(handler()).resolves.toEqual({
             statusCode: 302,
             headers: {
-                Location: `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`,
+                Location: mockPresignedUrl,
             },
         });
 

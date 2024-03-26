@@ -1,10 +1,5 @@
-import { fromIni } from "@aws-sdk/credential-providers";
-import { S3RequestPresigner } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@baselime/lambda-logger";
-import { Hash } from "@smithy/hash-node";
-import { HttpRequest } from "@smithy/protocol-http";
-import { buildQueryString } from "@smithy/querystring-builder";
-import { parseUrl } from "@smithy/url-parser";
+import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyResultV2 } from "aws-lambda";
 
 export const handler = async (): Promise<APIGatewayProxyResultV2> => {
@@ -19,36 +14,13 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
         };
     }
 
-    const region = "eu-west-2";
-    const key = "gtfs.zip";
-    const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-
     try {
-        const presigner = new S3RequestPresigner({
-            credentials: fromIni(),
-            region,
-            sha256: Hash.bind(null, "sha256"),
-        });
-
-        const presignedUrl = await presigner.presign(new HttpRequest(parseUrl(url)));
-
-        /**
-         * Query params should always be defined even though the query type is nullable.
-         * If the presign method resolves with no query params, the built query string
-         * will be empty and we can prevent our API redirecting to itself.
-         */
-        const queryString = buildQueryString(presignedUrl.query!);
-
-        if (!queryString) {
-            throw new Error("No presigned query parameters generated");
-        }
-
-        const presignedUrlString = `${url}?${queryString}`;
+        const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: "gtfs.zip" }, 3600);
 
         return {
             statusCode: 302,
             headers: {
-                Location: presignedUrlString,
+                Location: presignedUrl,
             },
         };
     } catch (error) {
