@@ -34,11 +34,18 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
 
         const presignedUrl = await presigner.presign(new HttpRequest(parseUrl(url)));
 
-        if (!presignedUrl.query) {
+        /**
+         * Query params should always be defined even though the query type is nullable.
+         * If the presign method resolves with no query params, the built query string
+         * will be empty and we can prevent our API redirecting to itself.
+         */
+        const queryString = buildQueryString(presignedUrl.query!);
+
+        if (!queryString) {
             throw new Error("No presigned query parameters generated");
         }
 
-        const presignedUrlString = `${url}?${buildQueryString(presignedUrl.query)}`;
+        const presignedUrlString = `${url}?${queryString}`;
 
         logger.info(`Presigned URL generated: ${presignedUrlString}`);
 
