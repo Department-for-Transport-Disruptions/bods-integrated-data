@@ -27,16 +27,4 @@ module "integrated_data_gtfs_downloader_function" {
   env_vars = {
     BUCKET_NAME = aws_s3_bucket.integrated_data_gtfs_bucket.bucket
   }
-
-  permissions = [
-    {
-      Action = [
-        "s3.GetObject"
-      ],
-      Effect = "Allow",
-      Resource = [
-        "${aws_s3_bucket.integrated_data_gtfs_bucket.bucket}/*"
-      ]
-    }
-  ]
 }
