@@ -138,7 +138,8 @@ export const serviceSchema = z.object({
 
 export type Service = z.infer<typeof serviceSchema>;
 
-const vehicleJourneyStopUsageSchema = z.object({
+// Abstract schema for JourneyPatternTimingLink and VehicleJourneyTimingLink
+const abstractTimingLinkSchema = z.object({
     "@_id": z.string().optional(),
     From: z
         .object({
@@ -157,9 +158,11 @@ const vehicleJourneyStopUsageSchema = z.object({
     RunTime: z.string().optional(),
 });
 
+export type AbstractTimingLink = z.infer<typeof abstractTimingLinkSchema>;
+
 export const journeyPatternSectionSchema = z.object({
     "@_id": z.string(),
-    JourneyPatternTimingLink: vehicleJourneyStopUsageSchema.array(),
+    JourneyPatternTimingLink: abstractTimingLinkSchema.array(),
 });
 
 export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
@@ -180,7 +183,7 @@ export const vehicleTypeSchema = z.object({
 
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
 
-export const vehicleJourneyTimingLinkSchema = vehicleJourneyStopUsageSchema.extend({
+export const vehicleJourneyTimingLinkSchema = abstractTimingLinkSchema.extend({
     JourneyPatternTimingLinkRef: z.string(),
 });
 
