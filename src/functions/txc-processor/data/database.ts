@@ -388,17 +388,45 @@ export const insertStopTimes = async (
                 const activity = journeyPatternTimingLink.From?.Activity || vehicleJourneyTimingLink?.From?.Activity;
                 const timingStatus =
                     journeyPatternTimingLink.From?.TimingStatus || vehicleJourneyTimingLink?.From?.TimingStatus;
-                const fromWaitTime =
-                    journeyPatternTimingLink.From?.WaitTime || vehicleJourneyTimingLink?.From?.WaitTime;
-                const toWaitTime = journeyPatternTimingLink.To?.WaitTime || vehicleJourneyTimingLink?.To?.WaitTime;
 
                 const arrivalTime = currentStopDepartureTime.clone();
                 let departureTime = arrivalTime.clone();
 
-                if (fromWaitTime) {
-                    departureTime = departureTime.add(getDuration(fromWaitTime));
-                } else if (toWaitTime) {
-                    departureTime = departureTime.add(getDuration(toWaitTime));
+                let hasAddedWaitTime = false;
+
+                if (journeyPatternTimingLink.From?.WaitTime) {
+                    const journeyPatternTimingLinkFromWaitTime = getDuration(journeyPatternTimingLink.From?.WaitTime);
+
+                    if (journeyPatternTimingLinkFromWaitTime.asSeconds() > 0) {
+                        departureTime = departureTime.add(journeyPatternTimingLinkFromWaitTime);
+                        hasAddedWaitTime = true;
+                    }
+                }
+
+                if (!hasAddedWaitTime && vehicleJourneyTimingLink?.From?.WaitTime) {
+                    const vehicleJourneyTimingLinkFromWaitTime = getDuration(vehicleJourneyTimingLink?.From?.WaitTime);
+
+                    if (vehicleJourneyTimingLinkFromWaitTime.asSeconds() > 0) {
+                        departureTime = departureTime.add(vehicleJourneyTimingLinkFromWaitTime);
+                        hasAddedWaitTime = true;
+                    }
+                }
+
+                if (!hasAddedWaitTime && journeyPatternTimingLink.To?.WaitTime) {
+                    const journeyPatternTimingLinkToWaitTime = getDuration(journeyPatternTimingLink.To?.WaitTime);
+
+                    if (journeyPatternTimingLinkToWaitTime.asSeconds() > 0) {
+                        departureTime = departureTime.add(journeyPatternTimingLinkToWaitTime);
+                        hasAddedWaitTime = true;
+                    }
+                }
+
+                if (!hasAddedWaitTime && vehicleJourneyTimingLink?.To?.WaitTime) {
+                    const vehicleJourneyTimingLinkToWaitTime = getDuration(vehicleJourneyTimingLink?.To?.WaitTime);
+
+                    if (vehicleJourneyTimingLinkToWaitTime.asSeconds() > 0) {
+                        departureTime = departureTime.add(vehicleJourneyTimingLinkToWaitTime);
+                    }
                 }
 
                 let hasAddedRunTime = false;
@@ -412,7 +440,7 @@ export const insertStopTimes = async (
                     }
                 }
 
-                if (vehicleJourneyTimingLink?.RunTime && !hasAddedRunTime) {
+                if (!hasAddedRunTime && vehicleJourneyTimingLink?.RunTime) {
                     const vehicleJourneyTimingLinkRunTime = getDuration(vehicleJourneyTimingLink.RunTime);
 
                     if (vehicleJourneyTimingLinkRunTime.asSeconds() > 0) {
