@@ -217,34 +217,32 @@ export const handler = async (event: S3Event) => {
     const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        await dbClient.transaction().execute(async (trx) => {
-            logger.info(`Starting txc processor for file: ${object.key}`);
+        logger.info(`Starting txc processor for file: ${object.key}`);
 
-            const txcData = await getAndParseTxcData(bucket.name, object.key);
+        const txcData = await getAndParseTxcData(bucket.name, object.key);
 
-            const { TransXChange } = txcData;
+        const { TransXChange } = txcData;
 
-            if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
-                logger.warn(`No vehicle journeys found in file: ${object.key}`);
-                return;
-            }
+        if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
+            logger.warn(`No vehicle journeys found in file: ${object.key}`);
+            return;
+        }
 
-            const agencyData = await insertAgencies(trx, TransXChange.Operators.Operator);
+        const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
-            await insertStops(trx, TransXChange.StopPoints.AnnotatedStopPointRef);
+        await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
 
-            await processServices(
-                trx,
-                TransXChange.Services.Service,
-                TransXChange.VehicleJourneys.VehicleJourney,
-                TransXChange.RouteSections.RouteSection,
-                TransXChange.Routes.Route,
-                TransXChange.JourneyPatternSections.JourneyPatternSection,
-                agencyData,
-            );
+        await processServices(
+            dbClient,
+            TransXChange.Services.Service,
+            TransXChange.VehicleJourneys.VehicleJourney,
+            TransXChange.RouteSections.RouteSection,
+            TransXChange.Routes.Route,
+            TransXChange.JourneyPatternSections.JourneyPatternSection,
+            agencyData,
+        );
 
-            logger.info("TXC processor successful");
-        });
+        logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
             logger.error(

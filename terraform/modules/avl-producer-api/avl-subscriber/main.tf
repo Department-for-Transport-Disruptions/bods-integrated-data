@@ -12,11 +12,16 @@ terraform {
 module "avl_subscriber" {
   source = "../../shared/lambda-function"
 
-  environment = var.environment
-  function_name      = "avl-subscriber"
-  zip_path           = "${path.module}/../../../../src/functions/dist/avl-subscriber.zip"
-  handler            = "index.handler"
-  memory             = 1024
-  runtime            = "nodejs20.x"
-  timeout            = 120
+  environment   = var.environment
+  function_name = "avl-subscriber"
+  zip_path      = "${path.module}/../../../../src/functions/dist/avl-subscriber.zip"
+  handler       = "index.handler"
+  memory        = 1024
+  runtime       = "nodejs20.x"
+  timeout       = 120
+}
+
+output "lambda_arn" {
+  description = "Lambda ARN"
+  value       = module.avl_subscriber.lambda_arn
 }

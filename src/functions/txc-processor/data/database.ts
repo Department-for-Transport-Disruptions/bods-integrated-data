@@ -189,68 +189,88 @@ export const insertShapes = async (
     routeSections: TxcRouteSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
-    const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
+    let updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
 
-    const routeRefShapeIdMapping: Record<string, string> = {};
+    const journeyPatternToRouteRefMapping: Record<string, string> = {};
 
-    const shapes = vehicleJourneyMappings.flatMap<NewShape>((vehicleJourneyMapping, index) => {
-        const journey = vehicleJourneyMapping.vehicleJourney;
+    const routeRefs = vehicleJourneyMappings
+        .map((vehicleJourneyMapping) => {
+            const journey = vehicleJourneyMapping.vehicleJourney;
 
-        const journeyPattern = services
-            .flatMap((s) => s.StandardService.JourneyPattern)
-            .find((journeyPattern) => journeyPattern["@_id"] === journey.JourneyPatternRef);
+            const journeyPattern = services
+                .flatMap((s) => s.StandardService.JourneyPattern)
+                .find((journeyPattern) => journeyPattern["@_id"] === journey.JourneyPatternRef);
 
-        if (!journeyPattern) {
-            logger.warn(`Unable to find journey pattern with journey pattern ref: ${journey.JourneyPatternRef}`);
+            if (!journeyPattern) {
+                logger.warn(`Unable to find journey pattern with journey pattern ref: ${journey.JourneyPatternRef}`);
+                return null;
+            }
+
+            const txcRoute = routes.find((r) => r["@_id"] === journeyPattern.RouteRef);
+
+            if (!txcRoute) {
+                logger.warn(`Unable to find route with route ref: ${journeyPattern.RouteRef}`);
+                return null;
+            }
+
+            journeyPatternToRouteRefMapping[journeyPattern["@_id"]] = txcRoute["@_id"];
+
+            return txcRoute["@_id"];
+        })
+        .filter(notEmpty);
+
+    const uniqueRouteRefs = [...new Set(routeRefs)];
+
+    const shapes = uniqueRouteRefs.flatMap<NewShape>((routeRef) => {
+        const route = routes.find((route) => route["@_id"] === routeRef);
+
+        const routeSectionsForRoute = routeSections.filter((section) =>
+            route?.RouteSectionRef.includes(section["@_id"]),
+        );
+
+        if (!routeSectionsForRoute.length) {
+            logger.warn(`Unable to find route sections for route: ${routeRef}`);
             return [];
         }
 
-        const txcRoute = routes.find((r) => r["@_id"] === journeyPattern.RouteRef);
+        const routeLinks = routeSectionsForRoute.flatMap((section) => section.RouteLink);
 
-        if (!txcRoute) {
-            logger.warn(`Unable to find route with route ref: ${journeyPattern.RouteRef}`);
-            return [];
-        }
-
-        const shapeId = routeRefShapeIdMapping[txcRoute["@_id"]] ?? randomUUID();
-
-        routeRefShapeIdMapping[txcRoute["@_id"]] = shapeId;
-
-        updatedVehicleJourneyMappings[index].shapeId = shapeId;
-
+        const shapeId = randomUUID();
         let currentPtSequence = 0;
 
-        return txcRoute.RouteSectionRef.flatMap<NewShape>((routeSectionRef) => {
-            const routeSection = routeSections.find((rs) => rs["@_id"] === routeSectionRef);
+        updatedVehicleJourneyMappings = updatedVehicleJourneyMappings.map((mapping) => {
+            if (journeyPatternToRouteRefMapping[mapping.vehicleJourney.JourneyPatternRef] === routeRef) {
+                return {
+                    ...mapping,
+                    shapeId,
+                };
+            }
 
-            if (!routeSection) {
-                logger.warn(`Unable to find route section with route section ref: ${routeSectionRef}`);
+            return mapping;
+        });
+
+        return routeLinks.flatMap<NewShape>((routeLink) => {
+            if (!routeLink.Track) {
                 return [];
             }
 
-            return routeSection.RouteLink.flatMap<NewShape>((routeLink) => {
-                if (!routeLink.Track) {
-                    return [];
-                }
+            return routeLink.Track.flatMap<NewShape>((track) => {
+                // Shape data will only be mapped if both latitude and longitude are defined in either translation data or location data
+                return track.Mapping.Location.flatMap<NewShape>((location) => {
+                    const latitude = location.Translation ? location.Translation.Latitude : location.Latitude;
+                    const longitude = location.Translation ? location.Translation.Longitude : location.Longitude;
 
-                return routeLink.Track.flatMap<NewShape>((track) => {
-                    // Shape data will only be mapped if both latitude and longitude are defined in either translation data or location data
-                    return track.Mapping.Location.flatMap<NewShape>((location) => {
-                        const latitude = location.Translation ? location.Translation.Latitude : location.Latitude;
-                        const longitude = location.Translation ? location.Translation.Longitude : location.Longitude;
+                    if (latitude === undefined || longitude === undefined) {
+                        return [];
+                    }
 
-                        if (latitude === undefined || longitude === undefined) {
-                            return [];
-                        }
-
-                        return {
-                            shape_id: shapeId,
-                            shape_pt_lat: latitude,
-                            shape_pt_lon: longitude,
-                            shape_pt_sequence: currentPtSequence++,
-                            shape_dist_traveled: 0,
-                        };
-                    });
+                    return {
+                        shape_id: shapeId,
+                        shape_pt_lat: latitude,
+                        shape_pt_lon: longitude,
+                        shape_pt_sequence: currentPtSequence++,
+                        shape_dist_traveled: 0,
+                    };
                 });
             });
         });
