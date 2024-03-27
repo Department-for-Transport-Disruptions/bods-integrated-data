@@ -1,11 +1,34 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { sql } from "kysely";
+import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { createLazyDownloadStreamFrom, startS3Upload } from "@bods-integrated-data/shared/s3";
+import archiver from "archiver";
+import { Kysely, sql } from "kysely";
+import { PassThrough } from "stream";
+import { Query, queryBuilder } from "./queries";
+
+const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: Kysely<Database>) => {
+    await Promise.all(
+        queries.map((query) => {
+            let options = "format csv, header true";
+
+            if (!!query.forceQuote?.length) {
+                options += `, force_quote(${query.forceQuote.join(",")})`;
+            }
+
+            return sql`
+                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.query)}',
+                    aws_commons.create_s3_uri('${sql.raw(outputBucket)}', '${sql.raw(query.fileName)}.txt', 'eu-west-2'),
+                    options :='${sql.raw(options)}'
+                );
+            `.execute(dbClient);
+        }),
+    );
+};
 
 export const handler = async () => {
-    const { OUTPUT_BUCKET: outputBucket, IS_LOCAL: local } = process.env;
+    const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, IS_LOCAL: local } = process.env;
 
-    if (!outputBucket) {
+    if (!outputBucket || !gtfsBucket) {
         throw new Error("Env vars must be set");
     }
 
@@ -16,26 +39,32 @@ export const handler = async () => {
     try {
         logger.info("Starting GTFS Timetable Generator");
 
-        const agenciesQuery = dbClient
-            .selectFrom("agency_new")
-            .select([
-                "agency_new.id as agency_id",
-                "agency_new.name as agency_name",
-                "agency_new.url as agency_url",
-                "agency_new.timezone as agency_timezone",
-                "agency_new.lang as agency_lang",
-                "agency_new.phone as agency_phone",
-                "agency_new.noc as agency_noc",
-            ])
-            .compile().sql;
+        const queries = queryBuilder(dbClient);
 
-        const queries = [{ query: agenciesQuery, path: "agency.txt" }];
+        await exportDataToS3(queries, outputBucket, dbClient);
 
-        for await (const query of queries) {
-            await sql`
-                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.query)}', 
-                    aws_commons.create_s3_uri('${outputBucket}', '${sql.raw(query.path)}', 'eu-west-2') 
-                );`.execute(dbClient);
+        const archive = archiver("zip", {});
+
+        try {
+            const passThrough = new PassThrough();
+            archive.pipe(passThrough);
+            const upload = startS3Upload(gtfsBucket, "gtfs.zip", passThrough, "application/zip");
+
+            for (const query of queries) {
+                const file = `${query.fileName}.txt`;
+                const downloadStream = createLazyDownloadStreamFrom(outputBucket, file);
+
+                archive.append(downloadStream, {
+                    name: file,
+                });
+            }
+
+            void archive.finalize();
+
+            await upload.done();
+        } catch (e) {
+            archive.abort();
+            throw e;
         }
 
         logger.info("GTFS Timetable Generator successful");
