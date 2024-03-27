@@ -247,6 +247,7 @@ export const mapTimingLinksToStopTimes = (
     journeyPatternTimingLinks: AbstractTimingLink[],
 ): NewStopTime[] => {
     let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
+    let sequenceNumber = 0;
 
     return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink) => {
         const vehicleJourneyTimingLink = vehicleJourney.VehicleJourneyTimingLink?.find(
@@ -263,8 +264,6 @@ export const mapTimingLinksToStopTimes = (
             return [];
         }
 
-        const sequenceNumber =
-            journeyPatternTimingLink.From?.["@_SequenceNumber"] || vehicleJourneyTimingLink?.From?.["@_SequenceNumber"];
         const activity = journeyPatternTimingLink.From?.Activity || vehicleJourneyTimingLink?.From?.Activity;
         const timingStatus =
             journeyPatternTimingLink.From?.TimingStatus || vehicleJourneyTimingLink?.From?.TimingStatus;
@@ -333,7 +332,7 @@ export const mapTimingLinksToStopTimes = (
             stop_id: stopPointRef,
             arrival_time: arrivalTime.format("HH:mm:ss"),
             departure_time: departureTime.format("HH:mm:ss"),
-            stop_sequence: sequenceNumber || 0,
+            stop_sequence: sequenceNumber++,
             stop_headsign: "",
             pickup_type: getPickupTypeFromStopActivity(activity),
             drop_off_type: getDropOffTypeFromStopActivity(activity),
