@@ -241,6 +241,15 @@ export const getTimepointFromTimingStatus = (timingStatus?: string) => {
     return timingStatus === "principalTimingPoint" ? Timepoint.Exact : Timepoint.Approximate;
 };
 
+/**
+ * Maps journey pattern timing links to stop times and assumes the vehicle journey departure time as the
+ * first stop's departure time. Where a journey pattern timing link property is not defined, its corresponding
+ * property within the vehicle journey timing link is used, or a default value if neither are defined.
+ * @param tripId The trip ID
+ * @param vehicleJourney The associated vehicle journey
+ * @param journeyPatternTimingLinks The journey pattern timing links
+ * @returns An array of stop times
+ */
 export const mapTimingLinksToStopTimes = (
     tripId: string,
     vehicleJourney: VehicleJourney,
@@ -271,60 +280,21 @@ export const mapTimingLinksToStopTimes = (
         const arrivalTime = currentStopDepartureTime.clone();
         let departureTime = arrivalTime.clone();
 
-        let hasAddedWaitTime = false;
+        const waitTime = getFirstNonZeroDuration([
+            journeyPatternTimingLink.From?.WaitTime,
+            vehicleJourneyTimingLink?.From?.WaitTime,
+            journeyPatternTimingLink.To?.WaitTime,
+            vehicleJourneyTimingLink?.To?.WaitTime,
+        ]);
 
-        if (journeyPatternTimingLink.From?.WaitTime) {
-            const journeyPatternTimingLinkFromWaitTime = getDuration(journeyPatternTimingLink.From?.WaitTime);
-
-            if (journeyPatternTimingLinkFromWaitTime.asSeconds() > 0) {
-                departureTime = departureTime.add(journeyPatternTimingLinkFromWaitTime);
-                hasAddedWaitTime = true;
-            }
+        if (waitTime) {
+            departureTime = departureTime.add(waitTime);
         }
 
-        if (!hasAddedWaitTime && vehicleJourneyTimingLink?.From?.WaitTime) {
-            const vehicleJourneyTimingLinkFromWaitTime = getDuration(vehicleJourneyTimingLink?.From?.WaitTime);
+        const runTime = getFirstNonZeroDuration([journeyPatternTimingLink.RunTime, vehicleJourneyTimingLink?.RunTime]);
 
-            if (vehicleJourneyTimingLinkFromWaitTime.asSeconds() > 0) {
-                departureTime = departureTime.add(vehicleJourneyTimingLinkFromWaitTime);
-                hasAddedWaitTime = true;
-            }
-        }
-
-        if (!hasAddedWaitTime && journeyPatternTimingLink.To?.WaitTime) {
-            const journeyPatternTimingLinkToWaitTime = getDuration(journeyPatternTimingLink.To?.WaitTime);
-
-            if (journeyPatternTimingLinkToWaitTime.asSeconds() > 0) {
-                departureTime = departureTime.add(journeyPatternTimingLinkToWaitTime);
-                hasAddedWaitTime = true;
-            }
-        }
-
-        if (!hasAddedWaitTime && vehicleJourneyTimingLink?.To?.WaitTime) {
-            const vehicleJourneyTimingLinkToWaitTime = getDuration(vehicleJourneyTimingLink?.To?.WaitTime);
-
-            if (vehicleJourneyTimingLinkToWaitTime.asSeconds() > 0) {
-                departureTime = departureTime.add(vehicleJourneyTimingLinkToWaitTime);
-            }
-        }
-
-        let hasAddedRunTime = false;
-
-        if (journeyPatternTimingLink.RunTime) {
-            const journeyPatternTimingLinkRunTime = getDuration(journeyPatternTimingLink.RunTime);
-
-            if (journeyPatternTimingLinkRunTime.asSeconds() > 0) {
-                currentStopDepartureTime = currentStopDepartureTime.add(journeyPatternTimingLinkRunTime);
-                hasAddedRunTime = true;
-            }
-        }
-
-        if (!hasAddedRunTime && vehicleJourneyTimingLink?.RunTime) {
-            const vehicleJourneyTimingLinkRunTime = getDuration(vehicleJourneyTimingLink.RunTime);
-
-            if (vehicleJourneyTimingLinkRunTime.asSeconds() > 0) {
-                currentStopDepartureTime = currentStopDepartureTime.add(vehicleJourneyTimingLinkRunTime);
-            }
+        if (runTime) {
+            currentStopDepartureTime = currentStopDepartureTime.add(runTime);
         }
 
         const newStopTime: NewStopTime = {
@@ -342,4 +312,25 @@ export const mapTimingLinksToStopTimes = (
 
         return newStopTime;
     });
+};
+
+/**
+ * Iterates over an array of ISO 8601 durations and returns the first non-zero element as a duration object.
+ * @param durationStrings Array of ISO 8601 durations
+ * @returns The first non-zero duration, or undefined otherwise
+ */
+export const getFirstNonZeroDuration = (durationStrings: (string | undefined)[]) => {
+    for (let i = 0; i < durationStrings.length; i++) {
+        const durationString = durationStrings[i];
+
+        if (durationString) {
+            const duration = getDuration(durationString);
+
+            if (duration.asSeconds() > 0) {
+                return duration;
+            }
+        }
+    }
+
+    return undefined;
 };
