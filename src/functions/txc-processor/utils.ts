@@ -245,9 +245,9 @@ export const getTimepointFromTimingStatus = (timingStatus?: string) => {
  * Maps journey pattern timing links to stop times and assumes the vehicle journey departure time as the
  * first stop's departure time. Where a journey pattern timing link property is not defined, its corresponding
  * property within the vehicle journey timing link is used, or a default value if neither are defined.
- * @param tripId The trip ID
- * @param vehicleJourney The associated vehicle journey
- * @param journeyPatternTimingLinks The journey pattern timing links
+ * @param tripId Trip ID
+ * @param vehicleJourney Associated vehicle journey
+ * @param journeyPatternTimingLinks Journey pattern timing links
  * @returns An array of stop times
  */
 export const mapTimingLinksToStopTimes = (
@@ -258,60 +258,118 @@ export const mapTimingLinksToStopTimes = (
     let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
     let sequenceNumber = 0;
 
-    return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink) => {
+    return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
         const vehicleJourneyTimingLink = vehicleJourney.VehicleJourneyTimingLink?.find(
             (link) => link.JourneyPatternTimingLinkRef === journeyPatternTimingLink["@_id"],
         );
 
-        const stopPointRef =
-            journeyPatternTimingLink.From?.StopPointRef || vehicleJourneyTimingLink?.From?.StopPointRef;
+        const { runTime, stopTime } = mapTimingLinkToStopTime(
+            "from",
+            currentStopDepartureTime,
+            tripId,
+            sequenceNumber,
+            journeyPatternTimingLink,
+            vehicleJourneyTimingLink,
+        );
 
-        if (!stopPointRef) {
-            logger.warn(
-                `Missing stop point ref for journey pattern timing link with ref: ${journeyPatternTimingLink["@_id"]}`,
-            );
-            return [];
-        }
-
-        const activity = journeyPatternTimingLink.From?.Activity || vehicleJourneyTimingLink?.From?.Activity;
-        const timingStatus =
-            journeyPatternTimingLink.From?.TimingStatus || vehicleJourneyTimingLink?.From?.TimingStatus;
-
-        const arrivalTime = currentStopDepartureTime.clone();
-        let departureTime = arrivalTime.clone();
-
-        const waitTime = getFirstNonZeroDuration([
-            journeyPatternTimingLink.From?.WaitTime,
-            vehicleJourneyTimingLink?.From?.WaitTime,
-            journeyPatternTimingLink.To?.WaitTime,
-            vehicleJourneyTimingLink?.To?.WaitTime,
-        ]);
-
-        if (waitTime) {
-            departureTime = departureTime.add(waitTime);
-        }
-
-        const runTime = getFirstNonZeroDuration([journeyPatternTimingLink.RunTime, vehicleJourneyTimingLink?.RunTime]);
+        sequenceNumber++;
 
         if (runTime) {
             currentStopDepartureTime = currentStopDepartureTime.add(runTime);
         }
 
-        const newStopTime: NewStopTime = {
+        const stopTimesToAdd: NewStopTime[] = [];
+
+        if (stopTime) {
+            stopTimesToAdd.push(stopTime);
+        }
+
+        if (index === journeyPatternTimingLinks.length - 1) {
+            const { stopTime: finalStopTime } = mapTimingLinkToStopTime(
+                "to",
+                currentStopDepartureTime,
+                tripId,
+                sequenceNumber,
+                journeyPatternTimingLink,
+                vehicleJourneyTimingLink,
+            );
+
+            if (finalStopTime) {
+                stopTimesToAdd.push(finalStopTime);
+            }
+        }
+
+        return stopTimesToAdd;
+    });
+};
+
+/**
+ * Map a timing link to a stop time. Either the From or To stop usage activity is used depending on the `stopUsageType`.
+ * If a run time will optionally be returned if it can be calculated.
+ * @param stopUsageType Which stop usage to use (from or to)
+ * @param currentStopDepartureTime Current stop departure time
+ * @param tripId Trip ID
+ * @param sequenceNumber Current sequence number
+ * @param journeyPatternTimingLink Journey pattern timing link
+ * @param vehicleJourneyTimingLink Vehicle journey timing link
+ * @returns A stop time and optional run time
+ */
+export const mapTimingLinkToStopTime = (
+    stopUsageType: "from" | "to",
+    currentStopDepartureTime: Dayjs,
+    tripId: string,
+    sequenceNumber: number,
+    journeyPatternTimingLink: AbstractTimingLink,
+    vehicleJourneyTimingLink?: AbstractTimingLink,
+): { runTime?: plugin.Duration; stopTime?: NewStopTime } => {
+    const journeyPatternTimingLinkStopUsage =
+        stopUsageType === "from" ? journeyPatternTimingLink?.From : journeyPatternTimingLink?.To;
+    const vehicleJourneyTimingLinkStopUsage =
+        stopUsageType === "from" ? vehicleJourneyTimingLink?.From : vehicleJourneyTimingLink?.To;
+
+    const stopPointRef =
+        journeyPatternTimingLinkStopUsage?.StopPointRef || vehicleJourneyTimingLinkStopUsage?.StopPointRef;
+
+    if (!stopPointRef) {
+        logger.warn(
+            `Missing stop point ref for journey pattern timing link with ref: ${journeyPatternTimingLink["@_id"]}`,
+        );
+        return {};
+    }
+
+    const activity = journeyPatternTimingLinkStopUsage?.Activity || vehicleJourneyTimingLinkStopUsage?.Activity;
+    const timingStatus =
+        journeyPatternTimingLinkStopUsage?.TimingStatus || vehicleJourneyTimingLinkStopUsage?.TimingStatus;
+
+    const arrivalTime = currentStopDepartureTime.clone();
+    let departureTime = arrivalTime.clone();
+
+    const waitTime = getFirstNonZeroDuration([
+        journeyPatternTimingLinkStopUsage?.WaitTime,
+        vehicleJourneyTimingLinkStopUsage?.WaitTime,
+    ]);
+
+    if (waitTime) {
+        departureTime = departureTime.add(waitTime);
+    }
+
+    const runTime = getFirstNonZeroDuration([journeyPatternTimingLink.RunTime, vehicleJourneyTimingLink?.RunTime]);
+
+    return {
+        runTime,
+        stopTime: {
             trip_id: tripId,
             stop_id: stopPointRef,
             arrival_time: arrivalTime.format("HH:mm:ss"),
             departure_time: departureTime.format("HH:mm:ss"),
-            stop_sequence: sequenceNumber++,
+            stop_sequence: sequenceNumber,
             stop_headsign: "",
             pickup_type: getPickupTypeFromStopActivity(activity),
             drop_off_type: getDropOffTypeFromStopActivity(activity),
             shape_dist_traveled: 0,
             timepoint: getTimepointFromTimingStatus(timingStatus),
-        };
-
-        return newStopTime;
-    });
+        },
+    };
 };
 
 /**

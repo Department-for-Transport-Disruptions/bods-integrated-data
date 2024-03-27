@@ -138,23 +138,21 @@ export const serviceSchema = z.object({
 
 export type Service = z.infer<typeof serviceSchema>;
 
+// Abstract schema for From and To within AbstractTimingLink
+const abstractStopUsageSchema = z.object({
+    Activity: z.string().optional(),
+    StopPointRef: z.string().optional(),
+    TimingStatus: z.string().optional(),
+    WaitTime: z.string().optional(),
+});
+
+export type AbstractStopUsage = z.infer<typeof abstractStopUsageSchema>;
+
 // Abstract schema for JourneyPatternTimingLink and VehicleJourneyTimingLink
 const abstractTimingLinkSchema = z.object({
     "@_id": z.string().optional(),
-    From: z
-        .object({
-            "@_SequenceNumber": z.coerce.number().optional(),
-            Activity: z.string().optional(),
-            StopPointRef: z.string().optional(),
-            TimingStatus: z.string().optional(),
-            WaitTime: z.string().optional(),
-        })
-        .optional(),
-    To: z
-        .object({
-            WaitTime: z.string().optional(),
-        })
-        .optional(),
+    From: abstractStopUsageSchema.optional(),
+    To: abstractStopUsageSchema.optional(),
     RunTime: z.string().optional(),
 });
 
