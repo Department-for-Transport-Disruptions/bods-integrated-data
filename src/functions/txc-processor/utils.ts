@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     CalendarDateExceptionType,
     DropOffType,
@@ -256,6 +255,11 @@ export const mapTimingLinksToStopTimes = (
     journeyPatternTimingLinks: AbstractTimingLink[],
 ): NewStopTime[] => {
     let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
+
+    if (!currentStopDepartureTime.isValid()) {
+        throw new Error(`Invalid departure time in vehicle journey with code: ${vehicleJourney.VehicleJourneyCode}`);
+    }
+
     let sequenceNumber = 0;
 
     return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
@@ -263,7 +267,7 @@ export const mapTimingLinksToStopTimes = (
             (link) => link.JourneyPatternTimingLinkRef === journeyPatternTimingLink["@_id"],
         );
 
-        const { runTime, stopTime } = mapTimingLinkToStopTime(
+        const { nextArrivalTime, stopTime } = mapTimingLinkToStopTime(
             "from",
             currentStopDepartureTime,
             tripId,
@@ -272,11 +276,8 @@ export const mapTimingLinksToStopTimes = (
             vehicleJourneyTimingLink,
         );
 
+        currentStopDepartureTime = nextArrivalTime.clone();
         sequenceNumber++;
-
-        if (runTime) {
-            currentStopDepartureTime = currentStopDepartureTime.add(runTime);
-        }
 
         const stopTimesToAdd: NewStopTime[] = [];
 
@@ -321,9 +322,9 @@ export const mapTimingLinkToStopTime = (
     sequenceNumber: number,
     journeyPatternTimingLink: AbstractTimingLink,
     vehicleJourneyTimingLink?: AbstractTimingLink,
-): { runTime?: plugin.Duration; stopTime?: NewStopTime } => {
+): { nextArrivalTime: Dayjs; stopTime: NewStopTime } => {
     const journeyPatternTimingLinkStopUsage =
-        stopUsageType === "from" ? journeyPatternTimingLink?.From : journeyPatternTimingLink?.To;
+        stopUsageType === "from" ? journeyPatternTimingLink.From : journeyPatternTimingLink.To;
     const vehicleJourneyTimingLinkStopUsage =
         stopUsageType === "from" ? vehicleJourneyTimingLink?.From : vehicleJourneyTimingLink?.To;
 
@@ -331,10 +332,9 @@ export const mapTimingLinkToStopTime = (
         journeyPatternTimingLinkStopUsage?.StopPointRef || vehicleJourneyTimingLinkStopUsage?.StopPointRef;
 
     if (!stopPointRef) {
-        logger.warn(
+        throw new Error(
             `Missing stop point ref for journey pattern timing link with ref: ${journeyPatternTimingLink["@_id"]}`,
         );
-        return {};
     }
 
     const activity = journeyPatternTimingLinkStopUsage?.Activity || vehicleJourneyTimingLinkStopUsage?.Activity;
@@ -344,19 +344,35 @@ export const mapTimingLinkToStopTime = (
     const arrivalTime = currentStopDepartureTime.clone();
     let departureTime = arrivalTime.clone();
 
-    const waitTime = getFirstNonZeroDuration([
-        journeyPatternTimingLinkStopUsage?.WaitTime,
-        vehicleJourneyTimingLinkStopUsage?.WaitTime,
-    ]);
+    if (stopUsageType === "from") {
+        const fromWaitTime = getFirstNonZeroDuration([
+            journeyPatternTimingLink.From?.WaitTime,
+            vehicleJourneyTimingLink?.From?.WaitTime,
+        ]);
 
-    if (waitTime) {
-        departureTime = departureTime.add(waitTime);
+        if (fromWaitTime) {
+            departureTime = departureTime.add(fromWaitTime);
+        }
     }
 
+    const toWaitTime = getFirstNonZeroDuration([
+        journeyPatternTimingLink.To?.WaitTime,
+        vehicleJourneyTimingLink?.To?.WaitTime,
+    ]);
+
+    if (toWaitTime) {
+        departureTime = departureTime.add(toWaitTime);
+    }
+
+    let nextArrivalTime = departureTime.clone();
     const runTime = getFirstNonZeroDuration([journeyPatternTimingLink.RunTime, vehicleJourneyTimingLink?.RunTime]);
 
+    if (runTime) {
+        nextArrivalTime = nextArrivalTime.add(runTime);
+    }
+
     return {
-        runTime,
+        nextArrivalTime,
         stopTime: {
             trip_id: tripId,
             stop_id: stopPointRef,
