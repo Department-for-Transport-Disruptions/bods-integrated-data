@@ -114,6 +114,8 @@ module "integrated_data_txc_pipeline" {
   db_sg_id             = module.integrated_data_aurora_db_dev.db_sg_id
   db_host              = module.integrated_data_aurora_db_dev.db_host
   tnds_ftp_credentials = local.secrets["tnds_ftp"]
+  alarm_topic_arn      = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn         = module.integrated_data_monitoring_dev.ok_topic_arn
 }
 
 module "integrated_data_avl_pipeline" {

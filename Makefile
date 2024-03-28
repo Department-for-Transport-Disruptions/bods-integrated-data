@@ -9,6 +9,7 @@ AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
+TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
@@ -97,6 +98,12 @@ create-dynamodb-table:
     --billing-mode PAY_PER_REQUEST \
     --region eu-west-2
 
+create-txc-queue:
+	queue_url=$$(awslocal sqs create-queue --queue-name ${TXC_QUEUE_NAME} --query 'QueueUrl' --output text); \
+	queue_arn=$$(awslocal sqs get-queue-attributes --queue-url $$queue_url --attribute-names QueueArn --query 'Attributes.QueueArn' --output text); \
+	awslocal s3api put-bucket-notification-configuration --bucket ${BODS_TXC_UNZIPPED_BUCKET_NAME} --notification-configuration "{\"QueueConfigurations\": [{\"QueueArn\": \"$$queue_arn\", \"Events\":[\"s3:ObjectCreated:*\"]}]}"
+	awslocal lambda create-event-source-mapping --event-source-arn $$queue_arn --function-name txc-processor-local
+
 # Database
 
 migrate-local-db-to-latest:
@@ -170,7 +177,7 @@ invoke-local-tnds-txc-unzipper:
 	FILE=${FILE} awslocal lambda invoke --function-name tnds-txc-unzipper-local --payload '{"Records":[{"s3":{"bucket":{"name":${TNDS_TXC_ZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-bods-txc-processor:
-	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+	FILE=${FILE} awslocal lambda invoke --function-name txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 
 # GTFS
