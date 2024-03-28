@@ -3,7 +3,13 @@ import { DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrate
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { AbstractTimingLink } from "@bods-integrated-data/shared/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getFirstNonZeroDuration, mapTimingLinkToStopTime } from "./utils";
+import {
+    getDropOffTypeFromStopActivity,
+    getFirstNonZeroDuration,
+    getPickupTypeFromStopActivity,
+    getTimepointFromTimingStatus,
+    mapTimingLinkToStopTime,
+} from "./utils";
 
 describe("utils", () => {
     vi.mock("@baselime/lambda-logger", () => ({
@@ -14,6 +20,43 @@ describe("utils", () => {
 
     afterEach(() => {
         vi.resetAllMocks();
+    });
+
+    describe("getPickupTypeFromStopActivity", () => {
+        it.each([
+            ["pickUp", PickupType.Pickup],
+            ["pickUpAndSetDown", PickupType.Pickup],
+            ["setDown", PickupType.NoPickup],
+            ["pass", PickupType.NoPickup],
+            [undefined, PickupType.Pickup],
+        ])("returns the correct pickup type for the activity", (input, expected) => {
+            const result = getPickupTypeFromStopActivity(input);
+            expect(result).toEqual(expected);
+        });
+    });
+
+    describe("getDropOffTypeFromStopActivity", () => {
+        it.each([
+            ["pickUp", DropOffType.NoDropOff],
+            ["pickUpAndSetDown", DropOffType.DropOff],
+            ["setDown", DropOffType.DropOff],
+            ["pass", DropOffType.NoDropOff],
+            [undefined, DropOffType.DropOff],
+        ])("returns the correct drop off type for the activity", (input, expected) => {
+            const result = getDropOffTypeFromStopActivity(input);
+            expect(result).toEqual(expected);
+        });
+    });
+
+    describe("getTimepointFromTimingStatus", () => {
+        it.each([
+            ["principalTimingPoint", Timepoint.Exact],
+            ["someOtherValue", Timepoint.Approximate],
+            [undefined, Timepoint.Approximate],
+        ])("returns the correct time point for the timing status", (input, expected) => {
+            const result = getTimepointFromTimingStatus(input);
+            expect(result).toEqual(expected);
+        });
     });
 
     describe("mapTimingLinkToStopTime", () => {
