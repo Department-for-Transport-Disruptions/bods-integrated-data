@@ -15,6 +15,7 @@ const cleardownDatabase = async (dbClient: Kysely<Database>) => {
         "shape",
         "trip",
         "frequency",
+        "stop_time",
     ];
 
     for (const table of tables) {

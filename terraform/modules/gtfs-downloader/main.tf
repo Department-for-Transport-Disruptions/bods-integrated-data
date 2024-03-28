@@ -9,6 +9,11 @@ terraform {
   }
 }
 
+resource "aws_lambda_function_url" "gtfs_download_url" {
+  function_name      = module.integrated_data_gtfs_downloader_function.function_name
+  authorization_type = "NONE"
+}
+
 module "integrated_data_gtfs_downloader_function" {
   source = "../shared/lambda-function"
 

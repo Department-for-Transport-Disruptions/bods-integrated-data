@@ -1,30 +1,39 @@
 import { logger } from "@baselime/lambda-logger";
 import {
-    Agency,
     Database,
-    LocationType,
-    NewFrequency,
     NewCalendar,
     NewCalendarDate,
+    NewFrequency,
+    ServiceType,
+    Agency,
     NewRoute,
     NewShape,
     NewStop,
-    NewTrip,
+    LocationType,
+    NewStopTime,
     Route,
-    ServiceType,
+    NewTrip,
 } from "@bods-integrated-data/shared/database";
-import { getDurationInSeconds } from "@bods-integrated-data/shared/dates";
-import { Operator, Service, TxcRoute, TxcRouteSection, TxcStop } from "@bods-integrated-data/shared/schema";
+import { getDuration } from "@bods-integrated-data/shared/dates";
 import {
-    chunkArray,
-    getRouteTypeFromServiceMode,
-    getWheelchairAccessibilityFromVehicleType,
+    Operator,
+    TxcRouteSection,
+    Service,
+    TxcStop,
+    TxcRoute,
+    TxcJourneyPatternSection,
+} from "@bods-integrated-data/shared/schema";
+import {
     notEmpty,
+    getRouteTypeFromServiceMode,
+    chunkArray,
+    getWheelchairAccessibilityFromVehicleType,
 } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 import { randomUUID } from "crypto";
 import { VehicleJourneyMapping } from "../types";
+import { mapTimingLinksToStopTimes } from "../utils";
 
 export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
@@ -110,7 +119,7 @@ export const insertFrequencies = async (
             let exactTimes = ServiceType.ScheduleBased;
 
             if (vehicleJourney.Frequency.Interval?.ScheduledFrequency) {
-                headwaySecs = getDurationInSeconds(vehicleJourney.Frequency.Interval.ScheduledFrequency);
+                headwaySecs = getDuration(vehicleJourney.Frequency.Interval.ScheduledFrequency).asSeconds();
 
                 if (vehicleJourney.Frequency.EndTime) {
                     exactTimes = ServiceType.FrequencyBased;
@@ -324,7 +333,45 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         .values(stopsToInsert)
         .onConflict((oc) => oc.column("id").doNothing())
         .returningAll()
-        .executeTakeFirst();
+        .execute();
+};
+
+export const insertStopTimes = async (
+    dbClient: Kysely<Database>,
+    services: Service[],
+    txcJourneyPatternSections: TxcJourneyPatternSection[],
+    vehicleJourneyMappings: VehicleJourneyMapping[],
+) => {
+    const stopTimes = vehicleJourneyMappings.flatMap<NewStopTime>((vehicleJourneyMapping) => {
+        const { tripId, vehicleJourney } = vehicleJourneyMapping;
+
+        const journeyPattern = services
+            .flatMap((s) => s.StandardService.JourneyPattern)
+            .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+
+        if (!journeyPattern) {
+            logger.warn(`Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`);
+            return [];
+        }
+
+        const journeyPatternTimingLinks = journeyPattern.JourneyPatternSectionRefs.flatMap((ref) => {
+            const journeyPatternSection = txcJourneyPatternSections.find((section) => section["@_id"] === ref);
+
+            if (!journeyPatternSection) {
+                logger.warn(`Unable to find journey pattern section with journey pattern section ref: ${ref}`);
+                return [];
+            }
+
+            return journeyPatternSection.JourneyPatternTimingLink;
+        });
+
+        return mapTimingLinksToStopTimes(tripId, vehicleJourney, journeyPatternTimingLinks);
+    });
+
+    if (stopTimes.length > 0) {
+        const insertChunks = chunkArray(stopTimes, 3000);
+        await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
+    }
 };
 
 export const insertTrips = async (
