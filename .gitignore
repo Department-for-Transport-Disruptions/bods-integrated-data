@@ -52,3 +52,6 @@ secrets.json
 
 # Local test data
 /data
+
+# Test coverage
+/src/coverage
