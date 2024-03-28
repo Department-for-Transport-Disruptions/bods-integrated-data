@@ -8,6 +8,7 @@ AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
+GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
 
 dev: dev-containers-up
@@ -180,6 +181,9 @@ run-local-gtfs-downloader:
 
 invoke-local-gtfs-downloader:
 	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0
+
+run-gtfs-rt-processor:
+	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-processor'; handler().catch(e => console.error(e))"
 
 # AVL
 
