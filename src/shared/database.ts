@@ -71,6 +71,8 @@ export interface Database {
     shape_new: GtfsShapeTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
+    stop_time: GtfsStopTimeTable;
+    stop_time_new: GtfsStopTimeTable;
     trip: GtfsTripTable;
     trip_new: GtfsTripTable;
 }
@@ -269,6 +271,42 @@ export interface GtfsStopTable {
 export type Stop = Selectable<GtfsStopTable>;
 export type NewStop = Insertable<GtfsStopTable>;
 export type StopUpdate = Updateable<GtfsStopTable>;
+
+export enum PickupType {
+    Pickup = 0,
+    NoPickup = 1,
+    ArrangeableByPhone = 2,
+    ArrangeableWithDriver = 3,
+}
+
+export enum DropOffType {
+    DropOff = 0,
+    NoDropOff = 1,
+    ArrangeableByPhone = 2,
+    ArrangeableWithDriver = 3,
+}
+
+export enum Timepoint {
+    Approximate = 0,
+    Exact = 1,
+}
+
+export interface GtfsStopTimeTable {
+    id: Generated<number>;
+    trip_id: string;
+    stop_id: string;
+    arrival_time: string;
+    departure_time: string;
+    stop_sequence: number;
+    stop_headsign: string;
+    pickup_type: PickupType;
+    drop_off_type: DropOffType;
+    shape_dist_traveled: number;
+    timepoint: Timepoint;
+}
+
+export type StopTime = Selectable<GtfsStopTimeTable>;
+export type NewStopTime = Insertable<GtfsStopTimeTable>;
 
 export enum WheelchairAccessibility {
     NoAccessibilityInformation = 0,

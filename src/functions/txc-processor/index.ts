@@ -1,7 +1,14 @@
 import { logger } from "@baselime/lambda-logger";
 import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { TxcRouteSection, Service, VehicleJourney, txcSchema, TxcRoute } from "@bods-integrated-data/shared/schema";
+import {
+    TxcRouteSection,
+    Service,
+    VehicleJourney,
+    txcSchema,
+    TxcRoute,
+    TxcJourneyPatternSection,
+} from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
@@ -12,6 +19,7 @@ import {
     insertFrequencies,
     insertRoutes,
     insertShapes,
+    insertStopTimes,
     insertStops,
     insertTrips,
 } from "./data/database";
@@ -26,12 +34,14 @@ const txcArrayProperties = [
     "Route",
     "RouteLink",
     "JourneyPatternSection",
+    "JourneyPatternSectionRefs",
     "Operator",
     "Garage",
     "Service",
     "Line",
     "Track",
     "JourneyPattern",
+    "JourneyPatternTimingLink",
     "VehicleJourney",
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
@@ -96,6 +106,7 @@ const processServices = (
     vehicleJourneys: VehicleJourney[],
     txcRouteSections: TxcRouteSection[],
     txcRoutes: TxcRoute[],
+    txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -162,6 +173,7 @@ const processServices = (
         );
         vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
         await insertFrequencies(dbClient, vehicleJourneyMappings);
+        await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -222,6 +234,7 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
         TransXChange.VehicleJourneys.VehicleJourney,
         TransXChange.RouteSections.RouteSection,
         TransXChange.Routes.Route,
+        TransXChange.JourneyPatternSections.JourneyPatternSection,
         agencyData,
     );
 };
