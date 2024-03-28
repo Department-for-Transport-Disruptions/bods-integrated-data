@@ -233,13 +233,7 @@ export const handler = async (event: SQSEvent) => {
         logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);
 
         await Promise.all(
-            event.Records.map((record) =>
-                Promise.all(
-                    (JSON.parse(record.body) as S3Event).Records.map((s3Record) =>
-                        processSqsRecord(s3Record, dbClient),
-                    ),
-                ),
-            ),
+            event.Records.map((record) => processSqsRecord((JSON.parse(record.body) as S3Event).Records[0], dbClient)),
         );
 
         logger.info("TXC processor successful");
