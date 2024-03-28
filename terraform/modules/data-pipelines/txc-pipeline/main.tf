@@ -264,7 +264,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   zip_path       = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
   handler        = "index.handler"
   runtime        = "nodejs20.x"
-  timeout        = 200
+  timeout        = 600
   memory         = 2048
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
