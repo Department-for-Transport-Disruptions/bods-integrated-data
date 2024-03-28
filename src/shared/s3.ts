@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { logger } from "@baselime/lambda-logger";
 import { PassThrough, Readable } from "stream";
 
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._\-!\*\'\(\)\/]/g, "_");
@@ -81,10 +82,15 @@ export const createLazyDownloadStreamFrom = (bucket: string, key: string): Reada
 
     stream.on("newListener", (event) => {
         if (!streamCreated && event == "data") {
-            void (async () => {
-                await initDownloadStream(bucket, key, stream);
-                streamCreated = true;
-            })();
+            initDownloadStream(bucket, key, stream)
+                .then(() => {
+                    streamCreated = true;
+                })
+                .catch((e) => {
+                    if (e instanceof Error) {
+                        logger.error("Error initialising stream", e);
+                    }
+                });
         }
     });
 

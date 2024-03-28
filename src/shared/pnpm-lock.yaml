@@ -26,6 +26,9 @@ dependencies:
   '@aws-sdk/s3-request-presigner':
     specifier: ^3.540.0
     version: 3.540.0
+  '@baselime/lambda-logger':
+    specifier: ^0.2.2
+    version: 0.2.2
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
@@ -2295,6 +2298,10 @@ packages:
     dependencies:
       '@smithy/types': 2.12.0
       tslib: 2.6.2
+    dev: false
+
+  /@baselime/lambda-logger@0.2.2:
+    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
     dev: false
 
   /@smithy/abort-controller@2.1.3:
