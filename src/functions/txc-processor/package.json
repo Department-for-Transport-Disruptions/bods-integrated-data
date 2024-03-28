@@ -4,7 +4,8 @@
     "description": "Processes TXC files and stores the data in a database",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./txc-processor.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/txc-processor.zip ../dist/txc-processor.zip"
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/txc-processor.zip ../dist/txc-processor.zip",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",

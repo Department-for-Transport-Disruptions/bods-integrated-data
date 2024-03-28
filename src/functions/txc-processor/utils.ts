@@ -1,6 +1,20 @@
-import { CalendarDateExceptionType, NewCalendar, NewCalendarDate } from "@bods-integrated-data/shared/database";
-import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
-import { OperatingPeriod, OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import {
+    CalendarDateExceptionType,
+    DropOffType,
+    NewCalendar,
+    NewCalendarDate,
+    NewStopTime,
+    PickupType,
+    Timepoint,
+} from "@bods-integrated-data/shared/database";
+import { getDate, getDateWithCustomFormat, getDuration, isDateBetween } from "@bods-integrated-data/shared/dates";
+import {
+    AbstractTimingLink,
+    OperatingPeriod,
+    OperatingProfile,
+    Service,
+    VehicleJourney,
+} from "@bods-integrated-data/shared/schema";
 import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/schema/dates.schema";
 import type { Dayjs } from "dayjs";
 
@@ -194,4 +208,203 @@ export const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
             MondayToSunday: "",
         },
     },
+};
+
+export const getPickupTypeFromStopActivity = (activity?: string) => {
+    switch (activity) {
+        case "pickUp":
+        case "pickUpAndSetDown":
+            return PickupType.Pickup;
+        case "setDown":
+        case "pass":
+            return PickupType.NoPickup;
+        default:
+            return PickupType.Pickup;
+    }
+};
+
+export const getDropOffTypeFromStopActivity = (activity?: string) => {
+    switch (activity) {
+        case "setDown":
+        case "pickUpAndSetDown":
+            return DropOffType.DropOff;
+        case "pickUp":
+        case "pass":
+            return DropOffType.NoDropOff;
+        default:
+            return DropOffType.DropOff;
+    }
+};
+
+export const getTimepointFromTimingStatus = (timingStatus?: string) => {
+    return timingStatus === "principalTimingPoint" ? Timepoint.Exact : Timepoint.Approximate;
+};
+
+/**
+ * Maps journey pattern timing links to stop times and assumes the vehicle journey departure time as the
+ * first stop's departure time. Where a journey pattern timing link property is not defined, its corresponding
+ * property within the vehicle journey timing link is used, or a default value if neither are defined.
+ * @param tripId Trip ID
+ * @param vehicleJourney Associated vehicle journey
+ * @param journeyPatternTimingLinks Journey pattern timing links
+ * @returns An array of stop times
+ */
+export const mapTimingLinksToStopTimes = (
+    tripId: string,
+    vehicleJourney: VehicleJourney,
+    journeyPatternTimingLinks: AbstractTimingLink[],
+): NewStopTime[] => {
+    let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
+
+    if (!currentStopDepartureTime.isValid()) {
+        throw new Error(`Invalid departure time in vehicle journey with code: ${vehicleJourney.VehicleJourneyCode}`);
+    }
+
+    let sequenceNumber = 0;
+
+    return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
+        const vehicleJourneyTimingLink = vehicleJourney.VehicleJourneyTimingLink?.find(
+            (link) => link.JourneyPatternTimingLinkRef === journeyPatternTimingLink["@_id"],
+        );
+
+        const { nextArrivalTime, stopTime } = mapTimingLinkToStopTime(
+            "from",
+            currentStopDepartureTime,
+            tripId,
+            sequenceNumber,
+            journeyPatternTimingLink,
+            vehicleJourneyTimingLink,
+        );
+
+        currentStopDepartureTime = nextArrivalTime.clone();
+        sequenceNumber++;
+
+        const stopTimesToAdd: NewStopTime[] = [];
+
+        if (stopTime) {
+            stopTimesToAdd.push(stopTime);
+        }
+
+        if (index === journeyPatternTimingLinks.length - 1) {
+            const { stopTime: finalStopTime } = mapTimingLinkToStopTime(
+                "to",
+                currentStopDepartureTime,
+                tripId,
+                sequenceNumber,
+                journeyPatternTimingLink,
+                vehicleJourneyTimingLink,
+            );
+
+            if (finalStopTime) {
+                stopTimesToAdd.push(finalStopTime);
+            }
+        }
+
+        return stopTimesToAdd;
+    });
+};
+
+/**
+ * Map a timing link to a stop time. Either the From or To stop usage activity is used depending on the `stopUsageType`.
+ * If a run time will optionally be returned if it can be calculated.
+ * @param stopUsageType Which stop usage to use (from or to)
+ * @param currentStopDepartureTime Current stop departure time
+ * @param tripId Trip ID
+ * @param sequenceNumber Current sequence number
+ * @param journeyPatternTimingLink Journey pattern timing link
+ * @param vehicleJourneyTimingLink Vehicle journey timing link
+ * @returns A stop time and optional run time
+ */
+export const mapTimingLinkToStopTime = (
+    stopUsageType: "from" | "to",
+    currentStopDepartureTime: Dayjs,
+    tripId: string,
+    sequenceNumber: number,
+    journeyPatternTimingLink: AbstractTimingLink,
+    vehicleJourneyTimingLink?: AbstractTimingLink,
+): { nextArrivalTime: Dayjs; stopTime: NewStopTime } => {
+    const journeyPatternTimingLinkStopUsage =
+        stopUsageType === "from" ? journeyPatternTimingLink.From : journeyPatternTimingLink.To;
+    const vehicleJourneyTimingLinkStopUsage =
+        stopUsageType === "from" ? vehicleJourneyTimingLink?.From : vehicleJourneyTimingLink?.To;
+
+    const stopPointRef =
+        journeyPatternTimingLinkStopUsage?.StopPointRef || vehicleJourneyTimingLinkStopUsage?.StopPointRef;
+
+    if (!stopPointRef) {
+        throw new Error(
+            `Missing stop point ref for journey pattern timing link with ref: ${journeyPatternTimingLink["@_id"]}`,
+        );
+    }
+
+    const activity = journeyPatternTimingLinkStopUsage?.Activity || vehicleJourneyTimingLinkStopUsage?.Activity;
+    const timingStatus =
+        journeyPatternTimingLinkStopUsage?.TimingStatus || vehicleJourneyTimingLinkStopUsage?.TimingStatus;
+
+    const arrivalTime = currentStopDepartureTime.clone();
+    let departureTime = arrivalTime.clone();
+
+    if (stopUsageType === "from") {
+        const fromWaitTime = getFirstNonZeroDuration([
+            journeyPatternTimingLink.From?.WaitTime,
+            vehicleJourneyTimingLink?.From?.WaitTime,
+        ]);
+
+        if (fromWaitTime) {
+            departureTime = departureTime.add(fromWaitTime);
+        }
+    }
+
+    const toWaitTime = getFirstNonZeroDuration([
+        journeyPatternTimingLink.To?.WaitTime,
+        vehicleJourneyTimingLink?.To?.WaitTime,
+    ]);
+
+    if (toWaitTime) {
+        departureTime = departureTime.add(toWaitTime);
+    }
+
+    let nextArrivalTime = departureTime.clone();
+    const runTime = getFirstNonZeroDuration([journeyPatternTimingLink.RunTime, vehicleJourneyTimingLink?.RunTime]);
+
+    if (runTime) {
+        nextArrivalTime = nextArrivalTime.add(runTime);
+    }
+
+    return {
+        nextArrivalTime,
+        stopTime: {
+            trip_id: tripId,
+            stop_id: stopPointRef,
+            arrival_time: arrivalTime.format("HH:mm:ss"),
+            departure_time: departureTime.format("HH:mm:ss"),
+            stop_sequence: sequenceNumber,
+            stop_headsign: "",
+            pickup_type: getPickupTypeFromStopActivity(activity),
+            drop_off_type: getDropOffTypeFromStopActivity(activity),
+            shape_dist_traveled: 0,
+            timepoint: getTimepointFromTimingStatus(timingStatus),
+        },
+    };
+};
+
+/**
+ * Iterates over an array of ISO 8601 durations and returns the first non-zero element as a duration object.
+ * @param durationStrings Array of ISO 8601 durations
+ * @returns The first non-zero duration, or undefined otherwise
+ */
+export const getFirstNonZeroDuration = (durationStrings: (string | undefined)[]) => {
+    for (let i = 0; i < durationStrings.length; i++) {
+        const durationString = durationStrings[i];
+
+        if (durationString) {
+            const duration = getDuration(durationString);
+
+            if (duration.asSeconds() > 0) {
+                return duration;
+            }
+        }
+    }
+
+    return undefined;
 };

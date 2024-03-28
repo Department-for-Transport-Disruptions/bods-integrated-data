@@ -130,12 +130,40 @@ export const serviceSchema = z.object({
                 "@_id": z.string(),
                 DestinationDisplay: z.string().optional(),
                 RouteRef: z.string().optional(),
+                JourneyPatternSectionRefs: z.string().array(),
             })
             .array(),
     }),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
+
+// Abstract schema for From and To within AbstractTimingLink
+const abstractStopUsageSchema = z.object({
+    Activity: z.string().optional(),
+    StopPointRef: z.string().optional(),
+    TimingStatus: z.string().optional(),
+    WaitTime: z.string().optional(),
+});
+
+export type AbstractStopUsage = z.infer<typeof abstractStopUsageSchema>;
+
+// Abstract schema for JourneyPatternTimingLink and VehicleJourneyTimingLink
+const abstractTimingLinkSchema = z.object({
+    "@_id": z.string().optional(),
+    From: abstractStopUsageSchema.optional(),
+    To: abstractStopUsageSchema.optional(),
+    RunTime: z.string().optional(),
+});
+
+export type AbstractTimingLink = z.infer<typeof abstractTimingLinkSchema>;
+
+export const journeyPatternSectionSchema = z.object({
+    "@_id": z.string(),
+    JourneyPatternTimingLink: abstractTimingLinkSchema.array(),
+});
+
+export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
 
 export const vehicleTypeSchema = z.object({
     WheelChairAccessible: z.boolean().optional(),
@@ -152,6 +180,10 @@ export const vehicleTypeSchema = z.object({
 });
 
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
+
+export const vehicleJourneyTimingLinkSchema = abstractTimingLinkSchema.extend({
+    JourneyPatternTimingLinkRef: z.string(),
+});
 
 export const vehicleJourneySchema = z.object({
     VehicleJourneyCode: z.string(),
@@ -182,6 +214,7 @@ export const vehicleJourneySchema = z.object({
     ServiceRef: z.string(),
     LineRef: z.string(),
     JourneyPatternRef: z.string(),
+    VehicleJourneyTimingLink: z.array(vehicleJourneyTimingLinkSchema).optional(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
@@ -204,6 +237,9 @@ export const txcSchema = z.object({
         }),
         Routes: z.object({
             Route: routeSchema.array(),
+        }),
+        JourneyPatternSections: z.object({
+            JourneyPatternSection: z.array(journeyPatternSectionSchema),
         }),
         Services: z.object({
             Service: serviceSchema.array(),

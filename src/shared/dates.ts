@@ -80,7 +80,7 @@ export const getDateWithCustomFormat = (date: string, format: string) => dayjs(d
 
 export const isDateBetween = (date: Dayjs, startDate: Dayjs, endDate: Dayjs) => date.isBetween(startDate, endDate);
 
-export const getDurationInSeconds = (duration: string) => dayjs.duration(duration).asSeconds();
+export const getDuration = (duration: string) => dayjs.duration(duration);
 
 export const getDateRange = (startDate: Dayjs, endDate: Dayjs) => {
     const dates = [];
