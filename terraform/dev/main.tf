@@ -117,6 +117,13 @@ module "integrated_data_txc_pipeline" {
   rds_output_bucket_name = module.integrated_data_aurora_db_dev.s3_output_bucket_name
 }
 
+module "integrated_data_gtfs_downloader" {
+  source = "../modules/gtfs-downloader"
+
+  environment      = local.env
+  gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
+}
+
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
@@ -166,12 +173,6 @@ module "integrated_data_avl_data_endpoint" {
 
   environment = local.env
   bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
-}
-
-module "integrated_data_gtfs_downloader" {
-  source = "../modules/gtfs-downloader"
-
-  environment = local.env
 }
 
 locals {
