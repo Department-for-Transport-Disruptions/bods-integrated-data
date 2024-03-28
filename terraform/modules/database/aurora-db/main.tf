@@ -9,6 +9,19 @@ terraform {
   }
 }
 
+resource "aws_s3_bucket" "aurora_s3_output_bucket" {
+  bucket = "integrated-data-aurora-output-${var.environment}"
+}
+
+resource "aws_s3_bucket_public_access_block" "aurora_s3_output_bucket_block_public" {
+  bucket = aws_s3_bucket.aurora_s3_output_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_db_subnet_group" "rds_private_db_subnet" {
   name        = "integrated-data-db-subnet-group-${var.environment}"
   description = "DB subnets for RDS instance"
@@ -36,6 +49,56 @@ resource "aws_vpc_security_group_egress_rule" "integrated_data_db_sg_self_egress
   referenced_security_group_id = aws_security_group.integrated_data_db_sg.id
 }
 
+data "aws_vpc_endpoint" "s3_endpoint" {
+  vpc_id       = var.vpc_id
+  service_name = "com.amazonaws.eu-west-2.s3"
+}
+
+resource "aws_vpc_security_group_egress_rule" "integrated_data_db_sg_s3_egress" {
+  security_group_id = aws_security_group.integrated_data_db_sg.id
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  prefix_list_id    = data.aws_vpc_endpoint.s3_endpoint.prefix_list_id
+}
+
+resource "aws_iam_policy" "rds_s3_export_policy" {
+  name = "integrated-data-rds-s3-export-policy-${var.environment}"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:PutObject",
+          "s3:AbortMultipartUpload"
+        ]
+        "Resource" : [
+          "${aws_s3_bucket.aurora_s3_output_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "rds_s3_export_role" {
+  name                = "integrated-data-rds-s3-export-role-${var.environment}"
+  managed_policy_arns = [aws_iam_policy.rds_s3_export_policy.arn]
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "rds.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
 resource "aws_rds_cluster" "integrated_data_rds_cluster" {
   engine                      = "aurora-postgresql"
   engine_version              = "16.1"
@@ -55,6 +118,12 @@ resource "aws_rds_cluster" "integrated_data_rds_cluster" {
     max_capacity = var.max_db_capacity
     min_capacity = var.min_db_capacity
   }
+}
+
+resource "aws_rds_cluster_role_association" "integrated_data_rds_cluster_s3_export_role" {
+  db_cluster_identifier = aws_rds_cluster.integrated_data_rds_cluster.id
+  feature_name          = "s3Export"
+  role_arn              = aws_iam_role.rds_s3_export_role.arn
 }
 
 resource "aws_rds_cluster_instance" "integrated_data_postgres_db_instance" {

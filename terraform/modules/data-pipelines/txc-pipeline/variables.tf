@@ -41,3 +41,8 @@ variable "tnds_ftp_credentials" {
   type        = map(string)
   description = "TNDS FTP credentials"
 }
+
+variable "rds_output_bucket_name" {
+  type        = string
+  description = "Name of the output bucket for aurora exports"
+}

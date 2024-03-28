@@ -107,13 +107,21 @@ module "integrated_data_naptan_pipeline" {
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
-  environment          = local.env
-  vpc_id               = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids   = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn        = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id             = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host              = module.integrated_data_aurora_db_dev.db_host
-  tnds_ftp_credentials = local.secrets["tnds_ftp"]
+  environment            = local.env
+  vpc_id                 = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids     = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn          = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id               = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                = module.integrated_data_aurora_db_dev.db_host
+  tnds_ftp_credentials   = local.secrets["tnds_ftp"]
+  rds_output_bucket_name = module.integrated_data_aurora_db_dev.s3_output_bucket_name
+}
+
+module "integrated_data_gtfs_downloader" {
+  source = "../modules/gtfs-downloader"
+
+  environment      = local.env
+  gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
 module "integrated_data_avl_pipeline" {
@@ -165,12 +173,6 @@ module "integrated_data_avl_data_endpoint" {
 
   environment = local.env
   bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
-}
-
-module "integrated_data_gtfs_downloader" {
-  source = "../modules/gtfs-downloader"
-
-  environment = local.env
 }
 
 locals {

@@ -15,7 +15,7 @@
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "bluebird": "^3.7.2",
-        "kysely": "^0.27.2",
+        "kysely": "^0.27.3",
         "ospoint": "^0.2.1",
         "papaparse": "^5.4.1",
         "pg": "^8.11.3"
