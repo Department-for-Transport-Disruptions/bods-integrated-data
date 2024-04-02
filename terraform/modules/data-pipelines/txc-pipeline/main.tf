@@ -17,6 +17,10 @@ resource "aws_s3_bucket" "integrated_data_tnds_txc_zipped_bucket" {
   bucket = "integrated-data-tnds-txc-zipped-${var.environment}"
 }
 
+resource "aws_s3_bucket" "integrated_data_gtfs_timetables_bucket" {
+  bucket = "integrated-data-gtfs-timetables-${var.environment}"
+}
+
 resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_zipped_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.id
 
@@ -28,6 +32,15 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_zipped_bu
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_zipped_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_timetables_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -254,4 +267,58 @@ module "integrated_data_txc_s3_sqs" {
 resource "aws_lambda_event_source_mapping" "integrated_data_txc_processor_sqs_trigger" {
   event_source_arn = module.integrated_data_txc_s3_sqs.sqs_arn
   function_name    = module.integrated_data_txc_processor_function.lambda_arn
+}
+
+module "integrated_data_gtfs_timetables_generator_function" {
+  source = "../../shared/lambda-function"
+
+  environment    = var.environment
+  function_name  = "integrated-data-gtfs-timetables-generator"
+  zip_path       = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 600
+  memory         = 2048
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+    },
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:s3:::${var.rds_output_bucket_name}/*"
+      ]
+    },
+    {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_gtfs_timetables_bucket.arn}/*"
+      ]
+    }
+  ]
+
+  env_vars = {
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+    OUTPUT_BUCKET = var.rds_output_bucket_name
+    GTFS_BUCKET   = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.bucket
+  }
 }
