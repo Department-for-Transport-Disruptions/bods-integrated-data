@@ -9,6 +9,7 @@ AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
+NOC_BUCKET_NAME="integrated-data-noc-local"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
@@ -88,6 +89,7 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${NOC_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 create-dynamodb-table:
 	awslocal dynamodb create-table \
@@ -198,6 +200,12 @@ run-avl-aggregate-siri-vm:
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
+# NOC
+
+run-local-noc-retriever:
+	IS_LOCAL=true NOC_BUCKET_NAME=${NOC_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/noc-retriever'; handler().catch(e => console.error(e))"
+
+
 
 # Lambdas
 create-lambdas: \
@@ -210,7 +218,8 @@ create-lambdas: \
 	create-lambda-tnds-txc-unzipper \
 	create-lambda-txc-retriever \
 	create-lambda-txc-processor \
-	create-lambda-gtfs-downloader
+	create-lambda-gtfs-downloader \
+	create-lambda-noc-retriever
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
@@ -222,7 +231,8 @@ delete-lambdas: \
 	delete-lambda-tnds-txc-unzipper \
 	delete-lambda-txc-retriever \
 	delete-lambda-txc-processor \
-	delete-lambda-gtfs-downloader
+	delete-lambda-gtfs-downloader \
+	delete-lambda-noc-retriever
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -262,3 +272,6 @@ create-lambda-txc-processor:
 
 create-lambda-gtfs-downloader:
 	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,IS_LOCAL=true;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
+
+create-lambda-noc-retriever:
+	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})

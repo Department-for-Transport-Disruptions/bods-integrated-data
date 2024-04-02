@@ -179,3 +179,9 @@ locals {
   env     = "dev"
   secrets = jsondecode(data.sops_file.secrets.raw)
 }
+
+module "integrated_data_noc_pipeline" {
+  source = "../modules/data-pipelines/noc-pipeline"
+
+  environment = local.env
+}
