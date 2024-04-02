@@ -11,6 +11,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("valid_until_time", "text")
         .addColumn("line_ref", "text")
         .addColumn("direction_ref", "text")
+        .addColumn("occupancy", "text")
         .addColumn("operator_ref", "text")
         .addColumn("dated_vehicle_journey_ref", "text")
         .addColumn("vehicle_ref", "text")

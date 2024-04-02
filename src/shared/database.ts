@@ -135,6 +135,7 @@ export interface AvlTable {
     valid_until_time: string;
     line_ref: string | null;
     direction_ref: string;
+    occupancy: string;
     operator_ref: string;
     data_frame_ref: string | null;
     dated_vehicle_journey_ref: string | null;
