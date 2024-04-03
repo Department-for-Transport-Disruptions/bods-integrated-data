@@ -14,6 +14,9 @@ dependencies:
   gtfs-realtime-bindings:
     specifier: ^1.1.1
     version: 1.1.1
+  uk-numberplate-format:
+    specifier: ^0.0.4
+    version: 0.0.4
 
 devDependencies:
   '@types/aws-lambda':
@@ -533,6 +536,10 @@ packages:
     resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
     engines: {node: '>=0.8.0'}
     hasBin: true
+    dev: false
+
+  /uk-numberplate-format@0.0.4:
+    resolution: {integrity: sha512-kdvs6GkefrV6xq6OPkso6ey8+1pCRsB5gnf2mM7JpSMgaCTOvd6kgDPfzBoi4aDs7XDY3cWwEOhosyYiKks3Sg==}
     dev: false
 
   /underscore@1.13.6:

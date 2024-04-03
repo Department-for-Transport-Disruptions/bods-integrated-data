@@ -1,45 +1,45 @@
 import { logger } from "@baselime/lambda-logger";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
-import { randomUUID } from "crypto";
+import { mapAvlToGtfsEntity } from "./utils";
 
-const { OccupancyStatus } = transit_realtime.VehiclePosition;
+const getAvlDataFromDatabase = async (): Promise<Avl[]> => {
+    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
-export const getOccupancyStatus = (occupancy: string): transit_realtime.VehiclePosition.OccupancyStatus => {
-    switch (occupancy) {
-        case "full":
-            return OccupancyStatus.FULL;
-        case "seatsAvailable":
-            return OccupancyStatus.MANY_SEATS_AVAILABLE;
-        case "standingAvailable":
-            return OccupancyStatus.STANDING_ROOM_ONLY;
-        default:
-            return OccupancyStatus.MANY_SEATS_AVAILABLE;
+    try {
+        return await dbClient
+            .selectFrom("avl")
+            .distinctOn(["operator_ref", "vehicle_ref"])
+            .selectAll("avl")
+            .orderBy(["operator_ref", "vehicle_ref", "response_time_stamp desc"])
+            .execute();
+    } catch (error) {
+        if (error instanceof Error) {
+            logger.error("There was a problem getting AVL data from the database", error);
+        }
+
+        throw error;
+    } finally {
+        await dbClient.destroy();
     }
 };
 
-export const mapAvlToEntity = (avl: Avl): transit_realtime.IFeedEntity => {
-    return {
-        id: randomUUID(),
-        vehicle: {
-            occupancyStatus: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
-            position: {
-                bearing: avl.bearing ? parseInt(avl.bearing) : 0,
-                latitude: avl.latitude,
-                longitude: avl.longitude,
-            },
-            vehicle: {
-                id: avl.vehicle_ref,
-                label: avl.vehicle_ref || null,
-            },
-            trip: {
-                // todo in BODS-3757
-            },
-            timestamp: getDate(avl.recorded_at_time).unix(),
-        },
-    };
+const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
+    try {
+        await putS3Object({
+            Bucket: bucketName,
+            Key: "gtfs-rt",
+            ContentType: "application/octet-stream",
+            Body: data,
+        });
+    } catch (error) {
+        if (error instanceof Error) {
+            logger.error("There was a problem uploading GTFS-RT data to S3", error);
+        }
+
+        throw error;
+    }
 };
 
 export const handler = async () => {
@@ -49,42 +49,18 @@ export const handler = async () => {
         throw new Error("Missing env vars - BUCKET_NAME must be set");
     }
 
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const avlData = await getAvlDataFromDatabase();
 
-    try {
-        const avl = await dbClient
-            .selectFrom("avl")
-            .distinctOn(["operator_ref", "vehicle_ref"])
-            .selectAll("avl")
-            .orderBy(["operator_ref", "vehicle_ref", "response_time_stamp desc"])
-            .execute();
+    const feed = transit_realtime.FeedMessage.encode({
+        header: {
+            gtfsRealtimeVersion: "2.0",
+            incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
+            timestamp: Date.now(),
+        },
+        entity: await Promise.all(avlData.map(mapAvlToGtfsEntity)),
+    });
 
-        const currentTimestamp = Date.now();
+    const data = feed.finish();
 
-        const feed = transit_realtime.FeedMessage.encode({
-            header: {
-                gtfsRealtimeVersion: "2.0",
-                incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
-                timestamp: currentTimestamp,
-            },
-            entity: avl.map(mapAvlToEntity),
-        });
-
-        const data = feed.finish();
-
-        await putS3Object({
-            Bucket: bucketName,
-            Key: "gtfs-rt",
-            ContentType: "application/octet-stream",
-            Body: data,
-        });
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem with the GTFS-RT processor", error);
-        }
-
-        throw error;
-    } finally {
-        await dbClient.destroy();
-    }
+    await uploadGtfsRtToS3(bucketName, data);
 };
