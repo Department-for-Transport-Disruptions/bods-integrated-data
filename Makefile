@@ -160,10 +160,10 @@ invoke-local-bods-txc-retriever:
 	awslocal lambda invoke --function-name bods-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-tnds-txc-retriever:
-	awslocal lambda invoke --function-name tnds-txc-retriever-local  --output text /dev/stdout --cli-read-timeout 0
+	awslocal lambda invoke --function-name tnds-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-txc-retriever:
-	awslocal lambda invoke --function-name txc-retriever-local  --output text /dev/stdout --cli-read-timeout 0
+	awslocal lambda invoke --function-name txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-bods-txc-unzipper:
 	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-unzipper-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_ZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
@@ -186,6 +186,9 @@ invoke-local-gtfs-downloader:
 run-gtfs-rt-processor:
 	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-processor'; handler().catch(e => console.error(e))"
 
+invoke-local-gtfs-rt-processor:
+	awslocal lambda invoke --function-name gtfs-rt-processor-local --output text /dev/stdout --cli-read-timeout 0
+
 # AVL
 
 run-local-avl-subscriber:
@@ -197,16 +200,20 @@ run-local-avl-data-endpoint:
 run-local-avl-processor:
 	IS_LOCAL=true FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
+invoke-local-avl-processor:
+	awslocal lambda invoke --function-name avl-processor-local --output text /dev/stdout --cli-read-timeout 0
+
 run-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
 
 invoke-local-avl-aggregate-siri-vm:
-	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
+	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local --output text /dev/stdout --cli-read-timeout 0
 
 
 # Lambdas
 create-lambdas: \
 	create-lambda-avl-aggregate-siri-vm \
+	create-lambda-avl-processor \
 	create-lambda-naptan-retriever \
 	create-lambda-naptan-uploader \
 	create-lambda-bods-txc-retriever \
@@ -215,10 +222,12 @@ create-lambdas: \
 	create-lambda-tnds-txc-unzipper \
 	create-lambda-txc-retriever \
 	create-lambda-txc-processor \
-	create-lambda-gtfs-downloader
+	create-lambda-gtfs-downloader \
+	create-lambda-gtfs-rt-processor
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
+	delete-lambda-avl-processor \
 	delete-lambda-naptan-retriever \
 	delete-lambda-naptan-uploader \
 	delete-lambda-bods-txc-retriever \
@@ -227,7 +236,8 @@ delete-lambdas: \
 	delete-lambda-tnds-txc-unzipper \
 	delete-lambda-txc-retriever \
 	delete-lambda-txc-processor \
-	delete-lambda-gtfs-downloader
+	delete-lambda-gtfs-downloader \
+	delete-lambda-gtfs-rt-processor
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -240,6 +250,9 @@ delete-lambda-%:
 
 create-lambda-avl-aggregate-siri-vm:
 	$(call create_lambda,avl-aggregate-siri-vm-local,avl-aggregate-siri-vm,IS_LOCAL=true;BUCKET_NAME=${AVL_SIRI_BUCKET_NAME})
+
+create-lambda-avl-processor:
+	$(call create_lambda,avl-processor-local,avl-processor,IS_LOCAL=true;AVL_UNPROCESSED_SIRI_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME})
 
 create-lambda-naptan-retriever:
 	$(call create_lambda,naptan-retriever-local,naptan-retriever,IS_LOCAL=true;BUCKET_NAME=${NAPTAN_BUCKET_NAME})
@@ -267,3 +280,6 @@ create-lambda-txc-processor:
 
 create-lambda-gtfs-downloader:
 	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,IS_LOCAL=true;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
+
+create-lambda-gtfs-rt-processor:
+	$(call create_lambda,gtfs-rt-processor-local,gtfs-rt-processor,IS_LOCAL=true;BUCKET_NAME=${GTFS_RT_BUCKET_NAME})
