@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+  xmlns:ns2="http://www.ifopt.org.uk/acsb"
+  xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+  xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+  version="2.0">
+    <ServiceDelivery>
+        <ResponseTimestamp>{CURRENT_TIMESTAMP}</ResponseTimestamp>
+        <ProducerRef>ATB</ProducerRef>
+        <VehicleMonitoringDelivery version="2.0">
+            <ResponseTimestamp>{CURRENT_TIMESTAMP}</ResponseTimestamp>
+            <VehicleActivity>
+              <RecordedAtTime>{CURRENT_TIMESTAMP}</RecordedAtTime>
+              <ItemIdentifier>{RANDOM_UUID}</ItemIdentifier>
+              <ValidUntilTime>{CURRENT_TIMESTAMP_PLUS_6_HOURS}</ValidUntilTime>
+              <MonitoredVehicleJourney>
+                <LineRef>12</LineRef>
+                <DirectionRef>INBOUND</DirectionRef>
+                <FramedVehicleJourneyRef>
+                  <DataFrameRef>{CURRENT_DATE}</DataFrameRef>
+                  <DatedVehicleJourneyRef>82</DatedVehicleJourneyRef>
+                </FramedVehicleJourneyRef>
+                <PublishedLineName>12</PublishedLineName>
+                <OperatorRef>BODS</OperatorRef>
+                <OriginRef>43001338101</OriginRef>
+                <DestinationRef>43000206202</DestinationRef>
+                <VehicleLocation>
+                  <Longitude>-0.01641</Longitude>
+                  <Latitude>51.50518</Latitude>
+                </VehicleLocation>
+                <Bearing>36.0</Bearing>
+                <BlockRef>WB1275</BlockRef>
+                <VehicleRef>{RANDOM_SELECTION_FROM_LIST_OF_REFS}</VehicleRef>
+              </MonitoredVehicleJourney>
+            </VehicleActivity>
+        </VehicleMonitoringDelivery>
+    </ServiceDelivery>
+</Siri>
