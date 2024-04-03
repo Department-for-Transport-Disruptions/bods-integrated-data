@@ -19,6 +19,12 @@ module "avl_subscriber" {
   memory        = 1024
   runtime       = "nodejs20.x"
   timeout       = 120
+
+  env_vars = {
+    TABLE_NAME              = var.avl_subscription_table_name,
+    STAGE                   = var.environment,
+    LOCAL_PRODUCER_ENDPOINT = var.avl_local_data_producer_endpoint != "" ? var.avl_local_data_producer_endpoint : null
+  }
 }
 
 output "lambda_arn" {

@@ -149,7 +149,8 @@ module "integrated_data_avl_subscription_table" {
 module "integrated_data_avl_subscriber" {
   source = "../modules/avl-producer-api/avl-subscriber"
 
-  environment = local.env
+  environment                 = local.env
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
 }
 
 module "integrated_data_avl_producer_api_gateway" {
@@ -164,7 +165,13 @@ module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
   environment = local.env
-  bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
+  bucket_name = module.integrated_data_avl_pipeline.bucket_name
+}
+
+module avl_mock_data_producer {
+  source = "../modules/avl-producer-api/mock-data-producer"
+
+  environment = local.env
 }
 
 locals {

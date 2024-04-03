@@ -30,7 +30,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
-        const subscriptionId = event?.pathParameters?.subscriptionId;
+        const subscriptionId = event?.pathParameters?.subscriptionId || event?.queryStringParameters?.subscriptionId;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID missing from path parameters");

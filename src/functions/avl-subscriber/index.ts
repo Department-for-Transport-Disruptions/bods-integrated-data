@@ -133,6 +133,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     subscriptionId: string,
     avlSubscribeMessage: AvlSubscribeMessage,
     tableName: string,
+    localProducerEndpoint?: string,
 ) => {
     const currentTimestamp = getDate().toISOString();
     // Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
@@ -148,7 +149,11 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         messageIdentifier,
     );
 
-    const subscriptionResponse = await fetch(`${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`, {
+    const url = localProducerEndpoint
+        ? localProducerEndpoint
+        : `${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`;
+
+    const subscriptionResponse = await fetch(url, {
         method: "POST",
         body: subscriptionRequestMessage,
     });
@@ -183,10 +188,14 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
 
 export const handler = async (event: APIGatewayEvent) => {
     try {
-        const { TABLE_NAME: tableName } = process.env;
+        const { TABLE_NAME: tableName, STAGE: stage, LOCAL_PRODUCER_ENDPOINT: localProducerEndpoint } = process.env;
 
         if (!tableName) {
             throw new Error("Missing env var: TABLE_NAME must be set.");
+        }
+
+        if (stage === "local" && !localProducerEndpoint) {
+            throw new Error("Missing env var: LOCAL_PRODUCER_ENDPOINT must be set when STAGE = local");
         }
 
         logger.info("Starting AVL subscriber");
@@ -205,7 +214,12 @@ export const handler = async (event: APIGatewayEvent) => {
         // Add username and password to parameter store
         await addSubscriptionAuthCredsToSsm(subscriptionId, avlSubscribeMessage.username, avlSubscribeMessage.password);
 
-        await sendSubscriptionRequestAndUpdateDynamo(subscriptionId, avlSubscribeMessage, tableName);
+        await sendSubscriptionRequestAndUpdateDynamo(
+            subscriptionId,
+            avlSubscribeMessage,
+            tableName,
+            localProducerEndpoint,
+        );
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
     } catch (e) {

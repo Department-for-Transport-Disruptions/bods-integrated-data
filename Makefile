@@ -8,9 +8,13 @@ AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
+AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_RULE_NAME="avl-mock-data-producer-send-data-rule-local"
+AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ID="test-target-id"
+AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN="arn:aws:lambda:eu-west-2:000000000000:function:avl-mock-data-producer-send-data"
+
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-lambdas
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -35,6 +39,7 @@ asdf:
 	asdf plugin add terraform https://github.com/asdf-community/asdf-hashicorp.git && \
 	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
 	asdf plugin-add sops https://github.com/feniix/asdf-sops.git && \
+	asdf plugin-add tflocal https://github.com/localstack/terraform-local.git && \
 	asdf install
 
 dev-containers-up:
@@ -58,6 +63,11 @@ tf-apply-%:
 	terraform -chdir=terraform/$* apply
 
 # Build
+
+create-avl-local-env:
+	tflocal -chdir=terraform/local init && \
+	tflocal -chdir=terraform/local apply
+
 
 install-deps:
 	cd src && pnpm i
@@ -87,13 +97,6 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
-create-dynamodb-table:
-	awslocal dynamodb create-table \
-    --table-name integrated-data-avl-subscriptions-local \
-    --key-schema AttributeName=PK,KeyType=HASH AttributeName=SK,KeyType=RANGE \
-    --attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S \
-    --billing-mode PAY_PER_REQUEST \
-    --region eu-west-2
 
 # Database
 
@@ -175,17 +178,35 @@ invoke-local-bods-txc-processor:
 # AVL
 
 run-local-avl-subscriber:
-	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"https://mock-data-producer.com\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
+	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
+
+invoke-local-avl-subscriber:
+	awslocal lambda invoke --function-name avl-subscriber-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://payload.json
 
 run-local-avl-data-endpoint:
 	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Siri/>', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
 
-run-avl-aggregate-siri-vm:
+invoke-local-avl-data-endpoint:
+	awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://data-payload.json
+
+
+run-local-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
 
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
+run-local-avl-mock-data-producer-subscribe:
+	IS_LOCAL=true EVENT_BRIDGE_RULE_NAME=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_RULE_NAME} EVENT_BRIDGE_TARGET_ID=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ID} EVENT_BRIDGE_TARGET_ARN=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN} npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/subscribe'; handler().catch(e => console.error(e))"
+
+run-local-avl-mock-data-producer-send-data:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/send-data'; handler().catch(e => console.error(e))"
+
+invoke-local-avl-mock-data-producer-subscribe:
+	awslocal lambda invoke --function-name avl-mock-data-producer-subscribe-local --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-avl-mock-data-producer-send-data:
+	awslocal lambda invoke --function-name avl-mock-data-producer-send-data-local output.txt --cli-read-timeout 0
 
 # Lambdas
 create-lambdas: \
@@ -197,7 +218,7 @@ create-lambdas: \
 	create-lambda-tnds-txc-retriever \
 	create-lambda-tnds-txc-unzipper \
 	create-lambda-txc-retriever \
-	create-lambda-txc-processor
+	create-lambda-txc-processor \
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
@@ -208,7 +229,9 @@ delete-lambdas: \
 	delete-lambda-tnds-txc-retriever \
 	delete-lambda-tnds-txc-unzipper \
 	delete-lambda-txc-retriever \
-	delete-lambda-txc-processor
+	delete-lambda-txc-processor \
+	delete-lambda-avl-mock-data-producer-send-data \
+	delete-lambda-avl-mock-data-producer-subscribe
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -245,3 +268,9 @@ create-lambda-txc-retriever:
 
 create-lambda-txc-processor:
 	$(call create_lambda,txc-processor-local,txc-processor,IS_LOCAL=true)
+
+create-lambda-avl-mock-data-producer-subscribe:
+	$(call create_lambda,avl-mock-data-producer-subscribe-local,avl-mock-data-producer-subscribe,IS_LOCAL=true;EVENT_BRIDGE_RULE_NAME=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_RULE_NAME};EVENT_BRIDGE_TARGET_ID=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ID};EVENT_BRIDGE_TARGET_ARN=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN})
+
+create-lambda-avl-mock-data-producer-send-data:
+	$(call create_lambda,avl-mock-data-producer-send-data-local,avl-mock-data-producer-send-data,IS_LOCAL=true)
