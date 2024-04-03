@@ -198,6 +198,9 @@ run-avl-aggregate-siri-vm:
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
+post-datat-endpoint:
+	./scripts/post-request.sh -a APIGatewayEndpoint
+
 
 # Lambdas
 create-lambdas: \
