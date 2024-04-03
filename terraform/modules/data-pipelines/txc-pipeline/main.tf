@@ -210,11 +210,6 @@ module "integrated_data_txc_processor_function" {
   subnet_ids     = var.private_subnet_ids
   database_sg_id = var.db_sg_id
 
-  s3_bucket_trigger = {
-    id  = module.integrated_data_txc_s3_sqs.bucket_id
-    arn = module.integrated_data_txc_s3_sqs.bucket_arn
-  }
-
   permissions = [{
     Action = [
       "secretsmanager:GetSecretValue",
@@ -256,11 +251,12 @@ module "integrated_data_txc_processor_function" {
 module "integrated_data_txc_s3_sqs" {
   source = "../../shared/s3-sqs"
 
-  bucket_name     = "integrated-data-txc-${var.environment}"
-  sqs_name        = "integrated-data-txc-queue-${var.environment}"
-  dlq_name        = "integrated-data-txc-dlq-${var.environment}"
-  alarm_topic_arn = var.alarm_topic_arn
-  ok_topic_arn    = var.ok_topic_arn
+  bucket_name                = "integrated-data-txc-${var.environment}"
+  sqs_name                   = "integrated-data-txc-queue-${var.environment}"
+  dlq_name                   = "integrated-data-txc-dlq-${var.environment}"
+  visibility_timeout_seconds = 200
+  alarm_topic_arn            = var.alarm_topic_arn
+  ok_topic_arn               = var.ok_topic_arn
 }
 
 resource "aws_lambda_event_source_mapping" "integrated_data_txc_processor_sqs_trigger" {
