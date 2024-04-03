@@ -89,6 +89,7 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_RT_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 create-dynamodb-table:
 	awslocal dynamodb create-table \
