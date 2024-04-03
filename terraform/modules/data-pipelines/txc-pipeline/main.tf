@@ -199,17 +199,16 @@ module "integrated_data_tnds_txc_unzipper_function" {
 module "integrated_data_txc_processor_function" {
   source = "../../shared/lambda-function"
 
-  environment          = var.environment
-  function_name        = "integrated-data-txc-processor"
-  zip_path             = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
-  handler              = "index.handler"
-  runtime              = "nodejs20.x"
-  timeout              = 200
-  memory               = 2048
-  vpc_id               = var.vpc_id
-  subnet_ids           = var.private_subnet_ids
-  database_sg_id       = var.db_sg_id
-  reserved_concurrency = 50
+  environment    = var.environment
+  function_name  = "integrated-data-txc-processor"
+  zip_path       = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 200
+  memory         = 2048
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
 
   s3_bucket_trigger = {
     id  = module.integrated_data_txc_s3_sqs.bucket_id
@@ -267,6 +266,10 @@ module "integrated_data_txc_s3_sqs" {
 resource "aws_lambda_event_source_mapping" "integrated_data_txc_processor_sqs_trigger" {
   event_source_arn = module.integrated_data_txc_s3_sqs.sqs_arn
   function_name    = module.integrated_data_txc_processor_function.lambda_arn
+  batch_size       = 1
+  scaling_config {
+    maximum_concurrency = 50
+  }
 }
 
 module "integrated_data_gtfs_timetables_generator_function" {
