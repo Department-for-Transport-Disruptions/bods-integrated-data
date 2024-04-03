@@ -9,7 +9,7 @@ import {
     TxcRoute,
     TxcJourneyPatternSection,
 } from "@bods-integrated-data/shared/schema";
-import { S3Event } from "aws-lambda";
+import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
@@ -212,43 +212,47 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-export const handler = async (event: S3Event) => {
-    const { bucket, object } = event.Records[0].s3;
+const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
+    logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
+
+    const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
+
+    const { TransXChange } = txcData;
+
+    if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
+        logger.warn(`No vehicle journeys found in file: ${record.s3.object.key}`);
+        return;
+    }
+
+    const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
+
+    await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+
+    await processServices(
+        dbClient,
+        TransXChange.Services.Service,
+        TransXChange.VehicleJourneys.VehicleJourney,
+        TransXChange.RouteSections.RouteSection,
+        TransXChange.Routes.Route,
+        TransXChange.JourneyPatternSections.JourneyPatternSection,
+        agencyData,
+    );
+};
+
+export const handler = async (event: SQSEvent) => {
     const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        logger.info(`Starting txc processor for file: ${object.key}`);
+        logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);
 
-        const txcData = await getAndParseTxcData(bucket.name, object.key);
-
-        const { TransXChange } = txcData;
-
-        if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
-            logger.warn(`No vehicle journeys found in file: ${object.key}`);
-            return;
-        }
-
-        const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
-
-        await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
-
-        await processServices(
-            dbClient,
-            TransXChange.Services.Service,
-            TransXChange.VehicleJourneys.VehicleJourney,
-            TransXChange.RouteSections.RouteSection,
-            TransXChange.Routes.Route,
-            TransXChange.JourneyPatternSections.JourneyPatternSection,
-            agencyData,
+        await Promise.all(
+            event.Records.map((record) => processSqsRecord((JSON.parse(record.body) as S3Event).Records[0], dbClient)),
         );
 
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(
-                `There was a problem with the bods txc processor for file: ${object.key}, rolling back transaction`,
-                e,
-            );
+            logger.error(`There was a problem with the bods txc processor, rolling back transaction`, e);
         }
 
         throw e;
