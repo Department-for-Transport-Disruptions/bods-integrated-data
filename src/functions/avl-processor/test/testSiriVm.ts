@@ -16,6 +16,7 @@ export const testSiri = `
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
+                    <Occupancy>full</Occupancy>
                     <OperatorRef>placeholder</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DataFrameRef>2018-08-17</DataFrameRef>
@@ -39,6 +40,7 @@ export const testSiri = `
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
+                    <Occupancy>seatsAvailable</Occupancy>
                     <OperatorRef>placeholder</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DataFrameRef>2018-08-17</DataFrameRef>
@@ -111,6 +113,7 @@ export const parsedSiri = [
         valid_until_time: "2018-08-17T16:13:29",
         line_ref: "ATB:Line:60",
         direction_ref: "2",
+        occupancy: "full",
         operator_ref: "placeholder",
         data_frame_ref: "2018-08-17",
         dated_vehicle_journey_ref: "ATB:ServiceJourney:00600027",
@@ -130,6 +133,7 @@ export const parsedSiri = [
         valid_until_time: "2018-08-17T16:22:29",
         line_ref: "ATB:Line:60",
         direction_ref: "2",
+        occupancy: "seatsAvailable",
         operator_ref: "placeholder",
         data_frame_ref: "2018-08-17",
         dated_vehicle_journey_ref: "ATB:ServiceJourney:00600027",
