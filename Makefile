@@ -195,6 +195,9 @@ run-local-avl-data-endpoint:
 run-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
 
+run-local-avl-retriever:
+	IS_LOCAL=true TARGET_BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
+
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
