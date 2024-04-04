@@ -51,6 +51,7 @@ describe("utils", () => {
                 dated_vehicle_journey_ref: "",
                 published_line_name: "",
                 origin_ref: "",
+                origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
             };
@@ -68,7 +69,10 @@ describe("utils", () => {
                         id: "ABC",
                         label: null,
                     },
-                    trip: {},
+                    trip: {
+                        startDate: null,
+                        startTime: null,
+                    },
                     timestamp: 0,
                 },
             };
@@ -96,6 +100,7 @@ describe("utils", () => {
                 dated_vehicle_journey_ref: "",
                 published_line_name: "",
                 origin_ref: "",
+                origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
             };
@@ -113,7 +118,10 @@ describe("utils", () => {
                         id: "ABC",
                         label: null,
                     },
-                    trip: {},
+                    trip: {
+                        startDate: null,
+                        startTime: null,
+                    },
                     timestamp: 0,
                 },
             };
@@ -141,6 +149,7 @@ describe("utils", () => {
                 dated_vehicle_journey_ref: "",
                 published_line_name: "",
                 origin_ref: "",
+                origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
             };
@@ -158,7 +167,59 @@ describe("utils", () => {
                         id: "ABC",
                         label: null,
                     },
-                    trip: {},
+                    trip: {
+                        startDate: null,
+                        startTime: null,
+                    },
+                    timestamp: 0,
+                },
+            };
+
+            const result = await mapAvlToGtfsEntity(avl);
+            expect(result).toEqual(expected);
+        });
+
+        it("returns a mapped GTFS entity with a start date and start time when departure time data exists", async () => {
+            const avl: Avl = {
+                id: 0,
+                bearing: "1",
+                latitude: 2,
+                longitude: 3,
+                vehicle_ref: "ABC",
+                recorded_at_time: "1970-01-01T00:00:00.000Z",
+                occupancy: "",
+                response_time_stamp: "",
+                producer_ref: "",
+                valid_until_time: "",
+                line_ref: "",
+                direction_ref: "",
+                operator_ref: "",
+                data_frame_ref: "",
+                dated_vehicle_journey_ref: "",
+                published_line_name: "",
+                origin_ref: "",
+                origin_aimed_departure_time: "2024-01-01T09:30:45.000Z",
+                destination_ref: "",
+                block_ref: "",
+            };
+
+            const expected: transit_realtime.IFeedEntity = {
+                id: "mock-uuid",
+                vehicle: {
+                    occupancyStatus: null,
+                    position: {
+                        bearing: 1,
+                        latitude: 2,
+                        longitude: 3,
+                    },
+                    vehicle: {
+                        id: "ABC",
+                        label: null,
+                    },
+                    trip: {
+                        startDate: "20240101",
+                        startTime: "09:30:45",
+                    },
                     timestamp: 0,
                 },
             };
@@ -186,6 +247,7 @@ describe("utils", () => {
                 dated_vehicle_journey_ref: "",
                 published_line_name: "",
                 origin_ref: "",
+                origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
             };
@@ -203,7 +265,10 @@ describe("utils", () => {
                         id: "AB12CDE",
                         label: "AB12CDE",
                     },
-                    trip: {},
+                    trip: {
+                        startDate: null,
+                        startTime: null,
+                    },
                     timestamp: 0,
                 },
             };

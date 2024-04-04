@@ -145,6 +145,7 @@ export interface AvlTable {
     bearing: string | null;
     published_line_name: string | null;
     origin_ref: string | null;
+    origin_aimed_departure_time: string | null;
     destination_ref: string | null;
     block_ref: string | null;
 }

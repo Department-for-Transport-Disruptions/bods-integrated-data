@@ -20,6 +20,15 @@ export const getOccupancyStatus = (occupancy: string): transit_realtime.VehicleP
 };
 
 export const mapAvlToGtfsEntity = async (avl: Avl): Promise<transit_realtime.IFeedEntity> => {
+    let startDate = null;
+    let startTime = null;
+
+    if (avl.origin_aimed_departure_time) {
+        const originAimedDepartureTime = getDate(avl.origin_aimed_departure_time);
+        startDate = originAimedDepartureTime.format("YYYYMMDD");
+        startTime = originAimedDepartureTime.format("HH:mm:ss");
+    }
+
     const isValidRegistrationNumber = await new Promise((resolve) => {
         validate(avl.vehicle_ref, (error) => resolve(!error));
     });
@@ -38,7 +47,8 @@ export const mapAvlToGtfsEntity = async (avl: Avl): Promise<transit_realtime.IFe
                 label: isValidRegistrationNumber ? avl.vehicle_ref : null,
             },
             trip: {
-                // todo in BODS-3757
+                startDate,
+                startTime,
             },
             timestamp: getDate(avl.recorded_at_time).unix(),
         },
