@@ -52,8 +52,9 @@ resource "aws_s3_bucket_notification" "s3_bucket_sqs_notification" {
 }
 
 resource "aws_sqs_queue" "queue" {
-  name                    = var.sqs_name
-  sqs_managed_sse_enabled = true
+  name                       = var.sqs_name
+  sqs_managed_sse_enabled    = true
+  visibility_timeout_seconds = var.visibility_timeout_seconds
 }
 
 resource "aws_sqs_queue" "dlq" {
