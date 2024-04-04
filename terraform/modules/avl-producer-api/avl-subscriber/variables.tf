@@ -14,3 +14,8 @@ variable avl_local_data_producer_endpoint {
   default     = ""
   nullable    = true
 }
+
+variable avl_data_endpoint {
+  type        = string
+  description = "HTTP API endpoint URL for the AVL Producer /data endpoint"
+}

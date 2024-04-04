@@ -1,7 +1,24 @@
-export const generateMockSiriVm = (
+export const mockSubscriptionsFromDynamo = [
+    {
+        PK: "subscription-one",
+        url: "https://www.mock-data-producer-one.com",
+        description: "test-description",
+        shortDescription: "test-short-description",
+        status: "ACTIVE",
+        requestorRef: "BODS_MOCK_PRODUCER",
+    },
+    {
+        PK: "subscription-two",
+        url: "https://www.mock-data-producer-two.com",
+        description: "test-description",
+        shortDescription: "test-short-description",
+        status: "ACTIVE",
+        requestorRef: "BODS_MOCK_PRODUCER",
+    },
+];
+
+export const expectedAVLDataForSubscription = (
     subscriptionId: string,
-    currentTime: string,
-    validUntilTime: string,
 ) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns="http://www.siri.org.uk/siri"
     xmlns:ns2="http://www.ifopt.org.uk/acsb"
@@ -12,10 +29,10 @@ export const generateMockSiriVm = (
         <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
         <ProducerRef>${subscriptionId}</ProducerRef>
         <VehicleMonitoringDelivery version="2.0">
-            <ResponseTimestamp>${currentTime}</ResponseTimestamp>
+            <ResponseTimestamp>2024-03-11T15:20:02.093Z</ResponseTimestamp>
             <VehicleActivity>
-                <RecordedAtTime>${currentTime}</RecordedAtTime>
-                <ValidUntilTime>${validUntilTime}</ValidUntilTime>
+                <RecordedAtTime>2024-03-11T15:20:02.093Z</RecordedAtTime>
+                <ValidUntilTime>2024-03-11T15:25:02.093Z</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
@@ -37,8 +54,8 @@ export const generateMockSiriVm = (
                 </MonitoredVehicleJourney>
             </VehicleActivity>
             <VehicleActivity>
-                <RecordedAtTime>${currentTime}</RecordedAtTime>
-                <ValidUntilTime>${validUntilTime}</ValidUntilTime>
+                <RecordedAtTime>2024-03-11T15:20:02.093Z</RecordedAtTime>
+                <ValidUntilTime>2024-03-11T15:25:02.093Z</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:11</LineRef>
                     <DirectionRef>2</DirectionRef>

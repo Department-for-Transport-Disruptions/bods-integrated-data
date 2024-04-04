@@ -14,7 +14,7 @@ AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN="arn:aws:lambda:eu-west-2:0000000
 
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-lambdas
+setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-lambdas create-avl-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -66,7 +66,7 @@ tf-apply-%:
 
 create-avl-local-env:
 	tflocal -chdir=terraform/local init && \
-	tflocal -chdir=terraform/local apply
+	tflocal -chdir=terraform/local apply --auto-approve
 
 
 install-deps:
@@ -174,7 +174,6 @@ invoke-local-bods-txc-processor:
 	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 
-
 # AVL
 
 run-local-avl-subscriber:
@@ -185,10 +184,6 @@ invoke-local-avl-subscriber:
 
 run-local-avl-data-endpoint:
 	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Siri/>', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
-
-invoke-local-avl-data-endpoint:
-	awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://data-payload.json
-
 
 run-local-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
@@ -218,7 +213,7 @@ create-lambdas: \
 	create-lambda-tnds-txc-retriever \
 	create-lambda-tnds-txc-unzipper \
 	create-lambda-txc-retriever \
-	create-lambda-txc-processor \
+	create-lambda-txc-processor
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \

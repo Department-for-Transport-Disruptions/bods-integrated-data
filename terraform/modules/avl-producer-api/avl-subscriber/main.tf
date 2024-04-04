@@ -24,6 +24,7 @@ module "avl_subscriber" {
     TABLE_NAME              = var.avl_subscription_table_name,
     STAGE                   = var.environment,
     LOCAL_PRODUCER_ENDPOINT = var.avl_local_data_producer_endpoint != "" ? var.avl_local_data_producer_endpoint : null
+    DATA_ENDPOINT           = var.avl_data_endpoint
   }
 }
 

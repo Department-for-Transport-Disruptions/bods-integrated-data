@@ -19,18 +19,14 @@ module "integrated_data_avl_mock_data_producer_send_data" {
   memory        = 1024
   runtime       = "nodejs20.x"
   timeout       = 120
+  schedule      = var.environment == "local" ? "cron(*/1 8-17 * * 1,2,3,4,5)" : "rate(1 minute)"
 
   env_vars = {
+    STAGE         = var.environment
     DATA_ENDPOINT = var.environment == "local" ? var.avl_consumer_data_endpoint_url_local : aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].api_endpoint
   }
 }
 
-resource "aws_cloudwatch_event_rule" "integrated_data_mock_data_producer_send_data" {
-  name        = "avl-mock-data-producer-send-data-rule-${var.environment}"
-  description = "Send AVL data to data producer api data endpoint at regular intervals"
-
-  schedule_expression = var.environment == "local" ? "cron(*/1 8-17 * * 1,2,3,4,5)" : "rate(1 minute)"
-}
 
 module "integrated_data_avl_mock_data_producer_subscribe" {
   source = "../../shared/lambda-function"
@@ -42,11 +38,6 @@ module "integrated_data_avl_mock_data_producer_subscribe" {
   memory        = 1024
   runtime       = "nodejs20.x"
   timeout       = 120
-
-  env_vars = {
-    EVENT_BRIDGE_RULE_NAME = aws_cloudwatch_event_rule.integrated_data_mock_data_producer_send_data.name
-    EVENT_BRIDGE_TARGET_ARN : module.integrated_data_avl_mock_data_producer_send_data.function_arn,
-  }
 }
 
 resource "aws_lambda_function_url" "integrated_data_mock_avl_producer_function_url" {

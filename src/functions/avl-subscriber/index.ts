@@ -1,18 +1,18 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import {
+    AvlSubscribeMessage,
+    avlSubscribeMessageSchema,
+    subscriptionRequestSchema,
+    subscriptionResponseSchema,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import { parse } from "js2xmlparser";
 import { parseStringPromise } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors";
 import { randomUUID } from "crypto";
-import {
-    AvlSubscribeMessage,
-    avlSubscribeMessageSchema,
-    subscriptionRequestSchema,
-    subscriptionResponseSchema,
-} from "./subscriber.schema";
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
@@ -20,11 +20,12 @@ export const generateSubscriptionRequestXml = (
     currentTimestamp: string,
     initialTerminationTime: string,
     messageIdentifier: string,
+    dataEndpoint: string,
 ) => {
     const subscriptionRequestJson = {
         SubscriptionRequest: {
             RequestTimeStamp: currentTimestamp,
-            Address: `${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`,
+            Address: `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionRequestContext: {
@@ -111,7 +112,7 @@ const updateDynamoWithSubscriptionInfo = async (
         url: avlSubscribeMessage.dataProducerEndpoint,
         status: status,
         description: avlSubscribeMessage.description,
-        shortDescription: avlSubscribeMessage.description,
+        shortDescription: avlSubscribeMessage.shortDescription,
         requestorRef: avlSubscribeMessage.requestorRef ?? null,
     };
 
@@ -133,6 +134,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     subscriptionId: string,
     avlSubscribeMessage: AvlSubscribeMessage,
     tableName: string,
+    dataEndpoint: string,
     localProducerEndpoint?: string,
 ) => {
     const currentTimestamp = getDate().toISOString();
@@ -147,6 +149,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         currentTimestamp,
         initialTerminationTime,
         messageIdentifier,
+        dataEndpoint,
     );
 
     const url = localProducerEndpoint
@@ -188,14 +191,19 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
 
 export const handler = async (event: APIGatewayEvent) => {
     try {
-        const { TABLE_NAME: tableName, STAGE: stage, LOCAL_PRODUCER_ENDPOINT: localProducerEndpoint } = process.env;
+        const {
+            TABLE_NAME: tableName,
+            STAGE: stage,
+            LOCAL_PRODUCER_ENDPOINT: localProducerEndpoint,
+            DATA_ENDPOINT: dataEndpoint,
+        } = process.env;
 
-        if (!tableName) {
-            throw new Error("Missing env var: TABLE_NAME must be set.");
+        if (!tableName || !dataEndpoint) {
+            throw new Error("Missing env vars: TABLE_NAME and DATA_ENDPOINT must be set.");
         }
 
         if (stage === "local" && !localProducerEndpoint) {
-            throw new Error("Missing env var: LOCAL_PRODUCER_ENDPOINT must be set when STAGE = local");
+            throw new Error("Missing env var: LOCAL_PRODUCER_ENDPOINT must be set when STAGE === local");
         }
 
         logger.info("Starting AVL subscriber");
@@ -218,6 +226,7 @@ export const handler = async (event: APIGatewayEvent) => {
             subscriptionId,
             avlSubscribeMessage,
             tableName,
+            dataEndpoint,
             localProducerEndpoint,
         );
 

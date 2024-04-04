@@ -1,31 +1,66 @@
 import { logger } from "@baselime/lambda-logger";
-import { mockSiriVm } from "./mockSiriVm";
+import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
+import { recursiveScan } from "@bods-integrated-data/shared/dynamo";
+import { z } from "zod";
+import { generateMockSiriVm } from "./mockSiriVm";
+import { subscriptionSchema } from "./subscription.schema";
+
+const getMockDataProducerSubscriptions = async (stage: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: `integrated-data-avl-subscription-table-${stage}`,
+    });
+
+    if (!subscriptions || subscriptions.length === 0) {
+        return null;
+    }
+
+    const parsedSubscriptions = z.array(subscriptionSchema).parse(subscriptions);
+
+    return parsedSubscriptions.filter(
+        (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "ACTIVE",
+    );
+};
 
 export const handler = async () => {
     try {
         const { STAGE: stage, DATA_ENDPOINT: dataEndpoint } = process.env;
 
-        if (!dataEndpoint) {
-            throw new Error("Missing env vars: DATA_ENDPOINT must be set");
+        const currentTimestamp = getDate().toISOString();
+        // ValidUntilTime for a SIRI-VM is defined as 5 minutes after the current time
+        const validUntilTime = addIntervalToDate(currentTimestamp, 5, "minutes").toISOString();
+
+        if (!stage || !dataEndpoint) {
+            throw new Error("Missing env vars: STAGE and DATA_ENDPOINT must be set");
         }
 
-        const siriVm = mockSiriVm;
+        const subscriptions = await getMockDataProducerSubscriptions(stage);
 
-        //TODO DEANNA: how do we get real subscription ids?
-        const url = stage === "local" ? `${dataEndpoint}?subscriptionId=test-subscription-id` : `${dataEndpoint}`;
-
-        const res = await fetch(url, {
-            method: "POST",
-            body: siriVm,
-        });
-
-        if (!res.ok) {
-            logger.error(`Unable to send AVL data to: ${url}`);
+        if (!subscriptions) {
+            logger.info("No mock data producers are currently active.");
+            return;
         }
 
-        logger.info(`Successfully sent AVL data to: ${url}`);
+        return Promise.all(
+            subscriptions.map(async (subscription) => {
+                const url =
+                    stage === "local"
+                        ? `${dataEndpoint}?subscriptionId=${subscription.subscriptionId}`
+                        : `${dataEndpoint}/${subscription.subscriptionId}`;
 
-        return;
+                const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
+
+                const res = await fetch(url, {
+                    method: "POST",
+                    body: siriVm,
+                });
+
+                if (!res.ok) {
+                    logger.error(`Unable to send AVL data to: ${url}`);
+                }
+
+                logger.info(`Successfully sent AVL data to: ${url}`);
+            }),
+        );
     } catch (e) {
         if (e instanceof Error) {
             logger.error("Lambda has failed", e);

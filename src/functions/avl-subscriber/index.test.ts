@@ -5,6 +5,7 @@ import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import { expectedSubscriptionRequest, mockSubscribeEvent, mockSubscriptionResponseBody } from "./test/mockData";
 import { handler } from "./index";
+
 vi.mock("crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
@@ -12,6 +13,7 @@ vi.mock("crypto", () => ({
 describe("avl-subscriber", () => {
     beforeAll(() => {
         process.env.TABLE_NAME = "test-dynamo-table";
+        process.env.DATA_ENDPOINT = "https://www.test.com/data";
     });
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -59,7 +61,7 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: null,
-                shortDescription: "description",
+                shortDescription: "shortDescription",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
             },
@@ -112,7 +114,7 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: null,
-                shortDescription: "description",
+                shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
             },
@@ -152,8 +154,51 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: null,
-                shortDescription: "description",
+                shortDescription: "shortDescription",
                 status: "FAILED",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
+        );
+    });
+
+    it("should process a subscription request for local environment if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
+        process.env.STAGE = "local";
+        process.env.LOCAL_PRODUCER_ENDPOINT = "www.local.com";
+
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+            status: 200,
+            ok: true,
+        } as unknown as Response);
+
+        await handler(mockSubscribeEvent);
+
+        expect(fetch).toBeCalledWith("www.local.com", expectedSubscriptionRequest);
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: null,
+                shortDescription: "shortDescription",
+                status: "ACTIVE",
                 url: "https://mock-data-producer.com",
             },
         );

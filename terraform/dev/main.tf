@@ -151,6 +151,7 @@ module "integrated_data_avl_subscriber" {
 
   environment                 = local.env
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  data_endpoint               = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
 }
 
 module "integrated_data_avl_producer_api_gateway" {

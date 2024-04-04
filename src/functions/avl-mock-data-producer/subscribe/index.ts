@@ -1,12 +1,15 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { putEventBridgeTarget } from "@bods-integrated-data/shared/eventBridge";
+import {
+    SubscriptionRequest,
+    subscriptionRequestSchema,
+    subscriptionResponseSchema,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent } from "aws-lambda";
 import { parse } from "js2xmlparser";
 import { parseStringPromise } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors";
 import { randomUUID } from "crypto";
-import { SubscriptionRequest, subscriptionRequestSchema, subscriptionResponseSchema } from "./subscribe.schema";
 
 const parseXml = async (xml: string) => {
     const parsedXml = (await parseStringPromise(xml, {
@@ -26,7 +29,7 @@ const parseXml = async (xml: string) => {
     return parsedJson.data;
 };
 
-export const generateSubscriptionResponse = async (subscriptionRequest: SubscriptionRequest) => {
+export const generateSubscriptionResponse = (subscriptionRequest: SubscriptionRequest) => {
     const currentTimestamp = getDate().toISOString();
     const requestMessageRef = randomUUID();
 
@@ -71,27 +74,13 @@ export const generateSubscriptionResponse = async (subscriptionRequest: Subscrip
 
 export const handler = async (event: APIGatewayEvent) => {
     try {
-        const { EVENT_BRIDGE_RULE_NAME: eventBridgeRuleName, EVENT_BRIDGE_TARGET_ARN: eventBridgeTargetArn } =
-            process.env;
-
-        if (!eventBridgeRuleName || !eventBridgeTargetArn) {
-            throw new Error("Missing env vars: both EVENT_BRIDGE_RULE_NAME, EVENT_BRIDGE_TARGET_ARN must be set");
-        }
-
         logger.info("Handling subscription request");
 
         const parsedBody = await parseXml(event.body ?? "");
 
         logger.info("Successfully parsed xml");
 
-        await putEventBridgeTarget(eventBridgeRuleName, [
-            {
-                Id: `avl-mock-producer-send-data-${parsedBody.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier}`,
-                Arn: eventBridgeTargetArn,
-            },
-        ]);
-
-        const subscriptionResponse = await generateSubscriptionResponse(parsedBody);
+        const subscriptionResponse = generateSubscriptionResponse(parsedBody);
 
         logger.info("Successfully created EventBridge target and created and generated subscription response");
 

@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+export const avlSubscribeMessageSchema = z.object({
+    dataProducerEndpoint: z.string().url(),
+    description: z.string(),
+    shortDescription: z.string(),
+    username: z.string(),
+    password: z.string(),
+    requestorRef: z.string().optional(),
+});
+
+export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
+
 export const subscriptionRequestSchema = z.object({
     SubscriptionRequest: z.object({
         RequestTimeStamp: z.string(),
