@@ -325,6 +325,7 @@ export interface GtfsTripTable {
     trip_headsign: string;
     wheelchair_accessible: WheelchairAccessibility;
     vehicle_journey_code: string;
+    ticket_machine_journey_code: string;
 }
 
 export type Trip = Selectable<GtfsTripTable>;
