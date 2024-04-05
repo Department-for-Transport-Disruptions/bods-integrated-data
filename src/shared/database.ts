@@ -1,6 +1,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
+export { sql } from "kysely";
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 

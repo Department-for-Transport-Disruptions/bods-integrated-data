@@ -417,6 +417,7 @@ export const insertTrips = async (
                     vehicleJourney.Operational?.VehicleType,
                 ),
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
+                ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
             };
         })
         .filter(notEmpty);
