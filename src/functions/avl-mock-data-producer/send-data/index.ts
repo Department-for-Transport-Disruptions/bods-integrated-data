@@ -56,6 +56,7 @@ export const handler = async () => {
 
                 if (!res.ok) {
                     logger.error(`Unable to send AVL data to: ${url}`);
+                    return;
                 }
 
                 logger.info(`Successfully sent AVL data to: ${url}`);

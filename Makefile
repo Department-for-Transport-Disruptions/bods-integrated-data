@@ -8,13 +8,10 @@ AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
-AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_RULE_NAME="avl-mock-data-producer-send-data-rule-local"
-AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ID="test-target-id"
-AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN="arn:aws:lambda:eu-west-2:000000000000:function:avl-mock-data-producer-send-data"
 
 
 dev: dev-containers-up
-setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-lambdas create-avl-local-env
+setup: dev-containers-up build-cli-helpers create-buckets install-deps migrate-local-db-to-latest create-lambdas create-avl-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -68,6 +65,8 @@ create-avl-local-env:
 	tflocal -chdir=terraform/local init && \
 	tflocal -chdir=terraform/local apply --auto-approve
 
+build-cli-helpers:
+	cd cli-helpers && pnpm i && pnpm run build
 
 install-deps:
 	cd src && pnpm i
@@ -192,10 +191,10 @@ invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-mock-data-producer-subscribe:
-	IS_LOCAL=true EVENT_BRIDGE_RULE_NAME=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_RULE_NAME} EVENT_BRIDGE_TARGET_ID=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ID} EVENT_BRIDGE_TARGET_ARN=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN} npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/subscribe'; handler().catch(e => console.error(e))"
+	npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/subscribe'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-send-data:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/send-data'; handler().catch(e => console.error(e))"
+	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/send-data'; handler().catch(e => console.error(e))"
 
 invoke-local-avl-mock-data-producer-subscribe:
 	awslocal lambda invoke --function-name avl-mock-data-producer-subscribe-local --output text /dev/stdout --cli-read-timeout 0
@@ -225,8 +224,6 @@ delete-lambdas: \
 	delete-lambda-tnds-txc-unzipper \
 	delete-lambda-txc-retriever \
 	delete-lambda-txc-processor \
-	delete-lambda-avl-mock-data-producer-send-data \
-	delete-lambda-avl-mock-data-producer-subscribe
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -264,8 +261,8 @@ create-lambda-txc-retriever:
 create-lambda-txc-processor:
 	$(call create_lambda,txc-processor-local,txc-processor,IS_LOCAL=true)
 
-create-lambda-avl-mock-data-producer-subscribe:
-	$(call create_lambda,avl-mock-data-producer-subscribe-local,avl-mock-data-producer-subscribe,IS_LOCAL=true;EVENT_BRIDGE_RULE_NAME=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_RULE_NAME};EVENT_BRIDGE_TARGET_ID=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ID};EVENT_BRIDGE_TARGET_ARN=${AVL_MOCK_DATA_PRODUCER_EVENT_BRIDGE_TARGET_ARN})
+# CLI Helper Commands
 
-create-lambda-avl-mock-data-producer-send-data:
-	$(call create_lambda,avl-mock-data-producer-send-data-local,avl-mock-data-producer-send-data,IS_LOCAL=true)
+create-mock-avl-data-producer:
+	cd cli-helpers && \
+	./bin/run.js create-avl-mock-data-producer

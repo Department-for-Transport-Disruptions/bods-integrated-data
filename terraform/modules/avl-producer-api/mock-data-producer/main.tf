@@ -19,7 +19,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
   memory        = 1024
   runtime       = "nodejs20.x"
   timeout       = 120
-  schedule      = var.environment == "local" ? "cron(*/1 8-17 * * 1,2,3,4,5)" : "rate(1 minute)"
+  schedule      = "rate(1 minute)"
 
   env_vars = {
     STAGE         = var.environment

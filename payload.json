@@ -1,3 +1,0 @@
-{
-  "body": "{\"dataProducerEndpoint\": \"http://www.test.com\",\"description\": \"description\",\"shortDescription\": \"shortDescription\",\"username\": \"test-username\",\"password\": \"test-password\",\"requestorRef\": \"BODS_MOCK_PRODUCER\"}"
-}

@@ -40,7 +40,7 @@ module "integrated_data_avl_subscriber" {
   environment                      = local.env
   avl_subscription_table_name      = module.integrated_data_avl_subscription_table.table_name
   avl_local_data_producer_endpoint = module.avl_mock_data_producer.function_url
-  data_endpoint                    = "https://www.mock-data-endpoint.com/data"
+  avl_data_endpoint                = "https://www.mock-data-endpoint.com/data"
 }
 
 locals {

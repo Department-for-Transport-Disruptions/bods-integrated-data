@@ -82,7 +82,7 @@ export const handler = async (event: APIGatewayEvent) => {
 
         const subscriptionResponse = generateSubscriptionResponse(parsedBody);
 
-        logger.info("Successfully created EventBridge target and created and generated subscription response");
+        logger.info("Returning subscription response");
 
         return {
             statusCode: 200,
