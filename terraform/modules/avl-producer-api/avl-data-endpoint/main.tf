@@ -22,6 +22,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
 
   env_vars = {
     BUCKET_NAME = var.bucket_name
+    STAGE       = var.environment
   }
 
   permissions = [

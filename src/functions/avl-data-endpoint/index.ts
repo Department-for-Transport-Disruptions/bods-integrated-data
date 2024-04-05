@@ -24,13 +24,14 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, 
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { STAGE: stage, BUCKET_NAME: bucketName } = process.env;
 
         if (!bucketName) {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
-        const subscriptionId = event?.pathParameters?.subscriptionId || event?.queryStringParameters?.subscriptionId;
+        const subscriptionId =
+            stage === "local" ? event?.queryStringParameters?.subscriptionId : event?.pathParameters?.subscriptionId;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID missing from path parameters");
