@@ -108,6 +108,7 @@ const processServices = (
     txcRoutes: TxcRoute[],
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
+    filePath: string,
 ) => {
     const promises = services.flatMap(async (service) => {
         if (hasServiceExpired(service)) {
@@ -171,7 +172,7 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData);
+        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData, filePath);
         await insertFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
@@ -236,6 +237,7 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
         TransXChange.Routes.Route,
         TransXChange.JourneyPatternSections.JourneyPatternSection,
         agencyData,
+        record.s3.object.key,
     );
 };
 

@@ -379,6 +379,7 @@ export const insertTrips = async (
     txcServices: Service[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
     routes: Route[],
+    filePath: string,
 ) => {
     const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
 
@@ -418,6 +419,7 @@ export const insertTrips = async (
                     vehicleJourney.Operational?.VehicleType,
                 ),
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
+                file_path: filePath,
             };
         })
         .filter(notEmpty);
