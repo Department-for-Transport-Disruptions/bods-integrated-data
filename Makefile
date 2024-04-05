@@ -223,7 +223,7 @@ delete-lambdas: \
 	delete-lambda-tnds-txc-retriever \
 	delete-lambda-tnds-txc-unzipper \
 	delete-lambda-txc-retriever \
-	delete-lambda-txc-processor \
+	delete-lambda-txc-processor
 
 remake-lambdas: delete-lambdas create-lambdas
 
