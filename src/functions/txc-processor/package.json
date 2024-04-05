@@ -4,7 +4,8 @@
     "description": "Processes TXC files and stores the data in a database",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./txc-processor.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/txc-processor.zip ../dist/txc-processor.zip"
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/txc-processor.zip ../dist/txc-processor.zip",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",
@@ -14,7 +15,7 @@
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "^4.3.5",
-        "kysely": "^0.27.2",
+        "kysely": "^0.27.3",
         "node-object-hash": "^3.0.0",
         "zod-validation-error": "^3.0.3"
     },

@@ -14,7 +14,7 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "kysely": "^0.27.2"
+        "kysely": "^0.27.3"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

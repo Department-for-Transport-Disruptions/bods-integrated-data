@@ -71,6 +71,8 @@ export interface Database {
     shape_new: GtfsShapeTable;
     stop: GtfsStopTable;
     stop_new: GtfsStopTable;
+    stop_time: GtfsStopTimeTable;
+    stop_time_new: GtfsStopTimeTable;
     trip: GtfsTripTable;
     trip_new: GtfsTripTable;
 }
@@ -156,6 +158,8 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
+    timezone: string | null;
+    lang: string | null;
     registered_operator_ref: string;
 }
 
@@ -262,13 +266,49 @@ export interface GtfsStopTable {
     stop_lon: number | null;
     wheelchair_boarding: number;
     location_type: number;
-    parent_station: string;
-    platform_code: string;
+    parent_station: string | null;
+    platform_code: string | null;
 }
 
 export type Stop = Selectable<GtfsStopTable>;
 export type NewStop = Insertable<GtfsStopTable>;
 export type StopUpdate = Updateable<GtfsStopTable>;
+
+export enum PickupType {
+    Pickup = 0,
+    NoPickup = 1,
+    ArrangeableByPhone = 2,
+    ArrangeableWithDriver = 3,
+}
+
+export enum DropOffType {
+    DropOff = 0,
+    NoDropOff = 1,
+    ArrangeableByPhone = 2,
+    ArrangeableWithDriver = 3,
+}
+
+export enum Timepoint {
+    Approximate = 0,
+    Exact = 1,
+}
+
+export interface GtfsStopTimeTable {
+    id: Generated<number>;
+    trip_id: string;
+    stop_id: string;
+    arrival_time: string;
+    departure_time: string;
+    stop_sequence: number;
+    stop_headsign: string;
+    pickup_type: PickupType;
+    drop_off_type: DropOffType;
+    shape_dist_traveled: number;
+    timepoint: Timepoint;
+}
+
+export type StopTime = Selectable<GtfsStopTimeTable>;
+export type NewStopTime = Insertable<GtfsStopTimeTable>;
 
 export enum WheelchairAccessibility {
     NoAccessibilityInformation = 0,
@@ -285,6 +325,7 @@ export interface GtfsTripTable {
     trip_headsign: string;
     wheelchair_accessible: WheelchairAccessibility;
     vehicle_journey_code: string;
+    file_path: string;
 }
 
 export type Trip = Selectable<GtfsTripTable>;
