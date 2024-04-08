@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
-import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import { parse } from "js2xmlparser";
@@ -177,6 +177,8 @@ export const handler = async (event: APIGatewayEvent) => {
         }
 
         logger.info(`Starting AVL unsubscriber to unsubscribe from subscription: ${subscriptionId}`);
+
+        const subscription = await getDynamoItem(tableName, { S: subscriptionId });
 
         const currentTimestamp = getDate().toISOString();
         const messageIdentifier = randomUUID();
