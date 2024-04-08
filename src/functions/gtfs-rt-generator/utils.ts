@@ -1,10 +1,12 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { transit_realtime } from "gtfs-realtime-bindings";
-import { validate } from "uk-numberplate-format";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
+const ukNumberPlateRegex = new RegExp(
+    /(^[A-Z]{2}[0-9]{2}\s?[A-Z]{3}$)|(^[A-Z][0-9]{1,3}[A-Z]{3}$)|(^[A-Z]{3}[0-9]{1,3}[A-Z]$)|(^[0-9]{1,4}[A-Z]{1,2}$)|(^[0-9]{1,3}[A-Z]{1,3}$)|(^[A-Z]{1,2}[0-9]{1,4}$)|(^[A-Z]{1,3}[0-9]{1,3}$)|(^[A-Z]{1,3}[0-9]{1,4}$)|(^[0-9]{3}[DX]{1}[0-9]{3}$)/,
+);
 
 export const getOccupancyStatus = (occupancy: string): transit_realtime.VehiclePosition.OccupancyStatus => {
     switch (occupancy) {
@@ -19,7 +21,7 @@ export const getOccupancyStatus = (occupancy: string): transit_realtime.VehicleP
     }
 };
 
-export const mapAvlToGtfsEntity = async (avl: ExtendedAvl): Promise<transit_realtime.IFeedEntity> => {
+export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEntity => {
     let startDate = null;
     let startTime = null;
 
@@ -29,9 +31,7 @@ export const mapAvlToGtfsEntity = async (avl: ExtendedAvl): Promise<transit_real
         startTime = originAimedDepartureTime.format("HH:mm:ss");
     }
 
-    const isValidRegistrationNumber = await new Promise((resolve) => {
-        validate(avl.vehicle_ref, (error) => resolve(!error));
-    });
+    const isValidRegistrationNumber = ukNumberPlateRegex.test(avl.vehicle_ref.replace(/\s/g, ""));
 
     return {
         id: randomUUID(),

@@ -32,7 +32,7 @@ describe("utils", () => {
     });
 
     describe("mapAvlToGtfsEntity", () => {
-        it("returns a mapped GTFS entity", async () => {
+        it("returns a mapped GTFS entity", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "",
@@ -82,11 +82,11 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with an occupancy status when occupancy data exists", async () => {
+        it("returns a mapped GTFS entity with an occupancy status when occupancy data exists", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "",
@@ -136,11 +136,11 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with a bearing when bearing data exists", async () => {
+        it("returns a mapped GTFS entity with a bearing when bearing data exists", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "1",
@@ -190,11 +190,11 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with a start date and start time when departure time data exists", async () => {
+        it("returns a mapped GTFS entity with a start date and start time when departure time data exists", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "1",
@@ -244,11 +244,11 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with a vehicle label when the vehicle ref is a valid UK vehicle registration number", async () => {
+        it("returns a mapped GTFS entity with a vehicle label when the vehicle ref is a valid UK vehicle registration number", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "",
@@ -298,11 +298,11 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with a route ID if a corresponding route can be found", async () => {
+        it("returns a mapped GTFS entity with a route ID if a corresponding route can be found", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "",
@@ -352,11 +352,11 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with a trip ID if a corresponding trip can be found", async () => {
+        it("returns a mapped GTFS entity with a trip ID if a corresponding trip can be found", () => {
             const avl: ExtendedAvl = {
                 id: 0,
                 bearing: "",
@@ -406,7 +406,7 @@ describe("utils", () => {
                 },
             };
 
-            const result = await mapAvlToGtfsEntity(avl);
+            const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
     });

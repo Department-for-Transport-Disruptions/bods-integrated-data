@@ -26,8 +26,8 @@ module "integrated_data_gtfs_rt_processor_function" {
   source = "../../shared/lambda-function"
 
   environment    = var.environment
-  function_name  = "integrated-data-gtfs-rt-processor"
-  zip_path       = "${path.module}/../../../../src/functions/dist/gtfs-rt-processor.zip"
+  function_name  = "integrated-data-gtfs-rt-generator"
+  zip_path       = "${path.module}/../../../../src/functions/dist/gtfs-rt-generator.zip"
   handler        = "index.handler"
   runtime        = "nodejs20.x"
   timeout        = 60

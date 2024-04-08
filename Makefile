@@ -195,11 +195,11 @@ run-local-gtfs-downloader:
 invoke-local-gtfs-downloader:
 	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0
 
-run-gtfs-rt-processor:
-	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-processor'; handler().catch(e => console.error(e))"
+run-gtfs-rt-generator:
+	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
-invoke-local-gtfs-rt-processor:
-	awslocal lambda invoke --function-name gtfs-rt-processor-local --output text /dev/stdout --cli-read-timeout 0
+invoke-local-gtfs-rt-generator:
+	awslocal lambda invoke --function-name gtfs-rt-generator-local --output text /dev/stdout --cli-read-timeout 0
 
 # AVL
 
@@ -244,7 +244,7 @@ create-lambdas: \
 	create-lambda-txc-retriever \
 	create-lambda-txc-processor \
 	create-lambda-gtfs-downloader \
-	create-lambda-gtfs-rt-processor \
+	create-lambda-gtfs-rt-generator \
 	create-lambda-noc-retriever
 
 delete-lambdas: \
@@ -259,7 +259,7 @@ delete-lambdas: \
 	delete-lambda-txc-retriever \
 	delete-lambda-txc-processor \
 	delete-lambda-gtfs-downloader \
-	delete-lambda-gtfs-rt-processor \
+	delete-lambda-gtfs-rt-generator \
 	delete-lambda-noc-retriever
 
 remake-lambdas: delete-lambdas create-lambdas
@@ -304,8 +304,8 @@ create-lambda-txc-processor:
 create-lambda-gtfs-downloader:
 	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,IS_LOCAL=true;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
 
-create-lambda-gtfs-rt-processor:
-	$(call create_lambda,gtfs-rt-processor-local,gtfs-rt-processor,IS_LOCAL=true;BUCKET_NAME=${GTFS_RT_BUCKET_NAME})
+create-lambda-gtfs-rt-generator:
+	$(call create_lambda,gtfs-rt-generator-local,gtfs-rt-generator,IS_LOCAL=true;BUCKET_NAME=${GTFS_RT_BUCKET_NAME})
 
 create-lambda-noc-retriever:
 	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})

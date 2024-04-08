@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/gtfs-rt-processor",
+    "name": "@bods-integrated-data/gtfs-rt-generator",
     "version": "0.1.0",
     "description": "Map SIRI-VM data to GTFS Realtime",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-rt-processor.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-rt-processor.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-rt-generator.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-rt-generator.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],
@@ -14,8 +14,7 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "gtfs-realtime-bindings": "^1.1.1",
-        "uk-numberplate-format": "^0.0.4"
+        "gtfs-realtime-bindings": "^1.1.1"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
