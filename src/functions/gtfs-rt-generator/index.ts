@@ -44,7 +44,7 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
     try {
         await putS3Object({
             Bucket: bucketName,
-            Key: "gtfs-rt",
+            Key: "gtfs-rt.bin",
             ContentType: "application/octet-stream",
             Body: data,
         });
