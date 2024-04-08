@@ -13,6 +13,7 @@ const vehicleActivitySchema = z.object({
             })
             .optional(),
         PublishedLineName: z.string().optional(),
+        Occupancy: z.string().optional(),
         OperatorRef: z.string(),
         OriginRef: z.string().optional(),
         DestinationRef: z.string().optional(),
@@ -47,6 +48,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
         valid_until_time: vehicleActivity.ValidUntilTime,
         line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
         direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef,
+        occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
         operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
         data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
         dated_vehicle_journey_ref:
@@ -72,6 +74,7 @@ export const avlSchema = z.object({
     validUntilTime: z.string(),
     lineRef: z.string().nullish(),
     directionRef: z.string(),
+    occupancy: z.string().nullish(),
     operatorRef: z.string(),
     dataFrameRef: z.string().nullish(),
     datedVehicleJourneyRef: z.string().nullish(),

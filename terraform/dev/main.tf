@@ -126,6 +126,17 @@ module "integrated_data_gtfs_downloader" {
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
+module "integrated_data_gtfs_rt_pipeline" {
+  source = "../modules/data-pipelines/gtfs-rt-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 

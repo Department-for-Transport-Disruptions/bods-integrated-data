@@ -8,6 +8,7 @@ AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
+GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
@@ -90,6 +91,7 @@ create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_RT_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${NOC_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 
 create-dynamodb-table:
@@ -170,10 +172,10 @@ invoke-local-bods-txc-retriever:
 	awslocal lambda invoke --function-name bods-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-tnds-txc-retriever:
-	awslocal lambda invoke --function-name tnds-txc-retriever-local  --output text /dev/stdout --cli-read-timeout 0
+	awslocal lambda invoke --function-name tnds-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-txc-retriever:
-	awslocal lambda invoke --function-name txc-retriever-local  --output text /dev/stdout --cli-read-timeout 0
+	awslocal lambda invoke --function-name txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-bods-txc-unzipper:
 	FILE=${FILE} awslocal lambda invoke --function-name bods-txc-unzipper-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_ZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
@@ -193,13 +195,25 @@ run-local-gtfs-downloader:
 invoke-local-gtfs-downloader:
 	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0
 
+run-gtfs-rt-generator:
+	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
+
+invoke-local-gtfs-rt-generator:
+	awslocal lambda invoke --function-name gtfs-rt-generator-local --output text /dev/stdout --cli-read-timeout 0
+
 # AVL
 
 run-local-avl-subscriber:
 	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"https://mock-data-producer.com\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
 run-local-avl-data-endpoint:
-	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Siri/>', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
+	IS_LOCAL=true FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
+
+run-local-avl-processor:
+	IS_LOCAL=true FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+
+invoke-local-avl-processor:
+	awslocal lambda invoke --function-name avl-processor-local --output text /dev/stdout --cli-read-timeout 0
 
 run-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
@@ -208,7 +222,7 @@ run-local-avl-retriever:
 	IS_LOCAL=true TARGET_BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
 
 invoke-local-avl-aggregate-siri-vm:
-	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
+	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local --output text /dev/stdout --cli-read-timeout 0
 
 # NOC
 
@@ -220,6 +234,7 @@ run-local-noc-retriever:
 # Lambdas
 create-lambdas: \
 	create-lambda-avl-aggregate-siri-vm \
+	create-lambda-avl-processor \
 	create-lambda-naptan-retriever \
 	create-lambda-naptan-uploader \
 	create-lambda-bods-txc-retriever \
@@ -229,10 +244,12 @@ create-lambdas: \
 	create-lambda-txc-retriever \
 	create-lambda-txc-processor \
 	create-lambda-gtfs-downloader \
+	create-lambda-gtfs-rt-generator \
 	create-lambda-noc-retriever
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
+	delete-lambda-avl-processor \
 	delete-lambda-naptan-retriever \
 	delete-lambda-naptan-uploader \
 	delete-lambda-bods-txc-retriever \
@@ -242,6 +259,7 @@ delete-lambdas: \
 	delete-lambda-txc-retriever \
 	delete-lambda-txc-processor \
 	delete-lambda-gtfs-downloader \
+	delete-lambda-gtfs-rt-generator \
 	delete-lambda-noc-retriever
 
 remake-lambdas: delete-lambdas create-lambdas
@@ -255,6 +273,9 @@ delete-lambda-%:
 
 create-lambda-avl-aggregate-siri-vm:
 	$(call create_lambda,avl-aggregate-siri-vm-local,avl-aggregate-siri-vm,IS_LOCAL=true;BUCKET_NAME=${AVL_SIRI_BUCKET_NAME})
+
+create-lambda-avl-processor:
+	$(call create_lambda,avl-processor-local,avl-processor,IS_LOCAL=true;AVL_UNPROCESSED_SIRI_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME})
 
 create-lambda-naptan-retriever:
 	$(call create_lambda,naptan-retriever-local,naptan-retriever,IS_LOCAL=true;BUCKET_NAME=${NAPTAN_BUCKET_NAME})
@@ -282,6 +303,9 @@ create-lambda-txc-processor:
 
 create-lambda-gtfs-downloader:
 	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,IS_LOCAL=true;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
+
+create-lambda-gtfs-rt-generator:
+	$(call create_lambda,gtfs-rt-generator-local,gtfs-rt-generator,IS_LOCAL=true;BUCKET_NAME=${GTFS_RT_BUCKET_NAME})
 
 create-lambda-noc-retriever:
 	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
