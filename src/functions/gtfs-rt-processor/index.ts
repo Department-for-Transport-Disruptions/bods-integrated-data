@@ -57,7 +57,7 @@ export const handler = async () => {
             incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
             timestamp: Date.now(),
         },
-        entity: await Promise.all(avlData.map(mapAvlToGtfsEntity)),
+        entity: avlData.map(mapAvlToGtfsEntity),
     });
 
     const data = feed.finish();
