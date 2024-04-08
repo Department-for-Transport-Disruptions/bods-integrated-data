@@ -49,8 +49,9 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
                 existingAgency || {
                     name: operator.OperatorShortName,
                     noc: operator.NationalOperatorCode,
-                    url: "",
+                    url: "https://www.traveline.info",
                     registered_operator_ref: operator["@_id"],
+                    phone: "",
                 },
             )
             .onConflict((oc) => oc.column("noc").doUpdateSet({ name: operator.OperatorShortName }))
@@ -302,7 +303,7 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         return {
             id: stop.StopPointRef,
             wheelchair_boarding: 0,
-            parent_station: "",
+            parent_station: null,
 
             ...(naptanStop
                 ? {
@@ -315,14 +316,14 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
                       platform_code:
                           naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)
                               ? naptanStop.stop_type
-                              : "",
+                              : null,
                   }
                 : {
                       stop_name: stop.CommonName,
                       stop_lat: stop.Location?.Latitude,
                       stop_lon: stop.Location?.Longitude,
                       location_type: LocationType.None,
-                      platform_code: "",
+                      platform_code: null,
                   }),
         };
     });
@@ -378,6 +379,7 @@ export const insertTrips = async (
     txcServices: Service[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
     routes: Route[],
+    filePath: string,
 ) => {
     const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
 
@@ -417,6 +419,7 @@ export const insertTrips = async (
                     vehicleJourney.Operational?.VehicleType,
                 ),
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
+                file_path: filePath,
             };
         })
         .filter(notEmpty);

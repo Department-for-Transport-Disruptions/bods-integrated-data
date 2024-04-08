@@ -32,17 +32,17 @@ resource "aws_s3_bucket_versioning" "versioning_example" {
 module "avl_aggregate_siri" {
   source = "../../shared/lambda-function"
 
-  environment = var.environment
-  function_name      = "avl-aggregate-siri-vm"
-  zip_path           = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
-  handler            = "index.handler"
-  memory             = 1024
-  runtime            = "nodejs20.x"
-  timeout            = 120
-  vpc_id             = var.vpc_id
-  subnet_ids         = var.private_subnet_ids
-  database_sg_id     = var.db_sg_id
-  schedule           = var.environment == "dev" ? "rate(1 minute)" : "rate(10 seconds)"
+  environment    = var.environment
+  function_name  = "avl-aggregate-siri-vm"
+  zip_path       = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
+  handler        = "index.handler"
+  memory         = 1024
+  runtime        = "nodejs20.x"
+  timeout        = 120
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+  schedule       = var.environment == "dev" ? "rate(1 minute)" : "rate(10 seconds)"
 
   permissions = [{
     Action = [
@@ -52,14 +52,22 @@ module "avl_aggregate_siri" {
     Resource = [
       "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
     ]
-  }]
+    }, {
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn,
+    ]
+  }, ]
 
   env_vars = {
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
-    BUCKET_NAME = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
-    }
+    BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+  }
 
 }
