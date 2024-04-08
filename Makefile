@@ -9,6 +9,7 @@ AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
+AVL_DATAENDPOINT_TABLE_NAME="integrated-data-avl-dataendpoint-local"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
@@ -96,6 +97,15 @@ create-dynamodb-table:
     --attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S \
     --billing-mode PAY_PER_REQUEST \
     --region eu-west-2
+
+	awslocal dynamodb create-table \
+    --table-name integrated-data-avl-dataendpoint-local \
+    --key-schema AttributeName=PK,KeyType=HASH AttributeName=SK,KeyType=RANGE \
+    --attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S \
+    --billing-mode PAY_PER_REQUEST \
+    --region eu-west-2
+
+
 
 # Database
 
@@ -190,7 +200,7 @@ run-local-avl-subscriber:
 	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"https://mock-data-producer.com\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
 run-local-avl-data-endpoint:
-	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><HeartbeatNotification><RequestTimestamp>2019-12-03T13:25:00+01:00</RequestTimestamp><ProducerRef>SUBSCRIPTION_ID</ProducerRef><Status>true</Status><ServiceStartedTime>2019-11-23T13:25:00+01:00</ServiceStartedTime></HeartbeatNotification><Siri/>', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
+	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_DATAENDPOINT_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><HeartbeatNotification><RequestTimestamp>2019-12-03T13:25:00+01:00</RequestTimestamp><ProducerRef>SUBSCRIPTION_ID</ProducerRef><Status>true</Status><ServiceStartedTime>2019-11-23T13:25:00+01:00</ServiceStartedTime></HeartbeatNotification><Siri/>', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
 
 run-avl-aggregate-siri-vm:
 	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
