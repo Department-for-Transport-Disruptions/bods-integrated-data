@@ -159,6 +159,8 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
+    timezone: string | null;
+    lang: string | null;
     registered_operator_ref: string;
 }
 
@@ -265,8 +267,8 @@ export interface GtfsStopTable {
     stop_lon: number | null;
     wheelchair_boarding: number;
     location_type: number;
-    parent_station: string;
-    platform_code: string;
+    parent_station: string | null;
+    platform_code: string | null;
 }
 
 export type Stop = Selectable<GtfsStopTable>;
@@ -324,6 +326,7 @@ export interface GtfsTripTable {
     trip_headsign: string;
     wheelchair_accessible: WheelchairAccessibility;
     vehicle_journey_code: string;
+    file_path: string;
 }
 
 export type Trip = Selectable<GtfsTripTable>;
