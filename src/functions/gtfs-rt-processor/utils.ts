@@ -47,7 +47,7 @@ export const mapAvlToGtfsEntity = async (avl: ExtendedAvl): Promise<transit_real
                 label: isValidRegistrationNumber ? avl.vehicle_ref : null,
             },
             trip: {
-                routeId: avl.route_id?.toString() || null,
+                routeId: avl.route_id ? avl.route_id.toString() : null,
                 tripId: avl.trip_id || null,
                 startDate,
                 startTime,

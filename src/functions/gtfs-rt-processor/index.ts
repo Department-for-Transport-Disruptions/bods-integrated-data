@@ -6,11 +6,13 @@ import { ExtendedAvl } from "./types";
 import { mapAvlToGtfsEntity } from "./utils";
 
 /**
- * Get all AVL data from the database, where each row is enriched with a route ID and trip ID.
- * The route ID is determined by comparing the concatenation of the operator and line refs in and AVL against the concatenation
- * of a route's national operator code and short name. The trip ID is determined by comparing this route ID against the corresponding
- * route ID of a trip, as well as comparing the trip's ticket machine journey code against the AVL's dated vehicle journey ref to
- * ensure a unique trip match.
+ * Get all AVL data from the database along with a route ID and trip ID for each AVL row.
+ * The route ID is determined by looking up the route that matches the concatenation of the
+ * AVL's operator and line refs with the concatenation of the route's national operator code
+ * and short name. The trip ID is then determined by looking up the trip with this route ID
+ * and that matches the trip's ticket machine journey code with the AVL's dated vehicle
+ * journey ref, to ensure a single trip is matched. Note that it is possible for no matching
+ * route ID or trip ID to be found.
  * @returns An array of AVL data enriched with route and trip IDs
  */
 const getAvlDataFromDatabase = async () => {
