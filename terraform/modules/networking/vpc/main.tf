@@ -152,6 +152,12 @@ resource "aws_vpc_endpoint_route_table_association" "integrated_data_vpc_gateway
   vpc_endpoint_id = each.value.id
 }
 
+resource "aws_vpc_endpoint_route_table_association" "integrated_data_vpc_gateway_endpoint_db_route_table_association" {
+  for_each        = aws_vpc_endpoint.integrated_data_vpc_gateway_endpoint
+  route_table_id  = aws_route_table.integrated_data_db_subnet_route_table.id
+  vpc_endpoint_id = each.value.id
+}
+
 locals {
   vpc_cidr                        = "10.0.0.0/16"
   db_subnet_cidr_blocks           = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]

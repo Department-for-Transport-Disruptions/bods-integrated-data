@@ -78,3 +78,31 @@ resource "aws_lambda_event_source_mapping" "integrated_data_avl_processor_sqs_tr
   function_name    = module.integrated_data_avl_processor_function.lambda_arn
 }
 
+module "integrated_data_avl_retriever_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-retriever"
+  zip_path      = "${path.module}/../../../../src/functions/dist/avl-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  memory        = 512
+
+  permissions = [
+    {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
+      ]
+    }
+  ]
+
+  env_vars = {
+    TARGET_BUCKET_NAME = module.integrated_data_avl_s3_sqs.bucket_id
+  }
+}
+

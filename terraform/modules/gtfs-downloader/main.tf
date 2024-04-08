@@ -3,14 +3,10 @@ terraform {
 
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 5.33"
     }
   }
-}
-
-resource "aws_s3_bucket" "integrated_data_gtfs_bucket" {
-  bucket = "gtfs-${var.environment}"
 }
 
 resource "aws_lambda_function_url" "gtfs_download_url" {
@@ -21,27 +17,27 @@ resource "aws_lambda_function_url" "gtfs_download_url" {
 module "integrated_data_gtfs_downloader_function" {
   source = "../shared/lambda-function"
 
-  environment = var.environment
-  function_name = "integrated_data_gtfs_downloader"
-  zip_path = "${path.module}/../../../src/functions/dist/gtfs-downloader.zip"
-  handler = "index.handler"
-  runtime = "nodejs20.x"
-  timeout = 120
-  memory = 1024
-
-  env_vars = {
-    BUCKET_NAME = aws_s3_bucket.integrated_data_gtfs_bucket.bucket
-  }
+  environment   = var.environment
+  function_name = "integrated-data-gtfs-downloader"
+  zip_path      = "${path.module}/../../../src/functions/dist/gtfs-downloader.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 120
+  memory        = 1024
 
   permissions = [
     {
       Action = [
-        "s3:GetObject"
+        "s3:GetObject",
       ],
       Effect = "Allow",
       Resource = [
-        "${aws_s3_bucket.integrated_data_gtfs_bucket.arn}/gtfs.zip"
+        "arn:aws:s3:::${var.gtfs_bucket_name}/*"
       ]
     },
   ]
+
+  env_vars = {
+    BUCKET_NAME = var.gtfs_bucket_name
+  }
 }
