@@ -3,7 +3,7 @@ import { APIGatewayEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { beforeAll, afterEach, afterAll, describe, expect, it, vi } from "vitest";
 import { testSiri } from "./testSiriVm";
-import { handler } from ".";
+import { handler } from "./handler";
 
 describe("AVL-data-endpoint", () => {
     beforeAll(() => {

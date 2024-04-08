@@ -16,7 +16,10 @@
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "^4.1.2",
-        "mockdate": "^3.0.5"
+        "mockdate": "^3.0.5",
+        "@types/xml2js": "^0.4.14",
+        "js2xmlparser": "^5.0.0",
+        "xml2js": "^0.6.2"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
