@@ -48,3 +48,50 @@ module "integrated_data_noc_retriever_function" {
     NOC_BUCKET_NAME = aws_s3_bucket.integrated_data_noc_bucket.bucket
   }
 }
+
+module "integrated_data_noc_processor_function" {
+  source = "../../shared/lambda-function"
+
+  environment          = var.environment
+  function_name        = "integrated-data-noc-processor"
+  zip_path             = "${path.module}/../../../../src/functions/dist/noc-processor.zip"
+  handler              = "index.handler"
+  runtime              = "nodejs20.x"
+  timeout              = 200
+  memory               = 2048
+  vpc_id               = var.vpc_id
+  subnet_ids           = var.private_subnet_ids
+  database_sg_id       = var.db_sg_id
+  reserved_concurrency = 50
+
+  s3_bucket_trigger = {
+    id  = aws_s3_bucket.integrated_data_noc_bucket.id
+    arn = aws_s3_bucket.integrated_data_noc_bucket.arn
+  }
+
+  permissions = [{
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn,
+    ]
+    },
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_noc_bucket.arn}/*"
+      ]
+  }]
+
+  env_vars = {
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+}

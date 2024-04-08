@@ -75,6 +75,8 @@ export interface Database {
     stop_time_new: GtfsStopTimeTable;
     trip: GtfsTripTable;
     trip_new: GtfsTripTable;
+    noc_operator: NocOperatorTable;
+    noc_operator_new: NocOperatorTable;
 }
 
 export interface NaptanStopTable {
@@ -331,3 +333,15 @@ export interface GtfsTripTable {
 export type Trip = Selectable<GtfsTripTable>;
 export type NewTrip = Insertable<GtfsTripTable>;
 export type TripUpdate = Updateable<GtfsTripTable>;
+
+export interface NocOperatorTable {
+    noc: string;
+    operator_public_name: string;
+    vosa_psv_license_name: string;
+    op_id: string;
+    pub_nm_id: string;
+}
+
+export type NocOperator = Selectable<NocOperatorTable>;
+export type NewNocOperator = Insertable<NocOperatorTable>;
+export type NocOperatorUpdate = Updateable<NocOperatorTable>;

@@ -1,0 +1,25 @@
+{
+    "name": "@bods-integrated-data/noc-processor",
+    "version": "0.1.0",
+    "description": "Processes NOC XML file and stores the data in a database",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./noc-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/noc-retriever.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.3.5",
+        "kysely": "^0.27.3",
+        "zod-validation-error": "^3.0.3"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}
