@@ -22,8 +22,20 @@ export const getOccupancyStatus = (occupancy: string): transit_realtime.VehicleP
 };
 
 export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEntity => {
+    let routeId = "";
+    let tripId = "";
     let startDate = null;
     let startTime = null;
+    let scheduleRelationship = null;
+
+    if (avl.route_id !== undefined) {
+        routeId = avl.route_id?.toString();
+
+        if (avl.trip_id) {
+            tripId = avl.trip_id;
+            scheduleRelationship = transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED;
+        }
+    }
 
     if (avl.origin_aimed_departure_time) {
         const originAimedDepartureTime = getDate(avl.origin_aimed_departure_time);
@@ -47,11 +59,11 @@ export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEnti
                 label: isValidRegistrationNumber ? avl.vehicle_ref : null,
             },
             trip: {
-                routeId: avl.route_id ? avl.route_id.toString() : null,
-                tripId: avl.trip_id || null,
+                routeId,
+                tripId,
                 startDate,
                 startTime,
-                scheduleRelationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
+                scheduleRelationship,
             },
             timestamp: getDate(avl.recorded_at_time).unix(),
         },
