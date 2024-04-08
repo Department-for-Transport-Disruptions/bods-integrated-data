@@ -42,8 +42,11 @@ jobs:
       - name: Build changed functions
         run: |
           cd ./src/functions/${{ inputs.function_dir }}
-          pnpm i
-          pnpm run build:ci
+          if [[ -f package.json ]]
+          then
+            pnpm i
+            pnpm run build:ci
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
