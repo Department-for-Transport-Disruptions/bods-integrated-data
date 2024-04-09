@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "description": "Processes NOC XML file and stores the data in a database",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./noc-retriever.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/noc-retriever.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./noc-processor.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/noc-processor.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],
