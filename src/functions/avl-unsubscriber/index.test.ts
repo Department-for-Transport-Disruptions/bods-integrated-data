@@ -22,16 +22,16 @@ describe("avl-unsubscriber", () => {
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
-        updateDynamoItem: vi.fn(),
+        putDynamoItem: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/ssm", () => ({
-        deleteParameter: vi.fn(),
+        deleteParameters: vi.fn(),
     }));
 
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
-    const updateDynamoItemSpy = vi.spyOn(dynamo, "updateDynamoItem");
-    const deleteParameterSpy = vi.spyOn(ssm, "deleteParameter");
+    const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
+    const deleteParametersSpy = vi.spyOn(ssm, "deleteParameters");
 
     const fetchSpy = vi.spyOn(global, "fetch");
 
@@ -65,25 +65,20 @@ describe("avl-unsubscriber", () => {
 
         expect(fetch).toBeCalledWith("https://mock-data-producer.com/", expectedSubscriptionRequest);
 
-        expect(updateDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(updateDynamoItemSpy).toHaveBeenCalledWith(
-            "test-dynamo-table",
-            {
-                PK: {
-                    S: "mock-subscription-id",
-                },
-                SK: {
-                    S: "SUBSCRIPTION",
-                },
-            },
-            {
-                UpdateExpression: "SET status = TERMINATED",
-            },
-        );
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "test-description",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "TERMINATED",
+            url: "https://mock-data-producer.com/",
+        });
 
-        expect(deleteParameterSpy).toHaveBeenCalledTimes(2);
-        expect(deleteParameterSpy).toBeCalledWith("subscription/mock-subscription-id/username");
-        expect(deleteParameterSpy).toBeCalledWith("subscription/mock-subscription-id/password");
+        expect(deleteParametersSpy).toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).toBeCalledWith([
+            "subscription/mock-subscription-id/username",
+            "subscription/mock-subscription-id/password",
+        ]);
     });
 
     it("should throw an error if subscription id not found in dynamo.", async () => {
@@ -93,8 +88,8 @@ describe("avl-unsubscriber", () => {
             `Subscription ID: mock-subscription-id not found in DynamoDB`,
         );
 
-        expect(updateDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(deleteParameterSpy).not.toHaveBeenCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
@@ -117,8 +112,8 @@ describe("avl-unsubscriber", () => {
             "There was an error when sending the request to unsubscribe from the data producer - subscription ID: mock-subscription-id, status code: 500",
         );
 
-        expect(updateDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(deleteParameterSpy).not.toHaveBeenCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
     it("should throw an error if we receive an empty response from the data producer", async () => {
@@ -141,8 +136,8 @@ describe("avl-unsubscriber", () => {
             "No response body received from the data producer - subscription ID: mock-subscription-id",
         );
 
-        expect(updateDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(deleteParameterSpy).not.toHaveBeenCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
     it("should throw an error if invalid xml received from the data producer's response", async () => {
@@ -165,8 +160,8 @@ describe("avl-unsubscriber", () => {
             "Error parsing the terminate subscription response from the data producer",
         );
 
-        expect(updateDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(deleteParameterSpy).not.toHaveBeenCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
     it("should throw an error if data producer does not return a status of true", async () => {
@@ -189,7 +184,7 @@ describe("avl-unsubscriber", () => {
             "The data producer did not return a status of true - subscription ID: mock-subscription-id",
         );
 
-        expect(updateDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(deleteParameterSpy).not.toHaveBeenCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 });

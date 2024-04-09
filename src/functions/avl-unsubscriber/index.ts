@@ -1,10 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, putDynamoItem, updateDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { deleteParameter, deleteParameters } from "@bods-integrated-data/shared/ssm";
+import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { z } from "zod";
 import { randomUUID } from "crypto";
 import {
     Subscription,
@@ -183,8 +182,6 @@ export const handler = async (event: APIGatewayEvent) => {
         const subscription = await getSubscriptionInfo(subscriptionId, tableName);
 
         await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
-
-        logger.info("Deleting subscription auth credentials from parameter store");
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 
