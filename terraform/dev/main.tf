@@ -185,7 +185,8 @@ module "integrated_data_avl_data_endpoint" {
 module avl_mock_data_producer {
   source = "../modules/avl-producer-api/mock-data-producer"
 
-  environment = local.env
+  environment                 = local.env
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
 }
 
 module "integrated_data_avl_producer_api_gateway" {

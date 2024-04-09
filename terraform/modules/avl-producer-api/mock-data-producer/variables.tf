@@ -9,3 +9,8 @@ variable "avl_consumer_data_endpoint_url_local" {
   default     = null
   nullable    = true
 }
+
+variable "avl_subscription_table_name" {
+  type        = string
+  description = "Table name for AVL subscriptions"
+}

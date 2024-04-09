@@ -21,17 +21,18 @@ resource "aws_lambda_function_url" "integrated_data_mock_avl_producer_function_u
   authorization_type = "NONE"
 }
 
+module "integrated_data_avl_subscription_table" {
+  source = "../modules/database/dynamo"
+
+  environment = local.env
+}
+
 module avl_mock_data_producer {
   source = "../modules/avl-producer-api/mock-data-producer"
 
   environment                          = local.env
   avl_consumer_data_endpoint_url_local = aws_lambda_function_url.integrated_data_mock_avl_producer_function_url.function_url
-}
-
-module "integrated_data_avl_subscription_table" {
-  source = "../modules/database/dynamo"
-
-  environment = local.env
+  avl_subscription_table_name          = module.integrated_data_avl_subscription_table.table_name
 }
 
 module "integrated_data_avl_subscriber" {

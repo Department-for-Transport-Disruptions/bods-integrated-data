@@ -5,9 +5,9 @@ import { z } from "zod";
 import { generateMockSiriVm } from "./mockSiriVm";
 import { subscriptionSchema } from "./subscription.schema";
 
-const getMockDataProducerSubscriptions = async (stage: string) => {
+const getMockDataProducerSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
-        TableName: `integrated-data-avl-subscription-table-${stage}`,
+        TableName: tableName,
     });
 
     if (!subscriptions || subscriptions.length === 0) {
@@ -23,17 +23,17 @@ const getMockDataProducerSubscriptions = async (stage: string) => {
 
 export const handler = async () => {
     try {
-        const { STAGE: stage, DATA_ENDPOINT: dataEndpoint } = process.env;
+        const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
 
         const currentTimestamp = getDate().toISOString();
         // ValidUntilTime for a SIRI-VM is defined as 5 minutes after the current time
         const validUntilTime = addIntervalToDate(currentTimestamp, 5, "minutes").toISOString();
 
-        if (!stage || !dataEndpoint) {
-            throw new Error("Missing env vars: STAGE and DATA_ENDPOINT must be set");
+        if (!stage || !dataEndpoint || !tableName) {
+            throw new Error("Missing env vars: STAGE, DATA_ENDPOINT and TABLE_NAME must be set");
         }
 
-        const subscriptions = await getMockDataProducerSubscriptions(stage);
+        const subscriptions = await getMockDataProducerSubscriptions(tableName);
 
         if (!subscriptions) {
             logger.info("No mock data producers are currently active.");

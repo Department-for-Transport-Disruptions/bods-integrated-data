@@ -23,6 +23,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
     it("should return and send no data if no subscriptions are returned from dynamo", async () => {
         process.env.STAGE = "dev";
+        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([]);
         await handler();
@@ -31,6 +32,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
     it("should return and send no data if no mock data producers are active", async () => {
         process.env.STAGE = "dev";
+        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([
             {
@@ -56,6 +58,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
     it("should send mock avl data with the subscriptionId in the query string parameters if the stage is local", async () => {
         process.env.STAGE = "local";
+        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-local";
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
@@ -78,6 +81,7 @@ describe("avl-mock-data-producer-send-data", () => {
     });
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
         process.env.STAGE = "dev";
+        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
