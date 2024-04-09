@@ -211,7 +211,7 @@ invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-unsubscriber:
-	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'172b7054-766f-4ceb-838c-a25ea5824208'} }).catch(e => console.error(e))"
+	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'82906189-a7b1-47d1-8c87-b775a77283bf'} }).catch(e => console.error(e))"
 
 
 # NOC

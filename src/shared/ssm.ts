@@ -1,4 +1,4 @@
-import { DeleteParameterCommand, PutParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
+import { DeleteParameterCommand, DeleteParametersCommand, PutParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
@@ -31,10 +31,10 @@ export const putParameter = async (
     );
 };
 
-export const deleteParameter = async (name: string): Promise<void> => {
+export const deleteParameters = async (names: string[]): Promise<void> => {
     await ssm.send(
-        new DeleteParameterCommand({
-            Name: name,
+        new DeleteParametersCommand({
+            Names: names,
         }),
     );
 };

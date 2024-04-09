@@ -1,9 +1,10 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, updateDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { deleteParameter } from "@bods-integrated-data/shared/ssm";
+import { getDynamoItem, putDynamoItem, updateDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { deleteParameter, deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { z } from "zod";
 import { randomUUID } from "crypto";
 import {
     Subscription,
@@ -142,22 +143,17 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 
     logger.info("Updating subscription status in DynamoDB");
 
-    await updateDynamoItem(
+    await putDynamoItem(
         tableName,
+        subscription.subscriptionId,
+        "SUBSCRIPTION",
+
         {
-            PK: subscription.subscriptionId,
-            SK: "SUBSCRIPTION",
-        },
-        {
-            ExpressionAttributeNames: {
-                "#s": "status",
-            },
-            ExpressionAttributeValues: {
-                ":s": {
-                    S: "TERMINATED",
-                },
-            },
-            UpdateExpression: "SET #s = :s ",
+            url: subscription.url,
+            description: subscription.description,
+            shortDescription: subscription.shortDescription,
+            requestorRef: subscription.requestorRef,
+            status: "TERMINATED",
         },
     );
 };
@@ -165,10 +161,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     logger.info("Deleting subscription auth credentials from parameter store");
 
-    await Promise.all([
-        deleteParameter(`subscription/${subscriptionId}/username`),
-        deleteParameter(`subscription/${subscriptionId}/password`),
-    ]);
+    await deleteParameters([`subscription/${subscriptionId}/username`, `subscription/${subscriptionId}/password`]);
 };
 
 export const handler = async (event: APIGatewayEvent) => {
