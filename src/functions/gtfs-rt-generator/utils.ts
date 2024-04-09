@@ -30,17 +30,17 @@ export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEnti
 
     if (avl.route_id !== undefined) {
         routeId = avl.route_id?.toString();
+        scheduleRelationship = transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED;
 
         if (avl.trip_id) {
             tripId = avl.trip_id;
-            scheduleRelationship = transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED;
         }
-    }
 
-    if (avl.origin_aimed_departure_time) {
-        const originAimedDepartureTime = getDate(avl.origin_aimed_departure_time);
-        startDate = originAimedDepartureTime.format("YYYYMMDD");
-        startTime = originAimedDepartureTime.format("HH:mm:ss");
+        if (avl.origin_aimed_departure_time) {
+            const originAimedDepartureTime = getDate(avl.origin_aimed_departure_time);
+            startDate = originAimedDepartureTime.format("YYYYMMDD");
+            startTime = originAimedDepartureTime.format("HH:mm:ss");
+        }
     }
 
     const isValidRegistrationNumber = ukNumberPlateRegex.test(avl.vehicle_ref.replace(/\s/g, ""));

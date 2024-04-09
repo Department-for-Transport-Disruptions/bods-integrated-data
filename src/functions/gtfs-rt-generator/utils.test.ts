@@ -194,60 +194,6 @@ describe("utils", () => {
             expect(result).toEqual(expected);
         });
 
-        it("returns a mapped GTFS entity with a start date and start time when departure time data exists", () => {
-            const avl: ExtendedAvl = {
-                id: 0,
-                bearing: "1",
-                latitude: 2,
-                longitude: 3,
-                vehicle_ref: "ABC",
-                recorded_at_time: "1970-01-01T00:00:00.000Z",
-                occupancy: "",
-                response_time_stamp: "",
-                producer_ref: "",
-                valid_until_time: "",
-                line_ref: "",
-                direction_ref: "",
-                operator_ref: "",
-                data_frame_ref: "",
-                dated_vehicle_journey_ref: "",
-                published_line_name: "",
-                origin_ref: "",
-                origin_aimed_departure_time: "2024-01-01T09:30:45.000Z",
-                destination_ref: "",
-                block_ref: "",
-                route_id: undefined,
-                trip_id: undefined,
-            };
-
-            const expected: transit_realtime.IFeedEntity = {
-                id: "mock-uuid",
-                vehicle: {
-                    occupancyStatus: null,
-                    position: {
-                        bearing: 1,
-                        latitude: 2,
-                        longitude: 3,
-                    },
-                    vehicle: {
-                        id: "ABC",
-                        label: null,
-                    },
-                    trip: {
-                        routeId: "",
-                        tripId: "",
-                        startDate: "20240101",
-                        startTime: "09:30:45",
-                        scheduleRelationship: null,
-                    },
-                    timestamp: 0,
-                },
-            };
-
-            const result = mapAvlToGtfsEntity(avl);
-            expect(result).toEqual(expected);
-        });
-
         it("returns a mapped GTFS entity with a vehicle label when the vehicle ref is a valid UK vehicle registration number", () => {
             const avl: ExtendedAvl = {
                 id: 0,
@@ -346,7 +292,7 @@ describe("utils", () => {
                         tripId: "",
                         startDate: null,
                         startTime: null,
-                        scheduleRelationship: null,
+                        scheduleRelationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
                     },
                     timestamp: 0,
                 },
@@ -409,5 +355,59 @@ describe("utils", () => {
             const result = mapAvlToGtfsEntity(avl);
             expect(result).toEqual(expected);
         });
+    });
+
+    it("returns a mapped GTFS entity with a start date and start time when departure time data exists", () => {
+        const avl: ExtendedAvl = {
+            id: 0,
+            bearing: "1",
+            latitude: 2,
+            longitude: 3,
+            vehicle_ref: "ABC",
+            recorded_at_time: "1970-01-01T00:00:00.000Z",
+            occupancy: "",
+            response_time_stamp: "",
+            producer_ref: "",
+            valid_until_time: "",
+            line_ref: "",
+            direction_ref: "",
+            operator_ref: "",
+            data_frame_ref: "",
+            dated_vehicle_journey_ref: "",
+            published_line_name: "",
+            origin_ref: "",
+            origin_aimed_departure_time: "2024-01-01T09:30:45.000Z",
+            destination_ref: "",
+            block_ref: "",
+            route_id: 4,
+            trip_id: undefined,
+        };
+
+        const expected: transit_realtime.IFeedEntity = {
+            id: "mock-uuid",
+            vehicle: {
+                occupancyStatus: null,
+                position: {
+                    bearing: 1,
+                    latitude: 2,
+                    longitude: 3,
+                },
+                vehicle: {
+                    id: "ABC",
+                    label: null,
+                },
+                trip: {
+                    routeId: "4",
+                    tripId: "",
+                    startDate: "20240101",
+                    startTime: "09:30:45",
+                    scheduleRelationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
+                },
+                timestamp: 0,
+            },
+        };
+
+        const result = mapAvlToGtfsEntity(avl);
+        expect(result).toEqual(expected);
     });
 });
