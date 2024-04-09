@@ -53,6 +53,13 @@ resource "aws_apigatewayv2_api" "integrated_data_mock_avl_producer_api" {
   protocol_type = "HTTP"
 }
 
+resource "aws_apigatewayv2_stage" "integrated_data_mock_avl_producer_api_stage" {
+  count       = var.environment == "local" ? 0 : 1
+  api_id      = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
+  name        = "$default"
+  auto_deploy = true
+}
+
 resource "aws_apigatewayv2_integration" "integrated_data_avl_mock_producer_api_integration_subscribe" {
   count                  = var.environment == "local" ? 0 : 1
   api_id                 = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
@@ -62,7 +69,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_mock_producer_api_i
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "integrated_data_avl__mock_data_producer_api_route_subscribe" {
+resource "aws_apigatewayv2_route" "integrated_data_avl_mock_data_producer_api_route_subscribe" {
   count     = var.environment == "local" ? 0 : 1
   api_id    = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
   route_key = "POST /subscribe"
@@ -75,13 +82,24 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_mock_data_producer_a
   api_id      = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
   description = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].name
 
-  depends_on = [
-    aws_apigatewayv2_route.integrated_data_avl__mock_data_producer_api_route_subscribe[0]
-  ]
+  triggers = {
+    redeployment = sha1(join(",", tolist([
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_mock_data_producer_api_route_subscribe),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_mock_producer_api_integration_subscribe),
+    ])))
+  }
 
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "aws_lambda_permission" "integrated_data_mock_avl_producer_api_subscribe_permissions" {
+  count         = var.environment == "local" ? 0 : 1
+  function_name = module.integrated_data_avl_mock_data_producer_subscribe.function_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].execution_arn}/${aws_apigatewayv2_stage.integrated_data_mock_avl_producer_api_stage[0].name}/*"
 }
 
 output "function_url" {
