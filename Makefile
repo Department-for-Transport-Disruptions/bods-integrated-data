@@ -256,7 +256,8 @@ invoke-local-avl-mock-data-producer-send-data:
 run-local-noc-retriever:
 	IS_LOCAL=true NOC_BUCKET_NAME=${NOC_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/noc-retriever'; handler().catch(e => console.error(e))"
 
-
+run-local-noc-processor:
+	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 # Lambdas
 create-lambdas: \
@@ -271,8 +272,9 @@ create-lambdas: \
 	create-lambda-txc-retriever \
 	create-lambda-txc-processor \
 	create-lambda-gtfs-downloader \
-	create-lambda-gtfs-rt-generator \
-	create-lambda-noc-retriever
+	create-lambda-noc-retriever \
+	create-lambda-noc-processor \
+	create-lambda-gtfs-rt-generator
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
@@ -286,8 +288,9 @@ delete-lambdas: \
 	delete-lambda-txc-retriever \
 	delete-lambda-txc-processor \
 	delete-lambda-gtfs-downloader \
-	delete-lambda-gtfs-rt-generator \
-	delete-lambda-noc-retriever
+	delete-lambda-noc-retriever \
+	delete-lambda-noc-processor \
+	delete-lambda-gtfs-rt-generator
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -336,6 +339,9 @@ create-lambda-gtfs-rt-generator:
 
 create-lambda-noc-retriever:
 	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
+
+create-lambda-noc-processor:
+	$(call create_lambda,noc-processor-local,noc-processor,IS_LOCAL=true)
 
 # CLI Helper Commands
 

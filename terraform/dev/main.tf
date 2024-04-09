@@ -207,5 +207,10 @@ locals {
 module "integrated_data_noc_pipeline" {
   source = "../modules/data-pipelines/noc-pipeline"
 
-  environment = local.env
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
 }
