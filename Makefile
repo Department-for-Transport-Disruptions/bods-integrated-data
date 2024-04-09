@@ -6,7 +6,7 @@ TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_TXC_FTP_CREDS_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
-AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscriptions-local"
+AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
 NOC_BUCKET_NAME="integrated-data-noc-local"
@@ -210,6 +210,10 @@ run-local-avl-retriever:
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local  --output text /dev/stdout --cli-read-timeout 0
 
+run-local-avl-unsubscriber:
+	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'172b7054-766f-4ceb-838c-a25ea5824208'} }).catch(e => console.error(e))"
+
+
 # NOC
 
 run-local-noc-retriever:
@@ -285,3 +289,6 @@ create-lambda-gtfs-downloader:
 
 create-lambda-noc-retriever:
 	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
+
+create-lambda-avl-unsubscriber:
+	$(call create_lambda,avl-unsubscriber-local,avl-unsubscriber,TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME})

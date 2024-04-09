@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 const dynamoDbDocClient = DynamoDBDocumentClient.from(
@@ -27,10 +27,26 @@ export const putDynamoItem = async (tableName: string, pk: string, sk: string, t
 };
 
 export const getDynamoItem = async (tableName: string, key: Record<string, NativeAttributeValue>) => {
-    await dynamoDbDocClient.send(
+    const data = await dynamoDbDocClient.send(
         new GetCommand({
             TableName: tableName,
             Key: key,
+        }),
+    );
+
+    return data.Item ?? null;
+};
+
+export const updateDynamoItem = async (
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+    updateExpression: Record<string, unknown>,
+) => {
+    await dynamoDbDocClient.send(
+        new UpdateCommand({
+            TableName: tableName,
+            Key: key,
+            ...updateExpression,
         }),
     );
 };

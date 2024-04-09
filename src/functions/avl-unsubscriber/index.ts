@@ -1,165 +1,174 @@
 import { logger } from "@baselime/lambda-logger";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { putParameter } from "@bods-integrated-data/shared/ssm";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import { getDynamoItem, updateDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { deleteParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
-import { parse } from "js2xmlparser";
-import { parseStringPromise } from "xml2js";
-import { parseBooleans } from "xml2js/lib/processors";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
+import {
+    Subscription,
+    subscriptionSchema,
+    terminateSubscriptionRequestSchema,
+    terminateSubscriptionResponseSchema,
+} from "./subscription.schema";
+import { mockSubscriptionResponseBody } from "./test/mockData";
+
+const getSubscriptionInfo = async (subscriptionId: string, tableName: string) => {
+    const subscription = await getDynamoItem(tableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
+
+    if (!subscription) {
+        throw new Error(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
+    }
+
+    return subscriptionSchema.parse(subscription);
+};
 
 export const generateTerminationSubscriptionRequest = (
     subscriptionId: string,
     currentTimestamp: string,
     messageIdentifier: string,
+    requestorRef: string | null,
 ) => {
-    const subscriptionRequestJson = {
-        TerminationSubscriptionRequest: {
+    const terminateSubscriptionRequestJson = {
+        TerminateSubscriptionRequest: {
             RequestTimeStamp: currentTimestamp,
-            RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
+            RequestorRef: requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
-            SubscriptionRequest: subscriptionId,
+            SubscriptionRef: subscriptionId,
         },
     };
 
-    const verifiedSubscriptionRequest = subscriptionRequestSchema.parse(subscriptionRequestJson);
+    const verifiedTerminateSubscriptionRequest = terminateSubscriptionRequestSchema.parse(
+        terminateSubscriptionRequestJson,
+    );
 
     const completeObject = {
-        "@": {
-            version: "2.0",
-            xmlns: "http://www.siri.org.uk/siri",
-            "xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+        "?xml": {
+            "#text": "",
+            "@_version": "1.0",
+            "@_encoding": "UTF-8",
+            "@_standalone": "yes",
         },
-        "#": {
-            SubscriptionRequest: {
-                ...verifiedSubscriptionRequest.SubscriptionRequest,
-                VehicleMonitoringSubscriptionRequest: {
-                    ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest,
-                    VehicleMonitoringRequest: {
-                        "@": {
-                            version: "2.0",
-                        },
-                        "#": {
-                            ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
-                                .VehicleMonitoringRequest,
-                        },
-                    },
-                },
-            },
+        Siri: {
+            "@_version": "2.0",
+            "@_xmlns": "http://www.siri.org.uk/siri",
+            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
+            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
+            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+            ...verifiedTerminateSubscriptionRequest,
         },
     };
 
-    return parse("Siri", completeObject, {
-        declaration: {
-            version: "1.0",
-            encoding: "UTF-8",
-            standalone: "yes",
-        },
-        useSelfClosingTagIfEmpty: true,
+    const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        attributeNamePrefix: "@_",
     });
+
+    const request = builder.build(completeObject) as string;
+
+    return request;
 };
 
-const parseXml = async (xml: string) => {
-    const parsedXml = (await parseStringPromise(xml, {
-        explicitArray: false,
-        valueProcessors: [parseBooleans],
-        ignoreAttrs: true,
-    })) as Record<string, object>;
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+    });
 
-    const parsedJson = subscriptionResponseSchema.safeParse(parsedXml.Siri);
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
+
+    const parsedJson = terminateSubscriptionResponseSchema.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
         logger.error(
-            "There was an error parsing the subscription response from the data producer",
+            "There was an error parsing the terminate subscription response from the data producer",
             parsedJson.error.format(),
         );
 
-        throw new Error("Error parsing data");
+        throw new Error("Error parsing the terminate subscription response from the data producer");
     }
 
     return parsedJson.data;
 };
 
-const updateDynamoWithSubscriptionInfo = async (
-    tableName: string,
-    subscriptionId: string,
-    avlSubscribeMessage: AvlSubscribeMessage,
-    status: "ACTIVE" | "FAILED",
-) => {
-    const subscriptionTableItems = {
-        url: avlSubscribeMessage.dataProducerEndpoint,
-        status: status,
-        description: avlSubscribeMessage.description,
-        shortDescription: avlSubscribeMessage.description,
-        requestorRef: avlSubscribeMessage.requestorRef ?? null,
-    };
-
-    logger.info("Updating DynamoDB with subscription information");
-
-    await putDynamoItem(tableName, subscriptionId, "SUBSCRIPTION", subscriptionTableItems);
-};
-
-const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
-    logger.info("Uploading subscription auth credentials to parameter store");
-
-    await Promise.all([
-        putParameter(`subscription/${subscriptionId}/username`, username, "SecureString", true),
-        putParameter(`subscription/${subscriptionId}/password`, password, "SecureString", true),
-    ]);
-};
-
-const sendSubscriptionRequestAndUpdateDynamo = async (
-    subscriptionId: string,
-    avlSubscribeMessage: AvlSubscribeMessage,
-    tableName: string,
-) => {
+const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Subscription, tableName: string) => {
     const currentTimestamp = getDate().toISOString();
-    // Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
-    const initialTerminationTime = addIntervalToDate(currentTimestamp, 10, "years").toISOString();
-
     const messageIdentifier = randomUUID();
 
-    const subscriptionRequestMessage = generateSubscriptionRequestXml(
-        avlSubscribeMessage,
-        subscriptionId,
+    const terminateSubscriptionRequestMessage = generateTerminationSubscriptionRequest(
+        subscription.subscriptionId,
         currentTimestamp,
-        initialTerminationTime,
         messageIdentifier,
+        subscription.requestorRef ?? null,
     );
 
-    const subscriptionResponse = await fetch(`${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`, {
-        method: "POST",
-        body: subscriptionRequestMessage,
-    });
+    const terminateSubscriptionResponse =
+        process.env.IS_LOCAL === "true"
+            ? {
+                  text: () => mockSubscriptionResponseBody,
+                  status: 200,
+                  ok: true,
+              }
+            : await fetch(subscription.url, {
+                  method: "POST",
+                  body: terminateSubscriptionRequestMessage,
+              });
 
-    if (!subscriptionResponse.ok) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+    if (!terminateSubscriptionResponse.ok) {
         throw new Error(
-            `There was an error when sending the subscription request to the data producer: ${avlSubscribeMessage.dataProducerEndpoint}, status code: ${subscriptionResponse.status}`,
+            `There was an error when sending the request to unsubscribe from the data producer - subscription ID: ${subscription.subscriptionId}, status code: ${terminateSubscriptionResponse.status}`,
         );
     }
 
-    const subscriptionResponseBody = await subscriptionResponse.text();
+    const terminateSubscriptionResponseBody = await terminateSubscriptionResponse.text();
 
-    if (!subscriptionResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+    if (!terminateSubscriptionResponseBody) {
         throw new Error(
-            `No response body received from the data producer: ${avlSubscribeMessage.dataProducerEndpoint}`,
+            `No response body received from the data producer - subscription ID: ${subscription.subscriptionId}`,
         );
     }
 
-    const parsedResponseBody = await parseXml(subscriptionResponseBody);
+    const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
 
-    if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+    if (parsedResponseBody.TerminateSubscriptionResponse.TerminateSubscriptionResponseStatus.Status !== "true") {
         throw new Error(
-            `The data producer: ${avlSubscribeMessage.dataProducerEndpoint} did not return a status of true.`,
+            `The data producer did not return a status of true - subscription ID: ${subscription.subscriptionId}`,
         );
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE");
+    logger.info("Updating subscription status in DynamoDB");
+
+    await updateDynamoItem(
+        tableName,
+        {
+            PK: subscription.subscriptionId,
+            SK: "SUBSCRIPTION",
+        },
+        {
+            ExpressionAttributeNames: {
+                "#s": "status",
+            },
+            ExpressionAttributeValues: {
+                ":s": {
+                    S: "TERMINATED",
+                },
+            },
+            UpdateExpression: "SET #s = :s ",
+        },
+    );
+};
+
+const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
+    logger.info("Deleting subscription auth credentials from parameter store");
+
+    await Promise.all([
+        deleteParameter(`subscription/${subscriptionId}/username`),
+        deleteParameter(`subscription/${subscriptionId}/password`),
+    ]);
 };
 
 export const handler = async (event: APIGatewayEvent) => {
@@ -170,7 +179,7 @@ export const handler = async (event: APIGatewayEvent) => {
             throw new Error("Missing env var: TABLE_NAME must be set.");
         }
 
-        const subscriptionId = event.pathParameters?.subscriptionId;
+        const subscriptionId = event.pathParameters?.subscription_id;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID must be provided in the path parameters");
@@ -178,20 +187,15 @@ export const handler = async (event: APIGatewayEvent) => {
 
         logger.info(`Starting AVL unsubscriber to unsubscribe from subscription: ${subscriptionId}`);
 
-        const subscription = await getDynamoItem(tableName, { S: subscriptionId });
+        const subscription = await getSubscriptionInfo(subscriptionId, tableName);
 
-        const currentTimestamp = getDate().toISOString();
-        const messageIdentifier = randomUUID();
+        await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
 
-        const terminationSusbcriptionRequest = generateTerminationSubscriptionRequest(
-            subscriptionId,
-            currentTimestamp,
-            messageIdentifier,
-        );
+        logger.info("Deleting subscription auth credentials from parameter store");
 
-        // await sendSubscriptionRequestAndUpdateDynamo(subscriptionId, avlSubscribeMessage, tableName);
-        //
-        // logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
+        await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
+
+        logger.info(`Successfully unsubscribed to data producer with subscription ID: ${subscriptionId}.`);
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem unsubscribing from  the AVL feed.", e);
