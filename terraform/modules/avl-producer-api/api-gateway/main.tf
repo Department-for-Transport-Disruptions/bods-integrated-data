@@ -62,8 +62,9 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deploym
 }
 
 resource "aws_apigatewayv2_stage" "integrated_data_avl_producer_api_stage" {
-  api_id = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  name   = var.environment
+  api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  name        = "$default"
+  auto_deploy = true
 }
 
 resource "aws_lambda_permission" "integrated_data_avl_producer_api_subscribe_permissions" {
