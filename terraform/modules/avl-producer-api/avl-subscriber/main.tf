@@ -27,8 +27,3 @@ module "avl_subscriber" {
     DATA_ENDPOINT           = var.avl_data_endpoint
   }
 }
-
-output "lambda_arn" {
-  description = "Lambda ARN"
-  value       = module.avl_subscriber.lambda_arn
-}

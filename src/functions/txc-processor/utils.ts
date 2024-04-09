@@ -306,7 +306,7 @@ export const mapTimingLinksToStopTimes = (
 
 /**
  * Map a timing link to a stop time. Either the From or To stop usage activity is used depending on the `stopUsageType`.
- * If a run time will optionally be returned if it can be calculated.
+ * A run time will optionally be returned if it can be calculated.
  * @param stopUsageType Which stop usage to use (from or to)
  * @param currentStopDepartureTime Current stop departure time
  * @param tripId Trip ID

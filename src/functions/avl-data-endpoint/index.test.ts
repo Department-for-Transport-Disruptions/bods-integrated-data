@@ -30,7 +30,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: testSiri,
             pathParameters: {
-                subscriptionId: mockSubscriptionId,
+                subscription_id: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -41,7 +41,7 @@ describe("AVL-data-endpoint", () => {
             Body: `${testSiri}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
-            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z`,
+            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
         });
     });
 
@@ -49,7 +49,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: null,
             pathParameters: {
-                subscriptionId: mockSubscriptionId,
+                subscription_id: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
         await expect(handler(mockEvent)).rejects.toThrowError("No body sent with event");
@@ -60,7 +60,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: "abc",
             pathParameters: {
-                subscriptionId: mockSubscriptionId,
+                subscription_id: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 

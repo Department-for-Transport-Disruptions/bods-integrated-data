@@ -16,7 +16,7 @@ export const validateXmlAndUploadToS3 = async (xml: string, bucketName: string, 
     logger.info("Valid XML");
     await putS3Object({
         Bucket: bucketName,
-        Key: `${subscriptionId}/${currentTime.toISOString()}`,
+        Key: `${subscriptionId}/${currentTime.toISOString()}.xml`,
         ContentType: "application/xml",
         Body: xml,
     });
@@ -31,7 +31,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
 
         const subscriptionId =
-            stage === "local" ? event?.queryStringParameters?.subscriptionId : event?.pathParameters?.subscriptionId;
+            stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID missing from path parameters");

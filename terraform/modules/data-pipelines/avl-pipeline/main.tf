@@ -100,5 +100,9 @@ module "integrated_data_avl_retriever_function" {
       ]
     }
   ]
+
+  env_vars = {
+    TARGET_BUCKET_NAME = module.integrated_data_avl_s3_sqs.bucket_id
+  }
 }
 

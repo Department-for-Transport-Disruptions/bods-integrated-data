@@ -66,12 +66,12 @@ describe("avl-mock-data-producer-send-data", () => {
 
         await handler();
         expect(fetchSpy).toBeCalledTimes(2);
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscriptionId=subscription-one", {
+        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-one", {
             body: expectedAVLDataForSubscription("subscription-one"),
             method: "POST",
         });
 
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscriptionId=subscription-two", {
+        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-two", {
             body: expectedAVLDataForSubscription("subscription-two"),
             method: "POST",
         });
