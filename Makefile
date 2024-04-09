@@ -246,7 +246,7 @@ create-lambdas: \
 	create-lambda-txc-processor \
 	create-lambda-gtfs-downloader \
 	create-lambda-noc-retriever \
-	create-lambda-noc-processor
+	create-lambda-noc-processor \
 	create-lambda-gtfs-rt-generator
 
 delete-lambdas: \
@@ -262,7 +262,7 @@ delete-lambdas: \
 	delete-lambda-txc-processor \
 	delete-lambda-gtfs-downloader \
 	delete-lambda-noc-retriever \
-	delete-lambda-noc-processor
+	delete-lambda-noc-processor \
 	delete-lambda-gtfs-rt-generator
 
 remake-lambdas: delete-lambdas create-lambdas
