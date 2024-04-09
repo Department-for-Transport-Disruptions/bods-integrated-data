@@ -1,6 +1,6 @@
 # Local
 
-This folder contains the terraform configuration code to deploy infrastructure locally using local stack
+This folder contains the terraform configuration code to deploy infrastructure locally using Localstack
 
 ## Pre-Reqs
 
@@ -34,14 +34,26 @@ To do this, follow these steps:
 
 1. Follow the existing repo pattern of creating infrastructure within the `modules` directory.
 2. Import your module into this /local `main.tf` file.
-3. In your terminal navigate to `/terraform/local` directory
-4. Run `tflocal plan` which will run a terraform plan using localstack
-5. Run `tflocal apply` which will run a terraform apply using localstack
+3. First init the terraform workspace using:
+
+```bash
+make tf-init-local
+```
+
+4. You can then run terraform plans and applies using the following make commands:
+
+```bash
+make tf-plan-local
+Run `make tf-apply-local
+```
 
 ### Tip:
 
 It's recommended to install the Localstack Desktop application to help view and manage the infrastructure you have
 deployed locally.
+
+When using Localstack, it will default to viewing resources deployed in `us-east-1`, make sure to update this to
+the region you expect resources to be deployed to.
 
 Localstack Desktop:
 

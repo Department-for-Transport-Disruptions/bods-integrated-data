@@ -13,19 +13,23 @@ This repo contains the code for the BODS Integrated Data platform, this encompas
 This repo uses asdf to manage the versions of various dependencies, install that first before proceeding with the setup.
 
 - asdf
-  - https://asdf-vm.com/guide/getting-started.html
+    - https://asdf-vm.com/guide/getting-started.html
 - AWS CLI Session Manager Plugin
-  - https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+    - https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
 - Docker
-  - https://rancherdesktop.io/
+    - https://rancherdesktop.io/
 - awslocal
-  - https://github.com/localstack/awscli-local
+    - https://github.com/localstack/awscli-local
 - pnpm
-  - https://pnpm.io/installation
+    - https://pnpm.io/installation
+- tflocal
+    - https://github.com/localstack/terraform-local
 
 ### Local Setup
 
-After installing the above dependencies, run the following to install the required asdf plugins and install the desired versions. It will then start the docker containers for postgres and localstack, create the needed localstack resources and then run the local DB migrations:
+After installing the above dependencies, run the following to install the required asdf plugins and install the desired
+versions. It will then start the docker containers for postgres and localstack, create the needed localstack resources
+and then run the local DB migrations:
 
 ```bash
 make asdf setup
@@ -41,7 +45,8 @@ aws configure sso
 # SSO registration scopes [None]: sso:account:access
 ```
 
-Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a user-friendly name and set the region:
+Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a
+user-friendly name and set the region:
 
 ```bash
 [profile bods-integrated-data-dev]
@@ -106,6 +111,13 @@ FILE=bods.zip make invoke-local-bods-txc-unzipper
 
 ### Terraform
 
+#### Local Environment
+
+This project uses Localstack to deploy infrastructure locally. For further instruction on how to develop locally using
+Localstack please see the following README: [Terraform Local Development](terraform/local/README.md)
+
+#### Higher Environments
+
 To run terraform plans and applies locally, first init the Terraform workspace:
 
 ```bash
@@ -119,38 +131,45 @@ make tf-plan-{ENV}
 make tf-apply-{ENV}
 ```
 
-for example, to run a plan against the dev environment, run `make tf-plan-dev` after authenticating against the dev AWS account.
+for example, to run a plan against the dev environment, run `make tf-plan-dev` after authenticating against the dev AWS
+account.
 
 ### Deploying lambda function changes
 
-If there's a need to deploy lambda code changes locally (best to use the CI where possible), the functions need to be built first, run:
+If there's a need to deploy lambda code changes locally (best to use the CI where possible), the functions need to be
+built first, run:
 
 ```bash
 make install-deps build-functions
 ```
 
-to do this. Then run a `make tf-apply-{ENV}` to deploy the changes. Terraform will see the new bundled functions and deploy the changes.
+to do this. Then run a `make tf-apply-{ENV}` to deploy the changes. Terraform will see the new bundled functions and
+deploy the changes.
 
 ## Adding or updating secrets
 
-[SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS key to encrypt a secrets file which can then be committed into version control.
+[SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS
+key to encrypt a secrets file which can then be committed into version control.
 
-In order to add or update a secret, first authenticate against the target AWS account (where the required KMS key resides) and then run the following from the root directory:
+In order to add or update a secret, first authenticate against the target AWS account (where the required KMS key
+resides) and then run the following from the root directory:
 
 ```bash
 make edit-secrets-{ENV}
 ```
 
-This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will automatically encrypt the new file which can then be pushed.
+This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will
+automatically encrypt the new file which can then be pushed.
 
 ### Using SOPS secrets in Terraform
 
-To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the secrets file in a data block. The secrets can then be extracted. An example of this would be:
+To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the
+secrets file in a data block. The secrets can then be extracted. An example of this would be:
 
 ```terraform
 sops = {
-    source  = "carlpett/sops"
-    version = "~> 1.0"
+  source  = "carlpett/sops"
+  version = "~> 1.0"
 }
 
 data "sops_file" "secrets" {
@@ -158,14 +177,17 @@ data "sops_file" "secrets" {
 }
 
 locals {
-    secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
+  secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
 }
 ```
 
 ## CI Pipelines
 
-On creating a Pull Request, a Github Actions pipeline will trigger which will generate a terraform plan and save it as a comment to the Pull Request. It will also run tflint and run the tests for the lambda functions.
+On creating a Pull Request, a Github Actions pipeline will trigger which will generate a terraform plan and save it as a
+comment to the Pull Request. It will also run tflint and run the tests for the lambda functions.
 
-When the PR is approved, the CI will run a terraform apply, this is to ensure that any code in main will successfully deploy. After it has deployed successfully, the code can be merged.
+When the PR is approved, the CI will run a terraform apply, this is to ensure that any code in main will successfully
+deploy. After it has deployed successfully, the code can be merged.
 
-The pipelines will detect which lambda functions have been updated and it will only build those functions, this ensures that terraform will only apply changes to functions that have actually been changed as part of the PR.
+The pipelines will detect which lambda functions have been updated and it will only build those functions, this ensures
+that terraform will only apply changes to functions that have actually been changed as part of the PR.

@@ -6,17 +6,17 @@ import {
     subscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent } from "aws-lambda";
-import { parse } from "js2xmlparser";
-import { parseStringPromise } from "xml2js";
-import { parseBooleans } from "xml2js/lib/processors";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
-const parseXml = async (xml: string) => {
-    const parsedXml = (await parseStringPromise(xml, {
-        explicitArray: false,
-        valueProcessors: [parseBooleans],
-        ignoreAttrs: true,
-    })) as Record<string, object>;
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+    });
+
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
     const parsedJson = subscriptionRequestSchema.safeParse(parsedXml.Siri);
 
@@ -52,50 +52,47 @@ export const generateSubscriptionResponse = (subscriptionRequest: SubscriptionRe
     const verifiedSubscriptionResponse = subscriptionResponseSchema.parse(subscriptionResponseJson);
 
     const completeObject = {
-        "@": {
-            version: "2.0",
-            xmlns: "http://www.siri.org.uk/siri",
-            "xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+        "?xml": {
+            "#text": "",
+            "@_version": "1.0",
+            "@_encoding": "UTF-8",
+            "@_standalone": "yes",
         },
-        "#": verifiedSubscriptionResponse,
+        Siri: {
+            "@_version": "2.0",
+            "@_xmlns": "http://www.siri.org.uk/siri",
+            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
+            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
+            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+            ...verifiedSubscriptionResponse,
+        },
     };
 
-    return parse("Siri", completeObject, {
-        declaration: {
-            version: "1.0",
-            encoding: "UTF-8",
-            standalone: "yes",
-        },
-        useSelfClosingTagIfEmpty: true,
+    const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        attributeNamePrefix: "@_",
     });
+
+    const response = builder.build(completeObject) as string;
+
+    return response;
 };
 
-export const handler = async (event: APIGatewayEvent) => {
-    try {
+export const handler = (event: APIGatewayEvent) => {
+    return new Promise((resolve) => {
         logger.info("Handling subscription request");
 
-        const parsedBody = await parseXml(event.body ?? "");
+        const parsedBody = parseXml(event.body ?? "");
 
         logger.info("Successfully parsed xml");
 
         const subscriptionResponse = generateSubscriptionResponse(parsedBody);
 
         logger.info("Returning subscription response");
-
-        return {
+        resolve({
             statusCode: 200,
             ok: true,
             body: subscriptionResponse,
-        };
-    } catch (e) {
-        if (e instanceof Error) {
-            logger.error("There was a problem with handling the data consumer's subscription request.", e);
-
-            throw e;
-        }
-
-        throw e;
-    }
+        });
+    });
 };

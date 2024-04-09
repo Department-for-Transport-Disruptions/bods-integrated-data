@@ -22,7 +22,7 @@ The mock data producer should accept subscription requests from the BODS AVL ser
 and return this back to the requestor.
 
 The BODS AVL service sends subscription requests to the mock data producer through its own /subscribe endpoint. When a
-response is recieved from the mock data producer, the BODS AVL service /subscribe function will update a DynamoDB table
+response is received from the mock data producer, the BODS AVL service /subscribe function will update a DynamoDB table
 with the subscription details.
 
 For the local environment, the subscribe lambda is invoked using a function URL. The reason for this is that
@@ -37,8 +37,7 @@ The purpose of the `send-data` lambda is to scan the AVL subscriptions table for
 and for each individual subscription make a fetch call to the BODS AVL /data endpoint with some mock AVL data in the
 body.
 
-Currently, this lambda is triggered once every minute. (Future improvement is to trigger this Lambda once every 5
-seconds to emulate the frequency of data in production)
+This lambda is triggered once every minute.
 
 
 

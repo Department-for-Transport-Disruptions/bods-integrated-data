@@ -38,7 +38,6 @@ asdf:
 	asdf plugin add terraform https://github.com/asdf-community/asdf-hashicorp.git && \
 	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
 	asdf plugin-add sops https://github.com/feniix/asdf-sops.git && \
-	asdf plugin-add tflocal https://github.com/localstack/terraform-local.git && \
 	asdf install
 
 dev-containers-up:
@@ -60,6 +59,19 @@ tf-plan-%:
 
 tf-apply-%:
 	terraform -chdir=terraform/$* apply
+
+
+# Terraform local
+
+tf-init-local:
+	tflocal -chdir=terraform/local init
+
+tf-plan-local:
+	tflocal -chdir=terraform/local plan
+
+tf-apply-local:
+	tflocal -chdir=terraform/local apply
+
 
 # Build
 
@@ -303,6 +315,6 @@ create-lambda-noc-retriever:
 
 # CLI Helper Commands
 
-create-mock-avl-data-producer:
+create-avl-mock-data-producer:
 	cd cli-helpers && \
 	./bin/run.js create-avl-mock-data-producer

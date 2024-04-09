@@ -16,7 +16,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
   function_name = "avl-mock-data-producer-send-data"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-producer-send-data.zip"
   handler       = "index.handler"
-  memory        = 1024
+  memory        = 256
   runtime       = "nodejs20.x"
   timeout       = 120
   schedule      = "rate(1 minute)"

@@ -11,11 +11,7 @@ export const subscriptionSchema = z
     })
     .transform((data) => ({
         subscriptionId: data.PK,
-        url: data.url,
-        description: data.description,
-        shortDescription: data.shortDescription,
-        status: data.status,
-        requestorRef: data.requestorRef ?? null,
+        ...data,
     }));
 
 export const subscriptionsSchema = z.array(subscriptionSchema);

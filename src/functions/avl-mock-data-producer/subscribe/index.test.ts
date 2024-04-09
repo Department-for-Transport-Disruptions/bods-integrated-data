@@ -20,7 +20,7 @@ describe("avl-mock-data-producer-subscribe", () => {
             body: "invalid xml",
         } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidXmlRequest)).rejects.toThrowError();
+        await expect(handler(invalidXmlRequest)).rejects.toThrowError("Error parsing subscription request");
     });
 
     it("should throw an error if invalid SIRI subscription request from data consumer is received", async () => {
