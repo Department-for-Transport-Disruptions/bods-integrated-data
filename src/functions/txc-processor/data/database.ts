@@ -43,18 +43,29 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
             .where("noc", "=", operator.NationalOperatorCode)
             .executeTakeFirst();
 
+        const existingNoc = await dbClient
+            .selectFrom("noc_operator")
+            .selectAll()
+            .where("noc", "=", operator.NationalOperatorCode)
+            .executeTakeFirst();
+
         return dbClient
             .insertInto("agency_new")
-            .values(
-                existingAgency || {
+            .values({
+                ...(existingAgency || {
                     name: operator.OperatorShortName,
                     noc: operator.NationalOperatorCode,
                     url: "https://www.traveline.info",
                     registered_operator_ref: operator["@_id"],
                     phone: "",
-                },
+                }),
+                ...(existingNoc && { name: existingNoc.operator_public_name }),
+            })
+            .onConflict((oc) =>
+                oc
+                    .column("noc")
+                    .doUpdateSet({ name: existingNoc ? existingNoc.operator_public_name : operator.OperatorShortName }),
             )
-            .onConflict((oc) => oc.column("noc").doUpdateSet({ name: operator.OperatorShortName }))
             .returningAll()
             .executeTakeFirst();
     });
