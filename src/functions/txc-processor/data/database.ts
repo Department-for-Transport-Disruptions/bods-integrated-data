@@ -13,6 +13,7 @@ import {
     NewStopTime,
     Route,
     NewTrip,
+    NewAgency,
 } from "@bods-integrated-data/shared/database";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import {
@@ -49,23 +50,18 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
             .where("noc", "=", operator.NationalOperatorCode)
             .executeTakeFirst();
 
+        const newAgency: NewAgency = {
+            name: existingNoc?.operator_public_name ?? operator.OperatorShortName,
+            noc: operator.NationalOperatorCode,
+            url: "https://www.traveline.info",
+            registered_operator_ref: operator["@_id"],
+            phone: "",
+        };
+
         return dbClient
             .insertInto("agency_new")
-            .values({
-                ...(existingAgency || {
-                    name: operator.OperatorShortName,
-                    noc: operator.NationalOperatorCode,
-                    url: "https://www.traveline.info",
-                    registered_operator_ref: operator["@_id"],
-                    phone: "",
-                }),
-                ...(existingNoc && { name: existingNoc.operator_public_name }),
-            })
-            .onConflict((oc) =>
-                oc
-                    .column("noc")
-                    .doUpdateSet({ name: existingNoc ? existingNoc.operator_public_name : operator.OperatorShortName }),
-            )
+            .values(existingAgency || newAgency)
+            .onConflict((oc) => oc.column("noc").doUpdateSet(existingAgency || newAgency))
             .returningAll()
             .executeTakeFirst();
     });
