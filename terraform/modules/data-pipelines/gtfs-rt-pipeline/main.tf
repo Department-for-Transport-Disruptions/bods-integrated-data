@@ -45,7 +45,15 @@ module "integrated_data_gtfs_rt_processor_function" {
     Resource = [
       "${aws_s3_bucket.integrated_data_gtfs_rt_bucket.arn}/*"
     ]
-  }]
+    }, {
+    Action = [
+      "secretsmanager:GetSecretValue",
+    ],
+    Effect = "Allow",
+    Resource = [
+      var.db_secret_arn,
+    ]
+  }, ]
 
   env_vars = {
     BUCKET_NAME   = aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
