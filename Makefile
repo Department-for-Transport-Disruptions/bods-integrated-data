@@ -225,10 +225,10 @@ invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-unsubscriber:
-	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'263c3097-6249-4564-88aa-1ad8e68d5dec'} }).catch(e => console.error(e))"
+	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
 invoke-local-avl-unsubscriber:
-	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" awslocal lambda invoke --function-name avl-unsuscriber-local --payload '{"pathParameters": {"subscription_id":"${SUBSCRIPTION_ID}"}}' --output text /dev/stdout --cli-read-timeout 0
+	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" awslocal lambda invoke --function-name avl-unsubscriber-local --payload '{"pathParameters": {"subscription_id":"${SUBSCRIPTION_ID}"}}' --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
 
 
 
@@ -324,7 +324,7 @@ create-lambda-noc-retriever:
 	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
 
 create-lambda-avl-unsubscriber:
-	$(call create_lambda,avl-unsubscriber-local,avl-unsubscriber,TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME})
+	$(call create_lambda,avl-unsubscriber-local,avl-unsubscriber,TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME};STAGE="local")
 
 create-lambda-noc-processor:
 	$(call create_lambda,noc-processor-local,noc-processor,IS_LOCAL=true)
