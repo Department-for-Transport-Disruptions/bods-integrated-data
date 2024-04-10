@@ -23,9 +23,22 @@ const dateRange = z
         StartDate: z.string(),
         EndDate: z.string(),
     })
-    .transform((range) =>
-        getDateRange(getDate(range.StartDate), getDate(range.EndDate)).map((date) => date.format(DEFAULT_DATE_FORMAT)),
-    );
+    .transform((range) => getDateRange(getDate(range.StartDate), getDate(range.EndDate)));
+
+const formattedDateRange = dateRange.transform((dates) => dates.map((date) => date.format(DEFAULT_DATE_FORMAT)));
+
+const servicedOperationDayTypeSchema = z.object({
+    WorkingDays: z
+        .object({
+            ServicedOrganisationRef: z.string(),
+        })
+        .optional(),
+    Holidays: z
+        .object({
+            ServicedOrganisationRef: z.string(),
+        })
+        .optional(),
+});
 
 export const operatingProfileSchema = z.object({
     RegularDayType: z.object({
@@ -41,7 +54,13 @@ export const operatingProfileSchema = z.object({
                 MondayToFriday: txcSelfClosingProperty.optional(),
                 MondayToSaturday: txcSelfClosingProperty.optional(),
                 MondayToSunday: txcSelfClosingProperty.optional(),
+                NotMonday: txcSelfClosingProperty.optional(),
+                NotTuesday: txcSelfClosingProperty.optional(),
+                NotWednesday: txcSelfClosingProperty.optional(),
+                NotThursday: txcSelfClosingProperty.optional(),
+                NotFriday: txcSelfClosingProperty.optional(),
                 NotSaturday: txcSelfClosingProperty.optional(),
+                NotSunday: txcSelfClosingProperty.optional(),
                 Weekend: txcSelfClosingProperty.optional(),
             })
             .or(z.literal(""))
@@ -52,13 +71,13 @@ export const operatingProfileSchema = z.object({
         .object({
             DaysOfOperation: z
                 .object({
-                    DateRange: dateRange.array(),
+                    DateRange: formattedDateRange.array(),
                 })
                 .or(txcEmptyProperty)
                 .optional(),
             DaysOfNonOperation: z
                 .object({
-                    DateRange: dateRange.array(),
+                    DateRange: formattedDateRange.array(),
                 })
                 .or(txcEmptyProperty)
                 .optional(),
@@ -70,6 +89,13 @@ export const operatingProfileSchema = z.object({
             DaysOfOperation: transformedBankHolidayOperationSchema.or(txcEmptyProperty).optional(),
             DaysOfNonOperation: transformedBankHolidayOperationSchema.or(txcEmptyProperty).optional(),
         })
+        .optional(),
+    ServicedOrganisationDayType: z
+        .object({
+            DaysOfOperation: servicedOperationDayTypeSchema.or(txcEmptyProperty).optional(),
+            DaysOfNonOperation: servicedOperationDayTypeSchema.or(txcEmptyProperty).optional(),
+        })
+        .or(txcEmptyProperty)
         .optional(),
 });
 
@@ -227,6 +253,22 @@ export const stopSchema = z.object({
 
 export type TxcStop = z.infer<typeof stopSchema>;
 
+export const servicedOrganisationSchema = z.object({
+    OrganisationCode: z.string().optional(),
+    WorkingDays: z
+        .object({
+            DateRange: dateRange.array(),
+        })
+        .optional(),
+    Holidays: z
+        .object({
+            DateRange: dateRange.array(),
+        })
+        .optional(),
+});
+
+export type ServicedOrganisation = z.infer<typeof servicedOrganisationSchema>;
+
 export const txcSchema = z.object({
     TransXChange: z.object({
         Operators: z.object({
@@ -241,6 +283,11 @@ export const txcSchema = z.object({
         JourneyPatternSections: z.object({
             JourneyPatternSection: z.array(journeyPatternSectionSchema),
         }),
+        ServicedOrganisations: z
+            .object({
+                ServicedOrganisation: servicedOrganisationSchema.array().optional(),
+            })
+            .optional(),
         Services: z.object({
             Service: serviceSchema.array(),
         }),

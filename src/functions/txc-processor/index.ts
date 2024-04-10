@@ -8,14 +8,15 @@ import {
     txcSchema,
     TxcRoute,
     TxcJourneyPatternSection,
+    ServicedOrganisation,
 } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
+import { processCalendars } from "./data/calendar";
 import {
     insertAgencies,
-    insertCalendar,
     insertFrequencies,
     insertRoutes,
     insertShapes,
@@ -24,7 +25,7 @@ import {
     insertTrips,
 } from "./data/database";
 import { VehicleJourneyMapping } from "./types";
-import { DEFAULT_OPERATING_PROFILE, formatCalendar, hasServiceExpired } from "./utils";
+import { hasServiceExpired } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -48,58 +49,6 @@ const txcArrayProperties = [
     "DateRange",
 ];
 
-export const processCalendars = async (
-    dbClient: Kysely<Database>,
-    service: Service,
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
-    let serviceCalendarId: number | null = null;
-
-    if (service.OperatingProfile) {
-        const serviceCalendar = await insertCalendar(
-            dbClient,
-            formatCalendar(service.OperatingProfile, service.OperatingPeriod),
-        );
-
-        serviceCalendarId = serviceCalendar.id;
-    }
-
-    const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: serviceCalendarId,
-            };
-        }
-
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
-            const defaultCalendar = await insertCalendar(
-                dbClient,
-                formatCalendar(DEFAULT_OPERATING_PROFILE, service.OperatingPeriod),
-            );
-
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: defaultCalendar.id,
-            };
-        }
-
-        const calendarData = formatCalendar(
-            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
-            service.OperatingPeriod,
-        );
-
-        const calendar = await insertCalendar(dbClient, calendarData);
-
-        return {
-            ...vehicleJourneyMapping,
-            serviceId: calendar.id,
-        };
-    });
-
-    return Promise.all(updatedVehicleJourneyMappingsPromises);
-};
-
 const processServices = (
     dbClient: Kysely<Database>,
     services: Service[],
@@ -109,6 +58,7 @@ const processServices = (
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
     filePath: string,
+    servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
         if (hasServiceExpired(service)) {
@@ -164,7 +114,12 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        vehicleJourneyMappings = await processCalendars(dbClient, service, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processCalendars(
+            dbClient,
+            service,
+            vehicleJourneyMappings,
+            servicedOrganisations,
+        );
         vehicleJourneyMappings = await insertShapes(
             dbClient,
             services,
@@ -238,6 +193,7 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
         TransXChange.JourneyPatternSections.JourneyPatternSection,
         agencyData,
         record.s3.object.key,
+        TransXChange.ServicedOrganisations?.ServicedOrganisation,
     );
 };
 
