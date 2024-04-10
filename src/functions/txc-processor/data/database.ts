@@ -45,7 +45,7 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
             .executeTakeFirst();
 
         const existingNoc = await dbClient
-            .selectFrom("noc_operator")
+            .selectFrom("noc_operator_new")
             .selectAll()
             .where("noc", "=", operator.NationalOperatorCode)
             .executeTakeFirst();
