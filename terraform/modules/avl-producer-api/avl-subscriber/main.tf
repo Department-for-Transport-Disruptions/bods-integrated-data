@@ -20,8 +20,3 @@ module "avl_subscriber" {
   runtime       = "nodejs20.x"
   timeout       = 120
 }
-
-output "lambda_arn" {
-  description = "Lambda ARN"
-  value       = module.avl_subscriber.lambda_arn
-}

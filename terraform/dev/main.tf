@@ -115,8 +115,8 @@ module "integrated_data_txc_pipeline" {
   db_host                = module.integrated_data_aurora_db_dev.db_host
   tnds_ftp_credentials   = local.secrets["tnds_ftp"]
   rds_output_bucket_name = module.integrated_data_aurora_db_dev.s3_output_bucket_name
-  alarm_topic_arn      = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn         = module.integrated_data_monitoring_dev.ok_topic_arn
+  alarm_topic_arn        = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn           = module.integrated_data_monitoring_dev.ok_topic_arn
 }
 
 module "integrated_data_gtfs_downloader" {
@@ -124,6 +124,17 @@ module "integrated_data_gtfs_downloader" {
 
   environment      = local.env
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
+}
+
+module "integrated_data_gtfs_rt_pipeline" {
+  source = "../modules/data-pipelines/gtfs-rt-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
 module "integrated_data_avl_pipeline" {
@@ -162,19 +173,21 @@ module "integrated_data_avl_subscriber" {
   environment = local.env
 }
 
-module "integrated_data_avl_producer_api_gateway" {
-  source = "../modules/avl-producer-api/api-gateway"
-
-  environment              = local.env
-  subscribe_lambda_arn     = module.integrated_data_avl_subscriber.lambda_arn
-  data_endpoint_lambda_arn = module.integrated_data_avl_data_endpoint.lambda_arn
-}
-
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
   environment = local.env
-  bucket_arn  = module.integrated_data_avl_pipeline.bucket_arn
+  bucket_name = module.integrated_data_avl_pipeline.bucket_name
+}
+
+module "integrated_data_avl_producer_api_gateway" {
+  source = "../modules/avl-producer-api/api-gateway"
+
+  environment                     = local.env
+  subscribe_lambda_name           = module.integrated_data_avl_subscriber.lambda_name
+  subscribe_lambda_invoke_arn     = module.integrated_data_avl_subscriber.invoke_arn
+  data_endpoint_lambda_name       = module.integrated_data_avl_data_endpoint.lambda_name
+  data_endpoint_lambda_invoke_arn = module.integrated_data_avl_data_endpoint.invoke_arn
 }
 
 locals {
@@ -185,5 +198,10 @@ locals {
 module "integrated_data_noc_pipeline" {
   source = "../modules/data-pipelines/noc-pipeline"
 
-  environment = local.env
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
 }
