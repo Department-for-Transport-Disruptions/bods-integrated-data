@@ -1,37 +1,60 @@
 # BODS Integrated Data
 
-This repo contains the code for the BODS Integrated Data platform, this encompasses the following functionality:
+Code for the Bus Open Data Service (BODS) integrated data platform, which includes the following:
 
-- GTFS and GTFS-RT generation
-- AVL Data Pipeline
-- Data Warehouse
+- [AVL](https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide#:~:text=of%20the%20UK.-,Automatic%20Vehicle%20Location%20(AVL),-%3A%20automatic%20vehicle%20location) data subscriptions
+- [GTFS](https://gtfs.org/) feed generation via [TransXChange](https://www.gov.uk/government/collections/transxchange) data mapping
 
-## Local Development
+Visit the [Bus open data implementation guide](https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide) for more information about BODS.
 
-### Requirements
+## Table of Contents
 
-This repo uses asdf to manage the versions of various dependencies, install that first before proceeding with the setup.
+- [Table of Contents](#table-of-contents)
+- [Dependencies](#dependencies)
+  - [Log in with the AWS CLI](#log-in-with-the-aws-cli)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [AVL subscriptions](#avl-subscriptions)
+  - [NaPTAN data retrieval](#naptan-data-retrieval)
+  - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
+    - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
+    - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
+  - [GTFS feed generation](#gtfs-feed-generation)
+    - [GTFS Schedule](#gtfs-schedule)
+    - [GTFS Realtime](#gtfs-realtime)
+  - [Creating and invoking lambda functions locally](#creating-and-invoking-lambda-functions-locally)
+- [Configuration](#configuration)
+  - [Adding and updating secrets](#adding-and-updating-secrets)
+  - [Using secrets in Terraform](#using-secrets-in-terraform)
+- [Testing](#testing)
+- [CICD](#cicd)
+  - [Workflow](#workflow)
+  - [Environments](#environments)
+  - [Deploying changes locally](#deploying-changes-locally)
+- [Known Issues](#known-issues)
+- [Getting involved](#getting-involved)
+- [Licence](#licence)
 
-- asdf
-  - https://asdf-vm.com/guide/getting-started.html
-- AWS CLI Session Manager Plugin
-  - https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
-- Docker
-  - https://rancherdesktop.io/
-- awslocal
-  - https://github.com/localstack/awscli-local
-- pnpm
-  - https://pnpm.io/installation
+## Dependencies
 
-### Local Setup
+The following dependencies are required. An AWS account is also required.
 
-After installing the above dependencies, run the following to install the required asdf plugins and install the desired versions. It will then start the docker containers for postgres and localstack, create the needed localstack resources and then run the local DB migrations:
+|Dependency|Description|
+|-|-|
+|[asdf](https://asdf-vm.com/guide/getting-started.html)|Runtime version manager|
+|[AWS CLI](https://aws.amazon.com/cli/)|AWS command line tool|
+|[AWS Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)|Session management plugin for AWS CLI|
+|[awslocal](https://github.com/localstack/awscli-local)|localstack wrapper for AWS CLI|
+|[Docker](https://rancherdesktop.io/)|Platform for running containerised code|
+|[pnpm](https://pnpm.io/installation)|Package manager|
 
-```bash
-make asdf setup
-```
+The following dependencies are optional:
 
-Log in to the AWS CLI:
+|Dependency|Description|
+|-|-|
+|[localstack desktop](https://www.localstack.cloud/)|Desktop UI for localstack|
+
+### Log in with the AWS CLI
 
 ```bash
 aws configure sso
@@ -53,6 +76,156 @@ Then export the profile as a shell variable:
 
 ```bash
 export AWS_PROFILE=bods-integrated-data-dev
+```
+
+## Installation
+
+The provided Makefile includes commands for installing and running software. To begin:
+
+```bash
+make asdf setup
+```
+
+This will:
+
+- install required asdf plugins
+- start docker containers for postgres and localstack
+- create the localstack resources
+- run local database migrations
+
+Run the local `txc-retriever` to create the remaining database tables:
+
+```bash
+make run-local-txc-retriever
+```
+
+Connect to the database with your preferred database client:
+
+```text
+Host: localhost
+Port: 5432
+Username: postgres
+Password: password
+```
+
+## Usage
+
+### AVL subscriptions
+
+todo
+
+### NaPTAN data retrieval
+
+Download all NaPTAN data into the localstack container:
+
+```bash
+make run-local-naptan-retriever
+```
+
+Insert NaPTAN data into the database:
+
+```bash
+make run-local-naptan-uploader
+```
+
+### TXC data retrieval and processing
+
+#### Bus Open Data Service (BODS)
+
+BODS data is publicly available. Download all TXC data into the localstack container:
+
+```bash
+make run-local-bods-txc-retriever
+```
+
+All BODS data will belong to a single `bods.zip` archive. Unzip the archive:
+
+```bash
+make run-bods-txc-unzipper FILE=bods.zip
+```
+
+The resulting files can be listed using the AWS CLI:
+
+```bash
+awslocal s3api list-objects --bucket integrated-data-bods-txc-local
+```
+
+Insert data into the database for a given file (requires NaPTAN data to exist in the database - see NaPTAN section above):
+
+```bash
+make run-local-bods-txc-processor FILE="bods/Acme_Bus_Co_314/A_ACME_PF1102351_14_1_2021-09-06.xml"
+```
+
+#### Traveline National Dataset (TNDS)
+
+TNDS data is behind authorisation. First find the AWS ARN of the secrete that contains auth credentials:
+
+```bash
+aws secretesmanager list-secrets
+```
+
+Then copy the `ARN` for the secret with the description "Integrated data tnds ftp credentials - dev".
+
+Download all TNDS data into the localstack container with this ARN:
+
+```bash
+run-local-tnds-txc-retriever TNDS_FTP_ARN="{TNDS_FTP_ARN}"
+```
+
+Unlike BODS, TNDS provides multiple archives. The resulting files can be listed using the AWS CLI:
+
+```bash
+awslocal s3api list-objects --bucket integrated-data-tnds-txc-zipped-local
+```
+
+Unzip a specified archive:
+
+```bash
+make run-tnds-txc-unzipper FILE=S.zip
+```
+
+The resulting files can be listed using the AWS CLI:
+
+```bash
+awslocal s3api list-objects --bucket integrated-data-tnds-txc-local
+```
+
+Map and insert data into the database for a given file (requires NaPTAN data to exist in the database - see NaPTAN section above):
+
+```bash
+make run-local-tnds-txc-processor FILE="S/S_SC_STWS_X79_2_A.xml"
+```
+
+### GTFS feed generation
+
+#### GTFS Schedule
+
+Generate a GTFS feed from the database data:
+
+```bash
+make run-local-gtfs-timetables-generator
+```
+
+A single `gtfs.zip` file will be uploaded to the `integrated-data-gtfs-timetables-{ENV}` bucket.
+
+A temporary publicly accessible URL can be generated to download the file:
+
+```bash
+make run-local-gtfs-downloader
+```
+
+#### GTFS Realtime
+
+The GTFS RT feed subscription-based, but a snapshot of the feed can be generated (requires AVL data to exist in the database - see AVL section above):
+
+```bash
+make run-gtfs-rt-generator
+```
+
+The resulting file can be manually downloaded:
+
+```bash
+awslocal s3api get-object --bucket integrated-data-gtfs-rt-local --key gtfs-rt.bin local-gtfs-rt.bin
 ```
 
 ### Creating and invoking lambda functions locally
@@ -104,34 +277,9 @@ make invoke-local-{LAMBDA_NAME}
 FILE=bods.zip make invoke-local-bods-txc-unzipper
 ```
 
-### Terraform
+## Configuration
 
-To run terraform plans and applies locally, first init the Terraform workspace:
-
-```bash
-make tf-init-{ENV}
-```
-
-then use the provided Make commands:
-
-```bash
-make tf-plan-{ENV}
-make tf-apply-{ENV}
-```
-
-for example, to run a plan against the dev environment, run `make tf-plan-dev` after authenticating against the dev AWS account.
-
-### Deploying lambda function changes
-
-If there's a need to deploy lambda code changes locally (best to use the CI where possible), the functions need to be built first, run:
-
-```bash
-make install-deps build-functions
-```
-
-to do this. Then run a `make tf-apply-{ENV}` to deploy the changes. Terraform will see the new bundled functions and deploy the changes.
-
-## Adding or updating secrets
+### Adding and updating secrets
 
 [SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS key to encrypt a secrets file which can then be committed into version control.
 
@@ -143,7 +291,7 @@ make edit-secrets-{ENV}
 
 This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will automatically encrypt the new file which can then be pushed.
 
-### Using SOPS secrets in Terraform
+### Using secrets in Terraform
 
 To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the secrets file in a data block. The secrets can then be extracted. An example of this would be:
 
@@ -162,10 +310,80 @@ locals {
 }
 ```
 
-## CI Pipelines
+## Testing
 
-On creating a Pull Request, a Github Actions pipeline will trigger which will generate a terraform plan and save it as a comment to the Pull Request. It will also run tflint and run the tests for the lambda functions.
+Automated testing is configured with [Vitest](https://vitest.dev/).
+Configuration includes a CLI test report and a HTML test coverage report.
 
-When the PR is approved, the CI will run a terraform apply, this is to ensure that any code in main will successfully deploy. After it has deployed successfully, the code can be merged.
+To run all tests:
 
-The pipelines will detect which lambda functions have been updated and it will only build those functions, this ensures that terraform will only apply changes to functions that have actually been changed as part of the PR.
+```bash
+make test-functions
+```
+
+To run tests within a specific lambda function:
+
+```bash
+cd src/functions/{folder}
+pnpm test
+```
+
+## CICD
+
+### Workflow
+
+On PR creation:
+
+- Terraform plan generation (saved as a comment to the PR)
+- Terraform linting
+- Lambda functions linting and unit testing
+
+On PR approval:
+
+- Terraform apply
+- Lambda functions build and deploy (only those with changes)
+
+### Environments
+
+|Environment|Notes|
+|-|-|
+|`local`|local environment used with localstack|
+|`dev`|Deployed environment used for dev testing|
+|`prod`|Not used yet|
+
+### Deploying changes locally
+
+Deploying manually is possible. First initialise Terraform:
+
+```bash
+# replace {ENV} with a known environment
+make tf-init-{ENV}
+```
+
+Then run a plan and/or apply:
+
+```bash
+# replace {ENV} with a known environment
+make tf-init-{ENV}
+make tf-plan-{ENV}
+make tf-apply-{ENV}
+```
+
+To deploy lambda functions, first build the functions before applying:
+
+```bash
+make install-deps build-functions
+make tf-apply-{ENV}
+```
+
+## Known Issues
+
+- Deadlock errors can occur when inserting large amounts of data quickly into the database during TXC processing (being investigated)
+
+## Getting involved
+
+todo
+
+## Licence
+
+todo
