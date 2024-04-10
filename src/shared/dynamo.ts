@@ -1,12 +1,18 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
+
 const dynamoDbDocClient = DynamoDBDocumentClient.from(
     new DynamoDBClient({
         region: "eu-west-2",
         ...(process.env.IS_LOCAL === "true"
             ? {
-                  endpoint: "http://localhost:4566",
+                  endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
+                  credentials: {
+                      accessKeyId: "DUMMY",
+                      secretAccessKey: "DUMMY",
+                  },
               }
             : {}),
     }),

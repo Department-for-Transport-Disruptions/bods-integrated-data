@@ -99,6 +99,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
 
         logger.info("Starting Data Endpoint");
+        logger.info(process.env.LOCALSTACK_HOSTNAME ?? "");
 
         if (!event.body) {
             throw new Error("No body sent with event");
