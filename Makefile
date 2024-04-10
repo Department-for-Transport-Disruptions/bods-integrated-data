@@ -12,6 +12,7 @@ GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
+AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 dev: dev-containers-up
 setup: dev-containers-up create-buckets install-deps migrate-local-db-to-latest create-dynamodb-table create-lambdas
@@ -165,9 +166,6 @@ run-tnds-txc-unzipper:
 run-local-bods-txc-processor:
 	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${BODS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
-run-local-gtfs-timetables-generator:
-	FILE=${FILE} IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/gtfs-timetables-generator'; handler().catch(e => console.error(e))"
-
 invoke-local-bods-txc-retriever:
 	awslocal lambda invoke --function-name bods-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
@@ -188,6 +186,9 @@ invoke-local-bods-txc-processor:
 
 
 # GTFS
+
+run-local-gtfs-timetables-generator:
+	OUTPUT_BUCKET=${AURORA_OUTPUT_BUCKET_NAME} GTFS_BUCKET=${GTFS_ZIPPED_BUCKET_NAME} IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/gtfs-timetables-generator'; handler().catch(e => console.error(e))"
 
 run-local-gtfs-downloader:
 	IS_LOCAL=true BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
