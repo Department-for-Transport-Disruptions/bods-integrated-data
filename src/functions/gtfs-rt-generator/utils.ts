@@ -28,7 +28,7 @@ export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEnti
     let startTime = null;
     let scheduleRelationship = null;
 
-    if (avl.route_id || avl.route_id == 0) {
+    if (avl.route_id || avl.route_id === 0) {
         routeId = avl.route_id.toString();
         scheduleRelationship = transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED;
 
