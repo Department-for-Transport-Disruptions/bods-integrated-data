@@ -4,7 +4,7 @@
   "description": "Function to send mock AVL data to our AVL data consumer",
   "scripts": {
     "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-mock-data-producer-send-data.zip .",
-    "build:local": "pnpm run build:ci && mkdir -p ../../dist && cp ./dist/avl-mock-data-producer-send-data.zip ../../dist",
+    "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-mock-data-producer-send-data.zip ../dist",
     "test": "vitest run"
   },
   "keywords": [],
