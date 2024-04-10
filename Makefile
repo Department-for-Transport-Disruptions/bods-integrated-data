@@ -227,6 +227,10 @@ invoke-local-avl-aggregate-siri-vm:
 run-local-avl-unsubscriber:
 	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'263c3097-6249-4564-88aa-1ad8e68d5dec'} }).catch(e => console.error(e))"
 
+invoke-local-avl-unsubscriber:
+	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" awslocal lambda invoke --function-name avl-unsuscriber-local --payload '{"pathParameters": {"subscription_id":"${SUBSCRIPTION_ID}"}}' --output text /dev/stdout --cli-read-timeout 0
+
+
 
 # NOC
 
@@ -251,7 +255,8 @@ create-lambdas: \
 	create-lambda-gtfs-downloader \
 	create-lambda-noc-retriever \
 	create-lambda-noc-processor \
-	create-lambda-gtfs-rt-generator
+	create-lambda-gtfs-rt-generator \
+	create-lambda-avl-unsubscriber
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
@@ -267,7 +272,8 @@ delete-lambdas: \
 	delete-lambda-gtfs-downloader \
 	delete-lambda-noc-retriever \
 	delete-lambda-noc-processor \
-	delete-lambda-gtfs-rt-generator
+	delete-lambda-gtfs-rt-generator \
+	delete-lambda-avl-unsubscriber
 
 remake-lambdas: delete-lambdas create-lambdas
 
