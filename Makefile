@@ -81,7 +81,7 @@ create-avl-local-env:
 	tflocal -chdir=terraform/local apply --auto-approve
 
 build-cli-helpers:
-	cd src/cli-helpers && pnpm run build
+	cd cli-helpers && pnpm i && pnpm run build
 
 install-deps:
 	cd src && pnpm i
@@ -346,5 +346,5 @@ create-lambda-noc-processor:
 # CLI Helper Commands
 
 create-avl-mock-data-producer:
-	cd src/cli-helpers && \
+	cd cli-helpers && \
 	./bin/run.js create-avl-mock-data-producer
