@@ -155,7 +155,13 @@ BODS data is publicly available. Download all TXC data into the localstack conta
 make run-local-bods-txc-retriever
 ```
 
-All BODS data will belong to a single `bods.zip` archive. Unzip the archive:
+BODS provides multiple archives. The resulting files can be listed using the AWS CLI:
+
+```bash
+awslocal s3api list-objects --bucket integrated-data-bods-txc-zipped-local
+```
+
+Unzip a specified archive:
 
 ```bash
 make run-bods-txc-unzipper FILE=bods.zip
@@ -191,7 +197,7 @@ Download all TNDS data into the localstack container with this ARN:
 run-local-tnds-txc-retriever TNDS_FTP_ARN="{TNDS_FTP_ARN}"
 ```
 
-Unlike BODS, TNDS provides multiple archives. The resulting files can be listed using the AWS CLI:
+TNDS provides multiple archives. The resulting files can be listed using the AWS CLI:
 
 ```bash
 awslocal s3api list-objects --bucket integrated-data-tnds-txc-zipped-local
