@@ -64,7 +64,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_mock_producer_api_i
   count                  = var.environment == "local" ? 0 : 1
   api_id                 = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
   integration_type       = "AWS_PROXY"
-  integration_uri        = module.integrated_data_avl_mock_data_producer_subscribe.function_name
+  integration_uri        = module.integrated_data_avl_mock_data_producer_subscribe.invoke_arn
   integration_method     = "POST"
   payload_format_version = "2.0"
 }
