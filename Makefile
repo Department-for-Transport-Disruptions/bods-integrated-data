@@ -165,6 +165,9 @@ run-tnds-txc-unzipper:
 run-local-bods-txc-processor:
 	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${BODS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
+run-local-tnds-txc-processor:
+	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${TNDS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+
 run-local-gtfs-timetables-generator:
 	FILE=${FILE} IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/gtfs-timetables-generator'; handler().catch(e => console.error(e))"
 
@@ -185,6 +188,9 @@ invoke-local-tnds-txc-unzipper:
 
 invoke-local-bods-txc-processor:
 	FILE=${FILE} awslocal lambda invoke --function-name txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-tnds-txc-processor:
+	FILE=${FILE} awslocal lambda invoke --function-name txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${TNDS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 
 # GTFS
