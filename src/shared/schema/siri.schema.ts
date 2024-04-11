@@ -16,6 +16,7 @@ const vehicleActivitySchema = z.object({
         Occupancy: z.string().optional(),
         OperatorRef: z.string(),
         OriginRef: z.string().optional(),
+        OriginAimedDepartureTime: z.string().optional(),
         DestinationRef: z.string().optional(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
@@ -59,6 +60,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
         bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
         published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
         origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+        origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
         destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
         block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
     }));
@@ -87,6 +89,7 @@ export const avlSchema = z.object({
     isCompleteStopSequence: z.boolean().nullish(),
     publishedLineName: z.string().nullish(),
     originRef: z.string().nullish(),
+    originAimedDepartureTime: z.string().nullish(),
     destinationRef: z.string().nullish(),
     blockRef: z.string().nullish(),
 });
