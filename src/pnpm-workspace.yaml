@@ -1,3 +1,4 @@
 packages:
     - "functions/**/*"
     - "shared"
+    - "cli-helpers"

@@ -14,7 +14,7 @@ NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 
 dev: dev-containers-up
-setup: dev-containers-up build-cli-helpers create-buckets install-deps migrate-local-db-to-latest create-lambdas create-avl-local-env
+setup: dev-containers-up install-deps build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -28,7 +28,7 @@ define create_lambda
 	 --handler index.handler \
 	 --role arn:aws:iam::000000000000:role/lambda-role \
 	 --environment "Variables={$(subst ;,$(comma),$(3))}" \
-	 --timeout 600 \
+	 --timeout 600 > /dev/null \
 	 || true
 endef
 
@@ -81,7 +81,7 @@ create-avl-local-env:
 	tflocal -chdir=terraform/local apply --auto-approve
 
 build-cli-helpers:
-	cd cli-helpers && pnpm i && pnpm run build
+	cd src/cli-helpers && pnpm run build
 
 install-deps:
 	cd src && pnpm i
@@ -346,5 +346,5 @@ create-lambda-noc-processor:
 # CLI Helper Commands
 
 create-avl-mock-data-producer:
-	cd cli-helpers && \
+	cd src/cli-helpers && \
 	./bin/run.js create-avl-mock-data-producer
