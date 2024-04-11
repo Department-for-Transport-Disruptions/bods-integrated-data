@@ -24,6 +24,7 @@ terraform {
 }
 
 data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
@@ -173,6 +174,8 @@ module "integrated_data_avl_subscriber" {
   environment                 = local.env
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   avl_data_endpoint           = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
 }
 
 module "integrated_data_avl_data_endpoint" {
@@ -187,6 +190,8 @@ module avl_mock_data_producer {
 
   environment                 = local.env
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
 }
 
 module "integrated_data_avl_producer_api_gateway" {

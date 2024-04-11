@@ -19,3 +19,13 @@ variable avl_data_endpoint {
   type        = string
   description = "HTTP API endpoint URL for the AVL Producer /data endpoint"
 }
+
+variable aws_account_id {
+  type        = string
+  description = "AWS account id"
+}
+
+variable aws_region {
+  type        = string
+  description = "AWS region"
+}

@@ -125,8 +125,8 @@ const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: s
     logger.info("Uploading subscription auth credentials to parameter store");
 
     await Promise.all([
-        putParameter(`subscription/${subscriptionId}/username`, username, "SecureString", true),
-        putParameter(`subscription/${subscriptionId}/password`, password, "SecureString", true),
+        putParameter(`/subscription/${subscriptionId}/username`, username, "SecureString", true),
+        putParameter(`/subscription/${subscriptionId}/password`, password, "SecureString", true),
     ]);
 };
 
