@@ -39,9 +39,9 @@ module "avl_subscriber" {
 
 
   env_vars = {
-    TABLE_NAME              = var.avl_subscription_table_name,
-    STAGE                   = var.environment,
-    LOCAL_PRODUCER_ENDPOINT = var.avl_local_data_producer_endpoint
-    DATA_ENDPOINT           = var.avl_data_endpoint
+    TABLE_NAME                       = var.avl_subscription_table_name,
+    STAGE                            = var.environment,
+    MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = var.avl_mock_data_producer_subscribe_endpoint
+    DATA_ENDPOINT                    = var.avl_data_endpoint
   }
 }

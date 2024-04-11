@@ -171,11 +171,12 @@ module "integrated_data_avl_subscription_table" {
 module "integrated_data_avl_subscriber" {
   source = "../modules/avl-producer-api/avl-subscriber"
 
-  environment                 = local.env
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  avl_data_endpoint           = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
+  environment                               = local.env
+  avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
+  avl_mock_data_producer_subscribe_endpoint = "${module.avl_mock_data_producer.endpoint}/subscribe"
+  avl_data_endpoint                         = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
+  aws_account_id                            = data.aws_caller_identity.current.account_id
+  aws_region                                = data.aws_region.current.name
 }
 
 module "integrated_data_avl_data_endpoint" {
@@ -192,6 +193,7 @@ module avl_mock_data_producer {
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
+  avl_consumer_data_endpoint  = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
 }
 
 module "integrated_data_avl_producer_api_gateway" {

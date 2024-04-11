@@ -8,11 +8,11 @@ variable avl_subscription_table_name {
   description = "AVL Subscription DynamoDB table name"
 }
 
-variable avl_local_data_producer_endpoint {
+variable avl_mock_data_producer_subscribe_endpoint {
   type        = string
-  description = "Endpoint for the mock data producer when running locally"
-  default     = null
   nullable    = true
+  default     = null
+  description = "URL for the mock data producer subscribe endpoint"
 }
 
 variable avl_data_endpoint {

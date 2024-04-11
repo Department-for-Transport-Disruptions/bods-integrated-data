@@ -3,11 +3,9 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "avl_consumer_data_endpoint_url_local" {
+variable "avl_consumer_data_endpoint" {
   type        = string
-  description = "Function url for the AVL service /data endpoint for local development"
-  default     = null
-  nullable    = true
+  description = "URL for the AVL consumer data endpoint."
 }
 
 variable "avl_subscription_table_name" {

@@ -96,7 +96,7 @@ const parseXml = async (xml: string) => {
             parsedJson.error.format(),
         );
 
-        throw new Error("Error parsing data");
+        return null;
     }
 
     return parsedJson.data;
@@ -135,7 +135,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     avlSubscribeMessage: AvlSubscribeMessage,
     tableName: string,
     dataEndpoint: string,
-    localProducerEndpoint?: string,
+    mockProducerSubscribeEndpoint?: string,
 ) => {
     const currentTimestamp = getDate().toISOString();
     // Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
@@ -152,9 +152,10 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         dataEndpoint,
     );
 
-    const url = localProducerEndpoint
-        ? localProducerEndpoint
-        : `${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`;
+    const url =
+        mockProducerSubscribeEndpoint && avlSubscribeMessage.requestorRef === "BODS_MOCK_PRODUCER"
+            ? mockProducerSubscribeEndpoint
+            : avlSubscribeMessage.dataProducerEndpoint;
 
     const subscriptionResponse = await fetch(url, {
         method: "POST",
@@ -164,7 +165,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     if (!subscriptionResponse.ok) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
         throw new Error(
-            `There was an error when sending the subscription request to the data producer: ${avlSubscribeMessage.dataProducerEndpoint}, status code: ${subscriptionResponse.status}`,
+            `There was an error when sending the subscription request to the data producer: ${url}, status code: ${subscriptionResponse.status}`,
         );
     }
 
@@ -178,6 +179,11 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     }
 
     const parsedResponseBody = await parseXml(subscriptionResponseBody);
+
+    if (!parsedResponseBody) {
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+        throw new Error(`Error parsing subscription response from: ${avlSubscribeMessage.dataProducerEndpoint}`);
+    }
 
     if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
@@ -194,7 +200,7 @@ export const handler = async (event: APIGatewayEvent) => {
         const {
             TABLE_NAME: tableName,
             STAGE: stage,
-            LOCAL_PRODUCER_ENDPOINT: localProducerEndpoint,
+            MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
             DATA_ENDPOINT: dataEndpoint,
         } = process.env;
 
@@ -202,8 +208,8 @@ export const handler = async (event: APIGatewayEvent) => {
             throw new Error("Missing env vars: TABLE_NAME and DATA_ENDPOINT must be set.");
         }
 
-        if (stage === "local" && !localProducerEndpoint) {
-            throw new Error("Missing env var: LOCAL_PRODUCER_ENDPOINT must be set when STAGE === local");
+        if (stage === "local" && !mockProducerSubscribeEndpoint) {
+            throw new Error("Missing env var: MOCK_PRODUCER_ENDPOINT must be set when STAGE === local");
         }
 
         logger.info("Starting AVL subscriber");
@@ -227,7 +233,7 @@ export const handler = async (event: APIGatewayEvent) => {
             avlSubscribeMessage,
             tableName,
             dataEndpoint,
-            localProducerEndpoint,
+            mockProducerSubscribeEndpoint,
         );
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);

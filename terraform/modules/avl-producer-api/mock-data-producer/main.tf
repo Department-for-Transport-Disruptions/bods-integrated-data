@@ -35,7 +35,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
 
   env_vars = {
     STAGE         = var.environment
-    DATA_ENDPOINT = var.environment == "local" ? var.avl_consumer_data_endpoint_url_local : aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].api_endpoint
+    DATA_ENDPOINT = var.avl_consumer_data_endpoint
     TABLE_NAME    = var.avl_subscription_table_name
   }
 }
