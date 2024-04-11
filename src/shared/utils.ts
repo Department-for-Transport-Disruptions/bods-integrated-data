@@ -16,7 +16,7 @@ export const notEmpty = <T>(value: T | null | undefined): value is T => {
     return value !== null && value !== undefined;
 };
 
-export const getRouteTypeFromServiceMode = (mode: string) => {
+export const getRouteTypeFromServiceMode = (mode?: string) => {
     switch (mode) {
         case "bus":
             return RouteType.Bus;
