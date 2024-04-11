@@ -3,8 +3,8 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "bucket_arn" {
+variable "bucket_name" {
   type        = string
-  description = "The ARN of the bucket to put unprocessed SIRI-VM files into."
+  description = "The name of the bucket to put unprocessed SIRI-VM files into."
 }
 
