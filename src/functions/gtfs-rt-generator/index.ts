@@ -1,19 +1,34 @@
 import { logger } from "@baselime/lambda-logger";
-import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, sql } from "@bods-integrated-data/shared/database";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
+import { ExtendedAvl } from "./types";
 import { mapAvlToGtfsEntity } from "./utils";
 
-const getAvlDataFromDatabase = async (): Promise<Avl[]> => {
+/**
+ * Get all AVL data from the database along with a route ID and trip ID for each AVL row.
+ * The route ID is determined by looking up the route that matches the concatenation of the
+ * AVL's operator and line refs with the concatenation of the route's national operator code
+ * and short name. The trip ID is then determined by looking up the trip with this route ID
+ * and that matches the trip's ticket machine journey code with the AVL's dated vehicle
+ * journey ref, to ensure a single trip is matched. Note that it is possible for no matching
+ * route ID or trip ID to be found.
+ * @returns An array of AVL data enriched with route and trip IDs
+ */
+const getAvlDataFromDatabase = async () => {
     const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
 
     try {
-        return await dbClient
-            .selectFrom("avl")
-            .distinctOn(["operator_ref", "vehicle_ref"])
-            .selectAll("avl")
-            .orderBy(["operator_ref", "vehicle_ref", "response_time_stamp desc"])
-            .execute();
+        const queryResult = await sql<ExtendedAvl>`
+            SELECT avl.*, routes_with_noc.route_id AS route_id, trip_new.id as trip_id FROM avl
+            LEFT OUTER JOIN (
+            SELECT route_new.id AS route_id, CONCAT(agency_new.noc, route_new.route_short_name) AS concat_noc_route_short_name FROM route_new
+            JOIN agency_new ON route_new.agency_id = agency_new.id
+            ) routes_with_noc ON routes_with_noc.concat_noc_route_short_name = CONCAT(avl.operator_ref, avl.line_ref)
+            LEFT OUTER JOIN trip_new ON trip_new.route_id = routes_with_noc.route_id AND trip_new.ticket_machine_journey_code = avl.dated_vehicle_journey_ref;
+        `.execute(dbClient);
+
+        return queryResult.rows;
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);

@@ -30,6 +30,7 @@ export const testSiri = `
                     </VehicleLocation>
                     <BlockRef>blockRef</BlockRef>
                     <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:13:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>
                     <PublishedLineName>1</PublishedLineName>
                 </MonitoredVehicleJourney>
@@ -54,6 +55,7 @@ export const testSiri = `
                     </VehicleLocation>
                     <BlockRef>blockRef</BlockRef>
                     <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>
                     <PublishedLineName>1</PublishedLineName>
                 </MonitoredVehicleJourney>
@@ -96,6 +98,7 @@ export const testInvalidSiri = `
                     <IsCompleteStopSequence>false</IsCompleteStopSequence>
                     <BlockRef>blockRef</BlockRef>
                     <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>
                     <PublishedLineName>1</PublishedLineName>
                 </MonitoredVehicleJourney>
@@ -123,6 +126,7 @@ export const parsedSiri = [
         bearing: "0",
         published_line_name: "1",
         origin_ref: "originRef",
+        origin_aimed_departure_time: "2018-08-17T15:13:20",
         destination_ref: "destinationRef",
         block_ref: "blockRef",
     },
@@ -143,6 +147,7 @@ export const parsedSiri = [
         bearing: "0",
         published_line_name: "1",
         origin_ref: "originRef",
+        origin_aimed_departure_time: "2018-08-17T15:22:20",
         destination_ref: "destinationRef",
         block_ref: "blockRef",
     },

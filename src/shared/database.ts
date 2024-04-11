@@ -1,6 +1,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
+export { sql } from "kysely";
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
@@ -147,6 +148,7 @@ export interface AvlTable {
     bearing: string | null;
     published_line_name: string | null;
     origin_ref: string | null;
+    origin_aimed_departure_time: string | null;
     destination_ref: string | null;
     block_ref: string | null;
 }
@@ -328,6 +330,7 @@ export interface GtfsTripTable {
     trip_headsign: string;
     wheelchair_accessible: WheelchairAccessibility;
     vehicle_journey_code: string;
+    ticket_machine_journey_code: string;
     file_path: string;
 }
 
