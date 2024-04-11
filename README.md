@@ -15,6 +15,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
 - [Installation](#installation)
 - [Usage](#usage)
   - [AVL subscriptions](#avl-subscriptions)
+  - [NOC data retrieval](#noc-data-retrieval)
   - [NaPTAN data retrieval](#naptan-data-retrieval)
   - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
     - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
@@ -114,6 +115,20 @@ Password: password
 
 todo
 
+### NOC data retrieval
+
+Download all NOC data into the localstack container:
+
+```bash
+make run-local-noc-retriever
+```
+
+Insert NOC data into the database:
+
+```bash
+make run-local-noc-processor FILE=noc.xml
+```
+
 ### NaPTAN data retrieval
 
 Download all NaPTAN data into the localstack container:
@@ -131,6 +146,8 @@ make run-local-naptan-uploader
 ### TXC data retrieval and processing
 
 #### Bus Open Data Service (BODS)
+
+> BODS data mapping requires NOC and NapTAN data to exist in the database first (see NOC and NaPTAN sections above).
 
 BODS data is publicly available. Download all TXC data into the localstack container:
 
@@ -150,13 +167,15 @@ The resulting files can be listed using the AWS CLI:
 awslocal s3api list-objects --bucket integrated-data-bods-txc-local
 ```
 
-Insert data into the database for a given file (requires NaPTAN data to exist in the database - see NaPTAN section above):
+Insert data into the database for a given file:
 
 ```bash
 make run-local-bods-txc-processor FILE="bods/Acme_Bus_Co_314/A_ACME_PF1102351_14_1_2021-09-06.xml"
 ```
 
 #### Traveline National Dataset (TNDS)
+
+> TNDS data mapping requires NOC and NapTAN data to exist in the database first (see NOC and NaPTAN sections above).
 
 TNDS data is behind authorisation. First find the AWS ARN of the secrete that contains auth credentials:
 
@@ -190,7 +209,7 @@ The resulting files can be listed using the AWS CLI:
 awslocal s3api list-objects --bucket integrated-data-tnds-txc-local
 ```
 
-Map and insert data into the database for a given file (requires NaPTAN data to exist in the database - see NaPTAN section above):
+Map and insert data into the database for a given file:
 
 ```bash
 make run-local-tnds-txc-processor FILE="S/S_SC_STWS_X79_2_A.xml"
@@ -216,7 +235,9 @@ make run-local-gtfs-downloader
 
 #### GTFS Realtime
 
-The GTFS RT feed subscription-based, but a snapshot of the feed can be generated (requires AVL data to exist in the database - see AVL section above):
+> GTFS RT data mapping requires AVL data to exist in the database first (see AVL section above).
+
+The GTFS RT feed subscription-based, but a snapshot of the feed can be generated:
 
 ```bash
 make run-gtfs-rt-generator
