@@ -31,7 +31,6 @@ export const putDynamoItem = async (tableName: string, pk: string, sk: string, t
     );
 };
 
-
 export const updateDynamoItem = async (
     tableName: string,
     pk: string,
@@ -55,7 +54,8 @@ export const updateDynamoItem = async (
             },
         }),
     );
-  
+};
+
 export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise<Record<string, unknown>[]> => {
     const dbData = await dynamoDbDocClient.send(new ScanCommand(scanCommandInput));
 
