@@ -9,6 +9,7 @@ import {
     mockSubscribeEvent,
     mockSubscribeEventToMockDataProducer,
     mockSubscriptionResponseBody,
+    mockSubscriptionResponseBodyFalseStatus,
 } from "./test/mockData";
 import { handler } from "./index";
 
@@ -241,6 +242,47 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: "BODS_MOCK_PRODUCER",
+                shortDescription: "shortDescription",
+                status: "FAILED",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
+        );
+    });
+
+    it("should throw an error if the data producers subscription response doesn't include a response status of true", async () => {
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBodyFalseStatus),
+            status: 200,
+            ok: true,
+        } as unknown as Response);
+
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
+            "The data producer: https://mock-data-producer.com did not return a status of true.",
+        );
+        expect(fetch).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: null,
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
