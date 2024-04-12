@@ -56,7 +56,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 resource "aws_iam_policy" "lambda_policy" {
   count = var.permissions != null ? 1 : 0
 
-  name = "${var.function_name}-policy-${var.environment}"
+  name   = "${var.function_name}-policy-${var.environment}"
   policy = jsonencode({
     Version   = "2012-10-17"
     Statement = var.permissions
@@ -81,8 +81,6 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {
-  count = var.permissions != null ? 1 : 0
-
   role       = aws_iam_role.lambda_role.id
   policy_arn = var.subnet_ids != null ? "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" : "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
@@ -112,7 +110,7 @@ resource "aws_lambda_function" "function" {
     for_each = local.needs_db_access ? [1] : []
 
     content {
-      subnet_ids = var.subnet_ids
+      subnet_ids         = var.subnet_ids
       security_group_ids = [
         aws_security_group.db_sg[0].id
       ]
