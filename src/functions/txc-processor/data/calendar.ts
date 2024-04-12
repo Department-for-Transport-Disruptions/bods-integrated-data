@@ -174,14 +174,30 @@ const calculateDaysOfOperation = (
 const processServicedOrganisation = (
     servicedOrganisationDayType: OperatingProfile["ServicedOrganisationDayType"],
     servicedOrganisations: ServicedOrganisation[],
+    calendar: NewCalendar
 ) => {
-    const servicedOrganisation = servicedOrganisations.find(
+    const servicedOrganisationWorkingDaysOperation = servicedOrganisations.find(
         (org) =>
             org.OrganisationCode === servicedOrganisationDayType?.DaysOfOperation?.WorkingDays?.ServicedOrganisationRef,
     )?.WorkingDays;
+    const servicedOrganisationWorkingDaysNonOperation = servicedOrganisations.find(
+        (org) =>
+            org.OrganisationCode === servicedOrganisationDayType?.DaysOfNonOperation?.WorkingDays?.ServicedOrganisationRef,
+    )?.WorkingDays;
+    const servicedOrganisationHolidaysOperation = servicedOrganisations.find(
+        (org) =>
+            org.OrganisationCode === servicedOrganisationDayType?.DaysOfOperation?.Holidays?.ServicedOrganisationRef,
+    )?.Holidays;
+    const servicedOrganisationHolidaysNonOperation = servicedOrganisations.find(
+        (org) =>
+            org.OrganisationCode === servicedOrganisationDayType?.DaysOfNonOperation?.Holidays?.ServicedOrganisationRef,
+    )?.WorkingDays;
+
+    if ()
+
     console.log(servicedOrganisations.flatMap((org) => org.WorkingDays?.DateRange).flat());
 
-    return [[], []];
+    return { servicedOrgDaysOfOperation: [], servicedOrgDaysOfNonOperation: [] };
 };
 
 export const formatCalendar = (
@@ -205,14 +221,8 @@ export const formatCalendar = (
 
     const specialDaysOfOperation = operatingProfile.SpecialDaysOperation?.DaysOfOperation?.DateRange.flat() ?? [];
     const specialDaysOfNonOperation = operatingProfile.SpecialDaysOperation?.DaysOfNonOperation?.DateRange.flat() ?? [];
-    const bankHolidayDaysOfOperation =
-        operatingProfile.BankHolidayOperation?.DaysOfOperation?.filter(
-            (day) => !specialDaysOfNonOperation.includes(day),
-        ) ?? [];
+    const bankHolidayDaysOfOperation = operatingProfile.BankHolidayOperation?.DaysOfOperation ?? [];
     const bankHolidayDaysOfNonOperation = operatingProfile.BankHolidayOperation?.DaysOfNonOperation ?? [];
-
-    let daysOfOperation = [...new Set([...specialDaysOfOperation, ...bankHolidayDaysOfOperation])];
-    let daysOfNonOperation = [...new Set([...specialDaysOfNonOperation, ...bankHolidayDaysOfNonOperation])];
 
     let calendar: NewCalendar = {
         monday: 0,
@@ -230,12 +240,23 @@ export const formatCalendar = (
         calendar = calculateDaysOfOperation(day, startDateToUse, endDateToUse);
     }
 
+    let servicedOrgDaysOfOperation: string[] = [];
+    let servicedOrgDaysOfNonOperation: string[] = [];
+
     if (operatingProfile.ServicedOrganisationDayType !== undefined && servicedOrganisations !== undefined) {
-        [daysOfOperation, daysOfNonOperation] = processServicedOrganisation(
+        ({ servicedOrgDaysOfOperation, servicedOrgDaysOfNonOperation } = processServicedOrganisation(
             operatingProfile.ServicedOrganisationDayType,
             servicedOrganisations,
-        );
+            calendar
+        ));
     }
+
+    const daysOfNonOperation = [
+        ...new Set([...specialDaysOfNonOperation, ...bankHolidayDaysOfNonOperation, ...servicedOrgDaysOfNonOperation]),
+    ];
+    const daysOfOperation = [
+        ...new Set([...specialDaysOfOperation, ...bankHolidayDaysOfOperation, ...servicedOrgDaysOfOperation]),
+    ].filter((day) => !daysOfNonOperation.includes(day));
 
     const formattedExtraDaysOfOperation = formatCalendarDates(
         daysOfOperation,
