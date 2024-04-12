@@ -149,10 +149,19 @@ const processServices = (
             return null;
         }
 
-        const routeData = await insertRoutes(dbClient, service, agencyData);
+        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agencyData, isTnds);
 
-        if (!routeData) {
-            logger.warn("No route data found for service", {
+        if (isDuplicateRoute) {
+            logger.warn("Duplicate TNDS route found for service", {
+                service: service.ServiceCode,
+                operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        if (!routes) {
+            logger.warn("No routes found for service", {
                 service: service.ServiceCode,
                 operator: service.RegisteredOperatorRef,
             });
@@ -169,7 +178,7 @@ const processServices = (
                 tripId: "",
             };
 
-            const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
+            const route = routes.find((r) => r.line_id === vehicleJourney.LineRef);
 
             if (route) {
                 vehicleJourneyMapping.routeId = route.id;
@@ -188,7 +197,7 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData, filePath);
+        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
         await insertFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });

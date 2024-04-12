@@ -150,44 +150,74 @@ export const insertFrequencies = async (
     await dbClient.insertInto("frequency_new").values(frequencies).execute();
 };
 
-export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
+export const insertRoutes = async (
+    dbClient: Kysely<Database>,
+    service: Service,
+    agencyData: Agency[],
+    isTnds: boolean,
+): Promise<{ routes?: Route[]; isDuplicateRoute?: boolean }> => {
     const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
 
     if (!agency) {
         logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);
-        return null;
+        return {};
     }
 
     const routeType = getRouteTypeFromServiceMode(service.Mode);
 
-    const routePromises = service.Lines.Line.map(async (line) => {
-        const existingRoute = await dbClient
-            .selectFrom("route")
-            .selectAll()
-            .where("line_id", "=", line["@_id"])
-            .executeTakeFirst();
+    try {
+        const routePromises = service.Lines.Line.map(async (line) => {
+            const nocLineName = agency.noc + line.LineName;
 
-        const newRoute: NewRoute = {
-            agency_id: agency.id,
-            route_short_name: line.LineName,
-            route_long_name: "",
-            route_type: routeType,
-            line_id: line["@_id"],
+            const existingRoute = isTnds
+                ? await dbClient
+                      .selectFrom("route_new")
+                      .selectAll()
+                      .where("noc_line_name", "=", nocLineName)
+                      .executeTakeFirst()
+                : await dbClient.selectFrom("route").selectAll().where("line_id", "=", line["@_id"]).executeTakeFirst();
+
+            const newRoute: NewRoute = {
+                agency_id: agency.id,
+                route_short_name: line.LineName,
+                route_long_name: "",
+                route_type: routeType,
+                line_id: line["@_id"],
+                data_source: isTnds ? "tnds" : "bods",
+                noc_line_name: nocLineName,
+            };
+
+            if (isTnds && existingRoute) {
+                if (existingRoute.data_source === "bods") {
+                    throw new Error("Duplicate TNDS route found");
+                } else {
+                    newRoute.id = existingRoute.id;
+                    newRoute.line_id = "";
+                }
+            }
+
+            return dbClient
+                .insertInto("route_new")
+                .values(existingRoute || newRoute)
+                .onConflict((oc) =>
+                    oc
+                        .column("line_id")
+                        .doUpdateSet({ route_short_name: newRoute.route_short_name, route_type: newRoute.route_type }),
+                )
+                .returningAll()
+                .executeTakeFirst();
+        });
+
+        const routeData = await Promise.all(routePromises);
+
+        return {
+            routes: routeData.filter(notEmpty),
         };
-
-        return dbClient
-            .insertInto("route_new")
-            .values(existingRoute || newRoute)
-            .onConflict((oc) =>
-                oc.column("line_id").doUpdateSet({ route_short_name: line.LineName, route_type: routeType }),
-            )
-            .returningAll()
-            .executeTakeFirst();
-    });
-
-    const routeData = await Promise.all(routePromises);
-
-    return routeData.filter(notEmpty);
+    } catch (error) {
+        return {
+            isDuplicateRoute: true,
+        };
+    }
 };
 
 export const insertShapes = async (
