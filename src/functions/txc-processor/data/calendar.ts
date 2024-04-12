@@ -174,30 +174,57 @@ const calculateDaysOfOperation = (
 const processServicedOrganisation = (
     servicedOrganisationDayType: OperatingProfile["ServicedOrganisationDayType"],
     servicedOrganisations: ServicedOrganisation[],
-    calendar: NewCalendar
+    calendar: NewCalendar,
 ) => {
-    const servicedOrganisationWorkingDaysOperation = servicedOrganisations.find(
-        (org) =>
-            org.OrganisationCode === servicedOrganisationDayType?.DaysOfOperation?.WorkingDays?.ServicedOrganisationRef,
-    )?.WorkingDays;
-    const servicedOrganisationWorkingDaysNonOperation = servicedOrganisations.find(
-        (org) =>
-            org.OrganisationCode === servicedOrganisationDayType?.DaysOfNonOperation?.WorkingDays?.ServicedOrganisationRef,
-    )?.WorkingDays;
-    const servicedOrganisationHolidaysOperation = servicedOrganisations.find(
-        (org) =>
-            org.OrganisationCode === servicedOrganisationDayType?.DaysOfOperation?.Holidays?.ServicedOrganisationRef,
-    )?.Holidays;
-    const servicedOrganisationHolidaysNonOperation = servicedOrganisations.find(
-        (org) =>
-            org.OrganisationCode === servicedOrganisationDayType?.DaysOfNonOperation?.Holidays?.ServicedOrganisationRef,
-    )?.WorkingDays;
+    const servicedOrganisationWorkingDaysOperation =
+        servicedOrganisations
+            .find(
+                (org) =>
+                    org.OrganisationCode ===
+                    servicedOrganisationDayType?.DaysOfOperation?.WorkingDays?.ServicedOrganisationRef,
+            )
+            ?.WorkingDays?.DateRange.flat() ?? [];
 
-    if ()
+    const servicedOrganisationHolidaysOperation =
+        servicedOrganisations
+            .find(
+                (org) =>
+                    org.OrganisationCode ===
+                    servicedOrganisationDayType?.DaysOfOperation?.Holidays?.ServicedOrganisationRef,
+            )
+            ?.Holidays?.DateRange.flat() ?? [];
 
-    console.log(servicedOrganisations.flatMap((org) => org.WorkingDays?.DateRange).flat());
+    const calendarMap: Record<
+        number,
+        "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+    > = {
+        0: "sunday",
+        1: "monday",
+        2: "tuesday",
+        3: "wednesday",
+        4: "thursday",
+        5: "friday",
+        6: "saturday",
+    };
 
-    return { servicedOrgDaysOfOperation: [], servicedOrgDaysOfNonOperation: [] };
+    const servicedOrgDaysOfOperation = [
+        ...servicedOrganisationWorkingDaysOperation,
+        ...servicedOrganisationHolidaysOperation,
+    ]
+        .filter((servicedOrgDay) => {
+            const dayKey = calendarMap[servicedOrgDay.day()];
+
+            return calendar[dayKey] === 1;
+        })
+        .map((servicedOrgDay) => servicedOrgDay.format(DEFAULT_DATE_FORMAT));
+
+    return {
+        servicedOrgDaysOfOperation,
+        /**
+         * TODO: Determine days of non-operation
+         */
+        servicedOrgDaysOfNonOperation: [],
+    };
 };
 
 export const formatCalendar = (
@@ -247,7 +274,7 @@ export const formatCalendar = (
         ({ servicedOrgDaysOfOperation, servicedOrgDaysOfNonOperation } = processServicedOrganisation(
             operatingProfile.ServicedOrganisationDayType,
             servicedOrganisations,
-            calendar
+            calendar,
         ));
     }
 
