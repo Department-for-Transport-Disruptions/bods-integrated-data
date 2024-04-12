@@ -1,12 +1,18 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient, ScanCommandInput } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const dynamoDbDocClient = DynamoDBDocumentClient.from(
     new DynamoDBClient({
         region: "eu-west-2",
         ...(process.env.IS_LOCAL === "true"
             ? {
-                  endpoint: "http://localhost:4566",
+                  endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
+                  credentials: {
+                      accessKeyId: "DUMMY",
+                      secretAccessKey: "DUMMY",
+                  },
               }
             : {}),
     }),
@@ -23,4 +29,24 @@ export const putDynamoItem = async (tableName: string, pk: string, sk: string, t
             },
         }),
     );
+};
+
+export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise<Record<string, unknown>[]> => {
+    const dbData = await dynamoDbDocClient.send(new ScanCommand(scanCommandInput));
+
+    if (!dbData.Items) {
+        return [];
+    }
+
+    if (dbData.LastEvaluatedKey) {
+        return [
+            ...dbData.Items,
+            ...(await recursiveScan({
+                ...scanCommandInput,
+                ExclusiveStartKey: dbData.LastEvaluatedKey,
+            })),
+        ];
+    } else {
+        return dbData.Items;
+    }
 };

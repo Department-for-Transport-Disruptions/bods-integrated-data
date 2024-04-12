@@ -31,6 +31,8 @@ export const subscriptionRequestSchema = z.object({
     }),
 });
 
+export type SubscriptionRequest = z.infer<typeof subscriptionRequestSchema>;
+
 export const subscriptionResponseSchema = z.object({
     SubscriptionResponse: z.object({
         ResponseTimestamp: z.string(),

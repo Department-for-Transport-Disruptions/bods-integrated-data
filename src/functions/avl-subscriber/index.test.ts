@@ -3,8 +3,16 @@ import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
-import { expectedSubscriptionRequest, mockSubscribeEvent, mockSubscriptionResponseBody } from "./test/mockData";
+import {
+    expectedSubscriptionRequest,
+    expectedSubscriptionRequestForMockProducer,
+    mockSubscribeEvent,
+    mockSubscribeEventToMockDataProducer,
+    mockSubscriptionResponseBody,
+    mockSubscriptionResponseBodyFalseStatus,
+} from "./test/mockData";
 import { handler } from "./index";
+
 vi.mock("crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
@@ -12,6 +20,7 @@ vi.mock("crypto", () => ({
 describe("avl-subscriber", () => {
     beforeAll(() => {
         process.env.TABLE_NAME = "test-dynamo-table";
+        process.env.DATA_ENDPOINT = "https://www.test.com/data";
     });
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -46,10 +55,7 @@ describe("avl-subscriber", () => {
 
         await handler(mockSubscribeEvent);
 
-        expect(fetch).toBeCalledWith(
-            "https://mock-data-producer.com/5965q7gh-5428-43e2-a75c-1782a48637d5",
-            expectedSubscriptionRequest,
-        );
+        expect(fetch).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -59,7 +65,7 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: null,
-                shortDescription: "description",
+                shortDescription: "shortDescription",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
             },
@@ -67,13 +73,13 @@ describe("avl-subscriber", () => {
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
             "dummy-password",
             "SecureString",
             true,
@@ -112,7 +118,7 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: null,
-                shortDescription: "description",
+                shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
             },
@@ -120,13 +126,13 @@ describe("avl-subscriber", () => {
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
             "dummy-password",
             "SecureString",
             true,
@@ -152,7 +158,7 @@ describe("avl-subscriber", () => {
             {
                 description: "description",
                 requestorRef: null,
-                shortDescription: "description",
+                shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
             },
@@ -160,13 +166,138 @@ describe("avl-subscriber", () => {
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
+        );
+    });
+
+    it("should process a subscription request for mock data producer if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
+        process.env.STAGE = "local";
+        process.env.MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = "www.local.com";
+
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+            status: 200,
+            ok: true,
+        } as unknown as Response);
+
+        await handler(mockSubscribeEventToMockDataProducer);
+
+        expect(fetch).toBeCalledWith("www.local.com", expectedSubscriptionRequestForMockProducer);
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: "BODS_MOCK_PRODUCER",
+                shortDescription: "shortDescription",
+                status: "ACTIVE",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
+        );
+    });
+
+    it("should throw an error if it cannot parse subscription response", async () => {
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue("<Siri/>"),
+            status: 200,
+            ok: true,
+        } as unknown as Response);
+
+        await expect(handler(mockSubscribeEventToMockDataProducer)).rejects.toThrowError(
+            "Error parsing subscription response from: https://mock-data-producer.com",
+        );
+        expect(fetch).toBeCalledWith("www.local.com", expectedSubscriptionRequestForMockProducer);
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: "BODS_MOCK_PRODUCER",
+                shortDescription: "shortDescription",
+                status: "FAILED",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "dummy-password",
+            "SecureString",
+            true,
+        );
+    });
+
+    it("should throw an error if the data producers subscription response doesn't include a response status of true", async () => {
+        fetchSpy.mockResolvedValue({
+            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBodyFalseStatus),
+            status: 200,
+            ok: true,
+        } as unknown as Response);
+
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
+            "The data producer: https://mock-data-producer.com did not return a status of true.",
+        );
+        expect(fetch).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            "SUBSCRIPTION",
+            {
+                description: "description",
+                requestorRef: null,
+                shortDescription: "shortDescription",
+                status: "FAILED",
+                url: "https://mock-data-producer.com",
+            },
+        );
+
+        expect(putParameterSpy).toHaveBeenCalledTimes(2);
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "test-user",
+            "SecureString",
+            true,
+        );
+        expect(putParameterSpy).toBeCalledWith(
+            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
             "dummy-password",
             "SecureString",
             true,
