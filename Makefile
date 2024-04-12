@@ -210,7 +210,7 @@ invoke-local-gtfs-downloader:
 	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0
 
 run-gtfs-rt-generator:
-	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
+	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
 invoke-local-gtfs-rt-generator:
 	awslocal lambda invoke --function-name gtfs-rt-generator-local --output text /dev/stdout --cli-read-timeout 0
@@ -252,6 +252,7 @@ invoke-local-avl-mock-data-producer-subscribe:
 
 invoke-local-avl-mock-data-producer-send-data:
 	awslocal lambda invoke --function-name avl-mock-data-producer-send-data-local output.txt --cli-read-timeout 0
+
 # NOC
 
 run-local-noc-retriever:
