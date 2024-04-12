@@ -48,6 +48,7 @@ The following dependencies are required. An AWS account is also required.
 |[awslocal](https://github.com/localstack/awscli-local)|localstack wrapper for AWS CLI|
 |[Docker](https://rancherdesktop.io/)|Platform for running containerised code|
 |[pnpm](https://pnpm.io/installation)|Package manager|
+|[tflocal](https://github.com/localstack/terraform-local)|A small wrapper script to run [Terraform](https://terraform.io/) against [localstack](https://localstack.cloud/)|
 
 The following dependencies are optional:
 
@@ -117,7 +118,9 @@ todo
 
 ### NOC data retrieval
 
-Download all NOC data into the localstack container:
+The National Operator Code (NOC) dataset contains unique codes for registered operators that are used to link data together during mapping.
+
+Download the NOC dataset into the localstack container:
 
 ```bash
 make run-local-noc-retriever
@@ -131,7 +134,9 @@ make run-local-noc-processor FILE=noc.xml
 
 ### NaPTAN data retrieval
 
-Download all NaPTAN data into the localstack container:
+The National Public Transport Access Nodes (NaPTAN) dataset contains information for uniquely identifying all public transport access points.
+
+Download the NaPTAN dataset into the localstack container:
 
 ```bash
 make run-local-naptan-retriever
@@ -183,7 +188,7 @@ make run-local-bods-txc-processor FILE="bods/Acme_Bus_Co_314/A_ACME_PF1102351_14
 
 > TNDS data mapping requires NOC and NapTAN data to exist in the database first (see NOC and NaPTAN sections above).
 
-TNDS data is behind authorisation. First find the AWS ARN of the secrete that contains auth credentials:
+TNDS data is behind authorisation. First find the AWS ARN of the secret that contains auth credentials:
 
 ```bash
 aws secretesmanager list-secrets
@@ -243,7 +248,7 @@ make run-local-gtfs-downloader
 
 > GTFS RT data mapping requires AVL data to exist in the database first (see AVL section above).
 
-The GTFS RT feed subscription-based, but a snapshot of the feed can be generated:
+The GTFS RT feed is subscription-based, however a snapshot of the feed at the current point in time can be generated:
 
 ```bash
 make run-gtfs-rt-generator
