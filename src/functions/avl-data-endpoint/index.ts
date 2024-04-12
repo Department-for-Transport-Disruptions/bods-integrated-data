@@ -99,7 +99,8 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env var: TABLE_NAME must be set.");
         }
 
-        const subscriptionId = event?.pathParameters?.subscriptionId;
+        const subscriptionId =
+            stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID missing from path parameters");

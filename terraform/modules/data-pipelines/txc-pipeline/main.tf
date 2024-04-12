@@ -48,21 +48,8 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_timetables_bu
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket" "integrated_data_bods_txc_bucket" {
-  bucket = "integrated-data-bods-txc-${var.environment}"
-}
-
 resource "aws_s3_bucket" "integrated_data_tnds_txc_bucket" {
   bucket = "integrated-data-tnds-txc-${var.environment}"
-}
-
-resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_bods_txc_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_block_public_access" {
@@ -192,8 +179,8 @@ module "integrated_data_bods_txc_unzipper_function" {
 
   function_name        = "integrated-data-bods-txc-unzipper"
   environment          = var.environment
-  unzipped_bucket_arn  = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
-  unzipped_bucket_name = aws_s3_bucket.integrated_data_bods_txc_bucket.bucket
+  unzipped_bucket_arn  = module.integrated_data_txc_s3_sqs.bucket_arn
+  unzipped_bucket_name = module.integrated_data_txc_s3_sqs.bucket_id
   zipped_bucket_arn    = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.arn
   zipped_bucket_name   = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.bucket
 }
@@ -212,22 +199,16 @@ module "integrated_data_tnds_txc_unzipper_function" {
 module "integrated_data_txc_processor_function" {
   source = "../../shared/lambda-function"
 
-  environment          = var.environment
-  function_name        = "integrated-data-txc-processor"
-  zip_path             = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
-  handler              = "index.handler"
-  runtime              = "nodejs20.x"
-  timeout              = 200
-  memory               = 2048
-  vpc_id               = var.vpc_id
-  subnet_ids           = var.private_subnet_ids
-  database_sg_id       = var.db_sg_id
-  reserved_concurrency = 50
-
-  s3_bucket_trigger = {
-    id  = aws_s3_bucket.integrated_data_bods_txc_bucket.id
-    arn = aws_s3_bucket.integrated_data_bods_txc_bucket.arn
-  }
+  environment    = var.environment
+  function_name  = "integrated-data-txc-processor"
+  zip_path       = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 200
+  memory         = 2048
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
 
   permissions = [{
     Action = [
@@ -244,7 +225,18 @@ module "integrated_data_txc_processor_function" {
       ],
       Effect = "Allow",
       Resource = [
-        "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*"
+        "${module.integrated_data_txc_s3_sqs.bucket_arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      Effect = "Allow",
+      Resource = [
+        module.integrated_data_txc_s3_sqs.sqs_arn
       ]
   }]
 
@@ -253,6 +245,26 @@ module "integrated_data_txc_processor_function" {
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
+  }
+}
+
+module "integrated_data_txc_s3_sqs" {
+  source = "../../shared/s3-sqs"
+
+  bucket_name                = "integrated-data-txc-${var.environment}"
+  sqs_name                   = "integrated-data-txc-queue-${var.environment}"
+  dlq_name                   = "integrated-data-txc-dlq-${var.environment}"
+  visibility_timeout_seconds = 200
+  alarm_topic_arn            = var.alarm_topic_arn
+  ok_topic_arn               = var.ok_topic_arn
+}
+
+resource "aws_lambda_event_source_mapping" "integrated_data_txc_processor_sqs_trigger" {
+  event_source_arn = module.integrated_data_txc_s3_sqs.sqs_arn
+  function_name    = module.integrated_data_txc_processor_function.lambda_arn
+  batch_size       = 1
+  scaling_config {
+    maximum_concurrency = 50
   }
 }
 

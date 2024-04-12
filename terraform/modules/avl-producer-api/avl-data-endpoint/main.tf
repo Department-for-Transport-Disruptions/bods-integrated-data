@@ -21,7 +21,8 @@ module "integrated_data_bods_avl_data_endpoint_function" {
   memory        = 1024
 
   env_vars = {
-    BUCKET_NAME = var.bucket_arn
+    BUCKET_NAME = var.bucket_name
+    STAGE       = var.environment
   }
 
   permissions = [
@@ -29,9 +30,9 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       Action = [
         "s3:PutObject"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
-        "${var.bucket_arn}/*"
+        "arn:aws:s3:::${var.bucket_name}/*"
       ]
     }
   ]
@@ -41,4 +42,9 @@ module "integrated_data_bods_avl_data_endpoint_function" {
 output "lambda_arn" {
   description = "Lambda ARN"
   value       = module.integrated_data_bods_avl_data_endpoint_function.lambda_arn
+}
+
+output "function_name" {
+  description = "Lambda function name"
+  value       = module.integrated_data_bods_avl_data_endpoint_function.function_name
 }

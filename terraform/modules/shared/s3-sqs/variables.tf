@@ -24,3 +24,8 @@ variable "alarm_topic_arn" {
   type        = string
   description = "ARN of the SNS topic to use for alarm notifications"
 }
+
+variable "visibility_timeout_seconds" {
+  type    = number
+  default = 30
+}

@@ -19,9 +19,29 @@ module "avl_subscriber" {
   memory        = 1024
   runtime       = "nodejs20.x"
   timeout       = 120
-}
 
-output "lambda_arn" {
-  description = "Lambda ARN"
-  value       = module.avl_subscriber.lambda_arn
+  permissions = [
+    {
+      Action   = "ssm:PutParameter",
+      Effect   = "Allow",
+      Resource = [
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
+      ]
+    },
+    {
+      Action   = "dynamodb:PutItem",
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
+
+    }
+  ]
+
+
+  env_vars = {
+    TABLE_NAME                       = var.avl_subscription_table_name,
+    STAGE                            = var.environment,
+    MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = var.avl_mock_data_producer_subscribe_endpoint
+    DATA_ENDPOINT                    = var.avl_data_endpoint
+  }
 }

@@ -24,8 +24,10 @@ const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime
                       }
                     : null,
             PublishedLineName: record.publishedLineName,
+            Occupancy: record.occupancy,
             OperatorRef: record.operatorRef,
             OriginRef: record.originRef,
+            OriginAimedDepartureTime: record.originAimedDepartureTime,
             DestinationRef: record.destinationRef,
             VehicleLocation: {
                 Longitude: record.longitude,
