@@ -59,7 +59,7 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
 };
 
 export const handler = async () => {
-    const { BUCKET_NAME: bucketName } = process.env;
+    const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson } = process.env;
 
     if (!bucketName) {
         throw new Error("Missing env vars - BUCKET_NAME must be set");
@@ -67,16 +67,28 @@ export const handler = async () => {
 
     const avlData = await getAvlDataFromDatabase();
 
-    const feed = transit_realtime.FeedMessage.encode({
+    const message = {
         header: {
             gtfsRealtimeVersion: "2.0",
             incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
             timestamp: Date.now(),
         },
         entity: avlData.map(mapAvlToGtfsEntity),
-    });
+    };
+
+    const feed = transit_realtime.FeedMessage.encode(message);
 
     const data = feed.finish();
 
-    await uploadGtfsRtToS3(bucketName, data);
+    if (saveJson === "true") {
+        await Promise.all([
+            uploadGtfsRtToS3(bucketName, data),
+            putS3Object({
+                Bucket: bucketName,
+                Key: "gtfs-rt.json",
+                ContentType: "application/json",
+                Body: JSON.stringify(message),
+            }),
+        ]);
+    }
 };
