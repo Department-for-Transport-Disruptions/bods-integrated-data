@@ -77,18 +77,18 @@ export const handler = async () => {
     };
 
     const feed = transit_realtime.FeedMessage.encode(message);
-
     const data = feed.finish();
 
+    await uploadGtfsRtToS3(bucketName, data);
+
     if (saveJson === "true") {
-        await Promise.all([
-            uploadGtfsRtToS3(bucketName, data),
-            putS3Object({
-                Bucket: bucketName,
-                Key: "gtfs-rt.json",
-                ContentType: "application/json",
-                Body: JSON.stringify(message),
-            }),
-        ]);
+        const encodedJson = transit_realtime.FeedMessage.decode(data);
+
+        await putS3Object({
+            Bucket: bucketName,
+            Key: "gtfs-rt.json",
+            ContentType: "application/json",
+            Body: JSON.stringify(encodedJson),
+        });
     }
 };
