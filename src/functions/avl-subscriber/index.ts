@@ -1,18 +1,18 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import {
+    AvlSubscribeMessage,
+    avlSubscribeMessageSchema,
+    subscriptionRequestSchema,
+    subscriptionResponseSchema,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import { parse } from "js2xmlparser";
 import { parseStringPromise } from "xml2js";
 import { parseBooleans } from "xml2js/lib/processors";
 import { randomUUID } from "crypto";
-import {
-    AvlSubscribeMessage,
-    avlSubscribeMessageSchema,
-    subscriptionRequestSchema,
-    subscriptionResponseSchema,
-} from "./subscriber.schema";
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
@@ -20,11 +20,12 @@ export const generateSubscriptionRequestXml = (
     currentTimestamp: string,
     initialTerminationTime: string,
     messageIdentifier: string,
+    dataEndpoint: string,
 ) => {
     const subscriptionRequestJson = {
         SubscriptionRequest: {
             RequestTimeStamp: currentTimestamp,
-            Address: `${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`,
+            Address: `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionRequestContext: {
@@ -95,7 +96,7 @@ const parseXml = async (xml: string) => {
             parsedJson.error.format(),
         );
 
-        throw new Error("Error parsing data");
+        return null;
     }
 
     return parsedJson.data;
@@ -111,7 +112,7 @@ const updateDynamoWithSubscriptionInfo = async (
         url: avlSubscribeMessage.dataProducerEndpoint,
         status: status,
         description: avlSubscribeMessage.description,
-        shortDescription: avlSubscribeMessage.description,
+        shortDescription: avlSubscribeMessage.shortDescription,
         requestorRef: avlSubscribeMessage.requestorRef ?? null,
     };
 
@@ -124,8 +125,8 @@ const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: s
     logger.info("Uploading subscription auth credentials to parameter store");
 
     await Promise.all([
-        putParameter(`subscription/${subscriptionId}/username`, username, "SecureString", true),
-        putParameter(`subscription/${subscriptionId}/password`, password, "SecureString", true),
+        putParameter(`/subscription/${subscriptionId}/username`, username, "SecureString", true),
+        putParameter(`/subscription/${subscriptionId}/password`, password, "SecureString", true),
     ]);
 };
 
@@ -133,6 +134,8 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     subscriptionId: string,
     avlSubscribeMessage: AvlSubscribeMessage,
     tableName: string,
+    dataEndpoint: string,
+    mockProducerSubscribeEndpoint?: string,
 ) => {
     const currentTimestamp = getDate().toISOString();
     // Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
@@ -146,9 +149,15 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         currentTimestamp,
         initialTerminationTime,
         messageIdentifier,
+        dataEndpoint,
     );
 
-    const subscriptionResponse = await fetch(`${avlSubscribeMessage.dataProducerEndpoint}/${subscriptionId}`, {
+    const url =
+        mockProducerSubscribeEndpoint && avlSubscribeMessage.requestorRef === "BODS_MOCK_PRODUCER"
+            ? mockProducerSubscribeEndpoint
+            : avlSubscribeMessage.dataProducerEndpoint;
+
+    const subscriptionResponse = await fetch(url, {
         method: "POST",
         body: subscriptionRequestMessage,
     });
@@ -156,7 +165,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     if (!subscriptionResponse.ok) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
         throw new Error(
-            `There was an error when sending the subscription request to the data producer: ${avlSubscribeMessage.dataProducerEndpoint}, status code: ${subscriptionResponse.status}`,
+            `There was an error when sending the subscription request to the data producer: ${url}, status code: ${subscriptionResponse.status}`,
         );
     }
 
@@ -171,6 +180,11 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
 
     const parsedResponseBody = await parseXml(subscriptionResponseBody);
 
+    if (!parsedResponseBody) {
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+        throw new Error(`Error parsing subscription response from: ${avlSubscribeMessage.dataProducerEndpoint}`);
+    }
+
     if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
         throw new Error(
@@ -183,10 +197,19 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
 
 export const handler = async (event: APIGatewayEvent) => {
     try {
-        const { TABLE_NAME: tableName } = process.env;
+        const {
+            TABLE_NAME: tableName,
+            STAGE: stage,
+            MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
+            DATA_ENDPOINT: dataEndpoint,
+        } = process.env;
 
-        if (!tableName) {
-            throw new Error("Missing env var: TABLE_NAME must be set.");
+        if (!tableName || !dataEndpoint) {
+            throw new Error("Missing env vars: TABLE_NAME and DATA_ENDPOINT must be set.");
+        }
+
+        if (stage === "local" && !mockProducerSubscribeEndpoint) {
+            throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
         logger.info("Starting AVL subscriber");
@@ -205,7 +228,13 @@ export const handler = async (event: APIGatewayEvent) => {
         // Add username and password to parameter store
         await addSubscriptionAuthCredsToSsm(subscriptionId, avlSubscribeMessage.username, avlSubscribeMessage.password);
 
-        await sendSubscriptionRequestAndUpdateDynamo(subscriptionId, avlSubscribeMessage, tableName);
+        await sendSubscriptionRequestAndUpdateDynamo(
+            subscriptionId,
+            avlSubscribeMessage,
+            tableName,
+            dataEndpoint,
+            mockProducerSubscribeEndpoint,
+        );
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
     } catch (e) {
