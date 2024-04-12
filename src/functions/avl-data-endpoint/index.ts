@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { updateDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLValidator } from "fast-xml-parser";
@@ -52,12 +52,19 @@ export const validateXmlAndUploadToS3 = async (
     }
     if (checkHeartBeat) {
         logger.info("This is a HeartBeat Notification");
-        const subscriptionTableItems = {
-            HeartbeatLastRecievedDateTime: dynamoDBValues.timeStamp,
-        };
+        // const subscriptionTableItems = {
+        //     HeartbeatLastRecievedDateTime: dynamoDBValues.timeStamp,
+        // };
         logger.info("Updating DynamoDB with subscription information");
 
-        await putDynamoItem(tableName, dynamoDBValues.subscriberID, "SUBSCRIPTION", subscriptionTableItems);
+        // await putDynamoItem(tableName, dynamoDBValues.subscriberID, "SUBSCRIPTION", subscriptionTableItems);
+        await updateDynamoItem(
+            tableName,
+            dynamoDBValues.subscriberID,
+            "SUBSCRIPTION",
+            "HeartbeatLastRecievedDateTime",
+            dynamoDBValues.timeStamp,
+        );
     }
 };
 
@@ -99,7 +106,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
 
         logger.info("Starting Data Endpoint");
-        logger.info(process.env.LOCALSTACK_HOSTNAME ?? "");
+        logger.info(process.env.TABLE_NAME ?? "");
 
         if (!event.body) {
             throw new Error("No body sent with event");
