@@ -57,8 +57,6 @@ export default class CreateAvlMockDataProducer extends Command {
 
     const cleanName = name.replace(/\s+/g, "-");
 
-    console.log(cleanName);
-
     const invokePayload = {
       body: `{\"dataProducerEndpoint\": \"https://www.${cleanName}.com\",\"description\": \"Mock AVL producer - ${name}\",\"shortDescription\": \"shortDescription\",\"username\": \"test-username\",\"password\": \"test-password\",\"requestorRef\": \"BODS_MOCK_PRODUCER\"}`,
     };
