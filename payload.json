@@ -1,3 +1,0 @@
-{
-  "body": "{\"dataProducerEndpoint\": \"https://caa76slb1a.execute-api.eu-west-2.amazonaws.com/subscribe\",\"description\": \"Mock AVL producer - test\",\"shortDescription\": \"shortDescription\",\"username\": \"test-username\",\"password\": \"test-password\",\"requestorRef\": \"BODS_MOCK_PRODUCER\"}"
-}
