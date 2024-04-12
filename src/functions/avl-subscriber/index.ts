@@ -209,7 +209,7 @@ export const handler = async (event: APIGatewayEvent) => {
         }
 
         if (stage === "local" && !mockProducerSubscribeEndpoint) {
-            throw new Error("Missing env var: MOCK_PRODUCER_ENDPOINT must be set when STAGE === local");
+            throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
         logger.info("Starting AVL subscriber");
