@@ -162,7 +162,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     logger.info("Deleting subscription auth credentials from parameter store");
 
-    await deleteParameters([`subscription/${subscriptionId}/username`, `subscription/${subscriptionId}/password`]);
+    await deleteParameters([`/subscription/${subscriptionId}/username`, `/subscription/${subscriptionId}/password`]);
 };
 
 export const handler = async (event: APIGatewayEvent) => {
