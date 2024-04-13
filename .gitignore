@@ -28,7 +28,6 @@ node_modules
 
 # Ignored ide files
 .idea/
-.vscode/
 
 # Ignore Any Generated JSON Files
 operations/automation-script/apply.json

@@ -206,6 +206,11 @@ export const vehicleJourneySchema = z.object({
                     BlockNumber: z.coerce.string(),
                 })
                 .optional(),
+            TicketMachine: z
+                .object({
+                    JourneyCode: z.string().optional(),
+                })
+                .optional(),
             VehicleType: vehicleTypeSchema.optional(),
         })
         .or(txcEmptyProperty)
