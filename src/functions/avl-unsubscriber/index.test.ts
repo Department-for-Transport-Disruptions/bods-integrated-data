@@ -76,8 +76,8 @@ describe("avl-unsubscriber", () => {
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
         expect(deleteParametersSpy).toBeCalledWith([
-            "subscription/mock-subscription-id/username",
-            "subscription/mock-subscription-id/password",
+            "/subscription/mock-subscription-id/username",
+            "/subscription/mock-subscription-id/password",
         ]);
     });
 
