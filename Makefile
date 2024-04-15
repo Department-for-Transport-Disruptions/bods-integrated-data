@@ -232,6 +232,10 @@ run-local-noc-retriever:
 run-local-noc-processor:
 	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
+
+run-local-table-renamer:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
+
 # Lambdas
 create-lambdas: \
 	create-lambda-avl-aggregate-siri-vm \
