@@ -52,12 +52,8 @@ export const validateXmlAndUploadToS3 = async (
     }
     if (checkHeartBeat) {
         logger.info("This is a HeartBeat Notification");
-        // const subscriptionTableItems = {
-        //     HeartbeatLastRecievedDateTime: dynamoDBValues.timeStamp,
-        // };
         logger.info("Updating DynamoDB with subscription information");
 
-        // await putDynamoItem(tableName, dynamoDBValues.subscriberID, "SUBSCRIPTION", subscriptionTableItems);
         await updateDynamoItem(
             tableName,
             dynamoDBValues.subscriberID,
@@ -89,7 +85,7 @@ export const getDynamoDBValues = (xml: string): DynamoDBValues => {
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { STAGE: stage, BUCKET_NAME: bucketName } = process.env;
         const { TABLE_NAME: tableName } = process.env;
 
         if (!bucketName) {

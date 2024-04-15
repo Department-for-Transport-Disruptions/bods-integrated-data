@@ -36,13 +36,12 @@ describe("AVL-data-endpoint", () => {
         } as unknown as APIGatewayEvent;
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
-
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Body: `${testSiri}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
-            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
+            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z`,
         });
     });
 
