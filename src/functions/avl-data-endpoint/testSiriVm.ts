@@ -58,3 +58,13 @@ export const testSiri = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         </VehicleMonitoringDelivery>
     </ServiceDelivery>
 </Siri>`;
+
+export const mockHeartbeatNotification = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:ns2="http://www.ifopt.org.uk/acsb" xmlns:ns3="http://www.ifopt.org.uk/ifopt" xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0">
+    <HeartbeatNotification>
+        <RequestTimestamp>2024-04-15T13:25:00+01:00</RequestTimestamp>
+        <ProducerRef>411e4495-4a57-4d2f-89d5-cf105441f321</ProducerRef>
+        <Status>true</Status>
+        <ServiceStartedTime>2019-11-23T13:25:00+01:00</ServiceStartedTime>
+    </HeartbeatNotification>
+</Siri>`;

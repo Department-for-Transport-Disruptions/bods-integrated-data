@@ -22,6 +22,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
 
   env_vars = {
     BUCKET_NAME = var.bucket_name
+    TABLE_NAME  = var.avl_subscription_table_name
     STAGE       = var.environment
   }
 
@@ -33,6 +34,15 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       Effect   = "Allow",
       Resource = [
         "arn:aws:s3:::${var.bucket_name}/*"
+      ]
+    },
+    {
+      Action = [
+        "dynamodb:PutItem", "dynamodb:GetItem"
+      ],
+      Effect   = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
       ]
     }
   ]

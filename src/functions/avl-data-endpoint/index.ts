@@ -1,99 +1,96 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { updateDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
-import { XMLValidator } from "fast-xml-parser";
-import { parseString } from "xml2js";
+import { XMLParser } from "fast-xml-parser";
 import { ClientError } from "./errors";
+import { dataEndpointInputSchema, HeartbeatNotification, heartbeatNotificationSchema } from "./heartbeat.schema";
 
-interface DynamoDBValues {
-    subscriberID: string;
-    timeStamp: string;
-    eventHeartbeatFlag: boolean;
-}
-
-interface HeartbeatNotificationEvent {
-    HeartbeatNotification?: HeartbeatNotification;
-}
-
-interface HeartbeatNotification {
-    RequestTimestamp: string[];
-    ProducerRef: string[];
-    Status: string[];
-    ServiceStartedTime: string[];
-}
-
-export const validateXmlAndUploadToS3 = async (
-    xml: string,
-    bucketName: string,
+const validateHeartbeatNotificationAndUploadToDynamo = async (
+    data: HeartbeatNotification,
     subscriptionId: string,
     tableName: string,
 ) => {
-    const currentTime = getDate();
-    const result = XMLValidator.validate(xml, {
-        allowBooleanAttributes: true,
-    });
-    if (result !== true) {
-        throw new ClientError();
+    if (data.HeartbeatNotification.Status !== "true") {
+        logger.warn(`Heartbeat notification for subscription: ${subscriptionId} did not include a status of true`);
+        return;
     }
-    logger.info("Valid XML");
-    const dynamoDBValues: DynamoDBValues = getDynamoDBValues(xml);
-    const checkHeartBeat: boolean = dynamoDBValues.eventHeartbeatFlag;
-    if (!checkHeartBeat) {
-        logger.info("Not a hearbeart notification");
-        await putS3Object({
-            Bucket: bucketName,
-            Key: `${subscriptionId}/${currentTime.toISOString()}`,
-            ContentType: "application/xml",
-            Body: xml,
-        });
-        logger.info("Successfully uploaded SIRI-VM to S3");
-    }
-    if (checkHeartBeat) {
-        logger.info("This is a HeartBeat Notification");
-        logger.info("Updating DynamoDB with subscription information");
 
-        await updateDynamoItem(
-            tableName,
-            dynamoDBValues.subscriberID,
-            "SUBSCRIPTION",
-            "HeartbeatLastRecievedDateTime",
-            dynamoDBValues.timeStamp,
-        );
+    const subscription = await getDynamoItem(tableName, { PK: subscriptionId, SK: "SUBSCRIPTION" });
+
+    if (!subscription) {
+        logger.error(`Subscription ID ${subscriptionId} not found in DynamoDB`);
+        throw new Error("Subscription not found in DynamoDB");
     }
+
+    logger.info("Updating DynamoDB with heartbeat notification information");
+
+    await putDynamoItem(tableName, subscriptionId, "SUBSCRIPTION", {
+        ...subscription,
+        heartbeatLastReceivedDateTime: data.HeartbeatNotification.RequestTimestamp,
+    });
+
+    return;
 };
 
-export const getDynamoDBValues = (xml: string): DynamoDBValues => {
-    let eventJson: HeartbeatNotificationEvent = {};
-    let eventHeartbeatFlag = false as boolean;
-    parseString(xml, function (err: unknown, results: unknown) {
-        const data = JSON.stringify(results);
-        eventJson = JSON.parse(data) as HeartbeatNotificationEvent;
-    });
-    if (eventJson.hasOwnProperty("HeartbeatNotification")) {
-        eventHeartbeatFlag = true as boolean;
-    }
-    const dynamoDBValues: DynamoDBValues = {
-        eventHeartbeatFlag: eventHeartbeatFlag,
-        subscriberID: eventJson.HeartbeatNotification?.ProducerRef[0] || "",
-        timeStamp: eventJson.HeartbeatNotification?.RequestTimestamp[0] || "",
-    };
+const processNotification = async (xml: string, bucketName: string, subscriptionId: string, tableName: string) => {
+    const data = parseXml(xml);
 
-    return dynamoDBValues;
+    if (data.hasOwnProperty("HeartbeatNotification")) {
+        logger.info("Heartbeat notification received: processing notification");
+
+        return validateHeartbeatNotificationAndUploadToDynamo(
+            heartbeatNotificationSchema.parse(data),
+            subscriptionId,
+            tableName,
+        );
+    }
+
+    logger.info("SIRI-VM Vehicle Journey data received - uploading data to S3");
+
+    const currentTime = getDate();
+
+    await putS3Object({
+        Bucket: bucketName,
+        Key: `${subscriptionId}/${currentTime.toISOString()}.xml`,
+        ContentType: "application/xml",
+        Body: xml,
+    });
+
+    logger.info("Successfully uploaded SIRI-VM to S3");
+};
+
+export const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+    });
+
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
+
+    // Check if Siri received is either SIRI-VM Vehicle Journey data or a Heartbeat Notification
+    const parsedJson = dataEndpointInputSchema.safeParse(parsedXml.Siri);
+
+    if (!parsedJson.success) {
+        logger.error("There was an error parsing the xml from the data producer.", parsedJson.error.format());
+
+        throw new ClientError();
+    }
+
+    return parsedJson.data;
 };
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
-        const { STAGE: stage, BUCKET_NAME: bucketName } = process.env;
-        const { TABLE_NAME: tableName } = process.env;
+        const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;
 
-        if (!bucketName) {
-            throw new Error("Missing env vars - BUCKET_NAME must be set");
+        if (!bucketName || !tableName) {
+            throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
-        if (!tableName) {
-            throw new Error("Missing env var: TABLE_NAME must be set.");
-        }
+
+        logger.info(JSON.stringify(event));
 
         const subscriptionId =
             stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;
@@ -103,12 +100,12 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
 
         logger.info("Starting Data Endpoint");
-        logger.info(process.env.TABLE_NAME ?? "");
 
         if (!event.body) {
             throw new Error("No body sent with event");
         }
-        await validateXmlAndUploadToS3(event.body, bucketName, subscriptionId, tableName);
+        await processNotification(event.body, bucketName, subscriptionId, tableName);
+
         return {
             statusCode: 200,
         };

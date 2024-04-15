@@ -8,6 +8,7 @@ export const subscriptionSchema = z
         shortDescription: z.string(),
         status: z.string(),
         requestorRef: z.string().nullish(),
+        heartbeatLastReceivedDateTime: z.string().nullish(),
     })
     .transform((data) => ({
         subscriptionId: data.PK,

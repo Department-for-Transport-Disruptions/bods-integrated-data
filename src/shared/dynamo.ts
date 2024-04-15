@@ -1,5 +1,6 @@
-import { DynamoDBClient, ScanCommandInput, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, UpdateCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient, ScanCommandInput } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
@@ -31,22 +32,15 @@ export const putDynamoItem = async (tableName: string, pk: string, sk: string, t
     );
 };
 
-export const updateDynamoItem = async (
-    tableName: string,
-    pk: string,
-    sk: string,
-    updateExpression: Omit<UpdateItemCommandInput, "TableName" | "Key">,
-) => {
-    await dynamoDbDocClient.send(
-        new UpdateCommand({
+export const getDynamoItem = async (tableName: string, key: Record<string, NativeAttributeValue>) => {
+    const data = await dynamoDbDocClient.send(
+        new GetCommand({
             TableName: tableName,
-            Key: {
-                PK: pk,
-                SK: sk,
-            },
-            ...updateExpression,
+            Key: key,
         }),
     );
+
+    return data.Item ?? null;
 };
 
 export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise<Record<string, unknown>[]> => {
