@@ -280,6 +280,7 @@ create-lambdas: \
 	create-lambda-gtfs-downloader \
 	create-lambda-noc-retriever \
 	create-lambda-noc-processor \
+	create-lambda-table-renamer \
 	create-lambda-gtfs-rt-generator
 
 delete-lambdas: \
@@ -296,6 +297,7 @@ delete-lambdas: \
 	delete-lambda-gtfs-downloader \
 	delete-lambda-noc-retriever \
 	delete-lambda-noc-processor \
+	delete-lambda-table-renamer \
 	delete-lambda-gtfs-rt-generator
 
 remake-lambdas: delete-lambdas create-lambdas
@@ -348,6 +350,9 @@ create-lambda-noc-retriever:
 
 create-lambda-noc-processor:
 	$(call create_lambda,noc-processor-local,noc-processor,IS_LOCAL=true)
+
+create-lambda-table-renamer:
+	$(call create_lambda,table-renamer-local,table-renamer,IS_LOCAL=true)
 
 # CLI Helper Commands
 
