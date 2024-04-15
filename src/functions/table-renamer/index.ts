@@ -4,28 +4,28 @@ import { Kysely, ReferenceExpression, sql } from "kysely";
 
 interface TableKey {
     table: keyof Database;
-    newTable: keyof Database;
     key: ReferenceExpression<Database, keyof Database>;
 }
 
 const tables: TableKey[] = [
-    { table: "agency", newTable: "agency_new", key: "agency.id" },
-    // { table: "calendar", key: "id" },
-    // { table: "calendar_date", key: "id" },
-    // { table: "route", key: "id" },
-    // { table: "stop", key: "id" },
-    // { table: "shape", key: "id" },
-    // { table: "trip", key: "id" },
-    // { table: "frequency", key: "id" },
-    // { table: "stop_time", key: "id" },
-    // { table: "noc_operator", key: "noc" },
+    { table: "agency", key: "id" },
+    { table: "calendar", key: "id" },
+    { table: "calendar_date", key: "id" },
+    { table: "route", key: "id" },
+    { table: "stop", key: "id" },
+    { table: "shape", key: "id" },
+    { table: "trip", key: "id" },
+    { table: "frequency", key: "id" },
+    { table: "stop_time", key: "id" },
+    { table: "noc_operator", key: "noc" },
 ];
 
 const getMatchingTables = async (dbClient: Kysely<Database>) => {
     const matches = await Promise.all(
         tables.map(async (tableKey) => {
-            const { table, newTable, key } = tableKey;
+            const { table, key } = tableKey;
             const pk = key as string;
+            const newTable = `${table}_new`;
 
             const query = await sql<{ percentage_matching: number }>`
                 WITH total_rows AS (
@@ -46,7 +46,7 @@ const getMatchingTables = async (dbClient: Kysely<Database>) => {
 
             if (query.rows[0].percentage_matching < 80) {
                 logger.warn(
-                    `Tables ${table} and ${table}_new have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
+                    `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
                 );
                 return;
             }

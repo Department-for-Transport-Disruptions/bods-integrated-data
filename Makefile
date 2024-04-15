@@ -262,8 +262,13 @@ run-local-noc-processor:
 	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 
+# Table renamer
+
 run-local-table-renamer:
 	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
+
+invoke-local-table-renamer:
+	awslocal lambda invoke --function-name table-renamer-local --output text /dev/stdout --cli-read-timeout 0
 
 # Lambdas
 create-lambdas: \
