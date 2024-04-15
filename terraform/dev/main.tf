@@ -24,6 +24,7 @@ terraform {
 }
 
 data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
@@ -170,7 +171,12 @@ module "integrated_data_avl_subscription_table" {
 module "integrated_data_avl_subscriber" {
   source = "../modules/avl-producer-api/avl-subscriber"
 
-  environment = local.env
+  environment                               = local.env
+  avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
+  avl_mock_data_producer_subscribe_endpoint = "${module.avl_mock_data_producer.endpoint}/subscribe"
+  avl_data_endpoint                         = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
+  aws_account_id                            = data.aws_caller_identity.current.account_id
+  aws_region                                = data.aws_region.current.name
 }
 
 module "integrated_data_avl_data_endpoint" {
@@ -178,6 +184,16 @@ module "integrated_data_avl_data_endpoint" {
 
   environment = local.env
   bucket_name = module.integrated_data_avl_pipeline.bucket_name
+}
+
+module avl_mock_data_producer {
+  source = "../modules/avl-producer-api/mock-data-producer"
+
+  environment                 = local.env
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
+  avl_consumer_data_endpoint  = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
 }
 
 module "integrated_data_avl_producer_api_gateway" {
