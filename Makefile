@@ -284,8 +284,7 @@ create-lambdas: \
 	create-lambda-gtfs-downloader \
 	create-lambda-noc-retriever \
 	create-lambda-noc-processor \
-	create-lambda-gtfs-rt-generator \
-	create-lambda-avl-unsubscriber
+	create-lambda-gtfs-rt-generator
 
 delete-lambdas: \
 	delete-lambda-avl-aggregate-siri-vm \
@@ -301,8 +300,7 @@ delete-lambdas: \
 	delete-lambda-gtfs-downloader \
 	delete-lambda-noc-retriever \
 	delete-lambda-noc-processor \
-	delete-lambda-gtfs-rt-generator \
-	delete-lambda-avl-unsubscriber
+	delete-lambda-gtfs-rt-generator
 
 remake-lambdas: delete-lambdas create-lambdas
 
@@ -351,9 +349,6 @@ create-lambda-gtfs-rt-generator:
 
 create-lambda-noc-retriever:
 	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
-
-create-lambda-avl-unsubscriber:
-	$(call create_lambda,avl-unsubscriber-local,avl-unsubscriber,TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME};STAGE="local")
 
 create-lambda-noc-processor:
 	$(call create_lambda,noc-processor-local,noc-processor,IS_LOCAL=true)

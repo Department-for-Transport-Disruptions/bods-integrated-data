@@ -1,4 +1,4 @@
-import { DeleteParameterCommand, DeleteParametersCommand, PutParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
+import { DeleteParametersCommand, PutParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
