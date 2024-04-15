@@ -1,4 +1,5 @@
 NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
+NPTG_BUCKET_NAME="integrated-data-nptg-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
@@ -105,6 +106,7 @@ edit-secrets-%:
 
 create-buckets:
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${NAPTAN_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
+	awslocal s3api create-bucket --region eu-west-2 --bucket ${NPTG_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
 	awslocal s3api create-bucket --region eu-west-2 --bucket ${TNDS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
@@ -159,6 +161,14 @@ invoke-local-naptan-uploader:
 
 invoke-full-local-naptan-pipeline: invoke-local-naptan-retriever invoke-local-naptan-uploader
 
+# NPTG
+
+run-local-nptg-retriever:
+	IS_LOCAL=true BUCKET_NAME=${NPTG_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/nptg-retriever'; handler().catch(e => console.error(e))"
+
+invoke-local-nptg-retriever:
+	awslocal lambda invoke --function-name nptg-retriever-local --output text /dev/stdout --cli-read-timeout 0
+
 # TXC
 
 run-local-bods-txc-retriever:
@@ -196,7 +206,6 @@ invoke-local-tnds-txc-unzipper:
 
 invoke-local-bods-txc-processor:
 	FILE=${FILE} awslocal lambda invoke --function-name txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
-
 
 # GTFS
 
@@ -267,6 +276,7 @@ create-lambdas: \
 	create-lambda-avl-processor \
 	create-lambda-naptan-retriever \
 	create-lambda-naptan-uploader \
+	create-lambda-nptg-retriever \
 	create-lambda-bods-txc-retriever \
 	create-lambda-bods-txc-unzipper \
 	create-lambda-tnds-txc-retriever \
@@ -283,6 +293,7 @@ delete-lambdas: \
 	delete-lambda-avl-processor \
 	delete-lambda-naptan-retriever \
 	delete-lambda-naptan-uploader \
+	delete-lambda-nptg-retriever \
 	delete-lambda-bods-txc-retriever \
 	delete-lambda-bods-txc-unzipper \
 	delete-lambda-tnds-txc-retriever \
@@ -314,6 +325,9 @@ create-lambda-naptan-retriever:
 
 create-lambda-naptan-uploader:
 	$(call create_lambda,naptan-uploader-local,naptan-uploader,IS_LOCAL=true)
+
+create-lambda-nptg-retriever:
+	$(call create_lambda,nptg-retriever-local,nptg-retriever,IS_LOCAL=true;BUCKET_NAME=${NPTG_BUCKET_NAME})
 
 create-lambda-bods-txc-retriever:
 	$(call create_lambda,bods-txc-retriever-local,bods-txc-retriever,IS_LOCAL=true;TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME})

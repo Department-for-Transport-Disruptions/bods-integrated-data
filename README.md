@@ -17,6 +17,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
   - [AVL subscriptions](#avl-subscriptions)
   - [NOC data retrieval](#noc-data-retrieval)
   - [NaPTAN data retrieval](#naptan-data-retrieval)
+  - [NPTG data retrieval](#nptg-data-retrieval)
   - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
     - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
     - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
@@ -148,11 +149,27 @@ Insert NaPTAN data into the database:
 make run-local-naptan-uploader
 ```
 
+### NPTG data retrieval
+
+The National Public Transport Gazetteer (NPTG) dataset contains geographical data for all cities, towns, villages and localities.
+
+Download the NPTG dataset into the localstack container:
+
+```bash
+make run-local-nptg-retriever
+```
+
+Insert NPTG data into the database:
+
+```bash
+make run-local-nptg-uploader
+```
+
 ### TXC data retrieval and processing
 
 #### Bus Open Data Service (BODS)
 
-> BODS data mapping requires NOC and NapTAN data to exist in the database first (see NOC and NaPTAN sections above).
+> BODS data mapping requires NOC, NapTAN and NPTG data to exist in the database first (see relevant sections above).
 
 BODS data is publicly available. Download all TXC data into the localstack container:
 
@@ -186,12 +203,12 @@ make run-local-bods-txc-processor FILE="bods/Acme_Bus_Co_314/A_ACME_PF1102351_14
 
 #### Traveline National Dataset (TNDS)
 
-> TNDS data mapping requires NOC and NapTAN data to exist in the database first (see NOC and NaPTAN sections above).
+> TNDS data mapping requires NOC, NapTAN and NPTG data to exist in the database first (see relevant sections above).
 
 TNDS data is behind authorisation. First find the AWS ARN of the secret that contains auth credentials:
 
 ```bash
-aws secretesmanager list-secrets
+aws secretsmanager list-secrets
 ```
 
 Then copy the `ARN` for the secret with the description "Integrated data tnds ftp credentials - dev".
