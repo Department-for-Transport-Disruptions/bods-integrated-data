@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { makeFilteredArraySchema } from "../utils";
 
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.string().optional(),
-        DirectionRef: z.string(),
+        DirectionRef: z.string().optional(),
         FramedVehicleJourneyRef: z
             .object({
                 DataFrameRef: z.string(),
@@ -36,7 +37,7 @@ export const siriSchema = z.object({
             ResponseTimestamp: z.string(),
             ValidUntil: z.string().optional(),
             RequestMessageRef: z.string().uuid().optional(),
-            VehicleActivity: vehicleActivitySchema.array(),
+            VehicleActivity: makeFilteredArraySchema(vehicleActivitySchema),
         }),
     }),
 });
@@ -48,7 +49,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
         recorded_at_time: vehicleActivity.RecordedAtTime,
         valid_until_time: vehicleActivity.ValidUntilTime,
         line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef,
+        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
         occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
         operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
         data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
