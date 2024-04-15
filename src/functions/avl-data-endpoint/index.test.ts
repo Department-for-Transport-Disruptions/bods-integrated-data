@@ -8,6 +8,7 @@ import { handler } from ".";
 describe("AVL-data-endpoint", () => {
     beforeAll(() => {
         process.env.BUCKET_NAME = "test-bucket";
+        process.env.TABLE_NAME = "test-dynamodb";
     });
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
