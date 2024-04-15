@@ -10,11 +10,11 @@ terraform {
 }
 
 module "integrated_data_table_renamer_function" {
-  source = "../../shared/lambda-function"
+  source = "../shared/lambda-function"
 
   environment    = var.environment
   function_name  = "integrated-data-table-renamer"
-  zip_path       = "${path.module}/../../../../src/functions/dist/table-renamer.zip"
+  zip_path       = "${path.module}/../../../src/functions/dist/table-renamer.zip"
   handler        = "index.handler"
   runtime        = "nodejs20.x"
   timeout        = 120
