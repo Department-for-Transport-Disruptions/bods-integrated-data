@@ -35,8 +35,7 @@ export const updateDynamoItem = async (
     tableName: string,
     pk: string,
     sk: string,
-    tableattr: string,
-    tablevalue: unknown,
+    updateExpression: Omit<UpdateItemCommandInput, "TableName" | "Key">,
 ) => {
     await dynamoDbDocClient.send(
         new UpdateCommand({
@@ -45,13 +44,7 @@ export const updateDynamoItem = async (
                 PK: pk,
                 SK: sk,
             },
-            UpdateExpression: "SET #attr = :value",
-            ExpressionAttributeNames: {
-                "#attr": tableattr,
-            },
-            ExpressionAttributeValues: {
-                ":value": tablevalue,
-            },
+            ...updateExpression,
         }),
     );
 };
