@@ -100,7 +100,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
     const messageIdentifier = randomUUID();
 
     const terminateSubscriptionRequestMessage = generateTerminationSubscriptionRequest(
-        subscription.subscriptionId,
+        subscription.PK,
         currentTimestamp,
         messageIdentifier,
         subscription.requestorRef ?? null,
@@ -122,38 +122,31 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 
     if (!terminateSubscriptionResponse.ok) {
         throw new Error(
-            `There was an error when sending the request to unsubscribe from the data producer - subscription ID: ${subscription.subscriptionId}, status code: ${terminateSubscriptionResponse.status}`,
+            `There was an error when sending the request to unsubscribe from the data producer - subscription ID: ${subscription.PK}, status code: ${terminateSubscriptionResponse.status}`,
         );
     }
 
     const terminateSubscriptionResponseBody = await terminateSubscriptionResponse.text();
 
     if (!terminateSubscriptionResponseBody) {
-        throw new Error(
-            `No response body received from the data producer - subscription ID: ${subscription.subscriptionId}`,
-        );
+        throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
     }
 
     const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
 
     if (parsedResponseBody.TerminateSubscriptionResponse.TerminateSubscriptionResponseStatus.Status !== "true") {
-        throw new Error(
-            `The data producer did not return a status of true - subscription ID: ${subscription.subscriptionId}`,
-        );
+        throw new Error(`The data producer did not return a status of true - subscription ID: ${subscription.PK}`);
     }
 
     logger.info("Updating subscription status in DynamoDB");
 
     await putDynamoItem(
         tableName,
-        subscription.subscriptionId,
+        subscription.PK,
         "SUBSCRIPTION",
 
         {
-            url: subscription.url,
-            description: subscription.description,
-            shortDescription: subscription.shortDescription,
-            requestorRef: subscription.requestorRef,
+            ...subscription,
             status: "TERMINATED",
         },
     );

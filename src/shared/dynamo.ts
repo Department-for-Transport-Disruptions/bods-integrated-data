@@ -1,5 +1,5 @@
-import { DynamoDBClient, ScanCommandInput } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient, ScanCommandInput, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;

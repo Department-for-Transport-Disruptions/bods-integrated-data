@@ -67,6 +67,7 @@ describe("avl-unsubscriber", () => {
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            PK: "mock-subscription-id",
             description: "test-description",
             requestorRef: null,
             shortDescription: "test-short-description",
