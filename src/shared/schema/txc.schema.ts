@@ -122,7 +122,7 @@ export const serviceSchema = z.object({
             })
             .array(),
     }),
-    Mode: z.string().default("bus"),
+    Mode: z.string().optional(),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
         JourneyPattern: z

@@ -7,6 +7,8 @@ import {
     getFirstNonZeroDuration,
     getPickupTypeFromStopActivity,
     getTimepointFromTimingStatus,
+    isRequiredTndsDataset,
+    isRequiredTndsServiceMode,
     mapTimingLinkToStopTime,
     mapTimingLinksToStopTimes,
 } from "./utils";
@@ -402,6 +404,39 @@ describe("utils", () => {
         ])("returns the non-zero duration when at least one exists", (input, expected) => {
             const result = getFirstNonZeroDuration(input);
             expect(result?.toISOString()).toEqual(expected);
+        });
+    });
+
+    describe("isRequiredTndsDataset", () => {
+        it.each([
+            ["L/", true],
+            ["S/", true],
+            ["W/", true],
+            ["L", false],
+            ["", false],
+            ["random", false],
+        ])("returns true when the key is a required TNDS dataset key", (input, expected) => {
+            const result = isRequiredTndsDataset(input);
+            expect(result).toEqual(expected);
+        });
+    });
+
+    describe("isRequiredTndsServiceMode", () => {
+        it.each([
+            ["coach", true],
+            ["ferry", true],
+            ["metro", true],
+            ["tram", true],
+            ["underground", true],
+            ["air", false],
+            ["bus", false],
+            ["telecabine", false],
+            ["train", false],
+            ["", false],
+            ["random", false],
+        ])("returns true when the mode is a required TNDS service mode", (input, expected) => {
+            const result = isRequiredTndsServiceMode(input);
+            expect(result).toEqual(expected);
         });
     });
 });
