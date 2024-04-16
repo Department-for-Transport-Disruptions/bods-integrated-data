@@ -17,8 +17,7 @@ For a given subscription it should:
 To run this function locally:
 
 - Auth against AWS
-- Navigate to this functions' directory and run a`pnpm run build`
-- Navigate back to root directory and run `make setup` (this will perform a `terraform apply` locally and will deploy
+- In the root directory run `make setup` (this will perform a `terraform apply` locally and will deploy
   the lambda function code in Localstack)
 - If you have a valid subscription ID to hand skip this step. Otherwise, to create a mock data producer run the
   command `make create-avl-mock-data-producer`, navigate to DynamoDB in Localstack desktop the PK and copy the

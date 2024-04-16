@@ -15,7 +15,7 @@ TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 dev: dev-containers-up
-setup: dev-containers-up install-deps build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
+setup: dev-containers-up install-deps build-functions build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -242,10 +242,10 @@ invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-mock-data-producer-subscribe:
-	npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/subscribe'; handler().catch(e => console.error(e))"
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-send-data:
-	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/send-data'; handler().catch(e => console.error(e))"
+	IS_LOCAL=true STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
 
 invoke-local-avl-mock-data-producer-subscribe:
 	awslocal lambda invoke --function-name avl-mock-data-producer-subscribe-local --output text /dev/stdout --cli-read-timeout 0
@@ -254,7 +254,7 @@ invoke-local-avl-mock-data-producer-send-data:
 	awslocal lambda invoke --function-name avl-mock-data-producer-send-data-local output.txt --cli-read-timeout 0
 
 run-local-avl-unsubscriber:
-	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+	IS_LOCAL=true SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
 invoke-local-avl-unsubscriber:
 	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" awslocal lambda invoke --function-name avl-unsubscriber-local --payload '{"pathParameters": {"subscription_id":"${SUBSCRIPTION_ID}"}}' --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
