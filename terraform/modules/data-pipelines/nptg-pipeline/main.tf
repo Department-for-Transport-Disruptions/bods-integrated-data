@@ -50,3 +50,52 @@ module "integrated_data_nptg_retriever_function" {
     BUCKET_NAME = aws_s3_bucket.integrated_data_nptg_s3_bucket.bucket
   }
 }
+
+module "integrated_data_nptg_uploader_function" {
+  source = "../../shared/lambda-function"
+
+  environment    = var.environment
+  function_name  = "integrated-data-nptg-uploader"
+  zip_path       = "${path.module}/../../../../src/functions/dist/nptg-uploader.zip"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  timeout        = 300
+  memory         = 1024
+  vpc_id         = var.vpc_id
+  subnet_ids     = var.private_subnet_ids
+  database_sg_id = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_nptg_s3_bucket.arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
+    }
+  ]
+
+  s3_bucket_trigger = {
+    id  = aws_s3_bucket.integrated_data_nptg_s3_bucket.id
+    arn = aws_s3_bucket.integrated_data_nptg_s3_bucket.arn
+  }
+
+  env_vars = {
+    BUCKET_NAME   = aws_s3_bucket.integrated_data_nptg_s3_bucket.bucket
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+}

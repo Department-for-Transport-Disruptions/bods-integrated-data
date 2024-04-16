@@ -166,8 +166,14 @@ invoke-full-local-naptan-pipeline: invoke-local-naptan-retriever invoke-local-na
 run-local-nptg-retriever:
 	IS_LOCAL=true BUCKET_NAME=${NPTG_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/nptg-retriever'; handler().catch(e => console.error(e))"
 
+run-local-nptg-uploader:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/nptg-uploader'; handler({Records:[{s3:{bucket:{name:'${NPTG_BUCKET_NAME}'},object:{key:'NPTG.xml'}}}]}).catch(e => console.error(e))"
+
 invoke-local-nptg-retriever:
 	awslocal lambda invoke --function-name nptg-retriever-local --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-nptg-uploader:
+	awslocal lambda invoke --function-name nptg-uploader-local --payload '{"Records":[{"s3":{"bucket":{"name":${NPTG_BUCKET_NAME}},"object":{"key":"NPTG.xml"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 # TXC
 
@@ -277,6 +283,7 @@ create-lambdas: \
 	create-lambda-naptan-retriever \
 	create-lambda-naptan-uploader \
 	create-lambda-nptg-retriever \
+	create-lambda-nptg-uploader \
 	create-lambda-bods-txc-retriever \
 	create-lambda-bods-txc-unzipper \
 	create-lambda-tnds-txc-retriever \
@@ -294,6 +301,7 @@ delete-lambdas: \
 	delete-lambda-naptan-retriever \
 	delete-lambda-naptan-uploader \
 	delete-lambda-nptg-retriever \
+	delete-lambda-nptg-uploader \
 	delete-lambda-bods-txc-retriever \
 	delete-lambda-bods-txc-unzipper \
 	delete-lambda-tnds-txc-retriever \
@@ -328,6 +336,9 @@ create-lambda-naptan-uploader:
 
 create-lambda-nptg-retriever:
 	$(call create_lambda,nptg-retriever-local,nptg-retriever,IS_LOCAL=true;BUCKET_NAME=${NPTG_BUCKET_NAME})
+
+create-lambda-nptg-uploader:
+	$(call create_lambda,nptg-uploader-local,nptg-uploader,IS_LOCAL=true)
 
 create-lambda-bods-txc-retriever:
 	$(call create_lambda,bods-txc-retriever-local,bods-txc-retriever,IS_LOCAL=true;TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME})
