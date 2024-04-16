@@ -25,7 +25,7 @@ export const generateSubscriptionRequestXml = (
     const subscriptionRequestJson = {
         SubscriptionRequest: {
             RequestTimeStamp: currentTimestamp,
-            Address: `${dataEndpoint}/${subscriptionId}`,
+            ConsumerAddress: `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionRequestContext: {
@@ -160,6 +160,11 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await fetch(url, {
         method: "POST",
         body: subscriptionRequestMessage,
+        headers: {
+            Authorization:
+                "Basic " +
+                Buffer.from(`${avlSubscribeMessage.username}:${avlSubscribeMessage.password}`).toString("base64"),
+        },
     });
 
     if (!subscriptionResponse.ok) {
@@ -177,6 +182,8 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
             `No response body received from the data producer: ${avlSubscribeMessage.dataProducerEndpoint}`,
         );
     }
+
+    logger.info(subscriptionResponseBody);
 
     const parsedResponseBody = await parseXml(subscriptionResponseBody);
 
