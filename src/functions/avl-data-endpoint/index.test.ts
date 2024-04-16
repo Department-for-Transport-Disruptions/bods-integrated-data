@@ -1,18 +1,27 @@
+import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { beforeAll, afterEach, afterAll, describe, expect, it, vi } from "vitest";
-import { testSiri } from "./testSiriVm";
+import { mockHeartbeatNotification, testSiri } from "./testSiriVm";
 import { handler } from ".";
 
 describe("AVL-data-endpoint", () => {
     beforeAll(() => {
         process.env.BUCKET_NAME = "test-bucket";
+        process.env.TABLE_NAME = "test-dynamodb";
     });
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
         putS3Object: vi.fn(),
     }));
+
+    vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+        putDynamoItem: vi.fn(),
+        getDynamoItem: vi.fn(),
+    }));
+
+    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
@@ -35,7 +44,6 @@ describe("AVL-data-endpoint", () => {
         } as unknown as APIGatewayEvent;
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
-
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Body: `${testSiri}`,
@@ -66,5 +74,53 @@ describe("AVL-data-endpoint", () => {
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 400 });
         expect(s3.putS3Object).not.toBeCalled();
+    });
+
+    it("should process a valid heartbeat notification and update dynamodb with heartbeat details", async () => {
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "ACTIVE",
+            requestorRef: null,
+        });
+
+        const mockEvent = {
+            body: mockHeartbeatNotification,
+            pathParameters: {
+                subscription_id: mockSubscriptionId,
+            },
+        } as unknown as APIGatewayEvent;
+
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
+        expect(dynamo.putDynamoItem).toBeCalledWith(
+            "test-dynamodb",
+            "411e4495-4a57-4d2f-89d5-cf105441f321",
+            "SUBSCRIPTION",
+            {
+                PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+                description: "test-description",
+                heartbeatLastReceivedDateTime: "2024-04-15T13:25:00+01:00",
+                requestorRef: null,
+                shortDescription: "test-short-description",
+                status: "ACTIVE",
+                url: "https://mock-data-producer.com/",
+            },
+        );
+    });
+
+    it("should throw an error if when processing a heartbeat notification the subscription does not exist in dynamodb", async () => {
+        getDynamoItemSpy.mockResolvedValue(null);
+
+        const mockEvent = {
+            body: mockHeartbeatNotification,
+            pathParameters: {
+                subscription_id: mockSubscriptionId,
+            },
+        } as unknown as APIGatewayEvent;
+
+        await expect(handler(mockEvent)).rejects.toThrowError("Subscription not found in DynamoDB");
+        expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 });
