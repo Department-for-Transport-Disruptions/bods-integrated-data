@@ -10,13 +10,7 @@ interface FtpCredentials {
     password: string;
 }
 
-const isLocal = process.env.IS_LOCAL === "true";
-const localStackHost = process.env.LOCALSTACK_HOSTNAME;
-
-const secretsClient = new SecretsManagerClient({
-    endpoint: isLocal ? (localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566") : undefined,
-    region: "eu-west-2",
-});
+const secretsClient = new SecretsManagerClient({ region: "eu-west-2" });
 
 const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Array>> => {
     const downloadedFiles: Map<string, Uint8Array> = new Map();
