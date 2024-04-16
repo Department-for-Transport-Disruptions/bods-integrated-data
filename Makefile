@@ -225,7 +225,7 @@ invoke-local-avl-subscriber:
 	awslocal lambda invoke --function-name avl-subscriber-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://payload.json
 
 run-local-avl-data-endpoint:
-	IS_LOCAL=true BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Siri><HeartbeatNotification><RequestTimestamp>2019-12-03T13:25:00+01:00</RequestTimestamp><ProducerRef>e0073936-c95c-4c41-9ec6-4ed4cfaa475c</ProducerRef><Status>true</Status><ServiceStartedTime>2019-11-23T13:25:00+01:00</ServiceStartedTime></HeartbeatNotification></Siri>', pathParameters: { subscription_id:'e0073936-c95c-4c41-9ec6-4ed4cfaa475c'}}).catch(e => console.error(e))"
+	IS_LOCAL=true SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
 	IS_LOCAL=true FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
@@ -249,7 +249,7 @@ run-local-avl-mock-data-producer-send-data:
 	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/send-data'; handler().catch(e => console.error(e))"
 
 invoke-local-avl-data-endpoint:
-	awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local --payload file://payload.json --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
+	FILE=${FILE} awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local --payload file://${FILE} --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
 
 invoke-local-avl-mock-data-producer-subscribe:
 	awslocal lambda invoke --function-name avl-mock-data-producer-subscribe-local --output text /dev/stdout --cli-read-timeout 0
@@ -354,3 +354,8 @@ create-lambda-noc-processor:
 create-avl-mock-data-producer:
 	cd cli-helpers && \
 	./bin/run.js create-avl-mock-data-producer
+
+invoke-avl-data-endpoint:
+	cd cli-helpers && \
+	./bin/run.js invoke-avl-data-endpoint
+
