@@ -185,6 +185,15 @@ module "integrated_data_avl_subscriber" {
   aws_region                                = data.aws_region.current.name
 }
 
+module "avl-unsubscriber" {
+  source = "../modules/avl-producer-api/avl-unsubscriber"
+
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
+  environment                 = local.env
+}
+
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
