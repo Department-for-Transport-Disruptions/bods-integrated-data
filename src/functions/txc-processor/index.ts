@@ -24,7 +24,13 @@ import {
     insertTrips,
 } from "./data/database";
 import { VehicleJourneyMapping } from "./types";
-import { DEFAULT_OPERATING_PROFILE, formatCalendar, hasServiceExpired } from "./utils";
+import {
+    DEFAULT_OPERATING_PROFILE,
+    formatCalendar,
+    hasServiceExpired,
+    isRequiredTndsDataset,
+    isRequiredTndsServiceMode,
+} from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -109,12 +115,22 @@ const processServices = (
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
     filePath: string,
+    isTnds: boolean,
 ) => {
     const promises = services.flatMap(async (service) => {
         if (hasServiceExpired(service)) {
             logger.warn("Service has expired", {
                 service: service.ServiceCode,
                 operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        if (isTnds && !isRequiredTndsDataset(filePath) && !isRequiredTndsServiceMode(service.Mode)) {
+            logger.warn("Ignoring TNDS service with mode", {
+                service: service.ServiceCode,
+                mode: service.Mode,
             });
 
             return null;
@@ -216,6 +232,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
+    const isTnds = record.s3.bucket.name.includes("-tnds-");
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const { TransXChange } = txcData;
@@ -238,6 +255,7 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
         TransXChange.JourneyPatternSections.JourneyPatternSection,
         agencyData,
         record.s3.object.key,
+        isTnds,
     );
 };
 

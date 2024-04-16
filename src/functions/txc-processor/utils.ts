@@ -408,3 +408,11 @@ export const getFirstNonZeroDuration = (durationStrings: (string | undefined)[])
 
     return undefined;
 };
+
+export const isRequiredTndsDataset = (key: string) => {
+    return key.startsWith("L/") || key.startsWith("S/") || key.startsWith("W/");
+};
+
+export const isRequiredTndsServiceMode = (mode?: string) => {
+    return mode === "coach" || mode === "ferry" || mode === "metro" || mode === "tram" || mode === "underground";
+};

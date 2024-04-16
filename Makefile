@@ -7,7 +7,7 @@ TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_TXC_FTP_CREDS_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-siri-vm-local"
-AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-local"
+AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 LAMBDA_ZIP_LOCATION="src/functions/dist"
@@ -16,7 +16,7 @@ TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 dev: dev-containers-up
-setup: dev-containers-up install-deps build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
+setup: dev-containers-up install-deps build-functions build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -124,6 +124,7 @@ create-txc-queue:
 	awslocal s3api put-bucket-notification-configuration --bucket ${BODS_TXC_UNZIPPED_BUCKET_NAME} --notification-configuration "{\"QueueConfigurations\": [{\"QueueArn\": \"$$queue_arn\", \"Events\":[\"s3:ObjectCreated:*\"]}]}"
 	awslocal lambda create-event-source-mapping --event-source-arn $$queue_arn --function-name txc-processor-local
 
+
 # Database
 
 migrate-local-db-to-latest:
@@ -195,6 +196,9 @@ run-tnds-txc-unzipper:
 run-local-bods-txc-processor:
 	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${BODS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
+run-local-tnds-txc-processor:
+	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${TNDS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+
 invoke-local-bods-txc-retriever:
 	awslocal lambda invoke --function-name bods-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
 
@@ -212,6 +216,9 @@ invoke-local-tnds-txc-unzipper:
 
 invoke-local-bods-txc-processor:
 	FILE=${FILE} awslocal lambda invoke --function-name txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${BODS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
+
+invoke-local-tnds-txc-processor:
+	FILE=${FILE} awslocal lambda invoke --function-name txc-processor-local --payload '{"Records":[{"s3":{"bucket":{"name":${TNDS_TXC_UNZIPPED_BUCKET_NAME}},"object":{"key":"${FILE}"}}}]}' --output text /dev/stdout --cli-read-timeout 0
 
 # GTFS
 
@@ -239,7 +246,7 @@ invoke-local-avl-subscriber:
 	awslocal lambda invoke --function-name avl-subscriber-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://payload.json
 
 run-local-avl-data-endpoint:
-	IS_LOCAL=true FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'1234'}}).catch(e => console.error(e))"
+	IS_LOCAL=true SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
 	IS_LOCAL=true FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
@@ -257,16 +264,27 @@ invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-mock-data-producer-subscribe:
-	npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/subscribe'; handler().catch(e => console.error(e))"
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-send-data:
-	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer/send-data'; handler().catch(e => console.error(e))"
+	IS_LOCAL=true STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
+
+invoke-local-avl-data-endpoint:
+	FILE=${FILE} awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local --payload file://${FILE} --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
 
 invoke-local-avl-mock-data-producer-subscribe:
 	awslocal lambda invoke --function-name avl-mock-data-producer-subscribe-local --output text /dev/stdout --cli-read-timeout 0
 
 invoke-local-avl-mock-data-producer-send-data:
 	awslocal lambda invoke --function-name avl-mock-data-producer-send-data-local output.txt --cli-read-timeout 0
+
+run-local-avl-unsubscriber:
+	IS_LOCAL=true SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+
+invoke-local-avl-unsubscriber:
+	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" awslocal lambda invoke --function-name avl-unsubscriber-local --payload '{"pathParameters": {"subscription_id":"${SUBSCRIPTION_ID}"}}' --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
+
+
 
 # NOC
 
@@ -375,3 +393,7 @@ create-lambda-noc-processor:
 create-avl-mock-data-producer:
 	cd cli-helpers && \
 	./bin/run.js create-avl-mock-data-producer
+
+invoke-avl-data-endpoint:
+	cd cli-helpers && \
+	./bin/run.js invoke-avl-data-endpoint

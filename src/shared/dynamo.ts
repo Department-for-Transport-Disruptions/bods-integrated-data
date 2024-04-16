@@ -1,5 +1,6 @@
 import { DynamoDBClient, ScanCommandInput } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
@@ -29,6 +30,17 @@ export const putDynamoItem = async (tableName: string, pk: string, sk: string, t
             },
         }),
     );
+};
+
+export const getDynamoItem = async (tableName: string, key: Record<string, NativeAttributeValue>) => {
+    const data = await dynamoDbDocClient.send(
+        new GetCommand({
+            TableName: tableName,
+            Key: key,
+        }),
+    );
+
+    return data.Item ?? null;
 };
 
 export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise<Record<string, unknown>[]> => {
