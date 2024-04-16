@@ -105,6 +105,12 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_nptg_pipeline" {
+  source = "../modules/data-pipelines/nptg-pipeline"
+
+  environment        = local.env
+}
+
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
