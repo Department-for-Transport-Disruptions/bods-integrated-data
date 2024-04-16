@@ -105,6 +105,12 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_nptg_pipeline" {
+  source = "../modules/data-pipelines/nptg-pipeline"
+
+  environment        = local.env
+}
+
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
@@ -191,8 +197,11 @@ module "avl-unsubscriber" {
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
-  environment = local.env
-  bucket_name = module.integrated_data_avl_pipeline.bucket_name
+  environment                 = local.env
+  bucket_name                 = module.integrated_data_avl_pipeline.bucket_name
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
 }
 
 module avl_mock_data_producer {
