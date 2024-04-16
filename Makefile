@@ -15,7 +15,7 @@ TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 dev: dev-containers-up
-setup: dev-containers-up install-deps build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
+setup: dev-containers-up install-deps build-functions build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
