@@ -56,6 +56,7 @@ module "integrated_data_gtfs_rt_processor_function" {
   }, ]
 
   env_vars = {
+    STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
     SAVE_JSON     = var.environment == "dev" ? "true" : false
     DB_HOST       = var.db_host

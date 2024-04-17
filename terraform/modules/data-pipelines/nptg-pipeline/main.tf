@@ -47,6 +47,7 @@ module "integrated_data_nptg_retriever_function" {
   ]
 
   env_vars = {
+    STAGE       = var.environment
     BUCKET_NAME = aws_s3_bucket.integrated_data_nptg_s3_bucket.bucket
   }
 }

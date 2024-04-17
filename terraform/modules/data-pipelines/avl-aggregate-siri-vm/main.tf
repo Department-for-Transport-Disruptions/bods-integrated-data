@@ -63,6 +63,7 @@ module "avl_aggregate_siri" {
   }, ]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn

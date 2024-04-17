@@ -35,6 +35,7 @@ module "integrated_data_table_renamer_function" {
   }]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
