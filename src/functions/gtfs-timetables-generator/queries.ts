@@ -11,7 +11,7 @@ export type Query = {
 export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     {
         query: dbClient
-            .selectFrom("agency_new")
+            .selectFrom("agency")
             .select([
                 "id as agency_id",
                 "name as agency_name",
@@ -28,7 +28,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
     {
         query: dbClient
-            .selectFrom("stop_new")
+            .selectFrom("stop")
             .select([
                 "id as stop_id",
                 "stop_code",
@@ -46,7 +46,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
     {
         query: dbClient
-            .selectFrom("route_new")
+            .selectFrom("route")
             .select(["id as route_id", "agency_id", "route_short_name", "route_long_name", "route_type"])
             .orderBy("route_id asc")
             .compile().sql,
@@ -55,7 +55,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
     {
         query: dbClient
-            .selectFrom("calendar_new")
+            .selectFrom("calendar")
             .select([
                 "id as service_id",
                 "monday",
@@ -84,12 +84,12 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         fileName: "calendar",
     },
     {
-        query: dbClient.selectFrom("calendar_date_new").select(["service_id", "date", "exception_type"]).compile().sql,
+        query: dbClient.selectFrom("calendar_date").select(["service_id", "date", "exception_type"]).compile().sql,
         fileName: "calendar_dates",
     },
     {
         query: dbClient
-            .selectFrom("trip_new")
+            .selectFrom("trip")
             .select([
                 "route_id",
                 "service_id",
@@ -107,21 +107,21 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
     {
         query: dbClient
-            .selectFrom("shape_new")
+            .selectFrom("shape")
             .select(["shape_id", "shape_pt_lat", "shape_pt_lon", "shape_pt_sequence", "shape_dist_traveled"])
             .compile().sql,
         fileName: "shapes",
     },
     {
         query: dbClient
-            .selectFrom("frequency_new")
+            .selectFrom("frequency")
             .select(["trip_id", "start_time", "end_time", "headway_secs", "exact_times"])
             .compile().sql,
         fileName: "frequencies",
     },
     {
         query: dbClient
-            .selectFrom("calendar_new")
+            .selectFrom("calendar")
             .select(({ fn }) => [
                 sql.lit<string>(`'Bus Open Data Service (BODS)'`).as("feed_publisher_name"),
                 sql.lit<string>(`'https://www.bus-data.dft.gov.uk/'`).as("feed_publisher_url"),
@@ -135,7 +135,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
     {
         query: dbClient
-            .selectFrom("stop_time_new")
+            .selectFrom("stop_time")
             .select([
                 "trip_id",
                 "arrival_time",

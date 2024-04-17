@@ -288,6 +288,15 @@ run-local-noc-retriever:
 run-local-noc-processor:
 	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
+
+# Table renamer
+
+run-local-table-renamer:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
+
+invoke-local-table-renamer:
+	awslocal lambda invoke --function-name table-renamer-local --output text /dev/stdout --cli-read-timeout 0
+
 # Lambdas
 create-lambdas: \
 	create-lambda-avl-aggregate-siri-vm \
@@ -304,6 +313,7 @@ create-lambdas: \
 	create-lambda-gtfs-downloader \
 	create-lambda-noc-retriever \
 	create-lambda-noc-processor \
+	create-lambda-table-renamer \
 	create-lambda-gtfs-rt-generator
 
 delete-lambdas: \
@@ -321,6 +331,7 @@ delete-lambdas: \
 	delete-lambda-gtfs-downloader \
 	delete-lambda-noc-retriever \
 	delete-lambda-noc-processor \
+	delete-lambda-table-renamer \
 	delete-lambda-gtfs-rt-generator
 
 remake-lambdas: delete-lambdas create-lambdas
@@ -376,6 +387,9 @@ create-lambda-noc-retriever:
 
 create-lambda-noc-processor:
 	$(call create_lambda,noc-processor-local,noc-processor,IS_LOCAL=true)
+
+create-lambda-table-renamer:
+	$(call create_lambda,table-renamer-local,table-renamer,IS_LOCAL=true)
 
 # CLI Helper Commands
 
