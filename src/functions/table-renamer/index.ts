@@ -7,6 +7,7 @@ interface TableKey {
     key: ReferenceExpression<Database, keyof Database>;
 }
 
+// Rename BODS related tables
 const tables: TableKey[] = [
     { table: "agency", key: "id" },
     { table: "calendar", key: "id" },
