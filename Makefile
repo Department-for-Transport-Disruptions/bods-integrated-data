@@ -16,7 +16,7 @@ TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 dev: dev-containers-up
-setup: dev-containers-up install-deps build-functions build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-avl-local-env
+setup: dev-containers-up install-deps build-functions build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-local-env
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -64,21 +64,9 @@ tf-apply-%:
 	terraform -chdir=terraform/$* apply
 
 
-# Terraform local
-
-tf-init-local:
-	tflocal -chdir=terraform/local init
-
-tf-plan-local:
-	tflocal -chdir=terraform/local plan
-
-tf-apply-local:
-	tflocal -chdir=terraform/local apply
-
-
 # Build
 
-create-avl-local-env:
+create-local-env:
 	tflocal -chdir=terraform/local init && \
 	tflocal -chdir=terraform/local apply --auto-approve
 
