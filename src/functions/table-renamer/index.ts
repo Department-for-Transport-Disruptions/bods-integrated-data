@@ -18,6 +18,7 @@ const tables: TableKey[] = [
     { table: "frequency", key: "id" },
     { table: "stop_time", key: "id" },
     { table: "noc_operator", key: "noc" },
+    { table: "naptan_stop", key: "atco_code" },
 ];
 
 const getMatchingTables = async (dbClient: Kysely<Database>) => {
