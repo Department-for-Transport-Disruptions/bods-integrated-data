@@ -16,7 +16,7 @@ TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 dev: dev-containers-up
-setup: dev-containers-up install-deps build-functions build-cli-helpers create-buckets migrate-local-db-to-latest create-lambdas create-local-env
+setup: dev-containers-up install-deps build-functions build-cli-helpers create-local-env migrate-local-db-to-latest
 
 # This is required as the subst function used below would interpret the comma as a parameter separator
 comma:= ,
@@ -91,20 +91,6 @@ edit-secrets-%:
 	cd terraform/$* && sops secrets.enc.json
 
 # Localstack
-
-create-buckets:
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${NAPTAN_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${NPTG_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${BODS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${TNDS_TXC_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${TNDS_TXC_UNZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${AVL_UNPROCESSED_SIRI_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_ZIPPED_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${GTFS_RT_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-	awslocal s3api create-bucket --region eu-west-2 --bucket ${NOC_BUCKET_NAME} --create-bucket-configuration LocationConstraint=eu-west-2 || true
-
 
 create-txc-queue:
 	queue_url=$$(awslocal sqs create-queue --queue-name ${TXC_QUEUE_NAME} --query 'QueueUrl' --output text); \
