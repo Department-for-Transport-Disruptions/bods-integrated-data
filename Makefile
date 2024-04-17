@@ -236,9 +236,6 @@ invoke-local-gtfs-rt-generator:
 run-local-avl-subscriber:
 	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
-invoke-local-avl-subscriber:
-	awslocal lambda invoke --function-name avl-subscriber-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://payload.json
-
 run-local-avl-data-endpoint:
 	IS_LOCAL=true SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
@@ -262,9 +259,6 @@ run-local-avl-mock-data-producer-subscribe:
 
 run-local-avl-mock-data-producer-send-data:
 	IS_LOCAL=true STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
-
-invoke-local-avl-data-endpoint:
-	FILE=${FILE} awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local --payload file://${FILE} --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
 
 invoke-local-avl-mock-data-producer-subscribe:
 	awslocal lambda invoke --function-name avl-mock-data-producer-subscribe-local --output text /dev/stdout --cli-read-timeout 0
@@ -390,4 +384,8 @@ invoke-avl-data-endpoint:
 invoke-avl-subscriber:
 	cd cli-helpers && \
 	./bin/run.js invoke-avl-subscriber
+
+invoke-avl-unsubscriber:
+	cd cli-helpers && \
+	./bin/run.js invoke-avl-unsubscriber
 
