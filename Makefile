@@ -128,10 +128,10 @@ create-txc-queue:
 # Database
 
 migrate-local-db-to-latest:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
 rollback-last-local-db-migration:
-	IS_LOCAL=true ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
+	STAGE=local ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
 bastion-tunnel:
 	./scripts/bastion-tunnel.sh
@@ -147,10 +147,10 @@ get-bank-holiday-dates:
 # Naptan
 
 run-local-naptan-retriever:
-	IS_LOCAL=true BUCKET_NAME=${NAPTAN_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/naptan-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local BUCKET_NAME=${NAPTAN_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/naptan-retriever'; handler().catch(e => console.error(e))"
 
 run-local-naptan-uploader:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/naptan-uploader'; handler({Records:[{s3:{bucket:{name:'${NAPTAN_BUCKET_NAME}'},object:{key:'Stops.csv'}}}]}).catch(e => console.error(e))"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/naptan-uploader'; handler({Records:[{s3:{bucket:{name:'${NAPTAN_BUCKET_NAME}'},object:{key:'Stops.csv'}}}]}).catch(e => console.error(e))"
 
 run-full-local-naptan-pipeline: run-local-naptan-retriever run-local-naptan-uploader
 
@@ -165,7 +165,7 @@ invoke-full-local-naptan-pipeline: invoke-local-naptan-retriever invoke-local-na
 # NPTG
 
 run-local-nptg-retriever:
-	IS_LOCAL=true BUCKET_NAME=${NPTG_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/nptg-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local BUCKET_NAME=${NPTG_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/nptg-retriever'; handler().catch(e => console.error(e))"
 
 invoke-local-nptg-retriever:
 	awslocal lambda invoke --function-name nptg-retriever-local --output text /dev/stdout --cli-read-timeout 0
@@ -173,25 +173,25 @@ invoke-local-nptg-retriever:
 # TXC
 
 run-local-bods-txc-retriever:
-	IS_LOCAL=true TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-txc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-txc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-tnds-txc-retriever:
-	IS_LOCAL=true TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-txc-retriever:
-	IS_LOCAL=true BODS_TXC_RETRIEVER_FUNCTION_NAME="dummy" TNDS_TXC_RETRIEVER_FUNCTION_NAME="dummy" npx tsx -e "import {handler} from './src/functions/txc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local BODS_TXC_RETRIEVER_FUNCTION_NAME="dummy" TNDS_TXC_RETRIEVER_FUNCTION_NAME="dummy" npx tsx -e "import {handler} from './src/functions/txc-retriever'; handler().catch(e => console.error(e))"
 
 run-bods-txc-unzipper:
-	FILE="${FILE}" IS_LOCAL=true UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 run-tnds-txc-unzipper:
-	FILE="${FILE}" IS_LOCAL=true UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${TNDS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${TNDS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 run-local-bods-txc-processor:
-	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${BODS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${BODS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
 run-local-tnds-txc-processor:
-	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${TNDS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${TNDS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
 invoke-local-bods-txc-retriever:
 	awslocal lambda invoke --function-name bods-txc-retriever-local --output text /dev/stdout --cli-read-timeout 0
@@ -217,16 +217,16 @@ invoke-local-tnds-txc-processor:
 # GTFS
 
 run-local-gtfs-timetables-generator:
-	OUTPUT_BUCKET=${AURORA_OUTPUT_BUCKET_NAME} GTFS_BUCKET=${GTFS_ZIPPED_BUCKET_NAME} IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/gtfs-timetables-generator'; handler().catch(e => console.error(e))"
+	STAGE=local OUTPUT_BUCKET=${AURORA_OUTPUT_BUCKET_NAME} GTFS_BUCKET=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-timetables-generator'; handler().catch(e => console.error(e))"
 
 run-local-gtfs-downloader:
-	IS_LOCAL=true BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
+	STAGE=local BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
 
 invoke-local-gtfs-downloader:
 	awslocal lambda invoke --function-name gtfs-downloader-local --output text /dev/stdout --cli-read-timeout 0
 
 run-gtfs-rt-generator:
-	IS_LOCAL=true BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
+	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
 invoke-local-gtfs-rt-generator:
 	awslocal lambda invoke --function-name gtfs-rt-generator-local --output text /dev/stdout --cli-read-timeout 0
@@ -234,34 +234,34 @@ invoke-local-gtfs-rt-generator:
 # AVL
 
 run-local-avl-subscriber:
-	IS_LOCAL=true TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
 invoke-local-avl-subscriber:
 	awslocal lambda invoke --function-name avl-subscriber-local output.txt --cli-read-timeout 0 --cli-binary-format raw-in-base64-out --payload file://payload.json
 
 run-local-avl-data-endpoint:
-	IS_LOCAL=true SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
-	IS_LOCAL=true FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
 invoke-local-avl-processor:
 	awslocal lambda invoke --function-name avl-processor-local --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-aggregate-siri-vm:
-	IS_LOCAL=true BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
+	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
 
 run-local-avl-retriever:
-	IS_LOCAL=true TARGET_BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TARGET_BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
 
 invoke-local-avl-aggregate-siri-vm:
 	awslocal lambda invoke --function-name avl-aggregate-siri-vm-local --output text /dev/stdout --cli-read-timeout 0
 
 run-local-avl-mock-data-producer-subscribe:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-send-data:
-	IS_LOCAL=true STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
+	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
 
 invoke-local-avl-data-endpoint:
 	FILE=${FILE} awslocal lambda invoke --function-name integrated-data-bods-avl-data-endpoint-local --payload file://${FILE} --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
@@ -273,7 +273,7 @@ invoke-local-avl-mock-data-producer-send-data:
 	awslocal lambda invoke --function-name avl-mock-data-producer-send-data-local output.txt --cli-read-timeout 0
 
 run-local-avl-unsubscriber:
-	IS_LOCAL=true SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
 invoke-local-avl-unsubscriber:
 	SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" awslocal lambda invoke --function-name avl-unsubscriber-local --payload '{"pathParameters": {"subscription_id":"${SUBSCRIPTION_ID}"}}' --output text /dev/stdout --cli-read-timeout 0 --cli-binary-format raw-in-base64-out
@@ -283,16 +283,16 @@ invoke-local-avl-unsubscriber:
 # NOC
 
 run-local-noc-retriever:
-	IS_LOCAL=true NOC_BUCKET_NAME=${NOC_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/noc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local NOC_BUCKET_NAME=${NOC_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/noc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-noc-processor:
-	FILE="${FILE}" IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 
 # Table renamer
 
 run-local-table-renamer:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
 
 invoke-local-table-renamer:
 	awslocal lambda invoke --function-name table-renamer-local --output text /dev/stdout --cli-read-timeout 0
@@ -344,52 +344,52 @@ delete-lambda-%:
 	awslocal lambda delete-function --function-name $*-local || true
 
 create-lambda-avl-aggregate-siri-vm:
-	$(call create_lambda,avl-aggregate-siri-vm-local,avl-aggregate-siri-vm,IS_LOCAL=true;BUCKET_NAME=${AVL_SIRI_BUCKET_NAME})
+	$(call create_lambda,avl-aggregate-siri-vm-local,avl-aggregate-siri-vm,STAGE=local;BUCKET_NAME=${AVL_SIRI_BUCKET_NAME})
 
 create-lambda-avl-processor:
-	$(call create_lambda,avl-processor-local,avl-processor,IS_LOCAL=true;AVL_UNPROCESSED_SIRI_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME})
+	$(call create_lambda,avl-processor-local,avl-processor,STAGE=local;AVL_UNPROCESSED_SIRI_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME})
 
 create-lambda-naptan-retriever:
-	$(call create_lambda,naptan-retriever-local,naptan-retriever,IS_LOCAL=true;BUCKET_NAME=${NAPTAN_BUCKET_NAME})
+	$(call create_lambda,naptan-retriever-local,naptan-retriever,STAGE=local;BUCKET_NAME=${NAPTAN_BUCKET_NAME})
 
 create-lambda-naptan-uploader:
-	$(call create_lambda,naptan-uploader-local,naptan-uploader,IS_LOCAL=true)
+	$(call create_lambda,naptan-uploader-local,naptan-uploader,STAGE=local)
 
 create-lambda-nptg-retriever:
-	$(call create_lambda,nptg-retriever-local,nptg-retriever,IS_LOCAL=true;BUCKET_NAME=${NPTG_BUCKET_NAME})
+	$(call create_lambda,nptg-retriever-local,nptg-retriever,STAGE=local;BUCKET_NAME=${NPTG_BUCKET_NAME})
 
 create-lambda-bods-txc-retriever:
-	$(call create_lambda,bods-txc-retriever-local,bods-txc-retriever,IS_LOCAL=true;TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME})
+	$(call create_lambda,bods-txc-retriever-local,bods-txc-retriever,STAGE=local;TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME})
 
 create-lambda-bods-txc-unzipper:
-	$(call create_lambda,bods-txc-unzipper-local,unzipper,IS_LOCAL=true;UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME})
+	$(call create_lambda,bods-txc-unzipper-local,unzipper,STAGE=local;UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME})
 
 create-lambda-tnds-txc-retriever:
-	$(call create_lambda,tnds-txc-retriever-local,tnds-txc-retriever,IS_LOCAL=true;TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME};TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN})
+	$(call create_lambda,tnds-txc-retriever-local,tnds-txc-retriever,STAGE=local;TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME};TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN})
 
 create-lambda-tnds-txc-unzipper:
-	$(call create_lambda,tnds-txc-unzipper-local,unzipper,IS_LOCAL=true;UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME})
+	$(call create_lambda,tnds-txc-unzipper-local,unzipper,STAGE=local;UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME})
 
 create-lambda-txc-retriever:
-	$(call create_lambda,txc-retriever-local,txc-retriever,IS_LOCAL=true;BODS_TXC_RETRIEVER_FUNCTION_NAME=bods-txc-retriever-local;TNDS_TXC_RETRIEVER_FUNCTION_NAME=tnds-txc-retriever-local)
+	$(call create_lambda,txc-retriever-local,txc-retriever,STAGE=local;BODS_TXC_RETRIEVER_FUNCTION_NAME=bods-txc-retriever-local;TNDS_TXC_RETRIEVER_FUNCTION_NAME=tnds-txc-retriever-local)
 
 create-lambda-txc-processor:
-	$(call create_lambda,txc-processor-local,txc-processor,IS_LOCAL=true)
+	$(call create_lambda,txc-processor-local,txc-processor,STAGE=local)
 
 create-lambda-gtfs-downloader:
-	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,IS_LOCAL=true;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
+	$(call create_lambda,gtfs-downloader-local,gtfs-downloader,STAGE=local;BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME})
 
 create-lambda-gtfs-rt-generator:
-	$(call create_lambda,gtfs-rt-generator-local,gtfs-rt-generator,IS_LOCAL=true;BUCKET_NAME=${GTFS_RT_BUCKET_NAME})
+	$(call create_lambda,gtfs-rt-generator-local,gtfs-rt-generator,STAGE=local;BUCKET_NAME=${GTFS_RT_BUCKET_NAME})
 
 create-lambda-noc-retriever:
-	$(call create_lambda,noc-retriever-local,noc-retriever,IS_LOCAL=true;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
+	$(call create_lambda,noc-retriever-local,noc-retriever,STAGE=local;NOC_BUCKET_NAME=${NOC_BUCKET_NAME})
 
 create-lambda-noc-processor:
-	$(call create_lambda,noc-processor-local,noc-processor,IS_LOCAL=true)
+	$(call create_lambda,noc-processor-local,noc-processor,STAGE=local)
 
 create-lambda-table-renamer:
-	$(call create_lambda,table-renamer-local,table-renamer,IS_LOCAL=true)
+	$(call create_lambda,table-renamer-local,table-renamer,STAGE=local)
 
 # CLI Helper Commands
 
@@ -400,4 +400,3 @@ create-avl-mock-data-producer:
 invoke-avl-data-endpoint:
 	cd cli-helpers && \
 	./bin/run.js invoke-avl-data-endpoint
-

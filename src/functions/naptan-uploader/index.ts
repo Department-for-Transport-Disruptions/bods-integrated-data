@@ -134,7 +134,7 @@ const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[
 };
 
 export const handler = async (event: S3Event) => {
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info(`Starting naptan uploader`);

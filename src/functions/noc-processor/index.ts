@@ -44,7 +44,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
 
 export const handler = async (event: S3Event) => {
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info(`Starting processing of NOC data for ${object.key}`);

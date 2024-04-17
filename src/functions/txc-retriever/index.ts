@@ -31,10 +31,10 @@ export const handler = async () => {
     const {
         BODS_TXC_RETRIEVER_FUNCTION_NAME: bodsTxcRetrieverFunctionName,
         TNDS_TXC_RETRIEVER_FUNCTION_NAME: tndsTxcRetrieverFunctionName,
-        IS_LOCAL: isLocal = "false",
+        STAGE: stage,
     } = process.env;
 
-    const dbClient = await getDatabaseClient(isLocal === "true");
+    const dbClient = await getDatabaseClient(stage === "true");
 
     try {
         if (!bodsTxcRetrieverFunctionName) {
@@ -51,7 +51,7 @@ export const handler = async () => {
 
         logger.info("Database preparation complete");
 
-        if (isLocal === "true") {
+        if (stage === "true") {
             return;
         }
 

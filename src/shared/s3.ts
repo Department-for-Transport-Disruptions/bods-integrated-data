@@ -1,6 +1,8 @@
 import {
     GetObjectCommand,
     GetObjectCommandInput,
+    ListObjectsV2Command,
+    ListObjectsV2CommandInput,
     PutObjectCommand,
     PutObjectCommandInput,
     S3Client,
@@ -15,7 +17,7 @@ const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const client = new S3Client({
     region: "eu-west-2",
-    ...(process.env.IS_LOCAL === "true"
+    ...(process.env.STAGE === "local"
         ? {
               endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
               forcePathStyle: true,
@@ -26,6 +28,8 @@ const client = new S3Client({
           }
         : {}),
 });
+
+export const listS3Objects = async (input: ListObjectsV2CommandInput) => client.send(new ListObjectsV2Command(input));
 
 export const getS3Object = async (input: GetObjectCommandInput) =>
     client.send(
