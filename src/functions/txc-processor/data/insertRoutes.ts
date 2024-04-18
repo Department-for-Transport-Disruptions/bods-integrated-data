@@ -4,6 +4,7 @@ import { Service } from "@bods-integrated-data/shared/schema";
 import { notEmpty, getRouteTypeFromServiceMode } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { getBodsRoute, getTndsRoute, insertRoute } from "./database";
+import { DuplicateRouteError } from "../errors";
 
 export const insertRoutes = async (
     dbClient: Kysely<Database>,
@@ -39,7 +40,7 @@ export const insertRoutes = async (
             };
 
             if (isTnds && existingRoute?.data_source === "bods") {
-                throw new Error("Duplicate TNDS route found");
+                throw new DuplicateRouteError();
             }
 
             return insertRoute(dbClient, existingRoute || newRoute);
@@ -51,7 +52,7 @@ export const insertRoutes = async (
             routes: routeData.filter(notEmpty),
         };
     } catch (error) {
-        if (error instanceof Error && error.message === "Duplicate TNDS route found") {
+        if (error instanceof DuplicateRouteError) {
             return {
                 isDuplicateRoute: true,
             };
