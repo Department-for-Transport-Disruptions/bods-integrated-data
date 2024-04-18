@@ -4,32 +4,50 @@ import { Kysely, ReferenceExpression, sql } from "kysely";
 
 interface TableKey {
     table: keyof Database;
+    newTable: keyof Database;
     key: ReferenceExpression<Database, keyof Database>;
 }
 
 // Rename BODS related tables
 const tables: TableKey[] = [
-    { table: "agency", key: "id" },
-    { table: "calendar", key: "id" },
-    { table: "calendar_date", key: "id" },
-    { table: "route", key: "id" },
-    { table: "stop", key: "id" },
-    { table: "shape", key: "id" },
-    { table: "trip", key: "id" },
-    { table: "frequency", key: "id" },
-    { table: "stop_time", key: "id" },
-    { table: "noc_operator", key: "noc" },
-    { table: "naptan_stop", key: "atco_code" },
+    { table: "agency", newTable: "agency_new", key: "id" },
+    { table: "calendar", newTable: "calendar_new", key: "id" },
+    { table: "calendar_date", newTable: "calendar_date_new", key: "id" },
+    { table: "route", newTable: "route_new", key: "id" },
+    { table: "stop", newTable: "stop_new", key: "id" },
+    { table: "shape", newTable: "shape_new", key: "id" },
+    { table: "trip", newTable: "trip_new", key: "id" },
+    { table: "frequency", newTable: "frequency_new", key: "id" },
+    { table: "stop_time", newTable: "stop_new", key: "id" },
+    { table: "noc_operator", newTable: "noc_operator_new", key: "noc" },
+    { table: "naptan_stop", newTable: "naptan_stop_new", key: "atco_code" },
 ];
+
+const tableIsEmpty = async (table: keyof Database, dbClient: Kysely<Database>) => {
+    // Count returns a string
+    const res = (
+        await dbClient
+            .selectFrom(table)
+            .select([(i) => i.fn.countAll<string>().as("count")])
+            .execute()
+    )[0];
+    return res.count === "0";
+};
 
 const getMatchingTables = async (dbClient: Kysely<Database>) => {
     const matches = await Promise.all(
         tables.map(async (tableKey) => {
-            const { table, key } = tableKey;
+            const { table, newTable, key } = tableKey;
             const pk = key as string;
-            const newTable = `${table}_new`;
 
-            const query = await sql<{ percentage_matching: number }>`
+            const newTableIsEmpty = await tableIsEmpty(newTable, dbClient);
+
+            if (newTableIsEmpty) return;
+
+            const mainTableIsEmpty = await tableIsEmpty(table, dbClient);
+
+            if (!mainTableIsEmpty) {
+                const query = await sql<{ percentage_matching: number }>`
                 WITH total_rows AS (
                 SELECT COUNT(*)::FLOAT AS total from ${sql.id(table)}
                 ),
@@ -42,15 +60,16 @@ const getMatchingTables = async (dbClient: Kysely<Database>) => {
                 FROM matching_rows, total_rows;
                 `.execute(dbClient);
 
-            if (query.rows.length < 0) {
-                throw new Error(`Error attempting to match table ${table} with key ${pk}`);
-            }
+                if (query.rows.length < 0) {
+                    throw new Error(`Error attempting to match table ${table} with key ${pk}`);
+                }
 
-            if (query.rows[0].percentage_matching < 80) {
-                logger.warn(
-                    `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
-                );
-                return;
+                if (query.rows[0].percentage_matching < 80) {
+                    logger.warn(
+                        `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
+                    );
+                    return;
+                }
             }
 
             return table;
