@@ -130,27 +130,21 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 
     // TODO: This block of code is to mock out the data producers response when running locally, it will be removed
     //  when we create an unsubscribe endpoint for the mock data producer.
-    // const terminateSubscriptionResponse =
-    //     process.env.STAGE === "local"
-    //         ? {
-    //               text: () => mockSubscriptionResponseBody,
-    //               status: 200,
-    //               ok: true,
-    //           }
-    //         : await fetch(subscription.url, {
-    //               method: "POST",
-    //               body: terminateSubscriptionRequestMessage,
-    //           });
-
-    logger.info(`request: ${terminateSubscriptionRequestMessage}`);
-
-    const terminateSubscriptionResponse = await fetch(subscription.url, {
-        method: "POST",
-        body: terminateSubscriptionRequestMessage,
-        headers: {
-            Authorization: "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
-        },
-    });
+    const terminateSubscriptionResponse =
+        process.env.STAGE === "local" && subscription.requestorRef === "BODS_MOCK_PRODUCER"
+            ? {
+                  text: () => mockSubscriptionResponseBody,
+                  status: 200,
+                  ok: true,
+              }
+            : await fetch(subscription.url, {
+                  method: "POST",
+                  body: terminateSubscriptionRequestMessage,
+                  headers: {
+                      Authorization:
+                          "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
+                  },
+              });
 
     if (!terminateSubscriptionResponse.ok) {
         throw new Error(
@@ -159,8 +153,6 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
     }
 
     const terminateSubscriptionResponseBody = await terminateSubscriptionResponse.text();
-
-    logger.info(terminateSubscriptionResponseBody);
 
     if (!terminateSubscriptionResponseBody) {
         throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
