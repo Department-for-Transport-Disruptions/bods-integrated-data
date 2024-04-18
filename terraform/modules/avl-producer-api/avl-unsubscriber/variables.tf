@@ -3,14 +3,9 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "bucket_name" {
+variable avl_subscription_table_name {
   type        = string
-  description = "The name of the bucket to put unprocessed SIRI-VM files into."
-}
-
-variable "avl_subscription_table_name" {
-  type        = string
-  description = "The name of AVL subscription DynamoDB table"
+  description = "AVL Subscription DynamoDB table name"
 }
 
 variable aws_account_id {

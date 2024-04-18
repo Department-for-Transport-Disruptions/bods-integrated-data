@@ -185,14 +185,26 @@ module "integrated_data_avl_subscriber" {
   aws_region                                = data.aws_region.current.name
 }
 
+module "avl-unsubscriber" {
+  source = "../modules/avl-producer-api/avl-unsubscriber"
+
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
+  environment                 = local.env
+}
+
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
-  environment = local.env
-  bucket_name = module.integrated_data_avl_pipeline.bucket_name
+  environment                 = local.env
+  bucket_name                 = module.integrated_data_avl_pipeline.bucket_name
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
 }
 
-module avl_mock_data_producer {
+module "avl_mock_data_producer" {
   source = "../modules/avl-producer-api/mock-data-producer"
 
   environment                 = local.env
@@ -219,6 +231,17 @@ locals {
 
 module "integrated_data_noc_pipeline" {
   source = "../modules/data-pipelines/noc-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_table_renamer" {
+  source = "../modules/table-renamer"
 
   environment        = local.env
   vpc_id             = module.integrated_data_vpc_dev.vpc_id
