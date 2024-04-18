@@ -17,12 +17,12 @@ import {
     insertAgencies,
     insertCalendar,
     insertFrequencies,
-    insertRoutes,
     insertShapes,
     insertStopTimes,
     insertStops,
     insertTrips,
 } from "./data/database";
+import { insertRoutes } from "./data/insertRoutes";
 import { VehicleJourneyMapping } from "./types";
 import {
     DEFAULT_OPERATING_PROFILE,
