@@ -33,7 +33,7 @@ module "integrated_data_avl_subscription_table" {
   environment = local.env
 }
 
-module avl_mock_data_producer {
+module "avl_mock_data_producer" {
   source = "../modules/avl-producer-api/mock-data-producer"
 
   environment                 = local.env
@@ -61,6 +61,12 @@ module "avl-unsubscriber" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
+}
+
+module "integrated_data_bank_holidays_pipeline" {
+  source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
 }
 
 locals {

@@ -108,7 +108,7 @@ module "integrated_data_naptan_pipeline" {
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
-  environment        = local.env
+  environment = local.env
 }
 
 module "integrated_data_txc_pipeline" {
@@ -249,4 +249,10 @@ module "integrated_data_table_renamer" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_bank_holidays_pipeline" {
+  source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
 }

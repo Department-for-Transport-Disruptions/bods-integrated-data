@@ -297,6 +297,11 @@ run-local-table-renamer:
 invoke-local-table-renamer:
 	awslocal lambda invoke --function-name table-renamer-local --output text /dev/stdout --cli-read-timeout 0
 
+# Bank holidays retriever
+
+invoke-local-bank-holidays-retriever:
+	awslocal lambda invoke --function-name integrated-data-bank-holidays-retriever-local --output text /dev/stdout --cli-read-timeout 0
+
 # Lambdas
 create-lambdas: \
 	create-lambda-avl-aggregate-siri-vm \
