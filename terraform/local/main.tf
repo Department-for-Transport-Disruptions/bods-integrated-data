@@ -109,11 +109,35 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_host            = null
 }
 
+module "integrated_data_avl_pipeline" {
+  source = "../modules/data-pipelines/avl-pipeline"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+  alarm_topic_arn    = ""
+  ok_topic_arn       = ""
+}
+
+module "integrated_data_avl_aggregator" {
+  source = "../modules/data-pipelines/avl-aggregate-siri-vm"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}
+
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
   environment                 = local.env
-  bucket_name                 = "integrated-data-siri-vm-local"
+  bucket_name                 = module.integrated_data_avl_pipeline.bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
