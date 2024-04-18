@@ -46,6 +46,8 @@ tf-plan-%:
 tf-apply-%:
 	terraform -chdir=terraform/$* apply
 
+# Terraform local
+
 tf-init-local:
 	tflocal -chdir=terraform/local init
 
