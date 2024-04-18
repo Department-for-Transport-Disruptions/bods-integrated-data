@@ -34,7 +34,7 @@ export const handler = async () => {
         STAGE: stage,
     } = process.env;
 
-    const dbClient = await getDatabaseClient(stage === "true");
+    const dbClient = await getDatabaseClient(stage === "local");
 
     try {
         if (!bodsTxcRetrieverFunctionName) {
@@ -51,7 +51,7 @@ export const handler = async () => {
 
         logger.info("Database preparation complete");
 
-        if (stage === "true") {
+        if (stage === "local") {
             return;
         }
 
