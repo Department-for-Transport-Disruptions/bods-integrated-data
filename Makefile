@@ -46,6 +46,15 @@ tf-plan-%:
 tf-apply-%:
 	terraform -chdir=terraform/$* apply
 
+tf-init-local:
+	tflocal -chdir=terraform/local init
+
+tf-plan-local:
+	tflocal -chdir=terraform/local plan
+
+tf-apply-local:
+	tflocal -chdir=terraform/local apply
+
 create-local-env:
 	tflocal -chdir=terraform/local init && \
 	tflocal -chdir=terraform/local apply --auto-approve
