@@ -2,7 +2,7 @@ export class DuplicateRouteError extends Error {
     constructor() {
         super("Duplicate route");
 
-        Object.setPrototypeOf(this, ServiceExpiredError.prototype);
+        Object.setPrototypeOf(this, DuplicateRouteError.prototype);
     }
 }
 
