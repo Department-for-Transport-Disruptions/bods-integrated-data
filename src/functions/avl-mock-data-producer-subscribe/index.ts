@@ -41,6 +41,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: SubscriptionRe
             ResponseStatus: {
                 ResponseTimestamp: currentTimestamp,
                 RequestMessageRef: subscriptionRequest.SubscriptionRequest.RequestorRef,
+                SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
                 Status: "ACTIVE",
