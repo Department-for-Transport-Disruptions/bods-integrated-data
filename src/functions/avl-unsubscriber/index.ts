@@ -34,7 +34,7 @@ export const generateTerminationSubscriptionRequest = (
 ) => {
     const terminateSubscriptionRequestJson = {
         TerminateSubscriptionRequest: {
-            RequestTimeStamp: currentTimestamp,
+            RequestTimestamp: currentTimestamp,
             RequestorRef: requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionRef: subscriptionId,
@@ -128,8 +128,6 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
         throw new Error("Missing auth credentials for subscription");
     }
 
-    logger.info(`username: ${subscriptionUsername}`);
-
     // TODO: This block of code is to mock out the data producers response when running locally, it will be removed
     //  when we create an unsubscribe endpoint for the mock data producer.
     // const terminateSubscriptionResponse =
@@ -143,6 +141,8 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
     //               method: "POST",
     //               body: terminateSubscriptionRequestMessage,
     //           });
+
+    logger.info(`request: ${terminateSubscriptionRequestMessage}`);
 
     const terminateSubscriptionResponse = await fetch(subscription.url, {
         method: "POST",
@@ -160,13 +160,15 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 
     const terminateSubscriptionResponseBody = await terminateSubscriptionResponse.text();
 
+    logger.info(terminateSubscriptionResponseBody);
+
     if (!terminateSubscriptionResponseBody) {
         throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
     }
 
     const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
 
-    if (parsedResponseBody.TerminateSubscriptionResponse.TerminateSubscriptionResponseStatus.Status !== "true") {
+    if (parsedResponseBody.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
         throw new Error(`The data producer did not return a status of true - subscription ID: ${subscription.PK}`);
     }
 

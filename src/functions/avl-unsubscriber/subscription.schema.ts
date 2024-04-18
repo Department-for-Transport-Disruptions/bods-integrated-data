@@ -13,7 +13,7 @@ export type Subscription = z.infer<typeof subscriptionSchema>;
 
 export const terminateSubscriptionRequestSchema = z.object({
     TerminateSubscriptionRequest: z.object({
-        RequestTimeStamp: z.string(),
+        RequestTimestamp: z.string(),
         RequestorRef: z.string(),
         MessageIdentifier: z.string(),
         SubscriptionRef: z.string(),
@@ -22,8 +22,8 @@ export const terminateSubscriptionRequestSchema = z.object({
 
 export const terminateSubscriptionResponseSchema = z.object({
     TerminateSubscriptionResponse: z.object({
-        TerminateSubscriptionResponseStatus: z.object({
-            ResponseTimeStamp: z.string(),
+        TerminationResponseStatus: z.object({
+            ResponseTimestamp: z.string(),
             SubscriptionRef: z.string(),
             Status: z.string(),
         }),
