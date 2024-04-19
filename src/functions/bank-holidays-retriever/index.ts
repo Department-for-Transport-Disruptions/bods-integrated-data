@@ -1,18 +1,21 @@
 import { logger } from "@baselime/lambda-logger";
-import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { putS3Object } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 
-const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: string) => {
-    const response = await axios.get("https://www.gov.uk/bank-holidays.json", { responseType: "json" });
+export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: string) => {
+    const url = "https://www.gov.uk/bank-holidays.json";
+    const response = await axios.get(url, { responseType: "json" });
 
-    const upload = startS3Upload(
-        bankHolidaysBucketName,
-        "bank-holidays.json",
-        JSON.stringify(response.data),
-        "application/json",
-    );
+    if (!response.data) {
+        throw new Error(`Did not recieve any data from bank holidays url: ${url}`);
+    }
 
-    await upload.done();
+    await putS3Object({
+        Bucket: bankHolidaysBucketName,
+        Key: "bank-holidays.json",
+        ContentType: "application/json",
+        Body: JSON.stringify(response.data),
+    });
 };
 
 export const handler = async () => {

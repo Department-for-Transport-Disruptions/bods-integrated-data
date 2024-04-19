@@ -1,0 +1,62 @@
+import { putS3Object } from "@bods-integrated-data/shared/s3";
+import axios from "axios";
+import { describe, vi, afterEach, it, expect } from "vitest";
+import { getBankHolidaysAndUploadToS3 } from ".";
+
+const mockBankHolidaysResponse = {
+    "england-and-wales": {
+        division: "england-and-wales",
+        events: [
+            { title: "Christmas Day", date: "2026-12-25", notes: "", bunting: true },
+            { title: "Boxing Day", date: "2026-12-28", notes: "Substitute day", bunting: true },
+        ],
+    },
+    scotland: {
+        division: "scotland",
+        events: [
+            { title: "Christmas Day", date: "2026-12-25", notes: "", bunting: true },
+            { title: "Boxing Day", date: "2026-12-28", notes: "Substitute day", bunting: true },
+        ],
+    },
+    "northern-ireland": {
+        division: "northern-ireland",
+        events: [
+            { title: "Christmas Day", date: "2026-12-25", notes: "", bunting: true },
+            { title: "Boxing Day", date: "2026-12-28", notes: "Substitute day", bunting: true },
+        ],
+    },
+};
+
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios, true);
+
+describe("getBankHolidaysAndUploadToS3", () => {
+    vi.mock("@bods-integrated-data/shared/s3", () => ({
+        putS3Object: vi.fn(),
+    }));
+
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
+    it("should retrieve bank holiday data and upload it to S3", async () => {
+        mockedAxios.get.mockResolvedValue({ status: 200, data: mockBankHolidaysResponse });
+        await getBankHolidaysAndUploadToS3("test-bucket");
+
+        expect(putS3Object).toBeCalled();
+        expect(putS3Object).toBeCalledWith({
+            Bucket: "test-bucket",
+            Key: "bank-holidays.json",
+            ContentType: "application/json",
+            Body: JSON.stringify(mockBankHolidaysResponse),
+        });
+    });
+
+    it("should throw an error when it gets no data from axios", async () => {
+        mockedAxios.get.mockResolvedValue({ status: 200, data: undefined });
+
+        await expect(() => getBankHolidaysAndUploadToS3("test-bucket")).rejects.toThrow(
+            "Did not recieve any data from bank holidays url",
+        );
+    });
+});

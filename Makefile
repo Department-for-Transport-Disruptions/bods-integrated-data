@@ -191,6 +191,11 @@ run-local-noc-processor:
 run-local-table-renamer:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
 
+# Bank Holidays retriever
+
+run-local-bank-holidays-retriever:
+	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/bank-holidays-retriever'; handler().catch(e => console.error(e))"
+
 # CLI Helper Commands
 
 create-avl-mock-data-producer:

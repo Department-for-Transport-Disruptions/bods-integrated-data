@@ -174,7 +174,7 @@ The bank holidays dataset contains data for UK bank holidays.
 Download the bank holidays dataset into the localstack container:
 
 ```bash
-make invoke-local-bank-holidays-retriever
+make run-local-bank-holidays-retriever
 ```
 
 ### TXC data retrieval and processing
