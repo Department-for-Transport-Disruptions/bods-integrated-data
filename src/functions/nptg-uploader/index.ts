@@ -100,7 +100,7 @@ export const insertNptgData = async (dbClient: Kysely<Database>, data: NptgSchem
 
 export const handler = async (event: S3Event) => {
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info(`Starting NPTG uploader for ${object.key}`);
