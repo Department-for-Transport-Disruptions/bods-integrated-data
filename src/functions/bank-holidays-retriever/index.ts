@@ -4,9 +4,9 @@ import axios from "axios";
 
 export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: string) => {
     const url = "https://www.gov.uk/bank-holidays.json";
-    const response = await axios.get(url, { responseType: "json" });
+    const response = await axios.get<object>(url, { responseType: "json" });
 
-    if (!response.data) {
+    if (!response.data || Object.keys(response.data).length === 0) {
         throw new Error(`Did not recieve any data from bank holidays url: ${url}`);
     }
 

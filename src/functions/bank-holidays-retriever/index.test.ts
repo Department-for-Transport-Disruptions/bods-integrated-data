@@ -59,4 +59,12 @@ describe("getBankHolidaysAndUploadToS3", () => {
             "Did not recieve any data from bank holidays url",
         );
     });
+
+    it("should throw an error when it gets an empty data object from axios", async () => {
+        mockedAxios.get.mockResolvedValue({ status: 200, data: {} });
+
+        await expect(() => getBankHolidaysAndUploadToS3("test-bucket")).rejects.toThrow(
+            "Did not recieve any data from bank holidays url",
+        );
+    });
 });
