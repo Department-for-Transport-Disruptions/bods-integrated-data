@@ -320,7 +320,7 @@ create-lambdas: \
 	create-lambda-noc-retriever \
 	create-lambda-noc-processor \
 	create-lambda-table-renamer \
-	create-lambda-bank-holidays-retreiver \
+	create-lambda-bank-holidays-retriever \
 	create-lambda-gtfs-rt-generator
 
 delete-lambdas: \
@@ -339,7 +339,7 @@ delete-lambdas: \
 	delete-lambda-noc-retriever \
 	delete-lambda-noc-processor \
 	delete-lambda-table-renamer \
-	delete-lambda-bank-holidays-retreiver \
+	delete-lambda-bank-holidays-retriever \
 	delete-lambda-gtfs-rt-generator
 
 remake-lambdas: delete-lambdas create-lambdas
