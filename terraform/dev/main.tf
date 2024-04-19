@@ -30,6 +30,11 @@ data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
 }
 
+locals {
+  env     = "dev"
+  secrets = jsondecode(data.sops_file.secrets.raw)
+}
+
 module "integrated_data_monitoring_dev" {
   source = "../modules/monitoring"
 
@@ -94,6 +99,28 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_noc_pipeline" {
+  source = "../modules/data-pipelines/noc-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_table_renamer" {
+  source = "../modules/table-renamer"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
 
@@ -108,7 +135,16 @@ module "integrated_data_naptan_pipeline" {
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
+<<<<<<< HEAD
   environment = local.env
+=======
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+>>>>>>> acc354dbf6e626e079cd94a45f4e16df22385665
 }
 
 module "integrated_data_txc_pipeline" {

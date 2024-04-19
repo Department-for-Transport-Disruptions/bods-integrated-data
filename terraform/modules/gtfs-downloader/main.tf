@@ -38,6 +38,7 @@ module "integrated_data_gtfs_downloader_function" {
   ]
 
   env_vars = {
+    STAGE       = var.environment
     BUCKET_NAME = var.gtfs_bucket_name
   }
 }

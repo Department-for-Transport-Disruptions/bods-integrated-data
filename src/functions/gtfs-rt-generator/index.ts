@@ -16,7 +16,7 @@ import { mapAvlToGtfsEntity } from "./utils";
  * @returns An array of AVL data enriched with route and trip IDs
  */
 const getAvlDataFromDatabase = async () => {
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         const queryResult = await sql<ExtendedAvl>`

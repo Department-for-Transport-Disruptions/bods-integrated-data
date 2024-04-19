@@ -44,7 +44,7 @@ make tf-init-local
 
 ```bash
 make tf-plan-local
-Run `make tf-apply-local
+make tf-apply-local
 ```
 
 ### Tip:
@@ -58,5 +58,3 @@ the region you expect resources to be deployed to.
 Localstack Desktop:
 
 - https://docs.localstack.cloud/user-guide/tools/localstack-desktop/
-
-

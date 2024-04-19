@@ -69,10 +69,7 @@ const renameTables = async (tablesToRename: (keyof Database)[], dbClient: Kysely
 };
 
 export const handler = async () => {
-    const { IS_LOCAL: local } = process.env;
-    const isLocal = local === "true";
-
-    const dbClient = await getDatabaseClient(isLocal);
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         const matchingTables = await getMatchingTables(dbClient);
