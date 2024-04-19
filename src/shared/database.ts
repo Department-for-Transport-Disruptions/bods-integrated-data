@@ -269,6 +269,8 @@ export interface GtfsRouteTable {
     route_long_name: string;
     route_type: RouteType;
     line_id: string;
+    data_source: "bods" | "tnds";
+    noc_line_name: string;
 }
 
 export type Route = Selectable<GtfsRouteTable>;

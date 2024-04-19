@@ -1,7 +1,11 @@
 {
   "markdown.extension.toc.levels": "2..6",
   "cSpell.words": [
+    "CICD",
+    "GTFS",
     "localstack",
-    "nptg"
+    "NPTG",
+    "Siri",
+    "Traveline"
   ]
 }

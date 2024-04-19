@@ -2,7 +2,7 @@
 
 Code for the Bus Open Data Service (BODS) integrated data platform, which includes the following:
 
-- [AVL](https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide#:~:text=of%20the%20UK.-,Automatic%20Vehicle%20Location%20(AVL),-%3A%20automatic%20vehicle%20location) data subscriptions
+- [AVL](<https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide#:~:text=of%20the%20UK.-,Automatic%20Vehicle%20Location%20(AVL),-%3A%20automatic%20vehicle%20location>) data subscriptions
 - [GTFS](https://gtfs.org/) feed generation via [TransXChange](https://www.gov.uk/government/collections/transxchange) data mapping
 
 Visit the [Bus open data implementation guide](https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide) for more information about BODS.
@@ -21,6 +21,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
   - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
     - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
     - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
+    - [Renaming tables](#renaming-tables)
   - [GTFS feed generation](#gtfs-feed-generation)
     - [GTFS Schedule](#gtfs-schedule)
     - [GTFS Realtime](#gtfs-realtime)
@@ -41,21 +42,21 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
 
 The following dependencies are required. An AWS account is also required.
 
-|Dependency|Description|
-|-|-|
-|[asdf](https://asdf-vm.com/guide/getting-started.html)|Runtime version manager|
-|[AWS CLI](https://aws.amazon.com/cli/)|AWS command line tool|
-|[AWS Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)|Session management plugin for AWS CLI|
-|[awslocal](https://github.com/localstack/awscli-local)|localstack wrapper for AWS CLI|
-|[Docker](https://rancherdesktop.io/)|Platform for running containerised code|
-|[pnpm](https://pnpm.io/installation)|Package manager|
-|[tflocal](https://github.com/localstack/terraform-local)|A small wrapper script to run [Terraform](https://terraform.io/) against [localstack](https://localstack.cloud/)|
+| Dependency                                                                                                                                  | Description                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [asdf](https://asdf-vm.com/guide/getting-started.html)                                                                                      | Runtime version manager                                                                                          |
+| [AWS CLI](https://aws.amazon.com/cli/)                                                                                                      | AWS command line tool                                                                                            |
+| [AWS Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) | Session management plugin for AWS CLI                                                                            |
+| [awslocal](https://github.com/localstack/awscli-local)                                                                                      | localstack wrapper for AWS CLI                                                                                   |
+| [Docker](https://rancherdesktop.io/)                                                                                                        | Platform for running containerised code                                                                          |
+| [pnpm](https://pnpm.io/installation)                                                                                                        | Package manager                                                                                                  |
+| [tflocal](https://github.com/localstack/terraform-local)                                                                                    | A small wrapper script to run [Terraform](https://terraform.io/) against [localstack](https://localstack.cloud/) |
 
 The following dependencies are optional:
 
-|Dependency|Description|
-|-|-|
-|[localstack desktop](https://www.localstack.cloud/)|Desktop UI for localstack|
+| Dependency                                          | Description               |
+| --------------------------------------------------- | ------------------------- |
+| [localstack desktop](https://www.localstack.cloud/) | Desktop UI for localstack |
 
 ### Log in with the AWS CLI
 
@@ -93,8 +94,9 @@ This will:
 
 - install required asdf plugins
 - start docker containers for postgres and localstack
-- create the localstack resources
+- install and build all functions
 - run local database migrations
+- create localstack resources in the Terraform local workspace
 
 Run the local `txc-retriever` to create the remaining database tables:
 
@@ -216,7 +218,7 @@ Then copy the `ARN` for the secret with the description "Integrated data tnds ft
 Download all TNDS data into the localstack container with this ARN:
 
 ```bash
-run-local-tnds-txc-retriever TNDS_FTP_ARN="{TNDS_FTP_ARN}"
+run-local-tnds-txc-retriever TNDS_TXC_FTP_CREDS_ARN="{TNDS_TXC_FTP_CREDS_ARN}"
 ```
 
 TNDS provides multiple archives. The resulting files can be listed using the AWS CLI:
@@ -241,6 +243,22 @@ Map and insert data into the database for a given file:
 
 ```bash
 make run-local-tnds-txc-processor FILE="S/S_SC_STWS_X79_2_A.xml"
+```
+
+#### Renaming tables
+
+To update the tables within the database you can run:
+
+```bash
+make run-local-table-renamer
+```
+
+This will update the `_new` tables to be the primary tables and update the primary tables to be `_old`, for example:
+
+```text
+agency_new -> agency
+agency -> agency_old
+agency_old -> <Deleted>
 ```
 
 ### GTFS feed generation
@@ -279,51 +297,25 @@ awslocal s3api get-object --bucket integrated-data-gtfs-rt-local --key gtfs-rt.b
 
 ### Creating and invoking lambda functions locally
 
-All the current lambda functions should be created when running the `make setup` command.
-
-If you wish to create them all manually you can run:
+`tflocal` is used to manage lambdas in the local Terraform workspace.
+To deploy lambdas after making changes:
 
 ```bash
-make create-lambdas
+make create-local-env
 ```
 
-Similarly, if you wish to delete all the lambdas:
+To invoke a lambda (with any necessary env vars):
 
 ```bash
-make delete-lambdas
+ENV_VAR_1="{A}" ENV_VAR_2="{B}" awslocal lambda invoke --function-name {FUNCTION_NAME} --output text /dev/stdout
 ```
 
-And if you want to delete and recreate all lambdas:
+Alternatively invoke a lambda using the associated CLI helper:
 
 ```bash
-make remake-lambdas
-```
-
-These commands can also be run for individual lambdas:
-
-```bash
-make create-lambda-{LAMBDA_NAME}
-make delete-lambda-{LAMBDA_NAME}
-make remake-lambda-{LAMBDA_NAME}
-```
-
-So if you wanted to update a lambda after changing the code, you could run:
-
-```bash
-make build-functions
-
-make remake-lambda-{LAMBDA_NAME}
-# OR
-make remake-lambdas
-```
-
-To invoke a lambda, simply run:
-
-```bash
-make invoke-local-{LAMBDA_NAME}
-
-# Some lambdas require a variable to be passed
-FILE=bods.zip make invoke-local-bods-txc-unzipper
+make {CLI_COMMAND}
+# for example:
+make invoke-avl-data-endpoint
 ```
 
 ## Configuration
@@ -394,11 +386,11 @@ On PR approval:
 
 ### Environments
 
-|Environment|Notes|
-|-|-|
-|`local`|local environment used with localstack|
-|`dev`|Deployed environment used for dev testing|
-|`prod`|Not used yet|
+| Environment | Notes                                     |
+| ----------- | ----------------------------------------- |
+| `local`     | local environment used with localstack    |
+| `dev`       | Deployed environment used for dev testing |
+| `prod`      | Not used yet                              |
 
 ### Deploying changes locally
 
