@@ -10,7 +10,7 @@ const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const ssm = new SSMClient({
     region: "eu-west-2",
-    ...(process.env.IS_LOCAL === "true"
+    ...(process.env.STAGE === "local"
         ? {
               endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
               credentials: {

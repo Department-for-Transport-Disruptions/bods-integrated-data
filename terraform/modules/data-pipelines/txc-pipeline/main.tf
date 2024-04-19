@@ -92,6 +92,7 @@ module "integrated_data_bods_txc_retriever_function" {
   }]
 
   env_vars = {
+    STAGE                  = var.environment
     TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.bucket
   }
 }
@@ -126,6 +127,7 @@ module "integrated_data_tnds_txc_retriever_function" {
   }]
 
   env_vars = {
+    STAGE                  = var.environment
     TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
     TNDS_FTP_ARN           = aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
   }
@@ -165,6 +167,7 @@ module "integrated_data_txc_retriever_function" {
   }]
 
   env_vars = {
+    STAGE                            = var.environment
     BODS_TXC_RETRIEVER_FUNCTION_NAME = module.integrated_data_bods_txc_retriever_function.function_name
     TNDS_TXC_RETRIEVER_FUNCTION_NAME = module.integrated_data_tnds_txc_retriever_function.function_name
     DB_HOST                          = var.db_host
@@ -241,6 +244,7 @@ module "integrated_data_txc_processor_function" {
   }]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
@@ -313,6 +317,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   ]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn

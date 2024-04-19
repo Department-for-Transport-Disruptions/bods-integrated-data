@@ -9,7 +9,7 @@ export const handler = async () => {
 
     const isRollback = rollback === "true";
 
-    const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const db = await getDatabaseClient(process.env.STAGE === "local");
 
     const migrator = new Migrator({
         db,

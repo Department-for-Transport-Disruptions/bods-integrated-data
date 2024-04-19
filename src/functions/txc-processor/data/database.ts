@@ -5,7 +5,6 @@ import {
     NewCalendarDate,
     NewFrequency,
     ServiceType,
-    Agency,
     NewRoute,
     NewShape,
     NewStop,
@@ -24,12 +23,7 @@ import {
     TxcRoute,
     TxcJourneyPatternSection,
 } from "@bods-integrated-data/shared/schema";
-import {
-    notEmpty,
-    getRouteTypeFromServiceMode,
-    chunkArray,
-    getWheelchairAccessibilityFromVehicleType,
-} from "@bods-integrated-data/shared/utils";
+import { notEmpty, chunkArray, getWheelchairAccessibilityFromVehicleType } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 import { randomUUID } from "crypto";
@@ -150,44 +144,23 @@ export const insertFrequencies = async (
     await dbClient.insertInto("frequency_new").values(frequencies).execute();
 };
 
-export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
-    const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
+export const getBodsRoute = (dbClient: Kysely<Database>, lineId: string) => {
+    return dbClient.selectFrom("route").selectAll().where("line_id", "=", lineId).executeTakeFirst();
+};
 
-    if (!agency) {
-        logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);
-        return null;
-    }
+export const getTndsRoute = (dbClient: Kysely<Database>, nocLineName: string) => {
+    return dbClient.selectFrom("route_new").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
+};
 
-    const routeType = getRouteTypeFromServiceMode(service.Mode);
+export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
+    const { route_short_name, route_type } = route;
 
-    const routePromises = service.Lines.Line.map(async (line) => {
-        const existingRoute = await dbClient
-            .selectFrom("route")
-            .selectAll()
-            .where("line_id", "=", line["@_id"])
-            .executeTakeFirst();
-
-        const newRoute: NewRoute = {
-            agency_id: agency.id,
-            route_short_name: line.LineName,
-            route_long_name: "",
-            route_type: routeType,
-            line_id: line["@_id"],
-        };
-
-        return dbClient
-            .insertInto("route_new")
-            .values(existingRoute || newRoute)
-            .onConflict((oc) =>
-                oc.column("line_id").doUpdateSet({ route_short_name: line.LineName, route_type: routeType }),
-            )
-            .returningAll()
-            .executeTakeFirst();
-    });
-
-    const routeData = await Promise.all(routePromises);
-
-    return routeData.filter(notEmpty);
+    return dbClient
+        .insertInto("route_new")
+        .values(route)
+        .onConflict((oc) => oc.column("line_id").doUpdateSet({ route_short_name, route_type }))
+        .returningAll()
+        .executeTakeFirst();
 };
 
 export const insertShapes = async (
