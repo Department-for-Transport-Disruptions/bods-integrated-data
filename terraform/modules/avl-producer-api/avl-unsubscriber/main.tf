@@ -22,8 +22,8 @@ module "avl_unsubscriber" {
 
   permissions = [
     {
-      Action = "ssm:DeleteParameters",
-      Effect = "Allow",
+      Action   = ["ssm:GetParameter", "ssm:DeleteParameters"],
+      Effect   = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
