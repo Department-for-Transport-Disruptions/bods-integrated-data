@@ -1,18 +1,16 @@
 import { logger } from "@baselime/lambda-logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
-import { PassThrough, Stream } from "stream";
 
 const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: string) => {
-    const response = await axios.get<Stream>("https://www.gov.uk/bank-holidays.json", {
-        responseType: "stream",
-    });
+    const response = await axios.get("https://www.gov.uk/bank-holidays.json", { responseType: "json" });
 
-    const passThrough = new PassThrough();
-
-    const upload = startS3Upload(bankHolidaysBucketName, "bank-holidays.json", passThrough, "application/json");
-
-    response.data.pipe(passThrough);
+    const upload = startS3Upload(
+        bankHolidaysBucketName,
+        "bank-holidays.json",
+        JSON.stringify(response.data),
+        "application/json",
+    );
 
     await upload.done();
 };
