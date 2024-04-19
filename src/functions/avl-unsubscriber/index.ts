@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { deleteParameters } from "@bods-integrated-data/shared/ssm";
+import { deleteParameters, getParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
@@ -34,7 +34,7 @@ export const generateTerminationSubscriptionRequest = (
 ) => {
     const terminateSubscriptionRequestJson = {
         TerminateSubscriptionRequest: {
-            RequestTimeStamp: currentTimestamp,
+            RequestTimestamp: currentTimestamp,
             RequestorRef: requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionRef: subscriptionId,
@@ -95,6 +95,21 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
+const getSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+    const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
+        getParameter(`/subscription/${subscriptionId}/username`, true),
+        getParameter(`/subscription/${subscriptionId}/password`, true),
+    ]);
+
+    const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
+    const subscriptionPassword = subscriptionPasswordParam.Parameter?.Value ?? null;
+
+    return {
+        subscriptionUsername,
+        subscriptionPassword,
+    };
+};
+
 const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Subscription, tableName: string) => {
     const currentTimestamp = getDate().toISOString();
     const messageIdentifier = randomUUID();
@@ -106,10 +121,17 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
         subscription.requestorRef ?? null,
     );
 
+    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscription.PK);
+
+    if (!subscriptionUsername || !subscriptionPassword) {
+        logger.error(`Missing auth credentials for subscription id: ${subscription.PK}`);
+        throw new Error("Missing auth credentials for subscription");
+    }
+
     // TODO: This block of code is to mock out the data producers response when running locally, it will be removed
     //  when we create an unsubscribe endpoint for the mock data producer.
     const terminateSubscriptionResponse =
-        process.env.STAGE === "local"
+        process.env.STAGE === "local" && subscription.requestorRef === "BODS_MOCK_PRODUCER"
             ? {
                   text: () => mockSubscriptionResponseBody,
                   status: 200,
@@ -118,6 +140,10 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
             : await fetch(subscription.url, {
                   method: "POST",
                   body: terminateSubscriptionRequestMessage,
+                  headers: {
+                      Authorization:
+                          "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
+                  },
               });
 
     if (!terminateSubscriptionResponse.ok) {
@@ -134,7 +160,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
 
     const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
 
-    if (parsedResponseBody.TerminateSubscriptionResponse.TerminateSubscriptionResponseStatus.Status !== "true") {
+    if (parsedResponseBody.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
         throw new Error(`The data producer did not return a status of true - subscription ID: ${subscription.PK}`);
     }
 

@@ -27,10 +27,12 @@ describe("avl-unsubscriber", () => {
 
     vi.mock("@bods-integrated-data/shared/ssm", () => ({
         deleteParameters: vi.fn(),
+        getParameter: vi.fn(),
     }));
 
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
+    const getParameterSpy = vi.spyOn(ssm, "getParameter");
     const deleteParametersSpy = vi.spyOn(ssm, "deleteParameters");
 
     const fetchSpy = vi.spyOn(global, "fetch");
@@ -51,6 +53,9 @@ describe("avl-unsubscriber", () => {
             status: 200,
             ok: true,
         } as unknown as Response);
+
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
@@ -100,6 +105,9 @@ describe("avl-unsubscriber", () => {
             ok: false,
         } as unknown as Response);
 
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
+
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com/",
@@ -123,6 +131,9 @@ describe("avl-unsubscriber", () => {
             status: 200,
             ok: true,
         } as unknown as Response);
+
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
@@ -148,6 +159,9 @@ describe("avl-unsubscriber", () => {
             ok: true,
         } as unknown as Response);
 
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
+
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com/",
@@ -172,6 +186,9 @@ describe("avl-unsubscriber", () => {
             ok: true,
         } as unknown as Response);
 
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
+
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com/",
@@ -184,6 +201,25 @@ describe("avl-unsubscriber", () => {
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
             "The data producer did not return a status of true - subscription ID: mock-subscription-id",
         );
+
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it("should throw an error if no auth creds are found for a subscription", async () => {
+        getParameterSpy.mockResolvedValue({ Parameter: undefined });
+        getParameterSpy.mockResolvedValue({ Parameter: undefined });
+
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "mock-subscription-id",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "ACTIVE",
+            requestorRef: null,
+        });
+
+        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Missing auth credentials for subscription");
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();

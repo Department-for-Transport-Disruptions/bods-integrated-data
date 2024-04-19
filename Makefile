@@ -203,3 +203,12 @@ create-avl-mock-data-producer:
 invoke-avl-data-endpoint:
 	cd cli-helpers && \
 	./bin/run.js invoke-avl-data-endpoint
+
+invoke-avl-subscriber:
+	cd cli-helpers && \
+	./bin/run.js invoke-avl-subscriber
+
+invoke-avl-unsubscriber:
+	cd cli-helpers && \
+	./bin/run.js invoke-avl-unsubscriber
+
