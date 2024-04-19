@@ -45,11 +45,11 @@ export const deleteParameters = async (names: string[]): Promise<void> => {
     );
 };
 
-export const getParameter = async (name: string, withDecryption?: boolean): Promise<GetParameterResult> => {
+export const getParameter = async (name: string, withDecryption: boolean = true): Promise<GetParameterResult> => {
     return ssm.send(
         new GetParameterCommand({
             Name: name,
-            WithDecryption: withDecryption ? withDecryption : true,
+            WithDecryption: withDecryption,
         }),
     );
 };
