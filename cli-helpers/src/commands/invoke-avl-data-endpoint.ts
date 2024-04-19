@@ -4,7 +4,7 @@ import { STAGE_OPTION, invokeLambda } from "../utils";
 
 export default new Command("invoke-avl-data-endpoint")
     .addOption(STAGE_OPTION)
-    .option("-i, --subscriptionId <id>", "Subscription ID of the data producer")
+    .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .addOption(
         new Option("-n, --notificationType <type>", "Notification type").choices([
             "Heartbeat Notification",

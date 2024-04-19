@@ -1,6 +1,8 @@
 import { program } from "@commander-js/extra-typings";
 import createAvlMockDataProducer from "./src/commands/create-avl-mock-data-producer";
 import invokeAvlDataEndpoint from "./src/commands/invoke-avl-data-endpoint";
+import invokeAvlSubscriber from "./src/commands/invoke-avl-subscriber";
+import invokeAvlUnsubscriber from "./src/commands/invoke-avl-unsubscriber";
 import invokeBodsTxcProcessor from "./src/commands/invoke-bods-txc-processor";
 import invokeBodsTxcRetriever from "./src/commands/invoke-bods-txc-retriever";
 import invokeBodsTxcUnzipper from "./src/commands/invoke-bods-txc-unzipper";
@@ -22,6 +24,8 @@ import invokeTxcRetriever from "./src/commands/invoke-txc-retriever";
 
 program.addCommand(createAvlMockDataProducer);
 program.addCommand(invokeAvlDataEndpoint);
+program.addCommand(invokeAvlSubscriber);
+program.addCommand(invokeAvlUnsubscriber);
 program.addCommand(invokeBodsTxcProcessor);
 program.addCommand(invokeBodsTxcRetriever);
 program.addCommand(invokeBodsTxcUnzipper);
