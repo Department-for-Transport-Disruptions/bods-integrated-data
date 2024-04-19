@@ -23,15 +23,14 @@ const tables: TableKey[] = [
     { table: "naptan_stop", newTable: "naptan_stop_new", key: "atco_code" },
 ];
 
-const tableIsEmpty = async (table: keyof Database, dbClient: Kysely<Database>) => {
+const isTableEmpty = async (dbClient: Kysely<Database>, table: keyof Database) => {
     // Count returns a string
-    const res = (
-        await dbClient
-            .selectFrom(table)
-            .select([(i) => i.fn.countAll<string>().as("count")])
-            .execute()
-    )[0];
-    return res.count === "0";
+    const queryResult = await dbClient
+        .selectFrom(table)
+        .select([(i) => i.fn.countAll<string>().as("count")])
+        .execute();
+
+    return queryResult[0].count === "0";
 };
 
 const getMatchingTables = async (dbClient: Kysely<Database>) => {
@@ -40,11 +39,11 @@ const getMatchingTables = async (dbClient: Kysely<Database>) => {
             const { table, newTable, key } = tableKey;
             const pk = key as string;
 
-            const newTableIsEmpty = await tableIsEmpty(newTable, dbClient);
+            const newTableIsEmpty = await isTableEmpty(dbClient, newTable);
 
             if (newTableIsEmpty) return;
 
-            const mainTableIsEmpty = await tableIsEmpty(table, dbClient);
+            const mainTableIsEmpty = await isTableEmpty(dbClient, table);
 
             if (!mainTableIsEmpty) {
                 const query = await sql<{ percentage_matching: number }>`
