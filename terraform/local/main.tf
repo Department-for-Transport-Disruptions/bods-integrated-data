@@ -170,7 +170,3 @@ module "integrated_data_bank_holidays_pipeline" {
 
   environment = local.env
 }
-
-locals {
-  env = "local"
-}

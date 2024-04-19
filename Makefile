@@ -14,6 +14,7 @@ LAMBDA_ZIP_LOCATION="src/functions/dist"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
+BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 
 # Dev
 
@@ -194,7 +195,7 @@ run-local-table-renamer:
 # Bank Holidays retriever
 
 run-local-bank-holidays-retriever:
-	IS_LOCAL=true npx tsx -e "import {handler} from './src/functions/bank-holidays-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bank-holidays-retriever'; handler().catch(e => console.error(e))"
 
 # CLI Helper Commands
 
