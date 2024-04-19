@@ -1,9 +1,11 @@
 import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/client-lambda";
+import { Option } from "@commander-js/extra-typings";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
-export const STAGES = ["local", "dev"];
-export const DEFAULT_STAGE = "local";
+export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use")
+    .choices(["local", "dev"])
+    .default("local");
 
 export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandInputType) => {
     const lambdaClient = new LambdaClient({

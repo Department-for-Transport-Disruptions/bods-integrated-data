@@ -1,9 +1,21 @@
 import { program } from "@commander-js/extra-typings";
 import createAvlMockDataProducer from "./src/commands/create-avl-mock-data-producer";
 import invokeAvlDataEndpoint from "./src/commands/invoke-avl-data-endpoint";
+import invokeNaptanRetriever from "./src/commands/invoke-naptan-retriever";
+import invokeNaptanUploader from "./src/commands/invoke-naptan-uploader";
 import invokeNocRetriever from "./src/commands/invoke-noc-retriever";
+import invokeNocUploader from "./src/commands/invoke-noc-uploader";
+import invokeNptgRetriever from "./src/commands/invoke-nptg-retriever";
+import invokeNptgUploader from "./src/commands/invoke-nptg-uploader";
+import invokeTableRenamer from "./src/commands/invoke-table-renamer";
 
 program.addCommand(createAvlMockDataProducer);
 program.addCommand(invokeAvlDataEndpoint);
+program.addCommand(invokeNaptanRetriever);
+program.addCommand(invokeNaptanUploader);
 program.addCommand(invokeNocRetriever);
+program.addCommand(invokeNocUploader);
+program.addCommand(invokeNptgRetriever);
+program.addCommand(invokeNptgUploader);
+program.addCommand(invokeTableRenamer);
 program.parse();
