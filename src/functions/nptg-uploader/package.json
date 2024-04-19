@@ -1,0 +1,25 @@
+{
+    "name": "@bods-integrated-data/nptg-uploader",
+    "version": "0.1.0",
+    "description": "Upload NPTG data from S3 into the database",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./nptg-uploader.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/nptg-uploader.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.3.6",
+        "kysely": "^0.27.3",
+        "zod-validation-error": "^3.0.3"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

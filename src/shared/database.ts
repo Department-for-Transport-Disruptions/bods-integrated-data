@@ -54,14 +54,17 @@ export const getDatabaseClient = async (isLocal = false) => {
 export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;
-    naptan_stop_old: NaptanStopTable;
+    nptg_admin_area: NptgAdminAreaTable;
+    nptg_admin_area_new: NptgAdminAreaTable;
+    nptg_locality: NptgLocalityTable;
+    nptg_locality_new: NptgLocalityTable;
+    nptg_region: NptgRegionTable;
+    nptg_region_new: NptgRegionTable;
     avl: AvlTable;
     agency: GtfsAgencyTable;
     agency_new: GtfsAgencyTable;
-    agency_old: GtfsAgencyTable;
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
-    calendar_old: GtfsCalendarTable;
     frequency: GtfsFrequencyTable;
     frequency_new: GtfsFrequencyTable;
     calendar_date: GtfsCalendarDateTable;
@@ -129,6 +132,34 @@ export interface NaptanStopTable {
 export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
+
+export interface NptgAdminAreaTable {
+    admin_area_code: string;
+    atco_code: string;
+    name: string;
+}
+
+export type NptgAdminArea = Selectable<NptgAdminAreaTable>;
+export type NewNptgAdminArea = Insertable<NptgAdminAreaTable>;
+export type NptgAdminAreaUpdate = Updateable<NptgAdminAreaTable>;
+
+export interface NptgLocalityTable {
+    locality_code: string;
+    admin_area_ref: string;
+}
+
+export type NptgLocality = Selectable<NptgLocalityTable>;
+export type NewNptgLocality = Insertable<NptgLocalityTable>;
+export type NptgLocalityUpdate = Updateable<NptgLocalityTable>;
+
+export interface NptgRegionTable {
+    region_code: string;
+    name: string;
+}
+
+export type NptgRegion = Selectable<NptgRegionTable>;
+export type NewNptgRegion = Insertable<NptgRegionTable>;
+export type NptgRegionUpdate = Updateable<NptgRegionTable>;
 
 export interface AvlTable {
     id: Generated<number>;
