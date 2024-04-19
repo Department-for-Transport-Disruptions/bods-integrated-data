@@ -6,11 +6,108 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.33"
     }
+
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.0"
+    }
   }
 }
 
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
+
+data "sops_file" "secrets" {
+  source_file = "secrets.enc.json"
+}
+
+locals {
+  env     = "local"
+  secrets = jsondecode(data.sops_file.secrets.raw)
+}
+
+module "integrated_data_db_migrator" {
+  source = "../modules/database/db-migrator"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}
+
+module "integrated_data_noc_pipeline" {
+  source = "../modules/data-pipelines/noc-pipeline"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}
+
+module "integrated_data_table_renamer" {
+  source = "../modules/table-renamer"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}
+
+module "integrated_data_naptan_pipeline" {
+  source = "../modules/data-pipelines/naptan-pipeline"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}
+
+module "integrated_data_nptg_pipeline" {
+  source = "../modules/data-pipelines/nptg-pipeline"
+
+  environment = local.env
+}
+
+module "integrated_data_txc_pipeline" {
+  source = "../modules/data-pipelines/txc-pipeline"
+
+  environment            = local.env
+  vpc_id                 = null
+  private_subnet_ids     = null
+  db_secret_arn          = "*"
+  db_sg_id               = null
+  db_host                = null
+  tnds_ftp_credentials   = local.secrets["tnds_ftp"]
+  rds_output_bucket_name = "integrated-data-aurora-output-${local.env}"
+  alarm_topic_arn        = ""
+  ok_topic_arn           = ""
+}
+
+module "integrated_data_gtfs_downloader" {
+  source = "../modules/gtfs-downloader"
+
+  environment      = local.env
+  gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
+}
+
+module "integrated_data_gtfs_rt_pipeline" {
+  source = "../modules/data-pipelines/gtfs-rt-pipeline"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}
 
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
@@ -33,7 +130,7 @@ module "integrated_data_avl_subscription_table" {
   environment = local.env
 }
 
-module avl_mock_data_producer {
+module "avl_mock_data_producer" {
   source = "../modules/avl-producer-api/mock-data-producer"
 
   environment                 = local.env
@@ -61,8 +158,4 @@ module "avl-unsubscriber" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-}
-
-locals {
-  env = "local"
 }

@@ -269,7 +269,7 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
 };
 
 export const handler = async (event: SQSEvent) => {
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);

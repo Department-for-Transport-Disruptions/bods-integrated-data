@@ -47,6 +47,7 @@ module "integrated_data_naptan_retriever_function" {
   ]
 
   env_vars = {
+    STAGE       = var.environment
     BUCKET_NAME = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
   }
 }
@@ -92,6 +93,7 @@ module "integrated_data_naptan_uploader_function" {
   }
 
   env_vars = {
+    STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
