@@ -181,7 +181,7 @@ run-local-noc-retriever:
 	STAGE=local NOC_BUCKET_NAME=${NOC_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/noc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-noc-processor:
-	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:'noc.xml'}}}]}).catch(e => console.error(e))"
 
 # Table renamer
 

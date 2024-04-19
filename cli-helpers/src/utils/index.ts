@@ -23,7 +23,7 @@ export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandIn
 
     try {
         console.log("Invoking lambda:", invokeCommand.FunctionName);
-        await lambdaClient.send(new InvokeCommand(invokeCommand));
+        return lambdaClient.send(new InvokeCommand(invokeCommand));
     } catch (error) {
         console.log("Failed to execute lambda:", error);
     } finally {

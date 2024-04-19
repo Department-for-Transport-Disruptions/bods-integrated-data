@@ -1,7 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import { STAGE_OPTION, invokeLambda } from "../utils";
 
-export default new Command("invoke-naptan-uploader").addOption(STAGE_OPTION).action(async (options) => {
+export default new Command("invoke-noc-processor").addOption(STAGE_OPTION).action(async (options) => {
     const { stage } = options;
 
     const payload = {
@@ -9,10 +9,10 @@ export default new Command("invoke-naptan-uploader").addOption(STAGE_OPTION).act
             {
                 s3: {
                     bucket: {
-                        name: `integrated-data-naptan-${stage}`,
+                        name: `integrated-data-noc-${stage}`,
                     },
                     object: {
-                        key: "Stops.csv",
+                        key: "noc.xml",
                     },
                 },
             },
@@ -20,7 +20,7 @@ export default new Command("invoke-naptan-uploader").addOption(STAGE_OPTION).act
     };
 
     await invokeLambda(stage, {
-        FunctionName: `integrated-data-naptan-uploader-${stage}`,
+        FunctionName: `integrated-data-noc-processor-${stage}`,
         InvocationType: "Event",
         Payload: JSON.stringify(payload),
     });
