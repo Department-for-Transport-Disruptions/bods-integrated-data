@@ -17,7 +17,7 @@ AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 
 # Dev
 
-setup: dev-containers-up install-deps build-functions build-cli-helpers create-local-env migrate-local-db-to-latest
+setup: dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add awscli && \
@@ -62,9 +62,6 @@ create-local-env:
 	tflocal -chdir=terraform/local apply --auto-approve
 
 # Build
-
-build-cli-helpers:
-	cd cli-helpers && pnpm i && pnpm run build
 
 install-deps:
 	cd src && pnpm i
@@ -190,13 +187,3 @@ run-local-noc-processor:
 
 run-local-table-renamer:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/table-renamer'; handler().catch(e => console.error(e))"
-
-# CLI Helper Commands
-
-create-avl-mock-data-producer:
-	cd cli-helpers && \
-	./bin/run.js create-avl-mock-data-producer
-
-invoke-avl-data-endpoint:
-	cd cli-helpers && \
-	./bin/run.js invoke-avl-data-endpoint

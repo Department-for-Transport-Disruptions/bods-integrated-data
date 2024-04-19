@@ -44,7 +44,6 @@ module.exports = {
                 },
             },
         ],
-        "no-console": "error",
         "import/order": [
             1,
             {
