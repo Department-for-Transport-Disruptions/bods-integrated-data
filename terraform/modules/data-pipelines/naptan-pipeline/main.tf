@@ -30,8 +30,8 @@ module "integrated_data_naptan_retriever_function" {
   zip_path      = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 60
-  memory        = 1024
+  timeout       = 120
+  memory        = 2048
   schedule      = "cron(0 2 * * ? *)"
 
   permissions = [
