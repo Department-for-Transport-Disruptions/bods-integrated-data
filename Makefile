@@ -1,4 +1,4 @@
-NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
+NAPTAN_BUCKET_NAME="integrated-data-naptan-stops-local"
 NPTG_BUCKET_NAME="integrated-data-nptg-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
