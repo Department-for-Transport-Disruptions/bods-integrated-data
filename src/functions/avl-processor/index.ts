@@ -21,7 +21,7 @@ const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Ky
 //     }
 
 //     return value;
-// };
+//  };
 
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
