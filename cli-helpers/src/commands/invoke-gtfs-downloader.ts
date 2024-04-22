@@ -1,8 +1,8 @@
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 export const invokeGtfsDownloader = new Command("invoke-gtfs-downloader")
-    .addOption(STAGE_OPTION)
+    .addOption(STAGE_OPTION_WITH_DEFAULT)
     .action(async (options) => {
         const { stage } = options;
 

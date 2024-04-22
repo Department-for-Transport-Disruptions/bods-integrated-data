@@ -14,8 +14,11 @@ pnpm command invoke-noc-retriever
 
 # with flags:
 pnpm command invoke-noc-retriever --stage="local"
+
+# alternatively:
+pnpm command invoke-noc-retriever --stage "local"
 ```
 
 ## Commands
 
-See `program.ts` and `src/commands` for a list of supported commands.
+See `src/commands/index.ts` for a list of supported commands.

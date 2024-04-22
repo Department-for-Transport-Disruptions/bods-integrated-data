@@ -1,11 +1,25 @@
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION, invokeLambda } from "../utils";
+import inquirer from "inquirer";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 export const invokeBodsTxcUnzipper = new Command("invoke-bods-txc-unzipper")
-    .addOption(STAGE_OPTION)
-    .option("-d, --file <file>", "File to unzip")
+    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .option("-f, --file <file>", "File to unzip")
     .action(async (options) => {
-        const { stage, file } = options;
+        const { stage } = options;
+        let { file } = options;
+
+        if (!file) {
+            const response = await inquirer.prompt<{ file: string }>([
+                {
+                    name: "file",
+                    message: "Enter the file to unzip",
+                    type: "input",
+                },
+            ]);
+
+            file = response.file;
+        }
 
         const payload = {
             Records: [

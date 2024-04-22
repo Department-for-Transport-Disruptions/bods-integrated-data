@@ -1,13 +1,25 @@
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .action(async (options) => {
-        const { stage } = options;
-        let { subscriptionId } = options;
+        let { stage, subscriptionId } = options;
+
+        if (!stage) {
+            const responses = await inquirer.prompt<{ stage: string }>([
+                {
+                    name: "stage",
+                    message: "Select the stage",
+                    type: "list",
+                    choices: STAGES,
+                },
+            ]);
+
+            stage = responses.stage;
+        }
 
         if (!subscriptionId) {
             const responses = await inquirer.prompt<{ subscriptionId: string }>([

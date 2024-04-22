@@ -3,8 +3,12 @@ import { Option } from "@commander-js/extra-typings";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
-export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use")
-    .choices(["local", "dev"])
+export const STAGES = ["local", "dev"];
+
+export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
+
+export const STAGE_OPTION_WITH_DEFAULT = new Option("-s, --stage <stage>", "Stage to use")
+    .choices(STAGES)
     .default("local");
 
 export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandInputType) => {

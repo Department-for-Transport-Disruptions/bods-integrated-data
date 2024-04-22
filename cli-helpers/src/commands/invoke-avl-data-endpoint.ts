@@ -1,9 +1,9 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
-    .addOption(STAGE_OPTION)
+    .addOption(STAGE_OPTION_WITH_DEFAULT)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .addOption(
         new Option("-n, --notificationType <type>", "Notification type").choices([

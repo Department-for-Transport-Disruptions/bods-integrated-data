@@ -77,6 +77,14 @@ lint-functions:
 test-functions:
 	cd src && pnpm test:ci
 
+# CLI helpers
+
+commands:
+	cd cli-helpers && pnpm command;
+
+command-%:
+	cd cli-helpers && pnpm command $* ${FLAGS};
+
 # Secrets
 
 edit-secrets-%:

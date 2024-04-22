@@ -1,6 +1,6 @@
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .addOption(STAGE_OPTION)
@@ -8,8 +8,20 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .option("-u, --username <username>", "Data producer username")
     .option("-p, --password <password>", "Data producer password")
     .action(async (options) => {
-        const { stage } = options;
-        let { producerEndpoint, username, password } = options;
+        let { stage, producerEndpoint, username, password } = options;
+
+        if (!stage) {
+            const responses = await inquirer.prompt<{ stage: string }>([
+                {
+                    name: "stage",
+                    message: "Select the stage",
+                    type: "list",
+                    choices: STAGES,
+                },
+            ]);
+
+            stage = responses.stage;
+        }
 
         if (!producerEndpoint) {
             const responses = await inquirer.prompt<{ producerEndpoint: string }>([
