@@ -11,7 +11,7 @@ export const invokeNaptanUploader = new Command("invoke-naptan-uploader")
                 {
                     s3: {
                         bucket: {
-                            name: `integrated-data-naptan-${stage}`,
+                            name: `integrated-data-naptan-stops-${stage}`,
                         },
                         object: {
                             key: "Stops.csv",
