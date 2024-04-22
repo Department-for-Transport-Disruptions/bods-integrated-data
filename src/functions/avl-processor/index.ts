@@ -4,9 +4,8 @@ import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { VehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
+import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
-import { parseStringPromise } from "xml2js";
-import { parseBooleans } from "xml2js/lib/processors.js";
 
 const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Kysely<Database>) => {
     const insertChunks = chunkArray(vehicleActivity, 3000);
@@ -24,12 +23,14 @@ const makeVehicleActivityArray = (value: string, name: string) => {
     return value;
 };
 
-const parseXml = async (xml: string) => {
-    const parsedXml = (await parseStringPromise(xml, {
-        explicitArray: false,
-        valueProcessors: [parseBooleans, makeVehicleActivityArray],
-        ignoreAttrs: true,
-    })) as Record<string, object>;
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+    });
+
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
@@ -51,7 +52,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<D
     const body = data.Body;
 
     if (body) {
-        const parsedSiri = await parseXml(await body.transformToString());
+        const parsedSiri = parseXml(await body.transformToString());
         await saveSiriToDatabase(parsedSiri, dbClient);
     }
 };
