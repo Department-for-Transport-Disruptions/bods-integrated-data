@@ -23,7 +23,7 @@ export const invokeNocProcessor = new Command("invoke-noc-processor")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-noc-processor-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
     });

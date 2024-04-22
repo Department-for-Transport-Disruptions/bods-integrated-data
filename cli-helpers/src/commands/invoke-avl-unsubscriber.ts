@@ -44,7 +44,7 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
 
         await invokeLambda(stage, {
             FunctionName: `avl-unsubscriber-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
 

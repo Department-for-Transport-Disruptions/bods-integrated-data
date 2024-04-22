@@ -38,7 +38,7 @@ export const invokeTndsTxcUnzipper = new Command("invoke-tnds-txc-unzipper")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-tnds-txc-unzipper-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
     });

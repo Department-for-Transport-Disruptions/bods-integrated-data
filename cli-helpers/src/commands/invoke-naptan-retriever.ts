@@ -8,6 +8,6 @@ export const invokeNaptanRetriever = new Command("invoke-naptan-retriever")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-naptan-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

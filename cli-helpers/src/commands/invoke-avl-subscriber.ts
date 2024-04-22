@@ -65,7 +65,7 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
 
         await invokeLambda(stage, {
             FunctionName: `avl-subscriber-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
 

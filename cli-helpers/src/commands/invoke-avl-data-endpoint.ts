@@ -123,7 +123,7 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-bods-avl-data-endpoint-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
 

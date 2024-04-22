@@ -8,6 +8,6 @@ export const invokeGtfsTimetablesGenerator = new Command("invoke-gtfs-timetables
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-gtfs-timetables-generator-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

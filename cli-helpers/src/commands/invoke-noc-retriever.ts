@@ -8,6 +8,6 @@ export const invokeNocRetriever = new Command("invoke-noc-retriever")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-noc-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

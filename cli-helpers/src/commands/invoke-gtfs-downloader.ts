@@ -6,12 +6,8 @@ export const invokeGtfsDownloader = new Command("invoke-gtfs-downloader")
     .action(async (options) => {
         const { stage } = options;
 
-        const response = await invokeLambda(stage, {
+        await invokeLambda(stage, {
             FunctionName: `integrated-data-gtfs-downloader-${stage}`,
             InvocationType: "RequestResponse",
         });
-
-        const payload = response?.Payload?.transformToString();
-
-        console.log("Response", JSON.stringify(JSON.parse(payload!), null, 2));
     });

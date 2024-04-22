@@ -23,7 +23,7 @@ export const invokeNaptanUploader = new Command("invoke-naptan-uploader")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-naptan-uploader-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
     });

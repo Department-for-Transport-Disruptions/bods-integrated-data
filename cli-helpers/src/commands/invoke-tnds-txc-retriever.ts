@@ -8,6 +8,6 @@ export const invokeTndsTxcRetriever = new Command("invoke-tnds-txc-retriever")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-tnds-txc-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

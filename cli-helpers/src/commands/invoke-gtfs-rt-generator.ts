@@ -8,6 +8,6 @@ export const invokeGtfsRtGenerator = new Command("invoke-gtfs-rt-generator")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-gtfs-rt-generator-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

@@ -9,6 +9,6 @@ export const invokeDbMigrator = new Command("invoke-db-migrator")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-db-migrator-${rollback ? "rollback" : "migrate"}-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

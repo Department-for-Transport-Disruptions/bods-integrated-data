@@ -8,6 +8,6 @@ export const invokeTableRenamer = new Command("invoke-table-renamer")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-table-renamer-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

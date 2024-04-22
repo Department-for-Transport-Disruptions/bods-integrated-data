@@ -8,6 +8,6 @@ export const invokeNptgRetriever = new Command("invoke-nptg-retriever")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-nptg-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

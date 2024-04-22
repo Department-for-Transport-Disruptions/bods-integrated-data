@@ -8,6 +8,6 @@ export const invokeTxcRetriever = new Command("invoke-txc-retriever")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-txc-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

@@ -8,6 +8,6 @@ export const invokeBankHolidaysRetriever = new Command("invoke-bank-holidays-ret
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-bank-holidays-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

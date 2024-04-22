@@ -23,7 +23,7 @@ export const invokeNptgUploader = new Command("invoke-nptg-uploader")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-nptg-uploader-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
     });

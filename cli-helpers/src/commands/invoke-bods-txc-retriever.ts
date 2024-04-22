@@ -8,6 +8,6 @@ export const invokeBodsTxcRetriever = new Command("invoke-bods-txc-retriever")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-bods-txc-retriever-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
         });
     });

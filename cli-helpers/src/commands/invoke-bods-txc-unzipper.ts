@@ -38,7 +38,7 @@ export const invokeBodsTxcUnzipper = new Command("invoke-bods-txc-unzipper")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-bods-txc-unzipper-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
     });

@@ -38,7 +38,7 @@ export const invokeBodsTxcProcessor = new Command("invoke-bods-txc-processor")
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-txc-processor-${stage}`,
-            InvocationType: "Event",
+            InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
     });
