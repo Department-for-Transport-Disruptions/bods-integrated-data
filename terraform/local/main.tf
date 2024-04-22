@@ -188,3 +188,9 @@ module "avl-unsubscriber" {
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
 }
+
+module "integrated_data_bank_holidays_pipeline" {
+  source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
+}

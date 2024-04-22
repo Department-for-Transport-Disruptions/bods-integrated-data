@@ -255,3 +255,9 @@ module "integrated_data_avl_producer_api_gateway" {
   data_endpoint_lambda_name       = module.integrated_data_avl_data_endpoint.lambda_name
   data_endpoint_lambda_invoke_arn = module.integrated_data_avl_data_endpoint.invoke_arn
 }
+
+module "integrated_data_bank_holidays_pipeline" {
+  source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
+}

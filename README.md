@@ -167,6 +167,16 @@ Insert NPTG data into the database:
 make run-local-nptg-uploader
 ```
 
+### Bank holidays data retrieval
+
+The bank holidays dataset contains data for UK bank holidays.
+
+Download the bank holidays dataset into the localstack container:
+
+```bash
+make run-local-bank-holidays-retriever
+```
+
 ### TXC data retrieval and processing
 
 #### Bus Open Data Service (BODS)
