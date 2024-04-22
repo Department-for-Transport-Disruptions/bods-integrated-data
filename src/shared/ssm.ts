@@ -1,10 +1,16 @@
-import { DeleteParametersCommand, PutParameterCommand, SSMClient } from "@aws-sdk/client-ssm";
+import {
+    DeleteParametersCommand,
+    GetParameterCommand,
+    GetParameterResult,
+    PutParameterCommand,
+    SSMClient,
+} from "@aws-sdk/client-ssm";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const ssm = new SSMClient({
     region: "eu-west-2",
-    ...(process.env.IS_LOCAL === "true"
+    ...(process.env.STAGE === "local"
         ? {
               endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
               credentials: {
@@ -35,6 +41,15 @@ export const deleteParameters = async (names: string[]): Promise<void> => {
     await ssm.send(
         new DeleteParametersCommand({
             Names: names,
+        }),
+    );
+};
+
+export const getParameter = async (name: string, withDecryption: boolean = true): Promise<GetParameterResult> => {
+    return ssm.send(
+        new GetParameterCommand({
+            Name: name,
+            WithDecryption: withDecryption,
         }),
     );
 };

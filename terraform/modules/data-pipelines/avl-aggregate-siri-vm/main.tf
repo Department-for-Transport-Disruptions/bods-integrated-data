@@ -42,7 +42,7 @@ module "avl_aggregate_siri" {
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
   database_sg_id = var.db_sg_id
-  schedule       = var.environment == "dev" ? "rate(1 minute)" : "rate(10 seconds)"
+  schedule       = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
 
   permissions = [{
     Action = [
@@ -63,6 +63,7 @@ module "avl_aggregate_siri" {
   }, ]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn

@@ -22,7 +22,7 @@ module "avl_unsubscriber" {
 
   permissions = [
     {
-      Action   = "ssm:DeleteParameters",
+      Action   = ["ssm:GetParameter", "ssm:DeleteParameters"],
       Effect   = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
@@ -38,7 +38,7 @@ module "avl_unsubscriber" {
 
 
   env_vars = {
-    TABLE_NAME = var.avl_subscription_table_name,
-    STAGE      = var.environment,
+    STAGE      = var.environment
+    TABLE_NAME = var.avl_subscription_table_name
   }
 }

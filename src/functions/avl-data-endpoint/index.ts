@@ -90,8 +90,6 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
-        logger.info(JSON.stringify(event));
-
         const subscriptionId =
             stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;
 
