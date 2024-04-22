@@ -230,7 +230,7 @@ Then copy the `ARN` for the secret with the description "Integrated data tnds ft
 Download all TNDS data into the localstack container with this ARN:
 
 ```bash
-run-local-tnds-txc-retriever TNDS_TXC_FTP_CREDS_ARN="{TNDS_TXC_FTP_CREDS_ARN}"
+run-local-tnds-txc-retriever TNDS_FTP_ARN="{TNDS_FTP_ARN}"
 ```
 
 TNDS provides multiple archives. The resulting files can be listed using the AWS CLI:

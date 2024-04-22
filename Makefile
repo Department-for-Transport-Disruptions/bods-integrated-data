@@ -4,13 +4,12 @@ BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
-TNDS_TXC_FTP_CREDS_ARN=""
+TNDS_FTP_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
-LAMBDA_ZIP_LOCATION="src/functions/dist"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
@@ -131,7 +130,7 @@ run-local-bods-txc-retriever:
 	STAGE=local TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-txc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-tnds-txc-retriever:
-	STAGE=local TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_FTP_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-txc-retriever:
 	STAGE=local BODS_TXC_RETRIEVER_FUNCTION_NAME="dummy" TNDS_TXC_RETRIEVER_FUNCTION_NAME="dummy" npx tsx -e "import {handler} from './src/functions/txc-retriever'; handler().catch(e => console.error(e))"
