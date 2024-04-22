@@ -183,11 +183,9 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         );
     }
 
-
     const parsedResponseBody = parseXml(subscriptionResponseBody);
 
     logger.info(subscriptionResponseBody);
-
 
     if (!parsedResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
