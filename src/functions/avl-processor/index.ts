@@ -28,6 +28,7 @@ const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
+        tagValueProcessor: makeVehicleActivityArray,
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
