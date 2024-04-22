@@ -2,7 +2,7 @@ import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGE_OPTION, invokeLambda } from "../utils";
 
-export default new Command("invoke-avl-subscriber")
+export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .addOption(STAGE_OPTION)
     .option("--producerEndpoint <endpoint>", "Data producer endpoint")
     .option("-u, --username <username>", "Data producer username")

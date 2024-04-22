@@ -1,27 +1,29 @@
 import { Command } from "@commander-js/extra-typings";
 import { STAGE_OPTION, invokeLambda } from "../utils";
 
-export default new Command("invoke-nptg-uploader").addOption(STAGE_OPTION).action(async (options) => {
-    const { stage } = options;
+export const invokeNptgUploader = new Command("invoke-nptg-uploader")
+    .addOption(STAGE_OPTION)
+    .action(async (options) => {
+        const { stage } = options;
 
-    const payload = {
-        Records: [
-            {
-                s3: {
-                    bucket: {
-                        name: `integrated-data-nptg-${stage}`,
-                    },
-                    object: {
-                        key: "NPTG.xml",
+        const payload = {
+            Records: [
+                {
+                    s3: {
+                        bucket: {
+                            name: `integrated-data-nptg-${stage}`,
+                        },
+                        object: {
+                            key: "NPTG.xml",
+                        },
                     },
                 },
-            },
-        ],
-    };
+            ],
+        };
 
-    await invokeLambda(stage, {
-        FunctionName: `integrated-data-nptg-uploader-${stage}`,
-        InvocationType: "Event",
-        Payload: JSON.stringify(payload),
+        await invokeLambda(stage, {
+            FunctionName: `integrated-data-nptg-uploader-${stage}`,
+            InvocationType: "Event",
+            Payload: JSON.stringify(payload),
+        });
     });
-});

@@ -1,7 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import { STAGE_OPTION, invokeLambda } from "../utils";
 
-export default new Command("invoke-bods-txc-unzipper")
+export const invokeBodsTxcUnzipper = new Command("invoke-bods-txc-unzipper")
     .addOption(STAGE_OPTION)
     .option("-d, --file <file>", "File to unzip")
     .action(async (options) => {

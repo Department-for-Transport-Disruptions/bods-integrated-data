@@ -2,7 +2,7 @@ import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGE_OPTION, invokeLambda } from "../utils";
 
-export default new Command("create-avl-mock-data-producer")
+export const createAvlMockDataProducer = new Command("create-avl-mock-data-producer")
     .addOption(STAGE_OPTION)
     .option("-n, --name <name>", "Name of mock data producer")
     .action(async (options) => {

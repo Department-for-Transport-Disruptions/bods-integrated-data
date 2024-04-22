@@ -1,47 +1,11 @@
 import { program } from "@commander-js/extra-typings";
-import createAvlMockDataProducer from "./src/commands/create-avl-mock-data-producer";
-import invokeAvlDataEndpoint from "./src/commands/invoke-avl-data-endpoint";
-import invokeAvlSubscriber from "./src/commands/invoke-avl-subscriber";
-import invokeAvlUnsubscriber from "./src/commands/invoke-avl-unsubscriber";
-import invokeBodsTxcProcessor from "./src/commands/invoke-bods-txc-processor";
-import invokeBodsTxcRetriever from "./src/commands/invoke-bods-txc-retriever";
-import invokeBodsTxcUnzipper from "./src/commands/invoke-bods-txc-unzipper";
-import invokeDbMigrator from "./src/commands/invoke-db-migrator";
-import invokeGtfsDownloader from "./src/commands/invoke-gtfs-downloader";
-import invokeGtfsRtGenerator from "./src/commands/invoke-gtfs-rt-generator";
-import invokeGtfsTimetablesGenerator from "./src/commands/invoke-gtfs-timetables-generator";
-import invokeNaptanRetriever from "./src/commands/invoke-naptan-retriever";
-import invokeNaptanUploader from "./src/commands/invoke-naptan-uploader";
-import invokeNocProcessor from "./src/commands/invoke-noc-processor";
-import invokeNocRetriever from "./src/commands/invoke-noc-retriever";
-import invokeNptgRetriever from "./src/commands/invoke-nptg-retriever";
-import invokeNptgUploader from "./src/commands/invoke-nptg-uploader";
-import invokeTableRenamer from "./src/commands/invoke-table-renamer";
-import invokeTndsTxcProcessor from "./src/commands/invoke-tnds-txc-processor";
-import invokeTndsTxcRetriever from "./src/commands/invoke-tnds-txc-retriever";
-import invokeTndsTxcUnzipper from "./src/commands/invoke-tnds-txc-unzipper";
-import invokeTxcRetriever from "./src/commands/invoke-txc-retriever";
+import * as commands from "./src/commands";
 
-program.addCommand(createAvlMockDataProducer);
-program.addCommand(invokeAvlDataEndpoint);
-program.addCommand(invokeAvlSubscriber);
-program.addCommand(invokeAvlUnsubscriber);
-program.addCommand(invokeBodsTxcProcessor);
-program.addCommand(invokeBodsTxcRetriever);
-program.addCommand(invokeBodsTxcUnzipper);
-program.addCommand(invokeDbMigrator);
-program.addCommand(invokeGtfsDownloader);
-program.addCommand(invokeGtfsRtGenerator);
-program.addCommand(invokeGtfsTimetablesGenerator);
-program.addCommand(invokeNaptanRetriever);
-program.addCommand(invokeNaptanUploader);
-program.addCommand(invokeNocProcessor);
-program.addCommand(invokeNocRetriever);
-program.addCommand(invokeNptgRetriever);
-program.addCommand(invokeNptgUploader);
-program.addCommand(invokeTableRenamer);
-program.addCommand(invokeTndsTxcProcessor);
-program.addCommand(invokeTndsTxcRetriever);
-program.addCommand(invokeTndsTxcUnzipper);
-program.addCommand(invokeTxcRetriever);
+let key: keyof typeof commands;
+
+for (key in commands) {
+    // eslint-disable-next-line import/namespace
+    program.addCommand(commands[key]);
+}
+
 program.parse();

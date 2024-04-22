@@ -1,7 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import { STAGE_OPTION, invokeLambda } from "../utils";
 
-export default new Command("invoke-bods-txc-processor")
+export const invokeBodsTxcProcessor = new Command("invoke-bods-txc-processor")
     .addOption(STAGE_OPTION)
     .option("-d, --file <file>", "File to process")
     .action(async (options) => {
