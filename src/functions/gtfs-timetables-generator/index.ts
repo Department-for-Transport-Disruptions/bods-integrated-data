@@ -26,15 +26,13 @@ const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: 
 };
 
 export const handler = async () => {
-    const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, IS_LOCAL: local } = process.env;
+    const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, STAGE: stage } = process.env;
 
     if (!outputBucket || !gtfsBucket) {
         throw new Error("Env vars must be set");
     }
 
-    const isLocal = local === "true";
-
-    const dbClient = await getDatabaseClient(isLocal);
+    const dbClient = await getDatabaseClient(stage === "local");
 
     try {
         logger.info("Starting GTFS Timetable Generator");

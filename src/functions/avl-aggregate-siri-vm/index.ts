@@ -121,7 +121,7 @@ export const generateSiriVmAndUploadToS3 = async (
 };
 
 export const handler = async () => {
-    const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const db = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info("Starting SIRI-VM generator...");
