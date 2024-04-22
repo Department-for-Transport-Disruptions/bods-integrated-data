@@ -30,8 +30,8 @@ module "integrated_data_naptan_retriever_function" {
   zip_path      = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 60
-  memory        = 1024
+  timeout       = 120
+  memory        = 2048
   schedule      = "cron(0 2 * * ? *)"
 
   permissions = [
@@ -47,6 +47,7 @@ module "integrated_data_naptan_retriever_function" {
   ]
 
   env_vars = {
+    STAGE       = var.environment
     BUCKET_NAME = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
   }
 }
@@ -60,7 +61,7 @@ module "integrated_data_naptan_uploader_function" {
   handler        = "index.handler"
   runtime        = "nodejs20.x"
   timeout        = 300
-  memory         = 3008
+  memory         = 1024
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
   database_sg_id = var.db_sg_id
@@ -92,6 +93,7 @@ module "integrated_data_naptan_uploader_function" {
   }
 
   env_vars = {
+    STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port

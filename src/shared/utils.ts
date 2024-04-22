@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { logger } from "@baselime/lambda-logger";
+import { ZodSchema, z } from "zod";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { VehicleType } from "./schema";
 
@@ -16,7 +17,7 @@ export const notEmpty = <T>(value: T | null | undefined): value is T => {
     return value !== null && value !== undefined;
 };
 
-export const getRouteTypeFromServiceMode = (mode: string) => {
+export const getRouteTypeFromServiceMode = (mode?: string) => {
     switch (mode) {
         case "bus":
             return RouteType.Bus;
@@ -56,3 +57,18 @@ export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleT
 
 export const txcSelfClosingProperty = z.literal("");
 export const txcEmptyProperty = txcSelfClosingProperty.transform(() => undefined);
+
+export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
+    z.preprocess((input): T[] => {
+        const result = z.any().array().parse(input);
+
+        return result.filter((item) => {
+            const parsedItem = schema.safeParse(item);
+
+            if (!parsedItem.success) {
+                logger.warn("Error parsing item", parsedItem.error.format());
+            }
+
+            return parsedItem.success;
+        });
+    }, z.array(schema));

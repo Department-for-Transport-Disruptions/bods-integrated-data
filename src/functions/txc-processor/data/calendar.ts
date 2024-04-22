@@ -15,7 +15,7 @@ import {
 import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/schema/dates.schema";
 import { Dayjs } from "dayjs";
 import { Kysely } from "kysely";
-import { hasher } from "node-object-hash";
+import { insertCalendar } from "./database";
 import { VehicleJourneyMapping } from "../types";
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
@@ -26,7 +26,7 @@ const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
     },
 };
 
-const formatCalendarDates = (
+export const formatCalendarDates = (
     days: string[],
     startDate: Dayjs,
     endDate: Dayjs,
@@ -41,7 +41,7 @@ const formatCalendarDates = (
             }),
         ) ?? [];
 
-const calculateDaysOfOperation = (
+export const calculateDaysOfOperation = (
     day: OperatingProfile["RegularDayType"]["DaysOfWeek"],
     startDate: Dayjs,
     endDate: Dayjs,
@@ -171,7 +171,7 @@ const calculateDaysOfOperation = (
     };
 };
 
-const calculateServicedOrgDaysToUse = (days: Dayjs[], calendar: NewCalendar) => {
+export const calculateServicedOrgDaysToUse = (days: Dayjs[], calendar: NewCalendar) => {
     const calendarMap: Record<
         number,
         "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
@@ -198,7 +198,7 @@ const calculateServicedOrgDaysToUse = (days: Dayjs[], calendar: NewCalendar) => 
         .map((servicedOrgDay) => servicedOrgDay.format(DEFAULT_DATE_FORMAT));
 };
 
-const processServicedOrganisation = (
+export const processServicedOrganisation = (
     servicedOrganisationDayType: OperatingProfile["ServicedOrganisationDayType"],
     servicedOrganisations: ServicedOrganisation[],
     calendar: NewCalendar,
@@ -279,7 +279,7 @@ export const formatCalendar = (
     const bankHolidayDaysOfOperation = operatingProfile.BankHolidayOperation?.DaysOfOperation ?? [];
     const bankHolidayDaysOfNonOperation = operatingProfile.BankHolidayOperation?.DaysOfNonOperation ?? [];
 
-    let calendar: NewCalendar = {
+    const defaultCalendar: NewCalendar = {
         monday: 0,
         tuesday: 0,
         wednesday: 0,
@@ -290,6 +290,8 @@ export const formatCalendar = (
         start_date: startDateToUse.format(DEFAULT_DATE_FORMAT),
         end_date: endDateToUse.format(DEFAULT_DATE_FORMAT),
     };
+
+    let calendar = defaultCalendar;
 
     if (holidaysOnly === undefined) {
         calendar = calculateDaysOfOperation(day, startDateToUse, endDateToUse);
@@ -304,6 +306,8 @@ export const formatCalendar = (
             servicedOrganisations,
             calendar,
         ));
+
+        calendar = defaultCalendar;
     }
 
     const daysOfNonOperation = [
@@ -395,43 +399,4 @@ export const processCalendars = async (
     });
 
     return Promise.all(updatedVehicleJourneyMappingsPromises);
-};
-
-export const insertCalendar = async (
-    dbClient: Kysely<Database>,
-    calendarData: {
-        calendar: NewCalendar;
-        calendarDates: NewCalendarDate[];
-    },
-) => {
-    const calendarHash = hasher().hash(calendarData);
-
-    const insertedCalendar = await dbClient
-        .insertInto("calendar_new")
-        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
-        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
-        .returningAll()
-        .executeTakeFirst();
-
-    if (!insertedCalendar?.id) {
-        throw new Error("Calendar failed to insert");
-    }
-
-    if (!calendarData.calendarDates?.length) {
-        return insertedCalendar;
-    }
-
-    await dbClient
-        .insertInto("calendar_date_new")
-        .values(
-            calendarData.calendarDates.map((date) => ({
-                date: date.date,
-                exception_type: date.exception_type,
-                service_id: insertedCalendar.id,
-            })),
-        )
-        .onConflict((oc) => oc.doNothing())
-        .execute();
-
-    return insertedCalendar;
 };

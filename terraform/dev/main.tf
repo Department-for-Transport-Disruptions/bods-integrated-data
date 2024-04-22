@@ -30,6 +30,11 @@ data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
 }
 
+locals {
+  env     = "dev"
+  secrets = jsondecode(data.sops_file.secrets.raw)
+}
+
 module "integrated_data_monitoring_dev" {
   source = "../modules/monitoring"
 
@@ -94,8 +99,41 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_noc_pipeline" {
+  source = "../modules/data-pipelines/noc-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_table_renamer" {
+  source = "../modules/table-renamer"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_nptg_pipeline" {
+  source = "../modules/data-pipelines/nptg-pipeline"
 
   environment        = local.env
   vpc_id             = module.integrated_data_vpc_dev.vpc_id
@@ -179,14 +217,26 @@ module "integrated_data_avl_subscriber" {
   aws_region                                = data.aws_region.current.name
 }
 
+module "avl-unsubscriber" {
+  source = "../modules/avl-producer-api/avl-unsubscriber"
+
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
+  environment                 = local.env
+}
+
 module "integrated_data_avl_data_endpoint" {
   source = "../modules/avl-producer-api/avl-data-endpoint"
 
-  environment = local.env
-  bucket_name = module.integrated_data_avl_pipeline.bucket_name
+  environment                 = local.env
+  bucket_name                 = module.integrated_data_avl_pipeline.bucket_name
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
 }
 
-module avl_mock_data_producer {
+module "avl_mock_data_producer" {
   source = "../modules/avl-producer-api/mock-data-producer"
 
   environment                 = local.env
@@ -206,18 +256,8 @@ module "integrated_data_avl_producer_api_gateway" {
   data_endpoint_lambda_invoke_arn = module.integrated_data_avl_data_endpoint.invoke_arn
 }
 
-locals {
-  env     = "dev"
-  secrets = jsondecode(data.sops_file.secrets.raw)
-}
+module "integrated_data_bank_holidays_pipeline" {
+  source = "../modules/data-pipelines/bank-holidays-pipeline"
 
-module "integrated_data_noc_pipeline" {
-  source = "../modules/data-pipelines/noc-pipeline"
-
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  environment = local.env
 }

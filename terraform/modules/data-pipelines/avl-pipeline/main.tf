@@ -66,6 +66,7 @@ module "integrated_data_avl_processor_function" {
   ]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
@@ -102,7 +103,7 @@ module "integrated_data_avl_retriever_function" {
   ]
 
   env_vars = {
+    STAGE              = var.environment
     TARGET_BUCKET_NAME = module.integrated_data_avl_s3_sqs.bucket_id
   }
 }
-
