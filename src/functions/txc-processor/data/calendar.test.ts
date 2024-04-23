@@ -50,6 +50,7 @@ describe("calendar", () => {
         OperatingPeriod: {
             StartDate: "2024-04-01",
         },
+        Mode: "bus",
         RegisteredOperatorRef: "xyz",
         StandardService: {
             JourneyPattern: [

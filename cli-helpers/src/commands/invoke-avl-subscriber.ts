@@ -1,23 +1,14 @@
-import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
-import { Command, Flags } from "@oclif/core";
+import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
-const localStackHost = process.env.LOCALSTACK_HOSTNAME;
-
-export default class InvokeAvlSubscriber extends Command {
-    static description = "Invoke AVL data endpoint";
-
-    static flags = {
-        stage: Flags.string({ description: "Stage to use" }),
-        producerEndpoint: Flags.string({ description: "Data producer endpoint" }),
-        username: Flags.string({ description: "Data producer username" }),
-        password: Flags.string({ description: "Data producer password" }),
-    };
-
-    async run(): Promise<void> {
-        const { flags } = await this.parse(InvokeAvlSubscriber);
-
-        let { stage, producerEndpoint, username, password } = flags;
+export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
+    .addOption(STAGE_OPTION)
+    .option("--producerEndpoint <endpoint>", "Data producer endpoint")
+    .option("-u, --username <username>", "Data producer username")
+    .option("-p, --password <password>", "Data producer password")
+    .action(async (options) => {
+        let { stage, producerEndpoint, username, password } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -25,7 +16,7 @@ export default class InvokeAvlSubscriber extends Command {
                     name: "stage",
                     message: "Select the stage",
                     type: "list",
-                    choices: ["local", "dev"],
+                    choices: STAGES,
                 },
             ]);
 
@@ -68,32 +59,15 @@ export default class InvokeAvlSubscriber extends Command {
             password = responses.password;
         }
 
-        const lambdaClient = new LambdaClient({
-            region: "eu-west-2",
-            ...(stage === "local"
-                ? {
-                      endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
-                      credentials: {
-                          accessKeyId: "DUMMY",
-                          secretAccessKey: "DUMMY",
-                      },
-                  }
-                : {}),
-        });
-
         const invokePayload = {
             body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${producerEndpoint}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\"}`,
         };
 
-        await lambdaClient.send(
-            new InvokeCommand({
-                FunctionName: `avl-subscriber-${stage}`,
-                InvocationType: "Event",
-                Payload: JSON.stringify(invokePayload),
-            }),
-        );
+        await invokeLambda(stage, {
+            FunctionName: `avl-subscriber-${stage}`,
+            InvocationType: "RequestResponse",
+            Payload: JSON.stringify(invokePayload),
+        });
 
-        // eslint-disable-next-line no-console
         console.log(`Subscription request for producer: ${producerEndpoint} sent to subscribe endpoint`);
-    }
-}
+    });
