@@ -30,9 +30,15 @@ export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandIn
 
         const response = await lambdaClient.send(new InvokeCommand(invokeCommand));
 
+        console.log("Invoke complete");
+
         if (invokeCommand.InvocationType === "RequestResponse") {
             const payload = response?.Payload?.transformToString();
-            console.log("Response", JSON.stringify(JSON.parse(payload!), null, 2));
+
+            // Lambdas without a return statement will return a "null" payload
+            if (payload && payload !== "null") {
+                console.log("Response", JSON.stringify(JSON.parse(payload), null, 2));
+            }
         }
 
         return response;
