@@ -44,6 +44,11 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<D
 
     if (body) {
         const parsedSiri = parseXml(await body.transformToString());
+
+        if (!parsedSiri || parsedSiri.length === 0) {
+            throw new Error("Error parsing data");
+        }
+
         await saveSiriToDatabase(parsedSiri, dbClient);
     }
 };
