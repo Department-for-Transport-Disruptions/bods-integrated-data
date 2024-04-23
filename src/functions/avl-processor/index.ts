@@ -13,16 +13,6 @@ const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Ky
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
 };
 
-// const makeVehicleActivityArray = (value: string, name: string) => {
-//     if (name === "VehicleActivity") {
-//         if (!Array.isArray(value)) {
-//             return [value];
-//         }
-//     }
-
-//     return value;
-//  };
-
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
