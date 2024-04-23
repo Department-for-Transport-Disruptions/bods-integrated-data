@@ -73,6 +73,7 @@ export const insertNptgData = async (dbClient: Kysely<Database>, data: NptgSchem
                 admin_area_code: adminArea.AdministrativeAreaCode,
                 atco_code: adminArea.AtcoAreaCode,
                 name: adminArea.Name,
+                region_code: region.RegionCode,
             });
         });
     });
