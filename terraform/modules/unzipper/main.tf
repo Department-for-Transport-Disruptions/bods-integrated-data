@@ -47,6 +47,7 @@ module "integrated_data_unzipper_function" {
   ]
 
   env_vars = {
+    STAGE                = var.environment
     UNZIPPED_BUCKET_NAME = var.unzipped_bucket_name
   }
 }

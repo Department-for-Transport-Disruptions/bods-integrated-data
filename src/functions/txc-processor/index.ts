@@ -19,14 +19,14 @@ import { processCalendars } from "./data/calendar";
 import {
     insertAgencies,
     insertFrequencies,
-    insertRoutes,
     insertShapes,
     insertStopTimes,
     insertStops,
     insertTrips,
 } from "./data/database";
+import { insertRoutes } from "./data/routes";
 import { VehicleJourneyMapping } from "./types";
-import { hasServiceExpired } from "./utils";
+import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -75,6 +75,7 @@ const processServices = (
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
     filePath: string,
+    isTnds: boolean,
     servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -82,6 +83,15 @@ const processServices = (
             logger.warn("Service has expired", {
                 service: service.ServiceCode,
                 operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        if (isTnds && !isRequiredTndsDataset(filePath) && !isRequiredTndsServiceMode(service.Mode)) {
+            logger.warn("Ignoring TNDS service with mode", {
+                service: service.ServiceCode,
+                mode: service.Mode,
             });
 
             return null;
@@ -100,10 +110,19 @@ const processServices = (
             return null;
         }
 
-        const routeData = await insertRoutes(dbClient, service, agencyData);
+        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agencyData, isTnds);
 
-        if (!routeData) {
-            logger.warn("No route data found for service", {
+        if (isDuplicateRoute) {
+            logger.warn("Duplicate TNDS route found for service", {
+                service: service.ServiceCode,
+                operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        if (!routes) {
+            logger.warn("No routes found for service", {
                 service: service.ServiceCode,
                 operator: service.RegisteredOperatorRef,
             });
@@ -120,7 +139,7 @@ const processServices = (
                 tripId: "",
             };
 
-            const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
+            const route = routes.find((r) => r.line_id === vehicleJourney.LineRef);
 
             if (route) {
                 vehicleJourneyMapping.routeId = route.id;
@@ -145,7 +164,7 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData, filePath);
+        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
         await insertFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
@@ -193,6 +212,7 @@ const processSqsRecord = async (
 ) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
+    const isTnds = record.s3.bucket.name.includes("-tnds-");
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const { TransXChange } = txcData;
@@ -216,13 +236,14 @@ const processSqsRecord = async (
         TransXChange.JourneyPatternSections.JourneyPatternSection,
         agencyData,
         record.s3.object.key,
+        isTnds,
         TransXChange.ServicedOrganisations?.ServicedOrganisation,
     );
 };
 
 export const handler = async (event: SQSEvent) => {
-    const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, IS_LOCAL: isLocal } = process.env;
-    const dbClient = await getDatabaseClient(isLocal === "true");
+    const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
+    const dbClient = await getDatabaseClient(stage === "local");
 
     if (!bankHolidaysBucketName) {
         throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");

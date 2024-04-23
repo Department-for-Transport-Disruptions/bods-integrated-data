@@ -2,7 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 
 export const handler = async () => {
     try {
-        if (process.env.IS_LOCAL === "true") {
+        if (process.env.STAGE === "local") {
             const message: string = await new Promise((resolve) => {
                 setTimeout(() => {
                     resolve("Hello world");

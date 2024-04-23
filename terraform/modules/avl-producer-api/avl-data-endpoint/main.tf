@@ -21,8 +21,9 @@ module "integrated_data_bods_avl_data_endpoint_function" {
   memory        = 1024
 
   env_vars = {
-    BUCKET_NAME = var.bucket_name
     STAGE       = var.environment
+    BUCKET_NAME = var.bucket_name
+    TABLE_NAME  = var.avl_subscription_table_name
   }
 
   permissions = [
@@ -30,9 +31,18 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       Action = [
         "s3:PutObject"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:s3:::${var.bucket_name}/*"
+      ]
+    },
+    {
+      Action = [
+        "dynamodb:PutItem", "dynamodb:GetItem"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
       ]
     }
   ]

@@ -5,20 +5,14 @@ import {
     NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson, getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
-import {
-    OperatingPeriod,
-    OperatingProfile,
-    Service,
-    ServicedOrganisation,
-    VehicleJourney,
-} from "@bods-integrated-data/shared/schema";
+import { OperatingPeriod, OperatingProfile, Service, ServicedOrganisation } from "@bods-integrated-data/shared/schema";
 import {
     DEFAULT_DATE_FORMAT,
     getTransformedBankHolidayOperationSchema,
 } from "@bods-integrated-data/shared/schema/dates.schema";
 import { Dayjs } from "dayjs";
 import { Kysely } from "kysely";
-import { hasher } from "node-object-hash";
+import { insertCalendar } from "./database";
 import { VehicleJourneyMapping } from "../types";
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
@@ -29,7 +23,7 @@ const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
     },
 };
 
-const formatCalendarDates = (
+export const formatCalendarDates = (
     days: string[],
     startDate: Dayjs,
     endDate: Dayjs,
@@ -42,9 +36,9 @@ const formatCalendarDates = (
                 date: day,
                 exception_type: exceptionType,
             }),
-        ) ?? [];
+        );
 
-const calculateDaysOfOperation = (
+export const calculateDaysOfOperation = (
     day: OperatingProfile["RegularDayType"]["DaysOfWeek"],
     startDate: Dayjs,
     endDate: Dayjs,
@@ -174,7 +168,7 @@ const calculateDaysOfOperation = (
     };
 };
 
-const calculateServicedOrgDaysToUse = (days: Dayjs[], calendar: NewCalendar) => {
+export const calculateServicedOrgDaysToUse = (days: Dayjs[], calendar: NewCalendar) => {
     const calendarMap: Record<
         number,
         "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
@@ -201,7 +195,7 @@ const calculateServicedOrgDaysToUse = (days: Dayjs[], calendar: NewCalendar) => 
         .map((servicedOrgDay) => servicedOrgDay.format(DEFAULT_DATE_FORMAT));
 };
 
-const processServicedOrganisation = (
+export const processServicedOrganisation = (
     servicedOrganisationDayType: OperatingProfile["ServicedOrganisationDayType"],
     servicedOrganisations: ServicedOrganisation[],
     calendar: NewCalendar,
@@ -291,7 +285,7 @@ export const formatCalendar = (
         ? getTransformedBankHolidayOperationSchema(bankHolidaysJson, bankHolidayDaysOfNonOperation)
         : [];
 
-    let calendar: NewCalendar = {
+    const defaultCalendar: NewCalendar = {
         monday: 0,
         tuesday: 0,
         wednesday: 0,
@@ -302,6 +296,8 @@ export const formatCalendar = (
         start_date: startDateToUse.format(DEFAULT_DATE_FORMAT),
         end_date: endDateToUse.format(DEFAULT_DATE_FORMAT),
     };
+
+    let calendar = defaultCalendar;
 
     if (holidaysOnly === undefined) {
         calendar = calculateDaysOfOperation(day, startDateToUse, endDateToUse);
@@ -316,6 +312,8 @@ export const formatCalendar = (
             servicedOrganisations,
             calendar,
         ));
+
+        calendar = defaultCalendar;
     }
 
     const daysOfNonOperation = [
@@ -352,21 +350,6 @@ export const formatCalendar = (
     };
 };
 
-export const getOperatingProfile = (
-    service: Service,
-    vehicleJourney: VehicleJourney,
-    bankHolidaysJson: BankHolidaysJson,
-) => {
-    const operatingPeriod = service.OperatingPeriod;
-    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
-    const serviceOperatingProfile = service.OperatingProfile;
-
-    const operatingProfileToUse =
-        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
-
-    return formatCalendar(operatingProfileToUse, operatingPeriod, bankHolidaysJson);
-};
-
 export const processCalendars = async (
     dbClient: Kysely<Database>,
     service: Service,
@@ -386,6 +369,10 @@ export const processCalendars = async (
     }
 
     const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+        /**
+         * If there is no vehicle journey level operating profile but there is a service level
+         * operating profile, use the service level operating profile
+         */
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
             return {
                 ...vehicleJourneyMapping,
@@ -393,6 +380,10 @@ export const processCalendars = async (
             };
         }
 
+        /**
+         * If there is no vehicle journey level operating profile and no service level
+         * operating profile, use DEFAULT_OPERATING_PROFILE
+         */
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
             const defaultCalendar = await insertCalendar(
                 dbClient,
@@ -426,43 +417,4 @@ export const processCalendars = async (
     });
 
     return Promise.all(updatedVehicleJourneyMappingsPromises);
-};
-
-export const insertCalendar = async (
-    dbClient: Kysely<Database>,
-    calendarData: {
-        calendar: NewCalendar;
-        calendarDates: NewCalendarDate[];
-    },
-) => {
-    const calendarHash = hasher().hash(calendarData);
-
-    const insertedCalendar = await dbClient
-        .insertInto("calendar_new")
-        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
-        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
-        .returningAll()
-        .executeTakeFirst();
-
-    if (!insertedCalendar?.id) {
-        throw new Error("Calendar failed to insert");
-    }
-
-    if (!calendarData.calendarDates?.length) {
-        return insertedCalendar;
-    }
-
-    await dbClient
-        .insertInto("calendar_date_new")
-        .values(
-            calendarData.calendarDates.map((date) => ({
-                date: date.date,
-                exception_type: date.exception_type,
-                service_id: insertedCalendar.id,
-            })),
-        )
-        .onConflict((oc) => oc.doNothing())
-        .execute();
-
-    return insertedCalendar;
 };

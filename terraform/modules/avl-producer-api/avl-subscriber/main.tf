@@ -22,8 +22,8 @@ module "avl_subscriber" {
 
   permissions = [
     {
-      Action   = "ssm:PutParameter",
-      Effect   = "Allow",
+      Action = "ssm:PutParameter",
+      Effect = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
@@ -39,8 +39,8 @@ module "avl_subscriber" {
 
 
   env_vars = {
-    TABLE_NAME                       = var.avl_subscription_table_name,
-    STAGE                            = var.environment,
+    STAGE                            = var.environment
+    TABLE_NAME                       = var.avl_subscription_table_name
     MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = var.avl_mock_data_producer_subscribe_endpoint
     DATA_ENDPOINT                    = var.avl_data_endpoint
   }
