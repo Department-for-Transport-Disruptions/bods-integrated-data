@@ -134,7 +134,7 @@ make run-local-noc-retriever
 Insert NOC data into the database:
 
 ```bash
-make run-local-noc-processor FILE=noc.xml
+make run-local-noc-processor
 ```
 
 ### NaPTAN data retrieval
