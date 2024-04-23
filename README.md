@@ -18,6 +18,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
   - [NOC data retrieval](#noc-data-retrieval)
   - [NaPTAN data retrieval](#naptan-data-retrieval)
   - [NPTG data retrieval](#nptg-data-retrieval)
+  - [Bank holidays data retrieval](#bank-holidays-data-retrieval)
   - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
     - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
     - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
@@ -26,6 +27,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
     - [GTFS Schedule](#gtfs-schedule)
     - [GTFS Realtime](#gtfs-realtime)
   - [Creating and invoking lambda functions locally](#creating-and-invoking-lambda-functions-locally)
+  - [CLI Helpers](#cli-helpers)
 - [Configuration](#configuration)
   - [Adding and updating secrets](#adding-and-updating-secrets)
   - [Using secrets in Terraform](#using-secrets-in-terraform)
@@ -132,7 +134,7 @@ make run-local-noc-retriever
 Insert NOC data into the database:
 
 ```bash
-make run-local-noc-processor FILE=noc.xml
+make run-local-noc-processor
 ```
 
 ### NaPTAN data retrieval
@@ -228,7 +230,7 @@ Then copy the `ARN` for the secret with the description "Integrated data tnds ft
 Download all TNDS data into the localstack container with this ARN:
 
 ```bash
-run-local-tnds-txc-retriever TNDS_TXC_FTP_CREDS_ARN="{TNDS_TXC_FTP_CREDS_ARN}"
+run-local-tnds-txc-retriever TNDS_FTP_ARN="{TNDS_FTP_ARN}"
 ```
 
 TNDS provides multiple archives. The resulting files can be listed using the AWS CLI:
@@ -314,18 +316,32 @@ To deploy lambdas after making changes:
 make create-local-env
 ```
 
-To invoke a lambda (with any necessary env vars):
+To invoke a lambda locally, use its corresponding CLI helper command as documented in the [CLI Helpers](#cli-helpers) section below.
+
+Alternatively, invoke the lambda directly (with any necessary env vars):
 
 ```bash
 ENV_VAR_1="{A}" ENV_VAR_2="{B}" awslocal lambda invoke --function-name {FUNCTION_NAME} --output text /dev/stdout
 ```
 
-Alternatively invoke a lambda using the associated CLI helper:
+### CLI Helpers
+
+Inside `./cli-helpers` are a number of CLI commands to help with development, such as invoking lambdas and provisioning mock data.
+
+List available commands:
 
 ```bash
-make {CLI_COMMAND}
+make commands
+```
+
+Run a command:
+
+```bash
+make command-{COMMAND_NAME}
 # for example:
-make invoke-avl-data-endpoint
+make command-invoke-gtfs-rt-downloader
+# with flags:
+make command-invoke-avl-unsubscriber FLAGS="--stage local"
 ```
 
 ## Configuration
