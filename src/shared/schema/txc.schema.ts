@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEFAULT_DATE_FORMAT, transformedBankHolidayOperationSchema } from "./dates.schema";
+import { DEFAULT_DATE_FORMAT, bankHolidayOperationSchema } from "./dates.schema";
 import { getDate, getDateRange } from "../dates";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
@@ -86,8 +86,8 @@ export const operatingProfileSchema = z.object({
         .optional(),
     BankHolidayOperation: z
         .object({
-            DaysOfOperation: transformedBankHolidayOperationSchema.or(txcEmptyProperty).optional(),
-            DaysOfNonOperation: transformedBankHolidayOperationSchema.or(txcEmptyProperty).optional(),
+            DaysOfOperation: bankHolidayOperationSchema.or(txcEmptyProperty).optional(),
+            DaysOfNonOperation: bankHolidayOperationSchema.or(txcEmptyProperty).optional(),
         })
         .optional(),
     ServicedOrganisationDayType: z
