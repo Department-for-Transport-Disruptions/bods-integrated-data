@@ -18,6 +18,7 @@ const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
+        isArray: (tagName) => tagName === "VehicleActivity",
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
