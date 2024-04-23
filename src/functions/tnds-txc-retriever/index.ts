@@ -88,12 +88,13 @@ export const handler = async () => {
 
     try {
         const credentials = await getFtpCredentials(ftpArn);
+        logger.info("FTP creds", { credentials });
 
-        logger.info("Starting retrieval of TNDS TXC data");
+        // logger.info("Starting retrieval of TNDS TXC data");
 
-        await getTndsDataAndUploadToS3(txcZippedBucketName, credentials);
+        // await getTndsDataAndUploadToS3(txcZippedBucketName, credentials);
 
-        logger.info("TNDS TXC retrieval complete");
+        // logger.info("TNDS TXC retrieval complete");
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error retrieving TNDS TXC data", e);

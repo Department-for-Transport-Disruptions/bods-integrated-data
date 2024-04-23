@@ -423,6 +423,7 @@ describe("utils", () => {
 
     describe("isRequiredTndsServiceMode", () => {
         it.each([
+            ["bus", true],
             ["coach", true],
             ["ferry", true],
             ["metro", true],
