@@ -84,7 +84,7 @@ const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
-        parseTagValue: false,
+        parseTagValue: true,
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;

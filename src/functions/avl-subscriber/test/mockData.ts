@@ -95,17 +95,17 @@ export const mockSubscriptionResponseBody = `<?xml version="1.0" encoding="UTF-8
     </SubscriptionResponse>
 </Siri>`;
 
-export const mockSubscriptionResponseBodyFalseStatus = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:ns2="http://www.ifopt.org.uk/acsb" xmlns:ns3="http://www.ifopt.org.uk/ifopt" xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0">
-    <SubscriptionResponse>
-        <ResponseTimestamp>2024-03-04T08:42:05.072928+01:00</ResponseTimestamp>
-        <ResponderRef>TEST</ResponderRef>
-        <ResponseStatus>
-            <ResponseTimestamp>2024-03-011T15:22:05.072928+01:00</ResponseTimestamp>
-            <RequestMessageRef>TEST</RequestMessageRef>
-            <SubscriberRef>800b3a06-6241-49fb-98cf-933508813159</SubscriberRef>
-            <SubscriptionRef>5965q7gh-5428-43e2-a75c-1782a48637d5</SubscriptionRef>
-            <Status>false</Status>
-        </ResponseStatus>
-    </SubscriptionResponse>
+export const mockSubscriptionResponseBodyFalseStatus = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:ns2=\"http://www.ifopt.org.uk/acsb\" xmlns:ns3=\"http://www.ifopt.org.uk/ifopt\" xmlns:ns4=\"http://datex2.eu/schema/2_0RC1/2_0\">
+  <SubscriptionResponse>
+    <ResponseTimestamp>2024-03-04T08:42:05.072928+01:00</ResponseTimestamp>
+    <ResponderRef>TEST</ResponderRef>
+    <ResponseStatus>
+      <ResponseTimestamp>2024-03-011T15:22:05.072928+01:00</ResponseTimestamp>
+      <RequestMessageRef>TEST</RequestMessageRef>
+      <SubscriberRef>800b3a06-6241-49fb-98cf-933508813159</SubscriberRef>
+      <SubscriptionRef>5965q7gh-5428-43e2-a75c-1782a48637d5</SubscriptionRef>
+      <Status>false</Status>
+    </ResponseStatus>
+  </SubscriptionResponse>
 </Siri>`;
