@@ -5,13 +5,7 @@ import {
     NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
 import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
-import {
-    OperatingPeriod,
-    OperatingProfile,
-    Service,
-    ServicedOrganisation,
-    VehicleJourney,
-} from "@bods-integrated-data/shared/schema";
+import { OperatingPeriod, OperatingProfile, Service, ServicedOrganisation } from "@bods-integrated-data/shared/schema";
 import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/schema/dates.schema";
 import { Dayjs } from "dayjs";
 import { Kysely } from "kysely";
@@ -39,7 +33,7 @@ export const formatCalendarDates = (
                 date: day,
                 exception_type: exceptionType,
             }),
-        ) ?? [];
+        );
 
 export const calculateDaysOfOperation = (
     day: OperatingProfile["RegularDayType"]["DaysOfWeek"],
@@ -336,17 +330,6 @@ export const formatCalendar = (
     };
 };
 
-export const getOperatingProfile = (service: Service, vehicleJourney: VehicleJourney) => {
-    const operatingPeriod = service.OperatingPeriod;
-    const vehicleJourneyOperatingProfile = vehicleJourney.OperatingProfile;
-    const serviceOperatingProfile = service.OperatingProfile;
-
-    const operatingProfileToUse =
-        vehicleJourneyOperatingProfile || serviceOperatingProfile || DEFAULT_OPERATING_PROFILE;
-
-    return formatCalendar(operatingProfileToUse, operatingPeriod);
-};
-
 export const processCalendars = async (
     dbClient: Kysely<Database>,
     service: Service,
@@ -365,6 +348,10 @@ export const processCalendars = async (
     }
 
     const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+        /**
+         * If there is no vehicle journey level operating profile but there is a service level
+         * operating profile, use the service level operating profile
+         */
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
             return {
                 ...vehicleJourneyMapping,
@@ -372,6 +359,10 @@ export const processCalendars = async (
             };
         }
 
+        /**
+         * If there is no vehicle journey level operating profile and no service level
+         * operating profile, use DEFAULT_OPERATING_PROFILE
+         */
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
             const defaultCalendar = await insertCalendar(
                 dbClient,

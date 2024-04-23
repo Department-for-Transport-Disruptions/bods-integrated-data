@@ -23,7 +23,7 @@ import {
     insertStops,
     insertTrips,
 } from "./data/database";
-import { insertRoutes } from "./data/insertRoutes";
+import { insertRoutes } from "./data/routes";
 import { VehicleJourneyMapping } from "./types";
 import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 

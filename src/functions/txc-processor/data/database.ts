@@ -1,6 +1,8 @@
 import { logger } from "@baselime/lambda-logger";
 import {
     Database,
+    NewCalendar,
+    NewCalendarDate,
     NewFrequency,
     ServiceType,
     NewRoute,
@@ -11,8 +13,6 @@ import {
     Route,
     NewTrip,
     NewAgency,
-    NewCalendar,
-    NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import {
@@ -63,6 +63,45 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
     const agencyData = await Promise.all(agencyPromises);
 
     return agencyData.filter(notEmpty);
+};
+
+export const insertCalendar = async (
+    dbClient: Kysely<Database>,
+    calendarData: {
+        calendar: NewCalendar;
+        calendarDates: NewCalendarDate[];
+    },
+) => {
+    const calendarHash = hasher().hash(calendarData);
+
+    const insertedCalendar = await dbClient
+        .insertInto("calendar_new")
+        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
+        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
+        .returningAll()
+        .executeTakeFirst();
+
+    if (!insertedCalendar?.id) {
+        throw new Error("Calendar failed to insert");
+    }
+
+    if (!calendarData.calendarDates?.length) {
+        return insertedCalendar;
+    }
+
+    await dbClient
+        .insertInto("calendar_date_new")
+        .values(
+            calendarData.calendarDates.map((date) => ({
+                date: date.date,
+                exception_type: date.exception_type,
+                service_id: insertedCalendar.id,
+            })),
+        )
+        .onConflict((oc) => oc.doNothing())
+        .execute();
+
+    return insertedCalendar;
 };
 
 export const insertFrequencies = async (
@@ -369,43 +408,4 @@ export const insertTrips = async (
     await dbClient.insertInto("trip_new").values(trips).execute();
 
     return updatedVehicleJourneyMappings;
-};
-
-export const insertCalendar = async (
-    dbClient: Kysely<Database>,
-    calendarData: {
-        calendar: NewCalendar;
-        calendarDates: NewCalendarDate[];
-    },
-) => {
-    const calendarHash = hasher().hash(calendarData);
-
-    const insertedCalendar = await dbClient
-        .insertInto("calendar_new")
-        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
-        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
-        .returningAll()
-        .executeTakeFirst();
-
-    if (!insertedCalendar?.id) {
-        throw new Error("Calendar failed to insert");
-    }
-
-    if (!calendarData.calendarDates?.length) {
-        return insertedCalendar;
-    }
-
-    await dbClient
-        .insertInto("calendar_date_new")
-        .values(
-            calendarData.calendarDates.map((date) => ({
-                date: date.date,
-                exception_type: date.exception_type,
-                service_id: insertedCalendar.id,
-            })),
-        )
-        .onConflict((oc) => oc.doNothing())
-        .execute();
-
-    return insertedCalendar;
 };

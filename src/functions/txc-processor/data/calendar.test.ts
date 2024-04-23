@@ -1,15 +1,18 @@
-import { CalendarDateExceptionType, NewCalendar } from "@bods-integrated-data/shared/database";
+import { CalendarDateExceptionType, Database, NewCalendar } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { OperatingProfile } from "@bods-integrated-data/shared/schema";
+import { OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import type { Kysely } from "kysely";
 import MockDate from "mockdate";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     calculateDaysOfOperation,
     calculateServicedOrgDaysToUse,
     formatCalendar,
     formatCalendarDates,
+    processCalendars,
     processServicedOrganisation,
 } from "./calendar";
+import * as database from "./database";
 
 describe("calendar", () => {
     MockDate.set("2024-04-01T14:36:11+00:00");
@@ -24,6 +27,38 @@ describe("calendar", () => {
         sunday: 0,
         start_date: "20240401",
         end_date: "20240430",
+    };
+
+    const defaultVehicleJourney: VehicleJourney = {
+        DepartureTime: "1200",
+        JourneyPatternRef: "123",
+        LineRef: "abc",
+        ServiceRef: "123",
+        VehicleJourneyCode: "1",
+    };
+
+    const defaultService: Service = {
+        ServiceCode: "123",
+        Lines: {
+            Line: [
+                {
+                    "@_id": "abc",
+                    LineName: "HELLO",
+                },
+            ],
+        },
+        OperatingPeriod: {
+            StartDate: "2024-04-01",
+        },
+        RegisteredOperatorRef: "xyz",
+        StandardService: {
+            JourneyPattern: [
+                {
+                    "@_id": "123",
+                    JourneyPatternSectionRefs: ["123"],
+                },
+            ],
+        },
     };
 
     describe("formatCalendarDates", () => {
@@ -199,6 +234,9 @@ describe("calendar", () => {
                         WorkingDays: {
                             ServicedOrganisationRef: "abc",
                         },
+                        Holidays: {
+                            ServicedOrganisationRef: "xyz",
+                        },
                     },
                 },
                 [
@@ -214,6 +252,12 @@ describe("calendar", () => {
                             DateRange: [[getDate("2024-03-04"), getDate("2024-04-01")]],
                         },
                     },
+                    {
+                        OrganisationCode: "xyz",
+                        Holidays: {
+                            DateRange: [[getDate("2024-05-04"), getDate("2024-05-01")]],
+                        },
+                    },
                 ],
                 {
                     ...defaultDaysOfOperation,
@@ -223,7 +267,7 @@ describe("calendar", () => {
             );
 
             expect(servicedOrganisation).toEqual({
-                servicedOrgDaysOfNonOperation: [],
+                servicedOrgDaysOfNonOperation: ["20240501"],
                 servicedOrgDaysOfOperation: ["20240401", "20240403"],
             });
         });
@@ -421,6 +465,9 @@ describe("calendar", () => {
                         },
                     },
                     SpecialDaysOperation: {
+                        DaysOfOperation: {
+                            DateRange: [["20240408"]],
+                        },
                         DaysOfNonOperation: {
                             DateRange: [["20240407"]],
                         },
@@ -454,11 +501,287 @@ describe("calendar", () => {
                 },
                 calendarDates: [
                     {
+                        date: "20240408",
+                        exception_type: 1,
+                    },
+                    {
                         date: "20240407",
                         exception_type: 2,
                     },
                 ],
             });
+        });
+
+        it("sets start date to current date if operating period start date in past", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            Weekend: "",
+                        },
+                    },
+                },
+                {
+                    StartDate: "2024-03-01",
+                },
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                },
+                calendarDates: [],
+            });
+        });
+
+        it("sets start date to operating period start date if operating period start date in future", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            Weekend: "",
+                        },
+                    },
+                },
+                {
+                    StartDate: "2024-04-10",
+                },
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240410",
+                    end_date: "20250110",
+                },
+                calendarDates: [],
+            });
+        });
+
+        it("sets end date to operating period end date if set", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            Weekend: "",
+                        },
+                    },
+                },
+                {
+                    StartDate: "2024-03-01",
+                    EndDate: "2024-04-30",
+                },
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240401",
+                    end_date: "20240430",
+                },
+                calendarDates: [],
+            });
+        });
+
+        it("sets end date to 9 months in the future if no operating period end date set", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            Weekend: "",
+                        },
+                    },
+                },
+                {
+                    StartDate: "2024-06-04",
+                },
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240604",
+                    end_date: "20250304",
+                },
+                calendarDates: [],
+            });
+        });
+    });
+
+    describe("processCalendars", () => {
+        const dbClientMock = vi.fn() as unknown as Kysely<Database>;
+        vi.mock("./database.ts");
+
+        const insertCalendarSpy = vi
+            .spyOn(database, "insertCalendar")
+            .mockResolvedValue({ ...defaultDaysOfOperation, calendar_hash: "hash", id: 1 });
+
+        afterEach(() => {
+            insertCalendarSpy.mockClear();
+        });
+
+        it("creates default calendar if no service or journey pattern level operating profile", async () => {
+            await processCalendars(dbClientMock, defaultService, [
+                {
+                    routeId: 1,
+                    serviceId: 1,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: defaultVehicleJourney,
+                },
+            ]);
+
+            expect(insertCalendarSpy).toBeCalledTimes(1);
+            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
+                calendar: {
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                },
+                calendarDates: [],
+            });
+        });
+
+        it("creates service level operating profile", async () => {
+            await processCalendars(
+                dbClientMock,
+                {
+                    ...defaultService,
+                    OperatingProfile: {
+                        RegularDayType: {
+                            DaysOfWeek: {
+                                MondayToFriday: "",
+                            },
+                        },
+                        SpecialDaysOperation: {
+                            DaysOfNonOperation: {
+                                DateRange: [["20240401"]],
+                            },
+                        },
+                    },
+                },
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 1,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: defaultVehicleJourney,
+                    },
+                ],
+            );
+
+            expect(insertCalendarSpy).toBeCalledTimes(1);
+            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
+                calendar: {
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                },
+                calendarDates: [
+                    {
+                        date: "20240401",
+                        exception_type: 2,
+                    },
+                ],
+            });
+        });
+
+        it("creates journey pattern level operating profile", async () => {
+            await processCalendars(dbClientMock, defaultService, [
+                {
+                    routeId: 1,
+                    serviceId: 1,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: {
+                        ...defaultVehicleJourney,
+                        OperatingProfile: {
+                            RegularDayType: {
+                                DaysOfWeek: {
+                                    Weekend: "",
+                                },
+                            },
+                            SpecialDaysOperation: {
+                                DaysOfNonOperation: {
+                                    DateRange: [["20241225"]],
+                                },
+                            },
+                        },
+                    },
+                },
+            ]);
+
+            expect(insertCalendarSpy).toBeCalledTimes(1);
+            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
+                calendar: {
+                    monday: 0,
+                    tuesday: 0,
+                    wednesday: 0,
+                    thursday: 0,
+                    friday: 0,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                },
+                calendarDates: [
+                    {
+                        date: "20241225",
+                        exception_type: 2,
+                    },
+                ],
+            });
+        });
+
+        it("returns serviceId in mapping", async () => {
+            const processedCalendar = await processCalendars(dbClientMock, defaultService, [
+                {
+                    routeId: 1,
+                    serviceId: 1,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: {
+                        ...defaultVehicleJourney,
+                        OperatingProfile: {
+                            RegularDayType: {
+                                DaysOfWeek: {
+                                    Weekend: "",
+                                },
+                            },
+                            SpecialDaysOperation: {
+                                DaysOfNonOperation: {
+                                    DateRange: [["20241225"]],
+                                },
+                            },
+                        },
+                    },
+                },
+            ]);
+
+            expect(processedCalendar[0].serviceId).toBe(1);
         });
     });
 });
