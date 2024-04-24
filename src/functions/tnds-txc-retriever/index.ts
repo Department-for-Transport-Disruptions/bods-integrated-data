@@ -1,5 +1,6 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { logger } from "@baselime/lambda-logger";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { Client } from "basic-ftp";
 import { Writable } from "stream";
@@ -34,8 +35,10 @@ const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Arra
 };
 
 const uploadZipFilesToS3 = async (files: Map<string, Uint8Array>, bucket: string) => {
+    const date = getDate().format("YYYYMMDD");
+
     for (const [fileName, content] of files.entries()) {
-        const upload = startS3Upload(bucket, fileName, content, "application/zip");
+        const upload = startS3Upload(bucket, `${date}/${fileName}`, content, "application/zip");
         await upload.done();
     }
 };

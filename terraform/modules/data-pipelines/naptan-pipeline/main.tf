@@ -61,7 +61,7 @@ module "integrated_data_naptan_uploader_function" {
   handler         = "index.handler"
   runtime         = "nodejs20.x"
   timeout         = 300
-  memory          = 1024
+  memory          = 3072
   needs_db_access = true
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids

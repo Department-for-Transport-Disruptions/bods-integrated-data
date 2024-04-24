@@ -1,10 +1,11 @@
 import { logger } from "@baselime/lambda-logger";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 import { Entry, Parse } from "unzipper";
 import { Stream } from "stream";
 
-const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketName: string) => {
+const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketName: string, prefix: string) => {
     logger.info("Starting retrieval of BODS data");
 
     const response = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/timetable/download/bulk_archive", {
@@ -30,10 +31,10 @@ const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketNa
             let upload;
 
             if (fileName.endsWith(".zip")) {
-                upload = startS3Upload(txcZippedBucketName, fileName, entry, "application/zip");
+                upload = startS3Upload(txcZippedBucketName, `${prefix}/${fileName}`, entry, "application/zip");
                 promises.push(upload.done());
             } else if (fileName.endsWith(".xml")) {
-                upload = startS3Upload(txcBucketName, fileName, entry, "application/xml");
+                upload = startS3Upload(txcBucketName, `${prefix}/${fileName}`, entry, "application/xml");
                 promises.push(upload.done());
             }
 
@@ -56,9 +57,15 @@ export const handler = async () => {
     try {
         logger.info("Starting retrieval of BODS TXC data");
 
-        await getBodsDataAndUploadToS3(txcZippedBucketName, txcBucketName);
+        const prefix = getDate().format("YYYYMMDD");
+        await getBodsDataAndUploadToS3(txcZippedBucketName, txcBucketName, prefix);
 
         logger.info("BODS TXC retrieval complete");
+
+        return {
+            bodsZippedBucketName: txcZippedBucketName,
+            bodsZippedBucketPrefix: prefix,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error retrieving BODS TXC data", e);
