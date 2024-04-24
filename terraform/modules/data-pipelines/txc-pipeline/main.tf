@@ -61,6 +61,20 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_txc_bucket_block_p
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_versioning" "integrated_data_txc_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_txc_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "integrated_data_gtfs_timetables_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
   description = "Integrated data tnds ftp credentials - ${var.environment}"
 }
@@ -227,7 +241,7 @@ module "integrated_data_txc_processor_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 200
+  timeout         = 300
   memory          = 2048
   needs_db_access = true
   vpc_id          = var.vpc_id

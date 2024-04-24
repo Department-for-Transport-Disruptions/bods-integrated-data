@@ -64,6 +64,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await handler(mockUnsubscribeEvent);
@@ -78,6 +79,8 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "TERMINATED",
             url: "https://mock-data-producer.com/",
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            serviceEndDatetime: "2024-03-11T15:20:02.093Z",
         });
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
@@ -115,6 +118,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -142,6 +146,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -196,6 +201,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -217,6 +223,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Missing auth credentials for subscription");

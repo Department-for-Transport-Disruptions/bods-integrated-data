@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
-  bucket = "avl-siri-vm-${var.environment}"
+  bucket = "integrated-data-avl-siri-vm-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_public" {
@@ -22,7 +22,7 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_versioning" "versioning_example" {
+resource "aws_s3_bucket_versioning" "integrated_data_avl_siri_vm_bucket_versioning" {
   bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
   versioning_configuration {
     status = "Enabled"

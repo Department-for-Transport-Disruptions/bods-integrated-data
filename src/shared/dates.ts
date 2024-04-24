@@ -18,7 +18,7 @@ dayjsExtend(isBetween);
 
 dayjs.tz.setDefault("Europe/London");
 
-export const getDate = (input?: string) => dayjs(input);
+export const getDate = (input?: string) => dayjs.utc(input);
 
 export type BankHolidayName =
     | "New Year’s Day"
@@ -74,11 +74,12 @@ export const getNextOccurrenceOfDate = (dateOfMonth: number, month: number) => {
 };
 
 export const addIntervalToDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
-    dayjs(date).add(interval, intervalUnit);
+    dayjs.utc(date).add(interval, intervalUnit);
 
-export const getDateWithCustomFormat = (date: string, format: string) => dayjs(date, format);
+export const getDateWithCustomFormat = (date: string, format: string) => dayjs.utc(date, format);
 
-export const isDateBetween = (date: Dayjs, startDate: Dayjs, endDate: Dayjs) => date.isBetween(startDate, endDate);
+export const isDateBetween = (date: Dayjs, startDate: Dayjs, endDate: Dayjs) =>
+    date.isBetween(startDate, endDate, "day", "[]");
 
 export const getDuration = (duration: string) => dayjs.duration(duration);
 

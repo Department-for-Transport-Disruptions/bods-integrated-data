@@ -22,6 +22,13 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_rt_bucket_blo
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_versioning" "integrated_data_gtfs_rt_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_gtfs_rt_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 module "integrated_data_gtfs_rt_processor_function" {
   source = "../../shared/lambda-function"
 
