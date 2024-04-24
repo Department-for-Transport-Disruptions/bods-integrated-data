@@ -25,17 +25,18 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_rt_bucket_blo
 module "integrated_data_gtfs_rt_processor_function" {
   source = "../../shared/lambda-function"
 
-  environment    = var.environment
-  function_name  = "integrated-data-gtfs-rt-generator"
-  zip_path       = "${path.module}/../../../../src/functions/dist/gtfs-rt-generator.zip"
-  handler        = "index.handler"
-  runtime        = "nodejs20.x"
-  timeout        = 60
-  memory         = 512
-  vpc_id         = var.vpc_id
-  subnet_ids     = var.private_subnet_ids
-  database_sg_id = var.db_sg_id
-  schedule       = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
+  environment     = var.environment
+  function_name   = "integrated-data-gtfs-rt-generator"
+  zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-rt-generator.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 60
+  memory          = 512
+  needs_db_access = true
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+  schedule        = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
 
   permissions = [{
     Action = [

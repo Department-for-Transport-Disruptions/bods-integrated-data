@@ -60,15 +60,11 @@ module "integrated_data_noc_processor_function" {
   runtime              = "nodejs20.x"
   timeout              = 200
   memory               = 2048
+  needs_db_access      = true
   vpc_id               = var.vpc_id
   subnet_ids           = var.private_subnet_ids
   database_sg_id       = var.db_sg_id
   reserved_concurrency = 50
-
-  s3_bucket_trigger = {
-    id  = aws_s3_bucket.integrated_data_noc_bucket.id
-    arn = aws_s3_bucket.integrated_data_noc_bucket.arn
-  }
 
   permissions = [{
     Action = [

@@ -1,35 +1,62 @@
 import { logger } from "@baselime/lambda-logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
-import { PassThrough, Stream } from "stream";
+import { Entry, Parse } from "unzipper";
+import { Stream } from "stream";
 
-const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string) => {
+const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketName: string) => {
     logger.info("Starting retrieval of BODS data");
 
     const response = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/timetable/download/bulk_archive", {
         responseType: "stream",
     });
 
-    const passThrough = new PassThrough();
+    const zip = response.data.pipe(
+        Parse({
+            forceStream: true,
+        }),
+    );
 
-    const upload = startS3Upload(txcZippedBucketName, "bods.zip", passThrough, "application/zip");
+    const promises = [];
 
-    response.data.pipe(passThrough);
+    for await (const item of zip) {
+        const entry = item as Entry;
 
-    await upload.done();
+        const fileName = entry.path;
+
+        const type = entry.type;
+
+        if (type === "File") {
+            let upload;
+
+            if (fileName.endsWith(".zip")) {
+                upload = startS3Upload(txcZippedBucketName, fileName, entry, "application/zip");
+                promises.push(upload.done());
+            } else if (fileName.endsWith(".xml")) {
+                upload = startS3Upload(txcBucketName, fileName, entry, "application/xml");
+                promises.push(upload.done());
+            }
+
+            entry.autodrain();
+        } else {
+            entry.autodrain();
+        }
+    }
+
+    await Promise.all(promises);
 };
 
 export const handler = async () => {
-    const { TXC_ZIPPED_BUCKET_NAME: txcZippedBucketName } = process.env;
+    const { TXC_ZIPPED_BUCKET_NAME: txcZippedBucketName, TXC_BUCKET_NAME: txcBucketName } = process.env;
 
-    if (!txcZippedBucketName) {
-        throw new Error("Missing env vars - TXC_ZIPPED_BUCKET_NAME must be set");
+    if (!txcZippedBucketName || !txcBucketName) {
+        throw new Error("Missing env vars - TXC_ZIPPED_BUCKET_NAME and TXC_BUCKET_NAME must be set");
     }
 
     try {
         logger.info("Starting retrieval of BODS TXC data");
 
-        await getBodsDataAndUploadToS3(txcZippedBucketName);
+        await getBodsDataAndUploadToS3(txcZippedBucketName, txcBucketName);
 
         logger.info("BODS TXC retrieval complete");
     } catch (e) {

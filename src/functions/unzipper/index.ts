@@ -2,7 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import { getS3Object, startS3Upload } from "@bods-integrated-data/shared/s3";
 import { S3Event } from "aws-lambda";
 import { Entry, Parse } from "unzipper";
-import { Readable } from "stream";
+import { Readable, Stream } from "stream";
 
 export const getFilePath = (filePathWithFile: string) => {
     const path = filePathWithFile.substring(0, filePathWithFile.lastIndexOf("."));
@@ -14,13 +14,48 @@ export const getFilePath = (filePathWithFile: string) => {
     return `${path}/`;
 };
 
+export const unzip = async (object: Stream, unzippedBucketName: string, key: string) => {
+    const zip = object.pipe(
+        Parse({
+            forceStream: true,
+        }),
+    );
+
+    const promises = [];
+
+    for await (const item of zip) {
+        const entry = item as Entry;
+
+        const fileName = entry.path;
+
+        const type = entry.type;
+
+        if (type === "File") {
+            let upload;
+
+            if (fileName.endsWith(".zip")) {
+                logger.info("IS NESTED ZIP");
+                await unzip(entry, unzippedBucketName, `${getFilePath(key)}${fileName}`);
+            } else if (fileName.endsWith(".xml")) {
+                logger.info("IS NOT NESTED ZIP");
+                upload = startS3Upload(unzippedBucketName, `${getFilePath(key)}${fileName}`, entry, "application/xml");
+                promises.push(upload.done());
+            }
+
+            entry.autodrain();
+        } else {
+            entry.autodrain();
+        }
+    }
+
+    await Promise.all(promises);
+};
+
 export const handler = async (event: S3Event) => {
     const {
         bucket: { name: bucketName },
         object: { key },
     } = event.Records[0].s3;
-
-    logger.info("event", event);
 
     try {
         const { UNZIPPED_BUCKET_NAME: unzippedBucketName } = process.env;
@@ -42,44 +77,7 @@ export const handler = async (event: S3Event) => {
             throw new Error("No data in file");
         }
 
-        const zip = object.Body.pipe(
-            Parse({
-                forceStream: true,
-            }),
-        );
-
-        const promises = [];
-
-        for await (const item of zip) {
-            const entry = item as Entry;
-
-            const fileName = entry.path;
-
-            const type = entry.type;
-
-            if (type === "File") {
-                let upload;
-
-                if (fileName.endsWith(".zip")) {
-                    upload = startS3Upload(bucketName, fileName, entry, "application/zip");
-                    promises.push(upload.done());
-                } else if (fileName.endsWith(".xml")) {
-                    upload = startS3Upload(
-                        unzippedBucketName,
-                        `${getFilePath(key)}${fileName}`,
-                        entry,
-                        "application/xml",
-                    );
-                    promises.push(upload.done());
-                }
-
-                entry.autodrain();
-            } else {
-                entry.autodrain();
-            }
-        }
-
-        await Promise.all(promises);
+        await unzip(object.Body, unzippedBucketName, key);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(`Error unzipping file at s3://${bucketName}/${key}`, e);

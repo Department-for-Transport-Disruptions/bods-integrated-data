@@ -32,17 +32,18 @@ resource "aws_s3_bucket_versioning" "versioning_example" {
 module "avl_aggregate_siri" {
   source = "../../shared/lambda-function"
 
-  environment    = var.environment
-  function_name  = "avl-aggregate-siri-vm"
-  zip_path       = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
-  handler        = "index.handler"
-  memory         = 1024
-  runtime        = "nodejs20.x"
-  timeout        = 120
-  vpc_id         = var.vpc_id
-  subnet_ids     = var.private_subnet_ids
-  database_sg_id = var.db_sg_id
-  schedule       = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
+  environment     = var.environment
+  function_name   = "avl-aggregate-siri-vm"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
+  handler         = "index.handler"
+  memory          = 1024
+  runtime         = "nodejs20.x"
+  timeout         = 120
+  needs_db_access = true
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+  schedule        = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
 
   permissions = [{
     Action = [
