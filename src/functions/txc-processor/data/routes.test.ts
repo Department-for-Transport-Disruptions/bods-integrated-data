@@ -3,7 +3,7 @@ import { Service } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
-import { insertRoutes } from "./insertRoutes";
+import { insertRoutes } from "./routes";
 
 describe("insertRoutes", () => {
     let dbClient: Kysely<Database>;

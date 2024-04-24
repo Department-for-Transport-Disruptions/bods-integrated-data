@@ -140,6 +140,7 @@ export interface NptgAdminAreaTable {
     admin_area_code: string;
     atco_code: string;
     name: string;
+    region_code: string;
 }
 
 export type NptgAdminArea = Selectable<NptgAdminAreaTable>;
