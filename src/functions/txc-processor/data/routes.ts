@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import { Database, Agency, NewRoute, Route } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
 import { notEmpty, getRouteTypeFromServiceMode } from "@bods-integrated-data/shared/utils";
@@ -9,16 +8,9 @@ import { DuplicateRouteError } from "../errors";
 export const insertRoutes = async (
     dbClient: Kysely<Database>,
     service: Service,
-    agencyData: Agency[],
+    agency: Agency,
     isTnds: boolean,
 ): Promise<{ routes?: Route[]; isDuplicateRoute?: boolean }> => {
-    const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
-
-    if (!agency) {
-        logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);
-        return {};
-    }
-
     const routeType = getRouteTypeFromServiceMode(service.Mode);
 
     try {
