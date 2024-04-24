@@ -14,28 +14,28 @@ const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
 const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime: string) => {
     return avl.map((record) => {
         const monitoredVehicleJourney = {
-            LineRef: record.lineRef,
-            DirectionRef: record.directionRef,
+            LineRef: record.line_ref,
+            DirectionRef: record.direction_ref,
             FramedVehicleJourneyRef:
-                record.dataFrameRef && record.datedVehicleJourneyRef
+                record.data_frame_ref && record.dated_vehicle_journey_ref
                     ? {
-                          DataFrameRef: record.dataFrameRef,
-                          DatedVehicleJourneyRef: record.datedVehicleJourneyRef,
+                          DataFrameRef: record.data_frame_ref,
+                          DatedVehicleJourneyRef: record.dated_vehicle_journey_ref,
                       }
                     : null,
-            PublishedLineName: record.publishedLineName,
+            PublishedLineName: record.published_line_name,
             Occupancy: record.occupancy,
-            OperatorRef: record.operatorRef,
-            OriginRef: record.originRef,
-            OriginAimedDepartureTime: record.originAimedDepartureTime,
-            DestinationRef: record.destinationRef,
+            OperatorRef: record.operator_ref,
+            OriginRef: record.origin_ref,
+            OriginAimedDepartureTime: record.origin_aimed_departure_time,
+            DestinationRef: record.destination_ref,
             VehicleLocation: {
                 Longitude: record.longitude,
                 Latitude: record.latitude,
             },
             Bearing: record.bearing,
-            BlockRef: record.blockRef,
-            VehicleRef: record.vehicleRef,
+            BlockRef: record.block_ref,
+            VehicleRef: record.vehicle_ref,
         };
 
         const monitoredVehicleJourneyWithNullEntriesRemoved = Object.fromEntries(

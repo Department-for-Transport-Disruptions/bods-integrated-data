@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
-  bucket = "avl-siri-vm-${var.environment}"
+  bucket = "integrated-data-avl-aggregated-siri-vm-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_public" {
@@ -33,7 +33,7 @@ module "avl_aggregate_siri" {
   source = "../../shared/lambda-function"
 
   environment    = var.environment
-  function_name  = "avl-aggregate-siri-vm"
+  function_name  = "integrated-data-avl-aggregate-siri-vm"
   zip_path       = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
   handler        = "index.handler"
   memory         = 1024
@@ -44,23 +44,25 @@ module "avl_aggregate_siri" {
   database_sg_id = var.db_sg_id
   schedule       = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
 
-  permissions = [{
-    Action = [
-      "s3:PutObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
-    ]
+  permissions = [
+    {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect   = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
+      ]
     }, {
-    Action = [
-      "secretsmanager:GetSecretValue",
-    ],
-    Effect = "Allow",
-    Resource = [
-      var.db_secret_arn,
-    ]
-  }, ]
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect   = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+    },
+  ]
 
   env_vars = {
     STAGE         = var.environment
