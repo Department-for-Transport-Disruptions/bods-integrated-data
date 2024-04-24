@@ -22,7 +22,7 @@ export const generateSubscriptionRequestXml = (
 ) => {
     const subscriptionRequestJson = {
         SubscriptionRequest: {
-            RequestTimeStamp: currentTimestamp,
+            RequestTimestamp: currentTimestamp,
             ConsumerAddress: `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
@@ -30,7 +30,6 @@ export const generateSubscriptionRequestXml = (
                 HeartbeatInterval: "PT30M",
             },
             VehicleMonitoringSubscriptionRequest: {
-                SubscriberRef: "BODS",
                 SubscriptionIdentifier: subscriptionId,
                 InitialTerminationTime: initialTerminationTime,
                 VehicleMonitoringRequest: {
