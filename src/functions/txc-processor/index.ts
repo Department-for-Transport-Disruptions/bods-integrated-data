@@ -47,6 +47,7 @@ const txcArrayProperties = [
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
     "DateRange",
+    "ServicedOrganisationRef",
 ];
 
 const processServices = (

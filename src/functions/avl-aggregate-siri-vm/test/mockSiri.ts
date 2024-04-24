@@ -14,8 +14,10 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
           <LineRef>784</LineRef>
           <DirectionRef>OUT</DirectionRef>
           <PublishedLineName>784</PublishedLineName>
+          <Occupancy>full</Occupancy>
           <OperatorRef>NATX</OperatorRef>
           <OriginRef>98010</OriginRef>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationRef>98045</DestinationRef>
           <VehicleLocation>
             <Longitude>-6.238029</Longitude>
@@ -33,8 +35,10 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
           <LineRef>ra</LineRef>
           <DirectionRef>outbound</DirectionRef>
           <PublishedLineName>ra</PublishedLineName>
+          <Occupancy>full</Occupancy>
           <OperatorRef>TBTN</OperatorRef>
           <OriginRef>3390VB01</OriginRef>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationRef>1090BSTN05</DestinationRef>
           <VehicleLocation>
             <Longitude>-1.471941</Longitude>
