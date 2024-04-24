@@ -107,6 +107,7 @@ const updateDynamoWithSubscriptionInfo = async (
     subscriptionId: string,
     avlSubscribeMessage: AvlSubscribeMessage,
     status: "ACTIVE" | "FAILED",
+    currentTimestamp?: string,
 ) => {
     const subscriptionTableItems = {
         url: avlSubscribeMessage.dataProducerEndpoint,
@@ -114,6 +115,7 @@ const updateDynamoWithSubscriptionInfo = async (
         description: avlSubscribeMessage.description,
         shortDescription: avlSubscribeMessage.shortDescription,
         requestorRef: avlSubscribeMessage.requestorRef ?? null,
+        serviceStartDatetime: currentTimestamp ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");
@@ -199,7 +201,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         );
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE");
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTimestamp);
 };
 
 export const handler = async (event: APIGatewayEvent) => {
