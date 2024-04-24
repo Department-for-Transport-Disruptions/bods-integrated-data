@@ -15,21 +15,16 @@ import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 import { processCalendars } from "./data/calendar";
-import {
-    insertAgencies,
-    insertFrequencies,
-    insertShapes,
-    insertStopTimes,
-    insertStops,
-    insertTrips,
-} from "./data/database";
+import { insertAgencies, insertFrequencies, insertShapes, insertStopTimes, insertTrips } from "./data/database";
 import { insertRoutes } from "./data/routes";
+import { insertStops } from "./data/stops";
 import { VehicleJourneyMapping } from "./types";
 import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
+    "StopPoint",
     "RouteSectionRef",
     "RouteSection",
     "Route",
