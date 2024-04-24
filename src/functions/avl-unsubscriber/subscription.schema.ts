@@ -7,6 +7,8 @@ export const subscriptionSchema = z.object({
     shortDescription: z.string(),
     status: z.string(),
     requestorRef: z.string().nullish(),
+    serviceStartDatetime: z.string().optional(),
+    serviceEndDatetime: z.string().optional(),
 });
 
 export type Subscription = z.infer<typeof subscriptionSchema>;
