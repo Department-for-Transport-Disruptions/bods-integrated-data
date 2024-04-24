@@ -4,13 +4,18 @@ import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { Client } from "basic-ftp";
 import { Writable } from "stream";
 
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
+
 interface FtpCredentials {
     host: string;
     user: string;
     password: string;
 }
 
-const secretsClient = new SecretsManagerClient({ region: "eu-west-2" });
+const secretsClient = new SecretsManagerClient({
+    endpoint: localStackHost ? `http://${localStackHost}:4566` : undefined,
+    region: "eu-west-2",
+});
 
 const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Array>> => {
     const downloadedFiles: Map<string, Uint8Array> = new Map();
