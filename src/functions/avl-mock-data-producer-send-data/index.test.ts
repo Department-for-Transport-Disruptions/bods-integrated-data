@@ -68,7 +68,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockResolvedValue({
             status: 200,
-        } as unknown as AxiosResponse);
+        } as AxiosResponse);
 
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
@@ -90,7 +90,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockResolvedValue({
             status: 200,
-        } as unknown as AxiosResponse);
+        } as AxiosResponse);
 
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
