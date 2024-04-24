@@ -28,7 +28,7 @@ export const generateSubscriptionRequestXml = (
             ConsumerAddress: `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
-            SubscriptionRequestContext: {
+            SubscriptionContext: {
                 HeartbeatInterval: "PT30M",
             },
             VehicleMonitoringSubscriptionRequest: {
