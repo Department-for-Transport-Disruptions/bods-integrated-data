@@ -1,6 +1,7 @@
 import { CalendarDateExceptionType, Database, NewCalendar } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
+import { BankHolidaysJson, getDate } from "@bods-integrated-data/shared/dates";
 import { OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { BankHolidayOperation } from "@bods-integrated-data/shared/schema/dates.schema";
 import type { Kysely } from "kysely";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -16,6 +17,15 @@ import * as database from "./database";
 
 describe("calendar", () => {
     MockDate.set("2024-04-01T14:36:11+00:00");
+
+    vi.mock("@bods-integrated-data/shared/schema/dates.schema", () => ({
+        getTransformedBankHolidayOperationSchema: (_: BankHolidaysJson, schema: BankHolidayOperation) => {
+            if (schema.ChristmasDay !== undefined) return ["20241225"];
+            if (schema.BoxingDay !== undefined) return ["20241226"];
+            return [];
+        },
+        DEFAULT_DATE_FORMAT: "YYYYMMDD",
+    }));
 
     const defaultDaysOfOperation: NewCalendar = {
         monday: 0,
@@ -59,6 +69,21 @@ describe("calendar", () => {
                     JourneyPatternSectionRefs: ["123"],
                 },
             ],
+        },
+    };
+
+    const bankHolidaysJson: BankHolidaysJson = {
+        "england-and-wales": {
+            division: "england-and-wales",
+            events: [],
+        },
+        scotland: {
+            division: "scotland",
+            events: [],
+        },
+        "northern-ireland": {
+            division: "northern-ireland",
+            events: [],
         },
     };
 
@@ -317,6 +342,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-04-01",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -340,13 +366,14 @@ describe("calendar", () => {
                         },
                     },
                     BankHolidayOperation: {
-                        DaysOfNonOperation: ["20241225"],
-                        DaysOfOperation: ["20241226"],
+                        DaysOfNonOperation: { ChristmasDay: "" },
+                        DaysOfOperation: { BoxingDay: "" },
                     },
                 },
                 {
                     StartDate: "2024-04-01",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -390,6 +417,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-04-01",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -432,6 +460,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-04-01",
                 },
+                bankHolidaysJson,
                 [
                     {
                         OrganisationCode: "123",
@@ -484,6 +513,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-04-01",
                 },
+                bankHolidaysJson,
                 [
                     {
                         OrganisationCode: "123",
@@ -525,6 +555,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-03-01",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -551,6 +582,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-04-10",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -578,6 +610,7 @@ describe("calendar", () => {
                     StartDate: "2024-03-01",
                     EndDate: "2024-04-30",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -604,6 +637,7 @@ describe("calendar", () => {
                 {
                     StartDate: "2024-06-04",
                 },
+                bankHolidaysJson,
             );
 
             expect(formattedCalendar).toEqual({
@@ -632,15 +666,20 @@ describe("calendar", () => {
         });
 
         it("creates default calendar if no service or journey pattern level operating profile", async () => {
-            await processCalendars(dbClientMock, defaultService, [
-                {
-                    routeId: 1,
-                    serviceId: 1,
-                    shapeId: "1",
-                    tripId: "1",
-                    vehicleJourney: defaultVehicleJourney,
-                },
-            ]);
+            await processCalendars(
+                dbClientMock,
+                defaultService,
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 1,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: defaultVehicleJourney,
+                    },
+                ],
+                bankHolidaysJson,
+            );
 
             expect(insertCalendarSpy).toBeCalledTimes(1);
             expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
@@ -686,6 +725,7 @@ describe("calendar", () => {
                         vehicleJourney: defaultVehicleJourney,
                     },
                 ],
+                bankHolidaysJson,
             );
 
             expect(insertCalendarSpy).toBeCalledTimes(1);
@@ -711,29 +751,34 @@ describe("calendar", () => {
         });
 
         it("creates journey pattern level operating profile", async () => {
-            await processCalendars(dbClientMock, defaultService, [
-                {
-                    routeId: 1,
-                    serviceId: 1,
-                    shapeId: "1",
-                    tripId: "1",
-                    vehicleJourney: {
-                        ...defaultVehicleJourney,
-                        OperatingProfile: {
-                            RegularDayType: {
-                                DaysOfWeek: {
-                                    Weekend: "",
+            await processCalendars(
+                dbClientMock,
+                defaultService,
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 1,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: {
+                            ...defaultVehicleJourney,
+                            OperatingProfile: {
+                                RegularDayType: {
+                                    DaysOfWeek: {
+                                        Weekend: "",
+                                    },
                                 },
-                            },
-                            SpecialDaysOperation: {
-                                DaysOfNonOperation: {
-                                    DateRange: [["20241225"]],
+                                SpecialDaysOperation: {
+                                    DaysOfNonOperation: {
+                                        DateRange: [["20241225"]],
+                                    },
                                 },
                             },
                         },
                     },
-                },
-            ]);
+                ],
+                bankHolidaysJson,
+            );
 
             expect(insertCalendarSpy).toBeCalledTimes(1);
             expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
@@ -758,29 +803,34 @@ describe("calendar", () => {
         });
 
         it("returns serviceId in mapping", async () => {
-            const processedCalendar = await processCalendars(dbClientMock, defaultService, [
-                {
-                    routeId: 1,
-                    serviceId: 1,
-                    shapeId: "1",
-                    tripId: "1",
-                    vehicleJourney: {
-                        ...defaultVehicleJourney,
-                        OperatingProfile: {
-                            RegularDayType: {
-                                DaysOfWeek: {
-                                    Weekend: "",
+            const processedCalendar = await processCalendars(
+                dbClientMock,
+                defaultService,
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 1,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: {
+                            ...defaultVehicleJourney,
+                            OperatingProfile: {
+                                RegularDayType: {
+                                    DaysOfWeek: {
+                                        Weekend: "",
+                                    },
                                 },
-                            },
-                            SpecialDaysOperation: {
-                                DaysOfNonOperation: {
-                                    DateRange: [["20241225"]],
+                                SpecialDaysOperation: {
+                                    DaysOfNonOperation: {
+                                        DateRange: [["20241225"]],
+                                    },
                                 },
                             },
                         },
                     },
-                },
-            ]);
+                ],
+                bankHolidaysJson,
+            );
 
             expect(processedCalendar[0].serviceId).toBe(1);
         });
