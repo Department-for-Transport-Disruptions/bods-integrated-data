@@ -1,7 +1,10 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
+
 export { sql } from "kysely";
+
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
@@ -10,7 +13,7 @@ export const getDatabaseClient = async (isLocal = false) => {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
                 pool: new Pool({
-                    host: "127.0.0.1",
+                    host: localStackHost ? "bods_integrated_data_postgres" : "127.0.0.1",
                     port: 5432,
                     database: "bods_integrated_data",
                     user: "postgres",
