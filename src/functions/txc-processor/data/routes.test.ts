@@ -15,14 +15,6 @@ describe("insertRoutes", () => {
         vi.resetAllMocks();
     });
 
-    it("returns no routes when the agency ID doesn't exist for the service", async () => {
-        const service: Partial<Service> = { RegisteredOperatorRef: "1" };
-        const agencies: Partial<Agency>[] = [{ registered_operator_ref: "2" }];
-
-        const result = await insertRoutes(dbClient, service as Service, agencies as Agency[], false);
-        expect(result).toEqual({});
-    });
-
     it("returns routes when the service lines are BODS", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
@@ -40,13 +32,11 @@ describe("insertRoutes", () => {
             },
         };
 
-        const agencies: Partial<Agency>[] = [
-            {
-                id: 0,
-                noc: "noc",
-                registered_operator_ref: "1",
-            },
-        ];
+        const agency: Partial<Agency> = {
+            id: 0,
+            noc: "noc",
+            registered_operator_ref: "1",
+        };
 
         const expectedRoutes: NewRoute[] = [
             {
@@ -72,7 +62,7 @@ describe("insertRoutes", () => {
         getBodsRouteMock.mockResolvedValue(undefined);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
-        const result = await insertRoutes(dbClient, service as Service, agencies as Agency[], false);
+        const result = await insertRoutes(dbClient, service as Service, agency as Agency, false);
         expect(result).toEqual({ routes: expectedRoutes });
     });
 
@@ -93,13 +83,11 @@ describe("insertRoutes", () => {
             },
         };
 
-        const agencies: Partial<Agency>[] = [
-            {
-                id: 0,
-                noc: "noc",
-                registered_operator_ref: "1",
-            },
-        ];
+        const agency: Partial<Agency> = {
+            id: 0,
+            noc: "noc",
+            registered_operator_ref: "1",
+        };
 
         const expectedRoutes: NewRoute[] = [
             {
@@ -125,7 +113,7 @@ describe("insertRoutes", () => {
         getTndsRouteMock.mockResolvedValue(undefined);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
-        const result = await insertRoutes(dbClient, service as Service, agencies as Agency[], true);
+        const result = await insertRoutes(dbClient, service as Service, agency as Agency, true);
         expect(result).toEqual({ routes: expectedRoutes });
     });
 
@@ -142,13 +130,11 @@ describe("insertRoutes", () => {
             },
         };
 
-        const agencies: Partial<Agency>[] = [
-            {
-                id: 0,
-                noc: "noc",
-                registered_operator_ref: "1",
-            },
-        ];
+        const agency: Partial<Agency> = {
+            id: 0,
+            noc: "noc",
+            registered_operator_ref: "1",
+        };
 
         const expectedRoutes: NewRoute[] = [
             {
@@ -166,10 +152,10 @@ describe("insertRoutes", () => {
         getTndsRouteMock.mockResolvedValueOnce(expectedRoutes[0] as Route);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
-        const bodsResult = await insertRoutes(dbClient, service as Service, agencies as Agency[], false);
+        const bodsResult = await insertRoutes(dbClient, service as Service, agency as Agency, false);
         expect(bodsResult).toEqual({ routes: expectedRoutes });
 
-        const tndsResult = await insertRoutes(dbClient, service as Service, agencies as Agency[], true);
+        const tndsResult = await insertRoutes(dbClient, service as Service, agency as Agency, true);
         expect(tndsResult).toEqual({ isDuplicateRoute: true });
     });
 
@@ -186,17 +172,15 @@ describe("insertRoutes", () => {
             },
         };
 
-        const agencies: Partial<Agency>[] = [
-            {
-                id: 0,
-                noc: "noc",
-                registered_operator_ref: "1",
-            },
-        ];
+        const agency: Partial<Agency> = {
+            id: 0,
+            noc: "noc",
+            registered_operator_ref: "1",
+        };
 
         getBodsRouteMock.mockResolvedValueOnce(undefined);
         insertRouteMock.mockRejectedValue(new Error("a"));
 
-        await expect(insertRoutes(dbClient, service as Service, agencies as Agency[], false)).rejects.toThrowError("a");
+        await expect(insertRoutes(dbClient, service as Service, agency as Agency, false)).rejects.toThrowError("a");
     });
 });

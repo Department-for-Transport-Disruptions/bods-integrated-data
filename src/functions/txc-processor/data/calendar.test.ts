@@ -187,12 +187,12 @@ describe("calendar", () => {
                 {
                     DaysOfOperation: {
                         WorkingDays: {
-                            ServicedOrganisationRef: "123",
+                            ServicedOrganisationRef: ["123"],
                         },
                     },
                     DaysOfNonOperation: {
                         WorkingDays: {
-                            ServicedOrganisationRef: "abc",
+                            ServicedOrganisationRef: ["abc"],
                         },
                     },
                 },
@@ -228,15 +228,15 @@ describe("calendar", () => {
                 {
                     DaysOfOperation: {
                         Holidays: {
-                            ServicedOrganisationRef: "123",
+                            ServicedOrganisationRef: ["123"],
                         },
                     },
                     DaysOfNonOperation: {
                         WorkingDays: {
-                            ServicedOrganisationRef: "abc",
+                            ServicedOrganisationRef: ["abc"],
                         },
                         Holidays: {
-                            ServicedOrganisationRef: "xyz",
+                            ServicedOrganisationRef: ["xyz"],
                         },
                     },
                 },
@@ -278,7 +278,7 @@ describe("calendar", () => {
                 {
                     DaysOfOperation: {
                         WorkingDays: {
-                            ServicedOrganisationRef: "123",
+                            ServicedOrganisationRef: ["123"],
                         },
                     },
                 },
@@ -424,7 +424,7 @@ describe("calendar", () => {
                     ServicedOrganisationDayType: {
                         DaysOfOperation: {
                             WorkingDays: {
-                                ServicedOrganisationRef: "123",
+                                ServicedOrganisationRef: ["123"],
                             },
                         },
                     },
@@ -476,7 +476,7 @@ describe("calendar", () => {
                     ServicedOrganisationDayType: {
                         DaysOfOperation: {
                             WorkingDays: {
-                                ServicedOrganisationRef: "123",
+                                ServicedOrganisationRef: ["123"],
                             },
                         },
                     },

@@ -30,12 +30,12 @@ const formattedDateRange = dateRange.transform((dates) => dates.map((date) => da
 const servicedOperationDayTypeSchema = z.object({
     WorkingDays: z
         .object({
-            ServicedOrganisationRef: z.string(),
+            ServicedOrganisationRef: z.string().array(),
         })
         .optional(),
     Holidays: z
         .object({
-            ServicedOrganisationRef: z.string(),
+            ServicedOrganisationRef: z.string().array(),
         })
         .optional(),
 });

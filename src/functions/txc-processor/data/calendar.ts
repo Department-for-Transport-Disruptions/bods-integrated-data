@@ -199,37 +199,45 @@ export const processServicedOrganisation = (
 ) => {
     const servicedOrganisationWorkingDaysOperation =
         servicedOrganisations
-            .find(
-                (org) =>
-                    org.OrganisationCode ===
-                    servicedOrganisationDayType?.DaysOfOperation?.WorkingDays?.ServicedOrganisationRef,
+            .find((org) =>
+                org.OrganisationCode
+                    ? servicedOrganisationDayType?.DaysOfOperation?.WorkingDays?.ServicedOrganisationRef.includes(
+                          org.OrganisationCode,
+                      )
+                    : false,
             )
             ?.WorkingDays?.DateRange.flat() ?? [];
 
     const servicedOrganisationHolidaysOperation =
         servicedOrganisations
-            .find(
-                (org) =>
-                    org.OrganisationCode ===
-                    servicedOrganisationDayType?.DaysOfOperation?.Holidays?.ServicedOrganisationRef,
+            .find((org) =>
+                org.OrganisationCode
+                    ? servicedOrganisationDayType?.DaysOfOperation?.Holidays?.ServicedOrganisationRef.includes(
+                          org.OrganisationCode,
+                      )
+                    : false,
             )
             ?.Holidays?.DateRange.flat() ?? [];
 
     const servicedOrganisationWorkingDaysNonOperation =
         servicedOrganisations
-            .find(
-                (org) =>
-                    org.OrganisationCode ===
-                    servicedOrganisationDayType?.DaysOfNonOperation?.WorkingDays?.ServicedOrganisationRef,
+            .find((org) =>
+                org.OrganisationCode
+                    ? servicedOrganisationDayType?.DaysOfNonOperation?.WorkingDays?.ServicedOrganisationRef.includes(
+                          org.OrganisationCode,
+                      )
+                    : false,
             )
             ?.WorkingDays?.DateRange.flat() ?? [];
 
     const servicedOrganisationHolidaysNonOperation =
         servicedOrganisations
-            .find(
-                (org) =>
-                    org.OrganisationCode ===
-                    servicedOrganisationDayType?.DaysOfNonOperation?.Holidays?.ServicedOrganisationRef,
+            .find((org) =>
+                org.OrganisationCode
+                    ? servicedOrganisationDayType?.DaysOfNonOperation?.Holidays?.ServicedOrganisationRef.includes(
+                          org.OrganisationCode,
+                      )
+                    : false,
             )
             ?.Holidays?.DateRange.flat() ?? [];
 
