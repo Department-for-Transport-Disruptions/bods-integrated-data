@@ -8,9 +8,9 @@ export const mockSubscriptionRequest = {
                             <ConsumerAddress>https://mock-data-producer.com/5965q7gh-5428-43e2-a75c-1782a48637d5</ConsumerAddress>
                             <RequestorRef>BODS</RequestorRef>
                             <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
-                            <SubscriptionRequestContext>
+                            <SubscriptionContext>
                                 <HeartbeatInterval>PT30M</HeartbeatInterval>
-                            </SubscriptionRequestContext>
+                            </SubscriptionContext>
                             <VehicleMonitoringSubscriptionRequest>
                                 <SubscriberRef>BODS</SubscriberRef>
                                 <SubscriptionIdentifier>TESTING</SubscriptionIdentifier>
