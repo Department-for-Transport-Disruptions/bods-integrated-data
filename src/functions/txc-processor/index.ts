@@ -10,7 +10,7 @@ import {
     TxcJourneyPatternSection,
     ServicedOrganisation,
 } from "@bods-integrated-data/shared/schema";
-import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
+import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";

@@ -101,14 +101,14 @@ export const handler = async () => {
 
         logger.info("Starting retrieval of TNDS TXC data");
 
-        const prefix = getDate().format("YYYYMMDD");
+        const prefix = `${getDate().format("YYYYMMDD")}/tnds`;
         await getTndsDataAndUploadToS3(txcZippedBucketName, credentials, prefix);
 
         logger.info("TNDS TXC retrieval complete");
 
         return {
             tndsTxcZippedBucketName: txcZippedBucketName,
-            txcPrefix: prefix,
+            tndsTxcPrefix: prefix,
         };
     } catch (e) {
         if (e instanceof Error) {

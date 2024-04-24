@@ -211,13 +211,13 @@ module "integrated_data_avl_subscriber" {
 
   environment                               = local.env
   avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
-  avl_mock_data_producer_subscribe_endpoint = "${module.avl_mock_data_producer.endpoint}/subscribe"
+  avl_mock_data_producer_subscribe_endpoint = "${module.integrated_data_avl_mock_data_producer.endpoint}/subscribe"
   avl_data_endpoint                         = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
   aws_account_id                            = data.aws_caller_identity.current.account_id
   aws_region                                = data.aws_region.current.name
 }
 
-module "avl-unsubscriber" {
+module "integrated_data_avl_unsubscriber" {
   source = "../modules/avl-producer-api/avl-unsubscriber"
 
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
@@ -236,7 +236,7 @@ module "integrated_data_avl_data_endpoint" {
   aws_region                  = data.aws_region.current.name
 }
 
-module "avl_mock_data_producer" {
+module "integrated_data_avl_mock_data_producer" {
   source = "../modules/avl-producer-api/mock-data-producer"
 
   environment                 = local.env
@@ -260,4 +260,41 @@ module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
 
   environment = local.env
+}
+
+module "integrated_data_db_cleardown_function" {
+  source = "../modules/db-cleardown"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_timetables_sfn" {
+  source = "../modules/timetables-sfn"
+
+  environment                            = local.env
+  bods_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
+  tnds_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
+  txc_processor_function_arn             = module.integrated_data_txc_pipeline.txc_processor_function_arn
+  unzipper_function_arn                  = module.integrated_data_txc_pipeline.unzipper_function_arn
+  gtfs_timetables_generator_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
+  naptan_retriever_function_arn          = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
+  naptan_uploader_function_arn           = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
+  noc_retriever_function_arn             = module.integrated_data_noc_pipeline.noc_retriever_function_arn
+  noc_processor_function_arn             = module.integrated_data_noc_pipeline.noc_processor_function_arn
+  nptg_retriever_function_arn            = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
+  nptg_uploader_function_arn             = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
+  bank_holidays_retriever_function_arn   = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
+  db_cleardown_function_arn              = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
+  table_renamer_function_arn             = module.integrated_data_table_renamer.table_renamer_function_arn
+  tnds_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
+  bods_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
+  txc_bucket_name                        = module.integrated_data_txc_pipeline.txc_bucket_name
+  noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
+  naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name
 }

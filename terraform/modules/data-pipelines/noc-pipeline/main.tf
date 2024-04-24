@@ -39,7 +39,6 @@ module "integrated_data_noc_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 120
   memory        = 1024
-  schedule      = "cron(0 2 * * ? *)"
 
   permissions = [{
     Action = [

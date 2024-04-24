@@ -39,7 +39,6 @@ module "integrated_data_naptan_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 120
   memory        = 2048
-  schedule      = "cron(0 2 * * ? *)"
 
   permissions = [
     {

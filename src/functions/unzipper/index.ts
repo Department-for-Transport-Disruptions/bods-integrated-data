@@ -34,10 +34,8 @@ export const unzip = async (object: Stream, unzippedBucketName: string, key: str
             let upload;
 
             if (fileName.endsWith(".zip")) {
-                logger.info("IS NESTED ZIP");
                 await unzip(entry, unzippedBucketName, `${getFilePath(key)}${fileName}`);
             } else if (fileName.endsWith(".xml")) {
-                logger.info("IS NOT NESTED ZIP");
                 upload = startS3Upload(unzippedBucketName, `${getFilePath(key)}${fileName}`, entry, "application/xml");
                 promises.push(upload.done());
             }
