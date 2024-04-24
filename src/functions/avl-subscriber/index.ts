@@ -9,9 +9,7 @@ import {
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
-import { parse } from "js2xmlparser";
-import { parseStringPromise } from "xml2js";
-import { parseBooleans } from "xml2js/lib/processors";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
 export const generateSubscriptionRequestXml = (
@@ -45,48 +43,51 @@ export const generateSubscriptionRequestXml = (
     const verifiedSubscriptionRequest = subscriptionRequestSchema.parse(subscriptionRequestJson);
 
     const completeObject = {
-        "@": {
-            version: "2.0",
-            xmlns: "http://www.siri.org.uk/siri",
-            "xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+        "?xml": {
+            "#text": "",
+            "@_version": "1.0",
+            "@_encoding": "UTF-8",
+            "@_standalone": "yes",
         },
-        "#": {
+        Siri: {
+            "@_version": "2.0",
+            "@_xmlns": "http://www.siri.org.uk/siri",
+            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
+            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
+            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
             SubscriptionRequest: {
                 ...verifiedSubscriptionRequest.SubscriptionRequest,
                 VehicleMonitoringSubscriptionRequest: {
                     ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest,
                     VehicleMonitoringRequest: {
-                        "@": {
-                            version: "2.0",
-                        },
-                        "#": {
-                            ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
-                                .VehicleMonitoringRequest,
-                        },
+                        "@_version": "2.0",
+                        ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
+                            .VehicleMonitoringRequest,
                     },
                 },
             },
         },
     };
 
-    return parse("Siri", completeObject, {
-        declaration: {
-            version: "1.0",
-            encoding: "UTF-8",
-            standalone: "yes",
-        },
-        useSelfClosingTagIfEmpty: true,
+    const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        format: true,
+        attributeNamePrefix: "@_",
     });
+
+    const request = builder.build(completeObject) as string;
+
+    return request;
 };
 
-const parseXml = async (xml: string) => {
-    const parsedXml = (await parseStringPromise(xml, {
-        explicitArray: false,
-        valueProcessors: [parseBooleans],
-        ignoreAttrs: true,
-    })) as Record<string, object>;
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: true,
+    });
+
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
     const parsedJson = subscriptionResponseSchema.safeParse(parsedXml.Siri);
 
@@ -95,7 +96,6 @@ const parseXml = async (xml: string) => {
             "There was an error parsing the subscription response from the data producer",
             parsedJson.error.format(),
         );
-
         return null;
     }
 
@@ -183,9 +183,9 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         );
     }
 
-    logger.info(subscriptionResponseBody);
+    const parsedResponseBody = parseXml(subscriptionResponseBody);
 
-    const parsedResponseBody = await parseXml(subscriptionResponseBody);
+    logger.info(subscriptionResponseBody);
 
     if (!parsedResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
