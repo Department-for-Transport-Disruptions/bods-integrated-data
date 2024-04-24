@@ -68,6 +68,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             },
         );
 
@@ -121,6 +122,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -161,6 +163,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -204,6 +207,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             },
         );
 
@@ -245,6 +249,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -286,6 +291,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 

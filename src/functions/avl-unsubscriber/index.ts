@@ -174,6 +174,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
         {
             ...subscription,
             status: "TERMINATED",
+            serviceEndDatetime: currentTimestamp,
         },
     );
 };

@@ -48,19 +48,6 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_timetables_bu
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket" "integrated_data_tnds_txc_bucket" {
-  bucket = "integrated-data-tnds-txc-${var.environment}"
-}
-
-resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_tnds_txc_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
   description = "Integrated data tnds ftp credentials - ${var.environment}"
 }
@@ -193,8 +180,8 @@ module "integrated_data_tnds_txc_unzipper_function" {
 
   function_name        = "integrated-data-tnds-txc-unzipper"
   environment          = var.environment
-  unzipped_bucket_arn  = aws_s3_bucket.integrated_data_tnds_txc_bucket.arn
-  unzipped_bucket_name = aws_s3_bucket.integrated_data_tnds_txc_bucket.bucket
+  unzipped_bucket_arn  = module.integrated_data_txc_s3_sqs.bucket_arn
+  unzipped_bucket_name = module.integrated_data_txc_s3_sqs.bucket_id
   zipped_bucket_arn    = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.arn
   zipped_bucket_name   = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
 }
@@ -207,7 +194,7 @@ module "integrated_data_txc_processor_function" {
   zip_path       = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
   handler        = "index.handler"
   runtime        = "nodejs20.x"
-  timeout        = 200
+  timeout        = 300
   memory         = 2048
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
