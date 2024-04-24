@@ -9,6 +9,7 @@ import {
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
+import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
@@ -159,9 +160,9 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
             ? mockProducerSubscribeEndpoint
             : avlSubscribeMessage.dataProducerEndpoint;
 
-    const subscriptionResponse = await fetch(url, {
+    const subscriptionResponse = await axios.post(url, {
         method: "POST",
-        body: subscriptionRequestMessage,
+        data: subscriptionRequestMessage,
         headers: {
             Authorization:
                 "Basic " +
@@ -169,14 +170,14 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         },
     });
 
-    if (!subscriptionResponse.ok) {
+    if (subscriptionResponse.status !== 200) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
         throw new Error(
             `There was an error when sending the subscription request to the data producer: ${url}, status code: ${subscriptionResponse.status}`,
         );
     }
 
-    const subscriptionResponseBody = await subscriptionResponse.text();
+    const subscriptionResponseBody = subscriptionResponse.data as string;
 
     if (!subscriptionResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");

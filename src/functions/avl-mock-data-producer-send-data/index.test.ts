@@ -1,8 +1,12 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import axios, { AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from "vitest";
 import { expectedAVLDataForSubscription, mockSubscriptionsFromDynamo } from "./test/mockData";
 import { handler } from "./index";
+
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-mock-data-producer-send-data", () => {
     beforeAll(() => {
@@ -11,7 +15,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
-    const fetchSpy = vi.spyOn(global, "fetch");
+    const axiosSpy = vi.spyOn(mockedAxios, "post");
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -27,7 +31,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([]);
         await handler();
-        expect(fetchSpy).not.toBeCalled();
+        expect(axiosSpy).not.toBeCalled();
     });
 
     it("should return and send no data if no mock data producers are active", async () => {
@@ -53,7 +57,7 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         ]);
         await handler();
-        expect(fetchSpy).not.toBeCalled();
+        expect(axiosSpy).not.toBeCalled();
     });
 
     it("should send mock avl data with the subscriptionId in the query string parameters if the stage is local", async () => {
@@ -62,20 +66,19 @@ describe("avl-mock-data-producer-send-data", () => {
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
-        fetchSpy.mockResolvedValue({
+        axiosSpy.mockResolvedValue({
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as unknown as AxiosResponse);
 
         await handler();
-        expect(fetchSpy).toBeCalledTimes(2);
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-one", {
-            body: expectedAVLDataForSubscription("subscription-one"),
+        expect(axiosSpy).toBeCalledTimes(2);
+        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-one", {
+            data: expectedAVLDataForSubscription("subscription-one"),
             method: "POST",
         });
 
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-two", {
-            body: expectedAVLDataForSubscription("subscription-two"),
+        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-two", {
+            data: expectedAVLDataForSubscription("subscription-two"),
             method: "POST",
         });
     });
@@ -85,20 +88,19 @@ describe("avl-mock-data-producer-send-data", () => {
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
-        fetchSpy.mockResolvedValue({
+        axiosSpy.mockResolvedValue({
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as unknown as AxiosResponse);
 
         await handler();
-        expect(fetchSpy).toBeCalledTimes(2);
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-one", {
-            body: expectedAVLDataForSubscription("subscription-one"),
+        expect(axiosSpy).toBeCalledTimes(2);
+        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-one", {
+            data: expectedAVLDataForSubscription("subscription-one"),
             method: "POST",
         });
 
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-two", {
-            body: expectedAVLDataForSubscription("subscription-two"),
+        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-two", {
+            data: expectedAVLDataForSubscription("subscription-two"),
             method: "POST",
         });
     });

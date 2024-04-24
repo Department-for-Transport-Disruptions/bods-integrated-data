@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { recursiveScan } from "@bods-integrated-data/shared/dynamo";
+import axios from "axios";
 import { z } from "zod";
 import { generateMockSiriVm } from "./mockSiriVm";
 import { subscriptionSchema } from "./subscription.schema";
@@ -49,12 +50,12 @@ export const handler = async () => {
 
                 const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
 
-                const res = await fetch(url, {
+                const res = await axios.post(url, {
                     method: "POST",
-                    body: siriVm,
+                    data: siriVm,
                 });
 
-                if (!res.ok) {
+                if (res.status !== 200) {
                     logger.error(`Unable to send AVL data to: ${url}`);
                     return;
                 }

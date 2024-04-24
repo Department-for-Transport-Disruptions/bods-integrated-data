@@ -3,6 +3,7 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { deleteParameters, getParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
+import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 import {
@@ -133,26 +134,25 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
     const terminateSubscriptionResponse =
         process.env.STAGE === "local" && subscription.requestorRef === "BODS_MOCK_PRODUCER"
             ? {
-                  text: () => mockSubscriptionResponseBody,
+                  data: mockSubscriptionResponseBody,
                   status: 200,
-                  ok: true,
               }
-            : await fetch(subscription.url, {
+            : await axios.post(subscription.url, {
                   method: "POST",
-                  body: terminateSubscriptionRequestMessage,
+                  data: terminateSubscriptionRequestMessage,
                   headers: {
                       Authorization:
                           "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
                   },
               });
 
-    if (!terminateSubscriptionResponse.ok) {
+    if (terminateSubscriptionResponse.status !== 200) {
         throw new Error(
             `There was an error when sending the request to unsubscribe from the data producer - subscription ID: ${subscription.PK}, status code: ${terminateSubscriptionResponse.status}`,
         );
     }
 
-    const terminateSubscriptionResponseBody = await terminateSubscriptionResponse.text();
+    const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data as string;
 
     if (!terminateSubscriptionResponseBody) {
         throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
