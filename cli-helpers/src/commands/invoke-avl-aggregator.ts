@@ -7,7 +7,7 @@ export const invokeAvlAggregator = new Command("invoke-avl-aggregator")
         const { stage } = options;
 
         await invokeLambda(stage, {
-            FunctionName: `avl-aggregate-siri-vm-${stage}`,
+            FunctionName: `integrated-data-avl-aggregate-siri-vm-${stage}`,
             InvocationType: "RequestResponse",
         });
     });
