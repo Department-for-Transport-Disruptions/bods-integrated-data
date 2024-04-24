@@ -89,17 +89,24 @@ export const insertCalendar = async (
         return insertedCalendar;
     }
 
-    await dbClient
-        .insertInto("calendar_date_new")
-        .values(
-            calendarData.calendarDates.map((date) => ({
-                date: date.date,
-                exception_type: date.exception_type,
-                service_id: insertedCalendar.id,
-            })),
-        )
-        .onConflict((oc) => oc.doNothing())
-        .execute();
+    const calendarDatesChunks = chunkArray(
+        calendarData.calendarDates.map((date) => ({
+            date: date.date,
+            exception_type: date.exception_type,
+            service_id: insertedCalendar.id,
+        })),
+        3000,
+    );
+
+    await Promise.all(
+        calendarDatesChunks.map((chunk) =>
+            dbClient
+                .insertInto("calendar_date_new")
+                .values(chunk)
+                .onConflict((oc) => oc.doNothing())
+                .execute(),
+        ),
+    );
 
     return insertedCalendar;
 };
