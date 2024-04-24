@@ -63,8 +63,9 @@ export const handler = async () => {
         logger.info("BODS TXC retrieval complete");
 
         return {
-            bodsZippedBucketName: txcZippedBucketName,
-            bodsZippedBucketPrefix: prefix,
+            bodsTxcZippedBucketName: txcZippedBucketName,
+            txcBucketName,
+            txcPrefix: prefix,
         };
     } catch (e) {
         if (e instanceof Error) {

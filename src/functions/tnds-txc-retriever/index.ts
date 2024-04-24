@@ -39,11 +39,9 @@ const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Arra
     return downloadedFiles;
 };
 
-const uploadZipFilesToS3 = async (files: Map<string, Uint8Array>, bucket: string) => {
-    const date = getDate().format("YYYYMMDD");
-
+const uploadZipFilesToS3 = async (files: Map<string, Uint8Array>, bucket: string, prefix: string) => {
     for (const [fileName, content] of files.entries()) {
-        const upload = startS3Upload(bucket, `${date}/${fileName}`, content, "application/zip");
+        const upload = startS3Upload(bucket, `${prefix}/${fileName}`, content, "application/zip");
         await upload.done();
     }
 };
@@ -62,7 +60,11 @@ const getFtpCredentials = async (ftpCredentialsArn: string): Promise<FtpCredenti
     return JSON.parse(ftpCredentialsSecret.SecretString) as FtpCredentials;
 };
 
-const getTndsDataAndUploadToS3 = async (txcZippedBucketName: string, ftpCredentials: FtpCredentials) => {
+const getTndsDataAndUploadToS3 = async (
+    txcZippedBucketName: string,
+    ftpCredentials: FtpCredentials,
+    prefix: string,
+) => {
     const { host, user, password } = ftpCredentials;
     const timeoutMs = 600000;
     const client = new Client(timeoutMs);
@@ -77,7 +79,7 @@ const getTndsDataAndUploadToS3 = async (txcZippedBucketName: string, ftpCredenti
 
         logger.info("Zip files recieved, uploading to S3");
 
-        await uploadZipFilesToS3(zipFiles, txcZippedBucketName);
+        await uploadZipFilesToS3(zipFiles, txcZippedBucketName, prefix);
     } finally {
         client.close();
     }
@@ -99,9 +101,15 @@ export const handler = async () => {
 
         logger.info("Starting retrieval of TNDS TXC data");
 
-        await getTndsDataAndUploadToS3(txcZippedBucketName, credentials);
+        const prefix = getDate().format("YYYYMMDD");
+        await getTndsDataAndUploadToS3(txcZippedBucketName, credentials, prefix);
 
         logger.info("TNDS TXC retrieval complete");
+
+        return {
+            tndsTxcZippedBucketName: txcZippedBucketName,
+            txcPrefix: prefix,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error retrieving TNDS TXC data", e);

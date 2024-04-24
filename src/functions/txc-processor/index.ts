@@ -218,20 +218,18 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
     );
 };
 
-export const handler = async (event: SQSEvent) => {
+export const handler = async (event: S3Event) => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);
+        logger.info("Starting processing of TXC");
 
-        await Promise.all(
-            event.Records.map((record) => processSqsRecord((JSON.parse(record.body) as S3Event).Records[0], dbClient)),
-        );
+        await processSqsRecord(event.Records[0], dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor, rolling back transaction`, e);
+            logger.error(`There was a problem with the bods txc processor`, e);
         }
 
         throw e;
