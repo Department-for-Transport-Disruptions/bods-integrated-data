@@ -3,7 +3,7 @@ import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { Avl, siriSchema } from "@bods-integrated-data/shared/schema/siri.schema";
-import { parse } from "js2xmlparser";
+import { XMLBuilder } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
 
@@ -75,23 +75,30 @@ export const convertJsonToSiri = (
     const verifiedObject = siriSchema.parse(jsonToXmlObject);
 
     const completeObject = {
-        "@": {
-            version: "2.0",
-            xmlns: "http://www.siri.org.uk/siri",
-            "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+        "?xml": {
+            "#text": "",
+            "@_version": "1.0",
+            "@_encoding": "UTF-8",
+            "@_standalone": "yes",
         },
-        ...verifiedObject,
+        Siri: {
+            "@_version": "2.0",
+            "@_xmlns": "http://www.siri.org.uk/siri",
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            ...verifiedObject,
+        },
     };
 
-    return parse("Siri", completeObject, {
-        declaration: {
-            version: "1.0",
-            encoding: "UTF-8",
-            standalone: "yes",
-        },
-        useSelfClosingTagIfEmpty: true,
+    const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        format: true,
+        attributeNamePrefix: "@_",
     });
+
+    const request = builder.build(completeObject) as string;
+
+    return request;
 };
 
 export const generateSiriVmAndUploadToS3 = async (
@@ -128,11 +135,6 @@ export const handler = async () => {
         const requestMessageRef = randomUUID();
 
         const avl = await getCurrentAvlData(db);
-
-        if (!avl || avl.length === 0) {
-            logger.warn("No valid AVL data found in the database...");
-            return;
-        }
 
         await generateSiriVmAndUploadToS3(
             avl,

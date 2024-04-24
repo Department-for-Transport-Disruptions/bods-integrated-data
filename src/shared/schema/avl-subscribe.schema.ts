@@ -17,7 +17,7 @@ export const subscriptionRequestSchema = z.object({
         ConsumerAddress: z.string().url(),
         RequestorRef: z.string(),
         MessageIdentifier: z.string(),
-        SubscriptionRequestContext: z.object({
+        SubscriptionContext: z.object({
             HeartbeatInterval: z.string(),
         }),
         VehicleMonitoringSubscriptionRequest: z.object({
