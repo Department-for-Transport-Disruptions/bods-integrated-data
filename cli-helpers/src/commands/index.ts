@@ -2,6 +2,7 @@ export * from "./create-avl-mock-data-producer";
 export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-subscriber";
 export * from "./invoke-avl-unsubscriber";
+export * from "./invoke-avl-aggregator";
 export * from "./invoke-bank-holidays-retriever";
 export * from "./invoke-bods-txc-processor";
 export * from "./invoke-bods-txc-retriever";

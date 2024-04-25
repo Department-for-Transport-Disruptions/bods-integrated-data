@@ -42,6 +42,7 @@ const txcArrayProperties = [
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
     "DateRange",
+    "ServicedOrganisationRef",
 ];
 
 const processServices = (
@@ -75,6 +76,16 @@ const processServices = (
             return null;
         }
 
+        const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
+
+        if (!agency) {
+            logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`, {
+                filePath,
+            });
+
+            return null;
+        }
+
         const vehicleJourneysForLines = service.Lines.Line.flatMap((line) =>
             vehicleJourneys.filter((journey) => journey.LineRef === line["@_id"]),
         );
@@ -88,7 +99,7 @@ const processServices = (
             return null;
         }
 
-        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agencyData, isTnds);
+        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agency, isTnds);
 
         if (isDuplicateRoute) {
             logger.warn("Duplicate TNDS route found for service", {

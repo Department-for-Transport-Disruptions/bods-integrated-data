@@ -13,7 +13,7 @@ export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
 
 export const subscriptionRequestSchema = z.object({
     SubscriptionRequest: z.object({
-        RequestTimeStamp: z.string(),
+        RequestTimestamp: z.string(),
         ConsumerAddress: z.string().url(),
         RequestorRef: z.string(),
         MessageIdentifier: z.string(),
@@ -21,7 +21,6 @@ export const subscriptionRequestSchema = z.object({
             HeartbeatInterval: z.string(),
         }),
         VehicleMonitoringSubscriptionRequest: z.object({
-            SubscriberRef: z.string(),
             SubscriptionIdentifier: z.string(),
             InitialTerminationTime: z.string(),
             VehicleMonitoringRequest: z.object({
