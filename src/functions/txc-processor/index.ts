@@ -17,7 +17,7 @@ import { fromZodError } from "zod-validation-error";
 import { processCalendars } from "./data/calendar";
 import { insertAgencies, insertFrequencies, insertShapes, insertStopTimes, insertTrips } from "./data/database";
 import { insertRoutes } from "./data/routes";
-import { insertStops } from "./data/stops";
+import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints } from "./data/stops";
 import { VehicleJourneyMapping } from "./types";
 import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
@@ -208,7 +208,11 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
 
     const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
-    await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+    if (TransXChange.StopPoints.StopPoint) {
+        await insertStopsByStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
+    } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
+        await insertStopsByAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+    }
 
     await processServices(
         dbClient,

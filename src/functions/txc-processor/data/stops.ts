@@ -1,9 +1,65 @@
-import { Database, NewStop, LocationType } from "@bods-integrated-data/shared/database";
-import { TxcStop } from "@bods-integrated-data/shared/schema";
+import { Database, NewStop, LocationType, NaptanStop } from "@bods-integrated-data/shared/database";
+import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 
-export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) => {
-    const platformCodes = ["BCS", "PLT", "FBT"];
+const platformCodes = ["BCS", "PLT", "FBT"];
+
+const mapStop = (id: string, name: string, latitude?: number, longitude?: number, naptanStop?: NaptanStop): NewStop => {
+    return {
+        id,
+        wheelchair_boarding: 0,
+        parent_station: null,
+
+        ...(naptanStop
+            ? {
+                  stop_code: naptanStop.naptan_code,
+                  stop_name: naptanStop.common_name || name,
+                  stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : latitude,
+                  stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : longitude,
+                  location_type: naptanStop.stop_type === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
+                  platform_code:
+                      naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)
+                          ? naptanStop.stop_type
+                          : null,
+              }
+            : {
+                  stop_name: name,
+                  stop_lat: latitude,
+                  stop_lon: longitude,
+                  location_type: LocationType.None,
+                  platform_code: null,
+              }),
+    };
+};
+
+export const insertStopsByStopPoints = async (dbClient: Kysely<Database>, stops: TxcStopPoint[]) => {
+    const stopsToInsert = await Promise.all(
+        stops.map(async (stop): Promise<NewStop> => {
+            const latitude = stop.Place.Location?.Latitude;
+            const longitude = stop.Place.Location?.Longitude;
+
+            const naptanStop = await dbClient
+                .selectFrom("naptan_stop_new")
+                .selectAll()
+                .where("atco_code", "=", stop.AtcoCode)
+                .executeTakeFirst();
+
+            return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
+        }),
+    );
+
+    await dbClient
+        .insertInto("stop_new")
+        .values(stopsToInsert)
+        .onConflict((oc) => oc.column("id").doNothing())
+        .returningAll()
+        .execute();
+};
+
+export const insertStopsByAnnotatedStopPointRefs = async (
+    dbClient: Kysely<Database>,
+    stops: TxcAnnotatedStopPointRef[],
+) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
 
     const naptanStops = await dbClient
@@ -17,32 +73,7 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) 
         const latitude = stop.Location?.Translation ? stop.Location.Translation.Latitude : stop.Location?.Latitude;
         const longitude = stop.Location?.Translation ? stop.Location?.Translation.Longitude : stop.Location?.Longitude;
 
-        return {
-            id: stop.StopPointRef,
-            wheelchair_boarding: 0,
-            parent_station: null,
-
-            ...(naptanStop
-                ? {
-                      stop_code: naptanStop.naptan_code,
-                      stop_name: naptanStop.common_name || stop.CommonName,
-                      stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : latitude,
-                      stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : longitude,
-                      location_type:
-                          naptanStop.stop_type === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
-                      platform_code:
-                          naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)
-                              ? naptanStop.stop_type
-                              : null,
-                  }
-                : {
-                      stop_name: stop.CommonName,
-                      stop_lat: stop.Location?.Latitude,
-                      stop_lon: stop.Location?.Longitude,
-                      location_type: LocationType.None,
-                      platform_code: null,
-                  }),
-        };
+        return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
     await dbClient
