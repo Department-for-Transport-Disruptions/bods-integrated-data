@@ -3,7 +3,7 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { deleteParameters, getParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 import {
@@ -137,7 +137,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
                   data: mockSubscriptionResponseBody,
                   status: 200,
               }
-            : await axios.post(subscription.url, {
+            : await axios.post<string>(subscription.url, {
                   method: "POST",
                   data: terminateSubscriptionRequestMessage,
                   headers: {
@@ -146,13 +146,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
                   },
               });
 
-    if (terminateSubscriptionResponse.status !== 200) {
-        throw new Error(
-            `There was an error when sending the request to unsubscribe from the data producer - subscription ID: ${subscription.PK}, status code: ${terminateSubscriptionResponse.status}`,
-        );
-    }
-
-    const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data as string;
+    const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data;
 
     if (!terminateSubscriptionResponseBody) {
         throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
@@ -203,7 +197,17 @@ export const handler = async (event: APIGatewayEvent) => {
 
         const subscription = await getSubscriptionInfo(subscriptionId, tableName);
 
-        await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
+        try {
+            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
+        } catch (e) {
+            if (e instanceof AxiosError) {
+                logger.error(
+                    `There was an error when sending the unsubscribe request to the data producer for subscription ${subscriptionId} - code: ${e.code}, message: ${e.message}`,
+                );
+            }
+
+            throw e;
+        }
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 

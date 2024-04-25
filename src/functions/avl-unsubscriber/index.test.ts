@@ -1,6 +1,6 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
@@ -105,10 +105,13 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
-        mockedAxios.post.mockResolvedValue({
-            data: "failed",
-            status: 500,
-        } as AxiosResponse);
+        mockedAxios.post.mockRejectedValue({
+            message: "Request failed with status code 500",
+            code: "500",
+            isAxiosError: true,
+            toJSON: () => {},
+            name: "AxiosError",
+        } as AxiosError);
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
@@ -123,9 +126,7 @@ describe("avl-unsubscriber", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            "There was an error when sending the request to unsubscribe from the data producer - subscription ID: mock-subscription-id, status code: 500",
-        );
+        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Request failed with status code 500");
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();

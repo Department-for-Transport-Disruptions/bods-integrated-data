@@ -9,7 +9,7 @@ import {
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 
@@ -160,7 +160,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
             ? mockProducerSubscribeEndpoint
             : avlSubscribeMessage.dataProducerEndpoint;
 
-    const subscriptionResponse = await axios.post(url, {
+    const subscriptionResponse = await axios.post<string>(url, {
         method: "POST",
         data: subscriptionRequestMessage,
         headers: {
@@ -170,14 +170,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         },
     });
 
-    if (subscriptionResponse.status !== 200) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
-        throw new Error(
-            `There was an error when sending the subscription request to the data producer: ${url}, status code: ${subscriptionResponse.status}`,
-        );
-    }
-
-    const subscriptionResponseBody = subscriptionResponse.data as string;
+    const subscriptionResponseBody = subscriptionResponse.data;
 
     if (!subscriptionResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
@@ -238,20 +231,29 @@ export const handler = async (event: APIGatewayEvent) => {
         // Add username and password to parameter store
         await addSubscriptionAuthCredsToSsm(subscriptionId, avlSubscribeMessage.username, avlSubscribeMessage.password);
 
-        await sendSubscriptionRequestAndUpdateDynamo(
-            subscriptionId,
-            avlSubscribeMessage,
-            tableName,
-            dataEndpoint,
-            mockProducerSubscribeEndpoint,
-        );
+        try {
+            await sendSubscriptionRequestAndUpdateDynamo(
+                subscriptionId,
+                avlSubscribeMessage,
+                tableName,
+                dataEndpoint,
+                mockProducerSubscribeEndpoint,
+            );
+        } catch (e) {
+            if (e instanceof AxiosError) {
+                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+                logger.error(
+                    `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
+                );
+            }
+
+            throw e;
+        }
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem subscribing to the AVL feed.", e);
-
-            throw e;
         }
 
         throw e;

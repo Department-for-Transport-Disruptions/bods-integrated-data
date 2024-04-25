@@ -50,22 +50,17 @@ export const handler = async () => {
 
                 const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
 
-                const res = await axios.post(url, {
+                await axios.post<string>(url, {
                     method: "POST",
                     data: siriVm,
                 });
-
-                if (res.status !== 200) {
-                    logger.error(`Unable to send AVL data to: ${url}`);
-                    return;
-                }
 
                 logger.info(`Successfully sent AVL data to: ${url}`);
             }),
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Lambda has failed", e);
+            logger.error("There was an error when sending AVL data", e);
 
             throw e;
         }

@@ -1,7 +1,7 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
@@ -104,14 +104,25 @@ describe("avl-subscriber", () => {
     });
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
-        mockedAxios.post.mockResolvedValue({
-            data: "failed",
-            status: 500,
-        } as AxiosResponse);
-
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
-            "There was an error when sending the subscription request to the data producer: https://mock-data-producer.com, status code: 500",
+        const axiosHeaders = new AxiosHeaders();
+        const axiosConfig = { url: "http://localhost:3000", headers: axiosHeaders };
+        mockedAxios.post.mockRejectedValue(
+            new AxiosError(
+                "Request failed with status code 500",
+                "500",
+                axiosConfig,
+                {},
+                {
+                    data: "Request failed with status code 500",
+                    status: 500,
+                    config: axiosConfig,
+                    statusText: "failed",
+                    headers: axiosHeaders,
+                },
+            ),
         );
+
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(

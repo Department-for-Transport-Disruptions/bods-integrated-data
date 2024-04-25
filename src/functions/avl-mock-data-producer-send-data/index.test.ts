@@ -104,4 +104,26 @@ describe("avl-mock-data-producer-send-data", () => {
             method: "POST",
         });
     });
+
+    it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
+        process.env.STAGE = "dev";
+        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
+
+        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
+
+        axiosSpy.mockRejectedValueOnce(new Error("There was an error when sending AVL data."));
+
+        await expect(handler()).rejects.toThrowError("There was an error when sending AVL data.");
+
+        expect(axiosSpy).toBeCalledTimes(2);
+        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-one", {
+            data: expectedAVLDataForSubscription("subscription-one"),
+            method: "POST",
+        });
+
+        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-two", {
+            data: expectedAVLDataForSubscription("subscription-two"),
+            method: "POST",
+        });
+    });
 });
