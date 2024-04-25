@@ -213,13 +213,6 @@ export const isRequiredTndsDataset = (key: string) => {
     return key.startsWith("L/") || key.startsWith("S/") || key.startsWith("W/");
 };
 
-export const isRequiredTndsServiceMode = (mode: string) => {
-    return (
-        mode === "bus" ||
-        mode === "coach" ||
-        mode === "ferry" ||
-        mode === "metro" ||
-        mode === "tram" ||
-        mode === "underground"
-    );
+export const isRequiredTndsServiceMode = (mode?: string) => {
+    return mode === "coach" || mode === "ferry" || mode === "metro" || mode === "tram" || mode === "underground";
 };
