@@ -15,7 +15,7 @@ describe("insertRoutes", () => {
         vi.resetAllMocks();
     });
 
-    it("returns routes when the service lines are BODS", async () => {
+    it("inserts routes into the database and returns them when the service lines are BODS", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
             Lines: {
@@ -65,7 +65,7 @@ describe("insertRoutes", () => {
         expect(result).toEqual({ routes: expectedRoutes });
     });
 
-    it("returns routes when the service lines are TNDS", async () => {
+    it("inserts routes into the database and returns them when the service lines are TNDS", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
             Lines: {
@@ -156,7 +156,7 @@ describe("insertRoutes", () => {
         expect(tndsResult).toEqual({ isDuplicateRoute: true });
     });
 
-    it("throws an error when an unexpected error occurs ", async () => {
+    it("throws an error when an unexpected error occurs", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
             Lines: {
