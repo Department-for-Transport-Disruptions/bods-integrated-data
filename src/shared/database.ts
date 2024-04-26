@@ -200,7 +200,6 @@ export interface GtfsAgencyTable {
     noc: string;
     timezone: string | null;
     lang: string | null;
-    registered_operator_ref: string;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;

@@ -9,6 +9,7 @@ import {
     TxcRoute,
     TxcJourneyPatternSection,
     ServicedOrganisation,
+    Operator,
 } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -52,6 +53,7 @@ const txcArrayProperties = [
 
 const processServices = (
     dbClient: Kysely<Database>,
+    operators: Operator[],
     services: Service[],
     vehicleJourneys: VehicleJourney[],
     txcRouteSections: TxcRouteSection[],
@@ -81,7 +83,8 @@ const processServices = (
             return null;
         }
 
-        const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
+        const operator = operators.find((operator) => operator["@_id"] === service.RegisteredOperatorRef);
+        const agency = agencyData.find((agency) => agency.noc === operator?.NationalOperatorCode);
 
         if (!agency) {
             logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`, {
@@ -217,6 +220,7 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
 
     await processServices(
         dbClient,
+        TransXChange.Operators.Operator,
         TransXChange.Services.Service,
         TransXChange.VehicleJourneys.VehicleJourney,
         TransXChange.RouteSections.RouteSection,

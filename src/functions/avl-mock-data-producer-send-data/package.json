@@ -13,7 +13,8 @@
   "type": "module",
   "dependencies": {
     "@baselime/lambda-logger": "^0.2.2",
-    "@bods-integrated-data/shared": "workspace:^"
+    "@bods-integrated-data/shared": "workspace:^",
+    "axios": "^1.6.7"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.110",
