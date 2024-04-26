@@ -201,7 +201,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
+const processRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
     const isTnds = record.s3.object.key.includes("/tnds/");
@@ -239,7 +239,7 @@ export const handler = async (event: S3Event) => {
     try {
         logger.info("Starting processing of TXC");
 
-        await processSqsRecord(event.Records[0], dbClient);
+        await processRecord(event.Records[0], dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {

@@ -37,11 +37,9 @@ const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketNa
                 upload = startS3Upload(txcBucketName, `${prefix}/${fileName}`, entry, "application/xml");
                 promises.push(upload.done());
             }
-
-            entry.autodrain();
-        } else {
-            entry.autodrain();
         }
+
+        entry.autodrain();
     }
 
     await Promise.all(promises);

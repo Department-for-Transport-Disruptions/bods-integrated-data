@@ -39,11 +39,9 @@ export const unzip = async (object: Stream, unzippedBucketName: string, key: str
                 upload = startS3Upload(unzippedBucketName, `${getFilePath(key)}${fileName}`, entry, "application/xml");
                 promises.push(upload.done());
             }
-
-            entry.autodrain();
-        } else {
-            entry.autodrain();
         }
+
+        entry.autodrain();
     }
 
     await Promise.all(promises);
