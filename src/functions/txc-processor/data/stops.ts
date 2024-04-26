@@ -12,31 +12,42 @@ export const mapStop = (
     longitude?: number,
     naptanStop?: NaptanStop,
 ): NewStop => {
-    return {
+    const stop: NewStop = {
         id,
         wheelchair_boarding: 0,
         parent_station: null,
-
-        ...(naptanStop
-            ? {
-                  stop_code: naptanStop.naptan_code,
-                  stop_name: naptanStop.common_name || name,
-                  stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : latitude,
-                  stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : longitude,
-                  location_type: naptanStop.stop_type === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
-                  platform_code:
-                      naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)
-                          ? naptanStop.stop_type
-                          : null,
-              }
-            : {
-                  stop_name: name,
-                  stop_lat: latitude,
-                  stop_lon: longitude,
-                  location_type: LocationType.None,
-                  platform_code: null,
-              }),
+        stop_name: name,
+        stop_lat: latitude,
+        stop_lon: longitude,
+        location_type: LocationType.None,
+        platform_code: null,
     };
+
+    if (naptanStop) {
+        stop.stop_code = naptanStop.naptan_code;
+
+        if (naptanStop.common_name) {
+            stop.stop_name = naptanStop.common_name;
+        }
+
+        if (naptanStop.latitude) {
+            stop.stop_lat = parseFloat(naptanStop.latitude);
+        }
+
+        if (naptanStop.longitude) {
+            stop.stop_lon = parseFloat(naptanStop.longitude);
+        }
+
+        if (naptanStop.stop_type === "RSE") {
+            stop.location_type = LocationType.RealStationEntrance;
+        }
+
+        if (naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)) {
+            stop.platform_code = naptanStop.stop_type;
+        }
+    }
+
+    return stop;
 };
 
 export const insertStopsByStopPoints = async (dbClient: Kysely<Database>, stops: TxcStopPoint[]) => {
