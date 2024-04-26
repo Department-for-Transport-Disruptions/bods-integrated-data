@@ -1,10 +1,17 @@
 import { Database, NewStop, LocationType, NaptanStop } from "@bods-integrated-data/shared/database";
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
+import { getNaptanStop, getNaptanStops, insertStops } from "./database";
 
 const platformCodes = ["BCS", "PLT", "FBT"];
 
-const mapStop = (id: string, name: string, latitude?: number, longitude?: number, naptanStop?: NaptanStop): NewStop => {
+export const mapStop = (
+    id: string,
+    name: string,
+    latitude?: number,
+    longitude?: number,
+    naptanStop?: NaptanStop,
+): NewStop => {
     return {
         id,
         wheelchair_boarding: 0,
@@ -37,23 +44,13 @@ export const insertStopsByStopPoints = async (dbClient: Kysely<Database>, stops:
         stops.map(async (stop): Promise<NewStop> => {
             const latitude = stop.Place.Location?.Latitude;
             const longitude = stop.Place.Location?.Longitude;
-
-            const naptanStop = await dbClient
-                .selectFrom("naptan_stop_new")
-                .selectAll()
-                .where("atco_code", "=", stop.AtcoCode)
-                .executeTakeFirst();
+            const naptanStop = await getNaptanStop(dbClient, stop.AtcoCode);
 
             return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
         }),
     );
 
-    await dbClient
-        .insertInto("stop_new")
-        .values(stopsToInsert)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .returningAll()
-        .execute();
+    return insertStops(dbClient, stopsToInsert);
 };
 
 export const insertStopsByAnnotatedStopPointRefs = async (
@@ -61,12 +58,7 @@ export const insertStopsByAnnotatedStopPointRefs = async (
     stops: TxcAnnotatedStopPointRef[],
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
-
-    const naptanStops = await dbClient
-        .selectFrom("naptan_stop_new")
-        .selectAll()
-        .where("atco_code", "in", atcoCodes)
-        .execute();
+    const naptanStops = await getNaptanStops(dbClient, atcoCodes);
 
     const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
@@ -76,10 +68,5 @@ export const insertStopsByAnnotatedStopPointRefs = async (
         return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
-    await dbClient
-        .insertInto("stop_new")
-        .values(stopsToInsert)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .returningAll()
-        .execute();
+    return insertStops(dbClient, stopsToInsert);
 };

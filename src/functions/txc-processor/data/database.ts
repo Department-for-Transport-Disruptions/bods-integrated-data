@@ -11,6 +11,7 @@ import {
     Route,
     NewTrip,
     NewAgency,
+    NewStop,
 } from "@bods-integrated-data/shared/database";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import {
@@ -148,6 +149,14 @@ export const insertFrequencies = async (
     await dbClient.insertInto("frequency_new").values(frequencies).execute();
 };
 
+export const getNaptanStop = (dbClient: Kysely<Database>, atcoCode: string) => {
+    return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "=", atcoCode).executeTakeFirst();
+};
+
+export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[]) => {
+    return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "in", atcoCodes).execute();
+};
+
 export const getBodsRoute = (dbClient: Kysely<Database>, lineId: string) => {
     return dbClient.selectFrom("route").selectAll().where("line_id", "=", lineId).executeTakeFirst();
 };
@@ -267,6 +276,15 @@ export const insertShapes = async (
     }
 
     return updatedVehicleJourneyMappings;
+};
+
+export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
+    return dbClient
+        .insertInto("stop_new")
+        .values(stops)
+        .onConflict((oc) => oc.column("id").doNothing())
+        .returningAll()
+        .execute();
 };
 
 export const insertStopTimes = async (
