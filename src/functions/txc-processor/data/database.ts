@@ -48,7 +48,6 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
             name: existingNoc?.operator_public_name ?? operator.OperatorShortName,
             noc: operator.NationalOperatorCode,
             url: "https://www.traveline.info",
-            registered_operator_ref: operator["@_id"],
             phone: "",
         };
 

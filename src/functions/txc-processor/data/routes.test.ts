@@ -35,7 +35,6 @@ describe("insertRoutes", () => {
         const agency: Partial<Agency> = {
             id: 0,
             noc: "noc",
-            registered_operator_ref: "1",
         };
 
         const expectedRoutes: NewRoute[] = [
@@ -86,7 +85,6 @@ describe("insertRoutes", () => {
         const agency: Partial<Agency> = {
             id: 0,
             noc: "noc",
-            registered_operator_ref: "1",
         };
 
         const expectedRoutes: NewRoute[] = [
@@ -133,7 +131,6 @@ describe("insertRoutes", () => {
         const agency: Partial<Agency> = {
             id: 0,
             noc: "noc",
-            registered_operator_ref: "1",
         };
 
         const expectedRoutes: NewRoute[] = [
@@ -175,7 +172,6 @@ describe("insertRoutes", () => {
         const agency: Partial<Agency> = {
             id: 0,
             noc: "noc",
-            registered_operator_ref: "1",
         };
 
         getBodsRouteMock.mockResolvedValueOnce(undefined);
