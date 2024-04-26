@@ -42,7 +42,7 @@ export const expectedRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" sta
 `;
 
 export const expectedSubscriptionRequest = {
-    body: expectedRequestBody,
+    data: expectedRequestBody,
     method: "POST",
     headers: {
         Authorization: "Basic dGVzdC11c2VyOmR1bW15LXBhc3N3b3Jk",
@@ -71,7 +71,7 @@ export const expectedRequestBodyForMockProducer = `<?xml version=\"1.0\" encodin
 `;
 
 export const expectedSubscriptionRequestForMockProducer = {
-    body: expectedRequestBodyForMockProducer,
+    data: expectedRequestBodyForMockProducer,
     method: "POST",
     headers: {
         Authorization: "Basic dGVzdC11c2VyOmR1bW15LXBhc3N3b3Jk",
