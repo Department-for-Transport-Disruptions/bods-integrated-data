@@ -19,7 +19,7 @@ module "integrated_data_table_renamer_function" {
   runtime         = "nodejs20.x"
   timeout         = 120
   memory          = 1024
-  needs_db_access = true
+  needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id

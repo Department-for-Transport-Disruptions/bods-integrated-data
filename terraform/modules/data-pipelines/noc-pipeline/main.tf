@@ -59,18 +59,17 @@ module "integrated_data_noc_retriever_function" {
 module "integrated_data_noc_processor_function" {
   source = "../../shared/lambda-function"
 
-  environment          = var.environment
-  function_name        = "integrated-data-noc-processor"
-  zip_path             = "${path.module}/../../../../src/functions/dist/noc-processor.zip"
-  handler              = "index.handler"
-  runtime              = "nodejs20.x"
-  timeout              = 200
-  memory               = 2048
-  needs_db_access      = true
-  vpc_id               = var.vpc_id
-  subnet_ids           = var.private_subnet_ids
-  database_sg_id       = var.db_sg_id
-  reserved_concurrency = 50
+  environment     = var.environment
+  function_name   = "integrated-data-noc-processor"
+  zip_path        = "${path.module}/../../../../src/functions/dist/noc-processor.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 200
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [{
     Action = [

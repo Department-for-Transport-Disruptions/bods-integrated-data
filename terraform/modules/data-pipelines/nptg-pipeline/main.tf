@@ -68,7 +68,7 @@ module "integrated_data_nptg_uploader_function" {
   runtime         = "nodejs20.x"
   timeout         = 300
   memory          = 1024
-  needs_db_access = true
+  needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
@@ -100,5 +100,6 @@ module "integrated_data_nptg_uploader_function" {
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
+    STAGE         = var.environment
   }
 }

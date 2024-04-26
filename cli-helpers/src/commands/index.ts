@@ -7,6 +7,7 @@ export * from "./invoke-bank-holidays-retriever";
 export * from "./invoke-bods-txc-processor";
 export * from "./invoke-bods-txc-retriever";
 export * from "./invoke-bods-txc-unzipper";
+export * from "./invoke-db-cleardown";
 export * from "./invoke-db-migrator";
 export * from "./invoke-gtfs-downloader";
 export * from "./invoke-gtfs-rt-generator";

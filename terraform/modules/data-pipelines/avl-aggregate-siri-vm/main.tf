@@ -39,7 +39,7 @@ module "avl_aggregate_siri" {
   memory          = 1024
   runtime         = "nodejs20.x"
   timeout         = 120
-  needs_db_access = true
+  needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id

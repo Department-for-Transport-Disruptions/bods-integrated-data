@@ -201,7 +201,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
-    const isTnds = record.s3.bucket.name.includes("-tnds-");
+    const isTnds = record.s3.object.key.includes("/tnds/");
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const { TransXChange } = txcData;
