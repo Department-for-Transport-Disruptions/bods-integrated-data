@@ -67,7 +67,11 @@ variable "tnds_txc_zipped_bucket_name" {
   type = string
 }
 
-variable "txc_bucket_name" {
+variable "bods_txc_bucket_name" {
+  type = string
+}
+
+variable "tnds_txc_bucket_name" {
   type = string
 }
 

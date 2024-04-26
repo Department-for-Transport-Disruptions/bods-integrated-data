@@ -226,7 +226,8 @@ module "integrated_data_timetables_sfn" {
   table_renamer_function_arn             = module.integrated_data_table_renamer.table_renamer_function_arn
   tnds_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
   bods_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
-  txc_bucket_name                        = module.integrated_data_txc_pipeline.txc_bucket_name
+  bods_txc_bucket_name                   = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tnds_txc_bucket_name                   = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
   naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name

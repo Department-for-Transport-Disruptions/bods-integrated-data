@@ -56,7 +56,8 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     unzipper_function_arn                  = var.unzipper_function_arn,
     bods_txc_zipped_bucket_name            = var.bods_txc_zipped_bucket_name,
     txc_processor_function_arn             = var.txc_processor_function_arn,
-    txc_bucket_name                        = var.txc_bucket_name,
+    bods_txc_bucket_name                   = var.bods_txc_bucket_name,
+    tnds_txc_bucket_name                   = var.tnds_txc_bucket_name,
     tnds_txc_retriever_function_arn        = var.tnds_txc_retriever_function_arn,
     tnds_txc_zipped_bucket_name            = var.tnds_txc_zipped_bucket_name,
     table_renamer_function_arn             = var.table_renamer_function_arn,
@@ -114,7 +115,8 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
         "Resource" : [
           "arn:aws:s3:::${var.bods_txc_zipped_bucket_name}",
           "arn:aws:s3:::${var.tnds_txc_zipped_bucket_name}",
-          "arn:aws:s3:::${var.txc_bucket_name}"
+          "arn:aws:s3:::${var.bods_txc_bucket_name}",
+          "arn:aws:s3:::${var.tnds_txc_bucket_name}",
         ]
       },
       {

@@ -10,8 +10,12 @@ output "tnds_txc_zipped_bucket_name" {
   value = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.id
 }
 
-output "txc_bucket_name" {
-  value = aws_s3_bucket.integrated_data_txc_bucket.id
+output "bods_txc_bucket_name" {
+  value = aws_s3_bucket.integrated_data_bods_txc_bucket.id
+}
+
+output "tnds_txc_bucket_name" {
+  value = aws_s3_bucket.integrated_data_tnds_txc_bucket.id
 }
 
 output "bods_txc_retriever_function_arn" {

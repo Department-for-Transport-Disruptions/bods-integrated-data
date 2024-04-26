@@ -55,15 +55,15 @@ export const handler = async () => {
     try {
         logger.info("Starting retrieval of BODS TXC data");
 
-        const prefix = `${getDate().format("YYYYMMDD")}/bods`;
+        const prefix = getDate().format("YYYYMMDD");
         await getBodsDataAndUploadToS3(txcZippedBucketName, txcBucketName, prefix);
 
         logger.info("BODS TXC retrieval complete");
 
         return {
             bodsTxcZippedBucketName: txcZippedBucketName,
-            txcBucketName,
-            bodsTxcPrefix: prefix,
+            bodsTxcBucketName: txcBucketName,
+            prefix,
         };
     } catch (e) {
         if (e instanceof Error) {

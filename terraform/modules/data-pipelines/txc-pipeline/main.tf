@@ -21,8 +21,12 @@ resource "aws_s3_bucket" "integrated_data_gtfs_timetables_bucket" {
   bucket = "integrated-data-gtfs-timetables-${var.environment}"
 }
 
-resource "aws_s3_bucket" "integrated_data_txc_bucket" {
-  bucket = "integrated-data-txc-${var.environment}"
+resource "aws_s3_bucket" "integrated_data_bods_txc_bucket" {
+  bucket = "integrated-data-bods-txc-${var.environment}"
+}
+
+resource "aws_s3_bucket" "integrated_data_tnds_txc_bucket" {
+  bucket = "integrated-data-tnds-txc-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_zipped_bucket_block_public_access" {
@@ -52,8 +56,17 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_timetables_bu
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_public_access_block" "integrated_data_txc_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_txc_bucket.bucket
+resource "aws_s3_bucket_public_access_block" "integrated_data_bods_txc_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_bods_txc_bucket.bucket
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_tnds_txc_bucket.bucket
 
   block_public_acls       = true
   block_public_policy     = true
@@ -95,14 +108,14 @@ module "integrated_data_bods_txc_retriever_function" {
     Effect = "Allow",
     Resource = [
       "${aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.arn}/*",
-      "${aws_s3_bucket.integrated_data_txc_bucket.arn}/*"
+      "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*"
     ]
   }]
 
   env_vars = {
     STAGE                  = var.environment
     TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.bucket
-    TXC_BUCKET_NAME        = aws_s3_bucket.integrated_data_txc_bucket.bucket
+    TXC_BUCKET_NAME        = aws_s3_bucket.integrated_data_bods_txc_bucket.bucket
   }
 }
 
@@ -170,14 +183,16 @@ module "integrated_data_unzipper_function" {
       ],
       Effect = "Allow",
       Resource = [
-        "${aws_s3_bucket.integrated_data_txc_bucket.arn}/*"
+        "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*",
+        "${aws_s3_bucket.integrated_data_tnds_txc_bucket.arn}/*",
       ]
     },
   ]
 
   env_vars = {
-    STAGE                = var.environment
-    UNZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_txc_bucket.bucket
+    STAGE                     = var.environment
+    UNZIPPED_BODS_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_txc_bucket.id
+    UNZIPPED_TNDS_BUCKET_NAME = aws_s3_bucket.integrated_data_tnds_txc_bucket.id
   }
 }
 
@@ -211,7 +226,8 @@ module "integrated_data_txc_processor_function" {
       ],
       Effect = "Allow",
       Resource = [
-        "${aws_s3_bucket.integrated_data_txc_bucket.arn}/*"
+        "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*",
+        "${aws_s3_bucket.integrated_data_tnds_txc_bucket.arn}/*"
       ]
   }]
 

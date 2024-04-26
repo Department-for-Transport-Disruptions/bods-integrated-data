@@ -311,7 +311,7 @@
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
           "Bucket.$": "$.bodsTxcZippedBucketName",
-          "Prefix.$": "$.bodsTxcPrefix"
+          "Prefix.$": "$.prefix"
         }
       },
       "ResultPath": null,
@@ -336,7 +336,7 @@
                   {
                     "s3": {
                       "bucket": {
-                        "name": "${txc_bucket_name}"
+                        "name": "${bods_txc_bucket_name}"
                       },
                       "object": {
                         "key.$": "$.Key"
@@ -353,8 +353,8 @@
       "ItemReader": {
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
-          "Bucket.$": "$.txcBucketName",
-          "Prefix.$": "$.bodsTxcPrefix"
+          "Bucket": "${bods_txc_zipped_bucket_name}",
+          "Prefix.$": "$.prefix"
         }
       },
       "MaxConcurrency": 50,
@@ -381,11 +381,7 @@
         }
       ],
       "Next": "Get Zipped TNDS TXC Keys",
-      "ResultPath": "$.tndsRetrieverOutput",
-      "ResultSelector": {
-        "tndsTxcPrefix.$": "$.Payload.tndsTxcPrefix",
-        "tndsTxcZippedBucketName.$": "$.Payload.tndsTxcZippedBucketName"
-      }
+      "OutputPath": "$.Payload"
     },
     "Get Zipped TNDS TXC Keys": {
       "Type": "Map",
@@ -436,8 +432,8 @@
       "ItemReader": {
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
-          "Bucket.$": "$.tndsRetrieverOutput.tndsTxcZippedBucketName",
-          "Prefix.$": "$.tndsRetrieverOutput.tndsTxcPrefix"
+          "Bucket.$": "$.tndsTxcZippedBucketName",
+          "Prefix.$": "$.prefix"
         }
       },
       "ResultPath": null,
@@ -462,7 +458,7 @@
                   {
                     "s3": {
                       "bucket": {
-                        "name": "${txc_bucket_name}"
+                        "name": "${tnds_txc_bucket_name}"
                       },
                       "object": {
                         "key.$": "$.Key"
@@ -479,7 +475,7 @@
       "ItemReader": {
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
-          "Bucket.$": "$.txcBucketName",
+          "Bucket": "${tnds_txc_zipped_bucket_name}",
           "Prefix.$": "$.tndsRetrieverOutput.tndsTxcPrefix"
         }
       },
