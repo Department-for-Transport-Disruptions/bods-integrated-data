@@ -36,56 +36,49 @@ const isTableEmpty = async (dbClient: Kysely<Database>, table: keyof Database) =
     return queryResult[0].count === "0";
 };
 
-const getMatchingTables = async (dbClient: Kysely<Database>) => {
-    const matches = await Promise.all(
-        tables.map(async (tableKey) => {
-            const { table, newTable, key } = tableKey;
-            const pk = key as string;
+const checkTables = async (dbClient: Kysely<Database>) => {
+    for (const t of tables) {
+        const { table, newTable, key } = t;
+        const pk = key as string;
 
-            const newTableIsEmpty = await isTableEmpty(dbClient, newTable);
+        const newTableIsEmpty = await isTableEmpty(dbClient, newTable);
 
-            if (newTableIsEmpty) return;
+        if (newTableIsEmpty) {
+            throw new Error(`Table ${table} is empty`);
+        }
 
-            const mainTableIsEmpty = await isTableEmpty(dbClient, table);
+        const mainTableIsEmpty = await isTableEmpty(dbClient, table);
 
-            if (!mainTableIsEmpty) {
-                const query = await sql<{ percentage_matching: number }>`
+        if (!mainTableIsEmpty) {
+            const query = await sql<{ percentage_matching: number }>`
                 WITH total_rows AS (
-                SELECT COUNT(*)::FLOAT AS total from ${sql.id(table)}
+                    SELECT COUNT(*)::FLOAT AS total from ${sql.table(table)}
                 ),
-                matching_rows AS (
-                SELECT COUNT(DISTINCT ${sql.id(table)}.${sql.ref(pk)})::FLOAT AS matching
-                FROM ${sql.id(table)}
-                JOIN ${sql.id(newTable)} ON ${sql.id(table)}.${sql.id(pk)} = ${sql.id(newTable)}.${sql.id(pk)}
+                new_total_rows AS (
+                    SELECT COUNT(*)::FLOAT AS total from ${sql.table(newTable)}
                 )
-                SELECT (matching_rows.matching / total_rows.total) * 100 AS percentage_matching
+                SELECT (new_total_rows.total / total_rows.total) * 100 AS percentage_matching
                 FROM matching_rows, total_rows;
                 `.execute(dbClient);
 
-                if (query.rows.length < 0) {
-                    throw new Error(`Error attempting to match table ${table} with key ${pk}`);
-                }
-
-                if (query.rows[0].percentage_matching < 80) {
-                    logger.warn(
-                        `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
-                    );
-                    return;
-                }
+            if (query.rows.length < 0) {
+                throw new Error(`Error attempting to match table ${table} with key ${pk}`);
             }
 
-            return table;
-        }),
-    );
-
-    return matches.filter(Boolean) as (keyof Database)[];
+            if (query.rows[0].percentage_matching < 80) {
+                throw new Error(
+                    `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
+                );
+            }
+        }
+    }
 };
 
-const renameTables = async (tablesToRename: (keyof Database)[], dbClient: Kysely<Database>) => {
-    for (const table of tablesToRename) {
-        await dbClient.schema.dropTable(`${table}_old`).ifExists().execute();
-        await dbClient.schema.alterTable(table).renameTo(`${table}_old`).execute();
-        await dbClient.schema.alterTable(`${table}_new`).renameTo(table).execute();
+const renameTables = async (dbClient: Kysely<Database>) => {
+    for (const t of tables) {
+        await dbClient.schema.dropTable(`${t.table}_old`).ifExists().execute();
+        await dbClient.schema.alterTable(t.table).renameTo(`${t.table}_old`).execute();
+        await dbClient.schema.alterTable(t.newTable).renameTo(t.table).execute();
     }
 };
 
@@ -93,9 +86,9 @@ export const handler = async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        const matchingTables = await getMatchingTables(dbClient);
+        await checkTables(dbClient);
 
-        await renameTables(matchingTables, dbClient);
+        await renameTables(dbClient);
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem with the Table renamer", e);
