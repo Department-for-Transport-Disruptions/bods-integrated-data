@@ -7,8 +7,8 @@ import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints, mapStop }
 
 describe("stops", () => {
     let dbClient: Kysely<Database>;
-    const getNaptanStop = vi.spyOn(databaseFunctions, "getNaptanStop");
-    const getNaptanStops = vi.spyOn(databaseFunctions, "getNaptanStops");
+    const getNaptanStopMock = vi.spyOn(databaseFunctions, "getNaptanStop");
+    const getNaptanStopsMock = vi.spyOn(databaseFunctions, "getNaptanStops");
     const insertStopsMock = vi.spyOn(databaseFunctions, "insertStops");
 
     beforeEach(() => {
@@ -226,7 +226,7 @@ describe("stops", () => {
                 },
             ];
 
-            getNaptanStop.mockResolvedValue(undefined);
+            getNaptanStopMock.mockResolvedValue(undefined);
             insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
 
             const result = await insertStopsByStopPoints(dbClient, stops);
@@ -280,7 +280,7 @@ describe("stops", () => {
                 },
             ];
 
-            getNaptanStops.mockResolvedValue([]);
+            getNaptanStopsMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
 
             const result = await insertStopsByAnnotatedStopPointRefs(dbClient, stops);
