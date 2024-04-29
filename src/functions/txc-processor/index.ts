@@ -16,8 +16,10 @@ import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
+import { insertAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
-import { insertAgencies, insertFrequencies, insertShapes, insertStopTimes, insertTrips } from "./data/database";
+import { insertShapes, insertStopTimes, insertTrips } from "./data/database";
+import { processFrequencies } from "./data/frequencies";
 import { insertRoutes } from "./data/routes";
 import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints } from "./data/stops";
 import { VehicleJourneyMapping } from "./types";
@@ -174,7 +176,7 @@ const processServices = (
             vehicleJourneyMappings,
         );
         vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
-        await insertFrequencies(dbClient, vehicleJourneyMappings);
+        await processFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
