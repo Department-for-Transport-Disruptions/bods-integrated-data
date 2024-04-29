@@ -353,7 +353,7 @@
       "ItemReader": {
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
-          "Bucket": "${bods_txc_zipped_bucket_name}",
+          "Bucket": "${bods_txc_bucket_name}",
           "Prefix.$": "$.prefix"
         }
       },
@@ -475,8 +475,8 @@
       "ItemReader": {
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
-          "Bucket": "${tnds_txc_zipped_bucket_name}",
-          "Prefix.$": "$.tndsRetrieverOutput.tndsTxcPrefix"
+          "Bucket": "${tnds_txc_bucket_name}",
+          "Prefix.$": "$.prefix"
         }
       },
       "MaxConcurrency": 50,
