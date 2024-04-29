@@ -6,7 +6,24 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import ukBankHolidays from "./uk-bank-holidays.json";
+
+interface Event {
+    title: string;
+    date: string;
+    notes: string;
+    bunting: boolean;
+}
+
+interface Division {
+    division: string;
+    events: Event[];
+}
+
+export interface BankHolidaysJson {
+    "england-and-wales": Division;
+    scotland: Division;
+    "northern-ireland": Division;
+}
 
 dayjsExtend(duration);
 dayjsExtend(timezone);
@@ -33,34 +50,43 @@ export type BankHolidayName =
     | "Christmas Day"
     | "Boxing Day";
 
-const mappedScottishHolidays = [...ukBankHolidays["scotland"].events].map((holiday) => {
-    if (holiday.title === "Summer bank holiday") {
-        return {
-            ...holiday,
-            title: "Scotland Summer bank holiday",
-        };
-    }
+export function createBankHolidayFunctions(ukBankHolidays: BankHolidaysJson) {
+    const mappedScottishHolidays = () =>
+        [...ukBankHolidays.scotland.events].map((holiday) => {
+            if (holiday.title === "Summer bank holiday") {
+                return {
+                    ...holiday,
+                    title: "Scotland Summer bank holiday",
+                };
+            }
+            return holiday;
+        });
 
-    return holiday;
-});
+    const bankHolidays = () =>
+        [...ukBankHolidays["england-and-wales"].events, ...mappedScottishHolidays()]
+            .filter(
+                (value, index, self) =>
+                    index === self.findIndex((t) => t.date === value.date && t.title === value.title),
+            )
+            .sort((a, b) => a.date.localeCompare(b.date));
 
-const bankHolidays = [...ukBankHolidays["england-and-wales"].events, ...mappedScottishHolidays]
-    .filter((value, index, self) => index === self.findIndex((t) => t.date === value.date && t.title === value.title))
-    .sort((a, b) => a.date.localeCompare(b.date));
+    const futureBankHolidays = () =>
+        bankHolidays().slice(bankHolidays().findIndex((holiday) => dayjs(holiday.date).isSameOrAfter(dayjs())) - 1);
 
-const futureBankHolidays = bankHolidays.slice(
-    bankHolidays.findIndex((holiday) => getDate(holiday.date).isSameOrAfter(getDate())) - 1,
-);
+    const getNextOccurrenceOfBankHoliday = (bankHolidayName: string) => {
+        const date = futureBankHolidays().find((holiday) => holiday.title.startsWith(bankHolidayName))?.date;
+        if (!date) {
+            throw new Error("Bank holiday not found");
+        }
+        return dayjs.utc(date);
+    };
 
-export const getNextOccurrenceOfBankHoliday = (bankHoliday: BankHolidayName) => {
-    const date = futureBankHolidays.find((holiday) => holiday.title.startsWith(bankHoliday))?.date;
-
-    if (!date) {
-        throw new Error("Bank holiday not found");
-    }
-
-    return dayjs.utc(date);
-};
+    return {
+        getNextOccurrenceOfBankHoliday,
+        bankHolidays, // This function lists all bank holidays considering mapped Scottish ones
+        futureBankHolidays, // This function provides a list of future bank holidays based on the current date
+    };
+}
 
 export const getNextOccurrenceOfDate = (dateOfMonth: number, month: number) => {
     const currentDate = dayjs.utc();
