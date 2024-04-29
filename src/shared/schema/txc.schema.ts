@@ -148,7 +148,7 @@ export const serviceSchema = z.object({
             })
             .array(),
     }),
-    Mode: z.string().default("bus"),
+    Mode: z.string().optional(),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
         JourneyPattern: z
@@ -250,13 +250,25 @@ export const vehicleJourneySchema = z.object({
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
 
-export const stopSchema = z.object({
+export const stopPointSchema = z.object({
+    AtcoCode: z.string(),
+    Descriptor: z.object({
+        CommonName: z.string(),
+    }),
+    Place: z.object({
+        Location: locationSchema.optional(),
+    }),
+});
+
+export type TxcStopPoint = z.infer<typeof stopPointSchema>;
+
+export const annotatedStopPointRefSchema = z.object({
     StopPointRef: z.coerce.string(),
     CommonName: z.string(),
     Location: locationSchema.optional(),
 });
 
-export type TxcStop = z.infer<typeof stopSchema>;
+export type TxcAnnotatedStopPointRef = z.infer<typeof annotatedStopPointRefSchema>;
 
 export const servicedOrganisationSchema = z.object({
     OrganisationCode: z.string().optional(),
@@ -302,7 +314,8 @@ export const txcSchema = z.object({
             })
             .or(txcEmptyProperty),
         StopPoints: z.object({
-            AnnotatedStopPointRef: stopSchema.array(),
+            AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
+            StopPoint: stopPointSchema.array().optional(),
         }),
     }),
 });
