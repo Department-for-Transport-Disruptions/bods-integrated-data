@@ -132,8 +132,8 @@ run-local-bods-txc-retriever:
 run-local-tnds-txc-retriever:
 	STAGE=local TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_FTP_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
 
-run-local-txc-retriever:
-	STAGE=local BODS_TXC_RETRIEVER_FUNCTION_NAME="dummy" TNDS_TXC_RETRIEVER_FUNCTION_NAME="dummy" npx tsx -e "import {handler} from './src/functions/txc-retriever'; handler().catch(e => console.error(e))"
+run-local-db-cleardown:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/db-cleardown'; handler().catch(e => console.error(e))"
 
 run-bods-txc-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
