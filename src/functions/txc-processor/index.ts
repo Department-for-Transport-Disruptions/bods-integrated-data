@@ -12,7 +12,7 @@ import {
     ServicedOrganisation,
     Operator,
 } from "@bods-integrated-data/shared/schema";
-import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
+import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
@@ -214,11 +214,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-const processSqsRecord = async (
-    record: S3EventRecord,
-    bankHolidaysJson: BankHolidaysJson,
-    dbClient: Kysely<Database>,
-) => {
+const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: Kysely<Database>) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
     const isTnds = record.s3.bucket.name.includes("-tnds-");
@@ -255,7 +251,7 @@ const processSqsRecord = async (
     );
 };
 
-export const handler = async (event: SQSEvent) => {
+export const handler = async (event: S3Event) => {
     const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
     const dbClient = await getDatabaseClient(stage === "local");
 
@@ -266,18 +262,14 @@ export const handler = async (event: SQSEvent) => {
     try {
         logger.info("Retrieving bank holidays JSON");
         const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);
-        logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);
+        logger.info("Starting processing of TXC");
 
-        await Promise.all(
-            event.Records.map((record) =>
-                processSqsRecord((JSON.parse(record.body) as S3Event).Records[0], bankHolidaysJson, dbClient),
-            ),
-        );
+        await processRecord(event.Records[0], bankHolidaysJson, dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor, rolling back transaction`, e);
+            logger.error(`There was a problem with the bods txc processor`, e);
         }
 
         throw e;

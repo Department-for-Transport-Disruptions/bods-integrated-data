@@ -9,12 +9,11 @@ terraform {
   }
 }
 
-module "integrated_data_table_renamer_function" {
-  source = "../shared/lambda-function"
-
+module "integrated_data_db_cleardown_function" {
+  source          = "../shared/lambda-function"
   environment     = var.environment
-  function_name   = "integrated-data-table-renamer"
-  zip_path        = "${path.module}/../../../src/functions/dist/table-renamer.zip"
+  function_name   = "integrated-data-db-cleardown"
+  zip_path        = "${path.module}/../../../src/functions/dist/db-cleardown.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
   timeout         = 120
@@ -24,15 +23,17 @@ module "integrated_data_table_renamer_function" {
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
 
-  permissions = [{
-    Action = [
-      "secretsmanager:GetSecretValue",
-    ],
-    Effect = "Allow",
-    Resource = [
-      var.db_secret_arn,
-    ]
-  }]
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+    }
+  ]
 
   env_vars = {
     STAGE         = var.environment

@@ -173,7 +173,7 @@ run-local-avl-aggregate-siri-vm:
 	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
 
 run-local-avl-retriever:
-	STAGE=local TARGET_BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TARGET_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-subscribe:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
