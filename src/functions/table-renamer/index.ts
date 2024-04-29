@@ -18,54 +18,37 @@ const tables: TableKey[] = [
     { table: "shape", newTable: "shape_new", key: "id" },
     { table: "trip", newTable: "trip_new", key: "id" },
     { table: "frequency", newTable: "frequency_new", key: "id" },
-    { table: "stop_time", newTable: "stop_new", key: "id" },
+    { table: "stop_time", newTable: "stop_time_new", key: "id" },
     { table: "noc_operator", newTable: "noc_operator_new", key: "noc" },
     { table: "naptan_stop", newTable: "naptan_stop_new", key: "atco_code" },
+    { table: "nptg_admin_area", newTable: "nptg_admin_area_new", key: "admin_area_code" },
+    { table: "nptg_locality", newTable: "nptg_locality_new", key: "locality_code" },
+    { table: "nptg_region", newTable: "nptg_region_new", key: "region_code" },
 ];
-
-const isTableEmpty = async (dbClient: Kysely<Database>, table: keyof Database) => {
-    // Count returns a string
-    const queryResult = await dbClient
-        .selectFrom(table)
-        .select([(i) => i.fn.countAll<string>().as("count")])
-        .execute();
-
-    return queryResult[0].count === "0";
-};
 
 const getMatchingTables = async (dbClient: Kysely<Database>) => {
     const matches = await Promise.all(
         tables.map(async (tableKey) => {
             const { table, newTable, key } = tableKey;
-            const pk = key as string;
 
-            const newTableIsEmpty = await isTableEmpty(dbClient, newTable);
+            const [newCount] = await dbClient
+                .selectFrom(`${newTable}`)
+                .select(dbClient.fn.count(key).as("count"))
+                .execute();
 
-            if (newTableIsEmpty) return;
+            if (newCount.count === 0) return;
 
-            const mainTableIsEmpty = await isTableEmpty(dbClient, table);
+            const [currentCount] = await dbClient
+                .selectFrom(table)
+                .select(dbClient.fn.count(key).as("count"))
+                .execute();
 
-            if (!mainTableIsEmpty) {
-                const query = await sql<{ percentage_matching: number }>`
-                WITH total_rows AS (
-                SELECT COUNT(*)::FLOAT AS total from ${sql.id(table)}
-                ),
-                matching_rows AS (
-                SELECT COUNT(DISTINCT ${sql.id(table)}.${sql.ref(pk)})::FLOAT AS matching
-                FROM ${sql.id(table)}
-                JOIN ${sql.id(newTable)} ON ${sql.id(table)}.${sql.id(pk)} = ${sql.id(newTable)}.${sql.id(pk)}
-                )
-                SELECT (matching_rows.matching / total_rows.total) * 100 AS percentage_matching
-                FROM matching_rows, total_rows;
-                `.execute(dbClient);
+            if (!(currentCount.count === 0)) {
+                const percentageResult = (Number(newCount.count) / Number(currentCount.count)) * 100;
 
-                if (query.rows.length < 0) {
-                    throw new Error(`Error attempting to match table ${table} with key ${pk}`);
-                }
-
-                if (query.rows[0].percentage_matching < 80) {
+                if (percentageResult < 80) {
                     logger.warn(
-                        `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${query.rows[0].percentage_matching}%`,
+                        `Tables ${table} and ${newTable} have less than an 80% match, percentage match: ${percentageResult}%`,
                     );
                     return;
                 }
@@ -80,7 +63,7 @@ const getMatchingTables = async (dbClient: Kysely<Database>) => {
 
 const renameTables = async (tablesToRename: (keyof Database)[], dbClient: Kysely<Database>) => {
     for (const table of tablesToRename) {
-        await dbClient.schema.dropTable(`${table}_old`).ifExists().execute();
+        await dbClient.schema.dropTable(`${table}_old`).ifExists().cascade().execute();
         await dbClient.schema.alterTable(table).renameTo(`${table}_old`).execute();
         await dbClient.schema.alterTable(`${table}_new`).renameTo(table).execute();
     }
