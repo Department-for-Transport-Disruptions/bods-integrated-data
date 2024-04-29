@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     TxcRouteSection,
@@ -46,8 +47,24 @@ const txcArrayProperties = [
     "ServicedOrganisationRef",
 ];
 
+const getBankHolidaysJson = async (bucket: string) => {
+    const file = await getS3Object({
+        Bucket: bucket,
+        Key: "bank-holidays.json",
+    });
+
+    const body = await file.Body?.transformToString();
+
+    if (!body) {
+        throw new Error("No data found in bank-holidays.json");
+    }
+
+    return JSON.parse(body) as BankHolidaysJson;
+};
+
 const processServices = (
     dbClient: Kysely<Database>,
+    bankHolidaysJson: BankHolidaysJson,
     operators: Operator[],
     services: Service[],
     vehicleJourneys: VehicleJourney[],
@@ -146,6 +163,7 @@ const processServices = (
             dbClient,
             service,
             vehicleJourneyMappings,
+            bankHolidaysJson,
             servicedOrganisations,
         );
         vehicleJourneyMappings = await insertShapes(
@@ -196,7 +214,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-const processRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
+const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: Kysely<Database>) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
     const isTnds = record.s3.bucket.name.includes("-tnds-");
@@ -219,6 +237,7 @@ const processRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) 
 
     await processServices(
         dbClient,
+        bankHolidaysJson,
         TransXChange.Operators.Operator,
         TransXChange.Services.Service,
         TransXChange.VehicleJourneys.VehicleJourney,
@@ -233,12 +252,19 @@ const processRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) 
 };
 
 export const handler = async (event: S3Event) => {
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
+    const dbClient = await getDatabaseClient(stage === "local");
+
+    if (!bankHolidaysBucketName) {
+        throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
+    }
 
     try {
+        logger.info("Retrieving bank holidays JSON");
+        const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);
         logger.info("Starting processing of TXC");
 
-        await processRecord(event.Records[0], dbClient);
+        await processRecord(event.Records[0], bankHolidaysJson, dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {

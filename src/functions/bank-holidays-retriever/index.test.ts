@@ -1,7 +1,7 @@
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 import { describe, vi, afterEach, it, expect } from "vitest";
-import { getBankHolidaysAndUploadToS3 } from ".";
+import { getBankHolidaysAndUploadToS3, handler } from ".";
 
 const mockBankHolidaysResponse = {
     "england-and-wales": {
@@ -66,5 +66,11 @@ describe("getBankHolidaysAndUploadToS3", () => {
         await expect(() => getBankHolidaysAndUploadToS3("test-bucket")).rejects.toThrow(
             "Did not recieve any data from bank holidays url",
         );
+    });
+});
+
+describe("handler", () => {
+    it("should throw an error if bucket name is not set", async () => {
+        await expect(() => handler()).rejects.toThrow("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
     });
 });
