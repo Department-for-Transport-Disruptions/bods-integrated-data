@@ -84,16 +84,17 @@ module "integrated_data_nptg_pipeline" {
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
-  environment            = local.env
-  vpc_id                 = null
-  private_subnet_ids     = null
-  db_secret_arn          = "*"
-  db_sg_id               = null
-  db_host                = null
-  tnds_ftp_credentials   = local.secrets["tnds_ftp"]
-  rds_output_bucket_name = "integrated-data-aurora-output-${local.env}"
-  alarm_topic_arn        = ""
-  ok_topic_arn           = ""
+  environment               = local.env
+  vpc_id                    = null
+  private_subnet_ids        = null
+  db_secret_arn             = "*"
+  db_sg_id                  = null
+  db_host                   = null
+  tnds_ftp_credentials      = local.secrets["tnds_ftp"]
+  rds_output_bucket_name    = "integrated-data-aurora-output-${local.env}"
+  alarm_topic_arn           = ""
+  ok_topic_arn              = ""
+  bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
 }
 
 module "integrated_data_gtfs_downloader" {
