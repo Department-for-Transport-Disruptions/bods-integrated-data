@@ -7,13 +7,12 @@ import {
     NewRoute,
     NewShape,
     NewStopTime,
-    Route,
     NewTrip,
     NewStop,
     NewAgency,
 } from "@bods-integrated-data/shared/database";
 import { TxcRouteSection, Service, TxcRoute, TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
-import { notEmpty, chunkArray, getWheelchairAccessibilityFromVehicleType } from "@bods-integrated-data/shared/utils";
+import { notEmpty, chunkArray } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 import { randomUUID } from "crypto";
@@ -267,58 +266,6 @@ export const insertStopTimes = async (
     }
 };
 
-export const insertTrips = async (
-    dbClient: Kysely<Database>,
-    txcServices: Service[],
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-    routes: Route[],
-    filePath: string,
-) => {
-    const updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
-
-    const trips = vehicleJourneyMappings
-        .map<NewTrip | null>((vehicleJourneyMapping, index) => {
-            const { vehicleJourney } = vehicleJourneyMapping;
-            const route = routes.find((route) => route.line_id === vehicleJourney.LineRef);
-
-            if (!route) {
-                logger.warn(`Unable to find route with line ref: ${vehicleJourney.LineRef}`);
-                return null;
-            }
-
-            const journeyPattern = txcServices
-                .flatMap((s) => s.StandardService.JourneyPattern)
-                .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
-
-            if (!journeyPattern) {
-                logger.warn(
-                    `Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`,
-                );
-                return null;
-            }
-
-            const tripId = randomUUID();
-
-            updatedVehicleJourneyMappings[index].tripId = tripId;
-
-            return {
-                id: tripId,
-                route_id: vehicleJourneyMapping.routeId,
-                service_id: vehicleJourneyMapping.serviceId,
-                block_id: vehicleJourney.Operational?.Block?.BlockNumber || "",
-                shape_id: vehicleJourneyMapping.shapeId,
-                trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
-                wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
-                    vehicleJourney.Operational?.VehicleType,
-                ),
-                vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
-                ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
-                file_path: filePath,
-            };
-        })
-        .filter(notEmpty);
-
-    await dbClient.insertInto("trip_new").values(trips).execute();
-
-    return updatedVehicleJourneyMappings;
+export const insertTrips = async (dbClient: Kysely<Database>, trips: NewTrip[]) => {
+    return dbClient.insertInto("trip_new").values(trips).returningAll().execute();
 };

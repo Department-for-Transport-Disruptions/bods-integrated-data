@@ -18,10 +18,11 @@ import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
-import { insertShapes, insertStopTimes, insertTrips } from "./data/database";
+import { insertShapes, insertStopTimes } from "./data/database";
 import { processFrequencies } from "./data/frequencies";
 import { processRoutes } from "./data/routes";
 import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
+import { processTrips } from "./data/trips";
 import { VehicleJourneyMapping } from "./types";
 import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
@@ -175,7 +176,7 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
+        vehicleJourneyMappings = await processTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
         await processFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
