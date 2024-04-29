@@ -56,3 +56,8 @@ variable "rds_output_bucket_name" {
   type        = string
   description = "Name of the output bucket for aurora exports"
 }
+
+variable "bank_holidays_bucket_name" {
+  type        = string
+  description = "Name of the output bucket for bank holidays JSON"
+}

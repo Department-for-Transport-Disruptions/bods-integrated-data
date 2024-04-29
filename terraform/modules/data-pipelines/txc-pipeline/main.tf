@@ -232,11 +232,12 @@ module "integrated_data_txc_processor_function" {
   }]
 
   env_vars = {
-    STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
+    STAGE                     = var.environment
+    DB_HOST                   = var.db_host
+    DB_PORT                   = var.db_port
+    DB_SECRET_ARN             = var.db_secret_arn
+    DB_NAME                   = var.db_name
+    BANK_HOLIDAYS_BUCKET_NAME = var.bank_holidays_bucket_name
   }
 }
 
