@@ -245,7 +245,7 @@ module "integrated_data_txc_s3_sqs" {
   bucket_name                = "integrated-data-txc-${var.environment}"
   sqs_name                   = "integrated-data-txc-queue-${var.environment}"
   dlq_name                   = "integrated-data-txc-dlq-${var.environment}"
-  visibility_timeout_seconds = 200
+  visibility_timeout_seconds = 300
   alarm_topic_arn            = var.alarm_topic_arn
   ok_topic_arn               = var.ok_topic_arn
 }
