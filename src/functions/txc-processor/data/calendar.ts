@@ -4,9 +4,12 @@ import {
     NewCalendar,
     NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
-import { getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
+import { BankHolidaysJson, getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
 import { OperatingPeriod, OperatingProfile, Service, ServicedOrganisation } from "@bods-integrated-data/shared/schema";
-import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/schema/dates.schema";
+import {
+    DEFAULT_DATE_FORMAT,
+    getTransformedBankHolidayOperationSchema,
+} from "@bods-integrated-data/shared/schema/dates.schema";
 import { Dayjs } from "dayjs";
 import { Kysely } from "kysely";
 import { insertCalendar } from "./database";
@@ -260,6 +263,7 @@ export const processServicedOrganisation = (
 export const formatCalendar = (
     operatingProfile: OperatingProfile,
     operatingPeriod: OperatingPeriod,
+    bankHolidaysJson: BankHolidaysJson,
     servicedOrganisations?: ServicedOrganisation[],
 ): {
     calendar: NewCalendar;
@@ -278,8 +282,16 @@ export const formatCalendar = (
 
     const specialDaysOfOperation = operatingProfile.SpecialDaysOperation?.DaysOfOperation?.DateRange.flat() ?? [];
     const specialDaysOfNonOperation = operatingProfile.SpecialDaysOperation?.DaysOfNonOperation?.DateRange.flat() ?? [];
-    const bankHolidayDaysOfOperation = operatingProfile.BankHolidayOperation?.DaysOfOperation ?? [];
-    const bankHolidayDaysOfNonOperation = operatingProfile.BankHolidayOperation?.DaysOfNonOperation ?? [];
+    const bankHolidayDaysOfOperation = operatingProfile.BankHolidayOperation?.DaysOfOperation;
+    const bankHolidayDaysOfNonOperation = operatingProfile.BankHolidayOperation?.DaysOfNonOperation;
+
+    const transformedbankHolidayDaysOfOperation = bankHolidayDaysOfOperation
+        ? getTransformedBankHolidayOperationSchema(bankHolidaysJson, bankHolidayDaysOfOperation)
+        : [];
+
+    const transformedbankHolidayDaysOfNonOperation = bankHolidayDaysOfNonOperation
+        ? getTransformedBankHolidayOperationSchema(bankHolidaysJson, bankHolidayDaysOfNonOperation)
+        : [];
 
     const defaultCalendar: NewCalendar = {
         monday: 0,
@@ -313,10 +325,18 @@ export const formatCalendar = (
     }
 
     const daysOfNonOperation = [
-        ...new Set([...specialDaysOfNonOperation, ...bankHolidayDaysOfNonOperation, ...servicedOrgDaysOfNonOperation]),
+        ...new Set([
+            ...specialDaysOfNonOperation,
+            ...transformedbankHolidayDaysOfNonOperation,
+            ...servicedOrgDaysOfNonOperation,
+        ]),
     ];
     const daysOfOperation = [
-        ...new Set([...specialDaysOfOperation, ...bankHolidayDaysOfOperation, ...servicedOrgDaysOfOperation]),
+        ...new Set([
+            ...specialDaysOfOperation,
+            ...transformedbankHolidayDaysOfOperation,
+            ...servicedOrgDaysOfOperation,
+        ]),
     ].filter((day) => !daysOfNonOperation.includes(day));
 
     const formattedExtraDaysOfOperation = formatCalendarDates(
@@ -342,6 +362,7 @@ export const processCalendars = async (
     dbClient: Kysely<Database>,
     service: Service,
     vehicleJourneyMappings: VehicleJourneyMapping[],
+    bankHolidaysJson: BankHolidaysJson,
     servicedOrganisations?: ServicedOrganisation[],
 ) => {
     let serviceCalendarId: number | null = null;
@@ -349,7 +370,7 @@ export const processCalendars = async (
     if (service.OperatingProfile) {
         const serviceCalendar = await insertCalendar(
             dbClient,
-            formatCalendar(service.OperatingProfile, service.OperatingPeriod, servicedOrganisations),
+            formatCalendar(service.OperatingProfile, service.OperatingPeriod, bankHolidaysJson, servicedOrganisations),
         );
 
         serviceCalendarId = serviceCalendar.id;
@@ -374,7 +395,12 @@ export const processCalendars = async (
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
             const defaultCalendar = await insertCalendar(
                 dbClient,
-                formatCalendar(DEFAULT_OPERATING_PROFILE, service.OperatingPeriod, servicedOrganisations),
+                formatCalendar(
+                    DEFAULT_OPERATING_PROFILE,
+                    service.OperatingPeriod,
+                    bankHolidaysJson,
+                    servicedOrganisations,
+                ),
             );
 
             return {
@@ -386,6 +412,7 @@ export const processCalendars = async (
         const calendarData = formatCalendar(
             vehicleJourneyMapping.vehicleJourney.OperatingProfile,
             service.OperatingPeriod,
+            bankHolidaysJson,
             servicedOrganisations,
         );
 

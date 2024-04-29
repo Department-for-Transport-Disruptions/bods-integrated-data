@@ -3,7 +3,7 @@ import { Database, NaptanStop, getDatabaseClient } from "@bods-integrated-data/s
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { S3Event } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
-import { sql, Kysely } from "kysely";
+import { Kysely } from "kysely";
 import OsPoint from "ospoint";
 import { parse } from "papaparse";
 
@@ -113,10 +113,6 @@ const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[
     }
 
     logger.info(`Uploading ${numRows} rows to the database in ${batches.length} batches`);
-
-    await dbClient.schema.dropTable("naptan_stop_new").ifExists().execute();
-
-    await sql`create table naptan_stop_new (LIKE naptan_stop INCLUDING ALL);`.execute(dbClient);
 
     await BluebirdPromise.map(
         batches,

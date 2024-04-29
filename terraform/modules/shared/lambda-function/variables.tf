@@ -47,6 +47,11 @@ variable "env_vars" {
   description = "Map of environment variables"
 }
 
+variable "needs_db_access" {
+  type    = bool
+  default = false
+}
+
 variable "vpc_id" {
   type        = string
   nullable    = true

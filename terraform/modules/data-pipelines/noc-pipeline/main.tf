@@ -22,6 +22,13 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_noc_bucket_block_p
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_versioning" "integrated_data_noc_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_noc_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 module "integrated_data_noc_retriever_function" {
   source = "../../shared/lambda-function"
 
@@ -32,7 +39,6 @@ module "integrated_data_noc_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 120
   memory        = 1024
-  schedule      = "cron(0 2 * * ? *)"
 
   permissions = [{
     Action = [
@@ -53,22 +59,17 @@ module "integrated_data_noc_retriever_function" {
 module "integrated_data_noc_processor_function" {
   source = "../../shared/lambda-function"
 
-  environment          = var.environment
-  function_name        = "integrated-data-noc-processor"
-  zip_path             = "${path.module}/../../../../src/functions/dist/noc-processor.zip"
-  handler              = "index.handler"
-  runtime              = "nodejs20.x"
-  timeout              = 200
-  memory               = 2048
-  vpc_id               = var.vpc_id
-  subnet_ids           = var.private_subnet_ids
-  database_sg_id       = var.db_sg_id
-  reserved_concurrency = 50
-
-  s3_bucket_trigger = {
-    id  = aws_s3_bucket.integrated_data_noc_bucket.id
-    arn = aws_s3_bucket.integrated_data_noc_bucket.arn
-  }
+  environment     = var.environment
+  function_name   = "integrated-data-noc-processor"
+  zip_path        = "${path.module}/../../../../src/functions/dist/noc-processor.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 200
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [{
     Action = [

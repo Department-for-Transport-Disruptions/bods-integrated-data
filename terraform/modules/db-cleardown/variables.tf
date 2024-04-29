@@ -36,28 +36,3 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
-
-variable "tnds_ftp_credentials" {
-  type        = map(string)
-  description = "TNDS FTP credentials"
-}
-
-variable "ok_topic_arn" {
-  type        = string
-  description = "ARN of the SNS topic to use for ok notifications"
-}
-
-variable "alarm_topic_arn" {
-  type        = string
-  description = "ARN of the SNS topic to use for alarm notifications"
-}
-
-variable "rds_output_bucket_name" {
-  type        = string
-  description = "Name of the output bucket for aurora exports"
-}
-
-variable "bank_holidays_bucket_name" {
-  type        = string
-  description = "Name of the output bucket for bank holidays JSON"
-}

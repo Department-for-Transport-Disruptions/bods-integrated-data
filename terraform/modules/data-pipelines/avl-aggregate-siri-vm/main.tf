@@ -22,7 +22,7 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_versioning" "versioning_example" {
+resource "aws_s3_bucket_versioning" "integrated_data_avl_siri_vm_bucket_versioning" {
   bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
   versioning_configuration {
     status = "Enabled"
@@ -32,32 +32,33 @@ resource "aws_s3_bucket_versioning" "versioning_example" {
 module "avl_aggregate_siri" {
   source = "../../shared/lambda-function"
 
-  environment    = var.environment
-  function_name  = "integrated-data-avl-aggregate-siri-vm"
-  zip_path       = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
-  handler        = "index.handler"
-  memory         = 1024
-  runtime        = "nodejs20.x"
-  timeout        = 120
-  vpc_id         = var.vpc_id
-  subnet_ids     = var.private_subnet_ids
-  database_sg_id = var.db_sg_id
-  schedule       = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
+  environment     = var.environment
+  function_name   = "integrated-data-avl-aggregate-siri-vm"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-aggregate-siri-vm.zip"
+  handler         = "index.handler"
+  memory          = 1024
+  runtime         = "nodejs20.x"
+  timeout         = 120
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+  schedule        = var.environment == "prod" ? "rate(10 seconds)" : "rate(1 minute)"
 
   permissions = [
     {
       Action = [
         "s3:PutObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
       ]
-    }, {
+      }, {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn,
       ]
