@@ -2,7 +2,7 @@ import { Agency, Database, NewAgency } from "@bods-integrated-data/shared/databa
 import { Operator } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { insertAgencies } from "./agencies";
+import { processAgencies } from "./agencies";
 import * as databaseFunctions from "./database";
 
 describe("agencies", () => {
@@ -48,7 +48,7 @@ describe("agencies", () => {
         getOperatorMock.mockResolvedValue(undefined);
         insertAgencyMock.mockImplementation((_dbClient, agency) => Promise.resolve(agency) as Promise<Agency>);
 
-        const result = await insertAgencies(dbClient, operators);
+        const result = await processAgencies(dbClient, operators);
         expect(result).toEqual(expectedAgencies);
     });
 
@@ -91,7 +91,7 @@ describe("agencies", () => {
         });
         insertAgencyMock.mockImplementation((_dbClient, agency) => Promise.resolve(agency) as Promise<Agency>);
 
-        const result = await insertAgencies(dbClient, operators);
+        const result = await processAgencies(dbClient, operators);
         expect(result).toEqual(expectedAgencies);
     });
 
@@ -140,7 +140,7 @@ describe("agencies", () => {
         getOperatorMock.mockResolvedValue(undefined);
         insertAgencyMock.mockImplementation((_dbClient, agency) => Promise.resolve(agency) as Promise<Agency>);
 
-        const result = await insertAgencies(dbClient, operators);
+        const result = await processAgencies(dbClient, operators);
         expect(result).toEqual(expectedAgencies);
     });
 });

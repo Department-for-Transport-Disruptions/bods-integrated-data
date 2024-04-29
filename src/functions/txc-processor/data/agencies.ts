@@ -4,7 +4,7 @@ import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { getAgency, getOperator, insertAgency } from "./database";
 
-export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
+export const processAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {
         const existingAgency = await getAgency(dbClient, operator.NationalOperatorCode);
         const existingNoc = await getOperator(dbClient, operator.NationalOperatorCode);

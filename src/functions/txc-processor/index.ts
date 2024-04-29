@@ -16,12 +16,12 @@ import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import { insertAgencies } from "./data/agencies";
+import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
 import { insertShapes, insertStopTimes, insertTrips } from "./data/database";
 import { processFrequencies } from "./data/frequencies";
-import { insertRoutes } from "./data/routes";
-import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints } from "./data/stops";
+import { processRoutes } from "./data/routes";
+import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { VehicleJourneyMapping } from "./types";
 import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
@@ -121,7 +121,7 @@ const processServices = (
             return null;
         }
 
-        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agency, isTnds);
+        const { routes, isDuplicateRoute } = await processRoutes(dbClient, service, agency, isTnds);
 
         if (isDuplicateRoute) {
             logger.warn("Duplicate TNDS route found for service", {
@@ -229,12 +229,12 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
         return;
     }
 
-    const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
+    const agencyData = await processAgencies(dbClient, TransXChange.Operators.Operator);
 
     if (TransXChange.StopPoints.StopPoint) {
-        await insertStopsByStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
+        await processStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
     } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
-        await insertStopsByAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+        await processAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
     }
 
     await processServices(

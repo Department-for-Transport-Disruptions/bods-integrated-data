@@ -5,7 +5,7 @@ import { Kysely } from "kysely";
 import { getBodsRoute, getTndsRoute, insertRoute } from "./database";
 import { DuplicateRouteError } from "../errors";
 
-export const insertRoutes = async (
+export const processRoutes = async (
     dbClient: Kysely<Database>,
     service: Service,
     agency: Agency,
