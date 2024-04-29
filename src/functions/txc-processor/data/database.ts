@@ -10,17 +10,11 @@ import {
     NewStopTime,
     Route,
     NewTrip,
-    NewAgency,
     NewStop,
+    NewAgency,
 } from "@bods-integrated-data/shared/database";
 import { getDuration } from "@bods-integrated-data/shared/dates";
-import {
-    Operator,
-    TxcRouteSection,
-    Service,
-    TxcRoute,
-    TxcJourneyPatternSection,
-} from "@bods-integrated-data/shared/schema";
+import { TxcRouteSection, Service, TxcRoute, TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { notEmpty, chunkArray, getWheelchairAccessibilityFromVehicleType } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
@@ -28,38 +22,25 @@ import { randomUUID } from "crypto";
 import { VehicleJourneyMapping } from "../types";
 import { mapTimingLinksToStopTimes } from "../utils";
 
-export const insertAgencies = async (dbClient: Kysely<Database>, operators: Operator[]) => {
-    const agencyPromises = operators.map(async (operator) => {
-        const existingAgency = await dbClient
-            .selectFrom("agency")
-            .selectAll()
-            .where("noc", "=", operator.NationalOperatorCode)
-            .executeTakeFirst();
+export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
+    return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
+};
 
-        const existingNoc = await dbClient
-            .selectFrom("noc_operator_new")
-            .selectAll()
-            .where("noc", "=", operator.NationalOperatorCode)
-            .executeTakeFirst();
+export const getOperator = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
+    return dbClient
+        .selectFrom("noc_operator_new")
+        .selectAll()
+        .where("noc", "=", nationalOperatorCode)
+        .executeTakeFirst();
+};
 
-        const newAgency: NewAgency = {
-            name: existingNoc?.operator_public_name ?? operator.OperatorShortName,
-            noc: operator.NationalOperatorCode,
-            url: "https://www.traveline.info",
-            phone: "",
-        };
-
-        return dbClient
-            .insertInto("agency_new")
-            .values(existingAgency || newAgency)
-            .onConflict((oc) => oc.column("noc").doUpdateSet(existingAgency || newAgency))
-            .returningAll()
-            .executeTakeFirst();
-    });
-
-    const agencyData = await Promise.all(agencyPromises);
-
-    return agencyData.filter(notEmpty);
+export const insertAgency = async (dbClient: Kysely<Database>, agency: NewAgency) => {
+    return dbClient
+        .insertInto("agency_new")
+        .values(agency)
+        .onConflict((oc) => oc.column("noc").doUpdateSet(agency))
+        .returningAll()
+        .executeTakeFirst();
 };
 
 export const insertCalendar = async (
