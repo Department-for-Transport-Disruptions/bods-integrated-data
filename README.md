@@ -18,13 +18,16 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
   - [NOC data retrieval](#noc-data-retrieval)
   - [NaPTAN data retrieval](#naptan-data-retrieval)
   - [NPTG data retrieval](#nptg-data-retrieval)
+  - [Bank holidays data retrieval](#bank-holidays-data-retrieval)
   - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
     - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
     - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
+    - [Renaming tables](#renaming-tables)
   - [GTFS feed generation](#gtfs-feed-generation)
     - [GTFS Schedule](#gtfs-schedule)
     - [GTFS Realtime](#gtfs-realtime)
   - [Creating and invoking lambda functions locally](#creating-and-invoking-lambda-functions-locally)
+  - [CLI Helpers](#cli-helpers)
 - [Configuration](#configuration)
   - [Adding and updating secrets](#adding-and-updating-secrets)
   - [Using secrets in Terraform](#using-secrets-in-terraform)
@@ -93,8 +96,9 @@ This will:
 
 - install required asdf plugins
 - start docker containers for postgres and localstack
-- create the localstack resources
+- install and build all functions
 - run local database migrations
+- create localstack resources in the Terraform local workspace
 
 Run the local `txc-retriever` to create the remaining database tables:
 
@@ -130,7 +134,7 @@ make run-local-noc-retriever
 Insert NOC data into the database:
 
 ```bash
-make run-local-noc-processor FILE=noc.xml
+make run-local-noc-processor
 ```
 
 ### NaPTAN data retrieval
@@ -163,6 +167,16 @@ Insert NPTG data into the database:
 
 ```bash
 make run-local-nptg-uploader
+```
+
+### Bank holidays data retrieval
+
+The bank holidays dataset contains data for UK bank holidays.
+
+Download the bank holidays dataset into the localstack container:
+
+```bash
+make run-local-bank-holidays-retriever
 ```
 
 ### TXC data retrieval and processing
@@ -251,11 +265,9 @@ To update the tables within the database you can run:
 make run-local-table-renamer
 ```
 
-This will update the `_new` tables to be the primary tables and update the primary tables to be `_old`
+This will update the `_new` tables to be the primary tables and update the primary tables to be `_old`, for example:
 
-Example:
-
-```
+```text
 agency_new -> agency
 agency -> agency_old
 agency_old -> <Deleted>
@@ -297,51 +309,39 @@ awslocal s3api get-object --bucket integrated-data-gtfs-rt-local --key gtfs-rt.b
 
 ### Creating and invoking lambda functions locally
 
-All the current lambda functions should be created when running the `make setup` command.
-
-If you wish to create them all manually you can run:
+`tflocal` is used to manage lambdas in the local Terraform workspace.
+To deploy lambdas after making changes:
 
 ```bash
-make create-lambdas
+make create-local-env
 ```
 
-Similarly, if you wish to delete all the lambdas:
+To invoke a lambda locally, use its corresponding CLI helper command as documented in the [CLI Helpers](#cli-helpers) section below.
+
+Alternatively, invoke the lambda directly (with any necessary env vars):
 
 ```bash
-make delete-lambdas
+ENV_VAR_1="{A}" ENV_VAR_2="{B}" awslocal lambda invoke --function-name {FUNCTION_NAME} --output text /dev/stdout
 ```
 
-And if you want to delete and recreate all lambdas:
+### CLI Helpers
+
+Inside `./cli-helpers` are a number of CLI commands to help with development, such as invoking lambdas and provisioning mock data.
+
+List available commands:
 
 ```bash
-make remake-lambdas
+make commands
 ```
 
-These commands can also be run for individual lambdas:
+Run a command:
 
 ```bash
-make create-lambda-{LAMBDA_NAME}
-make delete-lambda-{LAMBDA_NAME}
-make remake-lambda-{LAMBDA_NAME}
-```
-
-So if you wanted to update a lambda after changing the code, you could run:
-
-```bash
-make build-functions
-
-make remake-lambda-{LAMBDA_NAME}
-# OR
-make remake-lambdas
-```
-
-To invoke a lambda, simply run:
-
-```bash
-make invoke-local-{LAMBDA_NAME}
-
-# Some lambdas require a variable to be passed
-FILE=bods.zip make invoke-local-bods-txc-unzipper
+make command-{COMMAND_NAME}
+# for example:
+make command-invoke-gtfs-rt-downloader
+# with flags:
+make command-invoke-avl-unsubscriber FLAGS="--stage local"
 ```
 
 ## Configuration

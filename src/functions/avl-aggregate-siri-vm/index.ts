@@ -3,7 +3,7 @@ import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { Avl, siriSchema } from "@bods-integrated-data/shared/schema/siri.schema";
-import { parse } from "js2xmlparser";
+import { XMLBuilder } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
 
@@ -14,28 +14,28 @@ const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
 const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime: string) => {
     return avl.map((record) => {
         const monitoredVehicleJourney = {
-            LineRef: record.lineRef,
-            DirectionRef: record.directionRef,
+            LineRef: record.line_ref,
+            DirectionRef: record.direction_ref,
             FramedVehicleJourneyRef:
-                record.dataFrameRef && record.datedVehicleJourneyRef
+                record.data_frame_ref && record.dated_vehicle_journey_ref
                     ? {
-                          DataFrameRef: record.dataFrameRef,
-                          DatedVehicleJourneyRef: record.datedVehicleJourneyRef,
+                          DataFrameRef: record.data_frame_ref,
+                          DatedVehicleJourneyRef: record.dated_vehicle_journey_ref,
                       }
                     : null,
-            PublishedLineName: record.publishedLineName,
+            PublishedLineName: record.published_line_name,
             Occupancy: record.occupancy,
-            OperatorRef: record.operatorRef,
-            OriginRef: record.originRef,
-            OriginAimedDepartureTime: record.originAimedDepartureTime,
-            DestinationRef: record.destinationRef,
+            OperatorRef: record.operator_ref,
+            OriginRef: record.origin_ref,
+            OriginAimedDepartureTime: record.origin_aimed_departure_time,
+            DestinationRef: record.destination_ref,
             VehicleLocation: {
                 Longitude: record.longitude,
                 Latitude: record.latitude,
             },
             Bearing: record.bearing,
-            BlockRef: record.blockRef,
-            VehicleRef: record.vehicleRef,
+            BlockRef: record.block_ref,
+            VehicleRef: record.vehicle_ref,
         };
 
         const monitoredVehicleJourneyWithNullEntriesRemoved = Object.fromEntries(
@@ -75,23 +75,30 @@ export const convertJsonToSiri = (
     const verifiedObject = siriSchema.parse(jsonToXmlObject);
 
     const completeObject = {
-        "@": {
-            version: "2.0",
-            xmlns: "http://www.siri.org.uk/siri",
-            "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+        "?xml": {
+            "#text": "",
+            "@_version": "1.0",
+            "@_encoding": "UTF-8",
+            "@_standalone": "yes",
         },
-        ...verifiedObject,
+        Siri: {
+            "@_version": "2.0",
+            "@_xmlns": "http://www.siri.org.uk/siri",
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            ...verifiedObject,
+        },
     };
 
-    return parse("Siri", completeObject, {
-        declaration: {
-            version: "1.0",
-            encoding: "UTF-8",
-            standalone: "yes",
-        },
-        useSelfClosingTagIfEmpty: true,
+    const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        format: true,
+        attributeNamePrefix: "@_",
     });
+
+    const request = builder.build(completeObject) as string;
+
+    return request;
 };
 
 export const generateSiriVmAndUploadToS3 = async (
@@ -114,7 +121,7 @@ export const generateSiriVmAndUploadToS3 = async (
 };
 
 export const handler = async () => {
-    const db = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const db = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info("Starting SIRI-VM generator...");
@@ -128,11 +135,6 @@ export const handler = async () => {
         const requestMessageRef = randomUUID();
 
         const avl = await getCurrentAvlData(db);
-
-        if (!avl || avl.length === 0) {
-            logger.warn("No valid AVL data found in the database...");
-            return;
-        }
 
         await generateSiriVmAndUploadToS3(
             avl,

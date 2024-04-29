@@ -1,7 +1,10 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
+
 export { sql } from "kysely";
+
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
@@ -10,7 +13,7 @@ export const getDatabaseClient = async (isLocal = false) => {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
                 pool: new Pool({
-                    host: "127.0.0.1",
+                    host: localStackHost ? "bods_integrated_data_postgres" : "127.0.0.1",
                     port: 5432,
                     database: "bods_integrated_data",
                     user: "postgres",
@@ -54,14 +57,17 @@ export const getDatabaseClient = async (isLocal = false) => {
 export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;
-    naptan_stop_old: NaptanStopTable;
+    nptg_admin_area: NptgAdminAreaTable;
+    nptg_admin_area_new: NptgAdminAreaTable;
+    nptg_locality: NptgLocalityTable;
+    nptg_locality_new: NptgLocalityTable;
+    nptg_region: NptgRegionTable;
+    nptg_region_new: NptgRegionTable;
     avl: AvlTable;
     agency: GtfsAgencyTable;
     agency_new: GtfsAgencyTable;
-    agency_old: GtfsAgencyTable;
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
-    calendar_old: GtfsCalendarTable;
     frequency: GtfsFrequencyTable;
     frequency_new: GtfsFrequencyTable;
     calendar_date: GtfsCalendarDateTable;
@@ -130,6 +136,35 @@ export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
 
+export interface NptgAdminAreaTable {
+    admin_area_code: string;
+    atco_code: string;
+    name: string;
+    region_code: string;
+}
+
+export type NptgAdminArea = Selectable<NptgAdminAreaTable>;
+export type NewNptgAdminArea = Insertable<NptgAdminAreaTable>;
+export type NptgAdminAreaUpdate = Updateable<NptgAdminAreaTable>;
+
+export interface NptgLocalityTable {
+    locality_code: string;
+    admin_area_ref: string;
+}
+
+export type NptgLocality = Selectable<NptgLocalityTable>;
+export type NewNptgLocality = Insertable<NptgLocalityTable>;
+export type NptgLocalityUpdate = Updateable<NptgLocalityTable>;
+
+export interface NptgRegionTable {
+    region_code: string;
+    name: string;
+}
+
+export type NptgRegion = Selectable<NptgRegionTable>;
+export type NewNptgRegion = Insertable<NptgRegionTable>;
+export type NptgRegionUpdate = Updateable<NptgRegionTable>;
+
 export interface AvlTable {
     id: Generated<number>;
     response_time_stamp: string;
@@ -165,7 +200,6 @@ export interface GtfsAgencyTable {
     noc: string;
     timezone: string | null;
     lang: string | null;
-    registered_operator_ref: string;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;
@@ -238,6 +272,8 @@ export interface GtfsRouteTable {
     route_long_name: string;
     route_type: RouteType;
     line_id: string;
+    data_source: "bods" | "tnds";
+    noc_line_name: string;
 }
 
 export type Route = Selectable<GtfsRouteTable>;

@@ -48,19 +48,6 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_timetables_bu
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket" "integrated_data_tnds_txc_bucket" {
-  bucket = "integrated-data-tnds-txc-${var.environment}"
-}
-
-resource "aws_s3_bucket_public_access_block" "integrated_data_tnds_txc_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_tnds_txc_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
   description = "Integrated data tnds ftp credentials - ${var.environment}"
 }
@@ -92,6 +79,7 @@ module "integrated_data_bods_txc_retriever_function" {
   }]
 
   env_vars = {
+    STAGE                  = var.environment
     TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_txc_zipped_bucket.bucket
   }
 }
@@ -126,6 +114,7 @@ module "integrated_data_tnds_txc_retriever_function" {
   }]
 
   env_vars = {
+    STAGE                  = var.environment
     TXC_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
     TNDS_FTP_ARN           = aws_secretsmanager_secret.tnds_ftp_credentials_secret.arn
   }
@@ -165,6 +154,7 @@ module "integrated_data_txc_retriever_function" {
   }]
 
   env_vars = {
+    STAGE                            = var.environment
     BODS_TXC_RETRIEVER_FUNCTION_NAME = module.integrated_data_bods_txc_retriever_function.function_name
     TNDS_TXC_RETRIEVER_FUNCTION_NAME = module.integrated_data_tnds_txc_retriever_function.function_name
     DB_HOST                          = var.db_host
@@ -190,8 +180,8 @@ module "integrated_data_tnds_txc_unzipper_function" {
 
   function_name        = "integrated-data-tnds-txc-unzipper"
   environment          = var.environment
-  unzipped_bucket_arn  = aws_s3_bucket.integrated_data_tnds_txc_bucket.arn
-  unzipped_bucket_name = aws_s3_bucket.integrated_data_tnds_txc_bucket.bucket
+  unzipped_bucket_arn  = module.integrated_data_txc_s3_sqs.bucket_arn
+  unzipped_bucket_name = module.integrated_data_txc_s3_sqs.bucket_id
   zipped_bucket_arn    = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.arn
   zipped_bucket_name   = aws_s3_bucket.integrated_data_tnds_txc_zipped_bucket.bucket
 }
@@ -204,7 +194,7 @@ module "integrated_data_txc_processor_function" {
   zip_path       = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
   handler        = "index.handler"
   runtime        = "nodejs20.x"
-  timeout        = 200
+  timeout        = 300
   memory         = 2048
   vpc_id         = var.vpc_id
   subnet_ids     = var.private_subnet_ids
@@ -241,6 +231,7 @@ module "integrated_data_txc_processor_function" {
   }]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
@@ -254,7 +245,7 @@ module "integrated_data_txc_s3_sqs" {
   bucket_name                = "integrated-data-txc-${var.environment}"
   sqs_name                   = "integrated-data-txc-queue-${var.environment}"
   dlq_name                   = "integrated-data-txc-dlq-${var.environment}"
-  visibility_timeout_seconds = 200
+  visibility_timeout_seconds = 300
   alarm_topic_arn            = var.alarm_topic_arn
   ok_topic_arn               = var.ok_topic_arn
 }
@@ -313,6 +304,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   ]
 
   env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn

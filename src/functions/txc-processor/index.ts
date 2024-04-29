@@ -8,33 +8,24 @@ import {
     txcSchema,
     TxcRoute,
     TxcJourneyPatternSection,
+    ServicedOrganisation,
+    Operator,
 } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import {
-    insertAgencies,
-    insertCalendar,
-    insertFrequencies,
-    insertRoutes,
-    insertShapes,
-    insertStopTimes,
-    insertStops,
-    insertTrips,
-} from "./data/database";
+import { processCalendars } from "./data/calendar";
+import { insertAgencies, insertFrequencies, insertShapes, insertStopTimes, insertTrips } from "./data/database";
+import { insertRoutes } from "./data/routes";
+import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints } from "./data/stops";
 import { VehicleJourneyMapping } from "./types";
-import {
-    DEFAULT_OPERATING_PROFILE,
-    formatCalendar,
-    hasServiceExpired,
-    isRequiredTndsDataset,
-    isRequiredTndsServiceMode,
-} from "./utils";
+import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
+    "StopPoint",
     "RouteSectionRef",
     "RouteSection",
     "Route",
@@ -52,62 +43,12 @@ const txcArrayProperties = [
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
     "DateRange",
+    "ServicedOrganisationRef",
 ];
-
-export const processCalendars = async (
-    dbClient: Kysely<Database>,
-    service: Service,
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
-    let serviceCalendarId: number | null = null;
-
-    if (service.OperatingProfile) {
-        const serviceCalendar = await insertCalendar(
-            dbClient,
-            formatCalendar(service.OperatingProfile, service.OperatingPeriod),
-        );
-
-        serviceCalendarId = serviceCalendar.id;
-    }
-
-    const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: serviceCalendarId,
-            };
-        }
-
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
-            const defaultCalendar = await insertCalendar(
-                dbClient,
-                formatCalendar(DEFAULT_OPERATING_PROFILE, service.OperatingPeriod),
-            );
-
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: defaultCalendar.id,
-            };
-        }
-
-        const calendarData = formatCalendar(
-            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
-            service.OperatingPeriod,
-        );
-
-        const calendar = await insertCalendar(dbClient, calendarData);
-
-        return {
-            ...vehicleJourneyMapping,
-            serviceId: calendar.id,
-        };
-    });
-
-    return Promise.all(updatedVehicleJourneyMappingsPromises);
-};
 
 const processServices = (
     dbClient: Kysely<Database>,
+    operators: Operator[],
     services: Service[],
     vehicleJourneys: VehicleJourney[],
     txcRouteSections: TxcRouteSection[],
@@ -116,6 +57,7 @@ const processServices = (
     agencyData: Agency[],
     filePath: string,
     isTnds: boolean,
+    servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
         if (hasServiceExpired(service)) {
@@ -136,6 +78,17 @@ const processServices = (
             return null;
         }
 
+        const operator = operators.find((operator) => operator["@_id"] === service.RegisteredOperatorRef);
+        const agency = agencyData.find((agency) => agency.noc === operator?.NationalOperatorCode);
+
+        if (!agency) {
+            logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`, {
+                filePath,
+            });
+
+            return null;
+        }
+
         const vehicleJourneysForLines = service.Lines.Line.flatMap((line) =>
             vehicleJourneys.filter((journey) => journey.LineRef === line["@_id"]),
         );
@@ -149,10 +102,19 @@ const processServices = (
             return null;
         }
 
-        const routeData = await insertRoutes(dbClient, service, agencyData);
+        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agency, isTnds);
 
-        if (!routeData) {
-            logger.warn("No route data found for service", {
+        if (isDuplicateRoute) {
+            logger.warn("Duplicate TNDS route found for service", {
+                service: service.ServiceCode,
+                operator: service.RegisteredOperatorRef,
+            });
+
+            return null;
+        }
+
+        if (!routes) {
+            logger.warn("No routes found for service", {
                 service: service.ServiceCode,
                 operator: service.RegisteredOperatorRef,
             });
@@ -169,7 +131,7 @@ const processServices = (
                 tripId: "",
             };
 
-            const route = routeData.find((r) => r.line_id === vehicleJourney.LineRef);
+            const route = routes.find((r) => r.line_id === vehicleJourney.LineRef);
 
             if (route) {
                 vehicleJourneyMapping.routeId = route.id;
@@ -180,7 +142,12 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        vehicleJourneyMappings = await processCalendars(dbClient, service, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processCalendars(
+            dbClient,
+            service,
+            vehicleJourneyMappings,
+            servicedOrganisations,
+        );
         vehicleJourneyMappings = await insertShapes(
             dbClient,
             services,
@@ -188,7 +155,7 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routeData, filePath);
+        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
         await insertFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
@@ -244,10 +211,15 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
 
     const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
-    await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+    if (TransXChange.StopPoints.StopPoint) {
+        await insertStopsByStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
+    } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
+        await insertStopsByAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+    }
 
     await processServices(
         dbClient,
+        TransXChange.Operators.Operator,
         TransXChange.Services.Service,
         TransXChange.VehicleJourneys.VehicleJourney,
         TransXChange.RouteSections.RouteSection,
@@ -256,11 +228,12 @@ const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database
         agencyData,
         record.s3.object.key,
         isTnds,
+        TransXChange.ServicedOrganisations?.ServicedOrganisation,
     );
 };
 
 export const handler = async (event: SQSEvent) => {
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);

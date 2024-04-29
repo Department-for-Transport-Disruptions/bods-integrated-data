@@ -66,6 +66,7 @@ export const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
+        isArray: (tagName) => tagName === "VehicleActivity",
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
@@ -89,8 +90,6 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         if (!bucketName || !tableName) {
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
-
-        logger.info(JSON.stringify(event));
 
         const subscriptionId =
             stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;

@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { Kysely, ReferenceExpression, sql } from "kysely";
+import { Kysely, ReferenceExpression } from "kysely";
 
 interface TableKey {
     table: keyof Database;
@@ -70,10 +70,7 @@ const renameTables = async (tablesToRename: (keyof Database)[], dbClient: Kysely
 };
 
 export const handler = async () => {
-    const { IS_LOCAL: local } = process.env;
-    const isLocal = local === "true";
-
-    const dbClient = await getDatabaseClient(isLocal);
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         const matchingTables = await getMatchingTables(dbClient);

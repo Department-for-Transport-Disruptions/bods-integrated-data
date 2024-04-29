@@ -4,9 +4,8 @@ import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { VehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
+import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
-import { parseStringPromise } from "xml2js";
-import { parseBooleans } from "xml2js/lib/processors.js";
 
 const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Kysely<Database>) => {
     const insertChunks = chunkArray(vehicleActivity, 3000);
@@ -14,22 +13,15 @@ const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Ky
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
 };
 
-const makeVehicleActivityArray = (value: string, name: string) => {
-    if (name === "VehicleActivity") {
-        if (!Array.isArray(value)) {
-            return [value];
-        }
-    }
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+        isArray: (tagName) => tagName === "VehicleActivity",
+    });
 
-    return value;
-};
-
-const parseXml = async (xml: string) => {
-    const parsedXml = (await parseStringPromise(xml, {
-        explicitArray: false,
-        valueProcessors: [parseBooleans, makeVehicleActivityArray],
-        ignoreAttrs: true,
-    })) as Record<string, object>;
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
@@ -51,13 +43,18 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<D
     const body = data.Body;
 
     if (body) {
-        const parsedSiri = await parseXml(await body.transformToString());
+        const parsedSiri = parseXml(await body.transformToString());
+
+        if (!parsedSiri || parsedSiri.length === 0) {
+            throw new Error("Error parsing data");
+        }
+
         await saveSiriToDatabase(parsedSiri, dbClient);
     }
 };
 
 export const handler = async (event: SQSEvent) => {
-    const dbClient = await getDatabaseClient(process.env.IS_LOCAL === "true");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info(`Starting processing of SIRI-VM. Number of records to process: ${event.Records.length}`);

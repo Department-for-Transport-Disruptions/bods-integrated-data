@@ -5,31 +5,23 @@ import {
     NewCalendarDate,
     NewFrequency,
     ServiceType,
-    Agency,
     NewRoute,
     NewShape,
-    NewStop,
-    LocationType,
     NewStopTime,
     Route,
     NewTrip,
     NewAgency,
+    NewStop,
 } from "@bods-integrated-data/shared/database";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import {
     Operator,
     TxcRouteSection,
     Service,
-    TxcStop,
     TxcRoute,
     TxcJourneyPatternSection,
 } from "@bods-integrated-data/shared/schema";
-import {
-    notEmpty,
-    getRouteTypeFromServiceMode,
-    chunkArray,
-    getWheelchairAccessibilityFromVehicleType,
-} from "@bods-integrated-data/shared/utils";
+import { notEmpty, chunkArray, getWheelchairAccessibilityFromVehicleType } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 import { randomUUID } from "crypto";
@@ -54,7 +46,6 @@ export const insertAgencies = async (dbClient: Kysely<Database>, operators: Oper
             name: existingNoc?.operator_public_name ?? operator.OperatorShortName,
             noc: operator.NationalOperatorCode,
             url: "https://www.traveline.info",
-            registered_operator_ref: operator["@_id"],
             phone: "",
         };
 
@@ -95,17 +86,24 @@ export const insertCalendar = async (
         return insertedCalendar;
     }
 
-    await dbClient
-        .insertInto("calendar_date_new")
-        .values(
-            calendarData.calendarDates.map((date) => ({
-                date: date.date,
-                exception_type: date.exception_type,
-                service_id: insertedCalendar.id,
-            })),
-        )
-        .onConflict((oc) => oc.doNothing())
-        .execute();
+    const calendarDatesChunks = chunkArray(
+        calendarData.calendarDates.map((date) => ({
+            date: date.date,
+            exception_type: date.exception_type,
+            service_id: insertedCalendar.id,
+        })),
+        3000,
+    );
+
+    await Promise.all(
+        calendarDatesChunks.map((chunk) =>
+            dbClient
+                .insertInto("calendar_date_new")
+                .values(chunk)
+                .onConflict((oc) => oc.doNothing())
+                .execute(),
+        ),
+    );
 
     return insertedCalendar;
 };
@@ -150,44 +148,31 @@ export const insertFrequencies = async (
     await dbClient.insertInto("frequency_new").values(frequencies).execute();
 };
 
-export const insertRoutes = async (dbClient: Kysely<Database>, service: Service, agencyData: Agency[]) => {
-    const agency = agencyData.find((agency) => agency.registered_operator_ref === service.RegisteredOperatorRef);
+export const getNaptanStop = (dbClient: Kysely<Database>, atcoCode: string) => {
+    return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "=", atcoCode).executeTakeFirst();
+};
 
-    if (!agency) {
-        logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`);
-        return null;
-    }
+export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[]) => {
+    return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "in", atcoCodes).execute();
+};
 
-    const routeType = getRouteTypeFromServiceMode(service.Mode);
+export const getBodsRoute = (dbClient: Kysely<Database>, lineId: string) => {
+    return dbClient.selectFrom("route").selectAll().where("line_id", "=", lineId).executeTakeFirst();
+};
 
-    const routePromises = service.Lines.Line.map(async (line) => {
-        const existingRoute = await dbClient
-            .selectFrom("route")
-            .selectAll()
-            .where("line_id", "=", line["@_id"])
-            .executeTakeFirst();
+export const getTndsRoute = (dbClient: Kysely<Database>, nocLineName: string) => {
+    return dbClient.selectFrom("route_new").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
+};
 
-        const newRoute: NewRoute = {
-            agency_id: agency.id,
-            route_short_name: line.LineName,
-            route_long_name: "",
-            route_type: routeType,
-            line_id: line["@_id"],
-        };
+export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
+    const { route_short_name, route_type } = route;
 
-        return dbClient
-            .insertInto("route_new")
-            .values(existingRoute || newRoute)
-            .onConflict((oc) =>
-                oc.column("line_id").doUpdateSet({ route_short_name: line.LineName, route_type: routeType }),
-            )
-            .returningAll()
-            .executeTakeFirst();
-    });
-
-    const routeData = await Promise.all(routePromises);
-
-    return routeData.filter(notEmpty);
+    return dbClient
+        .insertInto("route_new")
+        .values(route)
+        .onConflict((oc) => oc.column("line_id").doUpdateSet({ route_short_name, route_type }))
+        .returningAll()
+        .executeTakeFirst();
 };
 
 export const insertShapes = async (
@@ -292,52 +277,10 @@ export const insertShapes = async (
     return updatedVehicleJourneyMappings;
 };
 
-export const insertStops = async (dbClient: Kysely<Database>, stops: TxcStop[]) => {
-    const platformCodes = ["BCS", "PLT", "FBT"];
-    const atcoCodes = stops.map((stop) => stop.StopPointRef);
-
-    const naptanStops = await dbClient
-        .selectFrom("naptan_stop_new")
-        .selectAll()
-        .where("atco_code", "in", atcoCodes)
-        .execute();
-
-    const stopsToInsert = stops.map((stop): NewStop => {
-        const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
-        const latitude = stop.Location?.Translation ? stop.Location.Translation.Latitude : stop.Location?.Latitude;
-        const longitude = stop.Location?.Translation ? stop.Location?.Translation.Longitude : stop.Location?.Longitude;
-
-        return {
-            id: stop.StopPointRef,
-            wheelchair_boarding: 0,
-            parent_station: null,
-
-            ...(naptanStop
-                ? {
-                      stop_code: naptanStop.naptan_code,
-                      stop_name: naptanStop.common_name || stop.CommonName,
-                      stop_lat: naptanStop.latitude ? parseFloat(naptanStop.latitude) : latitude,
-                      stop_lon: naptanStop.longitude ? parseFloat(naptanStop.longitude) : longitude,
-                      location_type:
-                          naptanStop.stop_type === "RSE" ? LocationType.RealStationEntrance : LocationType.None,
-                      platform_code:
-                          naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)
-                              ? naptanStop.stop_type
-                              : null,
-                  }
-                : {
-                      stop_name: stop.CommonName,
-                      stop_lat: stop.Location?.Latitude,
-                      stop_lon: stop.Location?.Longitude,
-                      location_type: LocationType.None,
-                      platform_code: null,
-                  }),
-        };
-    });
-
-    await dbClient
+export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
+    return dbClient
         .insertInto("stop_new")
-        .values(stopsToInsert)
+        .values(stops)
         .onConflict((oc) => oc.column("id").doNothing())
         .returningAll()
         .execute();

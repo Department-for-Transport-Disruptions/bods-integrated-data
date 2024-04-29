@@ -423,20 +423,21 @@ describe("utils", () => {
 
     describe("isRequiredTndsServiceMode", () => {
         it.each([
-            ["coach", true],
-            ["ferry", true],
-            ["metro", true],
-            ["tram", true],
-            ["underground", true],
-            ["air", false],
-            ["bus", false],
-            ["telecabine", false],
-            ["train", false],
-            ["", false],
-            ["random", false],
-        ])("returns true when the mode is a required TNDS service mode", (input, expected) => {
-            const result = isRequiredTndsServiceMode(input);
-            expect(result).toEqual(expected);
+            { mode: "coach", required: true },
+            { mode: "ferry", required: true },
+            { mode: "metro", required: true },
+            { mode: "tram", required: true },
+            { mode: "underground", required: true },
+            { mode: "air", required: false },
+            { mode: "bus", required: false },
+            { mode: "telecabine", required: false },
+            { mode: "train", required: false },
+            { mode: "", required: false },
+            { mode: "random", required: false },
+            { mode: undefined, required: false },
+        ])("returns $required when the required TNDS service mode is $mode", ({ mode, required }) => {
+            const result = isRequiredTndsServiceMode(mode);
+            expect(result).toEqual(required);
         });
     });
 });
