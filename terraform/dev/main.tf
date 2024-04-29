@@ -157,6 +157,7 @@ module "integrated_data_txc_pipeline" {
   alarm_topic_arn           = module.integrated_data_monitoring_dev.alarm_topic_arn
   ok_topic_arn              = module.integrated_data_monitoring_dev.ok_topic_arn
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
+  bank_holidays_bucket_arn  = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_arn
 }
 
 module "integrated_data_gtfs_downloader" {

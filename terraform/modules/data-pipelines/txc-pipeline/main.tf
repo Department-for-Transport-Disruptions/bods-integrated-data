@@ -227,7 +227,8 @@ module "integrated_data_txc_processor_function" {
       Effect = "Allow",
       Resource = [
         "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*",
-        "${aws_s3_bucket.integrated_data_tnds_txc_bucket.arn}/*"
+        "${aws_s3_bucket.integrated_data_tnds_txc_bucket.arn}/*",
+        "${var.bank_holidays_bucket_arn}/*"
       ]
   }]
 

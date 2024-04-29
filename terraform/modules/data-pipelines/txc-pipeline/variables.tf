@@ -61,3 +61,8 @@ variable "bank_holidays_bucket_name" {
   type        = string
   description = "Name of the output bucket for bank holidays JSON"
 }
+
+variable "bank_holidays_bucket_arn" {
+  type        = string
+  description = "ARN of the output bucket for bank holidays JSON"
+}
