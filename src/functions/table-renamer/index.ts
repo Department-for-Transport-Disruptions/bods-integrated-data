@@ -2,14 +2,14 @@ import { logger } from "@baselime/lambda-logger";
 import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { Kysely, ReferenceExpression } from "kysely";
 
-interface TableKey {
+export interface TableKey {
     table: keyof Database;
     newTable: keyof Database;
     key: ReferenceExpression<Database, keyof Database>;
 }
 
 // Rename BODS related tables
-const tables: TableKey[] = [
+const databaseTables: TableKey[] = [
     { table: "agency", newTable: "agency_new", key: "id" },
     { table: "calendar", newTable: "calendar_new", key: "id" },
     { table: "calendar_date", newTable: "calendar_date_new", key: "id" },
@@ -26,7 +26,7 @@ const tables: TableKey[] = [
     { table: "nptg_region", newTable: "nptg_region_new", key: "region_code" },
 ];
 
-const getMatchingTables = async (dbClient: Kysely<Database>) => {
+export const getMatchingTables = async (dbClient: Kysely<Database>, tables: TableKey[]) => {
     const matches = await Promise.all(
         tables.map(async (tableKey) => {
             const { table, newTable, key } = tableKey;
@@ -61,7 +61,7 @@ const getMatchingTables = async (dbClient: Kysely<Database>) => {
     return matches.filter(Boolean) as (keyof Database)[];
 };
 
-const renameTables = async (tablesToRename: (keyof Database)[], dbClient: Kysely<Database>) => {
+export const renameTables = async (tablesToRename: (keyof Database)[], dbClient: Kysely<Database>) => {
     for (const table of tablesToRename) {
         await dbClient.schema.dropTable(`${table}_old`).ifExists().cascade().execute();
         await dbClient.schema.alterTable(table).renameTo(`${table}_old`).execute();
@@ -73,7 +73,7 @@ export const handler = async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        const matchingTables = await getMatchingTables(dbClient);
+        const matchingTables = await getMatchingTables(dbClient, databaseTables);
 
         await renameTables(matchingTables, dbClient);
     } catch (e) {
