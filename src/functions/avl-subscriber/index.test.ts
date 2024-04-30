@@ -5,8 +5,10 @@ import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
+    expectedRequestBodyForExistingSubscription,
     expectedSubscriptionRequest,
     expectedSubscriptionRequestForMockProducer,
+    mockAvlSubscribeMessage,
     mockSubscribeEvent,
     mockSubscribeEventToMockDataProducer,
     mockSubscriptionResponseBody,
@@ -317,5 +319,37 @@ describe("avl-subscriber", () => {
             "SecureString",
             true,
         );
+    });
+
+    it("should handle resubscription requests to a data producer", async () => {
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBody,
+            status: 200,
+        } as AxiosResponse);
+
+        await handler({
+            ...mockSubscribeEvent,
+            body: JSON.stringify({
+                ...mockAvlSubscribeMessage,
+                subscriptionId: "existing-subscription-id",
+            }),
+        });
+
+        expect(axiosSpy).toBeCalledWith("https://mock-data-producer.com", {
+            ...expectedSubscriptionRequest,
+            data: expectedRequestBodyForExistingSubscription,
+        });
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "existing-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+        });
+
+        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
     });
 });

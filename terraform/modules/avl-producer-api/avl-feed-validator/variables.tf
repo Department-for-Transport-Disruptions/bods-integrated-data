@@ -17,3 +17,8 @@ variable aws_region {
   type        = string
   description = "AWS region"
 }
+
+variable "avl_consumer_subscribe_endpoint" {
+  type        = string
+  description = "URL for the AVL consumer subscribe endpoint."
+}

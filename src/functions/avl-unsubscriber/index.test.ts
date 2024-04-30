@@ -175,6 +175,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(

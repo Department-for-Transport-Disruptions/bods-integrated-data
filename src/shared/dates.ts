@@ -76,10 +76,15 @@ export const getNextOccurrenceOfDate = (dateOfMonth: number, month: number) => {
 export const addIntervalToDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
     dayjs.utc(date).add(interval, intervalUnit);
 
+export const subtractIntervalFromDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
+    dayjs.utc(date).subtract(interval, intervalUnit);
+
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs.utc(date, format);
 
 export const isDateBetween = (date: Dayjs, startDate: Dayjs, endDate: Dayjs) =>
     date.isBetween(startDate, endDate, "day", "[]");
+
+export const isDateAfter = (date: Dayjs, dateToCompare: Dayjs) => date.isSameOrAfter(dateToCompare);
 
 export const getDuration = (duration: string) => dayjs.duration(duration);
 

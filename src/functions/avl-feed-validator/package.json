@@ -14,10 +14,12 @@
   "dependencies": {
     "@baselime/lambda-logger": "^0.2.2",
     "@bods-integrated-data/shared": "workspace:^",
+    "axios": "^1.6.7",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.110",
-    "@types/node": "^20.11.19"
+    "@types/node": "^20.11.19",
+    "mockdate": "^3.0.5"
   }
 }

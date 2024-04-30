@@ -28,7 +28,7 @@ export const generateSubscriptionRequestXml = (
             RequestorRef: avlSubscribeMessage.requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionContext: {
-                HeartbeatInterval: "PT30M",
+                HeartbeatInterval: "PT30S",
             },
             VehicleMonitoringSubscriptionRequest: {
                 SubscriptionIdentifier: subscriptionId,
@@ -225,10 +225,16 @@ export const handler = async (event: APIGatewayEvent) => {
 
         const avlSubscribeMessage = parsedBody.data;
 
-        const subscriptionId = randomUUID();
+        const subscriptionId = avlSubscribeMessage.subscriptionId ?? randomUUID();
 
-        // Add username and password to parameter store
-        await addSubscriptionAuthCredsToSsm(subscriptionId, avlSubscribeMessage.username, avlSubscribeMessage.password);
+        // Add username and password to parameter store if we are processing a new subscription
+        if (!avlSubscribeMessage.subscriptionId) {
+            await addSubscriptionAuthCredsToSsm(
+                subscriptionId,
+                avlSubscribeMessage.username,
+                avlSubscribeMessage.password,
+            );
+        }
 
         try {
             await sendSubscriptionRequestAndUpdateDynamo(

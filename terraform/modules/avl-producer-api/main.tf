@@ -51,6 +51,12 @@ module "avl_subscriber" {
   aws_region     = var.aws_region
 }
 
+resource "aws_lambda_function_url" "avl_subscribe_endpoint_function_url" {
+  count              = var.environment == "local" ? 1 : 0
+  function_name      = module.avl_subscriber.lambda_name
+  authorization_type = "NONE"
+}
+
 module "avl_unsubscriber" {
   source = "./avl-unsubscriber"
 
@@ -73,9 +79,12 @@ module "avl_producer_api_gateway" {
 }
 
 module "avl_feed_validator" {
-  source                      = "./avl-feed-validator"
-  avl_subscription_table_name = var.avl_subscription_table_name
-  aws_account_id              = var.aws_account_id
-  aws_region                  = var.aws_region
-  environment                 = var.environment
+  source                          = "./avl-feed-validator"
+  avl_subscription_table_name     = var.avl_subscription_table_name
+  aws_account_id                  = var.aws_account_id
+  aws_region                      = var.aws_region
+  environment                     = var.environment
+  avl_consumer_subscribe_endpoint = (var.environment == "local" ?
+    aws_lambda_function_url.avl_subscribe_endpoint_function_url[0].function_url :
+    "${module.avl_producer_api_gateway.endpoint}/subscribe")
 }
