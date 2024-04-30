@@ -13,7 +13,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "avl-mock-data-producer-send-data"
+  function_name = "integrated-data-avl-mock-data-producer-send-data"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-producer-send-data.zip"
   handler       = "index.handler"
   memory        = 256
@@ -45,7 +45,7 @@ module "integrated_data_avl_mock_data_producer_subscribe" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "avl-mock-data-producer-subscribe"
+  function_name = "integrated-data-avl-mock-data-producer-subscribe"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-producer-subscribe.zip"
   handler       = "index.handler"
   memory        = 1024

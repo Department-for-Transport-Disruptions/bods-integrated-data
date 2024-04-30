@@ -206,54 +206,13 @@ module "integrated_data_avl_subscription_table" {
   environment = local.env
 }
 
-module "integrated_data_avl_subscriber" {
-  source = "../modules/avl-producer-api/avl-subscriber"
-
-  environment                               = local.env
-  avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
-  avl_mock_data_producer_subscribe_endpoint = "${module.avl_mock_data_producer.endpoint}/subscribe"
-  avl_data_endpoint                         = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
-  aws_account_id                            = data.aws_caller_identity.current.account_id
-  aws_region                                = data.aws_region.current.name
-}
-
-module "avl-unsubscriber" {
-  source = "../modules/avl-producer-api/avl-unsubscriber"
-
+module "integrated_data_avl_data_producer_api" {
+  source                      = "../modules/avl-producer-api"
+  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-}
-
-module "integrated_data_avl_data_endpoint" {
-  source = "../modules/avl-producer-api/avl-data-endpoint"
-
-  environment                 = local.env
-  bucket_name                 = module.integrated_data_avl_pipeline.bucket_name
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
-}
-
-module "avl_mock_data_producer" {
-  source = "../modules/avl-producer-api/mock-data-producer"
-
-  environment                 = local.env
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
-  avl_consumer_data_endpoint  = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
-}
-
-module "integrated_data_avl_producer_api_gateway" {
-  source = "../modules/avl-producer-api/api-gateway"
-
-  environment                     = local.env
-  subscribe_lambda_name           = module.integrated_data_avl_subscriber.lambda_name
-  subscribe_lambda_invoke_arn     = module.integrated_data_avl_subscriber.invoke_arn
-  data_endpoint_lambda_name       = module.integrated_data_avl_data_endpoint.lambda_name
-  data_endpoint_lambda_invoke_arn = module.integrated_data_avl_data_endpoint.invoke_arn
 }
 
 module "integrated_data_bank_holidays_pipeline" {

@@ -24,6 +24,4 @@ export const invokeAvlFeedValidator = new Command("invoke-avl-feed-validator")
             FunctionName: `integrated-data-avl-feed-validator-${stage}`,
             InvocationType: "RequestResponse",
         });
-
-        console.log(`AVL Feed Validator invoked`);
     });
