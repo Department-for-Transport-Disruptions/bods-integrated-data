@@ -1,43 +1,31 @@
-# Typescript Lambda Template
+# AVL Feed Validator
 
-This template can be used when creating a new typescript lambda and contains the basic config files needed to get up and
-running. 
+### Overview
 
-When using this template make sure to complete the following actions:
+The purpose of this Lambda is periodically scan the active subscriptions, check that a heartbeat notification has been
+received in the last 90 seconds. If a heartbeat notification has not been received then a new subscription request is
+sent to the data producer to attempt to re-activate the feed. This function is scheduled to run every 30 seconds as that
+is the frequency we expect to receive heartbeat notifications from a data producer.
 
-## Update the `package.json` file
+The process flow this function follows is displayed below:
 
-After copying the lambda-template directory and renaming it to your function name update the following in your `package.json`:
+![avl-feed-validator-flow.png](avl-feed-validator-flow.png)
 
-- Update name to your function's name
-- Update description to describe what your function is doing
-- Update `lamda-template.zip` with `{YOUR_FUNCTION_DIRECTORY_NAME}.zip` for the `build:ci` and `build:local` scripts.
+## Running this function
 
-```JSON
-"name": "@bods-integrated-data/lambda-template",
-    "version": "0.1.0",
-    "description": "Template for a typescript lambda",
-    "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./lambda-template.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/lambda-template.zip ../dist",
-        "test": "vitest run"
-    },
-```
+### Pre req:
 
-## Create a `Makefile` command
-
-To make it easy to test the lambda function locally create a make command. You can follow a similar structure to
-the below command:
-
-```makefile
-run-lambda-template: STAGE=local npx tsx -e "import {handler} from './src/functions/lambda-template'; handler().catch(e => console.error(e))"
-```
-
-Replace `lambda-template` with the name of your new function's directory. `STAGE=local` is an example of how to pass an environment variable to the lambda.
-
-Before testing your lambda locally run the following commands from the root directory to install dependencies:
+- Ensure the setup steps in the root directory's README have been followed
+- If you do not have a data producer setup in the environment you want to run this function in then create a mock data
+  producer using the following make command:
 
 ```bash
-cd src
-pnpm i
+make command-create-avl-mock-data-producer
 ```
+
+To run this lambda yourself use the following make command:
+
+```bash
+make command-invoke-avl-feed-validator
+```
+
