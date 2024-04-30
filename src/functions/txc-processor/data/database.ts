@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     Database,
     NewCalendar,
@@ -11,12 +10,9 @@ import {
     NewAgency,
     NewStopTime,
 } from "@bods-integrated-data/shared/database";
-import { TxcRouteSection, Service, TxcRoute } from "@bods-integrated-data/shared/schema";
-import { notEmpty, chunkArray } from "@bods-integrated-data/shared/utils";
+import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
-import { randomUUID } from "crypto";
-import { VehicleJourneyMapping } from "../types";
 
 export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
@@ -116,108 +112,6 @@ export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
         .executeTakeFirst();
 };
 
-export const insertShapes = async (
-    dbClient: Kysely<Database>,
-    services: Service[],
-    routes: TxcRoute[],
-    routeSections: TxcRouteSection[],
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
-    let updatedVehicleJourneyMappings = [...vehicleJourneyMappings];
-
-    const journeyPatternToRouteRefMapping: Record<string, string> = {};
-
-    const routeRefs = vehicleJourneyMappings
-        .map((vehicleJourneyMapping) => {
-            const journey = vehicleJourneyMapping.vehicleJourney;
-
-            const journeyPattern = services
-                .flatMap((s) => s.StandardService.JourneyPattern)
-                .find((journeyPattern) => journeyPattern["@_id"] === journey.JourneyPatternRef);
-
-            if (!journeyPattern) {
-                logger.warn(`Unable to find journey pattern with journey pattern ref: ${journey.JourneyPatternRef}`);
-                return null;
-            }
-
-            const txcRoute = routes.find((r) => r["@_id"] === journeyPattern.RouteRef);
-
-            if (!txcRoute) {
-                logger.warn(`Unable to find route with route ref: ${journeyPattern.RouteRef}`);
-                return null;
-            }
-
-            journeyPatternToRouteRefMapping[journeyPattern["@_id"]] = txcRoute["@_id"];
-
-            return txcRoute["@_id"];
-        })
-        .filter(notEmpty);
-
-    const uniqueRouteRefs = [...new Set(routeRefs)];
-
-    const shapes = uniqueRouteRefs.flatMap<NewShape>((routeRef) => {
-        const route = routes.find((route) => route["@_id"] === routeRef);
-
-        const routeSectionsForRoute = routeSections.filter((section) =>
-            route?.RouteSectionRef.includes(section["@_id"]),
-        );
-
-        if (!routeSectionsForRoute.length) {
-            logger.warn(`Unable to find route sections for route: ${routeRef}`);
-            return [];
-        }
-
-        const routeLinks = routeSectionsForRoute.flatMap((section) => section.RouteLink);
-
-        const shapeId = randomUUID();
-        let currentPtSequence = 0;
-
-        updatedVehicleJourneyMappings = updatedVehicleJourneyMappings.map((mapping) => {
-            if (journeyPatternToRouteRefMapping[mapping.vehicleJourney.JourneyPatternRef] === routeRef) {
-                return {
-                    ...mapping,
-                    shapeId,
-                };
-            }
-
-            return mapping;
-        });
-
-        return routeLinks.flatMap<NewShape>((routeLink) => {
-            if (!routeLink.Track) {
-                return [];
-            }
-
-            return routeLink.Track.flatMap<NewShape>((track) => {
-                // Shape data will only be mapped if both latitude and longitude are defined in either translation data or location data
-                return track.Mapping.Location.flatMap<NewShape>((location) => {
-                    const latitude = location.Translation ? location.Translation.Latitude : location.Latitude;
-                    const longitude = location.Translation ? location.Translation.Longitude : location.Longitude;
-
-                    if (latitude === undefined || longitude === undefined) {
-                        return [];
-                    }
-
-                    return {
-                        shape_id: shapeId,
-                        shape_pt_lat: latitude,
-                        shape_pt_lon: longitude,
-                        shape_pt_sequence: currentPtSequence++,
-                        shape_dist_traveled: 0,
-                    };
-                });
-            });
-        });
-    });
-
-    if (shapes.length > 0) {
-        const insertChunks = chunkArray(shapes, 3000);
-        await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("shape_new").values(chunk).execute()));
-    }
-
-    return updatedVehicleJourneyMappings;
-};
-
 export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
     return dbClient
         .insertInto("stop_new")
@@ -225,6 +119,11 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) 
         .onConflict((oc) => oc.column("id").doNothing())
         .returningAll()
         .execute();
+};
+
+export const insertShapes = async (dbClient: Kysely<Database>, shapes: NewShape[]) => {
+    const insertChunks = chunkArray(shapes, 3000);
+    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("shape_new").values(chunk).execute()));
 };
 
 export const insertStopTimes = async (dbClient: Kysely<Database>, stopTimes: NewStopTime[]) => {

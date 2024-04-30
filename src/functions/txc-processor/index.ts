@@ -18,9 +18,9 @@ import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
-import { insertShapes } from "./data/database";
 import { processFrequencies } from "./data/frequencies";
 import { processRoutes } from "./data/routes";
+import { processShapes } from "./data/shapes";
 import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processStopTimes } from "./data/stopTimes";
 import { processTrips } from "./data/trips";
@@ -170,7 +170,7 @@ const processServices = (
             bankHolidaysJson,
             servicedOrganisations,
         );
-        vehicleJourneyMappings = await insertShapes(
+        vehicleJourneyMappings = await processShapes(
             dbClient,
             services,
             txcRoutes,
