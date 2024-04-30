@@ -52,7 +52,16 @@ module "integrated_data_vpc_dev" {
 module "integrated_data_route53" {
   source = "../modules/networking/route-53"
 
-  vpc_id = module.integrated_data_vpc_dev.vpc_id
+  environment = local.env
+  vpc_id      = module.integrated_data_vpc_dev.vpc_id
+  root_domain = local.secrets["root_domain"]
+}
+
+module "integrated_data_acm" {
+  source = "../modules/networking/acm"
+
+  hosted_zone_id = module.integrated_data_route53.public_hosted_zone_id
+  domain_name    = module.integrated_data_route53.public_hosted_zone_name
 }
 
 module "integrated_data_aurora_db_dev" {
@@ -299,4 +308,15 @@ module "integrated_data_timetables_sfn" {
   noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
   naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name
+}
+
+module "integrated_data_gtfs_api" {
+  source = "../modules/gtfs-api"
+
+  environment                 = local.env
+  gtfs_downloader_lambda_name = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
+  gtfs_downloader_invoke_arn  = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
+  acm_certificate_arn         = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id              = module.integrated_data_route53.public_hosted_zone_id
+  domain                      = module.integrated_data_route53.public_hosted_zone_name
 }
