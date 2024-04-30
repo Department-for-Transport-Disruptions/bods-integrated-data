@@ -73,8 +73,8 @@ describe("frequencies", () => {
             (_dbClient, frequencies) => Promise.resolve(frequencies) as Promise<Frequency[]>,
         );
 
-        const result = await processFrequencies(dbClient, vehicleJourneyMappings);
-        expect(result).toEqual(expectedFrequencies);
+        await processFrequencies(dbClient, vehicleJourneyMappings);
+        expect(insertFrequenciesMock).toHaveBeenCalledWith(dbClient, expectedFrequencies);
     });
 
     it("doesn't insert frequencies that are missing a Frequency definition", async () => {
@@ -94,11 +94,7 @@ describe("frequencies", () => {
             },
         ];
 
-        insertFrequenciesMock.mockImplementation(
-            (_dbClient, frequencies) => Promise.resolve(frequencies) as Promise<Frequency[]>,
-        );
-
-        const result = await processFrequencies(dbClient, vehicleJourneyMappings);
-        expect(result).toEqual([]);
+        await processFrequencies(dbClient, vehicleJourneyMappings);
+        expect(insertFrequenciesMock).not.toHaveBeenCalled();
     });
 });

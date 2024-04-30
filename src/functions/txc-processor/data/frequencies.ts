@@ -38,5 +38,7 @@ export const processFrequencies = async (
         })
         .filter(notEmpty);
 
-    return insertFrequencies(dbClient, frequencies);
+    if (frequencies.length > 0) {
+        await insertFrequencies(dbClient, frequencies);
+    }
 };
