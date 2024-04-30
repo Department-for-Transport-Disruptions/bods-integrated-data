@@ -12,16 +12,17 @@ terraform {
 module "integrated_data_db_migrator_migrate_function" {
   source = "../../shared/lambda-function"
 
-  environment    = var.environment
-  function_name  = "integrated-data-db-migrator-migrate"
-  zip_path       = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
-  handler        = "index.handler"
-  runtime        = "nodejs20.x"
-  timeout        = 120
-  memory         = 1024
-  vpc_id         = var.vpc_id
-  subnet_ids     = var.private_subnet_ids
-  database_sg_id = var.db_sg_id
+  environment     = var.environment
+  function_name   = "integrated-data-db-migrator-migrate"
+  zip_path        = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 120
+  memory          = 1024
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [{
     Action = [
@@ -45,16 +46,17 @@ module "integrated_data_db_migrator_migrate_function" {
 module "integrated_data_db_migrator_rollback_function" {
   source = "../../shared/lambda-function"
 
-  environment    = var.environment
-  function_name  = "integrated-data-db-migrator-rollback"
-  zip_path       = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
-  handler        = "index.handler"
-  runtime        = "nodejs20.x"
-  timeout        = 120
-  memory         = 1024
-  vpc_id         = var.vpc_id
-  subnet_ids     = var.private_subnet_ids
-  database_sg_id = var.db_sg_id
+  environment     = var.environment
+  function_name   = "integrated-data-db-migrator-rollback"
+  zip_path        = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 120
+  memory          = 1024
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [{
     Action = [

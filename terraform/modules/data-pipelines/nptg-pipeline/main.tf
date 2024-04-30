@@ -22,6 +22,13 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_nptg_s3_bucket_blo
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_versioning" "integrated_data_nptg_s3_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_nptg_s3_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 module "integrated_data_nptg_retriever_function" {
   source = "../../shared/lambda-function"
 
@@ -32,7 +39,6 @@ module "integrated_data_nptg_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 60
   memory        = 1024
-  schedule      = "cron(0 2 * * ? *)"
 
   permissions = [
     {
@@ -55,16 +61,17 @@ module "integrated_data_nptg_retriever_function" {
 module "integrated_data_nptg_uploader_function" {
   source = "../../shared/lambda-function"
 
-  environment    = var.environment
-  function_name  = "integrated-data-nptg-uploader"
-  zip_path       = "${path.module}/../../../../src/functions/dist/nptg-uploader.zip"
-  handler        = "index.handler"
-  runtime        = "nodejs20.x"
-  timeout        = 300
-  memory         = 1024
-  vpc_id         = var.vpc_id
-  subnet_ids     = var.private_subnet_ids
-  database_sg_id = var.db_sg_id
+  environment     = var.environment
+  function_name   = "integrated-data-nptg-uploader"
+  zip_path        = "${path.module}/../../../../src/functions/dist/nptg-uploader.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 300
+  memory          = 1024
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [
     {
@@ -87,16 +94,12 @@ module "integrated_data_nptg_uploader_function" {
     }
   ]
 
-  s3_bucket_trigger = {
-    id  = aws_s3_bucket.integrated_data_nptg_s3_bucket.id
-    arn = aws_s3_bucket.integrated_data_nptg_s3_bucket.arn
-  }
-
   env_vars = {
     BUCKET_NAME   = aws_s3_bucket.integrated_data_nptg_s3_bucket.bucket
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
+    STAGE         = var.environment
   }
 }

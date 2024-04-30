@@ -22,6 +22,13 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_bank_holidays_buck
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_versioning" "integrated_data_bank_holidays_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_bank_holidays_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 module "integrated_data_bank_holidays_retriever_function" {
   source = "../../shared/lambda-function"
 
@@ -32,7 +39,6 @@ module "integrated_data_bank_holidays_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 120
   memory        = 1024
-  schedule      = "cron(0 2 * * ? *)"
 
   permissions = [{
     Action = [

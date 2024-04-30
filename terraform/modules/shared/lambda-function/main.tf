@@ -12,7 +12,6 @@ terraform {
 locals {
   source_code_hash = fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].source_code_hash
   function_name    = "${var.function_name}-${var.environment}"
-  needs_db_access  = var.vpc_id != null && var.database_sg_id != null
 }
 
 data "aws_lambda_function" "existing_function" {
@@ -21,13 +20,13 @@ data "aws_lambda_function" "existing_function" {
 }
 
 resource "aws_security_group" "db_sg" {
-  count  = local.needs_db_access ? 1 : 0
+  count  = var.needs_db_access ? 1 : 0
   name   = "${var.function_name}-sg-${var.environment}"
   vpc_id = var.vpc_id
 }
 
 resource "aws_vpc_security_group_egress_rule" "db_sg_allow_all_egress_ipv4" {
-  count             = local.needs_db_access ? 1 : 0
+  count             = var.needs_db_access ? 1 : 0
   security_group_id = aws_security_group.db_sg[0].id
 
   cidr_ipv4   = "0.0.0.0/0"
@@ -35,7 +34,7 @@ resource "aws_vpc_security_group_egress_rule" "db_sg_allow_all_egress_ipv4" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "db_sg_allow_all_egress_ipv6" {
-  count             = local.needs_db_access ? 1 : 0
+  count             = var.needs_db_access ? 1 : 0
   security_group_id = aws_security_group.db_sg[0].id
 
   cidr_ipv6   = "::/0"
@@ -43,7 +42,7 @@ resource "aws_vpc_security_group_egress_rule" "db_sg_allow_all_egress_ipv6" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
-  count                        = local.needs_db_access ? 1 : 0
+  count                        = var.needs_db_access ? 1 : 0
   security_group_id            = var.database_sg_id
   referenced_security_group_id = aws_security_group.db_sg[0].id
 
@@ -56,7 +55,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 resource "aws_iam_policy" "lambda_policy" {
   count = var.permissions != null ? 1 : 0
 
-  name   = "${var.function_name}-policy-${var.environment}"
+  name = "${var.function_name}-policy-${var.environment}"
   policy = jsonencode({
     Version   = "2012-10-17"
     Statement = var.permissions
@@ -107,10 +106,10 @@ resource "aws_lambda_function" "function" {
   reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
 
   dynamic "vpc_config" {
-    for_each = local.needs_db_access ? [1] : []
+    for_each = var.needs_db_access ? [1] : []
 
     content {
-      subnet_ids         = var.subnet_ids
+      subnet_ids = var.subnet_ids
       security_group_ids = [
         aws_security_group.db_sg[0].id
       ]
