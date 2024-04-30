@@ -26,7 +26,7 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_role" {
         "Action" : "sts:AssumeRole",
         "Condition" : {
           "StringEquals" : {
-            "aws:SourceAccount" : "${data.aws_caller_identity.current.account_id}"
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
           },
           "ArnLike" : {
             "aws:SourceArn" : "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:*"
@@ -134,7 +134,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "states:StartExecution"
         ],
         "Resource" : [
-          "${aws_sfn_state_machine.integrated_data_timetables_sfn.arn}"
+          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
         ]
       },
       {
@@ -144,7 +144,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "states:StopExecution"
         ],
         "Resource" : [
-          "${aws_sfn_state_machine.integrated_data_timetables_sfn.arn}"
+          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
         ]
       },
       {
