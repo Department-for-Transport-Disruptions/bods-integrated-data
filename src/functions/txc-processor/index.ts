@@ -148,7 +148,13 @@ const processServices = (
                 tripId: "",
             };
 
-            const route = routes.find((r) => r.line_id === vehicleJourney.LineRef);
+            const route = routes.find((r) => {
+                if (isTnds) {
+                    return r.line_id === `${service.ServiceCode}_${vehicleJourney.LineRef}`;
+                }
+
+                return r.line_id === vehicleJourney.LineRef;
+            });
 
             if (route) {
                 vehicleJourneyMapping.routeId = route.id;
