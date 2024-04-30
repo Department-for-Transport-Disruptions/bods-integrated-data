@@ -58,7 +58,9 @@ export const processTrips = async (
         })
         .filter(notEmpty);
 
-    await insertTrips(dbClient, trips);
+    if (trips.length > 0) {
+        await insertTrips(dbClient, trips);
+    }
 
     return updatedVehicleJourneyMappings;
 };

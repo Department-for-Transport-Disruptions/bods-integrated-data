@@ -150,11 +150,9 @@ describe("trips", () => {
             },
         ];
 
-        insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
-
         const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, [], "");
 
-        expect(insertTripsMock).toHaveBeenCalledWith(dbClient, []);
+        expect(insertTripsMock).not.toHaveBeenCalled();
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
     });
 
@@ -189,11 +187,9 @@ describe("trips", () => {
             },
         ] as Route[];
 
-        insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
-
         const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, routes, "");
 
-        expect(insertTripsMock).toHaveBeenCalledWith(dbClient, []);
+        expect(insertTripsMock).not.toHaveBeenCalled();
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
     });
 });
