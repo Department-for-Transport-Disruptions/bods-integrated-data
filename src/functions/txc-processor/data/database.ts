@@ -93,10 +93,6 @@ export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[]) 
     return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "in", atcoCodes).execute();
 };
 
-export const getBodsRoute = (dbClient: Kysely<Database>, lineId: string) => {
-    return dbClient.selectFrom("route").selectAll().where("line_id", "=", lineId).executeTakeFirst();
-};
-
 export const getTndsRoute = (dbClient: Kysely<Database>, nocLineName: string) => {
     return dbClient.selectFrom("route_new").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
 };

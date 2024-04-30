@@ -7,7 +7,6 @@ import { processRoutes } from "./routes";
 
 describe("routes", () => {
     let dbClient: Kysely<Database>;
-    const getBodsRouteMock = vi.spyOn(databaseFunctions, "getBodsRoute");
     const getTndsRouteMock = vi.spyOn(databaseFunctions, "getTndsRoute");
     const insertRouteMock = vi.spyOn(databaseFunctions, "insertRoute");
 
@@ -18,6 +17,7 @@ describe("routes", () => {
     it("inserts routes into the database and returns them when the service lines are BODS", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
+            ServiceCode: "test-code",
             Lines: {
                 Line: [
                     {
@@ -58,7 +58,6 @@ describe("routes", () => {
             },
         ];
 
-        getBodsRouteMock.mockResolvedValue(undefined);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
         const result = await processRoutes(dbClient, service as Service, agency as Agency, false);
@@ -68,6 +67,7 @@ describe("routes", () => {
     it("inserts routes into the database and returns them when the service lines are TNDS", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
+            ServiceCode: "test-code",
             Lines: {
                 Line: [
                     {
@@ -89,7 +89,7 @@ describe("routes", () => {
 
         const expectedRoutes: NewRoute[] = [
             {
-                line_id: "1",
+                line_id: "test-code_1",
                 agency_id: 0,
                 route_short_name: "A",
                 route_long_name: "",
@@ -98,7 +98,7 @@ describe("routes", () => {
                 noc_line_name: "nocA",
             },
             {
-                line_id: "2",
+                line_id: "test-code_2",
                 agency_id: 0,
                 route_short_name: "B",
                 route_long_name: "",
@@ -118,6 +118,7 @@ describe("routes", () => {
     it("throws an error when a duplicate TNDS route is found", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
+            ServiceCode: "test-code",
             Lines: {
                 Line: [
                     {
@@ -145,7 +146,6 @@ describe("routes", () => {
             },
         ];
 
-        getBodsRouteMock.mockResolvedValueOnce(undefined);
         getTndsRouteMock.mockResolvedValueOnce(expectedRoutes[0] as Route);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
@@ -159,6 +159,7 @@ describe("routes", () => {
     it("throws an error when an unexpected error occurs", async () => {
         const service: Partial<Service> = {
             RegisteredOperatorRef: "1",
+            ServiceCode: "test-code",
             Lines: {
                 Line: [
                     {
@@ -174,7 +175,6 @@ describe("routes", () => {
             noc: "noc",
         };
 
-        getBodsRouteMock.mockResolvedValueOnce(undefined);
         insertRouteMock.mockRejectedValue(new Error("a"));
 
         await expect(processRoutes(dbClient, service as Service, agency as Agency, false)).rejects.toThrowError("a");
