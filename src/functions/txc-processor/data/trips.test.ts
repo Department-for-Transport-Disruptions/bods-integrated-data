@@ -14,7 +14,7 @@ describe("trips", () => {
         vi.resetAllMocks();
     });
 
-    it("inserts trips into the database and returns them", async () => {
+    it("inserts trips into the database", async () => {
         const services: Service[] = [
             {
                 StandardService: {

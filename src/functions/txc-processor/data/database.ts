@@ -6,18 +6,17 @@ import {
     NewFrequency,
     NewRoute,
     NewShape,
-    NewStopTime,
     NewTrip,
     NewStop,
     NewAgency,
+    NewStopTime,
 } from "@bods-integrated-data/shared/database";
-import { TxcRouteSection, Service, TxcRoute, TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
+import { TxcRouteSection, Service, TxcRoute } from "@bods-integrated-data/shared/schema";
 import { notEmpty, chunkArray } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 import { randomUUID } from "crypto";
 import { VehicleJourneyMapping } from "../types";
-import { mapTimingLinksToStopTimes } from "../utils";
 
 export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
@@ -228,42 +227,9 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) 
         .execute();
 };
 
-export const insertStopTimes = async (
-    dbClient: Kysely<Database>,
-    services: Service[],
-    txcJourneyPatternSections: TxcJourneyPatternSection[],
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
-    const stopTimes = vehicleJourneyMappings.flatMap<NewStopTime>((vehicleJourneyMapping) => {
-        const { tripId, vehicleJourney } = vehicleJourneyMapping;
-
-        const journeyPattern = services
-            .flatMap((s) => s.StandardService.JourneyPattern)
-            .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
-
-        if (!journeyPattern) {
-            logger.warn(`Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`);
-            return [];
-        }
-
-        const journeyPatternTimingLinks = journeyPattern.JourneyPatternSectionRefs.flatMap((ref) => {
-            const journeyPatternSection = txcJourneyPatternSections.find((section) => section["@_id"] === ref);
-
-            if (!journeyPatternSection) {
-                logger.warn(`Unable to find journey pattern section with journey pattern section ref: ${ref}`);
-                return [];
-            }
-
-            return journeyPatternSection.JourneyPatternTimingLink;
-        });
-
-        return mapTimingLinksToStopTimes(tripId, vehicleJourney, journeyPatternTimingLinks);
-    });
-
-    if (stopTimes.length > 0) {
-        const insertChunks = chunkArray(stopTimes, 3000);
-        await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
-    }
+export const insertStopTimes = async (dbClient: Kysely<Database>, stopTimes: NewStopTime[]) => {
+    const insertChunks = chunkArray(stopTimes, 3000);
+    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
 };
 
 export const insertTrips = async (dbClient: Kysely<Database>, trips: NewTrip[]) => {
