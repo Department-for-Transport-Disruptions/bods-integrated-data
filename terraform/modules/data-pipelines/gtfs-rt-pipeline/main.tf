@@ -104,6 +104,8 @@ module "integrated_data_gtfs_rt_downloader_function" {
 }
 
 resource "aws_lambda_function_url" "gtfs_rt_download_url" {
+  count = var.environment == "local" ? 1 : 0
+
   function_name      = module.integrated_data_gtfs_rt_downloader_function.function_name
   authorization_type = "NONE"
 }
