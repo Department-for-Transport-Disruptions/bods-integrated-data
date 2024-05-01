@@ -161,6 +161,12 @@ run-local-gtfs-downloader:
 run-gtfs-rt-generator:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
+run-gtfs-rt-downloader:
+	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'false' }}).then(r => console.log(r)).catch(e => console.error(e))"
+
+run-gtfs-rt-downloader-download:
+	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'true' }}).then(r => console.log(r)).catch(e => console.error(e))"
+
 # AVL
 
 run-local-avl-subscriber:

@@ -11,6 +11,14 @@ variable "gtfs_downloader_lambda_name" {
   type = string
 }
 
+variable "gtfs_rt_downloader_invoke_arn" {
+  type = string
+}
+
+variable "gtfs_rt_downloader_lambda_name" {
+  type = string
+}
+
 variable "domain" {
   type = string
 }
