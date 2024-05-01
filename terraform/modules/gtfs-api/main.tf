@@ -66,14 +66,14 @@ resource "aws_apigatewayv2_stage" "integrated_data_gtfs_api_stage" {
   auto_deploy = true
 }
 
-resource "aws_lambda_permission" "integrated_data_gtfs_api_subscribe_permissions" {
+resource "aws_lambda_permission" "integrated_data_gtfs_downloader_api_permissions" {
   function_name = var.gtfs_downloader_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_gtfs_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_gtfs_api_stage.name}/*"
 }
 
-resource "aws_lambda_permission" "integrated_data_gtfs_rt_api_subscribe_permissions" {
+resource "aws_lambda_permission" "integrated_data_gtfs_rt_downloader_api_permissions" {
   function_name = var.gtfs_rt_downloader_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
