@@ -43,6 +43,7 @@ describe("trips", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -64,6 +65,7 @@ describe("trips", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
@@ -118,6 +120,7 @@ describe("trips", () => {
             vehicleJourneyMappings,
             routes,
             "",
+            false,
         );
 
         expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
@@ -132,6 +135,7 @@ describe("trips", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -150,7 +154,7 @@ describe("trips", () => {
             },
         ];
 
-        const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, [], "");
+        const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, [], "", false);
 
         expect(insertTripsMock).not.toHaveBeenCalled();
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
@@ -163,6 +167,7 @@ describe("trips", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -187,7 +192,14 @@ describe("trips", () => {
             },
         ] as Route[];
 
-        const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, routes, "");
+        const updatedVehicleJourneyMappings = await processTrips(
+            dbClient,
+            [],
+            vehicleJourneyMappings,
+            routes,
+            "",
+            false,
+        );
 
         expect(insertTripsMock).not.toHaveBeenCalled();
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
