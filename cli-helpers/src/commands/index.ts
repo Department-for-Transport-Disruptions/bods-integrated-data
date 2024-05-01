@@ -11,6 +11,7 @@ export * from "./invoke-bods-txc-unzipper";
 export * from "./invoke-db-cleardown";
 export * from "./invoke-db-migrator";
 export * from "./invoke-gtfs-downloader";
+export * from "./invoke-gtfs-rt-downloader";
 export * from "./invoke-gtfs-rt-generator";
 export * from "./invoke-gtfs-timetables-generator";
 export * from "./invoke-naptan-retriever";

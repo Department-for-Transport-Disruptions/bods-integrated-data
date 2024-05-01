@@ -73,3 +73,38 @@ module "integrated_data_gtfs_rt_processor_function" {
     DB_NAME       = var.db_name
   }
 }
+
+module "integrated_data_gtfs_rt_downloader_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-gtfs-rt-downloader"
+  zip_path      = "${path.module}/../../../../src/functions/dist/gtfs-rt-downloader.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 120
+  memory        = 1024
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_gtfs_rt_bucket.arn}/*"
+      ]
+    },
+  ]
+
+  env_vars = {
+    STAGE       = var.environment
+    BUCKET_NAME = aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
+  }
+}
+
+resource "aws_lambda_function_url" "gtfs_rt_download_url" {
+  function_name      = module.integrated_data_gtfs_rt_downloader_function.function_name
+  authorization_type = "NONE"
+}
+
