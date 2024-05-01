@@ -53,7 +53,7 @@ const retrieveContents = async (bucketName: string, key: string): Promise<APIGat
 };
 
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-    const { BUCKET_NAME: bucketName, STAGE: stage } = process.env;
+    const { BUCKET_NAME: bucketName } = process.env;
 
     const shouldDownload = event.queryStringParameters?.download?.toLowerCase() === "true";
     const key = "gtfs-rt.bin";

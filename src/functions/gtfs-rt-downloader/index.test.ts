@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
+import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
 
 const getMockApiEvent = (passDownloadParam: boolean = true): APIGatewayProxyEventV2 => ({
     version: "",
