@@ -3,16 +3,11 @@ import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/sh
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
-import {
-    NaptanStopWithRegionCode,
-    insertStopsByAnnotatedStopPointRefs,
-    insertStopsByStopPoints,
-    mapStop,
-} from "./stops";
+import { processAnnotatedStopPointRefs, processStopPoints, mapStop, NaptanStopWithRegionCode } from "./stops";
 
 describe("stops", () => {
     let dbClient: Kysely<Database>;
-    const getNaptanStops = vi.spyOn(databaseFunctions, "getNaptanStops");
+    const getNaptanStopsMock = vi.spyOn(databaseFunctions, "getNaptanStops");
     const insertStopsMock = vi.spyOn(databaseFunctions, "insertStops");
 
     beforeEach(() => {
@@ -217,7 +212,7 @@ describe("stops", () => {
         });
     });
 
-    describe("insertStopsByStopPoints", () => {
+    describe("processStopPoints", () => {
         it("inserts stops into the database and returns them", async () => {
             const stops: TxcStopPoint[] = [
                 {
@@ -266,15 +261,15 @@ describe("stops", () => {
                 },
             ];
 
-            getNaptanStops.mockResolvedValue([]);
+            getNaptanStopsMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
 
-            const result = await insertStopsByStopPoints(dbClient, stops, false);
+            const result = await processStopPoints(dbClient, stops, false);
             expect(result).toEqual(expectedStops);
         });
     });
 
-    describe("insertStopsByAnnotatedStopPointRefs", () => {
+    describe("processAnnotatedStopPointRefs", () => {
         it("inserts stops into the database and returns them", async () => {
             const stops: TxcAnnotatedStopPointRef[] = [
                 {
@@ -322,10 +317,10 @@ describe("stops", () => {
                 },
             ];
 
-            getNaptanStops.mockResolvedValue([]);
+            getNaptanStopsMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
 
-            const result = await insertStopsByAnnotatedStopPointRefs(dbClient, stops, false);
+            const result = await processAnnotatedStopPointRefs(dbClient, stops, false);
             expect(result).toEqual(expectedStops);
         });
     });

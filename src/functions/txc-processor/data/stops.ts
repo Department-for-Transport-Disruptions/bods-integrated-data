@@ -57,7 +57,7 @@ export const mapStop = (
     return stop;
 };
 
-export const insertStopsByStopPoints = async (
+export const processStopPoints = async (
     dbClient: Kysely<Database>,
     stops: TxcStopPoint[],
     useStopLocality: boolean,
@@ -76,7 +76,7 @@ export const insertStopsByStopPoints = async (
     return insertStops(dbClient, stopsToInsert);
 };
 
-export const insertStopsByAnnotatedStopPointRefs = async (
+export const processAnnotatedStopPointRefs = async (
     dbClient: Kysely<Database>,
     stops: TxcAnnotatedStopPointRef[],
     useStopLocality: boolean,

@@ -16,10 +16,14 @@ import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
+import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
-import { insertAgencies, insertFrequencies, insertShapes, insertStopTimes, insertTrips } from "./data/database";
-import { insertRoutes } from "./data/routes";
-import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints } from "./data/stops";
+import { processFrequencies } from "./data/frequencies";
+import { processRoutes } from "./data/routes";
+import { processShapes } from "./data/shapes";
+import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
+import { processStopTimes } from "./data/stopTimes";
+import { processTrips } from "./data/trips";
 import { VehicleJourneyMapping } from "./types";
 import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
 
@@ -119,7 +123,7 @@ const processServices = (
             return null;
         }
 
-        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agency, isTnds);
+        const { routes, isDuplicateRoute } = await processRoutes(dbClient, service, agency, isTnds);
 
         if (isDuplicateRoute) {
             logger.warn("Duplicate TNDS route found for service", {
@@ -173,14 +177,14 @@ const processServices = (
             bankHolidaysJson,
             servicedOrganisations,
         );
-        vehicleJourneyMappings = await insertShapes(
+        vehicleJourneyMappings = await processShapes(
             dbClient,
             services,
             txcRoutes,
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(
+        vehicleJourneyMappings = await processTrips(
             dbClient,
             services,
             vehicleJourneyMappings,
@@ -188,8 +192,8 @@ const processServices = (
             filePath,
             isTnds,
         );
-        await insertFrequencies(dbClient, vehicleJourneyMappings);
-        await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
+        await processFrequencies(dbClient, vehicleJourneyMappings);
+        await processStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -241,18 +245,14 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
         return;
     }
 
-    const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
+    const agencyData = await processAgencies(dbClient, TransXChange.Operators.Operator);
 
     const useStopLocality = TransXChange.Services.Service.some((service) => service.Mode && service.Mode !== "bus");
 
     if (TransXChange.StopPoints.StopPoint) {
-        await insertStopsByStopPoints(dbClient, TransXChange.StopPoints.StopPoint, useStopLocality);
+        await processStopPoints(dbClient, TransXChange.StopPoints.StopPoint, useStopLocality);
     } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
-        await insertStopsByAnnotatedStopPointRefs(
-            dbClient,
-            TransXChange.StopPoints.AnnotatedStopPointRef,
-            useStopLocality,
-        );
+        await processAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef, useStopLocality);
     }
 
     await processServices(
