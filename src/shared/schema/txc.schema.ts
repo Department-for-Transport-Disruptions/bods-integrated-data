@@ -122,6 +122,8 @@ const routeLinkSchema = z.object({
     Track: trackSchema.array().optional(),
 });
 
+export type TxcRouteLink = z.infer<typeof routeLinkSchema>;
+
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
     RouteLink: routeLinkSchema.array(),

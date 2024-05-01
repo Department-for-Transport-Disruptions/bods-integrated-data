@@ -3,9 +3,9 @@ import { Service } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
-import { insertRoutes } from "./routes";
+import { processRoutes } from "./routes";
 
-describe("insertRoutes", () => {
+describe("routes", () => {
     let dbClient: Kysely<Database>;
     const getTndsRouteMock = vi.spyOn(databaseFunctions, "getTndsRoute");
     const insertRouteMock = vi.spyOn(databaseFunctions, "insertRoute");
@@ -60,7 +60,7 @@ describe("insertRoutes", () => {
 
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
-        const result = await insertRoutes(dbClient, service as Service, agency as Agency, false);
+        const result = await processRoutes(dbClient, service as Service, agency as Agency, false);
         expect(result).toEqual({ routes: expectedRoutes });
     });
 
@@ -111,7 +111,7 @@ describe("insertRoutes", () => {
         getTndsRouteMock.mockResolvedValue(undefined);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
-        const result = await insertRoutes(dbClient, service as Service, agency as Agency, true);
+        const result = await processRoutes(dbClient, service as Service, agency as Agency, true);
         expect(result).toEqual({ routes: expectedRoutes });
     });
 
@@ -149,10 +149,10 @@ describe("insertRoutes", () => {
         getTndsRouteMock.mockResolvedValueOnce(expectedRoutes[0] as Route);
         insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
 
-        const bodsResult = await insertRoutes(dbClient, service as Service, agency as Agency, false);
+        const bodsResult = await processRoutes(dbClient, service as Service, agency as Agency, false);
         expect(bodsResult).toEqual({ routes: expectedRoutes });
 
-        const tndsResult = await insertRoutes(dbClient, service as Service, agency as Agency, true);
+        const tndsResult = await processRoutes(dbClient, service as Service, agency as Agency, true);
         expect(tndsResult).toEqual({ isDuplicateRoute: true });
     });
 
@@ -177,6 +177,6 @@ describe("insertRoutes", () => {
 
         insertRouteMock.mockRejectedValue(new Error("a"));
 
-        await expect(insertRoutes(dbClient, service as Service, agency as Agency, false)).rejects.toThrowError("a");
+        await expect(processRoutes(dbClient, service as Service, agency as Agency, false)).rejects.toThrowError("a");
     });
 });

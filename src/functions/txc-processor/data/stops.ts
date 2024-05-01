@@ -50,7 +50,7 @@ export const mapStop = (
     return stop;
 };
 
-export const insertStopsByStopPoints = async (dbClient: Kysely<Database>, stops: TxcStopPoint[]) => {
+export const processStopPoints = async (dbClient: Kysely<Database>, stops: TxcStopPoint[]) => {
     const stopsToInsert = await Promise.all(
         stops.map(async (stop): Promise<NewStop> => {
             const latitude = stop.Place.Location?.Latitude;
@@ -64,10 +64,7 @@ export const insertStopsByStopPoints = async (dbClient: Kysely<Database>, stops:
     return insertStops(dbClient, stopsToInsert);
 };
 
-export const insertStopsByAnnotatedStopPointRefs = async (
-    dbClient: Kysely<Database>,
-    stops: TxcAnnotatedStopPointRef[],
-) => {
+export const processAnnotatedStopPointRefs = async (dbClient: Kysely<Database>, stops: TxcAnnotatedStopPointRef[]) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes);
 
