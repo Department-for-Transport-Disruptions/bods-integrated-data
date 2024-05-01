@@ -92,8 +92,6 @@ module "integrated_data_txc_pipeline" {
   db_host                   = null
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = "integrated-data-aurora-output-${local.env}"
-  alarm_topic_arn           = ""
-  ok_topic_arn              = ""
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
 }
 
