@@ -676,6 +676,7 @@ describe("calendar", () => {
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test",
                     },
                 ],
                 bankHolidaysJson,
@@ -723,6 +724,7 @@ describe("calendar", () => {
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test",
                     },
                 ],
                 bankHolidaysJson,
@@ -760,6 +762,7 @@ describe("calendar", () => {
                         serviceId: 1,
                         shapeId: "1",
                         tripId: "1",
+                        serviceCode: "test",
                         vehicleJourney: {
                             ...defaultVehicleJourney,
                             OperatingProfile: {
@@ -812,6 +815,7 @@ describe("calendar", () => {
                         serviceId: 1,
                         shapeId: "1",
                         tripId: "1",
+                        serviceCode: "test",
                         vehicleJourney: {
                             ...defaultVehicleJourney,
                             OperatingProfile: {

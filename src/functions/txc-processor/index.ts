@@ -146,6 +146,7 @@ const processServices = (
                 serviceId: 0,
                 shapeId: "",
                 tripId: "",
+                serviceCode: service.ServiceCode,
             };
 
             const route = routes.find((r) => {
@@ -179,7 +180,14 @@ const processServices = (
             txcRouteSections,
             vehicleJourneyMappings,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
+        vehicleJourneyMappings = await insertTrips(
+            dbClient,
+            services,
+            vehicleJourneyMappings,
+            routes,
+            filePath,
+            isTnds,
+        );
         await insertFrequencies(dbClient, vehicleJourneyMappings);
         await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
     });
@@ -235,10 +243,16 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 
     const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
 
+    const useStopLocality = TransXChange.Services.Service.some((service) => service.Mode && service.Mode !== "bus");
+
     if (TransXChange.StopPoints.StopPoint) {
-        await insertStopsByStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
+        await insertStopsByStopPoints(dbClient, TransXChange.StopPoints.StopPoint, useStopLocality);
     } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
-        await insertStopsByAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+        await insertStopsByAnnotatedStopPointRefs(
+            dbClient,
+            TransXChange.StopPoints.AnnotatedStopPointRef,
+            useStopLocality,
+        );
     }
 
     await processServices(

@@ -4,7 +4,7 @@ import { createLazyDownloadStreamFrom, startS3Upload } from "@bods-integrated-da
 import archiver from "archiver";
 import { Kysely, sql } from "kysely";
 import { PassThrough } from "stream";
-import { Query, queryBuilder } from "./queries";
+import { Query, queryBuilder, regionalQueryBuilder } from "./queries";
 
 const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: Kysely<Database>) => {
     await Promise.all(
@@ -16,7 +16,7 @@ const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: 
             }
 
             return sql`
-                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.query)}',
+                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.getQuery())}',
                     aws_commons.create_s3_uri('${sql.raw(outputBucket)}', '${sql.raw(query.fileName)}.txt', 'eu-west-2'),
                     options :='${sql.raw(options)}'
                 );
@@ -25,7 +25,7 @@ const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: 
     );
 };
 
-export const handler = async () => {
+export const handler = async (payload: { regionCode: string }) => {
     const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, STAGE: stage } = process.env;
 
     if (!outputBucket || !gtfsBucket) {
@@ -37,7 +37,23 @@ export const handler = async () => {
     try {
         logger.info("Starting GTFS Timetable Generator");
 
-        const queries = queryBuilder(dbClient);
+        let queries: Query[];
+
+        if (!!payload.regionCode) {
+            await sql`
+                CREATE TEMP TABLE ${sql.table(`trip_${payload.regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
+
+                INSERT INTO ${sql.table(`trip_${payload.regionCode}`)}
+                SELECT DISTINCT t.* FROM trip t
+                JOIN stop_time st ON st.trip_id = t.id
+                JOIN stop s ON s.id = st.stop_id
+                WHERE s.region_code = ${payload.regionCode};
+            `.execute(dbClient);
+
+            queries = regionalQueryBuilder(dbClient, payload.regionCode);
+        } else {
+            queries = queryBuilder(dbClient);
+        }
 
         await exportDataToS3(queries, outputBucket, dbClient);
 
@@ -46,7 +62,12 @@ export const handler = async () => {
         try {
             const passThrough = new PassThrough();
             archive.pipe(passThrough);
-            const upload = startS3Upload(gtfsBucket, "gtfs.zip", passThrough, "application/zip");
+            const upload = startS3Upload(
+                gtfsBucket,
+                `${payload.regionCode ?? "gtfs"}.zip`,
+                passThrough,
+                "application/zip",
+            );
 
             for (const query of queries) {
                 const file = `${query.fileName}.txt`;
