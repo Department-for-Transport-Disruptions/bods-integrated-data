@@ -27,6 +27,7 @@ import { processTrips } from "./data/trips";
 import { VehicleJourneyMapping } from "./types";
 import {
     getJourneyPatternForVehicleJourney,
+    getNationalOperatorCode,
     hasServiceExpired,
     isRequiredTndsDataset,
     isRequiredTndsServiceMode,
@@ -105,10 +106,20 @@ const processServices = (
         }
 
         const operator = operators.find((operator) => operator["@_id"] === service.RegisteredOperatorRef);
-        const agency = agencyData.find((agency) => agency.noc === operator?.NationalOperatorCode);
+
+        if (!operator) {
+            logger.warn(`Unable to find operator with registered operator ref: ${service.RegisteredOperatorRef}`, {
+                filePath,
+            });
+
+            return null;
+        }
+
+        const noc = getNationalOperatorCode(operator);
+        const agency = agencyData.find((agency) => agency.noc === noc);
 
         if (!agency) {
-            logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`, {
+            logger.warn(`Unable to find agency with national operator code: ${noc}`, {
                 filePath,
             });
 

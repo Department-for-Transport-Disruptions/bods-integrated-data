@@ -1,6 +1,6 @@
 import { DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
 import { getDate, getDateWithCustomFormat, getDuration } from "@bods-integrated-data/shared/dates";
-import { AbstractTimingLink, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { AbstractTimingLink, Operator, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import type { Dayjs } from "dayjs";
 
 export const hasServiceExpired = (service: Service) => {
@@ -251,3 +251,12 @@ export const getJourneyPatternForVehicleJourney = (
 
     return journeyPattern;
 };
+
+/**
+ * Returns the national operator code for a given operator via the NationalOperatorCode property, or
+ * falling back to the OperatorCode property if NationalOperatorCode is omitted. Returns undefined if
+ * both are omitted.
+ * @param operator The operator
+ * @returns The national operator code, or undefined if one can't be determined
+ */
+export const getNationalOperatorCode = (operator: Operator) => operator.NationalOperatorCode || operator.OperatorCode;

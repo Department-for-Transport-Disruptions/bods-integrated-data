@@ -1,11 +1,12 @@
 import { DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { AbstractTimingLink, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { AbstractTimingLink, Operator, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { describe, expect, it } from "vitest";
 import {
     getDropOffTypeFromStopActivity,
     getFirstNonZeroDuration,
     getJourneyPatternForVehicleJourney,
+    getNationalOperatorCode,
     getPickupTypeFromStopActivity,
     getTimepointFromTimingStatus,
     isRequiredTndsDataset,
@@ -613,6 +614,40 @@ describe("utils", () => {
 
             const journeyPattern = getJourneyPatternForVehicleJourney(vehicleJourneys[0], vehicleJourneys, services);
             expect(journeyPattern).toBeUndefined();
+        });
+    });
+
+    describe("getNationalOperatorCode", () => {
+        it("returns the national operator code when the NationalOperatorCode is defined", () => {
+            const operator: Operator = {
+                "@_id": "1",
+                NationalOperatorCode: "noc",
+                OperatorShortName: "name",
+            };
+
+            const result = getNationalOperatorCode(operator);
+            expect(result).toEqual("noc");
+        });
+
+        it("returns the operator code when the NationalOperatorCode is undefined but OperatorCode is defined", () => {
+            const operator: Operator = {
+                "@_id": "1",
+                OperatorCode: "noc",
+                OperatorShortName: "name",
+            };
+
+            const result = getNationalOperatorCode(operator);
+            expect(result).toEqual("noc");
+        });
+
+        it("returns undefined when both operator codes are omitted", () => {
+            const operator: Operator = {
+                "@_id": "1",
+                OperatorShortName: "name",
+            };
+
+            const result = getNationalOperatorCode(operator);
+            expect(result).toBeUndefined();
         });
     });
 });

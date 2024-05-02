@@ -4,7 +4,8 @@ import { getDate, getDateRange } from "../dates";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
 export const operatorSchema = z.object({
-    NationalOperatorCode: z.string(),
+    NationalOperatorCode: z.string().optional(),
+    OperatorCode: z.string().optional(),
     OperatorShortName: z.string(),
     "@_id": z.string(),
 });
