@@ -6,6 +6,51 @@ export type Query = {
     getQuery: () => string;
     fileName: string;
     forceQuote?: string[];
+    include: boolean;
+};
+
+export const createRegionalTripTable = async (dbClient: Kysely<Database>, regionCode: string) => {
+    await sql`
+        CREATE TABLE ${sql.table(`trip_${regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
+    `.execute(dbClient);
+
+    await sql`
+        INSERT INTO ${sql.table(`trip_${regionCode}`)}
+        SELECT DISTINCT t.* FROM trip t
+        JOIN stop_time st ON st.trip_id = t.id
+        JOIN stop s ON s.id = st.stop_id
+        WHERE s.region_code = ${regionCode}
+    `.execute(dbClient);
+};
+
+export const exportDataToS3 = async (
+    queries: Query[],
+    outputBucket: string,
+    dbClient: Kysely<Database>,
+    filePath: string,
+) => {
+    await Promise.all(
+        queries.map((query) => {
+            let options = "format csv, header true";
+
+            if (!!query.forceQuote?.length) {
+                options += `, force_quote(${query.forceQuote.join(",")})`;
+            }
+
+            return sql`
+                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.getQuery())}',
+                    aws_commons.create_s3_uri('${sql.raw(outputBucket)}', '${sql.raw(`${filePath}/${query.fileName}`)}.txt', 'eu-west-2'),
+                    options :='${sql.raw(options)}'
+                );
+            `.execute(dbClient);
+        }),
+    );
+};
+
+export const dropRegionalTable = async (dbClient: Kysely<Database>, regionCode: string) => {
+    await sql`
+        DROP TABLE IF EXISTS ${sql.table(`trip_${regionCode}`)};
+    `.execute(dbClient);
 };
 
 export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
@@ -28,6 +73,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         },
         fileName: "agency",
         forceQuote: ["agency_name", "agency_url", "agency_noc", "agency_phone"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -49,6 +95,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         },
         fileName: "stops",
         forceQuote: ["stop_name"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -61,6 +108,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         },
         fileName: "routes",
         forceQuote: ["route_short_name"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -94,6 +142,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
             return query.compile().sql;
         },
         fileName: "calendar",
+        include: true,
     },
     {
         getQuery: () => {
@@ -102,6 +151,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
             return query.compile().sql;
         },
         fileName: "calendar_dates",
+        include: true,
     },
     {
         getQuery: () => {
@@ -123,6 +173,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         },
         fileName: "trips",
         forceQuote: ["trip_headsign", "vehicle_journey_code"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -133,6 +184,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
             return query.compile().sql;
         },
         fileName: "shapes",
+        include: true,
     },
     {
         getQuery: () => {
@@ -143,6 +195,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
             return query.compile().sql;
         },
         fileName: "frequencies",
+        include: true,
     },
     {
         getQuery: () => {
@@ -160,6 +213,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
             return query.compile().sql;
         },
         fileName: "feed_info",
+        include: true,
     },
     {
         getQuery: () => {
@@ -181,6 +235,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
             return query.compile().sql;
         },
         fileName: "stop_times",
+        include: true,
     },
 ];
 
@@ -207,6 +262,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
         },
         fileName: "agency",
         forceQuote: ["agency_name", "agency_url", "agency_noc", "agency_phone"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -231,6 +287,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
         },
         fileName: "stops",
         forceQuote: ["stop_name"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -251,6 +308,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
         },
         fileName: "routes",
         forceQuote: ["route_short_name"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -286,6 +344,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             return query.compile().sql;
         },
         fileName: "calendar",
+        include: true,
     },
     {
         getQuery: () => {
@@ -298,6 +357,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             return query.compile().sql;
         },
         fileName: "calendar_dates",
+        include: true,
     },
     {
         getQuery: () => {
@@ -319,6 +379,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
         },
         fileName: "trips",
         forceQuote: ["trip_headsign", "vehicle_journey_code"],
+        include: true,
     },
     {
         getQuery: () => {
@@ -337,6 +398,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             return query.compile().sql;
         },
         fileName: "shapes",
+        include: true,
     },
     {
         getQuery: () => {
@@ -355,6 +417,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             return query.compile().sql;
         },
         fileName: "frequencies",
+        include: true,
     },
     {
         getQuery: () => {
@@ -374,6 +437,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             return query.compile().sql;
         },
         fileName: "feed_info",
+        include: true,
     },
     {
         getQuery: () => {
@@ -397,5 +461,6 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             return query.compile().sql;
         },
         fileName: "stop_times",
+        include: true,
     },
 ];

@@ -1,31 +1,99 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { createLazyDownloadStreamFrom, startS3Upload } from "@bods-integrated-data/shared/s3";
+import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import {
+    createLazyDownloadStreamFrom,
+    getS3Object,
+    listS3Objects,
+    startS3Upload,
+} from "@bods-integrated-data/shared/s3";
 import archiver from "archiver";
-import { Kysely, sql } from "kysely";
+import path from "path";
 import { PassThrough } from "stream";
-import { Query, queryBuilder, regionalQueryBuilder } from "./queries";
+import {
+    Query,
+    createRegionalTripTable,
+    dropRegionalTable,
+    exportDataToS3,
+    queryBuilder,
+    regionalQueryBuilder,
+} from "./data";
 
-const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: Kysely<Database>) => {
-    await Promise.all(
-        queries.map((query) => {
-            let options = "format csv, header true";
+/**
+ * Checks if any of the generated files in the GTFS bucket are empty (not including headers)
+ * and excludes them from the zip file
+ *
+ * @param outputBucket
+ * @param filePath
+ * @param queries
+ * @returns
+ */
+export const ignoreEmptyFiles = async (outputBucket: string, filePath: string, queries: Query[]) => {
+    const newQueries: Query[] = queries.map((query) => ({
+        fileName: query.fileName,
+        include: query.include,
+        getQuery: query.getQuery,
+    }));
 
-            if (!!query.forceQuote?.length) {
-                options += `, force_quote(${query.forceQuote.join(",")})`;
+    const objects = await listS3Objects({
+        Bucket: outputBucket,
+        Prefix: filePath,
+    });
+
+    const smallObjects = objects.Contents?.filter((o) => o.Size && o.Size < 500) ?? [];
+
+    for (const object of smallObjects) {
+        const { Body: body } = await getS3Object({
+            Bucket: outputBucket,
+            Key: object.Key,
+        });
+
+        const contents = (await body?.transformToString()) ?? "";
+        const rows = contents.split("\n").filter((row) => row !== "");
+
+        if (rows.length <= 1) {
+            logger.warn(`CSV empty: ${object.Key}`);
+            const queryIndex = queries.findIndex((q) => q.fileName === path.basename(object.Key ?? "", ".txt"));
+
+            if (queryIndex > -1) {
+                logger.info(`Excluding ${object.Key} from generated GTFS`);
+
+                newQueries[queryIndex].include = false;
             }
+        }
+    }
 
-            return sql`
-                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.getQuery())}',
-                    aws_commons.create_s3_uri('${sql.raw(outputBucket)}', '${sql.raw(query.fileName)}.txt', 'eu-west-2'),
-                    options :='${sql.raw(options)}'
-                );
-            `.execute(dbClient);
-        }),
-    );
+    return newQueries;
 };
 
-export const handler = async (payload: { regionCode: string }) => {
+export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, filePath: string, queries: Query[]) => {
+    const archive = archiver("zip", {});
+
+    try {
+        const passThrough = new PassThrough();
+        archive.pipe(passThrough);
+        const upload = startS3Upload(gtfsBucket, `${filePath}.zip`, passThrough, "application/zip");
+
+        for (const query of queries) {
+            if (query.include) {
+                const file = `${filePath}/${query.fileName}.txt`;
+                const downloadStream = createLazyDownloadStreamFrom(outputBucket, file);
+
+                archive.append(downloadStream, {
+                    name: file,
+                });
+            }
+        }
+
+        void archive.finalize();
+
+        await upload.done();
+    } catch (e) {
+        archive.abort();
+        throw e;
+    }
+};
+
+export const handler = async (payload?: { regionCode?: string }) => {
     const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, STAGE: stage } = process.env;
 
     if (!outputBucket || !gtfsBucket) {
@@ -34,57 +102,35 @@ export const handler = async (payload: { regionCode: string }) => {
 
     const dbClient = await getDatabaseClient(stage === "local");
 
+    const regionCode = payload?.regionCode ?? null;
+
     try {
-        logger.info("Starting GTFS Timetable Generator");
-
         let queries: Query[];
+        let filePath: string;
 
-        if (!!payload.regionCode) {
-            await sql`
-                CREATE TEMP TABLE ${sql.table(`trip_${payload.regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
+        if (regionCode) {
+            logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
 
-                INSERT INTO ${sql.table(`trip_${payload.regionCode}`)}
-                SELECT DISTINCT t.* FROM trip t
-                JOIN stop_time st ON st.trip_id = t.id
-                JOIN stop s ON s.id = st.stop_id
-                WHERE s.region_code = ${payload.regionCode};
-            `.execute(dbClient);
+            await createRegionalTripTable(dbClient, regionCode);
 
-            queries = regionalQueryBuilder(dbClient, payload.regionCode);
+            queries = regionalQueryBuilder(dbClient, regionCode);
+            filePath = `${regionCode.toLowerCase()}_gtfs`;
         } else {
+            logger.info("Starting GTFS Timetable Generator");
+
             queries = queryBuilder(dbClient);
+            filePath = "all_gtfs";
         }
 
-        await exportDataToS3(queries, outputBucket, dbClient);
+        await exportDataToS3(queries, outputBucket, dbClient, filePath);
 
-        const archive = archiver("zip", {});
+        if (regionCode) {
+            await dropRegionalTable(dbClient, regionCode);
 
-        try {
-            const passThrough = new PassThrough();
-            archive.pipe(passThrough);
-            const upload = startS3Upload(
-                gtfsBucket,
-                `${payload.regionCode ?? "gtfs"}.zip`,
-                passThrough,
-                "application/zip",
-            );
-
-            for (const query of queries) {
-                const file = `${query.fileName}.txt`;
-                const downloadStream = createLazyDownloadStreamFrom(outputBucket, file);
-
-                archive.append(downloadStream, {
-                    name: file,
-                });
-            }
-
-            void archive.finalize();
-
-            await upload.done();
-        } catch (e) {
-            archive.abort();
-            throw e;
+            queries = await ignoreEmptyFiles(outputBucket, filePath, queries);
         }
+
+        await createGtfsZip(gtfsBucket, outputBucket, filePath, queries);
 
         logger.info("GTFS Timetable Generator successful");
     } catch (e) {
@@ -94,6 +140,12 @@ export const handler = async (payload: { regionCode: string }) => {
 
         throw e;
     } finally {
+        if (regionCode) {
+            logger.info(`Dropping region table: trip_${regionCode}`);
+
+            await dropRegionalTable(dbClient, regionCode);
+        }
+
         await dbClient.destroy();
     }
 };

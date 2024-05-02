@@ -278,6 +278,15 @@ module "integrated_data_gtfs_timetables_generator_function" {
     },
     {
       Action = [
+        "s3:ListBucket",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:s3:::${var.rds_output_bucket_name}"
+      ]
+    },
+    {
+      Action = [
         "s3:PutObject",
       ],
       Effect = "Allow",

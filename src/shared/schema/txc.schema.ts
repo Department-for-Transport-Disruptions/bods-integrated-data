@@ -321,3 +321,5 @@ export const txcSchema = z.object({
         }),
     }),
 });
+
+export const txcRegionsSchema = z.enum(["EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y"]);
