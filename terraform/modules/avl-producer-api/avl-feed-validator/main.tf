@@ -16,7 +16,7 @@ module "avl_feed_validator" {
   function_name = "integrated-data-avl-feed-validator"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-feed-validator.zip"
   handler       = "index.handler"
-  memory        = 1024
+  memory        = 256
   runtime       = "nodejs20.x"
   timeout       = 120
 
