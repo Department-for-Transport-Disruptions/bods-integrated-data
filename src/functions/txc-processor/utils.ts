@@ -216,3 +216,38 @@ export const isRequiredTndsDataset = (key: string) => {
 export const isRequiredTndsServiceMode = (mode?: string) => {
     return mode === "coach" || mode === "ferry" || mode === "metro" || mode === "tram" || mode === "underground";
 };
+
+/**
+ * Get a journey pattern for a vehicle journey via a journey pattern ref. If the ref is omitted,
+ * The vehicle journey ref is used to lookup a corresponding vehicle journey. The journey pattern ref
+ * from that vehicle journey is then used. If the vehicle journey ref or both journey pattern refs
+ * are omitted, no journey pattern is returned.
+ * @param vehicleJourney The vehicle journey
+ * @param vehicleJourneys The vehicles journeys from the given dataset
+ * @param services The services from the given dataset
+ * @returns A journey pattern if one can be determined
+ */
+export const getJourneyPatternForVehicleJourney = (
+    vehicleJourney: VehicleJourney,
+    vehicleJourneys: VehicleJourney[],
+    services: Service[],
+) => {
+    let journeyPattern = services
+        .flatMap((s) => s.StandardService.JourneyPattern)
+        .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+
+    if (!journeyPattern) {
+        const referencedVehicleJourney = vehicleJourneys.find((vj) => {
+            return (
+                vj.VehicleJourneyRef !== vehicleJourney.VehicleJourneyRef &&
+                vj.VehicleJourneyCode === vehicleJourney.VehicleJourneyRef
+            );
+        });
+
+        journeyPattern = services
+            .flatMap((s) => s.StandardService.JourneyPattern)
+            .find((journeyPattern) => journeyPattern["@_id"] === referencedVehicleJourney?.JourneyPatternRef);
+    }
+
+    return journeyPattern;
+};

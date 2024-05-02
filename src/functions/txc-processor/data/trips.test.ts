@@ -1,5 +1,4 @@
-import { Database, NewTrip, Route, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
-import { Service } from "@bods-integrated-data/shared/schema";
+import { Database, NewTrip, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
@@ -15,28 +14,6 @@ describe("trips", () => {
     });
 
     it("inserts trips into the database", async () => {
-        const services: Service[] = [
-            {
-                StandardService: {
-                    JourneyPattern: [
-                        {
-                            "@_id": "7",
-                            DestinationDisplay: "service1",
-                        },
-                    ],
-                },
-            },
-            {
-                StandardService: {
-                    JourneyPattern: [
-                        {
-                            "@_id": "17",
-                        },
-                    ],
-                },
-            },
-        ] as Service[];
-
         const vehicleJourneyMappings: VehicleJourneyMapping[] = [
             {
                 routeId: 1,
@@ -57,6 +34,12 @@ describe("trips", () => {
                             JourneyCode: "journey1",
                         },
                     },
+                    DestinationDisplay: "vjDisplay1",
+                },
+                journeyPattern: {
+                    "@_id": "1",
+                    DestinationDisplay: "jpDisplay1",
+                    JourneyPatternSectionRefs: [],
                 },
             },
             {
@@ -71,17 +54,12 @@ describe("trips", () => {
                     VehicleJourneyCode: "18",
                     DepartureTime: "00:01:00",
                 },
+                journeyPattern: {
+                    "@_id": "1",
+                    JourneyPatternSectionRefs: [],
+                },
             },
         ];
-
-        const routes: Route[] = [
-            {
-                line_id: "5",
-            },
-            {
-                line_id: "15",
-            },
-        ] as Route[];
 
         const expectedTrips: NewTrip[] = [
             {
@@ -90,7 +68,7 @@ describe("trips", () => {
                 service_id: 2,
                 block_id: "block1",
                 shape_id: "3",
-                trip_headsign: "service1",
+                trip_headsign: "vjDisplay1",
                 wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
                 vehicle_journey_code: "8",
                 ticket_machine_journey_code: "journey1",
@@ -112,20 +90,14 @@ describe("trips", () => {
 
         insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
 
-        const updatedVehicleJourneyMappings = await processTrips(
-            dbClient,
-            services,
-            vehicleJourneyMappings,
-            routes,
-            "",
-        );
+        const updatedVehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, "");
 
         expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual(expectedTrips[0].id);
         expect(updatedVehicleJourneyMappings[1].tripId).toEqual(expectedTrips[1].id);
     });
 
-    it("doesn't insert trips that fail to reference a route", async () => {
+    it("uses the journey pattern destination display when the vehicle journey destination display is omitted", async () => {
         const vehicleJourneyMappings: VehicleJourneyMapping[] = [
             {
                 routeId: 1,
@@ -147,49 +119,38 @@ describe("trips", () => {
                         },
                     },
                 },
+                journeyPattern: {
+                    "@_id": "1",
+                    DestinationDisplay: "jpDisplay1",
+                    JourneyPatternSectionRefs: [],
+                },
             },
         ];
 
-        const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, [], "");
+        const expectedTrips: NewTrip[] = [
+            {
+                id: expect.any(String) as string,
+                route_id: 1,
+                service_id: 2,
+                block_id: "block1",
+                shape_id: "3",
+                trip_headsign: "jpDisplay1",
+                wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
+                vehicle_journey_code: "8",
+                ticket_machine_journey_code: "journey1",
+                file_path: "",
+            },
+        ];
 
-        expect(insertTripsMock).not.toHaveBeenCalled();
-        expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
+        insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
+
+        await processTrips(dbClient, vehicleJourneyMappings, "");
+
+        expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
     });
 
-    it("doesn't insert trips that fail to reference a journey pattern", async () => {
-        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
-            {
-                routeId: 1,
-                serviceId: 2,
-                shapeId: "3",
-                tripId: "",
-                vehicleJourney: {
-                    LineRef: "5",
-                    ServiceRef: "6",
-                    JourneyPatternRef: "7",
-                    VehicleJourneyCode: "8",
-                    DepartureTime: "00:00:00",
-                    Operational: {
-                        Block: {
-                            BlockNumber: "block1",
-                        },
-                        TicketMachine: {
-                            JourneyCode: "journey1",
-                        },
-                    },
-                },
-            },
-        ];
-
-        const routes: Route[] = [
-            {
-                line_id: "5",
-            },
-        ] as Route[];
-
-        const updatedVehicleJourneyMappings = await processTrips(dbClient, [], vehicleJourneyMappings, routes, "");
-
+    it("doesn't insert trips into the database when the vehicle journey mapping is empty", async () => {
+        await processTrips(dbClient, [], "");
         expect(insertTripsMock).not.toHaveBeenCalled();
-        expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
     });
 });

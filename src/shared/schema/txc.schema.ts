@@ -138,6 +138,15 @@ export const routeSchema = z.object({
 
 export type TxcRoute = z.infer<typeof routeSchema>;
 
+export const journeyPatternSchema = z.object({
+    "@_id": z.string(),
+    DestinationDisplay: z.string().optional(),
+    RouteRef: z.string().optional(),
+    JourneyPatternSectionRefs: z.string().array(),
+});
+
+export type JourneyPattern = z.infer<typeof journeyPatternSchema>;
+
 export const serviceSchema = z.object({
     ServiceCode: z.string(),
     OperatingPeriod: operatingPeriodSchema,
@@ -153,14 +162,7 @@ export const serviceSchema = z.object({
     Mode: z.string().optional(),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
-        JourneyPattern: z
-            .object({
-                "@_id": z.string(),
-                DestinationDisplay: z.string().optional(),
-                RouteRef: z.string().optional(),
-                JourneyPatternSectionRefs: z.string().array(),
-            })
-            .array(),
+        JourneyPattern: journeyPatternSchema.array(),
     }),
 });
 
@@ -246,7 +248,12 @@ export const vehicleJourneySchema = z.object({
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
     LineRef: z.string(),
-    JourneyPatternRef: z.string(),
+    /**
+     * JourneyPatternRef is not an optional property in the schema but there are a non-negligible
+     * amount of files that omit it in favour of using VehicleJourneyRef.
+     */
+    JourneyPatternRef: z.string().optional(),
+    VehicleJourneyRef: z.string().optional(),
     VehicleJourneyTimingLink: z.array(vehicleJourneyTimingLinkSchema).optional(),
 });
 

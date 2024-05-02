@@ -1,4 +1,4 @@
-import { VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { JourneyPattern, VehicleJourney } from "@bods-integrated-data/shared/schema";
 
 export type VehicleJourneyMapping = {
     vehicleJourney: VehicleJourney;
@@ -6,4 +6,5 @@ export type VehicleJourneyMapping = {
     serviceId: number;
     shapeId: string;
     tripId: string;
+    journeyPattern?: JourneyPattern;
 };

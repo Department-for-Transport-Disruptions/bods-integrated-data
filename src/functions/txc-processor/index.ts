@@ -25,7 +25,12 @@ import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processStopTimes } from "./data/stopTimes";
 import { processTrips } from "./data/trips";
 import { VehicleJourneyMapping } from "./types";
-import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
+import {
+    getJourneyPatternForVehicleJourney,
+    hasServiceExpired,
+    isRequiredTndsDataset,
+    isRequiredTndsServiceMode,
+} from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -150,6 +155,7 @@ const processServices = (
                 serviceId: 0,
                 shapeId: "",
                 tripId: "",
+                journeyPattern: getJourneyPatternForVehicleJourney(vehicleJourney, vehicleJourneys, services),
             };
 
             const route = routes.find((r) => {
@@ -176,16 +182,10 @@ const processServices = (
             bankHolidaysJson,
             servicedOrganisations,
         );
-        vehicleJourneyMappings = await processShapes(
-            dbClient,
-            services,
-            txcRoutes,
-            txcRouteSections,
-            vehicleJourneyMappings,
-        );
-        vehicleJourneyMappings = await processTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
+        vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath);
         await processFrequencies(dbClient, vehicleJourneyMappings);
-        await processStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);

@@ -1,10 +1,11 @@
 import { DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { AbstractTimingLink, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { AbstractTimingLink, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { describe, expect, it } from "vitest";
 import {
     getDropOffTypeFromStopActivity,
     getFirstNonZeroDuration,
+    getJourneyPatternForVehicleJourney,
     getPickupTypeFromStopActivity,
     getTimepointFromTimingStatus,
     isRequiredTndsDataset,
@@ -438,6 +439,180 @@ describe("utils", () => {
         ])("returns $required when the required TNDS service mode is $mode", ({ mode, required }) => {
             const result = isRequiredTndsServiceMode(mode);
             expect(result).toEqual(required);
+        });
+    });
+
+    describe("getJourneyPatternForVehicleJourney", () => {
+        it("returns a journey pattern when a reference is found with the journey pattern ref", () => {
+            const vehicleJourneys: VehicleJourney[] = [
+                {
+                    VehicleJourneyCode: "1",
+                    JourneyPatternRef: "2",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+                {
+                    VehicleJourneyCode: "3",
+                    JourneyPatternRef: "4",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+            ];
+
+            const services: Service[] = [
+                {
+                    StandardService: {
+                        JourneyPattern: [
+                            {
+                                "@_id": "2",
+                                JourneyPatternSectionRefs: [],
+                            },
+                        ],
+                    },
+                    ServiceCode: "",
+                    OperatingPeriod: {
+                        StartDate: "",
+                    },
+                    Lines: {
+                        Line: [],
+                    },
+                    RegisteredOperatorRef: "",
+                },
+            ];
+
+            const journeyPattern = getJourneyPatternForVehicleJourney(vehicleJourneys[0], vehicleJourneys, services);
+            expect(journeyPattern).toEqual(services[0].StandardService.JourneyPattern[0]);
+        });
+
+        it("returns a journey pattern when a reference is not found with the journey pattern ref but instead a referenced vehicle journey", () => {
+            const vehicleJourneys: VehicleJourney[] = [
+                {
+                    VehicleJourneyCode: "1",
+                    VehicleJourneyRef: "3",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+                {
+                    VehicleJourneyCode: "3",
+                    JourneyPatternRef: "4",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+            ];
+
+            const services: Service[] = [
+                {
+                    StandardService: {
+                        JourneyPattern: [
+                            {
+                                "@_id": "4",
+                                JourneyPatternSectionRefs: [],
+                            },
+                        ],
+                    },
+                    ServiceCode: "",
+                    OperatingPeriod: {
+                        StartDate: "",
+                    },
+                    Lines: {
+                        Line: [],
+                    },
+                    RegisteredOperatorRef: "",
+                },
+            ];
+
+            const journeyPattern = getJourneyPatternForVehicleJourney(vehicleJourneys[0], vehicleJourneys, services);
+            expect(journeyPattern).toEqual(services[0].StandardService.JourneyPattern[0]);
+        });
+
+        it("returns undefined when a reference is not found for the given vehicle journey", () => {
+            const vehicleJourneys: VehicleJourney[] = [
+                {
+                    VehicleJourneyCode: "1",
+                    JourneyPatternRef: "2",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+                {
+                    VehicleJourneyCode: "3",
+                    JourneyPatternRef: "4",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+            ];
+
+            const services: Service[] = [
+                {
+                    StandardService: {
+                        JourneyPattern: [
+                            {
+                                "@_id": "4",
+                                JourneyPatternSectionRefs: [],
+                            },
+                        ],
+                    },
+                    ServiceCode: "",
+                    OperatingPeriod: {
+                        StartDate: "",
+                    },
+                    Lines: {
+                        Line: [],
+                    },
+                    RegisteredOperatorRef: "",
+                },
+            ];
+
+            const journeyPattern = getJourneyPatternForVehicleJourney(vehicleJourneys[0], vehicleJourneys, services);
+            expect(journeyPattern).toBeUndefined();
+        });
+
+        it("returns undefined when a reference is not found for the services", () => {
+            const vehicleJourneys: VehicleJourney[] = [
+                {
+                    VehicleJourneyCode: "1",
+                    JourneyPatternRef: "2",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+                {
+                    VehicleJourneyCode: "3",
+                    JourneyPatternRef: "4",
+                    DepartureTime: "",
+                    ServiceRef: "",
+                    LineRef: "",
+                },
+            ];
+
+            const services: Service[] = [
+                {
+                    StandardService: {
+                        JourneyPattern: [
+                            {
+                                "@_id": "5",
+                                JourneyPatternSectionRefs: [],
+                            },
+                        ],
+                    },
+                    ServiceCode: "",
+                    OperatingPeriod: {
+                        StartDate: "",
+                    },
+                    Lines: {
+                        Line: [],
+                    },
+                    RegisteredOperatorRef: "",
+                },
+            ];
+
+            const journeyPattern = getJourneyPatternForVehicleJourney(vehicleJourneys[0], vehicleJourneys, services);
+            expect(journeyPattern).toBeUndefined();
         });
     });
 });
