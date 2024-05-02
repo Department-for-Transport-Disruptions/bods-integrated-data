@@ -1,9 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDatabaseClient, sql } from "@bods-integrated-data/shared/database";
+import { ExtendedAvl } from "@bods-integrated-data/shared/gtfs-rt/types";
+import { mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
-import { ExtendedAvl } from "./types";
-import { mapAvlToGtfsEntity } from "./utils";
 
 /**
  * Get all AVL data from the database along with a route ID and trip ID for each AVL row.

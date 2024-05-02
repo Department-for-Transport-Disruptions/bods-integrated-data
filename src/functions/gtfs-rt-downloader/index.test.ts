@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { handler } from ".";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { handler, retrieveRouteData } from ".";
 
 const getMockApiEvent = (passDownloadParam: boolean = true): APIGatewayProxyEventV2 => ({
     version: "",
@@ -38,8 +38,20 @@ describe("gtfs-downloader-endpoint", () => {
         return {
             getS3Object: vi.fn(),
             getPresignedUrl: vi.fn(),
+            execute: vi.fn(),
+            destroy: vi.fn(),
+            sql: vi.fn(() => ({
+                execute: vi.fn(),
+            })),
         };
     });
+
+    vi.mock("@bods-integrated-data/shared/database", () => ({
+        getDatabaseClient: vi.fn(() => ({
+            destroy: mocks.destroy,
+        })),
+        sql: mocks.sql,
+    }));
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
@@ -55,6 +67,65 @@ describe("gtfs-downloader-endpoint", () => {
             error: vi.fn(),
         },
     }));
+
+    describe("when route ids are passed", () => {
+        afterEach(() => {
+            vi.resetAllMocks();
+        });
+
+        it("should return a 404 if it recieves no rows", async () => {
+            mocks.sql.mockImplementationOnce(() => ({
+                execute: vi.fn().mockResolvedValueOnce({ rows: [] }),
+            }));
+            await expect(retrieveRouteData(["123"])).resolves.toEqual({
+                statusCode: 404,
+                headers: { "Content-Type": "application/json" },
+                body: `No routes found that match Id(s) 123`,
+            });
+            expect(logger.error).not.toHaveBeenCalled();
+        });
+
+        it("should return a 200 if it recieves rows", async () => {
+            mocks.sql.mockImplementationOnce(() => ({
+                execute: vi.fn().mockResolvedValueOnce({
+                    operator_ref: "1",
+                    vehicle_ref: "2",
+                    route_id: "3",
+                    trip_id: "4",
+                }),
+            }));
+            await expect(retrieveRouteData(["123"])).resolves.toEqual({
+                statusCode: 200,
+                headers: { "Content-Type": "application/octet-stream" },
+                body: ``,
+            });
+            expect(logger.error).not.toHaveBeenCalled();
+        });
+
+        it("should send the sql query with the route ids", async () => {
+            const routeIds = ["123", "456"];
+            await retrieveRouteData(routeIds);
+            expect(mocks.sql).toHaveBeenCalledWith(expect.any(Array), "123,456");
+        });
+
+        it("should log when an error is thrown", async () => {
+            mocks.sql.mockImplementationOnce(() => ({
+                execute: vi
+                    .fn<[], { rows: { id: string }[] }>()
+                    .mockRejectedValueOnce(new Error("Database fetch error")),
+            }));
+
+            await expect(retrieveRouteData([""])).resolves.toEqual({
+                statusCode: 500,
+                body: "An unknown error occurred. Please try again.",
+            });
+
+            expect(logger.error).toHaveBeenCalledWith(
+                "There was an error retrieving the route data",
+                expect.any(Error),
+            );
+        });
+    });
 
     describe("when download is true", () => {
         beforeEach(() => {

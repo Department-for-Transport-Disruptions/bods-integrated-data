@@ -1,4 +1,4 @@
-import { Avl } from "@bods-integrated-data/shared/database";
+import { Avl } from "../database";
 
 export type ExtendedAvl = Avl & {
     route_id?: number;

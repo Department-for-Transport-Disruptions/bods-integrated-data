@@ -1,7 +1,7 @@
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
+import { getDate } from "../dates";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
