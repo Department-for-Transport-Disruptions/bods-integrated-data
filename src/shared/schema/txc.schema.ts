@@ -329,7 +329,7 @@ const stopPointsSchema = z.object({
     StopPoint: stopPointSchema.array().optional(),
 });
 
-const castToObject = (schema: ZodSchema) => z.preprocess((val) => Object(val), schema);
+const castToObject = <T extends ZodSchema>(schema: T) => z.preprocess((val) => Object(val), schema);
 
 export const txcSchema = z.object({
     TransXChange: z.object({
