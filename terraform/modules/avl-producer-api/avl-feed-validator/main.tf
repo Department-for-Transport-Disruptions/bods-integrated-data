@@ -19,7 +19,6 @@ module "avl_feed_validator" {
   memory        = 1024
   runtime       = "nodejs20.x"
   timeout       = 120
-  schedule      = "rate(1 minute)"
 
   permissions = [
     {
@@ -30,10 +29,14 @@ module "avl_feed_validator" {
     }
   ]
 
-
   env_vars = {
     STAGE              = var.environment
     TABLE_NAME         = var.avl_subscription_table_name
     SUBSCRIBE_ENDPOINT = var.avl_consumer_subscribe_endpoint
   }
+}
+
+output "function_arn" {
+  value       = module.avl_feed_validator.function_arn
+  description = "Function ARN for AVL Feed Validator"
 }

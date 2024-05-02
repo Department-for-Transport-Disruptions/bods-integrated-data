@@ -88,3 +88,12 @@ module "avl_feed_validator" {
     aws_lambda_function_url.avl_subscribe_endpoint_function_url[0].function_url :
     "${module.avl_producer_api_gateway[0].endpoint}/subscribe")
 }
+
+module "avl_feed_validator_sfn" {
+  count                = var.environment == "local" ? 0 : 1
+  source               = "../../modules/shared/lambda-trigger-sfn"
+  environment          = var.environment
+  function_arn         = module.avl_feed_validator.function_arn
+  invoke_every_seconds = 30
+  depends_on           = [module.avl_feed_validator]
+}

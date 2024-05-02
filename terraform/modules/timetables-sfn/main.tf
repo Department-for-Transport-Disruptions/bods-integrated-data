@@ -26,7 +26,7 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_role" {
         "Action" : "sts:AssumeRole",
         "Condition" : {
           "StringEquals" : {
-            "aws:SourceAccount" : "${data.aws_caller_identity.current.account_id}"
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
           },
           "ArnLike" : {
             "aws:SourceArn" : "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:*"
@@ -38,8 +38,8 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_role" {
 }
 
 resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
-  name     = "integrated-data-timetables-sfn-${var.environment}"
-  role_arn = aws_iam_role.integrated_data_timetables_sfn_role.arn
+  name       = "integrated-data-timetables-sfn-${var.environment}"
+  role_arn   = aws_iam_role.integrated_data_timetables_sfn_role.arn
   definition = templatefile("${path.module}/timetables-state-machine.asl.json", {
     db_cleardown_function_arn              = var.db_cleardown_function_arn,
     noc_retriever_function_arn             = var.noc_retriever_function_arn,
@@ -69,7 +69,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
   name = "integrated-data-timetables-sfn-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
