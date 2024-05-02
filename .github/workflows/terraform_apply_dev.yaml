@@ -3,7 +3,7 @@ on:
     types: [submitted]
   workflow_dispatch:
 
-name: Terraform Apply
+name: Terraform Apply Dev
 
 defaults:
   run:
@@ -43,11 +43,8 @@ jobs:
       - check_for_function_changes
       - zip_functions
     if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
-    strategy:
-      matrix:
-        stage: ["dev"]
     env:
-      stage: ${{ matrix.stage }}
+      stage: "dev"
 
     steps:
       - name: Checkout
@@ -85,4 +82,4 @@ jobs:
 
       - name: Invoke dbmigrator Lambda
         run: |
-          aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ matrix.stage }} --cli-binary-format raw-in-base64-out response.json
+          aws lambda invoke --function-name integrated-data-db-migrator-migrate-$stage --cli-binary-format raw-in-base64-out response.json
