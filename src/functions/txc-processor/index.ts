@@ -252,8 +252,14 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const vehicleJourneys = TransXChange.VehicleJourneys?.VehicleJourney || [];
 
     const agencyData = await processAgencies(dbClient, operators);
-    await processStopPoints(dbClient, stopPoints);
-    await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs);
+
+    if (stopPoints.length > 0) {
+        await processStopPoints(dbClient, stopPoints);
+    }
+
+    if (annotatedStopPointRefs.length > 0) {
+        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs);
+    }
 
     await processServices(
         dbClient,
