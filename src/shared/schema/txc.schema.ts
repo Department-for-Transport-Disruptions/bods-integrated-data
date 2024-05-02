@@ -255,7 +255,7 @@ export const vehicleJourneySchema = z.object({
      */
     JourneyPatternRef: z.string().optional(),
     VehicleJourneyRef: z.string().optional(),
-    VehicleJourneyTimingLink: z.array(vehicleJourneyTimingLinkSchema).optional(),
+    VehicleJourneyTimingLink: vehicleJourneyTimingLinkSchema.array().optional(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
@@ -298,34 +298,46 @@ export type ServicedOrganisation = z.infer<typeof servicedOrganisationSchema>;
 
 export const txcSchema = z.object({
     TransXChange: z.object({
-        Operators: z.object({
-            Operator: operatorSchema.array(),
-        }),
-        RouteSections: z.object({
-            RouteSection: routeSectionSchema.array(),
-        }),
-        Routes: z.object({
-            Route: routeSchema.array(),
-        }),
-        JourneyPatternSections: z.object({
-            JourneyPatternSection: z.array(journeyPatternSectionSchema),
-        }),
+        Operators: z
+            .object({
+                Operator: operatorSchema.array().optional(),
+            })
+            .optional(),
+        RouteSections: z
+            .object({
+                RouteSection: routeSectionSchema.array().optional(),
+            })
+            .optional(),
+        Routes: z
+            .object({
+                Route: routeSchema.array().optional(),
+            })
+            .optional(),
+        JourneyPatternSections: z
+            .object({
+                JourneyPatternSection: journeyPatternSectionSchema.array().optional(),
+            })
+            .optional(),
         ServicedOrganisations: z
             .object({
                 ServicedOrganisation: servicedOrganisationSchema.array().optional(),
             })
             .optional(),
-        Services: z.object({
-            Service: serviceSchema.array(),
-        }),
+        Services: z
+            .object({
+                Service: serviceSchema.array().optional(),
+            })
+            .optional(),
         VehicleJourneys: z
             .object({
-                VehicleJourney: vehicleJourneySchema.array(),
+                VehicleJourney: vehicleJourneySchema.array().optional(),
             })
-            .or(txcEmptyProperty),
-        StopPoints: z.object({
-            AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
-            StopPoint: stopPointSchema.array().optional(),
-        }),
+            .optional(),
+        StopPoints: z
+            .object({
+                AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
+                StopPoint: stopPointSchema.array().optional(),
+            })
+            .optional(),
     }),
 });

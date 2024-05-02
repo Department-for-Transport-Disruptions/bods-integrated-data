@@ -242,29 +242,28 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const { TransXChange } = txcData;
+    const operators = TransXChange.Operators?.Operator || [];
+    const journeyPatternSections = TransXChange.JourneyPatternSections?.JourneyPatternSection || [];
+    const routes = TransXChange.Routes?.Route || [];
+    const routeSections = TransXChange.RouteSections?.RouteSection || [];
+    const services = TransXChange.Services?.Service || [];
+    const stopPoints = TransXChange.StopPoints?.StopPoint || [];
+    const annotatedStopPointRefs = TransXChange.StopPoints?.AnnotatedStopPointRef || [];
+    const vehicleJourneys = TransXChange.VehicleJourneys?.VehicleJourney || [];
 
-    if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
-        logger.warn(`No vehicle journeys found in file: ${record.s3.object.key}`);
-        return;
-    }
-
-    const agencyData = await processAgencies(dbClient, TransXChange.Operators.Operator);
-
-    if (TransXChange.StopPoints.StopPoint) {
-        await processStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
-    } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
-        await processAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
-    }
+    const agencyData = await processAgencies(dbClient, operators);
+    await processStopPoints(dbClient, stopPoints);
+    await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs);
 
     await processServices(
         dbClient,
         bankHolidaysJson,
-        TransXChange.Operators.Operator,
-        TransXChange.Services.Service,
-        TransXChange.VehicleJourneys.VehicleJourney,
-        TransXChange.RouteSections.RouteSection,
-        TransXChange.Routes.Route,
-        TransXChange.JourneyPatternSections.JourneyPatternSection,
+        operators,
+        services,
+        vehicleJourneys,
+        routeSections,
+        routes,
+        journeyPatternSections,
         agencyData,
         record.s3.object.key,
         isTnds,
