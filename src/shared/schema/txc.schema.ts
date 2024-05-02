@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { ZodSchema, z } from "zod";
 import { DEFAULT_DATE_FORMAT, bankHolidayOperationSchema } from "./dates.schema";
 import { getDate, getDateRange } from "../dates";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
@@ -296,48 +296,50 @@ export const servicedOrganisationSchema = z.object({
 
 export type ServicedOrganisation = z.infer<typeof servicedOrganisationSchema>;
 
+const operatorsSchema = z.object({
+    Operator: operatorSchema.array().optional(),
+});
+
+const routeSectionsSchema = z.object({
+    RouteSection: routeSectionSchema.array().optional(),
+});
+
+const routesSchema = z.object({
+    Route: routeSchema.array().optional(),
+});
+
+const journeyPatternSectionsSchema = z.object({
+    JourneyPatternSection: journeyPatternSectionSchema.array().optional(),
+});
+
+const servicedOrganisationsSchema = z.object({
+    ServicedOrganisation: servicedOrganisationSchema.array().optional(),
+});
+
+const servicesSchema = z.object({
+    Service: serviceSchema.array().optional(),
+});
+
+const vehicleJourneysSchema = z.object({
+    VehicleJourney: vehicleJourneySchema.array().optional(),
+});
+
+const stopPointsSchema = z.object({
+    AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
+    StopPoint: stopPointSchema.array().optional(),
+});
+
+const castToObject = (schema: ZodSchema) => z.preprocess((val) => Object(val), schema);
+
 export const txcSchema = z.object({
     TransXChange: z.object({
-        Operators: z
-            .object({
-                Operator: operatorSchema.array().optional(),
-            })
-            .optional(),
-        RouteSections: z
-            .object({
-                RouteSection: routeSectionSchema.array().optional(),
-            })
-            .optional(),
-        Routes: z
-            .object({
-                Route: routeSchema.array().optional(),
-            })
-            .optional(),
-        JourneyPatternSections: z
-            .object({
-                JourneyPatternSection: journeyPatternSectionSchema.array().optional(),
-            })
-            .optional(),
-        ServicedOrganisations: z
-            .object({
-                ServicedOrganisation: servicedOrganisationSchema.array().optional(),
-            })
-            .optional(),
-        Services: z
-            .object({
-                Service: serviceSchema.array().optional(),
-            })
-            .optional(),
-        VehicleJourneys: z
-            .object({
-                VehicleJourney: vehicleJourneySchema.array().optional(),
-            })
-            .optional(),
-        StopPoints: z
-            .object({
-                AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
-                StopPoint: stopPointSchema.array().optional(),
-            })
-            .optional(),
+        Operators: castToObject(operatorsSchema.optional()),
+        RouteSections: castToObject(routeSectionsSchema.optional()),
+        Routes: castToObject(routesSchema.optional()),
+        JourneyPatternSections: castToObject(journeyPatternSectionsSchema.optional()),
+        ServicedOrganisations: castToObject(servicedOrganisationsSchema.optional()),
+        Services: castToObject(servicesSchema.optional()),
+        VehicleJourneys: castToObject(vehicleJourneysSchema.optional()),
+        StopPoints: castToObject(stopPointsSchema.optional()),
     }),
 });
