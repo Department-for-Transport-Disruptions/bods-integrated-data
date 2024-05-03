@@ -61,7 +61,9 @@ export const processStopPoints = async (dbClient: Kysely<Database>, stops: TxcSt
         }),
     );
 
-    return insertStops(dbClient, stopsToInsert);
+    if (stopsToInsert.length > 0) {
+        await insertStops(dbClient, stopsToInsert);
+    }
 };
 
 export const processAnnotatedStopPointRefs = async (dbClient: Kysely<Database>, stops: TxcAnnotatedStopPointRef[]) => {
@@ -76,5 +78,7 @@ export const processAnnotatedStopPointRefs = async (dbClient: Kysely<Database>, 
         return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
-    return insertStops(dbClient, stopsToInsert);
+    if (stopsToInsert.length > 0) {
+        await insertStops(dbClient, stopsToInsert);
+    }
 };

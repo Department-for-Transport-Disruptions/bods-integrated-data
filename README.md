@@ -100,10 +100,10 @@ This will:
 - run local database migrations
 - create localstack resources in the Terraform local workspace
 
-Run the local `txc-retriever` to create the remaining database tables:
+Run the local `db-cleardown` function to create the remaining database tables:
 
 ```bash
-make run-local-txc-retriever
+make run-local-db-cleardown
 ```
 
 Connect to the database with your preferred database client:
@@ -200,7 +200,7 @@ awslocal s3api list-objects --bucket integrated-data-bods-txc-zipped-local
 Unzip a specified archive:
 
 ```bash
-make run-bods-txc-unzipper FILE=bods.zip
+make run-bods-txc-unzipper FILE="20240502/1st_Bus_Stop_Ltd_330/remote_dataset_8883_2024-04-04_14-21-21.zip"
 ```
 
 The resulting files can be listed using the AWS CLI:
@@ -212,7 +212,7 @@ awslocal s3api list-objects --bucket integrated-data-bods-txc-local
 Insert data into the database for a given file:
 
 ```bash
-make run-local-bods-txc-processor FILE="bods/Acme_Bus_Co_314/A_ACME_PF1102351_14_1_2021-09-06.xml"
+make run-local-bods-txc-processor FILE="20240502/Yeomans_Travel_192/Yeomans_Canyon_Travel_latest_448_Um6tex2.xml"
 ```
 
 #### Traveline National Dataset (TNDS)

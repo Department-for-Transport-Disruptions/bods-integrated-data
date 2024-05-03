@@ -4,6 +4,7 @@ import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { processAgencies } from "./agencies";
 import * as databaseFunctions from "./database";
+import { InvalidOperatorError } from "../errors";
 
 describe("agencies", () => {
     let dbClient: Kysely<Database>;
@@ -142,5 +143,16 @@ describe("agencies", () => {
 
         const result = await processAgencies(dbClient, operators);
         expect(result).toEqual(expectedAgencies);
+    });
+
+    it("throws an error when an operator doesn't have a national operator code", async () => {
+        const operators: Operator[] = [
+            {
+                "@_id": "1",
+                OperatorShortName: "name1",
+            },
+        ];
+
+        await expect(processAgencies(dbClient, operators)).rejects.toThrowError(InvalidOperatorError);
     });
 });

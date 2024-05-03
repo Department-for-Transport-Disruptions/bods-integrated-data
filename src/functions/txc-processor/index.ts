@@ -25,7 +25,13 @@ import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processStopTimes } from "./data/stopTimes";
 import { processTrips } from "./data/trips";
 import { VehicleJourneyMapping } from "./types";
-import { hasServiceExpired, isRequiredTndsDataset, isRequiredTndsServiceMode } from "./utils";
+import {
+    getJourneyPatternForVehicleJourney,
+    getNationalOperatorCode,
+    hasServiceExpired,
+    isRequiredTndsDataset,
+    isRequiredTndsServiceMode,
+} from "./utils";
 
 const txcArrayProperties = [
     "ServicedOrganisation",
@@ -100,10 +106,20 @@ const processServices = (
         }
 
         const operator = operators.find((operator) => operator["@_id"] === service.RegisteredOperatorRef);
-        const agency = agencyData.find((agency) => agency.noc === operator?.NationalOperatorCode);
+
+        if (!operator) {
+            logger.warn(`Unable to find operator with registered operator ref: ${service.RegisteredOperatorRef}`, {
+                filePath,
+            });
+
+            return null;
+        }
+
+        const noc = getNationalOperatorCode(operator);
+        const agency = agencyData.find((agency) => agency.noc === noc);
 
         if (!agency) {
-            logger.warn(`Unable to find agency with registered operator ref: ${service.RegisteredOperatorRef}`, {
+            logger.warn(`Unable to find agency with national operator code: ${noc}`, {
                 filePath,
             });
 
@@ -150,6 +166,7 @@ const processServices = (
                 serviceId: 0,
                 shapeId: "",
                 tripId: "",
+                journeyPattern: getJourneyPatternForVehicleJourney(vehicleJourney, vehicleJourneys, services),
             };
 
             const route = routes.find((r) => {
@@ -176,16 +193,10 @@ const processServices = (
             bankHolidaysJson,
             servicedOrganisations,
         );
-        vehicleJourneyMappings = await processShapes(
-            dbClient,
-            services,
-            txcRoutes,
-            txcRouteSections,
-            vehicleJourneyMappings,
-        );
-        vehicleJourneyMappings = await processTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
+        vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath);
         await processFrequencies(dbClient, vehicleJourneyMappings);
-        await processStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -231,29 +242,34 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const { TransXChange } = txcData;
+    const operators = TransXChange.Operators?.Operator || [];
+    const journeyPatternSections = TransXChange.JourneyPatternSections?.JourneyPatternSection || [];
+    const routes = TransXChange.Routes?.Route || [];
+    const routeSections = TransXChange.RouteSections?.RouteSection || [];
+    const services = TransXChange.Services?.Service || [];
+    const stopPoints = TransXChange.StopPoints?.StopPoint || [];
+    const annotatedStopPointRefs = TransXChange.StopPoints?.AnnotatedStopPointRef || [];
+    const vehicleJourneys = TransXChange.VehicleJourneys?.VehicleJourney || [];
 
-    if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
-        logger.warn(`No vehicle journeys found in file: ${record.s3.object.key}`);
-        return;
+    const agencyData = await processAgencies(dbClient, operators);
+
+    if (stopPoints.length > 0) {
+        await processStopPoints(dbClient, stopPoints);
     }
 
-    const agencyData = await processAgencies(dbClient, TransXChange.Operators.Operator);
-
-    if (TransXChange.StopPoints.StopPoint) {
-        await processStopPoints(dbClient, TransXChange.StopPoints.StopPoint);
-    } else if (TransXChange.StopPoints.AnnotatedStopPointRef) {
-        await processAnnotatedStopPointRefs(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+    if (annotatedStopPointRefs.length > 0) {
+        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs);
     }
 
     await processServices(
         dbClient,
         bankHolidaysJson,
-        TransXChange.Operators.Operator,
-        TransXChange.Services.Service,
-        TransXChange.VehicleJourneys.VehicleJourney,
-        TransXChange.RouteSections.RouteSection,
-        TransXChange.Routes.Route,
-        TransXChange.JourneyPatternSections.JourneyPatternSection,
+        operators,
+        services,
+        vehicleJourneys,
+        routeSections,
+        routes,
+        journeyPatternSections,
         agencyData,
         record.s3.object.key,
         isTnds,

@@ -1,6 +1,6 @@
 import { DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
 import { getDate, getDateWithCustomFormat, getDuration } from "@bods-integrated-data/shared/dates";
-import { AbstractTimingLink, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { AbstractTimingLink, Operator, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import type { Dayjs } from "dayjs";
 
 export const hasServiceExpired = (service: Service) => {
@@ -216,3 +216,47 @@ export const isRequiredTndsDataset = (key: string) => {
 export const isRequiredTndsServiceMode = (mode?: string) => {
     return mode === "coach" || mode === "ferry" || mode === "metro" || mode === "tram" || mode === "underground";
 };
+
+/**
+ * Get a journey pattern for a vehicle journey via a journey pattern ref. If the ref is omitted,
+ * The vehicle journey ref is used to lookup a corresponding vehicle journey. The journey pattern ref
+ * from that vehicle journey is then used. If the vehicle journey ref or both journey pattern refs
+ * are omitted, no journey pattern is returned.
+ * @param vehicleJourney The vehicle journey
+ * @param vehicleJourneys The vehicles journeys from the given dataset
+ * @param services The services from the given dataset
+ * @returns A journey pattern if one can be determined
+ */
+export const getJourneyPatternForVehicleJourney = (
+    vehicleJourney: VehicleJourney,
+    vehicleJourneys: VehicleJourney[],
+    services: Service[],
+) => {
+    let journeyPattern = services
+        .flatMap((s) => s.StandardService.JourneyPattern)
+        .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+
+    if (!journeyPattern) {
+        const referencedVehicleJourney = vehicleJourneys.find((vj) => {
+            return (
+                vj.VehicleJourneyRef !== vehicleJourney.VehicleJourneyRef &&
+                vj.VehicleJourneyCode === vehicleJourney.VehicleJourneyRef
+            );
+        });
+
+        journeyPattern = services
+            .flatMap((s) => s.StandardService.JourneyPattern)
+            .find((journeyPattern) => journeyPattern["@_id"] === referencedVehicleJourney?.JourneyPatternRef);
+    }
+
+    return journeyPattern;
+};
+
+/**
+ * Returns the national operator code for a given operator via the NationalOperatorCode property, or
+ * falling back to the OperatorCode property if NationalOperatorCode is omitted. Returns undefined if
+ * both are omitted.
+ * @param operator The operator
+ * @returns The national operator code, or undefined if one can't be determined
+ */
+export const getNationalOperatorCode = (operator: Operator) => operator.NationalOperatorCode || operator.OperatorCode;

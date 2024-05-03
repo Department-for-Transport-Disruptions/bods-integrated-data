@@ -6,9 +6,17 @@ export class DuplicateRouteError extends Error {
     }
 }
 
+export class InvalidOperatorError extends Error {
+    constructor() {
+        super("Invalid operator");
+
+        Object.setPrototypeOf(this, InvalidOperatorError.prototype);
+    }
+}
+
 export class ServiceExpiredError extends Error {
     constructor() {
-        super();
+        super("Service expired");
 
         Object.setPrototypeOf(this, ServiceExpiredError.prototype);
     }
