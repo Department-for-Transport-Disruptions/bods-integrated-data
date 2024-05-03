@@ -135,10 +135,10 @@ run-local-tnds-txc-retriever:
 run-local-db-cleardown:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/db-cleardown'; handler().catch(e => console.error(e))"
 
-run-bods-txc-unzipper:
+run-local-bods-txc-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
-run-tnds-txc-unzipper:
+run-local-tnds-txc-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${TNDS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 run-local-bods-txc-processor:
@@ -155,13 +155,13 @@ run-local-gtfs-timetables-generator:
 run-local-gtfs-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
 
-run-gtfs-rt-generator:
+run-local-gtfs-rt-generator:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
-run-gtfs-rt-downloader:
+run-local-gtfs-rt-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'false' }}).then(r => console.log(r)).catch(e => console.error(e))"
 
-run-gtfs-rt-downloader-download:
+run-local-gtfs-rt-downloader-download:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'true' }}).then(r => console.log(r)).catch(e => console.error(e))"
 
 # AVL
