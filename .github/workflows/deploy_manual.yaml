@@ -21,7 +21,7 @@ env:
 jobs:
   terraform_apply_dev:
     uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply
+    name: Terraform Apply Dev
     if: inputs.stage == 'dev'
     with:
       stage: ${{ inputs.stage }}
@@ -32,7 +32,7 @@ jobs:
 
   terraform_apply_test:
     uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply
+    name: Terraform Apply Test
     if: inputs.stage == 'test'
     with:
       stage: ${{ inputs.stage }}

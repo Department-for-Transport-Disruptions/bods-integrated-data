@@ -37,7 +37,7 @@ jobs:
 
   terraform_apply:
     uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply Dev
+    name: Terraform Apply Test
     needs:
       - check_for_function_changes
       - zip_functions
