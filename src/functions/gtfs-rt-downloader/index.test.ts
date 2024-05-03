@@ -1,4 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
+import { ExtendedAvl } from "@bods-integrated-data/shared/gtfs-rt/types";
+import * as utilFunctions from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler, retrieveRouteData } from ".";
@@ -40,24 +42,17 @@ describe("gtfs-downloader-endpoint", () => {
             getPresignedUrl: vi.fn(),
             execute: vi.fn(),
             destroy: vi.fn(),
-            sql: vi.fn(() => ({
-                execute: vi.fn(),
-            })),
         };
     });
-
-    vi.mock("@bods-integrated-data/shared/database", () => ({
-        getDatabaseClient: vi.fn(() => ({
-            destroy: mocks.destroy,
-        })),
-        sql: mocks.sql,
-    }));
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object,
         getPresignedUrl: mocks.getPresignedUrl,
     }));
+
+    const getAvlDataForGtfsMock = vi.spyOn(utilFunctions, "getAvlDataForGtfs");
+    const base64EncodeMock = vi.spyOn(utilFunctions, "base64Encode");
 
     const mockBucketName = "mock-bucket";
     const mockApiEvent = getMockApiEvent();
@@ -68,15 +63,13 @@ describe("gtfs-downloader-endpoint", () => {
         },
     }));
 
-    describe("when route ids are passed", () => {
-        afterEach(() => {
-            vi.resetAllMocks();
-        });
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
 
+    describe("when route ids are passed", () => {
         it("should return a 404 if it recieves no rows", async () => {
-            mocks.sql.mockImplementationOnce(() => ({
-                execute: vi.fn().mockResolvedValueOnce({ rows: [] }),
-            }));
+            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             await expect(retrieveRouteData(["123"])).resolves.toEqual({
                 statusCode: 404,
                 headers: { "Content-Type": "application/json" },
@@ -86,18 +79,21 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         it("should return a 200 if it recieves rows", async () => {
-            mocks.sql.mockImplementationOnce(() => ({
-                execute: vi.fn().mockResolvedValueOnce({
+            getAvlDataForGtfsMock.mockResolvedValueOnce([
+                {
                     operator_ref: "1",
                     vehicle_ref: "2",
-                    route_id: "3",
+                    route_id: 3,
                     trip_id: "4",
-                }),
-            }));
+                } as ExtendedAvl,
+            ]);
+            base64EncodeMock.mockReturnValueOnce("test-base64");
+
             await expect(retrieveRouteData(["123"])).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/octet-stream" },
-                body: ``,
+                body: "test-base64",
+                isBase64Encoded: true,
             });
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -105,15 +101,12 @@ describe("gtfs-downloader-endpoint", () => {
         it("should send the sql query with the route ids", async () => {
             const routeIds = ["123", "456"];
             await retrieveRouteData(routeIds);
-            expect(mocks.sql).toHaveBeenCalledWith(expect.any(Array), "123,456");
+            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(routeIds);
         });
 
         it("should log when an error is thrown", async () => {
-            mocks.sql.mockImplementationOnce(() => ({
-                execute: vi
-                    .fn<[], { rows: { id: string }[] }>()
-                    .mockRejectedValueOnce(new Error("Database fetch error")),
-            }));
+            getAvlDataForGtfsMock.mockRejectedValueOnce(new Error("Database fetch error"));
 
             await expect(retrieveRouteData([""])).resolves.toEqual({
                 statusCode: 500,
@@ -130,10 +123,6 @@ describe("gtfs-downloader-endpoint", () => {
     describe("when download is true", () => {
         beforeEach(() => {
             process.env.BUCKET_NAME = mockBucketName;
-        });
-
-        afterEach(() => {
-            vi.resetAllMocks();
         });
 
         it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
@@ -186,6 +175,7 @@ describe("gtfs-downloader-endpoint", () => {
 
         it("returns a 200 with the data when the data is successfully retrieved", async () => {
             mocks.getS3Object.mockResolvedValue({ Body: { transformToString: () => Promise.resolve("test") } });
+
             await expect(handler(falseDownload)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/octet-stream" },

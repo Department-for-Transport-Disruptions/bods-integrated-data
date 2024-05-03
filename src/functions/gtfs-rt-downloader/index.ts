@@ -1,41 +1,12 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDatabaseClient, sql } from "@bods-integrated-data/shared/database";
-import { ExtendedAvl } from "@bods-integrated-data/shared/gtfs-rt/types";
-import { mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { base64Encode, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { transit_realtime } from "gtfs-realtime-bindings";
 
-export const getRouteData = async (routeIds: string[]) => {
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
-
-    try {
-        const queryResult = await sql<ExtendedAvl>`
-            SELECT DISTINCT ON (avl.operator_ref, avl.vehicle_ref) avl.*, routes_with_noc.route_id AS route_id, trip.id as trip_id FROM avl
-            LEFT OUTER JOIN (
-                SELECT route.id AS route_id, CONCAT(agency.noc, route.route_short_name) AS concat_noc_route_short_name FROM route
-                JOIN agency ON route.agency_id = agency.id
-            ) routes_with_noc ON routes_with_noc.concat_noc_route_short_name = CONCAT(avl.operator_ref, avl.line_ref)
-            LEFT OUTER JOIN trip ON trip.route_id = routes_with_noc.route_id AND trip.ticket_machine_journey_code = avl.dated_vehicle_journey_ref
-            WHERE routes_with_noc.route_id IN (${routeIds.join(",")})
-            ORDER BY avl.operator_ref, avl.vehicle_ref, avl.response_time_stamp DESC
-            `.execute(dbClient);
-
-        return queryResult.rows;
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem getting AVL data from the database", error);
-        }
-
-        throw error;
-    } finally {
-        await dbClient.destroy();
-    }
-};
-
 export const retrieveRouteData = async (routeIds: string[]): Promise<APIGatewayProxyResultV2> => {
     try {
-        const avlData = await getRouteData(routeIds);
+        const avlData = await getAvlDataForGtfs(routeIds);
 
         if (avlData.length === 0) {
             return {
@@ -55,8 +26,7 @@ export const retrieveRouteData = async (routeIds: string[]): Promise<APIGatewayP
 
         const feed = transit_realtime.FeedMessage.encode(message);
         const data = feed.finish();
-
-        const encodedData = Buffer.from(data).toString("base64");
+        const encodedData = base64Encode(data);
 
         return {
             statusCode: 200,
