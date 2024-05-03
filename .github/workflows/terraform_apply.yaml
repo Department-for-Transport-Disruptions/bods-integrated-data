@@ -1,0 +1,98 @@
+name: Apply terraform
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        required: true
+        type: string
+      terraform_version:
+        required: true
+        type: string
+      use_artifacts:
+        default: true
+        type: boolean
+    secrets:
+      oidc_role_arn:
+        required: true
+
+jobs:
+  terraform_apply:
+    runs-on: ubuntu-22.04
+    name: Terraform Apply
+    env:
+      stage: ${{ inputs.stage }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        if: inputs.use_artifacts
+        with:
+          path: ./src/functions/dist
+          merge-multiple: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        if: !inputs.use_artifacts
+        with:
+          node-version: "20.x"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        if: !inputs.use_artifacts
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        if: !inputs.use_artifacts
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        if: !inputs.use_artifacts
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Build all functions
+        if: !inputs.use_artifacts
+        run: |
+          cd ./src
+          pnpm i
+          pnpm run build-all
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.oidc_role_arn }}
+          aws-region: "eu-west-2"
+          role-session-name: GitHub-OIDC-TERRAFORM
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform -chdir=${{ inputs.stage }} init
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform -chdir=${{ inputs.stage }} plan -input=false -no-color -out=tfplan
+
+      - name: Terraform Apply
+        if: steps.plan.outcome == 'success'
+        id: apply
+        run: terraform -chdir=${{ inputs.stage }} apply -input=false -no-color tfplan
+
+      - name: Invoke dbmigrator Lambda
+        run: |
+          aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ inputs.stage }} --cli-binary-format raw-in-base64-out response.json

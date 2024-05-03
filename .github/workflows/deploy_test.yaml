@@ -1,0 +1,50 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Terraform Apply Test
+
+defaults:
+  run:
+    working-directory: ./terraform
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+env:
+  TERRAFORM_VERSION: 1.6.6
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+  check_for_function_changes:
+    uses: ./.github/workflows/get_directories_with_changes.yaml
+    name: Get list of updated functions
+    with:
+      path: "./src/functions"
+
+  zip_functions:
+    uses: ./.github/workflows/zip_function.yaml
+    name: Zip updated functions
+    if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
+    strategy:
+      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+    needs:
+      - check_for_function_changes
+    with:
+      function_dir: ${{ matrix.dir }}
+
+  terraform_apply:
+    uses: ./.github/workflows/terraform_apply.yaml
+    name: Terraform Apply Dev
+    needs:
+      - check_for_function_changes
+      - zip_functions
+    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    with:
+      stage: "test"
+      terraform_version: 1.6.6
+      use_artifacts: true
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST }}

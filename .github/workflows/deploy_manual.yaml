@@ -1,0 +1,42 @@
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        options:
+          - dev
+          - test
+        type: choice
+        description: Environment to deploy to
+
+name: Terraform Apply (All Functions)
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+env:
+  TERRAFORM_VERSION: 1.6.6
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+  terraform_apply_dev:
+    uses: ./.github/workflows/terraform_apply.yaml
+    name: Terraform Apply
+    if: inputs.stage == 'dev'
+    with:
+      stage: ${{ inputs.stage }}
+      terraform_version: 1.6.6
+      use_artifacts: false
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV}}
+
+  terraform_apply_test:
+    uses: ./.github/workflows/terraform_apply.yaml
+    name: Terraform Apply
+    if: inputs.stage == 'test'
+    with:
+      stage: ${{ inputs.stage }}
+      terraform_version: 1.6.6
+      use_artifacts: false
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST}}
