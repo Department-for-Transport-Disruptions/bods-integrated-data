@@ -5,10 +5,6 @@ on:
 
 name: Terraform Apply Test
 
-defaults:
-  run:
-    working-directory: ./terraform
-
 permissions:
   id-token: write # This is required for aws oidc connection
   contents: read # This is required for actions/checkout.

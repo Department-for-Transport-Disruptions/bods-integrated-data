@@ -35,26 +35,26 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        if: !inputs.use_artifacts
+        if: ${{ !inputs.use_artifacts }}
         with:
           node-version: "20.x"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
-        if: !inputs.use_artifacts
+        if: ${{ !inputs.use_artifacts }}
         with:
           version: 8
           run_install: false
 
       - name: Get pnpm store directory
-        if: !inputs.use_artifacts
+        if: ${{ !inputs.use_artifacts }}
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
-        if: !inputs.use_artifacts
+        if: ${{ !inputs.use_artifacts }}
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
@@ -62,7 +62,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Build all functions
-        if: !inputs.use_artifacts
+        if: ${{ !inputs.use_artifacts }}
         run: |
           cd ./src
           pnpm i
@@ -82,16 +82,16 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform -chdir=${{ inputs.stage }} init
+        run: terraform -chdir=terraform/${{ inputs.stage }} init
 
       - name: Terraform Plan
         id: plan
-        run: terraform -chdir=${{ inputs.stage }} plan -input=false -no-color -out=tfplan
+        run: terraform -chdir=terraform/${{ inputs.stage }} plan -input=false -no-color -out=tfplan
 
       - name: Terraform Apply
         if: steps.plan.outcome == 'success'
         id: apply
-        run: terraform -chdir=${{ inputs.stage }} apply -input=false -no-color tfplan
+        run: terraform -chdir=terraform/${{ inputs.stage }} apply -input=false -no-color tfplan
 
       - name: Invoke dbmigrator Lambda
         run: |
