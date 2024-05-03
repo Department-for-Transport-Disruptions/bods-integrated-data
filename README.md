@@ -412,11 +412,12 @@ On PR approval:
 
 ### Environments
 
-| Environment | Notes                                     |
-| ----------- | ----------------------------------------- |
-| `local`     | local environment used with localstack    |
-| `dev`       | Deployed environment used for dev testing |
-| `prod`      | Not used yet                              |
+| Environment | Notes                                                    |
+| ----------- | -------------------------------------------------------- |
+| `local`     | Local environment used with localstack                   |
+| `dev`       | Deployed environment used for dev testing                |
+| `test`      | Deployed environment used for UAT and automation testing |
+| `prod`      | Not used yet                                             |
 
 ### Deploying changes locally
 
