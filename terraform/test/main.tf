@@ -2,11 +2,11 @@ terraform {
   required_version = ">= 1.6.6"
 
   backend "s3" {
-    bucket = "integrated-data-tfstate-dev"
+    bucket = "integrated-data-tfstate-test"
     key    = "terraform.tfstate"
     region = "eu-west-2"
 
-    dynamodb_table = "integrated-data-state-lock-dev"
+    dynamodb_table = "integrated-data-state-lock-test"
     encrypt        = true
   }
 
@@ -31,18 +31,18 @@ data "sops_file" "secrets" {
 }
 
 locals {
-  env     = "dev"
+  env     = "test"
   secrets = jsondecode(data.sops_file.secrets.raw)
 }
 
-module "integrated_data_monitoring_dev" {
+module "integrated_data_monitoring" {
   source = "../modules/monitoring"
 
   environment     = local.env
   email_addresses = local.secrets["email_addresses_for_alarms"]
 }
 
-module "integrated_data_vpc_dev" {
+module "integrated_data_vpc" {
   source = "../modules/networking/vpc"
 
   environment = local.env
@@ -53,7 +53,7 @@ module "integrated_data_route53" {
   source = "../modules/networking/route-53"
 
   environment = local.env
-  vpc_id      = module.integrated_data_vpc_dev.vpc_id
+  vpc_id      = module.integrated_data_vpc.vpc_id
   root_domain = local.secrets["root_domain"]
 }
 
@@ -64,12 +64,12 @@ module "integrated_data_acm" {
   domain_name    = module.integrated_data_route53.public_hosted_zone_name
 }
 
-module "integrated_data_aurora_db_dev" {
+module "integrated_data_aurora_db" {
   source = "../modules/database/aurora-db"
 
   environment              = local.env
-  db_subnet_ids            = module.integrated_data_vpc_dev.db_subnet_ids
-  vpc_id                   = module.integrated_data_vpc_dev.vpc_id
+  db_subnet_ids            = module.integrated_data_vpc.db_subnet_ids
+  vpc_id                   = module.integrated_data_vpc.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
   min_db_capacity          = 0.5
@@ -81,88 +81,88 @@ module "integrated_data_db_monitoring" {
   source = "../modules/database/monitoring"
 
   environment     = local.env
-  db_cluster_id   = module.integrated_data_aurora_db_dev.db_cluster_id
-  alarm_topic_arn = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn    = module.integrated_data_monitoring_dev.ok_topic_arn
+  db_cluster_id   = module.integrated_data_aurora_db.db_cluster_id
+  alarm_topic_arn = module.integrated_data_monitoring.alarm_topic_arn
+  ok_topic_arn    = module.integrated_data_monitoring.ok_topic_arn
 }
 
 module "integrated_data_bastion_host" {
   source = "../modules/database/bastion-host"
 
   environment              = local.env
-  db_sg_id                 = module.integrated_data_aurora_db_dev.db_sg_id
-  private_subnet_ids       = module.integrated_data_vpc_dev.private_subnet_ids
-  vpc_id                   = module.integrated_data_vpc_dev.vpc_id
-  vpc_cidr                 = module.integrated_data_vpc_dev.vpc_cidr
-  interface_endpoint_sg_id = module.integrated_data_vpc_dev.interface_endpoint_sg_id
+  db_sg_id                 = module.integrated_data_aurora_db.db_sg_id
+  private_subnet_ids       = module.integrated_data_vpc.private_subnet_ids
+  vpc_id                   = module.integrated_data_vpc.vpc_id
+  vpc_cidr                 = module.integrated_data_vpc.vpc_cidr
+  interface_endpoint_sg_id = module.integrated_data_vpc.interface_endpoint_sg_id
 }
 
 module "integrated_data_db_migrator" {
   source = "../modules/database/db-migrator"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_noc_pipeline" {
   source = "../modules/data-pipelines/noc-pipeline"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_table_renamer" {
   source = "../modules/table-renamer"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
   environment               = local.env
-  vpc_id                    = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids        = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn             = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id                  = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host                   = module.integrated_data_aurora_db_dev.db_host
+  vpc_id                    = module.integrated_data_vpc.vpc_id
+  private_subnet_ids        = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn             = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                  = module.integrated_data_aurora_db.db_sg_id
+  db_host                   = module.integrated_data_aurora_db.db_host
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
-  rds_output_bucket_name    = module.integrated_data_aurora_db_dev.s3_output_bucket_name
+  rds_output_bucket_name    = module.integrated_data_aurora_db.s3_output_bucket_name
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
 }
 
@@ -177,35 +177,35 @@ module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
-  alarm_topic_arn    = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn       = module.integrated_data_monitoring_dev.ok_topic_arn
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+  alarm_topic_arn    = module.integrated_data_monitoring.alarm_topic_arn
+  ok_topic_arn       = module.integrated_data_monitoring.ok_topic_arn
 }
 
 module "integrated_data_avl_aggregator" {
   source = "../modules/data-pipelines/avl-aggregate-siri-vm"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -274,11 +274,11 @@ module "integrated_data_db_cleardown_function" {
   source = "../modules/db-cleardown"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_timetables_sfn" {

@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { Database, NewStopTime } from "@bods-integrated-data/shared/database";
-import { Service, TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
+import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { insertStopTimes } from "./database";
 import { VehicleJourneyMapping } from "../types";
@@ -8,19 +8,14 @@ import { mapTimingLinksToStopTimes } from "../utils";
 
 export const processStopTimes = async (
     dbClient: Kysely<Database>,
-    services: Service[],
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
     const stopTimes = vehicleJourneyMappings.flatMap<NewStopTime>((vehicleJourneyMapping) => {
-        const { tripId, vehicleJourney } = vehicleJourneyMapping;
-
-        const journeyPattern = services
-            .flatMap((s) => s.StandardService.JourneyPattern)
-            .find((journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef);
+        const { tripId, vehicleJourney, journeyPattern } = vehicleJourneyMapping;
 
         if (!journeyPattern) {
-            logger.warn(`Unable to find journey pattern with journey pattern ref: ${vehicleJourney.JourneyPatternRef}`);
+            logger.warn(`Unable to find journey pattern for vehicle journey with line ref: ${vehicleJourney.LineRef}`);
             return [];
         }
 

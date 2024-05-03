@@ -1,29 +1,23 @@
 import { logger } from "@baselime/lambda-logger";
 import { Database, NewShape } from "@bods-integrated-data/shared/database";
-import { TxcRouteSection, Service, TxcRoute, TxcRouteLink } from "@bods-integrated-data/shared/schema";
+import { TxcRouteSection, TxcRoute, TxcRouteLink } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
 import { randomUUID } from "crypto";
 import { insertShapes } from "./database";
 import { VehicleJourneyMapping } from "../types";
 
-export const getRouteRefs = (
-    services: Service[],
-    routes: TxcRoute[],
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
+export const getRouteRefs = (routes: TxcRoute[], vehicleJourneyMappings: VehicleJourneyMapping[]) => {
     const journeyPatternToRouteRefMapping: Record<string, string> = {};
 
     const routeRefs = vehicleJourneyMappings
         .map((vehicleJourneyMapping) => {
-            const journey = vehicleJourneyMapping.vehicleJourney;
-
-            const journeyPattern = services
-                .flatMap((s) => s.StandardService.JourneyPattern)
-                .find((journeyPattern) => journeyPattern["@_id"] === journey.JourneyPatternRef);
+            const { vehicleJourney, journeyPattern } = vehicleJourneyMapping;
 
             if (!journeyPattern) {
-                logger.warn(`Unable to find journey pattern with journey pattern ref: ${journey.JourneyPatternRef}`);
+                logger.warn(
+                    `Unable to find journey pattern for vehicle journey with line ref: ${vehicleJourney.LineRef}`,
+                );
                 return null;
             }
 
@@ -103,12 +97,11 @@ export const mapRouteLinksToShapes = (routeLinks: TxcRouteLink[]) => {
 
 export const processShapes = async (
     dbClient: Kysely<Database>,
-    services: Service[],
     routes: TxcRoute[],
     routeSections: TxcRouteSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
-    const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(services, routes, vehicleJourneyMappings);
+    const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(routes, vehicleJourneyMappings);
     const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings);
 
     const shapes = routeRefs.flatMap<NewShape>((routeRef) => {
@@ -116,7 +109,9 @@ export const processShapes = async (
         const { shapeId, shapes } = mapRouteLinksToShapes(routeLinks);
 
         updatedVehicleJourneyMappings.forEach((mapping) => {
-            if (journeyPatternToRouteRefMapping[mapping.vehicleJourney.JourneyPatternRef] === routeRef) {
+            const journeyPatternRef = mapping.journeyPattern?.["@_id"];
+
+            if (journeyPatternRef && journeyPatternToRouteRefMapping[journeyPatternRef] === routeRef) {
                 mapping.shapeId = shapeId;
             }
         });

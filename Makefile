@@ -135,6 +135,9 @@ run-local-tnds-txc-retriever:
 run-local-db-cleardown:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/db-cleardown'; handler().catch(e => console.error(e))"
 
+run-local-db-cleardown-gtfs-only:
+	STAGE=local ONLY_GTFS=true npx tsx -e "import {handler} from './src/functions/db-cleardown'; handler().catch(e => console.error(e))"
+
 run-local-bods-txc-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 

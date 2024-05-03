@@ -1,5 +1,5 @@
 import { Database, DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
-import { Service, TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
+import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
@@ -17,30 +17,6 @@ describe("stopTimes", () => {
     });
 
     it("inserts stop times into the database", async () => {
-        const services: Service[] = [
-            {
-                StandardService: {
-                    JourneyPattern: [
-                        {
-                            "@_id": "7",
-                            DestinationDisplay: "service1",
-                            JourneyPatternSectionRefs: ["1", "2"],
-                        },
-                    ],
-                },
-            },
-            {
-                StandardService: {
-                    JourneyPattern: [
-                        {
-                            "@_id": "17",
-                            JourneyPatternSectionRefs: ["3"],
-                        },
-                    ],
-                },
-            },
-        ] as Service[];
-
         const journeyPatternSections: TxcJourneyPatternSection[] = [
             {
                 "@_id": "1",
@@ -62,6 +38,7 @@ describe("stopTimes", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -77,18 +54,28 @@ describe("stopTimes", () => {
                         },
                     },
                 },
+                journeyPattern: {
+                    "@_id": "7",
+                    DestinationDisplay: "service1",
+                    JourneyPatternSectionRefs: ["1", "2"],
+                },
             },
             {
                 routeId: 11,
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
                     JourneyPatternRef: "17",
                     VehicleJourneyCode: "18",
                     DepartureTime: "00:01:00",
+                },
+                journeyPattern: {
+                    "@_id": "17",
+                    JourneyPatternSectionRefs: ["3"],
                 },
             },
         ];
@@ -124,7 +111,7 @@ describe("stopTimes", () => {
         mapTimingLinksToStopTimesMock.mockImplementationOnce(() => [expectedStopTimes[1]]);
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, services, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
 
         expect(mapTimingLinksToStopTimesMock).toHaveBeenNthCalledWith(
             1,
@@ -145,36 +132,13 @@ describe("stopTimes", () => {
     });
 
     it("doesn't insert stop times that fail to reference a journey pattern section", async () => {
-        const services: Service[] = [
-            {
-                StandardService: {
-                    JourneyPattern: [
-                        {
-                            "@_id": "7",
-                            DestinationDisplay: "service1",
-                            JourneyPatternSectionRefs: ["1", "2"],
-                        },
-                    ],
-                },
-            },
-            {
-                StandardService: {
-                    JourneyPattern: [
-                        {
-                            "@_id": "17",
-                            JourneyPatternSectionRefs: ["3"],
-                        },
-                    ],
-                },
-            },
-        ] as Service[];
-
         const vehicleJourneyMappings: VehicleJourneyMapping[] = [
             {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -190,12 +154,18 @@ describe("stopTimes", () => {
                         },
                     },
                 },
+                journeyPattern: {
+                    "@_id": "7",
+                    DestinationDisplay: "service1",
+                    JourneyPatternSectionRefs: ["1", "2"],
+                },
             },
             {
                 routeId: 11,
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
@@ -203,12 +173,16 @@ describe("stopTimes", () => {
                     VehicleJourneyCode: "18",
                     DepartureTime: "00:01:00",
                 },
+                journeyPattern: {
+                    "@_id": "17",
+                    JourneyPatternSectionRefs: ["3"],
+                },
             },
         ];
 
         mapTimingLinksToStopTimesMock.mockImplementation(() => []);
 
-        await processStopTimes(dbClient, services, [], vehicleJourneyMappings);
+        await processStopTimes(dbClient, [], vehicleJourneyMappings);
 
         expect(mapTimingLinksToStopTimesMock).toHaveBeenCalledWith(
             vehicleJourneyMappings[0].tripId,
@@ -225,6 +199,7 @@ describe("stopTimes", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -246,6 +221,7 @@ describe("stopTimes", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
@@ -256,7 +232,7 @@ describe("stopTimes", () => {
             },
         ];
 
-        await processStopTimes(dbClient, [], [], vehicleJourneyMappings);
+        await processStopTimes(dbClient, [], vehicleJourneyMappings);
 
         expect(mapTimingLinksToStopTimesMock).not.toHaveBeenCalled();
         expect(insertStopTimesMock).not.toHaveBeenCalled();

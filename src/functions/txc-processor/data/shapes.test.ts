@@ -1,5 +1,5 @@
 import { Database, NewShape } from "@bods-integrated-data/shared/database";
-import { Service, TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
+import { TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
@@ -16,36 +16,13 @@ describe("shapes", () => {
 
     describe("getRouteRefs", () => {
         it("returns route refs for the given vehicle journeys and services", () => {
-            const services: Service[] = [
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "7",
-                                DestinationDisplay: "service1",
-                                RouteRef: "1",
-                            },
-                        ],
-                    },
-                },
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "17",
-                                RouteRef: "2",
-                            },
-                        ],
-                    },
-                },
-            ] as Service[];
-
             const vehicleJourneyMappings: VehicleJourneyMapping[] = [
                 {
                     routeId: 1,
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
                         ServiceRef: "6",
@@ -61,18 +38,30 @@ describe("shapes", () => {
                             },
                         },
                     },
+                    journeyPattern: {
+                        "@_id": "7",
+                        DestinationDisplay: "service1",
+                        RouteRef: "1",
+                        JourneyPatternSectionRefs: [],
+                    },
                 },
                 {
                     routeId: 11,
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
                         ServiceRef: "16",
                         JourneyPatternRef: "17",
                         VehicleJourneyCode: "18",
                         DepartureTime: "00:01:00",
+                    },
+                    journeyPattern: {
+                        "@_id": "17",
+                        RouteRef: "2",
+                        JourneyPatternSectionRefs: [],
                     },
                 },
             ];
@@ -88,11 +77,7 @@ describe("shapes", () => {
                 },
             ];
 
-            const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(
-                services,
-                routes,
-                vehicleJourneyMappings,
-            );
+            const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(routes, vehicleJourneyMappings);
 
             expect(routeRefs).toEqual(["1", "2"]);
             expect(journeyPatternToRouteRefMapping).toEqual({
@@ -102,36 +87,13 @@ describe("shapes", () => {
         });
 
         it("doesn't return route refs that fail to reference routes", () => {
-            const services: Service[] = [
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "7",
-                                DestinationDisplay: "service1",
-                                RouteRef: "1",
-                            },
-                        ],
-                    },
-                },
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "17",
-                                RouteRef: "3",
-                            },
-                        ],
-                    },
-                },
-            ] as Service[];
-
             const vehicleJourneyMappings: VehicleJourneyMapping[] = [
                 {
                     routeId: 1,
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
                         ServiceRef: "6",
@@ -147,18 +109,30 @@ describe("shapes", () => {
                             },
                         },
                     },
+                    journeyPattern: {
+                        "@_id": "7",
+                        DestinationDisplay: "service1",
+                        RouteRef: "1",
+                        JourneyPatternSectionRefs: [],
+                    },
                 },
                 {
                     routeId: 11,
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
                         ServiceRef: "16",
                         JourneyPatternRef: "17",
                         VehicleJourneyCode: "18",
                         DepartureTime: "00:01:00",
+                    },
+                    journeyPattern: {
+                        "@_id": "17",
+                        RouteRef: "3",
+                        JourneyPatternSectionRefs: [],
                     },
                 },
             ];
@@ -174,11 +148,7 @@ describe("shapes", () => {
                 },
             ];
 
-            const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(
-                services,
-                routes,
-                vehicleJourneyMappings,
-            );
+            const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(routes, vehicleJourneyMappings);
 
             expect(routeRefs).toEqual(["1"]);
             expect(journeyPatternToRouteRefMapping).toEqual({
@@ -187,36 +157,13 @@ describe("shapes", () => {
         });
 
         it("doesn't return route refs that fail to reference journey patterns", () => {
-            const services: Service[] = [
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "7",
-                                DestinationDisplay: "service1",
-                                RouteRef: "1",
-                            },
-                        ],
-                    },
-                },
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "1",
-                                RouteRef: "2",
-                            },
-                        ],
-                    },
-                },
-            ] as Service[];
-
             const vehicleJourneyMappings: VehicleJourneyMapping[] = [
                 {
                     routeId: 1,
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
                         ServiceRef: "6",
@@ -232,12 +179,19 @@ describe("shapes", () => {
                             },
                         },
                     },
+                    journeyPattern: {
+                        "@_id": "7",
+                        DestinationDisplay: "service1",
+                        RouteRef: "1",
+                        JourneyPatternSectionRefs: [],
+                    },
                 },
                 {
                     routeId: 11,
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
                         ServiceRef: "16",
@@ -259,11 +213,7 @@ describe("shapes", () => {
                 },
             ];
 
-            const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(
-                services,
-                routes,
-                vehicleJourneyMappings,
-            );
+            const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(routes, vehicleJourneyMappings);
 
             expect(routeRefs).toEqual(["1"]);
             expect(journeyPatternToRouteRefMapping).toEqual({
@@ -517,36 +467,13 @@ describe("shapes", () => {
 
     describe("processShapes", () => {
         it("inserts shapes into the database", async () => {
-            const services: Service[] = [
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "7",
-                                DestinationDisplay: "service1",
-                                RouteRef: "1",
-                            },
-                        ],
-                    },
-                },
-                {
-                    StandardService: {
-                        JourneyPattern: [
-                            {
-                                "@_id": "17",
-                                RouteRef: "2",
-                            },
-                        ],
-                    },
-                },
-            ] as Service[];
-
             const vehicleJourneyMappings: VehicleJourneyMapping[] = [
                 {
                     routeId: 1,
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
                         ServiceRef: "6",
@@ -562,18 +489,30 @@ describe("shapes", () => {
                             },
                         },
                     },
+                    journeyPattern: {
+                        "@_id": "7",
+                        DestinationDisplay: "service1",
+                        RouteRef: "1",
+                        JourneyPatternSectionRefs: [],
+                    },
                 },
                 {
                     routeId: 11,
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
                         ServiceRef: "16",
                         JourneyPatternRef: "17",
                         VehicleJourneyCode: "18",
                         DepartureTime: "00:01:00",
+                    },
+                    journeyPattern: {
+                        "@_id": "17",
+                        RouteRef: "2",
+                        JourneyPatternSectionRefs: [],
                     },
                 },
             ];
@@ -653,7 +592,6 @@ describe("shapes", () => {
 
             const updatedVehicleJourneyMappings = await processShapes(
                 dbClient,
-                services,
                 routes,
                 routeSections,
                 vehicleJourneyMappings,
@@ -671,6 +609,7 @@ describe("shapes", () => {
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
                         ServiceRef: "6",
@@ -692,6 +631,7 @@ describe("shapes", () => {
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
                         ServiceRef: "16",
@@ -702,7 +642,7 @@ describe("shapes", () => {
                 },
             ];
 
-            const updatedVehicleJourneyMappings = await processShapes(dbClient, [], [], [], vehicleJourneyMappings);
+            const updatedVehicleJourneyMappings = await processShapes(dbClient, [], [], vehicleJourneyMappings);
 
             expect(insertShapesMock).not.toHaveBeenCalled();
             expect(updatedVehicleJourneyMappings[0].shapeId).toEqual(vehicleJourneyMappings[0].shapeId);
