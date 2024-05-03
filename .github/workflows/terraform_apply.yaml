@@ -1,88 +1,98 @@
+name: Apply terraform
+
 on:
-  pull_request_review:
-    types: [submitted]
-  workflow_dispatch:
-
-name: Terraform Apply
-
-defaults:
-  run:
-    working-directory: ./terraform
-
-permissions:
-  id-token: write # This is required for aws oidc connection
-  contents: read # This is required for actions/checkout.
-
-env:
-  TERRAFORM_VERSION: 1.6.6
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  workflow_call:
+    inputs:
+      stage:
+        required: true
+        type: string
+      terraform_version:
+        required: true
+        type: string
+      use_artifacts:
+        default: true
+        type: boolean
+    secrets:
+      oidc_role_arn:
+        required: true
 
 jobs:
-  check_for_function_changes:
-    uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Get list of updated functions
-    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
-    with:
-      path: "./src/functions"
-
-  zip_functions:
-    uses: ./.github/workflows/zip_function.yaml
-    name: Zip updated functions
-    if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
-    strategy:
-      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
-    needs:
-      - check_for_function_changes
-    with:
-      function_dir: ${{ matrix.dir }}
-
   terraform_apply:
     runs-on: ubuntu-22.04
     name: Terraform Apply
-    needs:
-      - check_for_function_changes
-      - zip_functions
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
-    strategy:
-      matrix:
-        stage: ["dev"]
     env:
-      stage: ${{ matrix.stage }}
+      stage: ${{ inputs.stage }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
+        if: inputs.use_artifacts
         with:
           path: ./src/functions/dist
           merge-multiple: true
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        if: ${{ !inputs.use_artifacts }}
+        with:
+          node-version: "20.x"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        if: ${{ !inputs.use_artifacts }}
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        if: ${{ !inputs.use_artifacts }}
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        if: ${{ !inputs.use_artifacts }}
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Build all functions
+        if: ${{ !inputs.use_artifacts }}
+        run: |
+          cd ./src
+          pnpm i
+          pnpm run build-all
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+          role-to-assume: ${{ secrets.oidc_role_arn }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_version: ${{ inputs.terraform_version }}
 
       - name: Terraform Init
         id: init
-        run: terraform -chdir=$stage init
+        run: terraform -chdir=terraform/${{ inputs.stage }} init
 
       - name: Terraform Plan
         id: plan
-        run: terraform -chdir=$stage plan -input=false -no-color -out=tfplan
+        run: terraform -chdir=terraform/${{ inputs.stage }} plan -input=false -no-color -out=tfplan
 
       - name: Terraform Apply
         if: steps.plan.outcome == 'success'
         id: apply
-        run: terraform -chdir=$stage apply -input=false -no-color tfplan
+        run: terraform -chdir=terraform/${{ inputs.stage }} apply -input=false -no-color tfplan
 
       - name: Invoke dbmigrator Lambda
         run: |
-          aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ matrix.stage }} --cli-binary-format raw-in-base64-out response.json
+          aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ inputs.stage }} --cli-binary-format raw-in-base64-out response.json
