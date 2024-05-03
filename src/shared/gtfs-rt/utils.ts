@@ -91,18 +91,28 @@ export const getAvlDataForGtfs = async (routeIds: string[]) => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        const routesFilterClause = `WHERE routes_with_noc.route_id IN (${routeIds.join(",")})`;
-
-        const queryResult = await sql<ExtendedAvl>`
+        let query = sql<ExtendedAvl>`
             SELECT DISTINCT ON (avl.operator_ref, avl.vehicle_ref) avl.*, routes_with_noc.route_id AS route_id, trip.id as trip_id FROM avl
             LEFT OUTER JOIN (
                 SELECT route.id AS route_id, CONCAT(agency.noc, route.route_short_name) AS concat_noc_route_short_name FROM route
                 JOIN agency ON route.agency_id = agency.id
             ) routes_with_noc ON routes_with_noc.concat_noc_route_short_name = CONCAT(avl.operator_ref, avl.line_ref)
             LEFT OUTER JOIN trip ON trip.route_id = routes_with_noc.route_id AND trip.ticket_machine_journey_code = avl.dated_vehicle_journey_ref
-            ${routeIds.length > 0 && routesFilterClause}
+        `;
+
+        if (routeIds.length > 0) {
+            query = sql`
+                ${query}
+                WHERE routes_with_noc.route_id IN (${routeIds.join(",")})
+            `;
+        }
+
+        query = sql`
+            ${query}
             ORDER BY avl.operator_ref, avl.vehicle_ref, avl.response_time_stamp DESC
-        `.execute(dbClient);
+        `;
+
+        const queryResult = await query.execute(dbClient);
 
         return queryResult.rows;
     } catch (error) {
