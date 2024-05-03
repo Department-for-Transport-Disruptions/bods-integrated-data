@@ -6,5 +6,6 @@ export type VehicleJourneyMapping = {
     serviceId: number;
     shapeId: string;
     tripId: string;
+    serviceCode: string;
     journeyPattern?: JourneyPattern;
 };

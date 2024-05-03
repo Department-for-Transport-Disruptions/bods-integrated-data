@@ -94,6 +94,8 @@ export const createLazyDownloadStreamFrom = (bucket: string, key: string): Reada
                     if (e instanceof Error) {
                         logger.error("Error initialising stream", e);
                     }
+
+                    throw e;
                 });
         }
     });

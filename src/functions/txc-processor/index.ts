@@ -166,6 +166,7 @@ const processServices = (
                 serviceId: 0,
                 shapeId: "",
                 tripId: "",
+                serviceCode: service.ServiceCode,
                 journeyPattern: getJourneyPatternForVehicleJourney(vehicleJourney, vehicleJourneys, services),
             };
 
@@ -253,12 +254,14 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 
     const agencyData = await processAgencies(dbClient, operators);
 
+    const useStopLocality = services.some((service) => service.Mode && service.Mode !== "bus");
+
     if (stopPoints.length > 0) {
-        await processStopPoints(dbClient, stopPoints);
+        await processStopPoints(dbClient, stopPoints, useStopLocality);
     }
 
     if (annotatedStopPointRefs.length > 0) {
-        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs);
+        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs, useStopLocality);
     }
 
     await processServices(

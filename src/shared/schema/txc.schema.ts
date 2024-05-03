@@ -343,3 +343,5 @@ export const txcSchema = z.object({
         StopPoints: castToObject(stopPointsSchema.optional()),
     }),
 });
+
+export const txcRegionsSchema = z.enum(["EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y"]);

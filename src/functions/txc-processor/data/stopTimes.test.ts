@@ -38,6 +38,7 @@ describe("stopTimes", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -64,6 +65,7 @@ describe("stopTimes", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
@@ -136,6 +138,7 @@ describe("stopTimes", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -162,6 +165,7 @@ describe("stopTimes", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
@@ -195,6 +199,7 @@ describe("stopTimes", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -216,6 +221,7 @@ describe("stopTimes", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",

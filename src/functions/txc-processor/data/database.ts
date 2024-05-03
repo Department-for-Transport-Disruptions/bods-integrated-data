@@ -85,12 +85,29 @@ export const insertFrequencies = async (dbClient: Kysely<Database>, frequencies:
     return dbClient.insertInto("frequency_new").values(frequencies).returningAll().execute();
 };
 
-export const getNaptanStop = (dbClient: Kysely<Database>, atcoCode: string) => {
-    return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "=", atcoCode).executeTakeFirst();
-};
+export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[], useStopLocality: boolean) => {
+    if (useStopLocality) {
+        return dbClient
+            .selectFrom("naptan_stop_new")
+            .leftJoin("nptg_locality_new", "nptg_locality_new.locality_code", "naptan_stop_new.nptg_locality_code")
+            .leftJoin("nptg_admin_area_new", "nptg_admin_area_new.admin_area_code", "nptg_locality_new.admin_area_ref")
+            .selectAll("naptan_stop_new")
+            .select(["nptg_admin_area_new.region_code"])
+            .where("naptan_stop_new.atco_code", "in", atcoCodes)
+            .execute();
+    }
 
-export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[]) => {
-    return dbClient.selectFrom("naptan_stop_new").selectAll().where("atco_code", "in", atcoCodes).execute();
+    return dbClient
+        .selectFrom("naptan_stop_new")
+        .leftJoin(
+            "nptg_admin_area_new",
+            "nptg_admin_area_new.admin_area_code",
+            "naptan_stop_new.administrative_area_code",
+        )
+        .selectAll("naptan_stop_new")
+        .select(["nptg_admin_area_new.region_code"])
+        .where("naptan_stop_new.atco_code", "in", atcoCodes)
+        .execute();
 };
 
 export const getTndsRoute = (dbClient: Kysely<Database>, nocLineName: string) => {

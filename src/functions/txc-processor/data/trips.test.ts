@@ -20,6 +20,7 @@ describe("trips", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
@@ -47,6 +48,7 @@ describe("trips", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
                     ServiceRef: "16",
@@ -104,6 +106,7 @@ describe("trips", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "",
+                serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
                     ServiceRef: "6",
