@@ -204,4 +204,105 @@ describe("trips", () => {
         expect(insertTripsMock).not.toHaveBeenCalled();
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual("");
     });
+
+    it("inserts trips correctly for tnds data", async () => {
+        const services: Service[] = [
+            {
+                StandardService: {
+                    JourneyPattern: [
+                        {
+                            "@_id": "7",
+                            DestinationDisplay: "service1",
+                        },
+                    ],
+                },
+            },
+            {
+                StandardService: {
+                    JourneyPattern: [
+                        {
+                            "@_id": "17",
+                        },
+                    ],
+                },
+            },
+        ] as Service[];
+
+        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+            {
+                routeId: 1,
+                serviceId: 2,
+                shapeId: "3",
+                tripId: "",
+                serviceCode: "test",
+                vehicleJourney: {
+                    LineRef: "5",
+                    ServiceRef: "6",
+                    JourneyPatternRef: "7",
+                    VehicleJourneyCode: "8",
+                    DepartureTime: "00:00:00",
+                    Operational: {
+                        Block: {
+                            BlockNumber: "block1",
+                        },
+                        TicketMachine: {
+                            JourneyCode: "journey1",
+                        },
+                    },
+                },
+            },
+            {
+                routeId: 11,
+                serviceId: 12,
+                shapeId: "13",
+                tripId: "",
+                serviceCode: "test",
+                vehicleJourney: {
+                    LineRef: "15",
+                    ServiceRef: "16",
+                    JourneyPatternRef: "17",
+                    VehicleJourneyCode: "18",
+                    DepartureTime: "00:01:00",
+                },
+            },
+        ];
+
+        const routes: Route[] = [
+            {
+                line_id: "test_5",
+            },
+            {
+                line_id: "15",
+            },
+        ] as Route[];
+
+        const expectedTrips: NewTrip[] = [
+            {
+                id: expect.any(String) as string,
+                route_id: 1,
+                service_id: 2,
+                block_id: "block1",
+                shape_id: "3",
+                trip_headsign: "service1",
+                wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
+                vehicle_journey_code: "8",
+                ticket_machine_journey_code: "journey1",
+                file_path: "",
+            },
+        ];
+
+        insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
+
+        const updatedVehicleJourneyMappings = await processTrips(
+            dbClient,
+            services,
+            vehicleJourneyMappings,
+            routes,
+            "",
+            true,
+        );
+
+        expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
+        expect(updatedVehicleJourneyMappings[0].tripId).toEqual(expectedTrips[0].id);
+    });
 });
