@@ -73,7 +73,9 @@ export const processStopPoints = async (
         return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
 
-    return insertStops(dbClient, stopsToInsert);
+    if (stopsToInsert.length > 0) {
+        await insertStops(dbClient, stopsToInsert);
+    }
 };
 
 export const processAnnotatedStopPointRefs = async (
@@ -92,5 +94,7 @@ export const processAnnotatedStopPointRefs = async (
         return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
-    return insertStops(dbClient, stopsToInsert);
+    if (stopsToInsert.length > 0) {
+        await insertStops(dbClient, stopsToInsert);
+    }
 };
