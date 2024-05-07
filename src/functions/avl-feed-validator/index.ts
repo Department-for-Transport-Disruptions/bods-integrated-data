@@ -98,8 +98,6 @@ export const handler = async () => {
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error when running the AVL feed validator", e);
-
-            throw e;
         }
 
         throw e;
