@@ -1,6 +1,5 @@
 import {
     Database,
-    NewCalendar,
     NewCalendarDate,
     NewFrequency,
     NewRoute,
@@ -12,7 +11,7 @@ import {
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
-import { hasher } from "node-object-hash";
+import { CalendarWithDates } from "../types";
 
 export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
@@ -35,38 +34,38 @@ export const insertAgency = async (dbClient: Kysely<Database>, agency: NewAgency
         .executeTakeFirst();
 };
 
-export const insertCalendar = async (
-    dbClient: Kysely<Database>,
-    calendarData: {
-        calendar: NewCalendar;
-        calendarDates: NewCalendarDate[];
-    },
-) => {
-    const calendarHash = hasher().hash(calendarData);
-
-    const insertedCalendar = await dbClient
-        .insertInto("calendar_new")
-        .values({ ...calendarData.calendar, calendar_hash: calendarHash })
-        .onConflict((oc) => oc.column("calendar_hash").doUpdateSet({ ...calendarData.calendar }))
-        .returningAll()
-        .executeTakeFirst();
-
-    if (!insertedCalendar?.id) {
-        throw new Error("Calendar failed to insert");
-    }
-
-    if (!calendarData.calendarDates?.length) {
-        return insertedCalendar;
-    }
-
-    const calendarDatesChunks = chunkArray(
-        calendarData.calendarDates.map((date) => ({
-            date: date.date,
-            exception_type: date.exception_type,
-            service_id: insertedCalendar.id,
-        })),
+export const insertCalendars = async (dbClient: Kysely<Database>, calendars: CalendarWithDates[]) => {
+    const calendarChunks = chunkArray(
+        calendars.map((c) => c.calendar),
         3000,
     );
+
+    const insertedCalendars = (
+        await Promise.all(
+            calendarChunks.map((chunk) =>
+                dbClient
+                    .insertInto("calendar_new")
+                    .values(chunk)
+                    .onConflict((oc) =>
+                        oc
+                            .column("calendar_hash")
+                            .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
+                    )
+                    .returningAll()
+                    .execute(),
+            ),
+        )
+    ).flat();
+
+    if (!insertedCalendars?.length) {
+        throw new Error("Calendars failed to insert");
+    }
+
+    return insertedCalendars;
+};
+
+export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDates: NewCalendarDate[]) => {
+    const calendarDatesChunks = chunkArray(calendarDates, 3000);
 
     await Promise.all(
         calendarDatesChunks.map((chunk) =>
@@ -77,8 +76,6 @@ export const insertCalendar = async (
                 .execute(),
         ),
     );
-
-    return insertedCalendar;
 };
 
 export const insertFrequencies = async (dbClient: Kysely<Database>, frequencies: NewFrequency[]) => {

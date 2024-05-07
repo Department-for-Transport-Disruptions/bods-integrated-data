@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { CalendarDateExceptionType, Database, NewCalendar } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson, getDate } from "@bods-integrated-data/shared/dates";
 import { OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
@@ -10,6 +11,8 @@ import {
     calculateServicedOrgDaysToUse,
     formatCalendar,
     formatCalendarDates,
+    mapVehicleJourneysToCalendars,
+    processCalendarDates,
     processCalendars,
     processServicedOrganisation,
 } from "./calendar";
@@ -17,6 +20,11 @@ import * as database from "./database";
 
 describe("calendar", () => {
     MockDate.set("2024-04-01T14:36:11+00:00");
+
+    const DEFAULT_HASH = "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840";
+
+    const dbClientMock = {} as Kysely<Database>;
+    vi.mock("./database.ts");
 
     vi.mock("@bods-integrated-data/shared/schema/dates.schema", () => ({
         getTransformedBankHolidayOperationSchema: (_: BankHolidaysJson, schema: BankHolidayOperation) => {
@@ -37,6 +45,7 @@ describe("calendar", () => {
         sunday: 0,
         start_date: "20240401",
         end_date: "20240430",
+        calendar_hash: "",
     };
 
     const defaultVehicleJourney: VehicleJourney = {
@@ -59,6 +68,13 @@ describe("calendar", () => {
         },
         OperatingPeriod: {
             StartDate: "2024-04-01",
+        },
+        OperatingProfile: {
+            RegularDayType: {
+                DaysOfWeek: {
+                    MondayToSunday: "",
+                },
+            },
         },
         Mode: "bus",
         RegisteredOperatorRef: "xyz",
@@ -352,6 +368,7 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240401",
                     end_date: "20250101",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
             });
@@ -383,6 +400,7 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240401",
                     end_date: "20250101",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [
                     {
@@ -427,6 +445,7 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240401",
                     end_date: "20250101",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [
                     {
@@ -476,6 +495,7 @@ describe("calendar", () => {
                     ...defaultDaysOfOperation,
                     start_date: "20240401",
                     end_date: "20250101",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [
                     {
@@ -529,6 +549,7 @@ describe("calendar", () => {
                     ...defaultDaysOfOperation,
                     start_date: "20240401",
                     end_date: "20250101",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [
                     {
@@ -565,6 +586,7 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240401",
                     end_date: "20250101",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
             });
@@ -592,6 +614,7 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240410",
                     end_date: "20250110",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
             });
@@ -620,6 +643,7 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240401",
                     end_date: "20240430",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
             });
@@ -647,196 +671,404 @@ describe("calendar", () => {
                     sunday: 1,
                     start_date: "20240604",
                     end_date: "20250304",
+                    calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
             });
         });
     });
 
-    describe("processCalendars", () => {
-        const dbClientMock = vi.fn() as unknown as Kysely<Database>;
-        vi.mock("./database.ts");
+    describe("mapVehicleJourneysToCalendars", () => {
+        it("maps vehicle journeys without operating profile to service calendar if present", () => {
+            const serviceCalendar = {
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    calendar_hash: "ServiceCalendarHash",
+                },
+                calendarDates: [],
+            };
 
-        const insertCalendarSpy = vi
-            .spyOn(database, "insertCalendar")
-            .mockResolvedValue({ ...defaultDaysOfOperation, calendar_hash: "hash", id: 1 });
+            const mappedVehicleJourneys = mapVehicleJourneysToCalendars(
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 0,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test",
+                    },
+                    {
+                        routeId: 2,
+                        serviceId: 0,
+                        shapeId: "2",
+                        tripId: "2",
+                        vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test2",
+                    },
+                ],
+                serviceCalendar,
+                defaultService.OperatingPeriod,
+                bankHolidaysJson,
+            );
+
+            expect(mappedVehicleJourneys).toEqual([
+                {
+                    routeId: 1,
+                    serviceId: 0,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: defaultVehicleJourney,
+                    serviceCode: "test",
+                    calendar: serviceCalendar,
+                },
+                {
+                    routeId: 2,
+                    serviceId: 0,
+                    shapeId: "2",
+                    tripId: "2",
+                    vehicleJourney: defaultVehicleJourney,
+                    serviceCode: "test2",
+                    calendar: serviceCalendar,
+                },
+            ]);
+        });
+
+        it("maps vehicle journeys without operating profile to default calendar if no service calendar", () => {
+            const expectedCalendar = {
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 1,
+                    sunday: 1,
+                    calendar_hash: "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840",
+                    end_date: "20250101",
+                },
+                calendarDates: [],
+            };
+
+            const mappedVehicleJourneys = mapVehicleJourneysToCalendars(
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 0,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test",
+                    },
+                ],
+                null,
+                defaultService.OperatingPeriod,
+                bankHolidaysJson,
+            );
+
+            expect(mappedVehicleJourneys).toEqual([
+                {
+                    routeId: 1,
+                    serviceId: 0,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: defaultVehicleJourney,
+                    serviceCode: "test",
+                    calendar: expectedCalendar,
+                },
+            ]);
+        });
+
+        it("maps vehicle journeys with an operating profile to a calendar for that profile", () => {
+            const expectedCalendar = {
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    calendar_hash: "cc65c0de950f1d5daf75ad415278134aecedebcde3dd896596481f32ec4806e5",
+                    end_date: "20250101",
+                },
+                calendarDates: [],
+            };
+
+            const vehicleJourney: VehicleJourney = {
+                ...defaultVehicleJourney,
+                OperatingProfile: {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            MondayToFriday: "",
+                        },
+                    },
+                },
+            };
+
+            const mappedVehicleJourneys = mapVehicleJourneysToCalendars(
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 0,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney,
+                        serviceCode: "test",
+                    },
+                ],
+                null,
+                defaultService.OperatingPeriod,
+                bankHolidaysJson,
+            );
+
+            expect(mappedVehicleJourneys).toEqual([
+                {
+                    routeId: 1,
+                    serviceId: 0,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney,
+                    serviceCode: "test",
+                    calendar: expectedCalendar,
+                },
+            ]);
+        });
+    });
+
+    describe("processCalendarDates", () => {
+        const insertCalendarDatesSpy = vi.spyOn(database, "insertCalendarDates").mockResolvedValue();
+
+        afterEach(() => {
+            insertCalendarDatesSpy.mockClear();
+        });
+
+        it("inserts calendar dates for calendars with matching hashes", async () => {
+            await processCalendarDates(
+                dbClientMock,
+                [
+                    {
+                        ...defaultDaysOfOperation,
+                        calendar_hash: DEFAULT_HASH,
+                        id: 2,
+                    },
+                    {
+                        ...defaultDaysOfOperation,
+                        calendar_hash: "NewHash",
+                        id: 3,
+                    },
+                ],
+                [
+                    {
+                        calendar: {
+                            ...defaultDaysOfOperation,
+                            calendar_hash: DEFAULT_HASH,
+                        },
+                        calendarDates: [
+                            {
+                                date: "20240401",
+                                exception_type: 1,
+                            },
+                        ],
+                    },
+                    {
+                        calendar: {
+                            ...defaultDaysOfOperation,
+                            calendar_hash: "NewHash",
+                        },
+                        calendarDates: [
+                            {
+                                date: "20240602",
+                                exception_type: 2,
+                            },
+                        ],
+                    },
+                    {
+                        calendar: {
+                            ...defaultDaysOfOperation,
+                            calendar_hash: "OtherHash",
+                        },
+                        calendarDates: [
+                            {
+                                date: "20240402",
+                                exception_type: 2,
+                            },
+                        ],
+                    },
+                ],
+            );
+
+            expect(insertCalendarDatesSpy).toBeCalledWith(dbClientMock, [
+                {
+                    date: "20240401",
+                    exception_type: 1,
+                    service_id: 2,
+                },
+                {
+                    date: "20240602",
+                    exception_type: 2,
+                    service_id: 3,
+                },
+            ]);
+        });
+
+        it("does not insert any calendar dates if no matching hashes", async () => {
+            await processCalendarDates(
+                dbClientMock,
+                [
+                    {
+                        ...defaultDaysOfOperation,
+                        calendar_hash: DEFAULT_HASH,
+                        id: 2,
+                    },
+                ],
+                [
+                    {
+                        calendar: {
+                            ...defaultDaysOfOperation,
+                            calendar_hash: "OTHER HASH",
+                        },
+                        calendarDates: [
+                            {
+                                date: "20240402",
+                                exception_type: 2,
+                            },
+                        ],
+                    },
+                ],
+            );
+
+            expect(insertCalendarDatesSpy).not.toBeCalled();
+        });
+    });
+
+    describe("processCalendars", () => {
+        const insertCalendarSpy = vi.spyOn(database, "insertCalendars").mockResolvedValue([
+            {
+                ...defaultDaysOfOperation,
+                calendar_hash: DEFAULT_HASH,
+                id: 12,
+            },
+        ]);
 
         afterEach(() => {
             insertCalendarSpy.mockClear();
         });
 
-        it("creates default calendar if no service or journey pattern level operating profile", async () => {
-            await processCalendars(
+        it("returns vehicle journey mapping with correct serviceId", async () => {
+            const processedCalendars = await processCalendars(
                 dbClientMock,
                 defaultService,
                 [
                     {
                         routeId: 1,
-                        serviceId: 1,
+                        serviceId: 0,
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
                     },
+                    {
+                        routeId: 2,
+                        serviceId: 0,
+                        shapeId: "2",
+                        tripId: "2",
+                        vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test2",
+                    },
                 ],
                 bankHolidaysJson,
             );
 
-            expect(insertCalendarSpy).toBeCalledTimes(1);
-            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
-                calendar: {
-                    monday: 1,
-                    tuesday: 1,
-                    wednesday: 1,
-                    thursday: 1,
-                    friday: 1,
-                    saturday: 1,
-                    sunday: 1,
-                    start_date: "20240401",
-                    end_date: "20250101",
-                },
-                calendarDates: [],
-            });
-        });
-
-        it("creates service level operating profile", async () => {
-            await processCalendars(
-                dbClientMock,
+            expect(processedCalendars).toEqual([
                 {
-                    ...defaultService,
-                    OperatingProfile: {
-                        RegularDayType: {
-                            DaysOfWeek: {
-                                MondayToFriday: "",
-                            },
-                        },
-                        SpecialDaysOperation: {
-                            DaysOfNonOperation: {
-                                DateRange: [["20240401"]],
-                            },
-                        },
-                    },
+                    routeId: 1,
+                    serviceCode: "test",
+                    serviceId: 12,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: defaultVehicleJourney,
                 },
-                [
-                    {
-                        routeId: 1,
-                        serviceId: 1,
-                        shapeId: "1",
-                        tripId: "1",
-                        vehicleJourney: defaultVehicleJourney,
-                        serviceCode: "test",
-                    },
-                ],
-                bankHolidaysJson,
-            );
-
-            expect(insertCalendarSpy).toBeCalledTimes(1);
-            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
-                calendar: {
-                    monday: 1,
-                    tuesday: 1,
-                    wednesday: 1,
-                    thursday: 1,
-                    friday: 1,
-                    saturday: 0,
-                    sunday: 0,
-                    start_date: "20240401",
-                    end_date: "20250101",
+                {
+                    routeId: 2,
+                    serviceCode: "test2",
+                    serviceId: 12,
+                    shapeId: "2",
+                    tripId: "2",
+                    vehicleJourney: defaultVehicleJourney,
                 },
-                calendarDates: [
-                    {
-                        date: "20240401",
-                        exception_type: 2,
-                    },
-                ],
-            });
+            ]);
         });
 
-        it("creates journey pattern level operating profile", async () => {
+        it("removes duplicate calendars", async () => {
             await processCalendars(
                 dbClientMock,
                 defaultService,
                 [
                     {
                         routeId: 1,
-                        serviceId: 1,
+                        serviceId: 0,
                         shapeId: "1",
                         tripId: "1",
+                        vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                    },
+                    {
+                        routeId: 2,
+                        serviceId: 0,
+                        shapeId: "2",
+                        tripId: "2",
+                        vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test2",
+                    },
+                    {
+                        routeId: 2,
+                        serviceId: 0,
+                        shapeId: "3",
+                        tripId: "3",
                         vehicleJourney: {
                             ...defaultVehicleJourney,
                             OperatingProfile: {
+                                ...defaultVehicleJourney,
                                 RegularDayType: {
                                     DaysOfWeek: {
-                                        Weekend: "",
-                                    },
-                                },
-                                SpecialDaysOperation: {
-                                    DaysOfNonOperation: {
-                                        DateRange: [["20241225"]],
+                                        Friday: "",
                                     },
                                 },
                             },
                         },
+                        serviceCode: "test2",
                     },
                 ],
                 bankHolidaysJson,
             );
 
-            expect(insertCalendarSpy).toBeCalledTimes(1);
-            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, {
-                calendar: {
-                    monday: 0,
-                    tuesday: 0,
-                    wednesday: 0,
-                    thursday: 0,
-                    friday: 0,
-                    saturday: 1,
-                    sunday: 1,
-                    start_date: "20240401",
-                    end_date: "20250101",
+            expect(insertCalendarSpy).toBeCalledWith(dbClientMock, [
+                {
+                    calendar: {
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 1,
+                        sunday: 1,
+                        start_date: "20240401",
+                        end_date: "20250101",
+                        calendar_hash: DEFAULT_HASH,
+                    },
+                    calendarDates: [],
                 },
-                calendarDates: [
-                    {
-                        date: "20241225",
-                        exception_type: 2,
+                {
+                    calendar: {
+                        ...defaultDaysOfOperation,
+                        friday: 1,
+                        end_date: "20250101",
+                        calendar_hash: "fd96c7104362826f9df45c7d00bfe33b391e1954e36304127f96f056ddae198a",
                     },
-                ],
-            });
-        });
-
-        it("returns serviceId in mapping", async () => {
-            const processedCalendar = await processCalendars(
-                dbClientMock,
-                defaultService,
-                [
-                    {
-                        routeId: 1,
-                        serviceId: 1,
-                        shapeId: "1",
-                        tripId: "1",
-                        serviceCode: "test",
-                        vehicleJourney: {
-                            ...defaultVehicleJourney,
-                            OperatingProfile: {
-                                RegularDayType: {
-                                    DaysOfWeek: {
-                                        Weekend: "",
-                                    },
-                                },
-                                SpecialDaysOperation: {
-                                    DaysOfNonOperation: {
-                                        DateRange: [["20241225"]],
-                                    },
-                                },
-                            },
-                        },
-                    },
-                ],
-                bankHolidaysJson,
-            );
-
-            expect(processedCalendar[0].serviceId).toBe(1);
+                    calendarDates: [],
+                },
+            ]);
         });
     });
 });
