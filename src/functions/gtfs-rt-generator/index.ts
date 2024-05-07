@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
 
@@ -28,23 +28,13 @@ export const handler = async () => {
     }
 
     const avlData = await getAvlDataForGtfs([]);
+    const entities = avlData.map(mapAvlToGtfsEntity);
+    const gtfsRtFeed = generateGtfsRtFeed(entities);
 
-    const message = {
-        header: {
-            gtfsRealtimeVersion: "2.0",
-            incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
-            timestamp: Date.now(),
-        },
-        entity: avlData.map(mapAvlToGtfsEntity),
-    };
-
-    const feed = transit_realtime.FeedMessage.encode(message);
-    const data = feed.finish();
-
-    await uploadGtfsRtToS3(bucketName, data);
+    await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
 
     if (saveJson === "true") {
-        const encodedJson = transit_realtime.FeedMessage.decode(data);
+        const encodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
 
         await putS3Object({
             Bucket: bucketName,

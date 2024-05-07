@@ -1,8 +1,12 @@
 import { logger } from "@baselime/lambda-logger";
-import { base64Encode, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import {
+    base64Encode,
+    generateGtfsRtFeed,
+    getAvlDataForGtfs,
+    mapAvlToGtfsEntity,
+} from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { transit_realtime } from "gtfs-realtime-bindings";
 
 export const retrieveRouteData = async (routeIds: string[]): Promise<APIGatewayProxyResultV2> => {
     try {
@@ -15,23 +19,15 @@ export const retrieveRouteData = async (routeIds: string[]): Promise<APIGatewayP
                 body: `No routes found that match Id(s) ${routeIds.join(",")}`,
             };
         }
-        const message = {
-            header: {
-                gtfsRealtimeVersion: "2.0",
-                incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
-                timestamp: Date.now(),
-            },
-            entity: avlData.map(mapAvlToGtfsEntity),
-        };
 
-        const feed = transit_realtime.FeedMessage.encode(message);
-        const data = feed.finish();
-        const encodedData = base64Encode(data);
+        const entities = avlData.map(mapAvlToGtfsEntity);
+        const gtfsRtFeed = generateGtfsRtFeed(entities);
+        const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
 
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/octet-stream" },
-            body: encodedData,
+            body: base64GtfsRtFeed,
             isBase64Encoded: true,
         };
     } catch (error) {
@@ -101,6 +97,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const shouldDownload = event.queryStringParameters?.download?.toLowerCase() === "true";
     const routeIds = event.queryStringParameters?.routeId;
+
     const key = "gtfs-rt.bin";
 
     if (!bucketName) {

@@ -125,3 +125,19 @@ export const getAvlDataForGtfs = async (routeIds: string[]) => {
         await dbClient.destroy();
     }
 };
+
+export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
+    const message = {
+        header: {
+            gtfsRealtimeVersion: "2.0",
+            incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
+            timestamp: getDate().unix(),
+        },
+        entity: entities,
+    };
+
+    const feed = transit_realtime.FeedMessage.encode(message);
+    const data = feed.finish();
+
+    return data;
+};
