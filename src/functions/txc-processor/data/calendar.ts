@@ -1,4 +1,5 @@
 import {
+    Calendar,
     CalendarDateExceptionType,
     Database,
     NewCalendar,
@@ -10,10 +11,12 @@ import {
     DEFAULT_DATE_FORMAT,
     getTransformedBankHolidayOperationSchema,
 } from "@bods-integrated-data/shared/schema/dates.schema";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Dayjs } from "dayjs";
 import { Kysely } from "kysely";
-import { insertCalendar } from "./database";
-import { VehicleJourneyMapping } from "../types";
+import { hasher } from "node-object-hash";
+import { insertCalendarDates, insertCalendars } from "./database";
+import { CalendarWithDates, VehicleJourneyMapping } from "../types";
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
     RegularDayType: {
@@ -62,6 +65,7 @@ export const calculateDaysOfOperation = (
             sunday: 0,
             start_date: formattedStartDate,
             end_date: formattedEndDate,
+            calendar_hash: "",
         };
     }
 
@@ -165,6 +169,7 @@ export const calculateDaysOfOperation = (
                 : 0,
         start_date: formattedStartDate,
         end_date: formattedEndDate,
+        calendar_hash: "",
     };
 };
 
@@ -265,10 +270,7 @@ export const formatCalendar = (
     operatingPeriod: OperatingPeriod,
     bankHolidaysJson: BankHolidaysJson,
     servicedOrganisations?: ServicedOrganisation[],
-): {
-    calendar: NewCalendar;
-    calendarDates: NewCalendarDate[];
-} => {
+): CalendarWithDates => {
     const {
         RegularDayType: { DaysOfWeek: day, HolidaysOnly: holidaysOnly },
     } = operatingProfile;
@@ -303,6 +305,7 @@ export const formatCalendar = (
         sunday: 0,
         start_date: startDateToUse.format(DEFAULT_DATE_FORMAT),
         end_date: endDateToUse.format(DEFAULT_DATE_FORMAT),
+        calendar_hash: "",
     };
 
     let calendar = defaultCalendar;
@@ -352,39 +355,38 @@ export const formatCalendar = (
         CalendarDateExceptionType.ServiceRemoved,
     );
 
-    return {
+    const calendarData = {
         calendar,
         calendarDates: [...formattedExtraDaysOfOperation, ...formattedExtraDaysOfNonOperation],
     };
+
+    const calendarHash = hasher().hash(calendarData);
+
+    return {
+        calendar: {
+            ...calendarData.calendar,
+            calendar_hash: calendarHash,
+        },
+        calendarDates: calendarData.calendarDates,
+    };
 };
 
-export const processCalendars = async (
-    dbClient: Kysely<Database>,
-    service: Service,
+export const mapVehicleJourneysToCalendars = (
     vehicleJourneyMappings: VehicleJourneyMapping[],
+    serviceCalendar: CalendarWithDates | null,
+    operatingPeriod: OperatingPeriod,
     bankHolidaysJson: BankHolidaysJson,
     servicedOrganisations?: ServicedOrganisation[],
-) => {
-    let serviceCalendarId: number | null = null;
-
-    if (service.OperatingProfile) {
-        const serviceCalendar = await insertCalendar(
-            dbClient,
-            formatCalendar(service.OperatingProfile, service.OperatingPeriod, bankHolidaysJson, servicedOrganisations),
-        );
-
-        serviceCalendarId = serviceCalendar.id;
-    }
-
-    const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
+) =>
+    vehicleJourneyMappings.map((vehicleJourneyMapping) => {
         /**
          * If there is no vehicle journey level operating profile but there is a service level
          * operating profile, use the service level operating profile
          */
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
+        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendar) {
             return {
                 ...vehicleJourneyMapping,
-                serviceId: serviceCalendarId,
+                calendar: serviceCalendar,
             };
         }
 
@@ -393,36 +395,105 @@ export const processCalendars = async (
          * operating profile, use DEFAULT_OPERATING_PROFILE
          */
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
-            const defaultCalendar = await insertCalendar(
-                dbClient,
-                formatCalendar(
+            return {
+                ...vehicleJourneyMapping,
+                calendar: formatCalendar(
                     DEFAULT_OPERATING_PROFILE,
-                    service.OperatingPeriod,
+                    operatingPeriod,
                     bankHolidaysJson,
                     servicedOrganisations,
                 ),
-            );
-
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: defaultCalendar.id,
             };
         }
 
-        const calendarData = formatCalendar(
-            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
+        return {
+            ...vehicleJourneyMapping,
+            calendar: formatCalendar(
+                vehicleJourneyMapping.vehicleJourney.OperatingProfile,
+                operatingPeriod,
+                bankHolidaysJson,
+                servicedOrganisations,
+            ),
+        };
+    });
+
+export const processCalendarDates = async (
+    dbClient: Kysely<Database>,
+    insertedCalendars: Calendar[],
+    calendarsWithDates: CalendarWithDates[],
+) => {
+    const calendarDates: NewCalendarDate[] = insertedCalendars
+        .flatMap((insertedCalendar) => {
+            const calendarDatesToUse = calendarsWithDates.find(
+                ({ calendar }) => calendar.calendar_hash === insertedCalendar.calendar_hash,
+            )?.calendarDates;
+
+            if (!calendarDatesToUse) {
+                return null;
+            }
+
+            return calendarDatesToUse.map((cd) => ({
+                service_id: insertedCalendar.id,
+                ...cd,
+            }));
+        })
+        .filter(notEmpty);
+
+    if (!calendarDates.length) {
+        return;
+    }
+
+    await insertCalendarDates(dbClient, calendarDates);
+};
+
+export const processCalendars = async (
+    dbClient: Kysely<Database>,
+    service: Service,
+    vehicleJourneyMappings: VehicleJourneyMapping[],
+    bankHolidaysJson: BankHolidaysJson,
+    servicedOrganisations?: ServicedOrganisation[],
+): Promise<VehicleJourneyMapping[]> => {
+    let serviceCalendar: ReturnType<typeof formatCalendar> | null = null;
+
+    if (service.OperatingProfile) {
+        serviceCalendar = formatCalendar(
+            service.OperatingProfile,
             service.OperatingPeriod,
             bankHolidaysJson,
             servicedOrganisations,
         );
+    }
 
-        const calendar = await insertCalendar(dbClient, calendarData);
+    const calendarVehicleJourneyMappings = mapVehicleJourneysToCalendars(
+        vehicleJourneyMappings,
+        serviceCalendar,
+        service.OperatingPeriod,
+        bankHolidaysJson,
+        servicedOrganisations,
+    );
 
-        return {
-            ...vehicleJourneyMapping,
-            serviceId: calendar.id,
-        };
-    });
+    const uniqueCalendars = calendarVehicleJourneyMappings
+        .map((c) => c.calendar)
+        .filter(
+            (value, index, self) =>
+                index === self.findIndex((c) => c.calendar.calendar_hash === value.calendar.calendar_hash),
+        );
 
-    return Promise.all(updatedVehicleJourneyMappingsPromises);
+    const insertedCalendars = await insertCalendars(dbClient, uniqueCalendars);
+    await processCalendarDates(dbClient, insertedCalendars, uniqueCalendars);
+
+    return calendarVehicleJourneyMappings
+        .map(({ calendar, ...keepAttrs }) => {
+            const serviceId = insertedCalendars.find((c) => c.calendar_hash === calendar.calendar.calendar_hash)?.id;
+
+            if (!serviceId) {
+                return null;
+            }
+
+            return {
+                ...keepAttrs,
+                serviceId,
+            };
+        })
+        .filter(notEmpty);
 };

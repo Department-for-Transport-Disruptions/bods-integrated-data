@@ -217,7 +217,7 @@ export interface GtfsCalendarTable {
     sunday: 0 | 1;
     start_date: string;
     end_date: string;
-    calendar_hash: string | null;
+    calendar_hash: string;
 }
 
 export type Calendar = Selectable<GtfsCalendarTable>;
