@@ -200,7 +200,7 @@ awslocal s3api list-objects --bucket integrated-data-bods-txc-zipped-local
 Unzip a specified archive:
 
 ```bash
-make run-bods-txc-unzipper FILE="20240502/1st_Bus_Stop_Ltd_330/remote_dataset_8883_2024-04-04_14-21-21.zip"
+make run-local-bods-txc-unzipper FILE="20240502/1st_Bus_Stop_Ltd_330/remote_dataset_8883_2024-04-04_14-21-21.zip"
 ```
 
 The resulting files can be listed using the AWS CLI:
@@ -242,7 +242,7 @@ awslocal s3api list-objects --bucket integrated-data-tnds-txc-zipped-local
 Unzip a specified archive:
 
 ```bash
-make run-tnds-txc-unzipper FILE=S.zip
+make run-local-tnds-txc-unzipper FILE=S.zip
 ```
 
 The resulting files can be listed using the AWS CLI:
@@ -294,7 +294,7 @@ national file, by passing `?region=${REGION_CODE}`, individual regional files ca
 The GTFS RT feed is subscription-based, however a snapshot of the feed at the current point in time can be generated:
 
 ```bash
-make run-gtfs-rt-generator
+make run-local-gtfs-rt-generator
 ```
 
 The resulting file can be manually downloaded:

@@ -52,5 +52,6 @@ secrets.json
 # Local test data
 /data
 
-# Test coverage
+# Testing
+.vite
 coverage

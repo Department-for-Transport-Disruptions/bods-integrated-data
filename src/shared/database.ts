@@ -2,8 +2,6 @@ import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-sec
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
 
-export { sql } from "kysely";
-
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
