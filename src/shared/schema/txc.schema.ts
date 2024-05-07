@@ -1,10 +1,11 @@
-import { z } from "zod";
+import { ZodSchema, z } from "zod";
 import { DEFAULT_DATE_FORMAT, bankHolidayOperationSchema } from "./dates.schema";
 import { getDate, getDateRange } from "../dates";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
 export const operatorSchema = z.object({
-    NationalOperatorCode: z.string(),
+    NationalOperatorCode: z.string().optional(),
+    OperatorCode: z.string().optional(),
     OperatorShortName: z.string(),
     "@_id": z.string(),
 });
@@ -122,6 +123,8 @@ const routeLinkSchema = z.object({
     Track: trackSchema.array().optional(),
 });
 
+export type TxcRouteLink = z.infer<typeof routeLinkSchema>;
+
 export const routeSectionSchema = z.object({
     "@_id": z.string(),
     RouteLink: routeLinkSchema.array(),
@@ -135,6 +138,15 @@ export const routeSchema = z.object({
 });
 
 export type TxcRoute = z.infer<typeof routeSchema>;
+
+export const journeyPatternSchema = z.object({
+    "@_id": z.string(),
+    DestinationDisplay: z.string().optional(),
+    RouteRef: z.string().optional(),
+    JourneyPatternSectionRefs: z.string().array(),
+});
+
+export type JourneyPattern = z.infer<typeof journeyPatternSchema>;
 
 export const serviceSchema = z.object({
     ServiceCode: z.string(),
@@ -151,14 +163,7 @@ export const serviceSchema = z.object({
     Mode: z.string().optional(),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
-        JourneyPattern: z
-            .object({
-                "@_id": z.string(),
-                DestinationDisplay: z.string().optional(),
-                RouteRef: z.string().optional(),
-                JourneyPatternSectionRefs: z.string().array(),
-            })
-            .array(),
+        JourneyPattern: journeyPatternSchema.array(),
     }),
 });
 
@@ -244,8 +249,13 @@ export const vehicleJourneySchema = z.object({
     OperatingProfile: operatingProfileSchema.optional(),
     ServiceRef: z.string(),
     LineRef: z.string(),
-    JourneyPatternRef: z.string(),
-    VehicleJourneyTimingLink: z.array(vehicleJourneyTimingLinkSchema).optional(),
+    /**
+     * JourneyPatternRef is not an optional property in the schema but there are a non-negligible
+     * amount of files that omit it in favour of using VehicleJourneyRef.
+     */
+    JourneyPatternRef: z.string().optional(),
+    VehicleJourneyRef: z.string().optional(),
+    VehicleJourneyTimingLink: vehicleJourneyTimingLinkSchema.array().optional(),
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
@@ -286,36 +296,52 @@ export const servicedOrganisationSchema = z.object({
 
 export type ServicedOrganisation = z.infer<typeof servicedOrganisationSchema>;
 
+const operatorsSchema = z.object({
+    Operator: operatorSchema.array().optional(),
+});
+
+const routeSectionsSchema = z.object({
+    RouteSection: routeSectionSchema.array().optional(),
+});
+
+const routesSchema = z.object({
+    Route: routeSchema.array().optional(),
+});
+
+const journeyPatternSectionsSchema = z.object({
+    JourneyPatternSection: journeyPatternSectionSchema.array().optional(),
+});
+
+const servicedOrganisationsSchema = z.object({
+    ServicedOrganisation: servicedOrganisationSchema.array().optional(),
+});
+
+const servicesSchema = z.object({
+    Service: serviceSchema.array().optional(),
+});
+
+const vehicleJourneysSchema = z.object({
+    VehicleJourney: vehicleJourneySchema.array().optional(),
+});
+
+const stopPointsSchema = z.object({
+    AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
+    StopPoint: stopPointSchema.array().optional(),
+});
+
+const castToObject = <T extends ZodSchema>(schema: T) => z.preprocess((val) => Object(val), schema);
+
 export const txcSchema = z.object({
     TransXChange: z.object({
-        Operators: z.object({
-            Operator: operatorSchema.array(),
-        }),
-        RouteSections: z.object({
-            RouteSection: routeSectionSchema.array(),
-        }),
-        Routes: z.object({
-            Route: routeSchema.array(),
-        }),
-        JourneyPatternSections: z.object({
-            JourneyPatternSection: z.array(journeyPatternSectionSchema),
-        }),
-        ServicedOrganisations: z
-            .object({
-                ServicedOrganisation: servicedOrganisationSchema.array().optional(),
-            })
-            .optional(),
-        Services: z.object({
-            Service: serviceSchema.array(),
-        }),
-        VehicleJourneys: z
-            .object({
-                VehicleJourney: vehicleJourneySchema.array(),
-            })
-            .or(txcEmptyProperty),
-        StopPoints: z.object({
-            AnnotatedStopPointRef: annotatedStopPointRefSchema.array().optional(),
-            StopPoint: stopPointSchema.array().optional(),
-        }),
+        Operators: castToObject(operatorsSchema.optional()),
+        RouteSections: castToObject(routeSectionsSchema.optional()),
+        Routes: castToObject(routesSchema.optional()),
+        JourneyPatternSections: castToObject(journeyPatternSectionsSchema.optional()),
+        ServicedOrganisations: castToObject(servicedOrganisationsSchema.optional()),
+        Services: castToObject(servicesSchema.optional()),
+        VehicleJourneys: castToObject(vehicleJourneysSchema.optional()),
+        StopPoints: castToObject(stopPointsSchema.optional()),
     }),
 });
+
+export const txcRegionsSchema = z.enum(["EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y"]);

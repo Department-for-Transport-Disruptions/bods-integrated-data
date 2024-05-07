@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
+import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -58,5 +59,49 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it("retrieves national dataset if no region passed", async () => {
+        const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
+        getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
+
+        await handler();
+
+        expect(getPresignedUrlMock).toBeCalledWith(
+            {
+                Bucket: mockBucketName,
+                Key: "all_gtfs.zip",
+            },
+            3600,
+        );
+    });
+
+    it("retrieves regional dataset if region passed", async () => {
+        const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
+        getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
+
+        await handler({ queryStringParameters: { region: "EA" } } as unknown as APIGatewayProxyEventV2);
+
+        expect(getPresignedUrlMock).toBeCalledWith(
+            {
+                Bucket: mockBucketName,
+                Key: "ea_gtfs.zip",
+            },
+            3600,
+        );
+    });
+
+    it("returns 400 if invalid region passed", async () => {
+        const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
+        getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
+
+        const response = await handler({
+            queryStringParameters: { region: "INVALID" },
+        } as unknown as APIGatewayProxyEventV2);
+
+        expect(response).toEqual({
+            body: "Invalid region code",
+            statusCode: 400,
+        });
     });
 });

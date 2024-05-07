@@ -1,16 +1,18 @@
 import { Database, NewStop, LocationType, NaptanStop } from "@bods-integrated-data/shared/database";
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
-import { getNaptanStop, getNaptanStops, insertStops } from "./database";
+import { getNaptanStops, insertStops } from "./database";
 
 const platformCodes = ["BCS", "PLT", "FBT"];
+
+export type NaptanStopWithRegionCode = NaptanStop & { region_code: string | null };
 
 export const mapStop = (
     id: string,
     name: string,
     latitude?: number,
     longitude?: number,
-    naptanStop?: NaptanStop,
+    naptanStop?: NaptanStopWithRegionCode,
 ): NewStop => {
     const stop: NewStop = {
         id,
@@ -21,6 +23,7 @@ export const mapStop = (
         stop_lon: longitude,
         location_type: LocationType.None,
         platform_code: null,
+        region_code: null,
     };
 
     if (naptanStop) {
@@ -45,31 +48,43 @@ export const mapStop = (
         if (naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)) {
             stop.platform_code = naptanStop.stop_type;
         }
+
+        if (naptanStop.region_code) {
+            stop.region_code = naptanStop.region_code;
+        }
     }
 
     return stop;
 };
 
-export const insertStopsByStopPoints = async (dbClient: Kysely<Database>, stops: TxcStopPoint[]) => {
-    const stopsToInsert = await Promise.all(
-        stops.map(async (stop): Promise<NewStop> => {
-            const latitude = stop.Place.Location?.Latitude;
-            const longitude = stop.Place.Location?.Longitude;
-            const naptanStop = await getNaptanStop(dbClient, stop.AtcoCode);
+export const processStopPoints = async (
+    dbClient: Kysely<Database>,
+    stops: TxcStopPoint[],
+    useStopLocality: boolean,
+) => {
+    const atcoCodes = stops.map((stop) => stop.AtcoCode);
+    const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
-            return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
-        }),
-    );
+    const stopsToInsert = stops.map((stop): NewStop => {
+        const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
+        const latitude = stop.Place.Location?.Latitude;
+        const longitude = stop.Place.Location?.Longitude;
 
-    return insertStops(dbClient, stopsToInsert);
+        return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
+    });
+
+    if (stopsToInsert.length > 0) {
+        await insertStops(dbClient, stopsToInsert);
+    }
 };
 
-export const insertStopsByAnnotatedStopPointRefs = async (
+export const processAnnotatedStopPointRefs = async (
     dbClient: Kysely<Database>,
     stops: TxcAnnotatedStopPointRef[],
+    useStopLocality: boolean,
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
-    const naptanStops = await getNaptanStops(dbClient, atcoCodes);
+    const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
     const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
@@ -79,5 +94,7 @@ export const insertStopsByAnnotatedStopPointRefs = async (
         return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
-    return insertStops(dbClient, stopsToInsert);
+    if (stopsToInsert.length > 0) {
+        await insertStops(dbClient, stopsToInsert);
+    }
 };

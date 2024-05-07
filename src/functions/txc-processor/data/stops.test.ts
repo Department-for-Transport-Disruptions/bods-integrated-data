@@ -3,12 +3,11 @@ import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/sh
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
-import { insertStopsByAnnotatedStopPointRefs, insertStopsByStopPoints, mapStop } from "./stops";
+import { processAnnotatedStopPointRefs, processStopPoints, mapStop, NaptanStopWithRegionCode } from "./stops";
 
 describe("stops", () => {
     let dbClient: Kysely<Database>;
-    const getNaptanStop = vi.spyOn(databaseFunctions, "getNaptanStop");
-    const getNaptanStops = vi.spyOn(databaseFunctions, "getNaptanStops");
+    const getNaptanStopsMock = vi.spyOn(databaseFunctions, "getNaptanStops");
     const insertStopsMock = vi.spyOn(databaseFunctions, "insertStops");
 
     beforeEach(() => {
@@ -35,9 +34,10 @@ describe("stops", () => {
                 stop_lon: 6,
                 location_type: LocationType.None,
                 platform_code: "BCS",
+                region_code: null,
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStop);
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -59,9 +59,10 @@ describe("stops", () => {
                 stop_lon: 6,
                 location_type: LocationType.None,
                 platform_code: "BCS",
+                region_code: null,
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStop);
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -82,9 +83,10 @@ describe("stops", () => {
                 stop_lon: 3,
                 location_type: LocationType.None,
                 platform_code: "BCS",
+                region_code: null,
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStop);
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -107,9 +109,10 @@ describe("stops", () => {
                 stop_lon: 6,
                 location_type: LocationType.RealStationEntrance,
                 platform_code: null,
+                region_code: null,
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStop);
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -131,9 +134,10 @@ describe("stops", () => {
                 stop_lon: 6,
                 location_type: LocationType.None,
                 platform_code: null,
+                region_code: null,
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStop);
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -156,9 +160,10 @@ describe("stops", () => {
                 stop_lon: 6,
                 location_type: LocationType.None,
                 platform_code: null,
+                region_code: null,
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStop);
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -172,14 +177,42 @@ describe("stops", () => {
                 stop_lon: 3,
                 location_type: LocationType.None,
                 platform_code: null,
+                region_code: null,
             };
 
             const result = mapStop("1", "name", 2, 3);
             expect(result).toEqual(expected);
         });
+
+        it("maps a stop using region_code if present", () => {
+            const naptanStop: Partial<NaptanStopWithRegionCode> = {
+                naptan_code: "4",
+                common_name: "naptan_name",
+                stop_type: "BCS",
+                latitude: "5",
+                longitude: "6",
+                region_code: "Y",
+            };
+
+            const expected: NewStop = {
+                id: "1",
+                wheelchair_boarding: 0,
+                parent_station: null,
+                stop_code: "4",
+                stop_name: "naptan_name",
+                stop_lat: 5,
+                stop_lon: 6,
+                location_type: LocationType.None,
+                platform_code: "BCS",
+                region_code: "Y",
+            };
+
+            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            expect(result).toEqual(expected);
+        });
     });
 
-    describe("insertStopsByStopPoints", () => {
+    describe("processStopPoints", () => {
         it("inserts stops into the database and returns them", async () => {
             const stops: TxcStopPoint[] = [
                 {
@@ -213,6 +246,7 @@ describe("stops", () => {
                     stop_lon: undefined,
                     location_type: LocationType.None,
                     platform_code: null,
+                    region_code: null,
                 },
                 {
                     id: "2",
@@ -223,18 +257,19 @@ describe("stops", () => {
                     stop_lon: 4,
                     location_type: LocationType.None,
                     platform_code: null,
+                    region_code: null,
                 },
             ];
 
-            getNaptanStop.mockResolvedValue(undefined);
+            getNaptanStopsMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
 
-            const result = await insertStopsByStopPoints(dbClient, stops);
-            expect(result).toEqual(expectedStops);
+            await processStopPoints(dbClient, stops, false);
+            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
         });
     });
 
-    describe("insertStopsByAnnotatedStopPointRefs", () => {
+    describe("processAnnotatedStopPointRefs", () => {
         it("inserts stops into the database and returns them", async () => {
             const stops: TxcAnnotatedStopPointRef[] = [
                 {
@@ -267,6 +302,7 @@ describe("stops", () => {
                     stop_lon: 3,
                     location_type: LocationType.None,
                     platform_code: null,
+                    region_code: null,
                 },
                 {
                     id: "4",
@@ -277,14 +313,15 @@ describe("stops", () => {
                     stop_lon: 6,
                     location_type: LocationType.None,
                     platform_code: null,
+                    region_code: null,
                 },
             ];
 
-            getNaptanStops.mockResolvedValue([]);
+            getNaptanStopsMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
 
-            const result = await insertStopsByAnnotatedStopPointRefs(dbClient, stops);
-            expect(result).toEqual(expectedStops);
+            await processAnnotatedStopPointRefs(dbClient, stops, false);
+            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
         });
     });
 });

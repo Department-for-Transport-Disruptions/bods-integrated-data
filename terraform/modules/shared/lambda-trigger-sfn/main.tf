@@ -113,10 +113,26 @@ resource "aws_iam_role_policy_attachment" "integrated_data_lambda_trigger_sfn_po
   role       = aws_iam_role.integrated_data_lambda_trigger_sfn_role.name
 }
 
-resource "aws_iam_role" "allow_event_bridge_to_run_sfn_policy" {
+resource "aws_iam_role" "sfn_event_bridge_role" {
   name = "integrated-data-lambda-trigger-sfn-cloudwatch-event-role-${var.environment}"
 
   assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "events.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "allow_event_bridge_to_run_sfn_policy" {
+  name   = "integrated-data-lambda-trigger-sfn-cloudwatch-event-polic-${var.environment}"
+  policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
@@ -128,6 +144,12 @@ resource "aws_iam_role" "allow_event_bridge_to_run_sfn_policy" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "sfn_eventbridge_policy_attachment" {
+  role       = aws_iam_role.sfn_event_bridge_role.id
+  policy_arn = aws_iam_policy.allow_event_bridge_to_run_sfn_policy.arn
+}
+
+
 resource "aws_cloudwatch_event_rule" "lambda_trigger_sfn_schedule" {
   name                = "schedule-${aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.name}"
   description         = "Schedule for ${aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.name}"
@@ -137,7 +159,7 @@ resource "aws_cloudwatch_event_rule" "lambda_trigger_sfn_schedule" {
 resource "aws_cloudwatch_event_target" "schedule_lambda_trigger_sfn" {
   rule     = aws_cloudwatch_event_rule.lambda_trigger_sfn_schedule.name
   arn      = aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.arn
-  role_arn = aws_iam_role.allow_event_bridge_to_run_sfn_policy.arn
+  role_arn = aws_iam_role.sfn_event_bridge_role.arn
 }
 
 locals {

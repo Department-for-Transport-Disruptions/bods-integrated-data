@@ -134,7 +134,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "states:StartExecution"
         ],
         "Resource" : [
-          "${aws_sfn_state_machine.integrated_data_timetables_sfn.arn}"
+          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
         ]
       },
       {
@@ -144,7 +144,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "states:StopExecution"
         ],
         "Resource" : [
-          "${aws_sfn_state_machine.integrated_data_timetables_sfn.arn}"
+          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
         ]
       },
       {

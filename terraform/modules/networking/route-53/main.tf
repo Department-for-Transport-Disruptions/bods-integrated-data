@@ -16,3 +16,7 @@ resource "aws_route53_zone" "integrated_data_private_hosted_zone" {
     vpc_id = var.vpc_id
   }
 }
+
+resource "aws_route53_zone" "integrated_data_public_hosted_zone" {
+  name = "${var.environment}.${var.root_domain}"
+}
