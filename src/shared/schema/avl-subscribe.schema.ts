@@ -7,6 +7,7 @@ export const avlSubscribeMessageSchema = z.object({
     username: z.string(),
     password: z.string(),
     requestorRef: z.string().optional(),
+    subscriptionId: z.string().optional(),
 });
 
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
@@ -48,3 +49,24 @@ export const subscriptionResponseSchema = z.object({
 });
 
 export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
+
+export const subscriptionSchema = z.object({
+    PK: z.string(),
+    url: z.string().url(),
+    description: z.string(),
+    shortDescription: z.string(),
+    status: z.string(),
+    requestorRef: z.string().nullish(),
+    heartbeatLastReceivedDateTime: z.string().nullish(),
+    serviceStartDatetime: z.string(),
+    serviceEndDatetime: z.string().optional(),
+});
+
+export type Subscription = z.infer<typeof subscriptionSchema>;
+
+export const subscriptionSchemaTransformed = subscriptionSchema.transform((data) => ({
+    subscriptionId: data.PK,
+    ...data,
+}));
+
+export const subscriptionsSchema = z.array(subscriptionSchema);

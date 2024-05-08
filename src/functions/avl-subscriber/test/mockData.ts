@@ -28,10 +28,31 @@ export const expectedRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" sta
     <RequestorRef>BODS</RequestorRef>
     <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
     <SubscriptionContext>
-      <HeartbeatInterval>PT30M</HeartbeatInterval>
+      <HeartbeatInterval>PT30S</HeartbeatInterval>
     </SubscriptionContext>
     <VehicleMonitoringSubscriptionRequest>
       <SubscriptionIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</SubscriptionIdentifier>
+      <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
+      <VehicleMonitoringRequest version=\"2.0\">
+        <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+      </VehicleMonitoringRequest>
+    </VehicleMonitoringSubscriptionRequest>
+  </SubscriptionRequest>
+</Siri>
+`;
+
+export const expectedRequestBodyForExistingSubscription = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:ns2=\"http://www.ifopt.org.uk/acsb\" xmlns:ns3=\"http://www.ifopt.org.uk/ifopt\" xmlns:ns4=\"http://datex2.eu/schema/2_0RC1/2_0\">
+  <SubscriptionRequest>
+    <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+    <ConsumerAddress>https://www.test.com/data/existing-subscription-id</ConsumerAddress>
+    <RequestorRef>BODS</RequestorRef>
+    <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
+    <SubscriptionContext>
+      <HeartbeatInterval>PT30S</HeartbeatInterval>
+    </SubscriptionContext>
+    <VehicleMonitoringSubscriptionRequest>
+      <SubscriptionIdentifier>existing-subscription-id</SubscriptionIdentifier>
       <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
       <VehicleMonitoringRequest version=\"2.0\">
         <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
@@ -57,7 +78,7 @@ export const expectedRequestBodyForMockProducer = `<?xml version=\"1.0\" encodin
     <RequestorRef>BODS_MOCK_PRODUCER</RequestorRef>
     <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
     <SubscriptionContext>
-      <HeartbeatInterval>PT30M</HeartbeatInterval>
+      <HeartbeatInterval>PT30S</HeartbeatInterval>
     </SubscriptionContext>
     <VehicleMonitoringSubscriptionRequest>
       <SubscriptionIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</SubscriptionIdentifier>

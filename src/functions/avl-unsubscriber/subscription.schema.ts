@@ -1,18 +1,5 @@
 import { z } from "zod";
 
-export const subscriptionSchema = z.object({
-    PK: z.string(),
-    url: z.string().url(),
-    description: z.string(),
-    shortDescription: z.string(),
-    status: z.string(),
-    requestorRef: z.string().nullish(),
-    serviceStartDatetime: z.string().optional(),
-    serviceEndDatetime: z.string().optional(),
-});
-
-export type Subscription = z.infer<typeof subscriptionSchema>;
-
 export const terminateSubscriptionRequestSchema = z.object({
     TerminateSubscriptionRequest: z.object({
         RequestTimestamp: z.string(),

@@ -2,6 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import { ZodSchema, z } from "zod";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { VehicleType } from "./schema";
+import { getParameter } from "./ssm";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -72,3 +73,18 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
             return parsedItem.success;
         });
     }, z.array(schema));
+
+export const getSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+    const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
+        getParameter(`/subscription/${subscriptionId}/username`, true),
+        getParameter(`/subscription/${subscriptionId}/password`, true),
+    ]);
+
+    const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
+    const subscriptionPassword = subscriptionPasswordParam.Parameter?.Value ?? null;
+
+    return {
+        subscriptionUsername,
+        subscriptionPassword,
+    };
+};
