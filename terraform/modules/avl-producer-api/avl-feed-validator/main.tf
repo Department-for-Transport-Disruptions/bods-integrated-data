@@ -22,11 +22,19 @@ module "avl_feed_validator" {
 
   permissions = [
     {
-      Action   = "dynamodb:PutItem",
+      Action   = ["dynamodb:PutItem", "dynamodb:Scan"]
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
 
-    }
+    },
+    {
+      Action   = ["ssm:GetParameter"],
+      Effect   = "Allow",
+      Resource = [
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
+      ]
+    },
   ]
 
   env_vars = {

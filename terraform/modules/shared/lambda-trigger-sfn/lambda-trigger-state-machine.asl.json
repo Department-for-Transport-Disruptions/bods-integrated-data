@@ -6,7 +6,7 @@
       "Type": "Pass",
       "Next": "Map",
       "Result": {
-        "invokes_per_minute": "${jsonencode(invokes_per_minute)}"
+        "invokes_per_minute": ${jsonencode(invokes_per_minute)}
       }
     },
     "Map": {

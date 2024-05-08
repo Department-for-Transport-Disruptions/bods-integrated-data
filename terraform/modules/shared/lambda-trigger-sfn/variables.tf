@@ -12,3 +12,8 @@ variable "invoke_every_seconds" {
   type        = number
   description = "The frequency the lambda should be invoked (e.g. invoke_every_seconds = 30 will invoke the lambda every 30 seconds)"
 }
+
+variable "step_function_name" {
+  type        = string
+  description = "Name of Step Function"
+}

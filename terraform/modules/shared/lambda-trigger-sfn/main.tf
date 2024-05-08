@@ -13,7 +13,7 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 resource "aws_iam_role" "integrated_data_lambda_trigger_sfn_role" {
-  name = "integrated-data-lambda-trigger-sfn-role-${var.environment}"
+  name = "${var.step_function_name}-sfn-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -37,10 +37,8 @@ resource "aws_iam_role" "integrated_data_lambda_trigger_sfn_role" {
   })
 }
 
-
 resource "aws_sfn_state_machine" "integrated_data_lambda_trigger_sfn" {
-  name       = "integrated-data-lambda-trigger-sfn-${var.environment}"
-  type       = "EXPRESS"
+  name       = "${var.step_function_name}-sfn-${var.environment}"
   role_arn   = aws_iam_role.integrated_data_lambda_trigger_sfn_role.arn
   definition = templatefile("${path.module}/lambda-trigger-state-machine.asl.json", {
     function_arn         = var.function_arn
@@ -50,7 +48,7 @@ resource "aws_sfn_state_machine" "integrated_data_lambda_trigger_sfn" {
 }
 
 resource "aws_iam_policy" "integrated_data_lambda_trigger_sfn_policy" {
-  name = "integrated-data-lambda-trigger-sfn-policy-${var.environment}"
+  name = "${var.step_function_name}-sfn-policy-${var.environment}"
 
   policy = jsonencode({
     Version   = "2012-10-17"
@@ -61,7 +59,8 @@ resource "aws_iam_policy" "integrated_data_lambda_trigger_sfn_policy" {
           "lambda:InvokeFunction"
         ],
         "Resource" : [
-          var.function_arn
+          var.function_arn,
+          "${var.function_arn}*"
         ]
       },
       {
@@ -79,7 +78,7 @@ resource "aws_iam_policy" "integrated_data_lambda_trigger_sfn_policy" {
           "states:StartExecution"
         ],
         "Resource" : [
-          "${aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.arn}"
+          aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.arn
         ]
       },
       {
@@ -89,7 +88,7 @@ resource "aws_iam_policy" "integrated_data_lambda_trigger_sfn_policy" {
           "states:StopExecution"
         ],
         "Resource" : [
-          "${aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.arn}"
+          aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.arn
         ]
       },
       {
@@ -113,8 +112,9 @@ resource "aws_iam_role_policy_attachment" "integrated_data_lambda_trigger_sfn_po
   role       = aws_iam_role.integrated_data_lambda_trigger_sfn_role.name
 }
 
+
 resource "aws_iam_role" "sfn_event_bridge_role" {
-  name = "integrated-data-lambda-trigger-sfn-cloudwatch-event-role-${var.environment}"
+  name = "${var.step_function_name}-sfn-cloudwatch-event-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -131,7 +131,7 @@ resource "aws_iam_role" "sfn_event_bridge_role" {
 }
 
 resource "aws_iam_policy" "allow_event_bridge_to_run_sfn_policy" {
-  name   = "integrated-data-lambda-trigger-sfn-cloudwatch-event-polic-${var.environment}"
+  name   = "${var.step_function_name}-sfn-cloudwatch-event-polic-${var.environment}"
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -162,6 +162,3 @@ resource "aws_cloudwatch_event_target" "schedule_lambda_trigger_sfn" {
   role_arn = aws_iam_role.sfn_event_bridge_role.arn
 }
 
-locals {
-  invokes_per_minute = range(60 / var.invoke_every_seconds)
-}

@@ -91,6 +91,7 @@ module "avl_feed_validator" {
 
 module "avl_feed_validator_sfn" {
   count                = var.environment == "local" ? 0 : 1
+  step_function_name   = "integrated-data-avl-feed-validator"
   source               = "../../modules/shared/lambda-trigger-sfn"
   environment          = var.environment
   function_arn         = module.avl_feed_validator.function_arn
