@@ -52,6 +52,22 @@ export const getDatabaseClient = async (isLocal = false) => {
     });
 };
 
+const delay = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+export const executeWithRetries = async <T>(fn: () => Promise<T>) => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (error instanceof Error && error.message === "deadlock detected") {
+                await delay(2 ** attempt * 10);
+            }
+
+            throw error;
+        }
+    }
+};
+
 export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;

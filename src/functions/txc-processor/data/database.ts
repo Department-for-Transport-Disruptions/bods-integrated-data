@@ -8,6 +8,7 @@ import {
     NewStop,
     NewAgency,
     NewStopTime,
+    executeWithRetries,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Kysely } from "kysely";
@@ -123,12 +124,14 @@ export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
 };
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
-    return dbClient
-        .insertInto("stop_new")
-        .values(stops)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .returningAll()
-        .execute();
+    return executeWithRetries(() =>
+        dbClient
+            .insertInto("stop_new")
+            .values(stops)
+            .onConflict((oc) => oc.column("id").doNothing())
+            .returningAll()
+            .execute(),
+    );
 };
 
 export const insertShapes = async (dbClient: Kysely<Database>, shapes: NewShape[]) => {
