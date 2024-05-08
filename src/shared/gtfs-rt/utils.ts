@@ -84,10 +84,11 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  * journey ref, to ensure a single trip is matched. Note that it is possible for no matching
  * route ID or trip ID to be found.
  * @param dbClient The database client
- * @param routeIds Optional array of route IDs to filter on
+ * @param routeId Optional route ID or comma-separated route IDs to filter on
+ * @param startTime Optional start time to filter on using the AVL's departure time
  * @returns An array of AVL data enriched with route and trip IDs
  */
-export const getAvlDataForGtfs = async (routeIds: string[]) => {
+export const getAvlDataForGtfs = async (routeId?: string, startTime?: string) => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
@@ -100,10 +101,17 @@ export const getAvlDataForGtfs = async (routeIds: string[]) => {
             LEFT OUTER JOIN trip ON trip.route_id = routes_with_noc.route_id AND trip.ticket_machine_journey_code = avl.dated_vehicle_journey_ref
         `;
 
-        if (routeIds.length > 0) {
+        if (routeId) {
             query = sql`
                 ${query}
-                WHERE routes_with_noc.route_id IN (${routeIds.join(",")})
+                WHERE routes_with_noc.route_id IN (${sql.raw(routeId)})
+            `;
+        }
+
+        if (startTime) {
+            query = sql`
+                ${query}
+                WHERE avl.origin_aimed_departure_time >= ${startTime}
             `;
         }
 
