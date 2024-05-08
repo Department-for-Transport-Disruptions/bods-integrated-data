@@ -57,9 +57,10 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom("agency")
+                .selectFrom("route")
+                .innerJoin("agency", "agency.id", "route.agency_id")
                 .select([
-                    "agency.id as agency_id",
+                    sql`CONCAT('OP', agency.id)`.as("agency_id"),
                     "agency.name as agency_name",
                     "agency.url as agency_url",
                     sql.lit<string>(`'Europe/London'`).as("agency_timezone"),
@@ -67,7 +68,8 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
                     "agency.phone as agency_phone",
                     "agency.noc as agency_noc",
                 ])
-                .orderBy("agency_id asc");
+                .distinct()
+                .orderBy("agency.id asc");
 
             return query.compile().sql;
         },

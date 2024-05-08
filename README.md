@@ -268,9 +268,9 @@ make run-local-table-renamer
 This will update the `_new` tables to be the primary tables and update the primary tables to be `_old`, for example:
 
 ```text
-agency_new -> agency
-agency -> agency_old
-agency_old -> <Deleted>
+route_new -> route
+route -> route_old
+route_old -> <Deleted>
 ```
 
 ### GTFS feed generation
