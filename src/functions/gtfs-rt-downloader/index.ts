@@ -23,7 +23,7 @@ const queryParametersSchema = z.preprocess(
     }),
 );
 
-export const retrieveRouteData = async (routeId?: string, startTime?: string): Promise<APIGatewayProxyResultV2> => {
+const retrieveRouteData = async (routeId?: string, startTime?: string): Promise<APIGatewayProxyResultV2> => {
     try {
         const avlData = await getAvlDataForGtfs(routeId, startTime);
         const entities = avlData.map(mapAvlToGtfsEntity);
