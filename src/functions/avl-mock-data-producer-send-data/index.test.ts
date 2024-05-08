@@ -72,15 +72,15 @@ describe("avl-mock-data-producer-send-data", () => {
 
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-one", {
-            data: expectedAVLDataForSubscription("subscription-one"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com?subscription_id=subscription-one",
+            expectedAVLDataForSubscription("subscription-one"),
+        );
 
-        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-two", {
-            data: expectedAVLDataForSubscription("subscription-two"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com?subscription_id=subscription-two",
+            expectedAVLDataForSubscription("subscription-two"),
+        );
     });
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
         process.env.STAGE = "dev";
@@ -94,15 +94,15 @@ describe("avl-mock-data-producer-send-data", () => {
 
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-one", {
-            data: expectedAVLDataForSubscription("subscription-one"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com/subscription-one",
+            expectedAVLDataForSubscription("subscription-one"),
+        );
 
-        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-two", {
-            data: expectedAVLDataForSubscription("subscription-two"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com/subscription-two",
+            expectedAVLDataForSubscription("subscription-two"),
+        );
     });
 
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
@@ -116,14 +116,14 @@ describe("avl-mock-data-producer-send-data", () => {
         await expect(handler()).rejects.toThrowError("There was an error when sending AVL data.");
 
         expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-one", {
-            data: expectedAVLDataForSubscription("subscription-one"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com/subscription-one",
+            expectedAVLDataForSubscription("subscription-one"),
+        );
 
-        expect(axiosSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-two", {
-            data: expectedAVLDataForSubscription("subscription-two"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com/subscription-two",
+            expectedAVLDataForSubscription("subscription-two"),
+        );
     });
 });

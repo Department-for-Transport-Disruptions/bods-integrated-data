@@ -62,11 +62,10 @@ export const expectedRequestBodyForExistingSubscription = `<?xml version=\"1.0\"
 </Siri>
 `;
 
-export const expectedSubscriptionRequest = {
-    data: expectedRequestBody,
-    method: "POST",
+export const expectedSubscriptionRequestConfig = {
     headers: {
         Authorization: "Basic dGVzdC11c2VyOmR1bW15LXBhc3N3b3Jk",
+        "Content-Type": "text/xml",
     },
 };
 
@@ -90,14 +89,6 @@ export const expectedRequestBodyForMockProducer = `<?xml version=\"1.0\" encodin
   </SubscriptionRequest>
 </Siri>
 `;
-
-export const expectedSubscriptionRequestForMockProducer = {
-    data: expectedRequestBodyForMockProducer,
-    method: "POST",
-    headers: {
-        Authorization: "Basic dGVzdC11c2VyOmR1bW15LXBhc3N3b3Jk",
-    },
-};
 
 export const mockSubscriptionResponseBody = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:ns2="http://www.ifopt.org.uk/acsb" xmlns:ns3="http://www.ifopt.org.uk/ifopt" xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0">

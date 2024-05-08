@@ -159,10 +159,9 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
             ? mockProducerSubscribeEndpoint
             : avlSubscribeMessage.dataProducerEndpoint;
 
-    const subscriptionResponse = await axios.post<string>(url, {
-        method: "POST",
-        data: subscriptionRequestMessage,
+    const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
+            "Content-Type": "text/xml",
             Authorization:
                 "Basic " +
                 Buffer.from(`${avlSubscribeMessage.username}:${avlSubscribeMessage.password}`).toString("base64"),
