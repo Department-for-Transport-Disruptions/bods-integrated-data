@@ -103,7 +103,13 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         getQuery: () => {
             const query = dbClient
                 .selectFrom("route")
-                .select(["id as route_id", "agency_id", "route_short_name", "route_long_name", "route_type"])
+                .select([
+                    "id as route_id",
+                    sql`CONCAT('OP', agency_id)`.as("agency_id"),
+                    "route_short_name",
+                    "route_long_name",
+                    "route_type",
+                ])
                 .orderBy("route_id asc");
 
             return query.compile().sql;
@@ -249,7 +255,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
                 .innerJoin("route", "route.id", "trip_region.route_id")
                 .innerJoin("agency", "agency.id", "route.agency_id")
                 .select([
-                    "agency.id as agency_id",
+                    sql`CONCAT('OP', agency.id)`.as("agency_id"),
                     "agency.name as agency_name",
                     "agency.url as agency_url",
                     sql.lit<string>(`'Europe/London'`).as("agency_timezone"),
@@ -258,7 +264,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
                     "agency.noc as agency_noc",
                 ])
                 .distinct()
-                .orderBy("agency_id asc");
+                .orderBy("agency.id asc");
 
             return query.compile().sql;
         },
@@ -298,7 +304,7 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
                 .innerJoin("route", "route.id", "trip_region.route_id")
                 .select([
                     "route.id as route_id",
-                    "route.agency_id",
+                    sql`CONCAT('OP', route.agency_id)`.as("agency_id"),
                     "route.route_short_name",
                     "route.route_long_name",
                     "route.route_type",
