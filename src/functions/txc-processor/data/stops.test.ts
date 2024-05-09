@@ -262,7 +262,7 @@ describe("stops", () => {
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
-            insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
 
             await processStopPoints(dbClient, stops, false);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
@@ -318,7 +318,7 @@ describe("stops", () => {
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
-            insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
 
             await processAnnotatedStopPointRefs(dbClient, stops, false);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
