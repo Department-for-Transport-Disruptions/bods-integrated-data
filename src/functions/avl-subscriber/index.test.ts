@@ -5,8 +5,11 @@ import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
-    expectedSubscriptionRequest,
-    expectedSubscriptionRequestForMockProducer,
+    expectedRequestBody,
+    expectedRequestBodyForExistingSubscription,
+    expectedRequestBodyForMockProducer,
+    expectedSubscriptionRequestConfig,
+    mockAvlSubscribeMessage,
     mockSubscribeEvent,
     mockSubscribeEventToMockDataProducer,
     mockSubscriptionResponseBody,
@@ -58,7 +61,11 @@ describe("avl-subscriber", () => {
 
         await handler(mockSubscribeEvent);
 
-        expect(axiosSpy).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com",
+            expectedRequestBody,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -205,7 +212,11 @@ describe("avl-subscriber", () => {
 
         await handler(mockSubscribeEventToMockDataProducer);
 
-        expect(axiosSpy).toBeCalledWith("www.local.com", expectedSubscriptionRequestForMockProducer);
+        expect(axiosSpy).toBeCalledWith(
+            "www.local.com",
+            expectedRequestBodyForMockProducer,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -246,7 +257,11 @@ describe("avl-subscriber", () => {
         await expect(handler(mockSubscribeEventToMockDataProducer)).rejects.toThrowError(
             "Error parsing subscription response from: https://mock-data-producer.com",
         );
-        expect(axiosSpy).toBeCalledWith("www.local.com", expectedSubscriptionRequestForMockProducer);
+        expect(axiosSpy).toBeCalledWith(
+            "www.local.com",
+            expectedRequestBodyForMockProducer,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -287,7 +302,11 @@ describe("avl-subscriber", () => {
         await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
             "The data producer: https://mock-data-producer.com did not return a status of true.",
         );
-        expect(axiosSpy).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com",
+            expectedRequestBody,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -317,5 +336,38 @@ describe("avl-subscriber", () => {
             "SecureString",
             true,
         );
+    });
+
+    it("should handle resubscription requests to a data producer", async () => {
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBody,
+            status: 200,
+        } as AxiosResponse);
+
+        await handler({
+            ...mockSubscribeEvent,
+            body: JSON.stringify({
+                ...mockAvlSubscribeMessage,
+                subscriptionId: "existing-subscription-id",
+            }),
+        });
+
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com",
+            expectedRequestBodyForExistingSubscription,
+            expectedSubscriptionRequestConfig,
+        );
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "existing-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+        });
+
+        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
     });
 });

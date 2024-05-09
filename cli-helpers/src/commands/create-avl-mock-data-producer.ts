@@ -27,7 +27,7 @@ export const createAvlMockDataProducer = new Command("create-avl-mock-data-produ
         };
 
         await invokeLambda(stage, {
-            FunctionName: `avl-subscriber-${stage}`,
+            FunctionName: `integrated-data-avl-subscriber-${stage}`,
             InvocationType: "Event",
             Payload: JSON.stringify(invokePayload),
         });

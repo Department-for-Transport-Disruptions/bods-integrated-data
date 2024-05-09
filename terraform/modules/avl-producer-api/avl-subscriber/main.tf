@@ -13,7 +13,7 @@ module "avl_subscriber" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "avl-subscriber"
+  function_name = "integrated-data-avl-subscriber"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-subscriber.zip"
   handler       = "index.handler"
   memory        = 1024
@@ -22,8 +22,8 @@ module "avl_subscriber" {
 
   permissions = [
     {
-      Action = "ssm:PutParameter",
-      Effect = "Allow",
+      Action   = "ssm:PutParameter",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"

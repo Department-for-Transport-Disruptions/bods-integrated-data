@@ -4,7 +4,8 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
-    expectedSubscriptionRequest,
+    expectedRequestBody,
+    expectedSubscriptionRequestConfig,
     mockFailedSubscriptionResponseBody,
     mockSubscriptionInvalidBody,
     mockSubscriptionResponseBody,
@@ -72,7 +73,11 @@ describe("avl-unsubscriber", () => {
 
         await handler(mockUnsubscribeEvent);
 
-        expect(axiosSpy).toBeCalledWith("https://mock-data-producer.com/", expectedSubscriptionRequest);
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com/",
+            expectedRequestBody,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
@@ -175,6 +180,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(

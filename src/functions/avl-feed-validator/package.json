@@ -1,10 +1,10 @@
 {
-  "name": "@bods-integrated-data/avl-subscriber",
+  "name": "@bods-integrated-data/avl-feed-validator",
   "version": "0.1.0",
-  "description": "",
+  "description": "AVL Feed Validator",
   "scripts": {
-    "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-subscriber.zip .",
-    "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-subscriber.zip ../dist/avl-subscriber.zip",
+    "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-feed-validator.zip .",
+    "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-feed-validator.zip ../dist",
     "test": "vitest run"
   },
   "keywords": [],
@@ -15,12 +15,11 @@
     "@baselime/lambda-logger": "^0.2.2",
     "@bods-integrated-data/shared": "workspace:^",
     "axios": "^1.6.7",
-    "mockdate": "^3.0.5",
-    "fast-xml-parser": "^4.3.5"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.110",
     "@types/node": "^20.11.19",
-    "zod": "^3.22.4"
+    "mockdate": "^3.0.5"
   }
 }
