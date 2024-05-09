@@ -62,9 +62,9 @@ export const executeWithRetries = async <T>(fn: () => Promise<T>) => {
         } catch (error) {
             if (error instanceof Error && error.message === "deadlock detected") {
                 await delay(2 ** attempt * 10);
+            } else {
+                throw error;
             }
-
-            throw error;
         }
     }
 
