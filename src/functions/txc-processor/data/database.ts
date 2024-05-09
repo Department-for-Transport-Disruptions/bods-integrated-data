@@ -44,16 +44,18 @@ export const insertCalendars = async (dbClient: Kysely<Database>, calendars: Cal
     const insertedCalendars = (
         await Promise.all(
             calendarChunks.map((chunk) =>
-                dbClient
-                    .insertInto("calendar_new")
-                    .values(chunk)
-                    .onConflict((oc) =>
-                        oc
-                            .column("calendar_hash")
-                            .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
-                    )
-                    .returningAll()
-                    .execute(),
+                executeWithRetries(() =>
+                    dbClient
+                        .insertInto("calendar_new")
+                        .values(chunk)
+                        .onConflict((oc) =>
+                            oc
+                                .column("calendar_hash")
+                                .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
+                        )
+                        .returningAll()
+                        .execute(),
+                ),
             ),
         )
     ).flat();
@@ -70,11 +72,13 @@ export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDa
 
     await Promise.all(
         calendarDatesChunks.map((chunk) =>
-            dbClient
-                .insertInto("calendar_date_new")
-                .values(chunk)
-                .onConflict((oc) => oc.doNothing())
-                .execute(),
+            executeWithRetries(() =>
+                dbClient
+                    .insertInto("calendar_date_new")
+                    .values(chunk)
+                    .onConflict((oc) => oc.doNothing())
+                    .execute(),
+            ),
         ),
     );
 };
