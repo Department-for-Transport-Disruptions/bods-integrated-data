@@ -49,3 +49,20 @@ export const subscriptionResponseSchema = z.object({
 });
 
 export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
+
+export const subscriptionDynamoSchema = z
+    .object({
+        PK: z.string(),
+        url: z.string().url(),
+        description: z.string(),
+        shortDescription: z.string(),
+        status: z.string(),
+        requestorRef: z.string().nullish(),
+        heartbeatLastReceivedDateTime: z.string().nullish(),
+    })
+    .transform((data) => ({
+        subscriptionId: data.PK,
+        ...data,
+    }));
+
+export const subscriptionsDynamoSchema = z.array(subscriptionDynamoSchema);

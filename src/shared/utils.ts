@@ -1,7 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
 import { ZodSchema, z } from "zod";
 import { RouteType, WheelchairAccessibility } from "./database";
+import { recursiveScan } from "./dynamo";
 import { VehicleType } from "./schema";
+import { subscriptionDynamoSchema } from "./schema/avl-subscribe.schema";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -72,3 +74,19 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
             return parsedItem.success;
         });
     }, z.array(schema));
+
+export const getMockDataProducerSubscriptions = async (tableName: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: tableName,
+    });
+
+    if (!subscriptions || subscriptions.length === 0) {
+        return null;
+    }
+
+    const parsedSubscriptions = z.array(subscriptionDynamoSchema).parse(subscriptions);
+
+    return parsedSubscriptions.filter(
+        (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "ACTIVE",
+    );
+};
