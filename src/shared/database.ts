@@ -1,7 +1,6 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
-import { TooManyRetriesError } from "./errors";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
@@ -51,24 +50,6 @@ export const getDatabaseClient = async (isLocal = false) => {
             }),
         }),
     });
-};
-
-const delay = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
-
-export const executeWithRetries = async <T>(fn: () => Promise<T>) => {
-    for (let attempt = 0; attempt < 5; attempt++) {
-        try {
-            return await fn();
-        } catch (error) {
-            if (error instanceof Error && error.message === "deadlock detected") {
-                await delay(2 ** attempt * 10);
-            } else {
-                throw error;
-            }
-        }
-    }
-
-    throw new TooManyRetriesError();
 };
 
 export interface Database {

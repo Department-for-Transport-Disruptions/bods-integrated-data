@@ -8,9 +8,9 @@ import {
     NewStop,
     NewAgency,
     NewStopTime,
-    executeWithRetries,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
+import { backOff } from "exponential-backoff";
 import { Kysely } from "kysely";
 import { CalendarWithDates } from "../types";
 
@@ -44,17 +44,19 @@ export const insertCalendars = async (dbClient: Kysely<Database>, calendars: Cal
     const insertedCalendars = (
         await Promise.all(
             calendarChunks.map((chunk) =>
-                executeWithRetries(() =>
-                    dbClient
-                        .insertInto("calendar_new")
-                        .values(chunk)
-                        .onConflict((oc) =>
-                            oc
-                                .column("calendar_hash")
-                                .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
-                        )
-                        .returningAll()
-                        .execute(),
+                backOff(
+                    () =>
+                        dbClient
+                            .insertInto("calendar_new")
+                            .values(chunk)
+                            .onConflict((oc) =>
+                                oc
+                                    .column("calendar_hash")
+                                    .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
+                            )
+                            .returningAll()
+                            .execute(),
+                    { jitter: "full" },
                 ),
             ),
         )
@@ -72,12 +74,14 @@ export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDa
 
     await Promise.all(
         calendarDatesChunks.map((chunk) =>
-            executeWithRetries(() =>
-                dbClient
-                    .insertInto("calendar_date_new")
-                    .values(chunk)
-                    .onConflict((oc) => oc.doNothing())
-                    .execute(),
+            backOff(
+                () =>
+                    dbClient
+                        .insertInto("calendar_date_new")
+                        .values(chunk)
+                        .onConflict((oc) => oc.doNothing())
+                        .execute(),
+                { jitter: "full" },
             ),
         ),
     );
@@ -128,13 +132,20 @@ export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
 };
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
-    return executeWithRetries(() =>
-        dbClient
-            .insertInto("stop_new")
-            .values(stops)
-            .onConflict((oc) => oc.column("id").doNothing())
-            .returningAll()
-            .execute(),
+    const insertChunks = chunkArray(stops, 3000);
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            backOff(
+                () =>
+                    dbClient
+                        .insertInto("stop_new")
+                        .values(chunk)
+                        .onConflict((oc) => oc.column("id").doNothing())
+                        .returningAll()
+                        .execute(),
+                { jitter: "full" },
+            ),
+        ),
     );
 };
 
