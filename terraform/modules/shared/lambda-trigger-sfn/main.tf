@@ -38,8 +38,8 @@ resource "aws_iam_role" "integrated_data_lambda_trigger_sfn_role" {
 }
 
 resource "aws_sfn_state_machine" "integrated_data_lambda_trigger_sfn" {
-  name       = "${var.step_function_name}-sfn-${var.environment}"
-  role_arn   = aws_iam_role.integrated_data_lambda_trigger_sfn_role.arn
+  name     = "${var.step_function_name}-sfn-${var.environment}"
+  role_arn = aws_iam_role.integrated_data_lambda_trigger_sfn_role.arn
   definition = templatefile("${path.module}/lambda-trigger-state-machine.asl.json", {
     function_arn         = var.function_arn
     invoke_every_seconds = var.invoke_every_seconds
@@ -51,7 +51,7 @@ resource "aws_iam_policy" "integrated_data_lambda_trigger_sfn_policy" {
   name = "${var.step_function_name}-sfn-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -114,7 +114,7 @@ resource "aws_iam_role_policy_attachment" "integrated_data_lambda_trigger_sfn_po
 
 
 resource "aws_iam_role" "sfn_event_bridge_role" {
-  name = "${var.step_function_name}-sfn-cloudwatch-event-role-${var.environment}"
+  name = "${var.step_function_name}-sfn-eventbridge-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -131,7 +131,7 @@ resource "aws_iam_role" "sfn_event_bridge_role" {
 }
 
 resource "aws_iam_policy" "allow_event_bridge_to_run_sfn_policy" {
-  name   = "${var.step_function_name}-sfn-cloudwatch-event-polic-${var.environment}"
+  name = "${var.step_function_name}-sfn-eventbridge-policy-${var.environment}"
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
