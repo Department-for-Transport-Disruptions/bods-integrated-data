@@ -1,4 +1,4 @@
-import { Database, LocationType, NaptanStop, NewStop, Stop } from "@bods-integrated-data/shared/database";
+import { Database, LocationType, NaptanStop, NewStop } from "@bods-integrated-data/shared/database";
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
