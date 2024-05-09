@@ -13,7 +13,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "avl-mock-data-producer-send-data"
+  function_name = "integrated-data-avl-mock-data-producer-send-data"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-producer-send-data.zip"
   handler       = "index.handler"
   memory        = 256
@@ -75,7 +75,7 @@ module "integrated_data_avl_mock_data_producer_subscribe" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "avl-mock-data-producer-subscribe"
+  function_name = "integrated-data-avl-mock-data-producer-subscribe"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-producer-subscribe.zip"
   handler       = "index.handler"
   memory        = 1024
@@ -144,12 +144,14 @@ resource "aws_lambda_permission" "integrated_data_mock_avl_producer_api_subscrib
   source_arn    = "${aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].execution_arn}/${aws_apigatewayv2_stage.integrated_data_mock_avl_producer_api_stage[0].name}/*"
 }
 
-output "function_url" {
+output "subscribe_function_url" {
   description = "Function URL for subscribe lambda for local deployment"
-  value       = var.environment == "local" ? aws_lambda_function_url.integrated_data_mock_avl_producer_function_url[0].function_url : null
+  value       = (var.environment == "local" ?
+    aws_lambda_function_url.integrated_data_mock_avl_producer_function_url[0].function_url : null)
 }
 
 output "endpoint" {
   description = "HTTP API endpoint URL"
-  value       = var.environment == "local" ? null : aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].api_endpoint
+  value       = (var.environment == "local" ? null :
+    aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].api_endpoint)
 }

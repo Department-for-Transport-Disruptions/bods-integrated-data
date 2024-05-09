@@ -1,9 +1,11 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
-    expectedSubscriptionRequest,
+    expectedRequestBody,
+    expectedSubscriptionRequestConfig,
     mockFailedSubscriptionResponseBody,
     mockSubscriptionInvalidBody,
     mockSubscriptionResponseBody,
@@ -14,6 +16,9 @@ import { handler } from "./index";
 vi.mock("crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
+
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-unsubscriber", () => {
     beforeAll(() => {
@@ -35,7 +40,7 @@ describe("avl-unsubscriber", () => {
     const getParameterSpy = vi.spyOn(ssm, "getParameter");
     const deleteParametersSpy = vi.spyOn(ssm, "deleteParameters");
 
-    const fetchSpy = vi.spyOn(global, "fetch");
+    const axiosSpy = vi.spyOn(mockedAxios, "post");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
@@ -48,11 +53,10 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should process a subscription request if a valid input is passed, including deleting auth creds from parameter store and subscription details to DynamoDB", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBody,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
@@ -64,11 +68,16 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await handler(mockUnsubscribeEvent);
 
-        expect(fetch).toBeCalledWith("https://mock-data-producer.com/", expectedSubscriptionRequest);
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com/",
+            expectedRequestBody,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
@@ -78,6 +87,8 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "TERMINATED",
             url: "https://mock-data-producer.com/",
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            serviceEndDatetime: "2024-03-11T15:20:02.093Z",
         });
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
@@ -99,11 +110,13 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
-        fetchSpy.mockResolvedValue({
-            text: "failed",
-            status: 500,
-            ok: false,
-        } as unknown as Response);
+        mockedAxios.post.mockRejectedValue({
+            message: "Request failed with status code 500",
+            code: "500",
+            isAxiosError: true,
+            toJSON: () => {},
+            name: "AxiosError",
+        } as AxiosError);
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
@@ -115,22 +128,20 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            "There was an error when sending the request to unsubscribe from the data producer - subscription ID: mock-subscription-id, status code: 500",
-        );
+        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Request failed with status code 500");
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
     it("should throw an error if we receive an empty response from the data producer", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(null),
+        mockedAxios.post.mockResolvedValue({
+            data: null,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
@@ -142,6 +153,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -153,11 +165,10 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should throw an error if invalid xml received from the data producer's response", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionInvalidBody),
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionInvalidBody,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
@@ -169,6 +180,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -180,11 +192,10 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should throw an error if data producer does not return a status of true", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockFailedSubscriptionResponseBody),
+        mockedAxios.post.mockResolvedValue({
+            data: mockFailedSubscriptionResponseBody,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
@@ -196,6 +207,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -217,6 +229,7 @@ describe("avl-unsubscriber", () => {
             shortDescription: "test-short-description",
             status: "ACTIVE",
             requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Missing auth credentials for subscription");

@@ -1,11 +1,15 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
+import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
 import {
-    expectedSubscriptionRequest,
-    expectedSubscriptionRequestForMockProducer,
+    expectedRequestBody,
+    expectedRequestBodyForExistingSubscription,
+    expectedRequestBodyForMockProducer,
+    expectedSubscriptionRequestConfig,
+    mockAvlSubscribeMessage,
     mockSubscribeEvent,
     mockSubscribeEventToMockDataProducer,
     mockSubscriptionResponseBody,
@@ -16,6 +20,9 @@ import { handler } from "./index";
 vi.mock("crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
+
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-subscriber", () => {
     beforeAll(() => {
@@ -34,7 +41,7 @@ describe("avl-subscriber", () => {
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const putParameterSpy = vi.spyOn(ssm, "putParameter");
 
-    const fetchSpy = vi.spyOn(global, "fetch");
+    const axiosSpy = vi.spyOn(mockedAxios, "post");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
@@ -47,15 +54,18 @@ describe("avl-subscriber", () => {
     });
 
     it("should process a subscription request if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBody,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         await handler(mockSubscribeEvent);
 
-        expect(fetch).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com",
+            expectedRequestBody,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -68,6 +78,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             },
         );
 
@@ -100,15 +111,25 @@ describe("avl-subscriber", () => {
     });
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
-        fetchSpy.mockResolvedValue({
-            text: "failed",
-            status: 500,
-            ok: false,
-        } as unknown as Response);
-
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
-            "There was an error when sending the subscription request to the data producer: https://mock-data-producer.com, status code: 500",
+        const axiosHeaders = new AxiosHeaders();
+        const axiosConfig = { url: "http://localhost:3000", headers: axiosHeaders };
+        mockedAxios.post.mockRejectedValue(
+            new AxiosError(
+                "Request failed with status code 500",
+                "500",
+                axiosConfig,
+                {},
+                {
+                    data: "Request failed with status code 500",
+                    status: 500,
+                    config: axiosConfig,
+                    statusText: "failed",
+                    headers: axiosHeaders,
+                },
+            ),
         );
+
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -121,6 +142,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -140,11 +162,10 @@ describe("avl-subscriber", () => {
     });
 
     it("should throw an error if we receive an empty response from the data producer", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(null),
+        mockedAxios.post.mockResolvedValue({
+            data: null,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
             "No response body received from the data producer: https://mock-data-producer.com",
@@ -161,6 +182,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -183,15 +205,18 @@ describe("avl-subscriber", () => {
         process.env.STAGE = "local";
         process.env.MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = "www.local.com";
 
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBody),
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBody,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         await handler(mockSubscribeEventToMockDataProducer);
 
-        expect(fetch).toBeCalledWith("www.local.com", expectedSubscriptionRequestForMockProducer);
+        expect(axiosSpy).toBeCalledWith(
+            "www.local.com",
+            expectedRequestBodyForMockProducer,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -204,6 +229,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "ACTIVE",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             },
         );
 
@@ -223,16 +249,19 @@ describe("avl-subscriber", () => {
     });
 
     it("should throw an error if it cannot parse subscription response", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue("<Siri/>"),
+        mockedAxios.post.mockResolvedValue({
+            data: "<Siri/>",
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         await expect(handler(mockSubscribeEventToMockDataProducer)).rejects.toThrowError(
             "Error parsing subscription response from: https://mock-data-producer.com",
         );
-        expect(fetch).toBeCalledWith("www.local.com", expectedSubscriptionRequestForMockProducer);
+        expect(axiosSpy).toBeCalledWith(
+            "www.local.com",
+            expectedRequestBodyForMockProducer,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -245,6 +274,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -264,16 +294,19 @@ describe("avl-subscriber", () => {
     });
 
     it("should throw an error if the data producers subscription response doesn't include a response status of true", async () => {
-        fetchSpy.mockResolvedValue({
-            text: vi.fn().mockResolvedValue(mockSubscriptionResponseBodyFalseStatus),
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBodyFalseStatus,
             status: 200,
-            ok: true,
-        } as unknown as Response);
+        } as AxiosResponse);
 
         await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
             "The data producer: https://mock-data-producer.com did not return a status of true.",
         );
-        expect(fetch).toBeCalledWith("https://mock-data-producer.com", expectedSubscriptionRequest);
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com",
+            expectedRequestBody,
+            expectedSubscriptionRequestConfig,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -286,6 +319,7 @@ describe("avl-subscriber", () => {
                 shortDescription: "shortDescription",
                 status: "FAILED",
                 url: "https://mock-data-producer.com",
+                serviceStartDatetime: null,
             },
         );
 
@@ -302,5 +336,38 @@ describe("avl-subscriber", () => {
             "SecureString",
             true,
         );
+    });
+
+    it("should handle resubscription requests to a data producer", async () => {
+        mockedAxios.post.mockResolvedValue({
+            data: mockSubscriptionResponseBody,
+            status: 200,
+        } as AxiosResponse);
+
+        await handler({
+            ...mockSubscribeEvent,
+            body: JSON.stringify({
+                ...mockAvlSubscribeMessage,
+                subscriptionId: "existing-subscription-id",
+            }),
+        });
+
+        expect(axiosSpy).toBeCalledWith(
+            "https://mock-data-producer.com",
+            expectedRequestBodyForExistingSubscription,
+            expectedSubscriptionRequestConfig,
+        );
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "existing-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+        });
+
+        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
     });
 });

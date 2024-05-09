@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getDate, getNextOccurrenceOfBankHoliday, getNextOccurrenceOfDate } from "../dates";
+import { BankHolidaysJson, createBankHolidayFunctions, getDate, getNextOccurrenceOfDate } from "../dates";
 import { notEmpty, txcSelfClosingProperty } from "../utils";
 
 export const DEFAULT_DATE_FORMAT = "YYYYMMDD";
@@ -65,90 +65,110 @@ export const bankHolidayOperationSchema = fixedBankHolidaysSchema
 
 export type BankHolidayOperation = z.infer<typeof bankHolidayOperationSchema>;
 
-const allBankHolidays: Record<keyof (FixedBankHoliday & VariableBankHoliday), string> = {
-    StAndrewsDay: getNextOccurrenceOfDate(30, 10).format(DEFAULT_DATE_FORMAT),
-    ChristmasEve: getNextOccurrenceOfDate(24, 11).format(DEFAULT_DATE_FORMAT),
-    ChristmasDay: getNextOccurrenceOfDate(25, 11).format(DEFAULT_DATE_FORMAT),
-    BoxingDay: getNextOccurrenceOfDate(26, 11).format(DEFAULT_DATE_FORMAT),
-    NewYearsEve: getNextOccurrenceOfDate(31, 11).format(DEFAULT_DATE_FORMAT),
-    NewYearsDay: getNextOccurrenceOfDate(1, 0).format(DEFAULT_DATE_FORMAT),
-    Jan2ndScotland: getNextOccurrenceOfDate(2, 0).format(DEFAULT_DATE_FORMAT),
-    AugustBankHolidayScotland:
-        getNextOccurrenceOfBankHoliday("Scotland Summer bank holiday").format(DEFAULT_DATE_FORMAT),
-    BoxingDayHoliday: getNextOccurrenceOfBankHoliday("Boxing Day").format(DEFAULT_DATE_FORMAT),
-    ChristmasDayHoliday: getNextOccurrenceOfBankHoliday("Christmas Day").format(DEFAULT_DATE_FORMAT),
-    EasterMonday: getNextOccurrenceOfBankHoliday("Easter Monday").format(DEFAULT_DATE_FORMAT),
-    GoodFriday: getNextOccurrenceOfBankHoliday("Good Friday").format(DEFAULT_DATE_FORMAT),
-    Jan2ndScotlandHoliday: getNextOccurrenceOfBankHoliday("2nd January").format(DEFAULT_DATE_FORMAT),
-    LateSummerBankHolidayNotScotland: getNextOccurrenceOfBankHoliday("Summer bank holiday").format(DEFAULT_DATE_FORMAT),
-    MayDay: getNextOccurrenceOfBankHoliday("Early May bank holiday").format(DEFAULT_DATE_FORMAT),
-    NewYearsDayHoliday: getNextOccurrenceOfBankHoliday("New Year’s Day").format(DEFAULT_DATE_FORMAT),
-    SpringBank: getNextOccurrenceOfBankHoliday("Spring bank holiday").format(DEFAULT_DATE_FORMAT),
-    StAndrewsDayHoliday: getNextOccurrenceOfBankHoliday("St Andrew’s Day").format(DEFAULT_DATE_FORMAT),
+const getAllBankHolidays = (
+    bankHolidaysJson: BankHolidaysJson,
+): Record<keyof (FixedBankHoliday & VariableBankHoliday), string> => {
+    const { getNextOccurrenceOfBankHoliday } = createBankHolidayFunctions(bankHolidaysJson);
+    return {
+        StAndrewsDay: getNextOccurrenceOfDate(30, 10).format(DEFAULT_DATE_FORMAT),
+        ChristmasEve: getNextOccurrenceOfDate(24, 11).format(DEFAULT_DATE_FORMAT),
+        ChristmasDay: getNextOccurrenceOfDate(25, 11).format(DEFAULT_DATE_FORMAT),
+        BoxingDay: getNextOccurrenceOfDate(26, 11).format(DEFAULT_DATE_FORMAT),
+        NewYearsEve: getNextOccurrenceOfDate(31, 11).format(DEFAULT_DATE_FORMAT),
+        NewYearsDay: getNextOccurrenceOfDate(1, 0).format(DEFAULT_DATE_FORMAT),
+        Jan2ndScotland: getNextOccurrenceOfDate(2, 0).format(DEFAULT_DATE_FORMAT),
+        AugustBankHolidayScotland:
+            getNextOccurrenceOfBankHoliday("Scotland Summer bank holiday").format(DEFAULT_DATE_FORMAT),
+        BoxingDayHoliday: getNextOccurrenceOfBankHoliday("Boxing Day").format(DEFAULT_DATE_FORMAT),
+        ChristmasDayHoliday: getNextOccurrenceOfBankHoliday("Christmas Day").format(DEFAULT_DATE_FORMAT),
+        EasterMonday: getNextOccurrenceOfBankHoliday("Easter Monday").format(DEFAULT_DATE_FORMAT),
+        GoodFriday: getNextOccurrenceOfBankHoliday("Good Friday").format(DEFAULT_DATE_FORMAT),
+        Jan2ndScotlandHoliday: getNextOccurrenceOfBankHoliday("2nd January").format(DEFAULT_DATE_FORMAT),
+        LateSummerBankHolidayNotScotland:
+            getNextOccurrenceOfBankHoliday("Summer bank holiday").format(DEFAULT_DATE_FORMAT),
+        MayDay: getNextOccurrenceOfBankHoliday("Early May bank holiday").format(DEFAULT_DATE_FORMAT),
+        NewYearsDayHoliday: getNextOccurrenceOfBankHoliday("New Year’s Day").format(DEFAULT_DATE_FORMAT),
+        SpringBank: getNextOccurrenceOfBankHoliday("Spring bank holiday").format(DEFAULT_DATE_FORMAT),
+        StAndrewsDayHoliday: getNextOccurrenceOfBankHoliday("St Andrew’s Day").format(DEFAULT_DATE_FORMAT),
+    };
 };
 
-const bankHolidaySubGroupMapping: Record<keyof BankHolidayOperationSubGroup, string[]> = {
-    AllHolidaysExceptChristmas: [
-        allBankHolidays.NewYearsDay,
-        allBankHolidays.Jan2ndScotland,
-        allBankHolidays.GoodFriday,
-        allBankHolidays.StAndrewsDay,
-        allBankHolidays.EasterMonday,
-        allBankHolidays.MayDay,
-        allBankHolidays.SpringBank,
-        allBankHolidays.AugustBankHolidayScotland,
-        allBankHolidays.LateSummerBankHolidayNotScotland,
-    ],
-    HolidayMondays: [
-        allBankHolidays.EasterMonday,
-        allBankHolidays.MayDay,
-        allBankHolidays.SpringBank,
-        allBankHolidays.AugustBankHolidayScotland,
-        allBankHolidays.LateSummerBankHolidayNotScotland,
-    ],
-    Christmas: [allBankHolidays.ChristmasDay, allBankHolidays.BoxingDay],
-    DisplacementHolidays: [
-        allBankHolidays.ChristmasDayHoliday,
-        allBankHolidays.BoxingDayHoliday,
-        allBankHolidays.NewYearsDayHoliday,
-        allBankHolidays.Jan2ndScotlandHoliday,
-        allBankHolidays.StAndrewsDayHoliday,
-    ],
+const getBankHolidaySubGroupMapping = (
+    allBankHolidays: Record<keyof (FixedBankHoliday & VariableBankHoliday), string>,
+): Record<keyof BankHolidayOperationSubGroup, string[]> => {
+    return {
+        AllHolidaysExceptChristmas: [
+            allBankHolidays.NewYearsDay,
+            allBankHolidays.Jan2ndScotland,
+            allBankHolidays.GoodFriday,
+            allBankHolidays.StAndrewsDay,
+            allBankHolidays.EasterMonday,
+            allBankHolidays.MayDay,
+            allBankHolidays.SpringBank,
+            allBankHolidays.AugustBankHolidayScotland,
+            allBankHolidays.LateSummerBankHolidayNotScotland,
+        ],
+        HolidayMondays: [
+            allBankHolidays.EasterMonday,
+            allBankHolidays.MayDay,
+            allBankHolidays.SpringBank,
+            allBankHolidays.AugustBankHolidayScotland,
+            allBankHolidays.LateSummerBankHolidayNotScotland,
+        ],
+        Christmas: [allBankHolidays.ChristmasDay, allBankHolidays.BoxingDay],
+        DisplacementHolidays: [
+            allBankHolidays.ChristmasDayHoliday,
+            allBankHolidays.BoxingDayHoliday,
+            allBankHolidays.NewYearsDayHoliday,
+            allBankHolidays.Jan2ndScotlandHoliday,
+            allBankHolidays.StAndrewsDayHoliday,
+        ],
+    };
 };
 
-const bankHolidayGroupMapping: Record<keyof BankHolidayOperationGroup, string[]> = {
-    AllBankHolidays: [
-        ...bankHolidaySubGroupMapping.AllHolidaysExceptChristmas,
-        ...bankHolidaySubGroupMapping.Christmas,
-        ...bankHolidaySubGroupMapping.DisplacementHolidays,
-    ],
-    EarlyRunOffDays: [allBankHolidays.ChristmasEve, allBankHolidays.NewYearsEve],
-};
-
-const completeBankHolidayMapping: Record<string, string[] | string> = {
-    ...allBankHolidays,
-    ...bankHolidaySubGroupMapping,
-    ...bankHolidayGroupMapping,
+const getBankHolidayGroupMapping = (
+    allBankHolidays: Record<keyof (FixedBankHoliday & VariableBankHoliday), string>,
+    bankHolidaySubGroupMapping: Record<keyof BankHolidayOperationSubGroup, string[]>,
+): Record<keyof BankHolidayOperationGroup, string[]> => {
+    return {
+        AllBankHolidays: [
+            ...bankHolidaySubGroupMapping.AllHolidaysExceptChristmas,
+            ...bankHolidaySubGroupMapping.Christmas,
+            ...bankHolidaySubGroupMapping.DisplacementHolidays,
+        ],
+        EarlyRunOffDays: [allBankHolidays.ChristmasEve, allBankHolidays.NewYearsEve],
+    };
 };
 
 /**
  * This function transforms the TXC bank holidays into actual dates to be used in the GTFS calendar_dates file, it also
  * extracts the dates of any OtherPublicHoliday items that may be in the TXC
  */
-export const transformedBankHolidayOperationSchema = bankHolidayOperationSchema.transform((op) => [
-    ...new Set(
-        Object.keys(op)
-            .flatMap((key) => {
-                if (key !== "OtherPublicHoliday") {
-                    return completeBankHolidayMapping[key];
-                }
+export const getTransformedBankHolidayOperationSchema = (
+    bankHolidaysJson: BankHolidaysJson,
+    schema: BankHolidayOperation,
+) => {
+    const allBankHolidays = getAllBankHolidays(bankHolidaysJson);
+    const bankHolidaySubGroupMapping = getBankHolidaySubGroupMapping(allBankHolidays);
+    const bankHolidayGroupMapping = getBankHolidayGroupMapping(allBankHolidays, bankHolidaySubGroupMapping);
 
-                if (op.OtherPublicHoliday) {
-                    return op.OtherPublicHoliday.flatMap((holiday) =>
-                        holiday.Date ? getDate(holiday.Date).format(DEFAULT_DATE_FORMAT) : null,
-                    );
-                }
-            })
-            .filter(notEmpty),
-    ),
-]);
+    const completeBankHolidayMapping: Record<string, string[] | string> = {
+        ...allBankHolidays,
+        ...bankHolidaySubGroupMapping,
+        ...bankHolidayGroupMapping,
+    };
+
+    const dates = Object.keys(schema)
+        .flatMap((key) => {
+            if (key === "OtherPublicHoliday") {
+                return schema[key]?.flatMap((holiday) =>
+                    holiday.Date ? getDate(holiday.Date).format(DEFAULT_DATE_FORMAT) : null,
+                );
+            } else {
+                return completeBankHolidayMapping[key];
+            }
+        })
+        .filter(notEmpty);
+
+    return [...new Set(dates)];
+};

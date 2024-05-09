@@ -52,7 +52,16 @@ module "integrated_data_vpc_dev" {
 module "integrated_data_route53" {
   source = "../modules/networking/route-53"
 
-  vpc_id = module.integrated_data_vpc_dev.vpc_id
+  environment = local.env
+  vpc_id      = module.integrated_data_vpc_dev.vpc_id
+  root_domain = local.secrets["root_domain"]
+}
+
+module "integrated_data_acm" {
+  source = "../modules/networking/acm"
+
+  hosted_zone_id = module.integrated_data_route53.public_hosted_zone_id
+  domain_name    = module.integrated_data_route53.public_hosted_zone_name
 }
 
 module "integrated_data_aurora_db_dev" {
@@ -146,16 +155,15 @@ module "integrated_data_nptg_pipeline" {
 module "integrated_data_txc_pipeline" {
   source = "../modules/data-pipelines/txc-pipeline"
 
-  environment            = local.env
-  vpc_id                 = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids     = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn          = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id               = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host                = module.integrated_data_aurora_db_dev.db_host
-  tnds_ftp_credentials   = local.secrets["tnds_ftp"]
-  rds_output_bucket_name = module.integrated_data_aurora_db_dev.s3_output_bucket_name
-  alarm_topic_arn        = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn           = module.integrated_data_monitoring_dev.ok_topic_arn
+  environment               = local.env
+  vpc_id                    = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids        = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn             = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                  = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                   = module.integrated_data_aurora_db_dev.db_host
+  tnds_ftp_credentials      = local.secrets["tnds_ftp"]
+  rds_output_bucket_name    = module.integrated_data_aurora_db_dev.s3_output_bucket_name
+  bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
 }
 
 module "integrated_data_gtfs_downloader" {
@@ -206,58 +214,68 @@ module "integrated_data_avl_subscription_table" {
   environment = local.env
 }
 
-module "integrated_data_avl_subscriber" {
-  source = "../modules/avl-producer-api/avl-subscriber"
-
-  environment                               = local.env
-  avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
-  avl_mock_data_producer_subscribe_endpoint = "${module.avl_mock_data_producer.endpoint}/subscribe"
-  avl_data_endpoint                         = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
-  aws_account_id                            = data.aws_caller_identity.current.account_id
-  aws_region                                = data.aws_region.current.name
-}
-
-module "avl-unsubscriber" {
-  source = "../modules/avl-producer-api/avl-unsubscriber"
-
+module "integrated_data_avl_data_producer_api" {
+  source                      = "../modules/avl-producer-api"
+  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-}
-
-module "integrated_data_avl_data_endpoint" {
-  source = "../modules/avl-producer-api/avl-data-endpoint"
-
-  environment                 = local.env
-  bucket_name                 = module.integrated_data_avl_pipeline.bucket_name
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
-}
-
-module "avl_mock_data_producer" {
-  source = "../modules/avl-producer-api/mock-data-producer"
-
-  environment                 = local.env
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
-  avl_consumer_data_endpoint  = "${module.integrated_data_avl_producer_api_gateway.endpoint}/data"
-}
-
-module "integrated_data_avl_producer_api_gateway" {
-  source = "../modules/avl-producer-api/api-gateway"
-
-  environment                     = local.env
-  subscribe_lambda_name           = module.integrated_data_avl_subscriber.lambda_name
-  subscribe_lambda_invoke_arn     = module.integrated_data_avl_subscriber.invoke_arn
-  data_endpoint_lambda_name       = module.integrated_data_avl_data_endpoint.lambda_name
-  data_endpoint_lambda_invoke_arn = module.integrated_data_avl_data_endpoint.invoke_arn
 }
 
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
 
   environment = local.env
+}
+
+module "integrated_data_db_cleardown_function" {
+  source = "../modules/db-cleardown"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_timetables_sfn" {
+  source = "../modules/timetables-sfn"
+
+  environment                            = local.env
+  bods_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
+  tnds_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
+  txc_processor_function_arn             = module.integrated_data_txc_pipeline.txc_processor_function_arn
+  unzipper_function_arn                  = module.integrated_data_txc_pipeline.unzipper_function_arn
+  gtfs_timetables_generator_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
+  naptan_retriever_function_arn          = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
+  naptan_uploader_function_arn           = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
+  noc_retriever_function_arn             = module.integrated_data_noc_pipeline.noc_retriever_function_arn
+  noc_processor_function_arn             = module.integrated_data_noc_pipeline.noc_processor_function_arn
+  nptg_retriever_function_arn            = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
+  nptg_uploader_function_arn             = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
+  bank_holidays_retriever_function_arn   = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
+  db_cleardown_function_arn              = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
+  table_renamer_function_arn             = module.integrated_data_table_renamer.table_renamer_function_arn
+  tnds_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
+  bods_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
+  bods_txc_bucket_name                   = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tnds_txc_bucket_name                   = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
+  noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
+  naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name
+}
+
+module "integrated_data_gtfs_api" {
+  source = "../modules/gtfs-api"
+
+  environment                    = local.env
+  gtfs_downloader_lambda_name    = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
+  gtfs_downloader_invoke_arn     = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
+  gtfs_rt_downloader_lambda_name = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
+  gtfs_rt_downloader_invoke_arn  = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
 }

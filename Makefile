@@ -1,16 +1,15 @@
-NAPTAN_BUCKET_NAME="integrated-data-naptan-local"
+NAPTAN_BUCKET_NAME="integrated-data-naptan-stops-local"
 NPTG_BUCKET_NAME="integrated-data-nptg-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
-TNDS_TXC_FTP_CREDS_ARN=""
+TNDS_FTP_ARN=""
 AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
-LAMBDA_ZIP_LOCATION="src/functions/dist"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
@@ -18,7 +17,7 @@ BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 
 # Dev
 
-setup: dev-containers-up install-deps build-functions build-cli-helpers create-local-env migrate-local-db-to-latest
+setup: dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add awscli && \
@@ -64,11 +63,9 @@ create-local-env:
 
 # Build
 
-build-cli-helpers:
-	cd cli-helpers && pnpm i && pnpm run build
-
 install-deps:
-	cd src && pnpm i
+	(cd src && pnpm i) && \
+	cd cli-helpers && pnpm i
 
 build-functions:
 	cd src && pnpm build-all
@@ -78,6 +75,14 @@ lint-functions:
 
 test-functions:
 	cd src && pnpm test:ci
+
+# CLI helpers
+
+commands:
+	cd cli-helpers && pnpm command;
+
+command-%:
+	cd cli-helpers && pnpm command $* ${FLAGS};
 
 # Secrets
 
@@ -122,25 +127,28 @@ run-local-nptg-uploader:
 # TXC
 
 run-local-bods-txc-retriever:
-	STAGE=local TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-txc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TXC_ZIPPED_BUCKET_NAME=${BODS_TXC_ZIPPED_BUCKET_NAME} TXC_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-txc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-tnds-txc-retriever:
-	STAGE=local TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_TXC_FTP_CREDS_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TXC_ZIPPED_BUCKET_NAME=${TNDS_TXC_ZIPPED_BUCKET_NAME} TNDS_FTP_ARN=${TNDS_FTP_ARN} npx tsx -e "import {handler} from './src/functions/tnds-txc-retriever'; handler().catch(e => console.error(e))"
 
-run-local-txc-retriever:
-	STAGE=local BODS_TXC_RETRIEVER_FUNCTION_NAME="dummy" TNDS_TXC_RETRIEVER_FUNCTION_NAME="dummy" npx tsx -e "import {handler} from './src/functions/txc-retriever'; handler().catch(e => console.error(e))"
+run-local-db-cleardown:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/db-cleardown'; handler().catch(e => console.error(e))"
 
-run-bods-txc-unzipper:
+run-local-db-cleardown-gtfs-only:
+	STAGE=local ONLY_GTFS=true npx tsx -e "import {handler} from './src/functions/db-cleardown'; handler().catch(e => console.error(e))"
+
+run-local-bods-txc-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${BODS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
-run-tnds-txc-unzipper:
+run-local-tnds-txc-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${TNDS_TXC_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/unzipper'; handler({Records:[{s3:{bucket:{name:'${TNDS_TXC_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 run-local-bods-txc-processor:
-	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${BODS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{s3:{bucket:{name:'${BODS_TXC_UNZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 run-local-tnds-txc-processor:
-	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{body: '{\"Records\": [{\"s3\":{\"bucket\":{\"name\":\"${TNDS_TXC_UNZIPPED_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local FILE="${FILE}" BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/txc-processor'; handler({Records:[{s3:{bucket:{name:'${TNDS_TXC_UNZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 # GTFS
 
@@ -150,8 +158,14 @@ run-local-gtfs-timetables-generator:
 run-local-gtfs-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
 
-run-gtfs-rt-generator:
+run-local-gtfs-rt-generator:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
+
+run-local-gtfs-rt-downloader:
+	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'false' }}).then(r => console.log(r)).catch(e => console.error(e))"
+
+run-local-gtfs-rt-downloader-download:
+	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'true' }}).then(r => console.log(r)).catch(e => console.error(e))"
 
 # AVL
 
@@ -168,7 +182,7 @@ run-local-avl-aggregate-siri-vm:
 	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
 
 run-local-avl-retriever:
-	STAGE=local TARGET_BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local TARGET_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-subscribe:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
@@ -186,7 +200,7 @@ run-local-noc-retriever:
 	STAGE=local NOC_BUCKET_NAME=${NOC_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/noc-retriever'; handler().catch(e => console.error(e))"
 
 run-local-noc-processor:
-	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/noc-processor'; handler({Records:[{s3:{bucket:{name:'${NOC_BUCKET_NAME}'},object:{key:'noc.xml'}}}]}).catch(e => console.error(e))"
 
 # Table renamer
 
@@ -197,22 +211,3 @@ run-local-table-renamer:
 
 run-local-bank-holidays-retriever:
 	STAGE=local BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bank-holidays-retriever'; handler().catch(e => console.error(e))"
-
-# CLI Helper Commands
-
-create-avl-mock-data-producer:
-	cd cli-helpers && \
-	./bin/run.js create-avl-mock-data-producer
-
-invoke-avl-data-endpoint:
-	cd cli-helpers && \
-	./bin/run.js invoke-avl-data-endpoint
-
-invoke-avl-subscriber:
-	cd cli-helpers && \
-	./bin/run.js invoke-avl-subscriber
-
-invoke-avl-unsubscriber:
-	cd cli-helpers && \
-	./bin/run.js invoke-avl-unsubscriber
-

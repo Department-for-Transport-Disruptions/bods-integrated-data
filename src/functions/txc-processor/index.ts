@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     TxcRouteSection,
@@ -8,25 +9,25 @@ import {
     txcSchema,
     TxcRoute,
     TxcJourneyPatternSection,
+    ServicedOrganisation,
+    Operator,
 } from "@bods-integrated-data/shared/schema";
-import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
+import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
-import {
-    insertAgencies,
-    insertCalendar,
-    insertFrequencies,
-    insertShapes,
-    insertStopTimes,
-    insertStops,
-    insertTrips,
-} from "./data/database";
-import { insertRoutes } from "./data/insertRoutes";
+import { processAgencies } from "./data/agencies";
+import { processCalendars } from "./data/calendar";
+import { processFrequencies } from "./data/frequencies";
+import { processRoutes } from "./data/routes";
+import { processShapes } from "./data/shapes";
+import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
+import { processStopTimes } from "./data/stopTimes";
+import { processTrips } from "./data/trips";
 import { VehicleJourneyMapping } from "./types";
 import {
-    DEFAULT_OPERATING_PROFILE,
-    formatCalendar,
+    getJourneyPatternForVehicleJourney,
+    getNationalOperatorCode,
     hasServiceExpired,
     isRequiredTndsDataset,
     isRequiredTndsServiceMode,
@@ -35,6 +36,7 @@ import {
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
+    "StopPoint",
     "RouteSectionRef",
     "RouteSection",
     "Route",
@@ -52,62 +54,28 @@ const txcArrayProperties = [
     "VehicleJourneyTimingLink",
     "OtherPublicHoliday",
     "DateRange",
+    "ServicedOrganisationRef",
 ];
 
-export const processCalendars = async (
-    dbClient: Kysely<Database>,
-    service: Service,
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
-    let serviceCalendarId: number | null = null;
-
-    if (service.OperatingProfile) {
-        const serviceCalendar = await insertCalendar(
-            dbClient,
-            formatCalendar(service.OperatingProfile, service.OperatingPeriod),
-        );
-
-        serviceCalendarId = serviceCalendar.id;
-    }
-
-    const updatedVehicleJourneyMappingsPromises = vehicleJourneyMappings.map(async (vehicleJourneyMapping) => {
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile && serviceCalendarId) {
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: serviceCalendarId,
-            };
-        }
-
-        if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
-            const defaultCalendar = await insertCalendar(
-                dbClient,
-                formatCalendar(DEFAULT_OPERATING_PROFILE, service.OperatingPeriod),
-            );
-
-            return {
-                ...vehicleJourneyMapping,
-                serviceId: defaultCalendar.id,
-            };
-        }
-
-        const calendarData = formatCalendar(
-            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
-            service.OperatingPeriod,
-        );
-
-        const calendar = await insertCalendar(dbClient, calendarData);
-
-        return {
-            ...vehicleJourneyMapping,
-            serviceId: calendar.id,
-        };
+const getBankHolidaysJson = async (bucket: string) => {
+    const file = await getS3Object({
+        Bucket: bucket,
+        Key: "bank-holidays.json",
     });
 
-    return Promise.all(updatedVehicleJourneyMappingsPromises);
+    const body = await file.Body?.transformToString();
+
+    if (!body) {
+        throw new Error("No data found in bank-holidays.json");
+    }
+
+    return JSON.parse(body) as BankHolidaysJson;
 };
 
 const processServices = (
     dbClient: Kysely<Database>,
+    bankHolidaysJson: BankHolidaysJson,
+    operators: Operator[],
     services: Service[],
     vehicleJourneys: VehicleJourney[],
     txcRouteSections: TxcRouteSection[],
@@ -116,6 +84,7 @@ const processServices = (
     agencyData: Agency[],
     filePath: string,
     isTnds: boolean,
+    servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
         if (hasServiceExpired(service)) {
@@ -136,6 +105,27 @@ const processServices = (
             return null;
         }
 
+        const operator = operators.find((operator) => operator["@_id"] === service.RegisteredOperatorRef);
+
+        if (!operator) {
+            logger.warn(`Unable to find operator with registered operator ref: ${service.RegisteredOperatorRef}`, {
+                filePath,
+            });
+
+            return null;
+        }
+
+        const noc = getNationalOperatorCode(operator);
+        const agency = agencyData.find((agency) => agency.noc === noc);
+
+        if (!agency) {
+            logger.warn(`Unable to find agency with national operator code: ${noc}`, {
+                filePath,
+            });
+
+            return null;
+        }
+
         const vehicleJourneysForLines = service.Lines.Line.flatMap((line) =>
             vehicleJourneys.filter((journey) => journey.LineRef === line["@_id"]),
         );
@@ -149,7 +139,7 @@ const processServices = (
             return null;
         }
 
-        const { routes, isDuplicateRoute } = await insertRoutes(dbClient, service, agencyData, isTnds);
+        const { routes, isDuplicateRoute } = await processRoutes(dbClient, service, agency, isTnds);
 
         if (isDuplicateRoute) {
             logger.warn("Duplicate TNDS route found for service", {
@@ -176,9 +166,17 @@ const processServices = (
                 serviceId: 0,
                 shapeId: "",
                 tripId: "",
+                serviceCode: service.ServiceCode,
+                journeyPattern: getJourneyPatternForVehicleJourney(vehicleJourney, vehicleJourneys, services),
             };
 
-            const route = routes.find((r) => r.line_id === vehicleJourney.LineRef);
+            const route = routes.find((r) => {
+                if (isTnds) {
+                    return r.line_id === `${service.ServiceCode}_${vehicleJourney.LineRef}`;
+                }
+
+                return r.line_id === vehicleJourney.LineRef;
+            });
 
             if (route) {
                 vehicleJourneyMapping.routeId = route.id;
@@ -189,17 +187,17 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        vehicleJourneyMappings = await processCalendars(dbClient, service, vehicleJourneyMappings);
-        vehicleJourneyMappings = await insertShapes(
+        vehicleJourneyMappings = await processCalendars(
             dbClient,
-            services,
-            txcRoutes,
-            txcRouteSections,
+            service,
             vehicleJourneyMappings,
+            bankHolidaysJson,
+            servicedOrganisations,
         );
-        vehicleJourneyMappings = await insertTrips(dbClient, services, vehicleJourneyMappings, routes, filePath);
-        await insertFrequencies(dbClient, vehicleJourneyMappings);
-        await insertStopTimes(dbClient, services, txcJourneyPatternSections, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
+        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath);
+        await processFrequencies(dbClient, vehicleJourneyMappings);
+        await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
     });
 
     return Promise.all(promises);
@@ -238,50 +236,69 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
+const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: Kysely<Database>) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
     const isTnds = record.s3.bucket.name.includes("-tnds-");
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const { TransXChange } = txcData;
+    const operators = TransXChange.Operators?.Operator || [];
+    const journeyPatternSections = TransXChange.JourneyPatternSections?.JourneyPatternSection || [];
+    const routes = TransXChange.Routes?.Route || [];
+    const routeSections = TransXChange.RouteSections?.RouteSection || [];
+    const services = TransXChange.Services?.Service || [];
+    const stopPoints = TransXChange.StopPoints?.StopPoint || [];
+    const annotatedStopPointRefs = TransXChange.StopPoints?.AnnotatedStopPointRef || [];
+    const vehicleJourneys = TransXChange.VehicleJourneys?.VehicleJourney || [];
 
-    if (!TransXChange.VehicleJourneys || TransXChange.VehicleJourneys.VehicleJourney.length === 0) {
-        logger.warn(`No vehicle journeys found in file: ${record.s3.object.key}`);
-        return;
+    const agencyData = await processAgencies(dbClient, operators);
+
+    const useStopLocality = services.some((service) => service.Mode && service.Mode !== "bus");
+
+    if (stopPoints.length > 0) {
+        await processStopPoints(dbClient, stopPoints, useStopLocality);
     }
 
-    const agencyData = await insertAgencies(dbClient, TransXChange.Operators.Operator);
-
-    await insertStops(dbClient, TransXChange.StopPoints.AnnotatedStopPointRef);
+    if (annotatedStopPointRefs.length > 0) {
+        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs, useStopLocality);
+    }
 
     await processServices(
         dbClient,
-        TransXChange.Services.Service,
-        TransXChange.VehicleJourneys.VehicleJourney,
-        TransXChange.RouteSections.RouteSection,
-        TransXChange.Routes.Route,
-        TransXChange.JourneyPatternSections.JourneyPatternSection,
+        bankHolidaysJson,
+        operators,
+        services,
+        vehicleJourneys,
+        routeSections,
+        routes,
+        journeyPatternSections,
         agencyData,
         record.s3.object.key,
         isTnds,
+        TransXChange.ServicedOrganisations?.ServicedOrganisation,
     );
 };
 
-export const handler = async (event: SQSEvent) => {
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+export const handler = async (event: S3Event) => {
+    const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
+    const dbClient = await getDatabaseClient(stage === "local");
+
+    if (!bankHolidaysBucketName) {
+        throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
+    }
 
     try {
-        logger.info(`Starting processing of TXC. Number of records to process: ${event.Records.length}`);
+        logger.info("Retrieving bank holidays JSON");
+        const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);
+        logger.info("Starting processing of TXC");
 
-        await Promise.all(
-            event.Records.map((record) => processSqsRecord((JSON.parse(record.body) as S3Event).Records[0], dbClient)),
-        );
+        await processRecord(event.Records[0], bankHolidaysJson, dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor, rolling back transaction`, e);
+            logger.error(`There was a problem with the bods txc processor`, e);
         }
 
         throw e;

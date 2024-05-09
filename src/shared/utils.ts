@@ -3,6 +3,7 @@ import { ZodSchema, z } from "zod";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
 import { VehicleType } from "./schema";
+import { getParameter } from "./ssm";
 import { subscriptionDynamoSchema } from "./schema/avl-subscribe.schema";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
@@ -75,6 +76,21 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
         });
     }, z.array(schema));
 
+export const getSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+    const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
+        getParameter(`/subscription/${subscriptionId}/username`, true),
+        getParameter(`/subscription/${subscriptionId}/password`, true),
+    ]);
+
+    const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
+    const subscriptionPassword = subscriptionPasswordParam.Parameter?.Value ?? null;
+
+    return {
+        subscriptionUsername,
+        subscriptionPassword,
+    };
+};
+
 export const getMockDataProducerSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
         TableName: tableName,
@@ -84,7 +100,7 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
         return null;
     }
 
-    const parsedSubscriptions = z.array(subscriptionDynamoSchema).parse(subscriptions);
+    const parsedSubscriptions = z.array(subscriptionSchema).parse(subscriptions);
 
     return parsedSubscriptions.filter(
         (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "ACTIVE",

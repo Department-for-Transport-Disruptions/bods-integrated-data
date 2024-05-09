@@ -4,7 +4,8 @@
     "description": "Replaces tables with new tables",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./table-renamer.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/table-renamer.zip ../dist"
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/table-renamer.zip ../dist",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",

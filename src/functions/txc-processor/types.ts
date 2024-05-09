@@ -1,4 +1,5 @@
-import { VehicleJourney } from "@bods-integrated-data/shared/schema";
+import { NewCalendar, NewCalendarDate } from "@bods-integrated-data/shared/database";
+import { JourneyPattern, VehicleJourney } from "@bods-integrated-data/shared/schema";
 
 export type VehicleJourneyMapping = {
     vehicleJourney: VehicleJourney;
@@ -6,4 +7,11 @@ export type VehicleJourneyMapping = {
     serviceId: number;
     shapeId: string;
     tripId: string;
+    serviceCode: string;
+    journeyPattern?: JourneyPattern;
+};
+
+export type CalendarWithDates = {
+    calendar: NewCalendar;
+    calendarDates: NewCalendarDate[];
 };

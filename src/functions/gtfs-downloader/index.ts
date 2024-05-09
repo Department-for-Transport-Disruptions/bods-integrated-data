@@ -1,8 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
-import { APIGatewayProxyResultV2 } from "aws-lambda";
+import { txcRegionsSchema } from "@bods-integrated-data/shared/schema/txc.schema";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 
-export const handler = async (): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event?: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
     const { BUCKET_NAME: bucketName } = process.env;
 
     if (!bucketName) {
@@ -14,8 +15,23 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
         };
     }
 
+    let fileName = "all_gtfs.zip";
+
+    if (event?.queryStringParameters?.region) {
+        const isValidRegion = txcRegionsSchema.safeParse(event.queryStringParameters.region);
+
+        if (!isValidRegion.success) {
+            return {
+                statusCode: 400,
+                body: "Invalid region code",
+            };
+        }
+
+        fileName = `${event.queryStringParameters.region.toLowerCase()}_gtfs.zip`;
+    }
+
     try {
-        const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: "gtfs.zip" }, 3600);
+        const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: fileName }, 3600);
 
         return {
             statusCode: 302,

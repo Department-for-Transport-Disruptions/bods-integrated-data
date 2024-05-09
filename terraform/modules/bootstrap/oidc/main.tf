@@ -114,7 +114,9 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "logs:*",
           "sns:*",
           "sqs:*",
-          "apigateway:*"
+          "apigateway:*",
+          "states:*",
+          "acm:*"
         ],
         Effect   = "Allow",
         Resource = "*",

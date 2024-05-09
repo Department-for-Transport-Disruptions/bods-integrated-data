@@ -11,6 +11,9 @@ dependencies:
   '@bods-integrated-data/shared':
     specifier: workspace:^
     version: link:../../shared
+  fast-xml-parser:
+    specifier: ^4.3.5
+    version: 4.3.6
   kysely:
     specifier: ^0.27.3
     version: 0.27.3
@@ -22,9 +25,6 @@ devDependencies:
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.20
-  js2xmlparser:
-    specifier: ^5.0.0
-    version: 5.0.0
   mockdate:
     specifier: ^3.0.5
     version: 3.0.5
@@ -48,11 +48,12 @@ packages:
       undici-types: 5.26.5
     dev: true
 
-  /js2xmlparser@5.0.0:
-    resolution: {integrity: sha512-ckXs0Fzd6icWurbeAXuqo+3Mhq2m8pOPygsQjTPh8K5UWgKaUgDSHrdDxAfexmT11xvBKOQ6sgYwPkYc5RW/bg==}
+  /fast-xml-parser@4.3.6:
+    resolution: {integrity: sha512-M2SovcRxD4+vC493Uc2GZVcZaj66CCJhWurC4viynVSTvrpErCShNcDz1lAho6n9REQKvL/ll4A4/fw6Y9z8nw==}
+    hasBin: true
     dependencies:
-      xmlcreate: 2.0.4
-    dev: true
+      strnum: 1.0.5
+    dev: false
 
   /kysely@0.27.3:
     resolution: {integrity: sha512-lG03Ru+XyOJFsjH3OMY6R/9U38IjDPfnOfDgO3ynhbDr+Dz8fak+X6L62vqu3iybQnj+lG84OttBuU9KY3L9kA==}
@@ -63,12 +64,12 @@ packages:
     resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
     dev: true
 
+  /strnum@1.0.5:
+    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
+    dev: false
+
   /undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-    dev: true
-
-  /xmlcreate@2.0.4:
-    resolution: {integrity: sha512-nquOebG4sngPmGPICTS5EnxqhKbCmz5Ox5hsszI2T6U5qdrJizBc+0ilYSEjTSzU0yZcmvppztXe/5Al5fUwdg==}
     dev: true
 
   /zod@3.22.4:

@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
+import axios from "axios";
 import { generateMockSiriVm } from "./mockSiriVm";
 
 export const handler = async () => {
@@ -31,22 +32,14 @@ export const handler = async () => {
 
                 const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
 
-                const res = await fetch(url, {
-                    method: "POST",
-                    body: siriVm,
-                });
-
-                if (!res.ok) {
-                    logger.error(`Unable to send AVL data to: ${url}`);
-                    return;
-                }
+                await axios.post<string>(url, siriVm);
 
                 logger.info(`Successfully sent AVL data to: ${url}`);
             }),
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Lambda has failed", e);
+            logger.error("There was an error when sending AVL data", e);
 
             throw e;
         }

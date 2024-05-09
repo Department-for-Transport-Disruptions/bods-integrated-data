@@ -1,0 +1,46 @@
+on:
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+
+name: Terraform Apply Dev
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+env:
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+  check_for_function_changes:
+    uses: ./.github/workflows/get_directories_with_changes.yaml
+    name: Get list of updated functions
+    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
+    with:
+      path: "./src/functions"
+
+  zip_functions:
+    uses: ./.github/workflows/zip_function.yaml
+    name: Zip updated functions
+    if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
+    strategy:
+      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+    needs:
+      - check_for_function_changes
+    with:
+      function_dir: ${{ matrix.dir }}
+
+  terraform_apply:
+    uses: ./.github/workflows/terraform_apply.yaml
+    name: Terraform Apply Dev
+    needs:
+      - check_for_function_changes
+      - zip_functions
+    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    with:
+      stage: "dev"
+      terraform_version: 1.6.6
+      use_artifacts: true
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}

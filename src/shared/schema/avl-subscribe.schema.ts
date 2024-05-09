@@ -7,21 +7,21 @@ export const avlSubscribeMessageSchema = z.object({
     username: z.string(),
     password: z.string(),
     requestorRef: z.string().optional(),
+    subscriptionId: z.string().optional(),
 });
 
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
 
 export const subscriptionRequestSchema = z.object({
     SubscriptionRequest: z.object({
-        RequestTimeStamp: z.string(),
+        RequestTimestamp: z.string(),
         ConsumerAddress: z.string().url(),
         RequestorRef: z.string(),
         MessageIdentifier: z.string(),
-        SubscriptionRequestContext: z.object({
+        SubscriptionContext: z.object({
             HeartbeatInterval: z.string(),
         }),
         VehicleMonitoringSubscriptionRequest: z.object({
-            SubscriberRef: z.string(),
             SubscriptionIdentifier: z.string(),
             InitialTerminationTime: z.string(),
             VehicleMonitoringRequest: z.object({
@@ -50,19 +50,23 @@ export const subscriptionResponseSchema = z.object({
 
 export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
 
-export const subscriptionDynamoSchema = z
-    .object({
-        PK: z.string(),
-        url: z.string().url(),
-        description: z.string(),
-        shortDescription: z.string(),
-        status: z.string(),
-        requestorRef: z.string().nullish(),
-        heartbeatLastReceivedDateTime: z.string().nullish(),
-    })
-    .transform((data) => ({
-        subscriptionId: data.PK,
-        ...data,
-    }));
+export const subscriptionSchema = z.object({
+    PK: z.string(),
+    url: z.string().url(),
+    description: z.string(),
+    shortDescription: z.string(),
+    status: z.string(),
+    requestorRef: z.string().nullish(),
+    heartbeatLastReceivedDateTime: z.string().nullish(),
+    serviceStartDatetime: z.string(),
+    serviceEndDatetime: z.string().optional(),
+});
 
-export const subscriptionsDynamoSchema = z.array(subscriptionDynamoSchema);
+export type Subscription = z.infer<typeof subscriptionSchema>;
+
+export const subscriptionSchemaTransformed = subscriptionSchema.transform((data) => ({
+    subscriptionId: data.PK,
+    ...data,
+}));
+
+export const subscriptionsSchema = z.array(subscriptionSchema);

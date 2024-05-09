@@ -4,7 +4,7 @@ import { Kysely } from "kysely";
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
         .createTable("calendar_date")
-        .addColumn("id", "serial", (col) => col.primaryKey())
+        .addColumn("id", "integer", (col) => col.primaryKey().generatedByDefaultAsIdentity())
         .addColumn("service_id", "integer")
         .addColumn("date", "text")
         .addColumn("exception_type", "integer")

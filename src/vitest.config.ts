@@ -6,7 +6,7 @@ export default defineConfig({
         environment: "node",
         coverage: {
             enabled: true,
-            exclude: ["**/esbuild.mjs"],
+            exclude: ["**/esbuild.mjs", "**/.eslintrc.cjs", "**/functions/db-migrator/migrations/*", "**/coverage/**"],
         },
     },
 });

@@ -1,16 +1,14 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { deleteParameters, getParameter } from "@bods-integrated-data/shared/ssm";
+import { Subscription, subscriptionSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { deleteParameters } from "@bods-integrated-data/shared/ssm";
+import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import { APIGatewayEvent } from "aws-lambda";
+import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { randomUUID } from "crypto";
-import {
-    Subscription,
-    subscriptionSchema,
-    terminateSubscriptionRequestSchema,
-    terminateSubscriptionResponseSchema,
-} from "./subscription.schema";
+import { terminateSubscriptionRequestSchema, terminateSubscriptionResponseSchema } from "./subscription.schema";
 import { mockSubscriptionResponseBody } from "./test/mockData";
 
 const getSubscriptionInfo = async (subscriptionId: string, tableName: string) => {
@@ -95,21 +93,6 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-const getSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
-    const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
-        getParameter(`/subscription/${subscriptionId}/username`, true),
-        getParameter(`/subscription/${subscriptionId}/password`, true),
-    ]);
-
-    const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
-    const subscriptionPassword = subscriptionPasswordParam.Parameter?.Value ?? null;
-
-    return {
-        subscriptionUsername,
-        subscriptionPassword,
-    };
-};
-
 const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Subscription, tableName: string) => {
     const currentTimestamp = getDate().toISOString();
     const messageIdentifier = randomUUID();
@@ -133,26 +116,18 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
     const terminateSubscriptionResponse =
         process.env.STAGE === "local" && subscription.requestorRef === "BODS_MOCK_PRODUCER"
             ? {
-                  text: () => mockSubscriptionResponseBody,
+                  data: mockSubscriptionResponseBody,
                   status: 200,
-                  ok: true,
               }
-            : await fetch(subscription.url, {
-                  method: "POST",
-                  body: terminateSubscriptionRequestMessage,
+            : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
+                      "Content-Type": "text/xml",
                       Authorization:
                           "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
                   },
               });
 
-    if (!terminateSubscriptionResponse.ok) {
-        throw new Error(
-            `There was an error when sending the request to unsubscribe from the data producer - subscription ID: ${subscription.PK}, status code: ${terminateSubscriptionResponse.status}`,
-        );
-    }
-
-    const terminateSubscriptionResponseBody = await terminateSubscriptionResponse.text();
+    const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data;
 
     if (!terminateSubscriptionResponseBody) {
         throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
@@ -174,6 +149,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
         {
             ...subscription,
             status: "TERMINATED",
+            serviceEndDatetime: currentTimestamp,
         },
     );
 };
@@ -202,7 +178,17 @@ export const handler = async (event: APIGatewayEvent) => {
 
         const subscription = await getSubscriptionInfo(subscriptionId, tableName);
 
-        await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
+        try {
+            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
+        } catch (e) {
+            if (e instanceof AxiosError) {
+                logger.error(
+                    `There was an error when sending the unsubscribe request to the data producer for subscription ${subscriptionId} - code: ${e.code}, message: ${e.message}`,
+                );
+            }
+
+            throw e;
+        }
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 

@@ -1,7 +1,8 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
-export { sql } from "kysely";
+
+const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
@@ -10,7 +11,7 @@ export const getDatabaseClient = async (isLocal = false) => {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
                 pool: new Pool({
-                    host: "127.0.0.1",
+                    host: localStackHost ? "bods_integrated_data_postgres" : "127.0.0.1",
                     port: 5432,
                     database: "bods_integrated_data",
                     user: "postgres",
@@ -137,6 +138,7 @@ export interface NptgAdminAreaTable {
     admin_area_code: string;
     atco_code: string;
     name: string;
+    region_code: string;
 }
 
 export type NptgAdminArea = Selectable<NptgAdminAreaTable>;
@@ -196,7 +198,6 @@ export interface GtfsAgencyTable {
     noc: string;
     timezone: string | null;
     lang: string | null;
-    registered_operator_ref: string;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;
@@ -214,7 +215,7 @@ export interface GtfsCalendarTable {
     sunday: 0 | 1;
     start_date: string;
     end_date: string;
-    calendar_hash: string | null;
+    calendar_hash: string;
 }
 
 export type Calendar = Selectable<GtfsCalendarTable>;
@@ -306,6 +307,7 @@ export interface GtfsStopTable {
     location_type: number;
     parent_station: string | null;
     platform_code: string | null;
+    region_code: string | null;
 }
 
 export type Stop = Selectable<GtfsStopTable>;

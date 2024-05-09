@@ -11,7 +11,7 @@ import { NptgSchema, nptgSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { Kysely, sql } from "kysely";
+import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 
 const arrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];
@@ -73,21 +73,10 @@ export const insertNptgData = async (dbClient: Kysely<Database>, data: NptgSchem
                 admin_area_code: adminArea.AdministrativeAreaCode,
                 atco_code: adminArea.AtcoAreaCode,
                 name: adminArea.Name,
+                region_code: region.RegionCode,
             });
         });
     });
-
-    await Promise.all([
-        dbClient.schema.dropTable("nptg_admin_area_new").ifExists().execute(),
-        dbClient.schema.dropTable("nptg_locality_new").ifExists().execute(),
-        dbClient.schema.dropTable("nptg_region_new").ifExists().execute(),
-    ]);
-
-    await Promise.all([
-        sql`create table nptg_admin_area_new (LIKE nptg_admin_area INCLUDING ALL);`.execute(dbClient),
-        sql`create table nptg_locality_new (LIKE nptg_locality INCLUDING ALL);`.execute(dbClient),
-        sql`create table nptg_region_new (LIKE nptg_region INCLUDING ALL);`.execute(dbClient),
-    ]);
 
     const localityChunks = chunkArray(localities, 3000);
 

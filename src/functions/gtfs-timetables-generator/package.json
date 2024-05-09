@@ -4,7 +4,8 @@
     "description": "",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-timetables-generator.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-timetables-generator.zip ../dist/"
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-timetables-generator.zip ../dist/",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",
