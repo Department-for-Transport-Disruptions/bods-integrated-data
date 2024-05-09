@@ -10,9 +10,14 @@ import {
     NewStopTime,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
-import { backOff } from "exponential-backoff";
+import { BackoffOptions, backOff } from "exponential-backoff";
 import { Kysely } from "kysely";
 import { CalendarWithDates } from "../types";
+
+const retryBackOffOptions: BackoffOptions = {
+    jitter: "full",
+    numOfAttempts: 20,
+};
 
 export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
@@ -56,7 +61,7 @@ export const insertCalendars = async (dbClient: Kysely<Database>, calendars: Cal
                             )
                             .returningAll()
                             .execute(),
-                    { jitter: "full" },
+                    retryBackOffOptions,
                 ),
             ),
         )
@@ -81,7 +86,7 @@ export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDa
                         .values(chunk)
                         .onConflict((oc) => oc.doNothing())
                         .execute(),
-                { jitter: "full" },
+                retryBackOffOptions,
             ),
         ),
     );
@@ -143,7 +148,7 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) 
                         .onConflict((oc) => oc.column("id").doNothing())
                         .returningAll()
                         .execute(),
-                { jitter: "full" },
+                retryBackOffOptions,
             ),
         ),
     );
