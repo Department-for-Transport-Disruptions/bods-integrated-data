@@ -1,6 +1,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
 import { Pool } from "pg";
+import { TooManyRetriesError } from "./errors";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
@@ -66,6 +67,8 @@ export const executeWithRetries = async <T>(fn: () => Promise<T>) => {
             throw error;
         }
     }
+
+    throw new TooManyRetriesError();
 };
 
 export interface Database {
