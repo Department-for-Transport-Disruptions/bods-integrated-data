@@ -27,7 +27,7 @@ export const handler = async () => {
         throw new Error("Missing env vars - BUCKET_NAME must be set");
     }
 
-    const avlData = await getAvlDataForGtfs([]);
+    const avlData = await getAvlDataForGtfs();
     const entities = avlData.map(mapAvlToGtfsEntity);
     const gtfsRtFeed = generateGtfsRtFeed(entities);
 
