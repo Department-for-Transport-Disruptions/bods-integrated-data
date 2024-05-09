@@ -119,10 +119,9 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
                   data: mockSubscriptionResponseBody,
                   status: 200,
               }
-            : await axios.post<string>(subscription.url, {
-                  method: "POST",
-                  data: terminateSubscriptionRequestMessage,
+            : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
+                      "Content-Type": "text/xml",
                       Authorization:
                           "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
                   },
