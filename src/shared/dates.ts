@@ -35,7 +35,7 @@ dayjsExtend(isBetween);
 
 dayjs.tz.setDefault("Europe/London");
 
-export const getDate = (input?: string) => dayjs.utc(input);
+export const getDate = (input?: Parameters<typeof dayjs.utc>[0]) => dayjs.utc(input);
 
 export type BankHolidayName =
     | "New Year’s Day"
