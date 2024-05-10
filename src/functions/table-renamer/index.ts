@@ -10,7 +10,6 @@ export interface TableKey {
 
 // Rename BODS related tables
 const databaseTables: TableKey[] = [
-    { table: "agency", newTable: "agency_new", key: "id" },
     { table: "calendar", newTable: "calendar_new", key: "id" },
     { table: "calendar_date", newTable: "calendar_date_new", key: "id" },
     { table: "route", newTable: "route_new", key: "id" },

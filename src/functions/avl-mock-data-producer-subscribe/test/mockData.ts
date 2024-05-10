@@ -9,7 +9,7 @@ export const mockSubscriptionRequest = {
                             <RequestorRef>BODS</RequestorRef>
                             <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
                             <SubscriptionContext>
-                                <HeartbeatInterval>PT30M</HeartbeatInterval>
+                                <HeartbeatInterval>PT30S</HeartbeatInterval>
                             </SubscriptionContext>
                             <VehicleMonitoringSubscriptionRequest>
                                 <SubscriptionIdentifier>TESTING</SubscriptionIdentifier>

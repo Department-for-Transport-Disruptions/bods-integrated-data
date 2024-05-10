@@ -358,7 +358,7 @@
         }
       },
       "MaxConcurrency": 50,
-      "ToleratedFailureCount": 1000,
+      "ToleratedFailureCount": 10,
       "Next": "Retrieve TNDS TXC Data",
       "ResultPath": null
     },
@@ -481,7 +481,7 @@
         }
       },
       "MaxConcurrency": 50,
-      "ToleratedFailureCount": 5000,
+      "ToleratedFailureCount": 10,
       "ResultPath": null,
       "Next": "Run Table Renamer"
     },

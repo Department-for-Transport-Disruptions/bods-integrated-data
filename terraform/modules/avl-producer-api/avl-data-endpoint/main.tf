@@ -17,8 +17,8 @@ module "integrated_data_bods_avl_data_endpoint_function" {
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-data-endpoint.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 120
-  memory        = 1024
+  timeout       = 60
+  memory        = 512
 
   env_vars = {
     STAGE       = var.environment
@@ -31,7 +31,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       Action = [
         "s3:PutObject"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:s3:::${var.bucket_name}/*"
       ]
@@ -40,7 +40,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       Action = [
         "dynamodb:PutItem", "dynamodb:GetItem"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
       ]

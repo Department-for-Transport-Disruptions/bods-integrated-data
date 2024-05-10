@@ -10,8 +10,14 @@ import {
     NewStopTime,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
+import { BackoffOptions, backOff } from "exponential-backoff";
 import { Kysely } from "kysely";
 import { CalendarWithDates } from "../types";
+
+const retryBackOffOptions: BackoffOptions = {
+    jitter: "full",
+    numOfAttempts: 20,
+};
 
 export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
@@ -27,7 +33,7 @@ export const getOperator = async (dbClient: Kysely<Database>, nationalOperatorCo
 
 export const insertAgency = async (dbClient: Kysely<Database>, agency: NewAgency) => {
     return dbClient
-        .insertInto("agency_new")
+        .insertInto("agency")
         .values(agency)
         .onConflict((oc) => oc.column("noc").doUpdateSet(agency))
         .returningAll()
@@ -43,16 +49,20 @@ export const insertCalendars = async (dbClient: Kysely<Database>, calendars: Cal
     const insertedCalendars = (
         await Promise.all(
             calendarChunks.map((chunk) =>
-                dbClient
-                    .insertInto("calendar_new")
-                    .values(chunk)
-                    .onConflict((oc) =>
-                        oc
-                            .column("calendar_hash")
-                            .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
-                    )
-                    .returningAll()
-                    .execute(),
+                backOff(
+                    () =>
+                        dbClient
+                            .insertInto("calendar_new")
+                            .values(chunk)
+                            .onConflict((oc) =>
+                                oc
+                                    .column("calendar_hash")
+                                    .doUpdateSet((eb) => ({ calendar_hash: eb.ref("excluded.calendar_hash") })),
+                            )
+                            .returningAll()
+                            .execute(),
+                    retryBackOffOptions,
+                ),
             ),
         )
     ).flat();
@@ -69,11 +79,15 @@ export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDa
 
     await Promise.all(
         calendarDatesChunks.map((chunk) =>
-            dbClient
-                .insertInto("calendar_date_new")
-                .values(chunk)
-                .onConflict((oc) => oc.doNothing())
-                .execute(),
+            backOff(
+                () =>
+                    dbClient
+                        .insertInto("calendar_date_new")
+                        .values(chunk)
+                        .onConflict((oc) => oc.doNothing())
+                        .execute(),
+                retryBackOffOptions,
+            ),
         ),
     );
 };
@@ -123,12 +137,21 @@ export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
 };
 
 export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
-    return dbClient
-        .insertInto("stop_new")
-        .values(stops)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .returningAll()
-        .execute();
+    const insertChunks = chunkArray(stops, 3000);
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            backOff(
+                () =>
+                    dbClient
+                        .insertInto("stop_new")
+                        .values(chunk)
+                        .onConflict((oc) => oc.column("id").doNothing())
+                        .returningAll()
+                        .execute(),
+                retryBackOffOptions,
+            ),
+        ),
+    );
 };
 
 export const insertShapes = async (dbClient: Kysely<Database>, shapes: NewShape[]) => {

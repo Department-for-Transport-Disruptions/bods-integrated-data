@@ -24,6 +24,7 @@ import { processShapes } from "./data/shapes";
 import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processStopTimes } from "./data/stopTimes";
 import { processTrips } from "./data/trips";
+import { InvalidOperatorError } from "./errors";
 import { VehicleJourneyMapping } from "./types";
 import {
     getJourneyPatternForVehicleJourney,
@@ -282,26 +283,31 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 
 export const handler = async (event: S3Event) => {
     const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
-    const dbClient = await getDatabaseClient(stage === "local");
 
     if (!bankHolidaysBucketName) {
         throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
     }
+
+    const dbClient = await getDatabaseClient(stage === "local");
+    const record = event.Records[0];
 
     try {
         logger.info("Retrieving bank holidays JSON");
         const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);
         logger.info("Starting processing of TXC");
 
-        await processRecord(event.Records[0], bankHolidaysJson, dbClient);
+        await processRecord(record, bankHolidaysJson, dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {
-        if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor`, e);
+        if (e instanceof InvalidOperatorError) {
+            logger.warn(`Invalid operator for TXC: ${record.s3.object.key}`, e);
+        } else if (e instanceof Error) {
+            logger.error("There was a problem with the bods txc processor", e);
+            throw e;
+        } else {
+            throw e;
         }
-
-        throw e;
     } finally {
         await dbClient.destroy();
     }

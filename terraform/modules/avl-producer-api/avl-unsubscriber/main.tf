@@ -13,7 +13,7 @@ module "avl_unsubscriber" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "avl-unsubscriber"
+  function_name = "integrated-data-avl-unsubscriber"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-unsubscriber.zip"
   handler       = "index.handler"
   memory        = 1024
