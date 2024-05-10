@@ -14,9 +14,15 @@ dependencies:
   commander:
     specifier: ^12.0.0
     version: 12.0.0
+  convert-csv-to-json:
+    specifier: ^2.46.0
+    version: 2.46.0
   inquirer:
     specifier: ^8.2.6
     version: 8.2.6
+  zod:
+    specifier: ^3.23.7
+    version: 3.23.7
 
 devDependencies:
   '@tsconfig/node20':
@@ -1459,6 +1465,10 @@ packages:
   /concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
     dev: true
+
+  /convert-csv-to-json@2.46.0:
+    resolution: {integrity: sha512-Q7PjRjhECa5nBUEGbsKXvB8YaygVUesF/sYnaoCPTWoiwJEDCbLd2CcFDE1y80Q347IaTQukCQSCP2fR5IW+5g==}
+    dev: false
 
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
@@ -3110,3 +3120,7 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  /zod@3.23.7:
+    resolution: {integrity: sha512-NBeIoqbtOiUMomACV/y+V3Qfs9+Okr18vR5c/5pHClPpufWOrsx8TENboDPe265lFdfewX2yBtNTLPvnmCxwog==}
+    dev: false

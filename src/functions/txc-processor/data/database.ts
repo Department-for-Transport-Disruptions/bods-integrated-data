@@ -33,7 +33,7 @@ export const getOperator = async (dbClient: Kysely<Database>, nationalOperatorCo
 
 export const insertAgency = async (dbClient: Kysely<Database>, agency: NewAgency) => {
     return dbClient
-        .insertInto("agency_new")
+        .insertInto("agency")
         .values(agency)
         .onConflict((oc) => oc.column("noc").doUpdateSet(agency))
         .returningAll()

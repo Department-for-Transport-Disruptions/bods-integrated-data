@@ -4,7 +4,6 @@ import { Kysely, sql } from "kysely";
 
 const cleardownDatabase = async (dbClient: Kysely<Database>, onlyGtfs = false) => {
     const gtfsTables: (keyof Database)[] = [
-        "agency",
         "calendar",
         "calendar_date",
         "route",

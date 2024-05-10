@@ -15,6 +15,11 @@ export const processAgencies = async (dbClient: Kysely<Database>, operators: Ope
         }
 
         const existingAgency = await getAgency(dbClient, noc);
+
+        if (existingAgency) {
+            return existingAgency;
+        }
+
         const existingNoc = await getOperator(dbClient, noc);
 
         const newAgency: NewAgency = {
@@ -24,7 +29,7 @@ export const processAgencies = async (dbClient: Kysely<Database>, operators: Ope
             phone: "",
         };
 
-        return insertAgency(dbClient, existingAgency || newAgency);
+        return insertAgency(dbClient, newAgency);
     });
 
     const agencyData = await Promise.all(agencyPromises);
