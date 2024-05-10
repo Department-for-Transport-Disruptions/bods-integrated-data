@@ -58,7 +58,7 @@ export const subscriptionSchema = z.object({
     status: z.string(),
     requestorRef: z.string().nullish(),
     heartbeatLastReceivedDateTime: z.string().nullish(),
-    serviceStartDatetime: z.string(),
+    serviceStartDatetime: z.string().optional(),
     serviceEndDatetime: z.string().optional(),
 });
 

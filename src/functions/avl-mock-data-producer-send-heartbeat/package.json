@@ -1,0 +1,26 @@
+{
+  "name": "@bods-integrated-data/avl-mock-data-producer-send-data",
+  "version": "0.1.0",
+  "description": "Function to send mock AVL data to our AVL data consumer",
+  "scripts": {
+    "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-mock-data-producer-send-heartbeat.zip .",
+    "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-mock-data-producer-send-heartbeat.zip ../dist",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@baselime/lambda-logger": "^0.2.2",
+    "@bods-integrated-data/shared": "workspace:^",
+    "axios": "^1.6.7"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.110",
+    "@types/node": "^20.11.19",
+    "@vitest/coverage-v8": "^1.4.0",
+    "mockdate": "^3.0.5",
+    "zod": "^3.22.4"
+  }
+}
