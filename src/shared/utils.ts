@@ -3,8 +3,8 @@ import { ZodSchema, z } from "zod";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
 import { VehicleType } from "./schema";
+import { subscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
-import { subscriptionDynamoSchema } from "./schema/avl-subscribe.schema";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -100,7 +100,7 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
         return null;
     }
 
-    const parsedSubscriptions = z.array(subscriptionSchema).parse(subscriptions);
+    const parsedSubscriptions = z.array(subscriptionSchemaTransformed).parse(subscriptions);
 
     return parsedSubscriptions.filter(
         (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "ACTIVE",

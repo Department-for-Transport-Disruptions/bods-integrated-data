@@ -1,9 +1,12 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import axios from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from "vitest";
 import { expectedHeartbeatNotification, mockSubscriptionsFromDynamo } from "./test/mockData";
 import { handler } from "./index";
 
+vi.mock("axios");
+const mockedAxios = vi.mocked(axios, true);
 describe("avl-mock-data-producer-send-data", () => {
     beforeAll(() => {
         process.env.DATA_ENDPOINT = "https://www.test-data-endpoint.com";
@@ -11,7 +14,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
-    const fetchSpy = vi.spyOn(global, "fetch");
+    const axiosSpy = vi.spyOn(mockedAxios, "post");
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -27,7 +30,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([]);
         await handler();
-        expect(fetchSpy).not.toBeCalled();
+        expect(axiosSpy).not.toBeCalled();
     });
 
     it("should return and send no data if no mock data producers are active", async () => {
@@ -42,6 +45,7 @@ describe("avl-mock-data-producer-send-data", () => {
                 shortDescription: "test-short-description",
                 status: "ACTIVE",
                 requestorRef: "REAL_DATA_PRODUCER",
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             },
             {
                 PK: "subscription-one",
@@ -53,7 +57,7 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         ]);
         await handler();
-        expect(fetchSpy).not.toBeCalled();
+        expect(axiosSpy).not.toBeCalled();
     });
 
     it("should send mock avl data with the subscriptionId in the query string parameters if the stage is local", async () => {
@@ -62,22 +66,32 @@ describe("avl-mock-data-producer-send-data", () => {
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
-        fetchSpy.mockResolvedValue({
+        axiosSpy.mockResolvedValue({
             status: 200,
             ok: true,
         } as unknown as Response);
 
         await handler();
-        expect(fetchSpy).toBeCalledTimes(2);
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-one", {
-            body: expectedHeartbeatNotification("subscription-one"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledTimes(2);
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com?subscription_id=subscription-one",
+            expectedHeartbeatNotification("subscription-one"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
+        );
 
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com?subscription_id=subscription-two", {
-            body: expectedHeartbeatNotification("subscription-two"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com?subscription_id=subscription-two",
+            expectedHeartbeatNotification("subscription-two"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
+        );
     });
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
         process.env.STAGE = "dev";
@@ -85,21 +99,31 @@ describe("avl-mock-data-producer-send-data", () => {
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
-        fetchSpy.mockResolvedValue({
+        axiosSpy.mockResolvedValue({
             status: 200,
             ok: true,
         } as unknown as Response);
 
         await handler();
-        expect(fetchSpy).toBeCalledTimes(2);
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-one", {
-            body: expectedHeartbeatNotification("subscription-one"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledTimes(2);
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com/subscription-one",
+            expectedHeartbeatNotification("subscription-one"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
+        );
 
-        expect(fetchSpy).toBeCalledWith("https://www.test-data-endpoint.com/subscription-two", {
-            body: expectedHeartbeatNotification("subscription-two"),
-            method: "POST",
-        });
+        expect(axiosSpy).toBeCalledWith(
+            "https://www.test-data-endpoint.com/subscription-two",
+            expectedHeartbeatNotification("subscription-two"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
+        );
     });
 });

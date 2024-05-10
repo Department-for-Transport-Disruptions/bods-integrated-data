@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
+import axios from "axios";
 import { generateMockHeartbeat } from "./mockHeartbeatNotification";
 
 export const handler = async () => {
@@ -29,22 +30,18 @@ export const handler = async () => {
 
                 const HeartbeatNotification = generateMockHeartbeat(subscription.subscriptionId, currentTimestamp);
 
-                const res = await fetch(url, {
-                    method: "POST",
-                    body: HeartbeatNotification,
+                await axios.post(url, HeartbeatNotification, {
+                    headers: {
+                        "Content-Type": "text/xml",
+                    },
                 });
 
-                if (!res.ok) {
-                    logger.error(`Unable to send Heartbeat to: ${url}`);
-                    return;
-                }
-
-                logger.info(`Successfully sent Heartbeat to: ${url}`);
+                logger.info(`Successfully sent Heartbeat Notification to: ${url}`);
             }),
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Lambda has failed", e);
+            logger.error("There was an error when sending a Heartbeat Notification", e);
 
             throw e;
         }

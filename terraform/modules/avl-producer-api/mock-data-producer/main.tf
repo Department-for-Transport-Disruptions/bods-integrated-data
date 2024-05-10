@@ -26,7 +26,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
@@ -50,14 +50,14 @@ module "integrated_data_avl_mock_data_producer_send_heartbeat" {
   memory        = 256
   runtime       = "nodejs20.x"
   timeout       = 120
-  schedule      = "rate(30 minute)"
+  schedule      = "rate(1 minute)"
 
   permissions = [
     {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]

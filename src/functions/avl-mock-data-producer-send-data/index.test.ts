@@ -46,6 +46,7 @@ describe("avl-mock-data-producer-send-data", () => {
                 shortDescription: "test-short-description",
                 status: "ACTIVE",
                 requestorRef: "REAL_DATA_PRODUCER",
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             },
             {
                 PK: "subscription-one",
@@ -75,11 +76,21 @@ describe("avl-mock-data-producer-send-data", () => {
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com?subscription_id=subscription-one",
             expectedAVLDataForSubscription("subscription-one"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
         );
 
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com?subscription_id=subscription-two",
             expectedAVLDataForSubscription("subscription-two"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
         );
     });
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
@@ -97,11 +108,21 @@ describe("avl-mock-data-producer-send-data", () => {
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com/subscription-one",
             expectedAVLDataForSubscription("subscription-one"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
         );
 
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com/subscription-two",
             expectedAVLDataForSubscription("subscription-two"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
         );
     });
 
@@ -119,11 +140,21 @@ describe("avl-mock-data-producer-send-data", () => {
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com/subscription-one",
             expectedAVLDataForSubscription("subscription-one"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
         );
 
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com/subscription-two",
             expectedAVLDataForSubscription("subscription-two"),
+            {
+                headers: {
+                    "Content-Type": "text/xml",
+                },
+            },
         );
     });
 });

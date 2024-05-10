@@ -32,7 +32,11 @@ export const handler = async () => {
 
                 const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
 
-                await axios.post<string>(url, siriVm);
+                await axios.post(url, siriVm, {
+                    headers: {
+                        "Content-Type": "text/xml",
+                    },
+                });
 
                 logger.info(`Successfully sent AVL data to: ${url}`);
             }),
