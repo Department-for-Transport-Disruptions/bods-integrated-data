@@ -44,7 +44,7 @@ module "integrated_data_avl_mock_data_producer_send_heartbeat" {
   source = "../../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "integrated-data-avl-mock-data-producer-send-heartbeat"
+  function_name = "integrated-data-avl-mock-producer-send-heartbeat"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-producer-send-heartbeat.zip"
   handler       = "index.handler"
   memory        = 256
