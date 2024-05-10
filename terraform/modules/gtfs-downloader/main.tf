@@ -32,7 +32,43 @@ module "integrated_data_gtfs_downloader_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
+      Resource = [
+        "arn:aws:s3:::${var.gtfs_bucket_name}/*"
+      ]
+    },
+  ]
+
+  env_vars = {
+    STAGE       = var.environment
+    BUCKET_NAME = var.gtfs_bucket_name
+  }
+}
+
+resource "aws_lambda_function_url" "gtfs_region_retriever_url" {
+  count = var.environment == "local" ? 1 : 0
+
+  function_name      = module.integrated_data_gtfs_region_retriever_function.function_name
+  authorization_type = "NONE"
+}
+
+module "integrated_data_gtfs_region_retriever_function" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-gtfs-region-retriever"
+  zip_path      = "${path.module}/../../../src/functions/dist/gtfs-timetables-region-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 60
+  memory        = 512
+
+  permissions = [
+    {
+      Action = [
+        "s3:ListObjects",
+      ],
+      Effect   = "Allow",
       Resource = [
         "arn:aws:s3:::${var.gtfs_bucket_name}/*"
       ]
