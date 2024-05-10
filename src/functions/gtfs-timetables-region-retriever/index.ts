@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 
 export const handler = async () => {
     try {
@@ -13,14 +14,16 @@ export const handler = async () => {
             Bucket: bucketName,
         });
 
-        const fileNames = objects.Contents;
+        if (!objects) {
+            logger.warn("No files found in bucket.");
+        }
+
+        const fileNames = objects.Contents?.map((item) => item.Key).filter(notEmpty);
 
         logger.info("data", fileNames as Object);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Lambda has failed", e);
-
-            throw e;
+            logger.error("There was an error when retrieving GTFS regions.", e);
         }
 
         throw e;

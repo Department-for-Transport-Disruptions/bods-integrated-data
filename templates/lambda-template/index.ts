@@ -14,8 +14,6 @@ export const handler = async () => {
     } catch (e) {
         if (e instanceof Error) {
             logger.error("Lambda has failed", e);
-
-            throw e;
         }
 
         throw e;
