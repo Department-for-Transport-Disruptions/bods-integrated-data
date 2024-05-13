@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
@@ -14,7 +14,6 @@ import {
 } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
@@ -24,6 +23,7 @@ import { processShapes } from "./data/shapes";
 import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processStopTimes } from "./data/stopTimes";
 import { processTrips } from "./data/trips";
+import { InvalidOperatorError } from "./errors";
 import { VehicleJourneyMapping } from "./types";
 import {
     getJourneyPatternForVehicleJourney,
@@ -73,7 +73,7 @@ const getBankHolidaysJson = async (bucket: string) => {
 };
 
 const processServices = (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     bankHolidaysJson: BankHolidaysJson,
     operators: Operator[],
     services: Service[],
@@ -236,7 +236,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: Kysely<Database>) => {
+const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: KyselyDb) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
     const isTnds = record.s3.bucket.name.includes("-tnds-");
@@ -282,26 +282,31 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 
 export const handler = async (event: S3Event) => {
     const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
-    const dbClient = await getDatabaseClient(stage === "local");
 
     if (!bankHolidaysBucketName) {
         throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
     }
+
+    const dbClient = await getDatabaseClient(stage === "local");
+    const record = event.Records[0];
 
     try {
         logger.info("Retrieving bank holidays JSON");
         const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);
         logger.info("Starting processing of TXC");
 
-        await processRecord(event.Records[0], bankHolidaysJson, dbClient);
+        await processRecord(record, bankHolidaysJson, dbClient);
 
         logger.info("TXC processor successful");
     } catch (e) {
-        if (e instanceof Error) {
-            logger.error(`There was a problem with the bods txc processor`, e);
+        if (e instanceof InvalidOperatorError) {
+            logger.warn(`Invalid operator for TXC: ${record.s3.object.key}`, e);
+        } else if (e instanceof Error) {
+            logger.error("There was a problem with the bods txc processor", e);
+            throw e;
+        } else {
+            throw e;
         }
-
-        throw e;
     } finally {
         await dbClient.destroy();
     }

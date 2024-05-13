@@ -3,7 +3,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
-import { getDatabaseClient } from "../database";
+import { KyselyDb } from "../database";
 import { getDate } from "../dates";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
@@ -84,44 +84,76 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  * journey ref, to ensure a single trip is matched. Note that it is possible for no matching
  * route ID or trip ID to be found.
  * @param dbClient The database client
- * @param routeIds Optional array of route IDs to filter on
+ * @param routeId Optional route ID or comma-separated route IDs to filter on
+ * @param startTime Optional start time to filter on using the AVL's departure time
  * @returns An array of AVL data enriched with route and trip IDs
  */
-export const getAvlDataForGtfs = async (routeIds: string[]) => {
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
-
+export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, startTime?: string) => {
     try {
-        let query = sql<ExtendedAvl>`
-            SELECT DISTINCT ON (avl.operator_ref, avl.vehicle_ref) avl.*, routes_with_noc.route_id AS route_id, trip.id as trip_id FROM avl
-            LEFT OUTER JOIN (
-                SELECT route.id AS route_id, CONCAT(agency.noc, route.route_short_name) AS concat_noc_route_short_name FROM route
-                JOIN agency ON route.agency_id = agency.id
-            ) routes_with_noc ON routes_with_noc.concat_noc_route_short_name = CONCAT(avl.operator_ref, avl.line_ref)
-            LEFT OUTER JOIN trip ON trip.route_id = routes_with_noc.route_id AND trip.ticket_machine_journey_code = avl.dated_vehicle_journey_ref
-        `;
+        let query = dbClient
+            .selectFrom("avl")
+            .distinctOn(["avl.operator_ref", "avl.vehicle_ref"])
+            .leftJoin(
+                (eb) =>
+                    eb
+                        .selectFrom("route")
+                        .innerJoin("agency", "agency.id", "route.agency_id")
+                        .select([
+                            "route.id as route_id",
+                            sql`CONCAT(agency.noc, route.route_short_name)`.as("concat_noc_route_short_name"),
+                        ])
+                        .as("routes_with_noc"),
+                (join) =>
+                    join.onRef(
+                        "routes_with_noc.concat_noc_route_short_name",
+                        "=",
+                        sql`CONCAT(avl.operator_ref, avl.line_ref)`,
+                    ),
+            )
+            .leftJoin("trip", (eb) =>
+                eb
+                    .onRef("trip.route_id", "=", "routes_with_noc.route_id")
+                    .onRef("trip.ticket_machine_journey_code", "=", "avl.dated_vehicle_journey_ref"),
+            )
+            .selectAll("avl")
+            .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"]);
 
-        if (routeIds.length > 0) {
-            query = sql`
-                ${query}
-                WHERE routes_with_noc.route_id IN (${routeIds.join(",")})
-            `;
+        if (routeId) {
+            query = query.where(
+                "routes_with_noc.route_id",
+                "in",
+                routeId.split(",").map((id) => Number(id)),
+            );
         }
 
-        query = sql`
-            ${query}
-            ORDER BY avl.operator_ref, avl.vehicle_ref, avl.response_time_stamp DESC
-        `;
+        if (startTime) {
+            query = query.where("avl.origin_aimed_departure_time", ">=", startTime);
+        }
 
-        const queryResult = await query.execute(dbClient);
+        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
 
-        return queryResult.rows;
+        return query.execute();
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);
         }
 
         throw error;
-    } finally {
-        await dbClient.destroy();
     }
+};
+
+export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
+    const message = {
+        header: {
+            gtfsRealtimeVersion: "2.0",
+            incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
+            timestamp: getDate().unix(),
+        },
+        entity: entities,
+    };
+
+    const feed = transit_realtime.FeedMessage.encode(message);
+    const data = feed.finish();
+
+    return data;
 };

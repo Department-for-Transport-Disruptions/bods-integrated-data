@@ -35,7 +35,7 @@ describe("table renamer", () => {
         },
     }));
 
-    const tables: TableKey[] = [{ table: "agency", newTable: "agency_new", key: "id" }];
+    const tables: TableKey[] = [{ table: "route", newTable: "route_new", key: "id" }];
 
     describe("getMatchingTables", () => {
         it("should not throw an error with valid percentages", async () => {
@@ -49,7 +49,7 @@ describe("table renamer", () => {
             mockExecute.mockResolvedValueOnce([{ count: 50 }]);
 
             await expect(checkTables(dbClient, tables)).rejects.toThrowError(
-                "Tables agency and agency_new have less than an 80% match, percentage match: 50%",
+                "Tables route and route_new have less than an 80% match, percentage match: 50%",
             );
         });
 
@@ -57,7 +57,7 @@ describe("table renamer", () => {
             const dbClient = await getDatabaseClient(true);
             mockExecute.mockResolvedValueOnce([{ count: 0 }]);
 
-            await expect(checkTables(dbClient, tables)).rejects.toThrowError("No data found in table agency_new");
+            await expect(checkTables(dbClient, tables)).rejects.toThrowError("No data found in table route_new");
         });
 
         it("should skip percentage check if current table is empty", async () => {
@@ -74,23 +74,23 @@ describe("table renamer", () => {
             const dbClient = await getDatabaseClient(true);
             await renameTables(dbClient, tables);
 
-            expect(mockSchema.dropTable).toHaveBeenCalledWith("agency_old");
+            expect(mockSchema.dropTable).toHaveBeenCalledWith("route_old");
         });
 
         it("should rename the current table", async () => {
             const dbClient = await getDatabaseClient(true);
             await renameTables(dbClient, tables);
 
-            expect(mockSchema.alterTable).toHaveBeenCalledWith("agency");
-            expect(mockSchema.renameTo).toHaveBeenCalledWith("agency_old");
+            expect(mockSchema.alterTable).toHaveBeenCalledWith("route");
+            expect(mockSchema.renameTo).toHaveBeenCalledWith("route_old");
         });
 
         it("should rename the new table", async () => {
             const dbClient = await getDatabaseClient(true);
             await renameTables(dbClient, tables);
 
-            expect(mockSchema.alterTable).toHaveBeenCalledWith("agency_new");
-            expect(mockSchema.renameTo).toHaveBeenCalledWith("agency");
+            expect(mockSchema.alterTable).toHaveBeenCalledWith("route_new");
+            expect(mockSchema.renameTo).toHaveBeenCalledWith("route");
         });
     });
 });

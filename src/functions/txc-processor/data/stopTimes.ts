@@ -1,13 +1,12 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, NewStopTime } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewStopTime } from "@bods-integrated-data/shared/database";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 import { insertStopTimes } from "./database";
 import { VehicleJourneyMapping } from "../types";
 import { mapTimingLinksToStopTimes } from "../utils";
 
 export const processStopTimes = async (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {

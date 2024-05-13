@@ -1,6 +1,5 @@
-import { Database } from "@bods-integrated-data/shared/database";
+import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { S3EventRecord } from "aws-lambda";
-import { Kysely } from "kysely";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parsedSiri, testInvalidSiri, testSiri } from "./test/testSiriVm";
 import { processSqsRecord } from ".";
@@ -43,7 +42,7 @@ describe("avl-processor", () => {
     });
 
     it("correctly processes a siri-vm file", async () => {
-        await processSqsRecord(record as S3EventRecord, dbClient as unknown as Kysely<Database>);
+        await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb);
 
         expect(valuesMock).toBeCalledWith(parsedSiri);
     });
@@ -51,9 +50,7 @@ describe("avl-processor", () => {
     it("does not insert to database if invalid", async () => {
         mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testInvalidSiri } });
 
-        await expect(
-            processSqsRecord(record as S3EventRecord, dbClient as unknown as Kysely<Database>),
-        ).rejects.toThrowError();
+        await expect(processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb)).rejects.toThrowError();
 
         expect(valuesMock).not.toBeCalled();
     });

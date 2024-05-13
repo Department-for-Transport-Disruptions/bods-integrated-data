@@ -1,6 +1,5 @@
-import { Database, DropOffType, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
+import { DropOffType, KyselyDb, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import { processStopTimes } from "./stopTimes";
@@ -8,7 +7,7 @@ import { VehicleJourneyMapping } from "../types";
 import * as utilFunctions from "../utils";
 
 describe("stopTimes", () => {
-    let dbClient: Kysely<Database>;
+    let dbClient: KyselyDb;
     const mapTimingLinksToStopTimesMock = vi.spyOn(utilFunctions, "mapTimingLinksToStopTimes");
     const insertStopTimesMock = vi.spyOn(databaseFunctions, "insertStopTimes");
 

@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { CalendarDateExceptionType, Database, NewCalendar } from "@bods-integrated-data/shared/database";
+import { CalendarDateExceptionType, KyselyDb, NewCalendar } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson, getDate } from "@bods-integrated-data/shared/dates";
 import { OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { BankHolidayOperation } from "@bods-integrated-data/shared/schema/dates.schema";
-import type { Kysely } from "kysely";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -23,7 +22,7 @@ describe("calendar", () => {
 
     const DEFAULT_HASH = "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840";
 
-    const dbClientMock = {} as Kysely<Database>;
+    const dbClientMock = {} as KyselyDb;
     vi.mock("./database.ts");
 
     vi.mock("@bods-integrated-data/shared/schema/dates.schema", () => ({

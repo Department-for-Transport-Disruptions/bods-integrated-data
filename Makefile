@@ -14,6 +14,7 @@ NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
+GTFS_RT_DOWNLOADER_INPUT="{}"
 
 # Dev
 
@@ -161,11 +162,9 @@ run-local-gtfs-downloader:
 run-local-gtfs-rt-generator:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
+# example usage with query params: make run-local-gtfs-rt-downloader GTFS_RT_DOWNLOADER_INPUT="{ queryStringParameters: { routeId: "1,2", startTimeAfter: 1712288820 } }"
 run-local-gtfs-rt-downloader:
-	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'false' }}).then(r => console.log(r)).catch(e => console.error(e))"
-
-run-local-gtfs-rt-downloader-download:
-	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler({queryStringParameters: { download: 'true' }}).then(r => console.log(r)).catch(e => console.error(e))"
+	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler(${GTFS_RT_DOWNLOADER_INPUT}).then(r => console.log(r)).catch(e => console.error(e))"
 
 # AVL
 

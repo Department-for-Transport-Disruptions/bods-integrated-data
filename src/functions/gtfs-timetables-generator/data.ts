@@ -1,6 +1,6 @@
-import { Database, Trip } from "@bods-integrated-data/shared/database";
+import { KyselyDb, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { Kysely, sql } from "kysely";
+import { sql } from "kysely";
 
 export type Query = {
     getQuery: () => string;
@@ -9,7 +9,7 @@ export type Query = {
     include: boolean;
 };
 
-export const createRegionalTripTable = async (dbClient: Kysely<Database>, regionCode: string) => {
+export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: string) => {
     await sql`
         CREATE TABLE ${sql.table(`trip_${regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
     `.execute(dbClient);
@@ -23,12 +23,7 @@ export const createRegionalTripTable = async (dbClient: Kysely<Database>, region
     `.execute(dbClient);
 };
 
-export const exportDataToS3 = async (
-    queries: Query[],
-    outputBucket: string,
-    dbClient: Kysely<Database>,
-    filePath: string,
-) => {
+export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: KyselyDb, filePath: string) => {
     await Promise.all(
         queries.map((query) => {
             let options = "format csv, header true";
@@ -47,19 +42,20 @@ export const exportDataToS3 = async (
     );
 };
 
-export const dropRegionalTable = async (dbClient: Kysely<Database>, regionCode: string) => {
+export const dropRegionalTable = async (dbClient: KyselyDb, regionCode: string) => {
     await sql`
         DROP TABLE IF EXISTS ${sql.table(`trip_${regionCode}`)};
     `.execute(dbClient);
 };
 
-export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
+export const queryBuilder = (dbClient: KyselyDb): Query[] => [
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom("agency")
-                .select([
-                    "agency.id as agency_id",
+                .selectFrom("route")
+                .innerJoin("agency", "agency.id", "route.agency_id")
+                .select(({ ref }) => [
+                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
                     "agency.name as agency_name",
                     "agency.url as agency_url",
                     sql.lit<string>(`'Europe/London'`).as("agency_timezone"),
@@ -67,6 +63,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
                     "agency.phone as agency_phone",
                     "agency.noc as agency_noc",
                 ])
+                .distinct()
                 .orderBy("agency_id asc");
 
             return query.compile().sql;
@@ -101,7 +98,13 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
         getQuery: () => {
             const query = dbClient
                 .selectFrom("route")
-                .select(["id as route_id", "agency_id", "route_short_name", "route_long_name", "route_type"])
+                .select(({ ref }) => [
+                    "id as route_id",
+                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
+                    "route_short_name",
+                    "route_long_name",
+                    "route_type",
+                ])
                 .orderBy("route_id asc");
 
             return query.compile().sql;
@@ -239,15 +242,15 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
 ];
 
-export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: string): Query[] => [
+export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: string): Query[] => [
     {
         getQuery: () => {
             const query = dbClient
                 .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
                 .innerJoin("route", "route.id", "trip_region.route_id")
                 .innerJoin("agency", "agency.id", "route.agency_id")
-                .select([
-                    "agency.id as agency_id",
+                .select(({ ref }) => [
+                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
                     "agency.name as agency_name",
                     "agency.url as agency_url",
                     sql.lit<string>(`'Europe/London'`).as("agency_timezone"),
@@ -294,9 +297,9 @@ export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: str
             const query = dbClient
                 .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
                 .innerJoin("route", "route.id", "trip_region.route_id")
-                .select([
+                .select(({ ref }) => [
                     "route.id as route_id",
-                    "route.agency_id",
+                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
                     "route.route_short_name",
                     "route.route_long_name",
                     "route.route_type",

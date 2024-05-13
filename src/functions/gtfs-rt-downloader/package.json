@@ -14,7 +14,8 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "gtfs-realtime-bindings": "^1.1.1"
+        "zod": "^3.22.4",
+        "zod-validation-error": "^3.0.3"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import {
-    Database,
+    KyselyDb,
     NewNptgAdminArea,
     NewNptgLocality,
     NewNptgRegion,
@@ -11,7 +11,6 @@ import { NptgSchema, nptgSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 
 const arrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];
@@ -49,7 +48,7 @@ const getAndParseData = async (bucket: string, key: string) => {
     return parseResult.data;
 };
 
-export const insertNptgData = async (dbClient: Kysely<Database>, data: NptgSchema) => {
+export const insertNptgData = async (dbClient: KyselyDb, data: NptgSchema) => {
     const { NptgLocalities, Regions } = data.NationalPublicTransportGazetteer;
     const adminAreas: NewNptgAdminArea[] = [];
     const localities: NewNptgLocality[] = [];

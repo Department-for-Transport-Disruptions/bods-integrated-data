@@ -1,6 +1,5 @@
-import { Database, NewStop, LocationType, NaptanStop } from "@bods-integrated-data/shared/database";
+import { NewStop, LocationType, NaptanStop, KyselyDb } from "@bods-integrated-data/shared/database";
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 import { getNaptanStops, insertStops } from "./database";
 
 const platformCodes = ["BCS", "PLT", "FBT"];
@@ -57,11 +56,7 @@ export const mapStop = (
     return stop;
 };
 
-export const processStopPoints = async (
-    dbClient: Kysely<Database>,
-    stops: TxcStopPoint[],
-    useStopLocality: boolean,
-) => {
+export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
     const atcoCodes = stops.map((stop) => stop.AtcoCode);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
@@ -79,7 +74,7 @@ export const processStopPoints = async (
 };
 
 export const processAnnotatedStopPointRefs = async (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     stops: TxcAnnotatedStopPointRef[],
     useStopLocality: boolean,
 ) => {
