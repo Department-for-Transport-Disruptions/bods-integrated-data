@@ -45,13 +45,6 @@ module "integrated_data_gtfs_downloader_function" {
   }
 }
 
-resource "aws_lambda_function_url" "gtfs_region_retriever_url" {
-  count = var.environment == "local" ? 1 : 0
-
-  function_name      = module.integrated_data_gtfs_region_retriever_function.function_name
-  authorization_type = "NONE"
-}
-
 module "integrated_data_gtfs_region_retriever_function" {
   source = "../shared/lambda-function"
 
