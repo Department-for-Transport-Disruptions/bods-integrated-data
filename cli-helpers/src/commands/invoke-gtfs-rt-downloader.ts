@@ -6,17 +6,19 @@ export const invokeGtfsRtDownloader = new Command("invoke-gtfs-rt-downloader")
     .option("--download <download>", "Pass download parameter to function")
     .option("--routeId <routeId>", "Pass routeId parameter to function")
     .option("--startTimeAfter <startTimeAfter>", "Pass startTimeAfter parameter to function")
+    .option("--boundingBox <boundingBox>", "Pass boundingBox parameter to function")
     .action(async (options) => {
-        const { stage, download, routeId, startTimeAfter } = options;
+        const { stage, download, routeId, startTimeAfter, boundingBox } = options;
 
         let invokePayload = {};
 
-        if (download || routeId || startTimeAfter) {
+        if (download || routeId || startTimeAfter || boundingBox) {
             invokePayload = {
                 queryStringParameters: {
                     download,
                     routeId,
                     startTimeAfter,
+                    boundingBox,
                 },
             };
         }

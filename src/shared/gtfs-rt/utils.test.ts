@@ -56,6 +56,7 @@ describe("utils", () => {
                 block_ref: "",
                 route_id: null,
                 trip_id: null,
+                geom: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -110,6 +111,7 @@ describe("utils", () => {
                 block_ref: "",
                 route_id: null,
                 trip_id: null,
+                geom: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -164,6 +166,7 @@ describe("utils", () => {
                 block_ref: "",
                 route_id: null,
                 trip_id: null,
+                geom: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -218,6 +221,7 @@ describe("utils", () => {
                 block_ref: "",
                 route_id: null,
                 trip_id: null,
+                geom: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -272,6 +276,7 @@ describe("utils", () => {
                 block_ref: "",
                 route_id: 4,
                 trip_id: null,
+                geom: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -326,6 +331,7 @@ describe("utils", () => {
                 block_ref: "",
                 route_id: 4,
                 trip_id: "5",
+                geom: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -381,6 +387,7 @@ describe("utils", () => {
             block_ref: "",
             route_id: 4,
             trip_id: null,
+            geom: null,
         };
 
         const expected: transit_realtime.IFeedEntity = {
