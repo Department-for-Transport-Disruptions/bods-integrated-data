@@ -1,10 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database } from "@bods-integrated-data/shared/database";
+import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { avlSchema } from "@bods-integrated-data/shared/schema/siri.schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { Kysely } from "kysely";
 
-export const getCurrentAvlData = async (db: Kysely<Database>) => {
+export const getCurrentAvlData = async (db: KyselyDb) => {
     logger.info("Getting data from avl table...");
 
     const avl = await db

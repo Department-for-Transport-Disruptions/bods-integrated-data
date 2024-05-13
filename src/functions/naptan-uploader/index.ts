@@ -1,9 +1,8 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { S3Event } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
-import { Kysely } from "kysely";
 import OsPoint from "ospoint";
 import { parse } from "papaparse";
 
@@ -103,7 +102,7 @@ const getAndParseNaptanFile = async (event: S3Event) => {
     return data;
 };
 
-const insertNaptanData = async (dbClient: Kysely<Database>, naptanData: unknown[]) => {
+const insertNaptanData = async (dbClient: KyselyDb, naptanData: unknown[]) => {
     const numRows = naptanData.length;
     const batches = [];
 

@@ -6,6 +6,7 @@ export const mockSubscriptionsFromDynamo = [
         shortDescription: "test-short-description",
         status: "ACTIVE",
         requestorRef: "BODS_MOCK_PRODUCER",
+        serviceStartDatetime: "2024-01-01T15:20:02.093Z",
     },
     {
         PK: "subscription-two",
@@ -14,6 +15,7 @@ export const mockSubscriptionsFromDynamo = [
         shortDescription: "test-short-description",
         status: "ACTIVE",
         requestorRef: "BODS_MOCK_PRODUCER",
+        serviceStartDatetime: "2024-01-01T15:20:02.093Z",
     },
 ];
 

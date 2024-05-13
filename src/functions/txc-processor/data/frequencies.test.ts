@@ -1,12 +1,11 @@
-import { Database, Frequency, NewFrequency, ServiceType } from "@bods-integrated-data/shared/database";
-import { Kysely } from "kysely";
+import { Frequency, KyselyDb, NewFrequency, ServiceType } from "@bods-integrated-data/shared/database";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import { processFrequencies } from "./frequencies";
 import { VehicleJourneyMapping } from "../types";
 
 describe("frequencies", () => {
-    let dbClient: Kysely<Database>;
+    let dbClient: KyselyDb;
     const insertFrequenciesMock = vi.spyOn(databaseFunctions, "insertFrequencies");
 
     beforeEach(() => {

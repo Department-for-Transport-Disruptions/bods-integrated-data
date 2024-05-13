@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { Kysely, ReferenceExpression } from "kysely";
+import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { ReferenceExpression } from "kysely";
 
 export interface TableKey {
     table: keyof Database;
@@ -10,7 +10,6 @@ export interface TableKey {
 
 // Rename BODS related tables
 const databaseTables: TableKey[] = [
-    { table: "agency", newTable: "agency_new", key: "id" },
     { table: "calendar", newTable: "calendar_new", key: "id" },
     { table: "calendar_date", newTable: "calendar_date_new", key: "id" },
     { table: "route", newTable: "route_new", key: "id" },
@@ -26,7 +25,7 @@ const databaseTables: TableKey[] = [
     { table: "nptg_region", newTable: "nptg_region_new", key: "region_code" },
 ];
 
-export const checkTables = async (dbClient: Kysely<Database>, tables: TableKey[]) => {
+export const checkTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
     for (const t of tables) {
         const { table, newTable, key } = t;
 
@@ -58,7 +57,7 @@ export const checkTables = async (dbClient: Kysely<Database>, tables: TableKey[]
     }
 };
 
-export const renameTables = async (dbClient: Kysely<Database>, tables: TableKey[]) => {
+export const renameTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
     for (const { table, newTable } of tables) {
         await dbClient.schema.dropTable(`${table}_old`).ifExists().cascade().execute();
         await dbClient.schema.alterTable(table).renameTo(`${table}_old`).execute();

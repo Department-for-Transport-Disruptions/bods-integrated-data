@@ -1,12 +1,11 @@
-import { Database, LocationType, NaptanStop, NewStop, Stop } from "@bods-integrated-data/shared/database";
+import { KyselyDb, LocationType, NaptanStop, NewStop } from "@bods-integrated-data/shared/database";
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import { processAnnotatedStopPointRefs, processStopPoints, mapStop, NaptanStopWithRegionCode } from "./stops";
 
 describe("stops", () => {
-    let dbClient: Kysely<Database>;
+    let dbClient: KyselyDb;
     const getNaptanStopsMock = vi.spyOn(databaseFunctions, "getNaptanStops");
     const insertStopsMock = vi.spyOn(databaseFunctions, "insertStops");
 
@@ -262,7 +261,7 @@ describe("stops", () => {
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
-            insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
 
             await processStopPoints(dbClient, stops, false);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
@@ -318,7 +317,7 @@ describe("stops", () => {
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
-            insertStopsMock.mockImplementation((_dbClient, stops) => Promise.resolve(stops) as Promise<Stop[]>);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
 
             await processAnnotatedStopPointRefs(dbClient, stops, false);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);

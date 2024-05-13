@@ -1,13 +1,12 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import * as MockDate from "mockdate";
 import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from "vitest";
-import { expectedAVLDataForSubscription, mockSubscriptionsFromDynamo } from "./test/mockData";
+import { expectedHeartbeatNotification, mockSubscriptionsFromDynamo } from "./test/mockData";
 import { handler } from "./index";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
-
 describe("avl-mock-data-producer-send-data", () => {
     beforeAll(() => {
         process.env.DATA_ENDPOINT = "https://www.test-data-endpoint.com";
@@ -69,13 +68,14 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockResolvedValue({
             status: 200,
-        } as AxiosResponse);
+            ok: true,
+        } as unknown as Response);
 
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com?subscription_id=subscription-one",
-            expectedAVLDataForSubscription("subscription-one"),
+            expectedHeartbeatNotification("subscription-one"),
             {
                 headers: {
                     "Content-Type": "text/xml",
@@ -85,7 +85,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com?subscription_id=subscription-two",
-            expectedAVLDataForSubscription("subscription-two"),
+            expectedHeartbeatNotification("subscription-two"),
             {
                 headers: {
                     "Content-Type": "text/xml",
@@ -101,13 +101,14 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockResolvedValue({
             status: 200,
-        } as AxiosResponse);
+            ok: true,
+        } as unknown as Response);
 
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com/subscription-one",
-            expectedAVLDataForSubscription("subscription-one"),
+            expectedHeartbeatNotification("subscription-one"),
             {
                 headers: {
                     "Content-Type": "text/xml",
@@ -117,39 +118,7 @@ describe("avl-mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toBeCalledWith(
             "https://www.test-data-endpoint.com/subscription-two",
-            expectedAVLDataForSubscription("subscription-two"),
-            {
-                headers: {
-                    "Content-Type": "text/xml",
-                },
-            },
-        );
-    });
-
-    it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
-        process.env.STAGE = "dev";
-        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
-
-        axiosSpy.mockRejectedValueOnce(new Error("There was an error when sending AVL data."));
-
-        await expect(handler()).rejects.toThrowError("There was an error when sending AVL data.");
-
-        expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-one",
-            expectedAVLDataForSubscription("subscription-one"),
-            {
-                headers: {
-                    "Content-Type": "text/xml",
-                },
-            },
-        );
-
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-two",
-            expectedAVLDataForSubscription("subscription-two"),
+            expectedHeartbeatNotification("subscription-two"),
             {
                 headers: {
                     "Content-Type": "text/xml",

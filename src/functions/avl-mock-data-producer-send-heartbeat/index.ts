@@ -1,16 +1,14 @@
 import { logger } from "@baselime/lambda-logger";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
-import { generateMockSiriVm } from "./mockSiriVm";
+import { generateMockHeartbeat } from "./mockHeartbeatNotification";
 
 export const handler = async () => {
     try {
         const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
 
         const currentTimestamp = getDate().toISOString();
-        // ValidUntilTime for a SIRI-VM is defined as 5 minutes after the current time
-        const validUntilTime = addIntervalToDate(currentTimestamp, 5, "minutes").toISOString();
 
         if (!stage || !dataEndpoint || !tableName) {
             throw new Error("Missing env vars: STAGE, DATA_ENDPOINT and TABLE_NAME must be set");
@@ -30,22 +28,20 @@ export const handler = async () => {
                         ? `${dataEndpoint}?subscription_id=${subscription.subscriptionId}`
                         : `${dataEndpoint}/${subscription.subscriptionId}`;
 
-                const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
+                const HeartbeatNotification = generateMockHeartbeat(subscription.subscriptionId, currentTimestamp);
 
-                await axios.post(url, siriVm, {
+                await axios.post(url, HeartbeatNotification, {
                     headers: {
                         "Content-Type": "text/xml",
                     },
                 });
 
-                logger.info(`Successfully sent AVL data to: ${url}`);
+                logger.info(`Successfully sent Heartbeat Notification to: ${url}`);
             }),
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error when sending AVL data", e);
-
-            throw e;
+            logger.error("There was an error when sending a Heartbeat Notification", e);
         }
 
         throw e;

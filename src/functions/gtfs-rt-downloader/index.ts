@@ -1,49 +1,45 @@
 import { logger } from "@baselime/lambda-logger";
-import { base64Encode, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import {
+    base64Encode,
+    generateGtfsRtFeed,
+    getAvlDataForGtfs,
+    mapAvlToGtfsEntity,
+} from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { transit_realtime } from "gtfs-realtime-bindings";
+import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 
-export const retrieveRouteData = async (routeIds: string[]): Promise<APIGatewayProxyResultV2> => {
-    try {
-        const avlData = await getAvlDataForGtfs(routeIds);
+const queryParametersSchema = z.preprocess(
+    (val) => Object(val),
+    z.object({
+        download: z.coerce.string().toLowerCase().optional(),
+        routeId: z.coerce
+            .string()
+            .regex(/^[0-9]+(,[0-9]+)*$/)
+            .optional(),
+        startTimeAfter: z.coerce.number().optional(),
+    }),
+);
 
-        if (avlData.length === 0) {
-            return {
-                statusCode: 404,
-                headers: { "Content-Type": "application/json" },
-                body: `No routes found that match Id(s) ${routeIds.join(",")}`,
-            };
-        }
-        const message = {
-            header: {
-                gtfsRealtimeVersion: "2.0",
-                incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
-                timestamp: Date.now(),
-            },
-            entity: avlData.map(mapAvlToGtfsEntity),
-        };
+const retrieveRouteData = async (
+    dbClient: KyselyDb,
+    routeId?: string,
+    startTime?: string,
+): Promise<APIGatewayProxyResultV2> => {
+    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime);
+    const entities = avlData.map(mapAvlToGtfsEntity);
+    const gtfsRtFeed = generateGtfsRtFeed(entities);
+    const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
 
-        const feed = transit_realtime.FeedMessage.encode(message);
-        const data = feed.finish();
-        const encodedData = base64Encode(data);
-
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/octet-stream" },
-            body: encodedData,
-            isBase64Encoded: true,
-        };
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was an error retrieving the route data", error);
-        }
-
-        return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        };
-    }
+    return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+        body: base64GtfsRtFeed,
+        isBase64Encoded: true,
+    };
 };
 
 const downloadData = async (bucketName: string, key: string): Promise<APIGatewayProxyResultV2> => {
@@ -98,9 +94,6 @@ const retrieveContents = async (bucketName: string, key: string): Promise<APIGat
 
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
     const { BUCKET_NAME: bucketName } = process.env;
-
-    const shouldDownload = event.queryStringParameters?.download?.toLowerCase() === "true";
-    const routeIds = event.queryStringParameters?.routeId;
     const key = "gtfs-rt.bin";
 
     if (!bucketName) {
@@ -112,11 +105,41 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    if (routeIds) {
-        return await retrieveRouteData(routeIds.split(","));
+    const parseResult = queryParametersSchema.safeParse(event.queryStringParameters);
+
+    if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+
+        return {
+            statusCode: 400,
+            body: validationError.message,
+        };
     }
 
-    if (shouldDownload) {
+    const { download, routeId, startTimeAfter } = parseResult.data;
+
+    if (routeId || startTimeAfter) {
+        const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+
+        try {
+            const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
+
+            return await retrieveRouteData(dbClient, routeId, startTime);
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error("There was an error retrieving the route data", error);
+            }
+
+            return {
+                statusCode: 500,
+                body: "An unknown error occurred. Please try again.",
+            };
+        } finally {
+            await dbClient.destroy();
+        }
+    }
+
+    if (download === "true") {
         return await downloadData(bucketName, key);
     }
 

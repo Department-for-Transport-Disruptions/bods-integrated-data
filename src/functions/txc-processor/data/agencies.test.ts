@@ -1,13 +1,12 @@
-import { Agency, Database, NewAgency } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, NewAgency } from "@bods-integrated-data/shared/database";
 import { Operator } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { processAgencies } from "./agencies";
 import * as databaseFunctions from "./database";
 import { InvalidOperatorError } from "../errors";
 
 describe("agencies", () => {
-    let dbClient: Kysely<Database>;
+    let dbClient: KyselyDb;
     const getAgencyMock = vi.spyOn(databaseFunctions, "getAgency");
     const getOperatorMock = vi.spyOn(databaseFunctions, "getOperator");
     const insertAgencyMock = vi.spyOn(databaseFunctions, "insertAgency");

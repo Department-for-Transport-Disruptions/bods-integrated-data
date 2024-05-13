@@ -1,10 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { Kysely, sql } from "kysely";
+import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { sql } from "kysely";
 
-const cleardownDatabase = async (dbClient: Kysely<Database>, onlyGtfs = false) => {
+const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
     const gtfsTables: (keyof Database)[] = [
-        "agency",
         "calendar",
         "calendar_date",
         "route",

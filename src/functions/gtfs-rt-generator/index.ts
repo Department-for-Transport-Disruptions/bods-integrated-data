@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
 
@@ -21,36 +22,38 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
 };
 
 export const handler = async () => {
-    const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson } = process.env;
+    const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson, STAGE: stage } = process.env;
 
     if (!bucketName) {
         throw new Error("Missing env vars - BUCKET_NAME must be set");
     }
 
-    const avlData = await getAvlDataForGtfs([]);
+    const dbClient = await getDatabaseClient(stage === "local");
 
-    const message = {
-        header: {
-            gtfsRealtimeVersion: "2.0",
-            incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
-            timestamp: Date.now(),
-        },
-        entity: avlData.map(mapAvlToGtfsEntity),
-    };
+    try {
+        const avlData = await getAvlDataForGtfs(dbClient);
+        const entities = avlData.map(mapAvlToGtfsEntity);
+        const gtfsRtFeed = generateGtfsRtFeed(entities);
 
-    const feed = transit_realtime.FeedMessage.encode(message);
-    const data = feed.finish();
+        await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
 
-    await uploadGtfsRtToS3(bucketName, data);
+        if (saveJson === "true") {
+            const encodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
 
-    if (saveJson === "true") {
-        const encodedJson = transit_realtime.FeedMessage.decode(data);
+            await putS3Object({
+                Bucket: bucketName,
+                Key: "gtfs-rt.json",
+                ContentType: "application/json",
+                Body: JSON.stringify(encodedJson),
+            });
+        }
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error("There was an error running the GTFS-RT Generator", e);
+        }
 
-        await putS3Object({
-            Bucket: bucketName,
-            Key: "gtfs-rt.json",
-            ContentType: "application/json",
-            Body: JSON.stringify(encodedJson),
-        });
+        throw e;
+    } finally {
+        await dbClient.destroy();
     }
 };

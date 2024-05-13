@@ -54,8 +54,8 @@ describe("utils", () => {
                 origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
-                route_id: undefined,
-                trip_id: undefined,
+                route_id: null,
+                trip_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -108,8 +108,8 @@ describe("utils", () => {
                 origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
-                route_id: undefined,
-                trip_id: undefined,
+                route_id: null,
+                trip_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -162,8 +162,8 @@ describe("utils", () => {
                 origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
-                route_id: undefined,
-                trip_id: undefined,
+                route_id: null,
+                trip_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -216,8 +216,8 @@ describe("utils", () => {
                 origin_aimed_departure_time: null,
                 destination_ref: "",
                 block_ref: "",
-                route_id: undefined,
-                trip_id: undefined,
+                route_id: null,
+                trip_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -271,7 +271,7 @@ describe("utils", () => {
                 destination_ref: "",
                 block_ref: "",
                 route_id: 4,
-                trip_id: undefined,
+                trip_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -380,7 +380,7 @@ describe("utils", () => {
             destination_ref: "",
             block_ref: "",
             route_id: 4,
-            trip_id: undefined,
+            trip_id: null,
         };
 
         const expected: transit_realtime.IFeedEntity = {

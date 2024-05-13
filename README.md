@@ -36,7 +36,6 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
   - [Workflow](#workflow)
   - [Environments](#environments)
   - [Deploying changes locally](#deploying-changes-locally)
-- [Known Issues](#known-issues)
 - [Getting involved](#getting-involved)
 - [Licence](#licence)
 
@@ -268,9 +267,9 @@ make run-local-table-renamer
 This will update the `_new` tables to be the primary tables and update the primary tables to be `_old`, for example:
 
 ```text
-agency_new -> agency
-agency -> agency_old
-agency_old -> <Deleted>
+route_new -> route
+route -> route_old
+route_old -> <Deleted>
 ```
 
 ### GTFS feed generation
@@ -439,10 +438,6 @@ To deploy lambda functions, first build the functions before applying:
 make install-deps build-functions
 make tf-apply-{ENV}
 ```
-
-## Known Issues
-
-- Deadlock errors can occur when inserting large amounts of data quickly into the database during TXC processing (being investigated)
 
 ## Getting involved
 
