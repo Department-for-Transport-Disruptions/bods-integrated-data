@@ -3,7 +3,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
-import { getDatabaseClient } from "../database";
+import { KyselyDb } from "../database";
 import { getDate } from "../dates";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
@@ -88,9 +88,7 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  * @param startTime Optional start time to filter on using the AVL's departure time
  * @returns An array of AVL data enriched with route and trip IDs
  */
-export const getAvlDataForGtfs = async (routeId?: string, startTime?: string) => {
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
-
+export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, startTime?: string) => {
     try {
         let query = dbClient
             .selectFrom("avl")
@@ -141,8 +139,6 @@ export const getAvlDataForGtfs = async (routeId?: string, startTime?: string) =>
         }
 
         throw error;
-    } finally {
-        await dbClient.destroy();
     }
 };
 

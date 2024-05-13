@@ -1,5 +1,5 @@
+import { logger } from "@baselime/lambda-logger";
 import {
-    Database,
     NewCalendarDate,
     NewFrequency,
     NewRoute,
@@ -8,22 +8,27 @@ import {
     NewStop,
     NewAgency,
     NewStopTime,
+    KyselyDb,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { BackoffOptions, backOff } from "exponential-backoff";
-import { Kysely } from "kysely";
 import { CalendarWithDates } from "../types";
 
 const retryBackOffOptions: BackoffOptions = {
     jitter: "full",
     numOfAttempts: 20,
+    retry: (e, attemptNumber) => {
+        logger.warn(`Attempt ${attemptNumber} failed, ${attemptNumber < 20 ? "retrying" : "aborting"}...`, e as Error);
+
+        return true;
+    },
 };
 
-export const getAgency = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
+export const getAgency = async (dbClient: KyselyDb, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
 };
 
-export const getOperator = async (dbClient: Kysely<Database>, nationalOperatorCode: string) => {
+export const getOperator = async (dbClient: KyselyDb, nationalOperatorCode: string) => {
     return dbClient
         .selectFrom("noc_operator_new")
         .selectAll()
@@ -31,7 +36,7 @@ export const getOperator = async (dbClient: Kysely<Database>, nationalOperatorCo
         .executeTakeFirst();
 };
 
-export const insertAgency = async (dbClient: Kysely<Database>, agency: NewAgency) => {
+export const insertAgency = async (dbClient: KyselyDb, agency: NewAgency) => {
     return dbClient
         .insertInto("agency")
         .values(agency)
@@ -40,7 +45,7 @@ export const insertAgency = async (dbClient: Kysely<Database>, agency: NewAgency
         .executeTakeFirst();
 };
 
-export const insertCalendars = async (dbClient: Kysely<Database>, calendars: CalendarWithDates[]) => {
+export const insertCalendars = async (dbClient: KyselyDb, calendars: CalendarWithDates[]) => {
     const calendarChunks = chunkArray(
         calendars.map((c) => c.calendar),
         3000,
@@ -74,7 +79,7 @@ export const insertCalendars = async (dbClient: Kysely<Database>, calendars: Cal
     return insertedCalendars;
 };
 
-export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDates: NewCalendarDate[]) => {
+export const insertCalendarDates = async (dbClient: KyselyDb, calendarDates: NewCalendarDate[]) => {
     const calendarDatesChunks = chunkArray(calendarDates, 3000);
 
     await Promise.all(
@@ -92,11 +97,11 @@ export const insertCalendarDates = async (dbClient: Kysely<Database>, calendarDa
     );
 };
 
-export const insertFrequencies = async (dbClient: Kysely<Database>, frequencies: NewFrequency[]) => {
+export const insertFrequencies = async (dbClient: KyselyDb, frequencies: NewFrequency[]) => {
     return dbClient.insertInto("frequency_new").values(frequencies).returningAll().execute();
 };
 
-export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[], useStopLocality: boolean) => {
+export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopLocality: boolean) => {
     if (useStopLocality) {
         return dbClient
             .selectFrom("naptan_stop_new")
@@ -121,11 +126,11 @@ export const getNaptanStops = (dbClient: Kysely<Database>, atcoCodes: string[], 
         .execute();
 };
 
-export const getTndsRoute = (dbClient: Kysely<Database>, nocLineName: string) => {
+export const getTndsRoute = (dbClient: KyselyDb, nocLineName: string) => {
     return dbClient.selectFrom("route_new").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
 };
 
-export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
+export const insertRoute = (dbClient: KyselyDb, route: NewRoute) => {
     const { route_short_name, route_type } = route;
 
     return dbClient
@@ -136,7 +141,7 @@ export const insertRoute = (dbClient: Kysely<Database>, route: NewRoute) => {
         .executeTakeFirst();
 };
 
-export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) => {
+export const insertStops = async (dbClient: KyselyDb, stops: NewStop[]) => {
     const insertChunks = chunkArray(stops, 3000);
     await Promise.all(
         insertChunks.map((chunk) =>
@@ -154,16 +159,16 @@ export const insertStops = async (dbClient: Kysely<Database>, stops: NewStop[]) 
     );
 };
 
-export const insertShapes = async (dbClient: Kysely<Database>, shapes: NewShape[]) => {
+export const insertShapes = async (dbClient: KyselyDb, shapes: NewShape[]) => {
     const insertChunks = chunkArray(shapes, 3000);
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("shape_new").values(chunk).execute()));
 };
 
-export const insertStopTimes = async (dbClient: Kysely<Database>, stopTimes: NewStopTime[]) => {
+export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime[]) => {
     const insertChunks = chunkArray(stopTimes, 3000);
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
 };
 
-export const insertTrips = async (dbClient: Kysely<Database>, trips: NewTrip[]) => {
+export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
     return dbClient.insertInto("trip_new").values(trips).returningAll().execute();
 };

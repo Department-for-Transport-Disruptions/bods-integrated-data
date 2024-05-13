@@ -1,12 +1,11 @@
-import { Database, Agency, NewRoute, Route } from "@bods-integrated-data/shared/database";
+import { Agency, NewRoute, Route, KyselyDb } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
 import { notEmpty, getRouteTypeFromServiceMode } from "@bods-integrated-data/shared/utils";
-import { Kysely } from "kysely";
 import { getTndsRoute, insertRoute } from "./database";
 import { DuplicateRouteError } from "../errors";
 
 export const processRoutes = async (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     service: Service,
     agency: Agency,
     isTnds: boolean,

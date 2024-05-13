@@ -1,13 +1,12 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { VehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { Kysely } from "kysely";
 
-const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: Kysely<Database>) => {
+const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: KyselyDb) => {
     const insertChunks = chunkArray(vehicleActivity, 3000);
 
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
@@ -34,7 +33,7 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const processSqsRecord = async (record: S3EventRecord, dbClient: Kysely<Database>) => {
+export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb) => {
     const data = await getS3Object({
         Bucket: record.s3.bucket.name,
         Key: record.s3.object.key,

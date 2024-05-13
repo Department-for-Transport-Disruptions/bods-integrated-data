@@ -1,12 +1,11 @@
-import { Database, NewTrip, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
-import { Kysely } from "kysely";
+import { KyselyDb, NewTrip, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import { processTrips } from "./trips";
 import { VehicleJourneyMapping } from "../types";
 
 describe("trips", () => {
-    let dbClient: Kysely<Database>;
+    let dbClient: KyselyDb;
     const insertTripsMock = vi.spyOn(databaseFunctions, "insertTrips");
 
     beforeEach(() => {

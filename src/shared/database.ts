@@ -383,3 +383,5 @@ export interface NocOperatorTable {
 export type NocOperator = Selectable<NocOperatorTable>;
 export type NewNocOperator = Insertable<NocOperatorTable>;
 export type NocOperatorUpdate = Updateable<NocOperatorTable>;
+
+export type KyselyDb = Kysely<Database>;

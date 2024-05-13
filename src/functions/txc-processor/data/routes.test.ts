@@ -1,12 +1,11 @@
-import { Agency, Database, NewRoute, Route, RouteType } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, NewRoute, Route, RouteType } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import { processRoutes } from "./routes";
 
 describe("routes", () => {
-    let dbClient: Kysely<Database>;
+    let dbClient: KyselyDb;
     const getTndsRouteMock = vi.spyOn(databaseFunctions, "getTndsRoute");
     const insertRouteMock = vi.spyOn(databaseFunctions, "insertRoute");
 

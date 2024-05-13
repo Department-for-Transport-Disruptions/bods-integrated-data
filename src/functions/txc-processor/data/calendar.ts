@@ -1,7 +1,7 @@
 import {
     Calendar,
     CalendarDateExceptionType,
-    Database,
+    KyselyDb,
     NewCalendar,
     NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
@@ -13,7 +13,6 @@ import {
 } from "@bods-integrated-data/shared/schema/dates.schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Dayjs } from "dayjs";
-import { Kysely } from "kysely";
 import { hasher } from "node-object-hash";
 import { insertCalendarDates, insertCalendars } from "./database";
 import { CalendarWithDates, VehicleJourneyMapping } from "../types";
@@ -418,7 +417,7 @@ export const mapVehicleJourneysToCalendars = (
     });
 
 export const processCalendarDates = async (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     insertedCalendars: Calendar[],
     calendarsWithDates: CalendarWithDates[],
 ) => {
@@ -447,7 +446,7 @@ export const processCalendarDates = async (
 };
 
 export const processCalendars = async (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     service: Service,
     vehicleJourneyMappings: VehicleJourneyMapping[],
     bankHolidaysJson: BankHolidaysJson,
