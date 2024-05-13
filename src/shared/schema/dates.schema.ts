@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { BankHolidaysJson, createBankHolidayFunctions, getDate, getNextOccurrenceOfDate } from "../dates";
+import {
+    BankHolidaysJson,
+    createBankHolidayFunctions,
+    getDate,
+    getDatesInRange,
+    getNextOccurrenceOfDate,
+} from "../dates";
 import { notEmpty, txcSelfClosingProperty } from "../utils";
 
 export const DEFAULT_DATE_FORMAT = "YYYYMMDD";
@@ -172,3 +178,12 @@ export const getTransformedBankHolidayOperationSchema = (
 
     return [...new Set(dates)];
 };
+
+export const dateRange = z
+    .object({
+        StartDate: z.string(),
+        EndDate: z.string(),
+    })
+    .transform((range) => getDatesInRange(getDate(range.StartDate), getDate(range.EndDate)));
+
+export const formattedDateRange = dateRange.transform((dates) => dates.map((date) => date.format(DEFAULT_DATE_FORMAT)));
