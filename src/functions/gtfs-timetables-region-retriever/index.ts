@@ -39,8 +39,6 @@ export const handler = async () => {
             };
         }
 
-        logger.info("data", objects);
-
         const regionFileNames = objects.Contents?.map((item) => item.Key?.slice(0, -9).toUpperCase()).filter(notEmpty);
 
         const regions = regionFileNames.map((region) => ({
