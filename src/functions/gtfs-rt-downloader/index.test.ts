@@ -11,6 +11,9 @@ describe("gtfs-downloader-endpoint", () => {
             getPresignedUrl: vi.fn(),
             execute: vi.fn(),
             destroy: vi.fn(),
+            mockDbClient: {
+                destroy: vi.fn(),
+            },
         };
     });
 
@@ -18,6 +21,11 @@ describe("gtfs-downloader-endpoint", () => {
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object,
         getPresignedUrl: mocks.getPresignedUrl,
+    }));
+
+    vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/database")>()),
+        getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
     }));
 
     const getAvlDataForGtfsMock = vi.spyOn(utilFunctions, "getAvlDataForGtfs");
@@ -38,7 +46,8 @@ describe("gtfs-downloader-endpoint", () => {
     });
 
     afterEach(() => {
-        vi.resetAllMocks();
+        vi.clearAllMocks();
+        getAvlDataForGtfsMock.mockReset();
     });
 
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
@@ -150,7 +159,7 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith("1", undefined);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1", undefined);
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -169,7 +178,7 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith("1,2,3", undefined);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1,2,3", undefined);
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -204,7 +213,11 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(undefined, "1970-01-01T00:02:03.000Z");
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                undefined,
+                "1970-01-01T00:02:03.000Z",
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 

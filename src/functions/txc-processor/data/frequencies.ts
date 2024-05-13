@@ -1,14 +1,10 @@
-import { Database, NewFrequency, ServiceType } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewFrequency, ServiceType } from "@bods-integrated-data/shared/database";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { Kysely } from "kysely";
 import { insertFrequencies } from "./database";
 import { VehicleJourneyMapping } from "../types";
 
-export const processFrequencies = async (
-    dbClient: Kysely<Database>,
-    vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
+export const processFrequencies = async (dbClient: KyselyDb, vehicleJourneyMappings: VehicleJourneyMapping[]) => {
     const frequencies = vehicleJourneyMappings
         .map<NewFrequency | null>((vehicleJourneyMapping) => {
             const { vehicleJourney } = vehicleJourneyMapping;

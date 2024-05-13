@@ -1,4 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import {
     base64Encode,
@@ -23,29 +24,22 @@ const queryParametersSchema = z.preprocess(
     }),
 );
 
-const retrieveRouteData = async (routeId?: string, startTime?: string): Promise<APIGatewayProxyResultV2> => {
-    try {
-        const avlData = await getAvlDataForGtfs(routeId, startTime);
-        const entities = avlData.map(mapAvlToGtfsEntity);
-        const gtfsRtFeed = generateGtfsRtFeed(entities);
-        const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
+const retrieveRouteData = async (
+    dbClient: KyselyDb,
+    routeId?: string,
+    startTime?: string,
+): Promise<APIGatewayProxyResultV2> => {
+    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime);
+    const entities = avlData.map(mapAvlToGtfsEntity);
+    const gtfsRtFeed = generateGtfsRtFeed(entities);
+    const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/octet-stream" },
-            body: base64GtfsRtFeed,
-            isBase64Encoded: true,
-        };
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was an error retrieving the route data", error);
-        }
-
-        return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        };
-    }
+    return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/octet-stream" },
+        body: base64GtfsRtFeed,
+        isBase64Encoded: true,
+    };
 };
 
 const downloadData = async (bucketName: string, key: string): Promise<APIGatewayProxyResultV2> => {
@@ -125,8 +119,24 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     const { download, routeId, startTimeAfter } = parseResult.data;
 
     if (routeId || startTimeAfter) {
-        const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
-        return await retrieveRouteData(routeId, startTime);
+        const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+
+        try {
+            const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
+
+            return await retrieveRouteData(dbClient, routeId, startTime);
+        } catch (error) {
+            if (error instanceof Error) {
+                logger.error("There was an error retrieving the route data", error);
+            }
+
+            return {
+                statusCode: 500,
+                body: "An unknown error occurred. Please try again.",
+            };
+        } finally {
+            await dbClient.destroy();
+        }
     }
 
     if (download === "true") {

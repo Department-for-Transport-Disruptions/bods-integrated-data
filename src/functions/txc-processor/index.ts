@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, Database, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
@@ -14,7 +14,6 @@ import {
 } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { Kysely } from "kysely";
 import { fromZodError } from "zod-validation-error";
 import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
@@ -74,7 +73,7 @@ const getBankHolidaysJson = async (bucket: string) => {
 };
 
 const processServices = (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     bankHolidaysJson: BankHolidaysJson,
     operators: Operator[],
     services: Service[],
@@ -237,7 +236,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return txcJson.data;
 };
 
-const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: Kysely<Database>) => {
+const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolidaysJson, dbClient: KyselyDb) => {
     logger.info(`Starting txc processor for file: ${record.s3.object.key}`);
 
     const isTnds = record.s3.bucket.name.includes("-tnds-");

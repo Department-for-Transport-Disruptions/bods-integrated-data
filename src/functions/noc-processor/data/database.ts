@@ -1,8 +1,7 @@
-import { Database, NewNocOperator } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewNocOperator } from "@bods-integrated-data/shared/database";
 import { NocTableRecord } from "@bods-integrated-data/shared/schema";
-import { Kysely } from "kysely";
 
-export const insertNocOperator = async (dbClient: Kysely<Database>, nocRecords: NocTableRecord[]) => {
+export const insertNocOperator = async (dbClient: KyselyDb, nocRecords: NocTableRecord[]) => {
     const records = nocRecords.map((record): NewNocOperator => {
         return {
             noc: record.NOCCODE,

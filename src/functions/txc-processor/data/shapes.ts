@@ -1,8 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
-import { Database, NewShape } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewShape } from "@bods-integrated-data/shared/database";
 import { TxcRouteSection, TxcRoute, TxcRouteLink } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { Kysely } from "kysely";
 import { randomUUID } from "crypto";
 import { insertShapes } from "./database";
 import { VehicleJourneyMapping } from "../types";
@@ -96,7 +95,7 @@ export const mapRouteLinksToShapes = (routeLinks: TxcRouteLink[]) => {
 };
 
 export const processShapes = async (
-    dbClient: Kysely<Database>,
+    dbClient: KyselyDb,
     routes: TxcRoute[],
     routeSections: TxcRouteSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
