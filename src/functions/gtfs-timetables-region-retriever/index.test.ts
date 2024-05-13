@@ -31,7 +31,7 @@ describe("gtfs-timetables-region-retriever", () => {
         await expect(handler()).resolves.toEqual({
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: [],
+            body: "[]",
         });
     });
 
@@ -66,7 +66,7 @@ describe("gtfs-timetables-region-retriever", () => {
         await expect(handler()).resolves.toEqual({
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: [
+            body: JSON.stringify([
                 {
                     regionCode: "EA",
                     regionName: "East Anglia",
@@ -75,7 +75,47 @@ describe("gtfs-timetables-region-retriever", () => {
                     regionCode: "L",
                     regionName: "London",
                 },
+            ]),
+        });
+    });
+
+    it("filters out invalid regions", async () => {
+        vi.spyOn(s3, "listS3Objects").mockResolvedValue({
+            Contents: [
+                {
+                    Key: "ea_gtfs.zip",
+                    LastModified: new Date(),
+                    ETag: '"d54b8d2d8837c53449ea7c9d5016e132-10"',
+                    Size: 48250425,
+                    StorageClass: "STANDARD",
+                },
+                {
+                    Key: "invalid_gtfs.zip",
+                    LastModified: new Date(),
+                    ETag: '"ea14c28d9b166a5bca2eec361cc908d1-8"',
+                    Size: 37773219,
+                    StorageClass: "STANDARD",
+                },
             ],
+            $metadata: {
+                attempts: 1,
+                cfId: "test",
+                extendedRequestId: "test",
+                httpStatusCode: 200,
+                requestId: "test",
+                totalRetryDelay: 60,
+            },
+        });
+
+        await expect(handler()).resolves.toEqual({
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify([
+                {
+                    regionCode: "EA",
+                    regionName: "East Anglia",
+                },
+            ]),
         });
     });
 });

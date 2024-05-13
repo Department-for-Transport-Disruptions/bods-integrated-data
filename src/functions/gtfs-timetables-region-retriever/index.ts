@@ -3,8 +3,9 @@ import { GTFS_FILE_SUFFIX, REGION_MAPPINGS } from "@bods-integrated-data/shared/
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
+import { APIGatewayProxyResultV2 } from "aws-lambda";
 
-export const handler = async () => {
+export const handler = async (): Promise<APIGatewayProxyResultV2> => {
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 
@@ -22,7 +23,7 @@ export const handler = async () => {
             return {
                 statusCode: 200,
                 headers: { "Content-Type": "application/json" },
-                body: [],
+                body: "[]",
             };
         }
 
@@ -40,7 +41,7 @@ export const handler = async () => {
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: regions,
+            body: JSON.stringify(regions),
         };
     } catch (e) {
         if (e instanceof Error) {
