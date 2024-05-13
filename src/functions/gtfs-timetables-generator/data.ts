@@ -64,7 +64,7 @@ export const queryBuilder = (dbClient: KyselyDb): Query[] => [
                     "agency.noc as agency_noc",
                 ])
                 .distinct()
-                .orderBy("route.agency_id asc");
+                .orderBy("agency_id asc");
 
             return query.compile().sql;
         },
@@ -259,7 +259,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: string): Qu
                     "agency.noc as agency_noc",
                 ])
                 .distinct()
-                .orderBy("route.agency_id asc");
+                .orderBy("agency_id asc");
 
             return query.compile().sql;
         },
