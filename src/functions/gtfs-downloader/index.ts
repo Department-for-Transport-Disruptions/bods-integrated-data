@@ -16,7 +16,7 @@ export const handler = async (event?: APIGatewayProxyEventV2): Promise<APIGatewa
         };
     }
 
-    let region = RegionCode.ALL;
+    let region: RegionCode = "ALL";
 
     if (event?.queryStringParameters?.region) {
         const parsedRegion = regionCodeSchema.safeParse(event.queryStringParameters.region);

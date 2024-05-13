@@ -1,19 +1,8 @@
 export const GTFS_FILE_SUFFIX = "_gtfs";
 
-export enum RegionCode {
-    "EA" = "EA",
-    "EM" = "EM",
-    "L" = "L",
-    "NE" = "NE",
-    "NW" = "NW",
-    "S" = "S",
-    "SE" = "SE",
-    "SW" = "SW",
-    "W" = "W",
-    "WM" = "WM",
-    "Y" = "Y",
-    "ALL" = "ALL",
-}
+export const regionCodes = ["EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y", "ALL"] as const;
+
+export type RegionCode = (typeof regionCodes)[number];
 
 export const REGION_MAPPINGS: { [key in RegionCode]: string } = {
     ALL: "All",

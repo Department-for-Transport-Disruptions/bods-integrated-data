@@ -1,4 +1,4 @@
 import { z } from "zod";
-import { RegionCode } from "../constants";
+import { regionCodes } from "../constants";
 
-export const regionCodeSchema = z.nativeEnum(RegionCode);
+export const regionCodeSchema = z.enum(regionCodes);

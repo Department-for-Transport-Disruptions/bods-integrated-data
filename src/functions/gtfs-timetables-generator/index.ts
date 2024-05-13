@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { GTFS_FILE_SUFFIX, RegionCode } from "@bods-integrated-data/shared/constants";
+import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     createLazyDownloadStreamFrom,
@@ -104,23 +104,22 @@ export const handler = async (payload?: { regionCode?: string }) => {
 
     const dbClient = await getDatabaseClient(stage === "local");
 
-    const regionCode = regionCodeSchema.parse(payload?.regionCode ?? RegionCode.ALL);
+    const regionCode = regionCodeSchema.parse(payload?.regionCode ?? "ALL");
 
     try {
         logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
 
-        if (regionCode !== RegionCode.ALL) {
+        if (regionCode !== "ALL") {
             await createRegionalTripTable(dbClient, regionCode);
         }
 
-        let queries =
-            regionCode === RegionCode.ALL ? queryBuilder(dbClient) : regionalQueryBuilder(dbClient, regionCode);
+        let queries = regionCode === "ALL" ? queryBuilder(dbClient) : regionalQueryBuilder(dbClient, regionCode);
 
         const filePath = `${regionCode.toLowerCase()}${GTFS_FILE_SUFFIX}`;
 
         await exportDataToS3(queries, outputBucket, dbClient, filePath);
 
-        if (regionCode !== RegionCode.ALL) {
+        if (regionCode !== "ALL") {
             await dropRegionalTable(dbClient, regionCode);
 
             queries = await ignoreEmptyFiles(outputBucket, filePath, queries);
