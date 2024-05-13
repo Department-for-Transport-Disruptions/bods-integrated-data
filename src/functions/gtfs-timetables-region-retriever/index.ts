@@ -1,21 +1,8 @@
 import { logger } from "@baselime/lambda-logger";
+import { GTFS_FILE_SUFFIX, REGION_MAPPINGS } from "@bods-integrated-data/shared/constants";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
-import { notEmpty } from "@bods-integrated-data/shared/utils";
-
-const regionMappings: { [key: string]: string } = {
-    ALL: "All",
-    EA: "East Anglia",
-    EM: "East Midlands",
-    L: "London",
-    S: "Scotland",
-    SE: "South East",
-    SW: "South West",
-    NE: "North East",
-    NW: "North West",
-    W: "Wales",
-    WM: "West Midlands",
-    Y: "Yorkshire",
-};
+import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
+import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
 
 export const handler = async () => {
     try {
@@ -39,11 +26,15 @@ export const handler = async () => {
             };
         }
 
-        const regionFileNames = objects.Contents?.map((item) => item.Key?.slice(0, -9).toUpperCase()).filter(notEmpty);
+        const regionFileNames = objects.Contents?.map((item) =>
+            item.Key?.split(GTFS_FILE_SUFFIX)[0].toUpperCase(),
+        ).filter(notEmpty);
 
-        const regions = regionFileNames.map((region) => ({
+        const validRegions = makeFilteredArraySchema(regionCodeSchema).parse(regionFileNames);
+
+        const regions = validRegions.map((region) => ({
             regionCode: region,
-            regionName: regionMappings[region],
+            regionName: REGION_MAPPINGS[region],
         }));
 
         return {

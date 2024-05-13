@@ -1,3 +1,4 @@
+import { RegionCode } from "@bods-integrated-data/shared/constants";
 import { Database, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { Kysely, sql } from "kysely";
@@ -9,7 +10,7 @@ export type Query = {
     include: boolean;
 };
 
-export const createRegionalTripTable = async (dbClient: Kysely<Database>, regionCode: string) => {
+export const createRegionalTripTable = async (dbClient: Kysely<Database>, regionCode: RegionCode) => {
     await sql`
         CREATE TABLE ${sql.table(`trip_${regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
     `.execute(dbClient);
@@ -47,7 +48,7 @@ export const exportDataToS3 = async (
     );
 };
 
-export const dropRegionalTable = async (dbClient: Kysely<Database>, regionCode: string) => {
+export const dropRegionalTable = async (dbClient: Kysely<Database>, regionCode: RegionCode) => {
     await sql`
         DROP TABLE IF EXISTS ${sql.table(`trip_${regionCode}`)};
     `.execute(dbClient);
@@ -239,7 +240,7 @@ export const queryBuilder = (dbClient: Kysely<Database>): Query[] => [
     },
 ];
 
-export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: string): Query[] => [
+export const regionalQueryBuilder = (dbClient: Kysely<Database>, regionCode: RegionCode): Query[] => [
     {
         getQuery: () => {
             const query = dbClient

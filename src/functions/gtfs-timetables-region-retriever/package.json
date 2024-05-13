@@ -1,22 +1,22 @@
 {
-  "name": "@bods-integrated-data/gtfs-timetables-region-retriever",
-  "version": "0.1.0",
-  "description": "Lambda to retrieve a list GTFS timetable regions",
-  "scripts": {
-    "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-timetables-region-retriever.zip .",
-    "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-timetables-region-retriever.zip ../dist",
-    "test": "vitest run"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "@baselime/lambda-logger": "^0.2.2",
-    "@bods-integrated-data/shared": "workspace:^"
-  },
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.110",
-    "@types/node": "^20.11.19"
-  }
+    "name": "@bods-integrated-data/gtfs-timetables-region-retriever",
+    "version": "0.1.0",
+    "description": "Lambda to retrieve a list of GTFS timetable regions",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-timetables-region-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-timetables-region-retriever.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
 }

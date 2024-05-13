@@ -1,4 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
+import { GTFS_FILE_SUFFIX, RegionCode } from "@bods-integrated-data/shared/constants";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     createLazyDownloadStreamFrom,
@@ -6,6 +7,7 @@ import {
     listS3Objects,
     startS3Upload,
 } from "@bods-integrated-data/shared/s3";
+import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import archiver from "archiver";
 import path from "path";
 import { PassThrough } from "stream";
@@ -102,29 +104,23 @@ export const handler = async (payload?: { regionCode?: string }) => {
 
     const dbClient = await getDatabaseClient(stage === "local");
 
-    const regionCode = payload?.regionCode ?? null;
+    const regionCode = regionCodeSchema.parse(payload?.regionCode ?? RegionCode.ALL);
 
     try {
-        let queries: Query[];
-        let filePath: string;
+        logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
 
-        if (regionCode) {
-            logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
-
+        if (regionCode !== RegionCode.ALL) {
             await createRegionalTripTable(dbClient, regionCode);
-
-            queries = regionalQueryBuilder(dbClient, regionCode);
-            filePath = `${regionCode.toLowerCase()}_gtfs`;
-        } else {
-            logger.info("Starting GTFS Timetable Generator");
-
-            queries = queryBuilder(dbClient);
-            filePath = "all_gtfs";
         }
+
+        let queries =
+            regionCode === RegionCode.ALL ? queryBuilder(dbClient) : regionalQueryBuilder(dbClient, regionCode);
+
+        const filePath = `${regionCode.toLowerCase()}${GTFS_FILE_SUFFIX}`;
 
         await exportDataToS3(queries, outputBucket, dbClient, filePath);
 
-        if (regionCode) {
+        if (regionCode !== RegionCode.ALL) {
             await dropRegionalTable(dbClient, regionCode);
 
             queries = await ignoreEmptyFiles(outputBucket, filePath, queries);
