@@ -3,9 +3,18 @@ import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 
 const regionMappings: { [key: string]: string } = {
-    L: "London",
     ALL: "All",
     EA: "East Anglia",
+    EM: "East Midlands",
+    L: "London",
+    S: "Scotland",
+    SE: "South East",
+    SW: "South West",
+    NE: "North East",
+    NW: "North West",
+    W: "Wales",
+    WM: "West Midlands",
+    Y: "Yorkshire",
 };
 
 export const handler = async () => {
@@ -22,18 +31,28 @@ export const handler = async () => {
 
         if (!objects || !objects.Contents) {
             logger.warn("No files found in bucket.");
-            return [];
+
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/json" },
+                body: [],
+            };
         }
+
+        logger.info("data", objects);
 
         const regionFileNames = objects.Contents?.map((item) => item.Key?.slice(0, -9).toUpperCase()).filter(notEmpty);
 
-        const res = regionFileNames.map((region) => ({
+        const regions = regionFileNames.map((region) => ({
             regionCode: region,
             regionName: regionMappings[region],
         }));
 
-        logger.info("data", res);
-        return res;
+        return {
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: regions,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error when retrieving GTFS regions.", e);
