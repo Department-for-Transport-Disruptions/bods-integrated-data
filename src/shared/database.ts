@@ -234,7 +234,7 @@ export enum CalendarDateExceptionType {
 
 export interface GtfsCalendarDateTable {
     id: Generated<number>;
-    service_id: number | null;
+    service_id: number;
     date: string;
     exception_type: CalendarDateExceptionType;
 }

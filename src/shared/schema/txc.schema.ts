@@ -1,6 +1,5 @@
 import { ZodSchema, z } from "zod";
-import { DEFAULT_DATE_FORMAT, bankHolidayOperationSchema } from "./dates.schema";
-import { getDate, getDateRange } from "../dates";
+import { bankHolidayOperationSchema, dateRange, formattedDateRange } from "./dates.schema";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
 export const operatorSchema = z.object({
@@ -18,15 +17,6 @@ export const operatingPeriodSchema = z.object({
 });
 
 export type OperatingPeriod = z.infer<typeof operatingPeriodSchema>;
-
-const dateRange = z
-    .object({
-        StartDate: z.string(),
-        EndDate: z.string(),
-    })
-    .transform((range) => getDateRange(getDate(range.StartDate), getDate(range.EndDate)));
-
-const formattedDateRange = dateRange.transform((dates) => dates.map((date) => date.format(DEFAULT_DATE_FORMAT)));
 
 const servicedOperationDayTypeSchema = z.object({
     WorkingDays: z
@@ -343,5 +333,3 @@ export const txcSchema = z.object({
         StopPoints: castToObject(stopPointsSchema.optional()),
     }),
 });
-
-export const txcRegionsSchema = z.enum(["EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y"]);

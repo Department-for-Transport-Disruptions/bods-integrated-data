@@ -5,7 +5,7 @@ import {
     BankHolidayName,
     BankHolidaysJson,
     getDate,
-    getDateRange,
+    getDatesInRange,
     createBankHolidayFunctions,
     getNextOccurrenceOfDate,
 } from "./dates";
@@ -90,7 +90,15 @@ describe("getDateRange", () => {
             getDate("2024-03-08"),
             [getDate("2024-03-05"), getDate("2024-03-06"), getDate("2024-03-07"), getDate("2024-03-08")],
         ],
+        [getDate("2024-01-01"), getDate("2024-01-01"), [getDate("2024-01-01")]],
     ])("gets the next occurrence of a given date", (startDate, endDate, dates) => {
-        expect(getDateRange(startDate, endDate)).toEqual(dates);
+        expect(getDatesInRange(startDate, endDate)).toEqual(dates);
+    });
+
+    it("only includes dates up to 9 months in the future", () => {
+        expect(getDatesInRange(getDate("2024-11-30"), getDate("2099-12-10"))).toEqual([
+            getDate("2024-11-30"),
+            getDate("2024-12-01"),
+        ]);
     });
 });

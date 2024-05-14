@@ -114,15 +114,24 @@ export const isDateAfter = (date: Dayjs, dateToCompare: Dayjs) => date.isSameOrA
 
 export const getDuration = (duration: string) => dayjs.duration(duration);
 
-export const getDateRange = (startDate: Dayjs, endDate: Dayjs) => {
+/**
+ * Gets an array of dates between a given start and end date, if the end date
+ * is more than 9 months in the future then it is capped
+ *
+ * @param startDate
+ * @param endDate
+ * @returns Array of dates in range
+ */
+export const getDatesInRange = (startDate: Dayjs, endDate: Dayjs) => {
     const dates = [];
 
-    let currentDate = startDate;
+    let iteratorDate = startDate;
+    const dateIn9Months = getDate().add(9, "months");
 
-    while (currentDate.isSameOrBefore(endDate)) {
-        dates.push(currentDate);
+    while (iteratorDate.isSameOrBefore(endDate) && iteratorDate.isSameOrBefore(dateIn9Months)) {
+        dates.push(iteratorDate);
 
-        currentDate = currentDate.add(1, "day");
+        iteratorDate = iteratorDate.add(1, "day");
     }
 
     return dates;
