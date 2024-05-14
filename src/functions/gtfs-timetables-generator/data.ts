@@ -20,7 +20,7 @@ export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: Re
         SELECT DISTINCT t.* FROM trip t
         JOIN stop_time st ON st.trip_id = t.id
         JOIN stop s ON s.id = st.stop_id
-        WHERE s.region_code = ${regionCode}
+        WHERE s.region_code ${regionCode === "E" ? `IN ('EA', 'EM', 'L', 'NE', 'NW', 'SE', 'SW', 'WM', 'Y')` : `= ${regionCode}`}
     `.execute(dbClient);
 };
 
