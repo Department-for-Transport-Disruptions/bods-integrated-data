@@ -1,23 +1,11 @@
 import { logger } from "@baselime/lambda-logger";
+import { GTFS_FILE_SUFFIX, REGION_MAPPINGS } from "@bods-integrated-data/shared/constants";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
-import { notEmpty } from "@bods-integrated-data/shared/utils";
+import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
+import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
+import { APIGatewayProxyResultV2 } from "aws-lambda";
 
-const regionMappings: { [key: string]: string } = {
-    ALL: "All",
-    EA: "East Anglia",
-    EM: "East Midlands",
-    L: "London",
-    S: "Scotland",
-    SE: "South East",
-    SW: "South West",
-    NE: "North East",
-    NW: "North West",
-    W: "Wales",
-    WM: "West Midlands",
-    Y: "Yorkshire",
-};
-
-export const handler = async () => {
+export const handler = async (): Promise<APIGatewayProxyResultV2> => {
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 
@@ -35,21 +23,25 @@ export const handler = async () => {
             return {
                 statusCode: 200,
                 headers: { "Content-Type": "application/json" },
-                body: [],
+                body: "[]",
             };
         }
 
-        const regionFileNames = objects.Contents?.map((item) => item.Key?.slice(0, -9).toUpperCase()).filter(notEmpty);
+        const regionFileNames = objects.Contents?.map((item) =>
+            item.Key?.split(GTFS_FILE_SUFFIX)[0].toUpperCase(),
+        ).filter(notEmpty);
 
-        const regions = regionFileNames.map((region) => ({
+        const validRegions = makeFilteredArraySchema(regionCodeSchema).parse(regionFileNames);
+
+        const regions = validRegions.map((region) => ({
             regionCode: region,
-            regionName: regionMappings[region],
+            regionName: REGION_MAPPINGS[region],
         }));
 
         return {
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
-            body: regions,
+            body: JSON.stringify(regions),
         };
     } catch (e) {
         if (e instanceof Error) {

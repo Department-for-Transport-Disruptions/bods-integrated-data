@@ -32,7 +32,7 @@ module "integrated_data_gtfs_downloader_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:s3:::${var.gtfs_bucket_name}/*"
       ]
@@ -59,11 +59,11 @@ module "integrated_data_gtfs_region_retriever_function" {
   permissions = [
     {
       Action = [
-        "s3:ListObjects",
+        "s3:ListBucket",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
-        "arn:aws:s3:::${var.gtfs_bucket_name}/*"
+        "arn:aws:s3:::${var.gtfs_bucket_name}"
       ]
     },
   ]
