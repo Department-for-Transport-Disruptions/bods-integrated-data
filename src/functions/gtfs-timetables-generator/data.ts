@@ -26,7 +26,7 @@ export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: Re
         query = query.where("stop.region_code", "=", regionCode);
     }
 
-    await dbClient.schema.createTable(`trip_${regionCode}`).as(query).execute();
+    await query.execute();
 };
 
 export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: KyselyDb, filePath: string) => {
