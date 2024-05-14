@@ -15,13 +15,18 @@ export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: Re
         CREATE TABLE ${sql.table(`trip_${regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
     `.execute(dbClient);
 
-    await sql`
-        INSERT INTO ${sql.table(`trip_${regionCode}`)}
-        SELECT DISTINCT t.* FROM trip t
-        JOIN stop_time st ON st.trip_id = t.id
-        JOIN stop s ON s.id = st.stop_id
-        WHERE s.region_code ${regionCode === "E" ? `IN ('EA', 'EM', 'L', 'NE', 'NW', 'SE', 'SW', 'WM', 'Y')` : `= ${regionCode}`}
-    `.execute(dbClient);
+    let query = dbClient
+        .selectFrom("trip")
+        .innerJoin("stop_time", "stop_time.trip_id", "trip.id")
+        .innerJoin("stop", "stop.id", "stop_time.stop_id");
+
+    if (regionCode === "E") {
+        query = query.where("stop.region_code", "in", ["EA", "EM", "L", "NE", "NW", "SE", "SW", "WM", "Y"]);
+    } else {
+        query = query.where("stop.region_code", "=", regionCode);
+    }
+
+    await dbClient.schema.createTable(`trip_${regionCode}`).as(query).execute();
 };
 
 export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: KyselyDb, filePath: string) => {
@@ -44,9 +49,7 @@ export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbC
 };
 
 export const dropRegionalTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
-    await sql`
-        DROP TABLE IF EXISTS ${sql.table(`trip_${regionCode}`)};
-    `.execute(dbClient);
+    await dbClient.schema.dropTable(`trip_${regionCode}`).ifExists().execute();
 };
 
 export const queryBuilder = (dbClient: KyselyDb): Query[] => [
