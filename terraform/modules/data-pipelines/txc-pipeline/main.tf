@@ -250,7 +250,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 600
+  timeout         = 900
   memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
