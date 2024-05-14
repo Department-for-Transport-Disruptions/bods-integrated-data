@@ -504,39 +504,138 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "Generate GTFS"
+      "Next": "National GTFS"
     },
-
-    "Generate GTFS": {
+    "National GTFS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+        "Payload": {}
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "England GTFS"
+    },
+    "England GTFS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+        "Payload": {
+          "regionCode": "E"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "London GTFS"
+    },
+    "London GTFS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+        "Payload": {
+          "regionCode": "L"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "South East GTFS"
+    },
+    "South East GTFS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+        "Payload": {
+          "regionCode": "SE"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "South West GTFS"
+    },
+    "South West GTFS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+        "Payload": {
+          "regionCode": "SW"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Generate Remaining GTFS"
+    },
+    "Generate Remaining GTFS": {
       "Type": "Parallel",
       "End": true,
       "Branches": [
         {
-          "StartAt": "National GTFS",
+          "StartAt": "Wales GTFS",
           "States": {
-            "National GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {}
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "Wales GTFS"
-            },
             "Wales GTFS": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
@@ -585,61 +684,6 @@
                   "BackoffRate": 2
                 }
               ],
-              "Next": "South East GTFS"
-            },
-            "South East GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "SE"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "End": true
-            }
-          }
-        },
-        {
-          "StartAt": "England GTFS",
-          "States": {
-            "England GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "E"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
               "Next": "North West GTFS"
             },
             "North West GTFS": {
@@ -650,31 +694,6 @@
                 "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
                 "Payload": {
                   "regionCode": "NW"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "London GTFS"
-            },
-            "London GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "L"
                 }
               },
               "Retry": [
@@ -715,8 +734,13 @@
                   "BackoffRate": 2
                 }
               ],
-              "Next": "Yorkshire GTFS"
-            },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Yorkshire GTFS",
+          "States": {
             "Yorkshire GTFS": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
@@ -740,13 +764,8 @@
                   "BackoffRate": 2
                 }
               ],
-              "End": true
-            }
-          }
-        },
-        {
-          "StartAt": "East Anglia GTFS",
-          "States": {
+              "Next": "East Anglia GTFS"
+            },
             "East Anglia GTFS": {
               "Type": "Task",
               "Resource": "arn:aws:states:::lambda:invoke",
@@ -755,31 +774,6 @@
                 "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
                 "Payload": {
                   "regionCode": "EA"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "South West GTFS"
-            },
-            "South West GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "SW"
                 }
               },
               "Retry": [
