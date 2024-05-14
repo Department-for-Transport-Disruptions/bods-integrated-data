@@ -1,3 +1,5 @@
+import { expect } from "vitest";
+
 export const testSiri = `
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns="http://www.siri.org.uk/siri"
@@ -129,6 +131,7 @@ export const parsedSiri = [
         origin_aimed_departure_time: "2018-08-17T15:13:20",
         destination_ref: "destinationRef",
         block_ref: "blockRef",
+        geom: expect.anything() as unknown,
     },
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
@@ -150,5 +153,6 @@ export const parsedSiri = [
         origin_aimed_departure_time: "2018-08-17T15:22:20",
         destination_ref: "destinationRef",
         block_ref: "blockRef",
+        geom: expect.anything() as unknown,
     },
 ];

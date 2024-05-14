@@ -1,12 +1,13 @@
 import { logger } from "@baselime/lambda-logger";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { VehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
+import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { sql } from "kysely";
 
-const saveSiriToDatabase = async (vehicleActivity: VehicleActivity, dbClient: KyselyDb) => {
+const saveSiriToDatabase = async (vehicleActivity: NewAvl[], dbClient: KyselyDb) => {
     const insertChunks = chunkArray(vehicleActivity, 3000);
 
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
@@ -48,7 +49,17 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             throw new Error("Error parsing data");
         }
 
-        await saveSiriToDatabase(parsedSiri, dbClient);
+        const avlWithGeom = parsedSiri.map(
+            (item): NewAvl => ({
+                ...item,
+                geom:
+                    item.longitude && item.latitude
+                        ? sql`ST_SetSRID(ST_MakePoint(${item.longitude}, ${item.latitude}), 4326)`
+                        : null,
+            }),
+        );
+
+        await saveSiriToDatabase(avlWithGeom, dbClient);
     }
 };
 
