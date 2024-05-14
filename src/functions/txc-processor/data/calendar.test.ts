@@ -612,7 +612,7 @@ describe("calendar", () => {
                     saturday: 1,
                     sunday: 1,
                     start_date: "20240410",
-                    end_date: "20250110",
+                    end_date: "20250101",
                     calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
@@ -648,7 +648,7 @@ describe("calendar", () => {
             });
         });
 
-        it("sets end date to 9 months in the future if no operating period end date set", () => {
+        it("sets end date to 9 months from the current date if no operating period end date set", () => {
             const formattedCalendar = formatCalendar(
                 {
                     RegularDayType: {
@@ -669,7 +669,7 @@ describe("calendar", () => {
                     saturday: 1,
                     sunday: 1,
                     start_date: "20240604",
-                    end_date: "20250304",
+                    end_date: "20250101",
                     calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
@@ -1044,28 +1044,22 @@ describe("calendar", () => {
 
             expect(insertCalendarSpy).toBeCalledWith(dbClientMock, [
                 {
-                    calendar: {
-                        monday: 1,
-                        tuesday: 1,
-                        wednesday: 1,
-                        thursday: 1,
-                        friday: 1,
-                        saturday: 1,
-                        sunday: 1,
-                        start_date: "20240401",
-                        end_date: "20250101",
-                        calendar_hash: DEFAULT_HASH,
-                    },
-                    calendarDates: [],
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                    calendar_hash: DEFAULT_HASH,
                 },
                 {
-                    calendar: {
-                        ...defaultDaysOfOperation,
-                        friday: 1,
-                        end_date: "20250101",
-                        calendar_hash: "fd96c7104362826f9df45c7d00bfe33b391e1954e36304127f96f056ddae198a",
-                    },
-                    calendarDates: [],
+                    ...defaultDaysOfOperation,
+                    friday: 1,
+                    end_date: "20250101",
+                    calendar_hash: "fd96c7104362826f9df45c7d00bfe33b391e1954e36304127f96f056ddae198a",
                 },
             ]);
         });

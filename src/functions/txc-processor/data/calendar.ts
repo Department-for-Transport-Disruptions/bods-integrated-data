@@ -34,7 +34,7 @@ export const formatCalendarDates = (
     days
         .filter((day) => isDateBetween(getDateWithCustomFormat(day, DEFAULT_DATE_FORMAT), startDate, endDate))
         .map(
-            (day): NewCalendarDate => ({
+            (day): Omit<NewCalendarDate, "service_id"> => ({
                 date: day,
                 exception_type: exceptionType,
             }),
@@ -278,8 +278,10 @@ export const formatCalendar = (
     const startDate = getDateWithCustomFormat(operatingPeriod.StartDate, "YYYY-MM-DD");
     const endDate = operatingPeriod.EndDate ? getDateWithCustomFormat(operatingPeriod.EndDate, "YYYY-MM-DD") : null;
 
+    const dateIn9Months = currentDate.add(9, "months");
+
     const startDateToUse = startDate.isBefore(currentDate) ? currentDate : startDate;
-    const endDateToUse = endDate ?? startDateToUse.add(9, "months");
+    const endDateToUse = endDate?.isBefore(dateIn9Months) ? endDate : dateIn9Months;
 
     const specialDaysOfOperation = operatingProfile.SpecialDaysOperation?.DaysOfOperation?.DateRange.flat() ?? [];
     const specialDaysOfNonOperation = operatingProfile.SpecialDaysOperation?.DaysOfNonOperation?.DateRange.flat() ?? [];
@@ -432,8 +434,8 @@ export const processCalendarDates = async (
             }
 
             return calendarDatesToUse.map((cd) => ({
-                service_id: insertedCalendar.id,
                 ...cd,
+                service_id: insertedCalendar.id,
             }));
         })
         .filter(notEmpty);
@@ -478,7 +480,10 @@ export const processCalendars = async (
                 index === self.findIndex((c) => c.calendar.calendar_hash === value.calendar.calendar_hash),
         );
 
-    const insertedCalendars = await insertCalendars(dbClient, uniqueCalendars);
+    const insertedCalendars = await insertCalendars(
+        dbClient,
+        uniqueCalendars.map((uc) => uc.calendar),
+    );
     await processCalendarDates(dbClient, insertedCalendars, uniqueCalendars);
 
     return calendarVehicleJourneyMappings

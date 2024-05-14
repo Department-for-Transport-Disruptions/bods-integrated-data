@@ -9,10 +9,10 @@ import {
     NewAgency,
     NewStopTime,
     KyselyDb,
+    NewCalendar,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { BackoffOptions, backOff } from "exponential-backoff";
-import { CalendarWithDates } from "../types";
 
 const retryBackOffOptions: BackoffOptions = {
     jitter: "full",
@@ -45,9 +45,9 @@ export const insertAgency = async (dbClient: KyselyDb, agency: NewAgency) => {
         .executeTakeFirst();
 };
 
-export const insertCalendars = async (dbClient: KyselyDb, calendars: CalendarWithDates[]) => {
+export const insertCalendars = async (dbClient: KyselyDb, calendars: NewCalendar[]) => {
     const calendarChunks = chunkArray(
-        calendars.map((c) => c.calendar),
+        calendars.sort((a, b) => a.calendar_hash.localeCompare(b.calendar_hash)),
         3000,
     );
 
@@ -80,7 +80,10 @@ export const insertCalendars = async (dbClient: KyselyDb, calendars: CalendarWit
 };
 
 export const insertCalendarDates = async (dbClient: KyselyDb, calendarDates: NewCalendarDate[]) => {
-    const calendarDatesChunks = chunkArray(calendarDates, 3000);
+    const calendarDatesChunks = chunkArray(
+        calendarDates.sort((a, b) => a.service_id - b.service_id || a.date.localeCompare(b.date)),
+        3000,
+    );
 
     await Promise.all(
         calendarDatesChunks.map((chunk) =>
@@ -142,7 +145,10 @@ export const insertRoute = (dbClient: KyselyDb, route: NewRoute) => {
 };
 
 export const insertStops = async (dbClient: KyselyDb, stops: NewStop[]) => {
-    const insertChunks = chunkArray(stops, 3000);
+    const insertChunks = chunkArray(
+        stops.sort((a, b) => a.id.localeCompare(b.id)),
+        3000,
+    );
     await Promise.all(
         insertChunks.map((chunk) =>
             backOff(

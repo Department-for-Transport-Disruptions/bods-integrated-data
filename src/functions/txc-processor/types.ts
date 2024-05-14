@@ -13,5 +13,5 @@ export type VehicleJourneyMapping = {
 
 export type CalendarWithDates = {
     calendar: NewCalendar;
-    calendarDates: NewCalendarDate[];
+    calendarDates: Omit<NewCalendarDate, "service_id">[];
 };
