@@ -1,5 +1,5 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { Generated, Insertable, Kysely, PostgresDialect, Selectable, Updateable } from "kysely";
+import { Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable, Updateable } from "kysely";
 import { Pool } from "pg";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
@@ -162,10 +162,10 @@ export type NptgRegion = Selectable<NptgRegionTable>;
 export type NewNptgRegion = Insertable<NptgRegionTable>;
 export type NptgRegionUpdate = Updateable<NptgRegionTable>;
 
-export interface PostGISGeometry {
-    type: string;
-    coordinates: number[] | number[][] | number[][][];
-}
+export type Point = {
+    longitude: number;
+    latitude: number;
+};
 
 export interface AvlTable {
     id: Generated<number>;
@@ -188,7 +188,7 @@ export interface AvlTable {
     origin_aimed_departure_time: string | null;
     destination_ref: string | null;
     block_ref: string | null;
-    geom: PostGISGeometry | null;
+    geom: RawBuilder<string> | null;
 }
 
 export type Avl = Selectable<AvlTable>;
@@ -234,7 +234,7 @@ export enum CalendarDateExceptionType {
 
 export interface GtfsCalendarDateTable {
     id: Generated<number>;
-    service_id: number | null;
+    service_id: number;
     date: string;
     exception_type: CalendarDateExceptionType;
 }

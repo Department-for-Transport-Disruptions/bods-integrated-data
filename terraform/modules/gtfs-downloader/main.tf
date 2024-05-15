@@ -44,3 +44,32 @@ module "integrated_data_gtfs_downloader_function" {
     BUCKET_NAME = var.gtfs_bucket_name
   }
 }
+
+module "integrated_data_gtfs_region_retriever_function" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-gtfs-region-retriever"
+  zip_path      = "${path.module}/../../../src/functions/dist/gtfs-timetables-region-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 60
+  memory        = 512
+
+  permissions = [
+    {
+      Action = [
+        "s3:ListBucket",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:s3:::${var.gtfs_bucket_name}"
+      ]
+    },
+  ]
+
+  env_vars = {
+    STAGE       = var.environment
+    BUCKET_NAME = var.gtfs_bucket_name
+  }
+}
