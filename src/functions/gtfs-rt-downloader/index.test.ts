@@ -159,7 +159,7 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1", undefined);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1", undefined, undefined);
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -178,7 +178,7 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1,2,3", undefined);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1,2,3", undefined, undefined);
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -217,6 +217,7 @@ describe("gtfs-downloader-endpoint", () => {
                 mocks.mockDbClient,
                 undefined,
                 "1970-01-01T00:02:03.000Z",
+                undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -254,6 +255,7 @@ describe("gtfs-downloader-endpoint", () => {
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
+                undefined,
                 undefined,
                 "1970-01-01T00:02:03.000Z",
             );
