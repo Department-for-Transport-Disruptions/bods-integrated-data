@@ -87,6 +87,7 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  * @param routeId Optional route ID or comma-separated route IDs to filter on
  * @param startTimeBefore Optional start time before to filter on using the AVL's departure time
  * @param startTimeAfter Optional start time after to filter on using the AVL's departure time
+ * @param boundingBox Optional bounding box to filter on using the AVL's coordinates
  * @returns An array of AVL data enriched with route and trip IDs
  */
 export const getAvlDataForGtfs = async (
@@ -94,6 +95,7 @@ export const getAvlDataForGtfs = async (
     routeId?: string,
     startTimeBefore?: string,
     startTimeAfter?: string,
+    boundingBox?: string,
 ) => {
     try {
         let query = dbClient
@@ -138,6 +140,12 @@ export const getAvlDataForGtfs = async (
 
         if (startTimeAfter) {
             query = query.where("avl.origin_aimed_departure_time", ">", startTimeAfter);
+        }
+
+        if (boundingBox) {
+            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
         query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
