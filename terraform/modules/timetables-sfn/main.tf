@@ -38,8 +38,8 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_role" {
 }
 
 resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
-  name       = "integrated-data-timetables-sfn-${var.environment}"
-  role_arn   = aws_iam_role.integrated_data_timetables_sfn_role.arn
+  name     = "integrated-data-timetables-sfn-${var.environment}"
+  role_arn = aws_iam_role.integrated_data_timetables_sfn_role.arn
   definition = templatefile("${path.module}/timetables-state-machine.asl.json", {
     db_cleardown_function_arn              = var.db_cleardown_function_arn,
     noc_retriever_function_arn             = var.noc_retriever_function_arn,
@@ -69,7 +69,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
   name = "integrated-data-timetables-sfn-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -166,4 +166,17 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
 resource "aws_iam_role_policy_attachment" "integrated_data_timetables_sfn_policy_attachment" {
   policy_arn = aws_iam_policy.integrated_data_timetables_sfn_policy.arn
   role       = aws_iam_role.integrated_data_timetables_sfn_role.name
+}
+
+resource "aws_cloudwatch_event_rule" "sfn_schedule" {
+  count               = var.schedule != null ? 1 : 0
+  name                = "schedule-timetables-sfn"
+  description         = "Schedule for ${aws_sfn_state_machine.integrated_data_timetables_sfn.name}"
+  schedule_expression = var.schedule
+}
+
+resource "aws_cloudwatch_event_target" "schedule_lambda" {
+  count = var.schedule != null ? 1 : 0
+  rule  = aws_cloudwatch_event_rule.sfn_schedule[0].name
+  arn   = aws_sfn_state_machine.integrated_data_timetables_sfn.arn
 }
