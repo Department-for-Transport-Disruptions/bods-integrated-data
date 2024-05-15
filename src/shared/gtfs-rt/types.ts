@@ -1,6 +1,6 @@
-import { Avl } from "../database";
+import { AvlBods } from "../database";
 
-export type ExtendedAvl = Avl & {
+export type ExtendedAvl = AvlBods & {
     route_id: number | null;
     trip_id: string | null;
 };
