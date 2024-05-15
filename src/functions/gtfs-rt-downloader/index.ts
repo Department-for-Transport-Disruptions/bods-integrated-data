@@ -20,6 +20,7 @@ const queryParametersSchema = z.preprocess(
             .string()
             .regex(/^[0-9]+(,[0-9]+)*$/)
             .optional(),
+        startTimeBefore: z.coerce.number().optional(),
         startTimeAfter: z.coerce.number().optional(),
     }),
 );
@@ -27,9 +28,10 @@ const queryParametersSchema = z.preprocess(
 const retrieveRouteData = async (
     dbClient: KyselyDb,
     routeId?: string,
-    startTime?: string,
+    startTimeBefore?: string,
+    startTimeAfter?: string,
 ): Promise<APIGatewayProxyResultV2> => {
-    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime);
+    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTimeBefore, startTimeAfter);
     const entities = avlData.map(mapAvlToGtfsEntity);
     const gtfsRtFeed = generateGtfsRtFeed(entities);
     const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
@@ -116,15 +118,16 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { download, routeId, startTimeAfter } = parseResult.data;
+    const { download, routeId, startTimeBefore, startTimeAfter } = parseResult.data;
 
-    if (routeId || startTimeAfter) {
+    if (routeId || startTimeBefore || startTimeAfter) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
         try {
-            const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
+            const startTimeBeforeParsed = startTimeBefore ? getDate(startTimeBefore * 1000).toISOString() : undefined;
+            const startTimeAfterParsed = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
 
-            return await retrieveRouteData(dbClient, routeId, startTime);
+            return await retrieveRouteData(dbClient, routeId, startTimeBeforeParsed, startTimeAfterParsed);
         } catch (error) {
             if (error instanceof Error) {
                 logger.error("There was an error retrieving the route data", error);
