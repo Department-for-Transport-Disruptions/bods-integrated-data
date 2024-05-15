@@ -27,7 +27,7 @@ module "integrated_data_avl_processor_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-processor.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 30
+  timeout         = 60
   memory          = 1024
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
