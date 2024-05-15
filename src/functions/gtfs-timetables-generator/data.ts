@@ -11,12 +11,10 @@ export type Query = {
 };
 
 export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
-    await sql`
-        CREATE TABLE ${sql.table(`trip_${regionCode}`)} (LIKE trip INCLUDING DEFAULTS);
-    `.execute(dbClient);
-
     let query = dbClient
         .selectFrom("trip")
+        .selectAll("trip")
+        .distinct()
         .innerJoin("stop_time", "stop_time.trip_id", "trip.id")
         .innerJoin("stop", "stop.id", "stop_time.stop_id");
 
@@ -26,7 +24,7 @@ export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: Re
         query = query.where("stop.region_code", "=", regionCode);
     }
 
-    await query.execute();
+    await dbClient.schema.createTable(`trip_${regionCode}`).as(query).execute();
 };
 
 export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: KyselyDb, filePath: string) => {
