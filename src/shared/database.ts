@@ -62,6 +62,7 @@ export interface Database {
     nptg_region: NptgRegionTable;
     nptg_region_new: NptgRegionTable;
     avl: AvlTable;
+    avl_bods: AvlBodsTable;
     agency: GtfsAgencyTable;
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
