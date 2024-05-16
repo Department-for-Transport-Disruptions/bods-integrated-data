@@ -134,6 +134,7 @@ export const journeyPatternSchema = z.object({
     DestinationDisplay: z.string().optional(),
     RouteRef: z.string().optional(),
     JourneyPatternSectionRefs: z.string().array(),
+    Direction: z.string().optional(),
 });
 
 export type JourneyPattern = z.infer<typeof journeyPatternSchema>;

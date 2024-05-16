@@ -3,13 +3,15 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
-import { KyselyDb } from "../database";
+import { Calendar, KyselyDb } from "../database";
 import { getDate } from "../dates";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
     /(^[A-Z]{2}[0-9]{2}\s?[A-Z]{3}$)|(^[A-Z][0-9]{1,3}[A-Z]{3}$)|(^[A-Z]{3}[0-9]{1,3}[A-Z]$)|(^[0-9]{1,4}[A-Z]{1,2}$)|(^[0-9]{1,3}[A-Z]{1,3}$)|(^[A-Z]{1,2}[0-9]{1,4}$)|(^[A-Z]{1,3}[0-9]{1,3}$)|(^[A-Z]{1,3}[0-9]{1,4}$)|(^[0-9]{3}[DX]{1}[0-9]{3}$)/,
 );
+
+const daysOfWeek: (keyof Calendar)[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export const getOccupancyStatus = (occupancy: string): transit_realtime.VehiclePosition.OccupancyStatus => {
     switch (occupancy) {
@@ -98,6 +100,8 @@ export const getAvlDataForGtfs = async (
     boundingBox?: string,
 ) => {
     try {
+        const currentDate = getDate().toISOString();
+        const currentDay = daysOfWeek[getDate().day()];
         let query = dbClient
             .selectFrom("avl")
             .distinctOn(["avl.operator_ref", "avl.vehicle_ref"])
@@ -123,8 +127,17 @@ export const getAvlDataForGtfs = async (
                     .onRef("trip.route_id", "=", "routes_with_noc.route_id")
                     .onRef("trip.ticket_machine_journey_code", "=", "avl.dated_vehicle_journey_ref"),
             )
+            .leftJoin("calendar", (eb) => eb.onRef("calendar.id", "=", "trip.service_id"))
+            .leftJoin("calendar_date", (eb) =>
+                eb.onRef("calendar_date.service_id", "=", "trip.service_id").on("calendar_date.exception_type", "=", 2),
+            )
             .selectAll("avl")
-            .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"]);
+            .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
+            .where("calendar.start_date", "<=", currentDate)
+            .where("calendar.end_date", ">", currentDate)
+            .where(`calendar.${currentDay}`, "=", 1)
+            .where("calendar_date.exception_type", "is", null)
+            .where("avl.direction_ref", "=", "trip.direction");
 
         if (routeId) {
             query = query.where(

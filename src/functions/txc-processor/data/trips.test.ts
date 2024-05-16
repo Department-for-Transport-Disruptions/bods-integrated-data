@@ -1,8 +1,8 @@
 import { KyselyDb, NewTrip, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { VehicleJourneyMapping } from "../types";
 import * as databaseFunctions from "./database";
 import { processTrips } from "./trips";
-import { VehicleJourneyMapping } from "../types";
 
 describe("trips", () => {
     let dbClient: KyselyDb;
@@ -40,6 +40,7 @@ describe("trips", () => {
                     "@_id": "1",
                     DestinationDisplay: "jpDisplay1",
                     JourneyPatternSectionRefs: [],
+                    Direction: "inbound",
                 },
             },
             {
@@ -74,6 +75,7 @@ describe("trips", () => {
                 vehicle_journey_code: "8",
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
+                direction: "inbound",
             },
             {
                 id: expect.any(String) as string,
@@ -86,6 +88,7 @@ describe("trips", () => {
                 vehicle_journey_code: "18",
                 ticket_machine_journey_code: "",
                 file_path: "",
+                direction: "",
             },
         ];
 
@@ -141,6 +144,7 @@ describe("trips", () => {
                 vehicle_journey_code: "8",
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
+                direction: "",
             },
         ];
 

@@ -372,6 +372,7 @@ export interface GtfsTripTable {
     vehicle_journey_code: string;
     ticket_machine_journey_code: string;
     file_path: string;
+    direction: string;
 }
 
 export type Trip = Selectable<GtfsTripTable>;

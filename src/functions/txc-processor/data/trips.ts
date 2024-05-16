@@ -1,8 +1,8 @@
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
-import { notEmpty, getWheelchairAccessibilityFromVehicleType } from "@bods-integrated-data/shared/utils";
+import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { randomUUID } from "crypto";
-import { insertTrips } from "./database";
 import { VehicleJourneyMapping } from "../types";
+import { insertTrips } from "./database";
 
 export const processTrips = async (
     dbClient: KyselyDb,
@@ -33,6 +33,7 @@ export const processTrips = async (
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
                 ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
                 file_path: filePath,
+                direction: journeyPattern?.Direction || "",
             };
         })
         .filter(notEmpty);
