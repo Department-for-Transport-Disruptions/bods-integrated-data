@@ -91,8 +91,8 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
 export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, startTime?: string) => {
     try {
         let query = dbClient
-            .selectFrom("avl")
-            .distinctOn(["avl.operator_ref", "avl.vehicle_ref"])
+            .selectFrom("avl_bods")
+            .distinctOn(["avl_bods.operator_ref", "avl_bods.vehicle_ref"])
             .leftJoin(
                 (eb) =>
                     eb
@@ -107,15 +107,15 @@ export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, st
                     join.onRef(
                         "routes_with_noc.concat_noc_route_short_name",
                         "=",
-                        sql`CONCAT(avl.operator_ref, avl.line_ref)`,
+                        sql`CONCAT(avl_bods.operator_ref, avl_bods.line_ref)`,
                     ),
             )
             .leftJoin("trip", (eb) =>
                 eb
                     .onRef("trip.route_id", "=", "routes_with_noc.route_id")
-                    .onRef("trip.ticket_machine_journey_code", "=", "avl.dated_vehicle_journey_ref"),
+                    .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref"),
             )
-            .selectAll("avl")
+            .selectAll("avl_bods")
             .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"]);
 
         if (routeId) {
@@ -127,10 +127,10 @@ export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, st
         }
 
         if (startTime) {
-            query = query.where("avl.origin_aimed_departure_time", ">=", startTime);
+            query = query.where("avl_bods.origin_aimed_departure_time", ">=", startTime);
         }
 
-        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
+        query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);
 
         return query.execute();
     } catch (error) {
