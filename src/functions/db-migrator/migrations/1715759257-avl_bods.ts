@@ -22,6 +22,8 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("destination_ref", "text")
         .addColumn("block_ref", "text")
         .addColumn("data_frame_ref", "text")
+        .addColumn("occupancy", "text")
+        .addColumn("origin_aimed_departure_time", "text")
         .execute();
 }
 
