@@ -83,7 +83,7 @@ describe("getWheelchairAccessibilityFromVehicleType", () => {
             "bus",
         ],
     ])(
-        "should return NoAccessibilityInformation if VehicleType is missing,",
+        "should return NoAccessibilityInformation if VehicleType is undefined or if WheelChairAccessible or WheelChairEquipment is undefined,",
         (vehicleType?: VehicleType, mode?: string) => {
             expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
                 WheelchairAccessibility.NoAccessibilityInformation,
