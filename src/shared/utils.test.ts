@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { chunkArray, notEmpty } from "./utils";
+import { WheelchairAccessibility } from "./database";
+import { VehicleType } from "./schema";
+import { chunkArray, getWheelchairAccessibilityFromVehicleType, notEmpty } from "./utils";
 
 describe("chunkArray", () => {
     it.each([
@@ -36,4 +38,56 @@ describe("notEmpty", () => {
 
         expect(array.filter(notEmpty)).toEqual([1, 2, 3, 4]);
     });
+});
+
+describe("getWheelchairAccessibilityFromVehicleType", () => {
+    it.each([
+        [undefined, "underground"],
+        [
+            {
+                VehicleEquipment: { WheelchairEquipment: { NumberOfWheelChairAreas: 1 } },
+            },
+            "bus",
+        ],
+        [{ WheelChairAccessible: true }, "bus"],
+    ])(
+        "should return Accessible if mode is underground, WheelChairAccessible is true, or NumberOfWheelChairs is greater than zero ",
+        (vehicleType?: VehicleType, mode?: string) => {
+            expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
+                WheelchairAccessibility.Accessible,
+            );
+        },
+    );
+    it.each([
+        [{ WheelChairAccessible: false }, "bus"],
+        [
+            {
+                VehicleEquipment: { WheelchairEquipment: { NumberOfWheelChairAreas: 0 } },
+            },
+            "bus",
+        ],
+    ])(
+        "should return NotAccessible if WheelChairAccessible is false, or if NumberOfWheelChairs is equal to zero ",
+        (vehicleType?: VehicleType, mode?: string) => {
+            expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
+                WheelchairAccessibility.NotAccessible,
+            );
+        },
+    );
+    it.each([
+        [undefined, "bus"],
+        [
+            {
+                VehicleEquipment: { WheelChairAccessible: undefined, WheelchairEquipment: undefined },
+            },
+            "bus",
+        ],
+    ])(
+        "should return NoAccessibilityInformation if VehicleType is missing,",
+        (vehicleType?: VehicleType, mode?: string) => {
+            expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
+                WheelchairAccessibility.NoAccessibilityInformation,
+            );
+        },
+    );
 });

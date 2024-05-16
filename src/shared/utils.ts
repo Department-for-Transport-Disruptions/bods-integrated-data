@@ -39,7 +39,11 @@ export const getRouteTypeFromServiceMode = (mode?: string) => {
     }
 };
 
-export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleType) => {
+export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleType, mode?: string) => {
+    if (mode === "underground") {
+        return WheelchairAccessibility.Accessible;
+    }
+
     if (!vehicleType) {
         return WheelchairAccessibility.NoAccessibilityInformation;
     }
