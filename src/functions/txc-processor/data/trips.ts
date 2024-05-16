@@ -1,4 +1,4 @@
-import { KyselyDb, NewTrip, RouteType } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
 import { notEmpty, getWheelchairAccessibilityFromVehicleType } from "@bods-integrated-data/shared/utils";
 import { randomUUID } from "crypto";
 import { insertTrips } from "./database";

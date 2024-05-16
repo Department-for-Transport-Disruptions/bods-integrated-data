@@ -12,7 +12,6 @@ import {
     ServicedOrganisation,
     Operator,
 } from "@bods-integrated-data/shared/schema";
-import { getRouteTypeFromServiceMode } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
