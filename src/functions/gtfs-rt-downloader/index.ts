@@ -20,6 +20,11 @@ const queryParametersSchema = z.preprocess(
             .string()
             .regex(/^[0-9]+(,[0-9]+)*$/)
             .optional(),
+        boundingBox: z.coerce
+            .string()
+            .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)
+            .optional(),
+        startTimeBefore: z.coerce.number().optional(),
         startTimeAfter: z.coerce.number().optional(),
     }),
 );
@@ -27,9 +32,11 @@ const queryParametersSchema = z.preprocess(
 const retrieveRouteData = async (
     dbClient: KyselyDb,
     routeId?: string,
-    startTime?: string,
+    startTimeBefore?: string,
+    startTimeAfter?: string,
+    boundingBox?: string,
 ): Promise<APIGatewayProxyResultV2> => {
-    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime);
+    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTimeBefore, startTimeAfter, boundingBox);
     const entities = avlData.map(mapAvlToGtfsEntity);
     const gtfsRtFeed = generateGtfsRtFeed(entities);
     const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
@@ -116,15 +123,23 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { download, routeId, startTimeAfter } = parseResult.data;
+    const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = parseResult.data;
 
-    if (routeId || startTimeAfter) {
+    if (routeId || startTimeBefore || startTimeAfter || boundingBox) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
-        try {
-            const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
+        if (boundingBox && boundingBox.split(",").length !== 4) {
+            return {
+                statusCode: 400,
+                body: "Bounding box must contain 4 items; minLongitude, minLatitude, maxLongitude and maxLatitude",
+            };
+        }
 
-            return await retrieveRouteData(dbClient, routeId, startTime);
+        try {
+            const startTimeBeforeParsed = startTimeBefore ? getDate(startTimeBefore * 1000).toISOString() : undefined;
+            const startTimeAfterParsed = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
+
+            return await retrieveRouteData(dbClient, routeId, startTimeBeforeParsed, startTimeAfterParsed, boundingBox);
         } catch (error) {
             if (error instanceof Error) {
                 logger.error("There was an error retrieving the route data", error);

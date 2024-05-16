@@ -38,8 +38,8 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_role" {
 }
 
 resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
-  name       = "integrated-data-timetables-sfn-${var.environment}"
-  role_arn   = aws_iam_role.integrated_data_timetables_sfn_role.arn
+  name     = "integrated-data-timetables-sfn-${var.environment}"
+  role_arn = aws_iam_role.integrated_data_timetables_sfn_role.arn
   definition = templatefile("${path.module}/timetables-state-machine.asl.json", {
     db_cleardown_function_arn              = var.db_cleardown_function_arn,
     noc_retriever_function_arn             = var.noc_retriever_function_arn,
@@ -69,7 +69,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
   name = "integrated-data-timetables-sfn-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -166,4 +166,68 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
 resource "aws_iam_role_policy_attachment" "integrated_data_timetables_sfn_policy_attachment" {
   policy_arn = aws_iam_policy.integrated_data_timetables_sfn_policy.arn
   role       = aws_iam_role.integrated_data_timetables_sfn_role.name
+}
+
+resource "aws_iam_policy" "integrated_data_timetables_sfn_schedule_policy" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-timetables-sfn-schedule-policy-${var.environment}"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "states:StartExecution"
+        ],
+        "Resource" : [
+          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "integrated_data_timetables_sfn_schedule_role" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-timetables-sfn-schedule-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "scheduler.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole",
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+
+  managed_policy_arns = [aws_iam_policy.integrated_data_timetables_sfn_schedule_policy[0].arn]
+}
+
+resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-timetables-sfn-schedule-${var.environment}"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = var.schedule
+
+  target {
+    arn      = aws_sfn_state_machine.integrated_data_timetables_sfn.arn
+    role_arn = aws_iam_role.integrated_data_timetables_sfn_schedule_role[0].arn
+  }
 }

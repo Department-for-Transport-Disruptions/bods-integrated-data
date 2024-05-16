@@ -1,11 +1,12 @@
 export const GTFS_FILE_SUFFIX = "_gtfs";
 
-export const regionCodes = ["EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y", "ALL"] as const;
+export const regionCodes = ["E", "EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y", "ALL"] as const;
 
 export type RegionCode = (typeof regionCodes)[number];
 
 export const REGION_MAPPINGS: { [key in RegionCode]: string } = {
     ALL: "All",
+    E: "England",
     EA: "East Anglia",
     EM: "East Midlands",
     L: "London",

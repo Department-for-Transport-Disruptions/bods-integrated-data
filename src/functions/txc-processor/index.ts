@@ -195,7 +195,7 @@ const processServices = (
             servicedOrganisations,
         );
         vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
-        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath);
+        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath, service.Mode);
         await processFrequencies(dbClient, vehicleJourneyMappings);
         await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
     });

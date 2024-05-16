@@ -85,10 +85,18 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  * route ID or trip ID to be found.
  * @param dbClient The database client
  * @param routeId Optional route ID or comma-separated route IDs to filter on
- * @param startTime Optional start time to filter on using the AVL's departure time
+ * @param startTimeBefore Optional start time before to filter on using the AVL's departure time
+ * @param startTimeAfter Optional start time after to filter on using the AVL's departure time
+ * @param boundingBox Optional bounding box to filter on using the AVL's coordinates
  * @returns An array of AVL data enriched with route and trip IDs
  */
-export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, startTime?: string) => {
+export const getAvlDataForGtfs = async (
+    dbClient: KyselyDb,
+    routeId?: string,
+    startTimeBefore?: string,
+    startTimeAfter?: string,
+    boundingBox?: string,
+) => {
     try {
         let query = dbClient
             .selectFrom("avl_bods")
@@ -126,8 +134,18 @@ export const getAvlDataForGtfs = async (dbClient: KyselyDb, routeId?: string, st
             );
         }
 
-        if (startTime) {
-            query = query.where("avl_bods.origin_aimed_departure_time", ">=", startTime);
+        if (startTimeBefore) {
+            query = query.where("avl.origin_aimed_departure_time", "<", startTimeBefore);
+        }
+
+        if (startTimeAfter) {
+            query = query.where("avl.origin_aimed_departure_time", ">", startTimeAfter);
+        }
+
+        if (boundingBox) {
+            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
         query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);

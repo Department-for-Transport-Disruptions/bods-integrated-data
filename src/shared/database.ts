@@ -1,5 +1,5 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { Kysely, PostgresDialect, Insertable, Selectable, Updateable, Generated } from "kysely";
+import { Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable, Updateable } from "kysely";
 import { Pool } from "pg";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
@@ -163,6 +163,11 @@ export type NptgRegion = Selectable<NptgRegionTable>;
 export type NewNptgRegion = Insertable<NptgRegionTable>;
 export type NptgRegionUpdate = Updateable<NptgRegionTable>;
 
+export type Point = {
+    longitude: number;
+    latitude: number;
+};
+
 export interface AvlTable {
     id: Generated<number>;
     response_time_stamp: string;
@@ -184,6 +189,7 @@ export interface AvlTable {
     origin_aimed_departure_time: string | null;
     destination_ref: string | null;
     block_ref: string | null;
+    geom: RawBuilder<string> | null;
 }
 
 export type Avl = Selectable<AvlTable>;
