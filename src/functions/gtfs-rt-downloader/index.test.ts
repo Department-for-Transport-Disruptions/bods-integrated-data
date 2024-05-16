@@ -159,7 +159,13 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1", undefined, undefined);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                "1",
+                undefined,
+                undefined,
+                undefined,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -178,7 +184,13 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, "1,2,3", undefined, undefined);
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                "1,2,3",
+                undefined,
+                undefined,
+                undefined,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -193,6 +205,47 @@ describe("gtfs-downloader-endpoint", () => {
             await expect(handler(mockRequest)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "routeId"',
+            });
+
+            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
+        });
+
+        it("returns a 200 with filtered data when the startTimeBefore query param is a number", async () => {
+            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            base64EncodeMock.mockReturnValueOnce("test-base64");
+
+            mockRequest.queryStringParameters = {
+                startTimeBefore: "123",
+            };
+
+            await expect(handler(mockRequest)).resolves.toEqual({
+                statusCode: 200,
+                headers: { "Content-Type": "application/octet-stream" },
+                body: "test-base64",
+                isBase64Encoded: true,
+            });
+
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                undefined,
+                "1970-01-01T00:02:03.000Z",
+                undefined,
+                undefined,
+            );
+            expect(logger.error).not.toHaveBeenCalled();
+        });
+
+        it("returns a 400 when the startTimeBefore query param is an unexpected format", async () => {
+            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            base64EncodeMock.mockReturnValueOnce("test-base64");
+
+            mockRequest.queryStringParameters = {
+                startTimeBefore: "asdf",
+            };
+
+            await expect(handler(mockRequest)).resolves.toEqual({
+                statusCode: 400,
+                body: 'Validation error: Expected number, received nan at "startTimeBefore"',
             });
 
             expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
@@ -215,6 +268,7 @@ describe("gtfs-downloader-endpoint", () => {
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
+                undefined,
                 undefined,
                 "1970-01-01T00:02:03.000Z",
                 undefined,
@@ -253,7 +307,13 @@ describe("gtfs-downloader-endpoint", () => {
                 isBase64Encoded: true,
             });
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(mocks.mockDbClient, undefined, undefined, "1,2,3,4");
+            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                undefined,
+                undefined,
+                undefined,
+                "1,2,3,4",
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 

@@ -24,6 +24,7 @@ const queryParametersSchema = z.preprocess(
             .string()
             .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)
             .optional(),
+        startTimeBefore: z.coerce.number().optional(),
         startTimeAfter: z.coerce.number().optional(),
     }),
 );
@@ -31,10 +32,11 @@ const queryParametersSchema = z.preprocess(
 const retrieveRouteData = async (
     dbClient: KyselyDb,
     routeId?: string,
-    startTime?: string,
+    startTimeBefore?: string,
+    startTimeAfter?: string,
     boundingBox?: string,
 ): Promise<APIGatewayProxyResultV2> => {
-    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime, boundingBox);
+    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTimeBefore, startTimeAfter, boundingBox);
     const entities = avlData.map(mapAvlToGtfsEntity);
     const gtfsRtFeed = generateGtfsRtFeed(entities);
     const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
@@ -121,9 +123,9 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { download, routeId, startTimeAfter, boundingBox } = parseResult.data;
+    const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = parseResult.data;
 
-    if (routeId || startTimeAfter || boundingBox) {
+    if (routeId || startTimeBefore || startTimeAfter || boundingBox) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
         if (boundingBox && boundingBox.split(",").length !== 4) {
@@ -134,9 +136,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         }
 
         try {
-            const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
+            const startTimeBeforeParsed = startTimeBefore ? getDate(startTimeBefore * 1000).toISOString() : undefined;
+            const startTimeAfterParsed = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
 
-            return await retrieveRouteData(dbClient, routeId, startTime, boundingBox);
+            return await retrieveRouteData(dbClient, routeId, startTimeBeforeParsed, startTimeAfterParsed, boundingBox);
         } catch (error) {
             if (error instanceof Error) {
                 logger.error("There was an error retrieving the route data", error);
