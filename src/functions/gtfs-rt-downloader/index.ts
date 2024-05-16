@@ -20,6 +20,10 @@ const queryParametersSchema = z.preprocess(
             .string()
             .regex(/^[0-9]+(,[0-9]+)*$/)
             .optional(),
+        boundingBox: z.coerce
+            .string()
+            .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)
+            .optional(),
         startTimeAfter: z.coerce.number().optional(),
     }),
 );
@@ -28,8 +32,9 @@ const retrieveRouteData = async (
     dbClient: KyselyDb,
     routeId?: string,
     startTime?: string,
+    boundingBox?: string,
 ): Promise<APIGatewayProxyResultV2> => {
-    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime);
+    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTime, boundingBox);
     const entities = avlData.map(mapAvlToGtfsEntity);
     const gtfsRtFeed = generateGtfsRtFeed(entities);
     const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
@@ -116,15 +121,22 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { download, routeId, startTimeAfter } = parseResult.data;
+    const { download, routeId, startTimeAfter, boundingBox } = parseResult.data;
 
-    if (routeId || startTimeAfter) {
+    if (routeId || startTimeAfter || boundingBox) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+
+        if (boundingBox && boundingBox.split(",").length !== 4) {
+            return {
+                statusCode: 400,
+                body: "Bounding box must contain 4 items; minLongitude, minLatitude, maxLongitude and maxLatitude",
+            };
+        }
 
         try {
             const startTime = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
 
-            return await retrieveRouteData(dbClient, routeId, startTime);
+            return await retrieveRouteData(dbClient, routeId, startTime, boundingBox);
         } catch (error) {
             if (error instanceof Error) {
                 logger.error("There was an error retrieving the route data", error);
