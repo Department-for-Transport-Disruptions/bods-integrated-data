@@ -3,8 +3,8 @@ import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
-        .createTable("avl-bods")
-        .addColumn("id", "serial", (col) => col.primaryKey())
+        .createTable("avl_bods")
+        .addColumn("id", "integer", (col) => col.primaryKey().generatedByDefaultAsIdentity())
         .addColumn("response_time_stamp", "text")
         .addColumn("producer_ref", "text")
         .addColumn("recorded_at_time", "text")
@@ -28,5 +28,5 @@ export async function up(db: Kysely<Database>): Promise<void> {
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
-    await db.schema.dropTable("avl-bods").execute();
+    await db.schema.dropTable("avl_bods").execute();
 }
