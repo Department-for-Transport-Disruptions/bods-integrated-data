@@ -3,7 +3,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
-import { Calendar, KyselyDb } from "../database";
+import { Calendar, CalendarDateExceptionType, KyselyDb } from "../database";
 import { getDate } from "../dates";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
@@ -129,7 +129,9 @@ export const getAvlDataForGtfs = async (
             )
             .leftJoin("calendar", (eb) => eb.onRef("calendar.id", "=", "trip.service_id"))
             .leftJoin("calendar_date", (eb) =>
-                eb.onRef("calendar_date.service_id", "=", "trip.service_id").on("calendar_date.exception_type", "=", 2),
+                eb
+                    .onRef("calendar_date.service_id", "=", "trip.service_id")
+                    .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
             )
             .selectAll("avl")
             .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
