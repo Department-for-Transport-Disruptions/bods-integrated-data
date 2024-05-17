@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
-import { GTFS_FILE_SUFFIX, RegionCode } from "@bods-integrated-data/shared/constants";
+import { GTFS_FILE_SUFFIX, REGIONS, RegionCode } from "@bods-integrated-data/shared/constants";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
-import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
+import { regionCodeSchema, regionNameSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 
 export const handler = async (event?: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
@@ -18,17 +18,39 @@ export const handler = async (event?: APIGatewayProxyEventV2): Promise<APIGatewa
 
     let region: RegionCode = "ALL";
 
-    if (event?.queryStringParameters?.region) {
-        const parsedRegion = regionCodeSchema.safeParse(event.queryStringParameters.region);
+    if (event?.queryStringParameters?.regionCode) {
+        const parsedRegionCode = regionCodeSchema.safeParse(event.queryStringParameters.regionCode);
 
-        if (!parsedRegion.success) {
+        if (!parsedRegionCode.success) {
             return {
                 statusCode: 400,
                 body: "Invalid region code",
             };
         }
 
-        region = parsedRegion.data;
+        region = parsedRegionCode.data;
+    } else if (event?.queryStringParameters?.regionName) {
+        const parsedRegionName = regionNameSchema.safeParse(event.queryStringParameters.regionName);
+
+        if (!parsedRegionName.success) {
+            return {
+                statusCode: 400,
+                body: "Invalid region name",
+            };
+        }
+
+        const regionCodeFromName = Object.values(REGIONS).find(
+            (region) => region.regionName === parsedRegionName.data,
+        )?.regionCode;
+
+        if (!regionCodeFromName) {
+            return {
+                statusCode: 400,
+                body: "Invalid region name",
+            };
+        }
+
+        region = regionCodeFromName;
     }
 
     const fileName = `${region.toLowerCase()}${GTFS_FILE_SUFFIX}.zip`;

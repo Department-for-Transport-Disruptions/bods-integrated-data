@@ -7,10 +7,17 @@ import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { sql } from "kysely";
 
-const saveSiriToDatabase = async (vehicleActivity: NewAvl[], dbClient: KyselyDb) => {
+const saveSiriToDatabase = async (vehicleActivity: NewAvl[], dbClient: KyselyDb, fromBods: boolean) => {
     const insertChunks = chunkArray(vehicleActivity, 3000);
 
-    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            dbClient
+                .insertInto(fromBods ? "avl_bods" : "avl")
+                .values(chunk)
+                .execute(),
+        ),
+    );
 };
 
 const parseXml = (xml: string) => {
@@ -59,7 +66,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             }),
         );
 
-        await saveSiriToDatabase(avlWithGeom, dbClient);
+        await saveSiriToDatabase(avlWithGeom, dbClient, record.s3.object.key.startsWith("bods/"));
     }
 };
 
