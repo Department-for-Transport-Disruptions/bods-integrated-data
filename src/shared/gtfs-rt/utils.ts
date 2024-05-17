@@ -103,8 +103,8 @@ export const getAvlDataForGtfs = async (
         const currentDate = getDate().toISOString();
         const currentDay = daysOfWeek[getDate().day()];
         let query = dbClient
-            .selectFrom("avl")
-            .distinctOn(["avl.operator_ref", "avl.vehicle_ref"])
+            .selectFrom("avl_bods")
+            .distinctOn(["avl_bods.operator_ref", "avl_bods.vehicle_ref"])
             .leftJoin(
                 (eb) =>
                     eb
@@ -119,13 +119,13 @@ export const getAvlDataForGtfs = async (
                     join.onRef(
                         "routes_with_noc.concat_noc_route_short_name",
                         "=",
-                        sql`CONCAT(avl.operator_ref, avl.line_ref)`,
+                        sql`CONCAT(avl_bods.operator_ref, avl_bods.line_ref)`,
                     ),
             )
             .leftJoin("trip", (eb) =>
                 eb
                     .onRef("trip.route_id", "=", "routes_with_noc.route_id")
-                    .onRef("trip.ticket_machine_journey_code", "=", "avl.dated_vehicle_journey_ref"),
+                    .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref"),
             )
             .leftJoin("calendar", (eb) => eb.onRef("calendar.id", "=", "trip.service_id"))
             .leftJoin("calendar_date", (eb) =>
@@ -133,13 +133,13 @@ export const getAvlDataForGtfs = async (
                     .onRef("calendar_date.service_id", "=", "trip.service_id")
                     .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
             )
-            .selectAll("avl")
+            .selectAll("avl_bods")
             .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
             .where("calendar.start_date", "<=", currentDate)
             .where("calendar.end_date", ">", currentDate)
             .where(`calendar.${currentDay}`, "=", 1)
             .where("calendar_date.exception_type", "is", null)
-            .where("avl.direction_ref", "=", "trip.direction");
+            .where("avl_bods.direction_ref", "=", "trip.direction");
 
         if (routeId) {
             query = query.where(
@@ -150,11 +150,11 @@ export const getAvlDataForGtfs = async (
         }
 
         if (startTimeBefore) {
-            query = query.where("avl.origin_aimed_departure_time", "<", startTimeBefore);
+            query = query.where("avl_bods.origin_aimed_departure_time", "<", startTimeBefore);
         }
 
         if (startTimeAfter) {
-            query = query.where("avl.origin_aimed_departure_time", ">", startTimeAfter);
+            query = query.where("avl_bods.origin_aimed_departure_time", ">", startTimeAfter);
         }
 
         if (boundingBox) {
@@ -163,7 +163,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
+        query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);
 
         return query.execute();
     } catch (error) {

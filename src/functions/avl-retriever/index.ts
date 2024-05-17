@@ -17,7 +17,7 @@ const unzipAndUploadToS3 = async (avlResponse: AxiosResponse<Stream>, targetBuck
         const fileName = entry.path;
 
         if (fileName === "siri.xml") {
-            const upload = startS3Upload(targetBucketName, "bods-siri-vm.xml", entry, "application/xml");
+            const upload = startS3Upload(targetBucketName, "bods/siri-vm.xml", entry, "application/xml");
 
             await upload.done();
         }
