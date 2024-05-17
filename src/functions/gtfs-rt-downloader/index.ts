@@ -1,6 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
 import {
     base64Encode,
     generateGtfsRtFeed,
@@ -32,8 +31,8 @@ const queryParametersSchema = z.preprocess(
 const retrieveRouteData = async (
     dbClient: KyselyDb,
     routeId?: string,
-    startTimeBefore?: string,
-    startTimeAfter?: string,
+    startTimeBefore?: number,
+    startTimeAfter?: number,
     boundingBox?: string,
 ): Promise<APIGatewayProxyResultV2> => {
     const avlData = await getAvlDataForGtfs(dbClient, routeId, startTimeBefore, startTimeAfter, boundingBox);
@@ -136,10 +135,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         }
 
         try {
-            const startTimeBeforeParsed = startTimeBefore ? getDate(startTimeBefore * 1000).toISOString() : undefined;
-            const startTimeAfterParsed = startTimeAfter ? getDate(startTimeAfter * 1000).toISOString() : undefined;
-
-            return await retrieveRouteData(dbClient, routeId, startTimeBeforeParsed, startTimeAfterParsed, boundingBox);
+            return await retrieveRouteData(dbClient, routeId, startTimeBefore, startTimeAfter, boundingBox);
         } catch (error) {
             if (error instanceof Error) {
                 logger.error("There was an error retrieving the route data", error);

@@ -93,8 +93,8 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
 export const getAvlDataForGtfs = async (
     dbClient: KyselyDb,
     routeId?: string,
-    startTimeBefore?: string,
-    startTimeAfter?: string,
+    startTimeBefore?: number,
+    startTimeAfter?: number,
     boundingBox?: string,
 ) => {
     try {
@@ -135,11 +135,11 @@ export const getAvlDataForGtfs = async (
         }
 
         if (startTimeBefore) {
-            query = query.where("avl.origin_aimed_departure_time", "<", startTimeBefore);
+            query = query.where("avl.origin_aimed_departure_time", "<", sql<string>`to_timestamp(${startTimeBefore})`);
         }
 
         if (startTimeAfter) {
-            query = query.where("avl.origin_aimed_departure_time", ">", startTimeAfter);
+            query = query.where("avl.origin_aimed_departure_time", ">", sql<string>`to_timestamp(${startTimeAfter})`);
         }
 
         if (boundingBox) {
