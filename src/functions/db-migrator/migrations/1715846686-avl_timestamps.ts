@@ -13,6 +13,12 @@ export async function up(db: Kysely<Database>): Promise<void> {
             ac.setDataType(sql`TIMESTAMPTZ USING origin_aimed_departure_time::timestamptz`),
         )
         .execute();
+
+    await db.schema
+        .createIndex("idx_avl_origin_aimed_departure_time")
+        .on("avl")
+        .column("origin_aimed_departure_time")
+        .execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
@@ -23,4 +29,6 @@ export async function down(db: Kysely<Database>): Promise<void> {
         .alterColumn("valid_until_time", (ac) => ac.setDataType("text"))
         .alterColumn("origin_aimed_departure_time", (ac) => ac.setDataType("text"))
         .execute();
+
+    await db.schema.dropIndex("idx_avl_origin_aimed_departure_time").on("avl").execute();
 }
