@@ -228,7 +228,7 @@ describe("gtfs-downloader-endpoint", () => {
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 undefined,
-                "1970-01-01T00:02:03.000Z",
+                123,
                 undefined,
                 undefined,
             );
@@ -270,7 +270,7 @@ describe("gtfs-downloader-endpoint", () => {
                 mocks.mockDbClient,
                 undefined,
                 undefined,
-                "1970-01-01T00:02:03.000Z",
+                123,
                 undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
