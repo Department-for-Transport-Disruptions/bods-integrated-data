@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { GTFS_FILE_SUFFIX, REGION_MAPPINGS } from "@bods-integrated-data/shared/constants";
+import { GTFS_FILE_SUFFIX, REGIONS } from "@bods-integrated-data/shared/constants";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
@@ -33,10 +33,21 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
 
         const validRegions = makeFilteredArraySchema(regionCodeSchema).parse(regionFileNames);
 
-        const regions = validRegions.map((region) => ({
-            regionCode: region,
-            regionName: REGION_MAPPINGS[region],
-        }));
+        const regions = validRegions
+            .map((region) => {
+                const regionInfo = REGIONS[region];
+
+                if (!regionInfo) {
+                    return null;
+                }
+
+                return {
+                    regionCode: region,
+                    regionDisplayName: regionInfo.regionDisplayName,
+                    regionName: regionInfo.regionName,
+                };
+            })
+            .filter(notEmpty);
 
         return {
             statusCode: 200,

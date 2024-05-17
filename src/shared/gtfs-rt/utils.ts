@@ -135,11 +135,11 @@ export const getAvlDataForGtfs = async (
         }
 
         if (startTimeBefore) {
-            query = query.where("avl.origin_aimed_departure_time", "<", startTimeBefore);
+            query = query.where("avl_bods.origin_aimed_departure_time", "<", startTimeBefore);
         }
 
         if (startTimeAfter) {
-            query = query.where("avl.origin_aimed_departure_time", ">", startTimeAfter);
+            query = query.where("avl_bods.origin_aimed_departure_time", ">", startTimeAfter);
         }
 
         if (boundingBox) {
