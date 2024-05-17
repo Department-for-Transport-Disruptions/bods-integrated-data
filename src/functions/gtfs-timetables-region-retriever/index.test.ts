@@ -69,11 +69,13 @@ describe("gtfs-timetables-region-retriever", () => {
             body: JSON.stringify([
                 {
                     regionCode: "EA",
-                    regionName: "East Anglia",
+                    regionDisplayName: "East Anglia",
+                    regionName: "east_anglia",
                 },
                 {
                     regionCode: "L",
-                    regionName: "London",
+                    regionDisplayName: "London",
+                    regionName: "london",
                 },
             ]),
         });
@@ -113,7 +115,8 @@ describe("gtfs-timetables-region-retriever", () => {
             body: JSON.stringify([
                 {
                     regionCode: "EA",
-                    regionName: "East Anglia",
+                    regionDisplayName: "East Anglia",
+                    regionName: "east_anglia",
                 },
             ]),
         });

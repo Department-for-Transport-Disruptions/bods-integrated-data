@@ -6,6 +6,7 @@
     "localstack",
     "NPTG",
     "Siri",
+    "timestamptz",
     "Traveline",
     "unsubscriber"
   ]

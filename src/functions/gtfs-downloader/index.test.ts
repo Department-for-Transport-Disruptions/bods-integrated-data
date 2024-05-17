@@ -76,11 +76,11 @@ describe("gtfs-downloader-endpoint", () => {
         );
     });
 
-    it("retrieves regional dataset if region passed", async () => {
+    it("retrieves regional dataset if region code passed", async () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        await handler({ queryStringParameters: { region: "EA" } } as unknown as APIGatewayProxyEventV2);
+        await handler({ queryStringParameters: { regionCode: "EA" } } as unknown as APIGatewayProxyEventV2);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -91,16 +91,45 @@ describe("gtfs-downloader-endpoint", () => {
         );
     });
 
-    it("returns 400 if invalid region passed", async () => {
+    it("returns 400 if invalid region code passed", async () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
         const response = await handler({
-            queryStringParameters: { region: "INVALID" },
+            queryStringParameters: { regionCode: "INVALID" },
         } as unknown as APIGatewayProxyEventV2);
 
         expect(response).toEqual({
             body: "Invalid region code",
+            statusCode: 400,
+        });
+    });
+
+    it("retrieves regional dataset if region name passed", async () => {
+        const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
+        getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
+
+        await handler({ queryStringParameters: { regionName: "east_anglia" } } as unknown as APIGatewayProxyEventV2);
+
+        expect(getPresignedUrlMock).toBeCalledWith(
+            {
+                Bucket: mockBucketName,
+                Key: "ea_gtfs.zip",
+            },
+            3600,
+        );
+    });
+
+    it("returns 400 if invalid region code passed", async () => {
+        const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
+        getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
+
+        const response = await handler({
+            queryStringParameters: { regionName: "INVALID" },
+        } as unknown as APIGatewayProxyEventV2);
+
+        expect(response).toEqual({
+            body: "Invalid region name",
             statusCode: 400,
         });
     });
