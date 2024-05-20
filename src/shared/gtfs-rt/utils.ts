@@ -133,13 +133,16 @@ export const getAvlDataForGtfs = async (
                     .onRef("calendar_date.service_id", "=", "trip.service_id")
                     .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
             )
+            .leftJoin("stop_time", "stop_time.trip_id", "trip.id")
             .selectAll("avl_bods")
             .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
             .where("calendar.start_date", "<=", currentDate)
             .where("calendar.end_date", ">", currentDate)
             .where(`calendar.${currentDay}`, "=", 1)
             .where("calendar_date.exception_type", "is", null)
-            .where("avl_bods.direction_ref", "=", "trip.direction");
+            .where("avl_bods.direction_ref", "=", "trip.direction")
+            .where("avl_bods.origin_ref", "=", "stop_time.stop_id")
+            .where("avl_bods.destination_ref", "=", "stop_time.destination_stop_id");
 
         if (routeId) {
             query = query.where(
