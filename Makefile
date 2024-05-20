@@ -14,6 +14,7 @@ NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
+BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 
 # Dev
@@ -210,3 +211,8 @@ run-local-table-renamer:
 
 run-local-bank-holidays-retriever:
 	STAGE=local BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bank-holidays-retriever'; handler().catch(e => console.error(e))"
+
+# Fares retriever
+
+run-local-bods-fares-retriever:
+	STAGE=local FARES_ZIPPED_BUCKET_NAME=${BODS_FARES_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-fares-retriever'; handler().catch(e => console.error(e))"

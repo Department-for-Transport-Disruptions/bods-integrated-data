@@ -168,3 +168,9 @@ module "integrated_data_db_cleardown_function" {
   db_sg_id           = null
   db_host            = null
 }
+
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
+
+  environment = local.env
+}
