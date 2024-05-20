@@ -240,6 +240,12 @@ module "integrated_data_db_cleardown_function" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
 }
 
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_timetables_sfn" {
   source = "../modules/timetables-sfn"
 
