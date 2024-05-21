@@ -144,6 +144,7 @@ describe("utils", () => {
                 {
                     trip_id: "trip_id",
                     stop_id: "1",
+                    destination_stop_id: "2",
                     arrival_time: "00:00:00",
                     departure_time: "00:00:15",
                     stop_sequence: 0,
@@ -156,6 +157,7 @@ describe("utils", () => {
                 {
                     trip_id: "trip_id",
                     stop_id: "2",
+                    destination_stop_id: "3",
                     arrival_time: "00:01:15",
                     departure_time: "00:01:55",
                     stop_sequence: 1,
@@ -168,6 +170,7 @@ describe("utils", () => {
                 {
                     trip_id: "trip_id",
                     stop_id: "3",
+                    destination_stop_id: "4",
                     arrival_time: "00:06:55",
                     departure_time: "00:08:55",
                     stop_sequence: 2,
@@ -180,6 +183,7 @@ describe("utils", () => {
                 {
                     trip_id: "trip_id",
                     stop_id: "4",
+                    destination_stop_id: "",
                     arrival_time: "00:18:55",
                     departure_time: "00:18:55",
                     stop_sequence: 3,
@@ -224,6 +228,7 @@ describe("utils", () => {
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
                 stop_id: "stop_id",
+                destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
                 stop_sequence: 0,
@@ -260,6 +265,7 @@ describe("utils", () => {
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
                 stop_id: "stop_id",
+                destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
                 stop_sequence: 0,
@@ -297,6 +303,7 @@ describe("utils", () => {
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
                 stop_id: "stop_id",
+                destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
                 stop_sequence: 0,
@@ -327,6 +334,7 @@ describe("utils", () => {
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
                 stop_id: "stop_id",
+                destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
                 stop_sequence: 0,
@@ -365,6 +373,7 @@ describe("utils", () => {
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
                 stop_id: "stop_id",
+                destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:30",
                 stop_sequence: 0,

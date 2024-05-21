@@ -82,7 +82,8 @@ describe("stopTimes", () => {
         const expectedStopTimes: NewStopTime[] = [
             {
                 trip_id: "trip1",
-                stop_id: "",
+                stop_id: "1",
+                destination_stop_id: "2",
                 arrival_time: "",
                 departure_time: "",
                 stop_sequence: 0,
@@ -94,7 +95,8 @@ describe("stopTimes", () => {
             },
             {
                 trip_id: "trip2",
-                stop_id: "",
+                stop_id: "2",
+                destination_stop_id: "",
                 arrival_time: "",
                 departure_time: "",
                 stop_sequence: 0,
