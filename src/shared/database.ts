@@ -82,6 +82,7 @@ export interface Database {
     trip_new: GtfsTripTable;
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
+    tfl_line: TflLineTable;
 }
 
 export interface NaptanStopTable {
@@ -173,7 +174,7 @@ export interface AvlTable {
     response_time_stamp: string;
     producer_ref: string;
     recorded_at_time: string;
-    valid_until_time: string;
+    valid_until_time: string | null;
     line_ref: string | null;
     direction_ref: string | null;
     occupancy: string | null;
@@ -190,11 +191,34 @@ export interface AvlTable {
     destination_ref: string | null;
     block_ref: string | null;
     geom: RawBuilder<string> | null;
+    vehicle_name: string | null;
+    monitored: string | null;
+    load: number | null;
+    passenger_count: number | null;
+    odometer: number | null;
+    headway_deviation: number | null;
+    schedule_deviation: number | null;
+    vehicle_state: number | null;
+    next_stop_point_id: string | null;
+    next_stop_point_name: string | null;
+    previous_stop_point_id: string | null;
+    previous_stop_point_name: string | null;
+    origin_name: string | null;
+    destination_name: string | null;
+    vehicle_journey_ref: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;
 export type NewAvl = Insertable<AvlTable>;
 export type AvlUpdate = Updateable<AvlTable>;
+
+export interface TflLineTable {
+    id: string;
+}
+
+export type TflLine = Selectable<TflLineTable>;
+export type NewTflLine = Insertable<TflLineTable>;
+export type TflLineUpdate = Updateable<TflLineTable>;
 
 export interface GtfsAgencyTable {
     id: Generated<number>;
