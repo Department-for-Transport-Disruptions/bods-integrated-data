@@ -1,8 +1,8 @@
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { randomUUID } from "crypto";
-import { VehicleJourneyMapping } from "../types";
 import { insertTrips } from "./database";
+import { VehicleJourneyMapping } from "../types";
 
 export const processTrips = async (
     dbClient: KyselyDb,
