@@ -4,56 +4,14 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
-
-interface TflApiKeys {
-    generalApiKey: string;
-    liveVehiclesApiKey: string;
-}
-
-interface RealTimeVehicleLocation {
-    producerRef?: string;
-    vehicleRef?: string;
-    vehicleName?: string;
-    operatorRef?: string;
-    monitored?: string;
-    longitude?: number;
-    latitude?: number;
-    recordedAtTime?: string;
-    bearing?: number;
-    load?: number;
-    passengerCount?: number;
-    odometer?: number;
-    headwayDeviation?: number;
-    scheduleDeviation?: number;
-    vehicleState?: number;
-    nextStopPointId?: string;
-    nextStopPointName?: string;
-    previousStopPointId?: string;
-    previousStopPointName?: string;
-    lineRef?: string;
-    publishedLineName?: string;
-    directionRef?: number;
-    originName?: string;
-    originRef?: string;
-    originAimedDepartureTime?: number;
-    destinationName?: string;
-    destinationRef?: string;
-    vehicleJourneyRef?: string;
-}
-
-interface RealTimeVehicleLocationsApiResponse {
-    lines: {
-        lineId: string;
-        vehicles: RealTimeVehicleLocation[];
-    }[];
-}
+import { RealTimeVehicleLocation, RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
 
 const getLineIds = async (dbClient: KyselyDb) => {
     const lineIds = await dbClient.selectFrom("tfl_line").selectAll().execute();
     return lineIds.map((lineId) => lineId.id);
 };
 
-const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string) => {
+export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string) => {
     const lineIdChunks = chunkArray(lineIds, 20);
 
     const requests = lineIdChunks.map(async (lineIdChunk) => {
@@ -79,7 +37,7 @@ const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string)
     return responses.flatMap((response) => response.lines.flatMap((line) => line.vehicles));
 };
 
-const mapVehicleLocation = (vehicle: RealTimeVehicleLocation): NewAvl => {
+export const mapVehicleLocation = (vehicle: RealTimeVehicleLocation): NewAvl => {
     const recordedAtTime = vehicle.recordedAtTime || getDate().toISOString();
     const originAimedDepartureTime = getDate()
         .startOf("day")
@@ -139,9 +97,8 @@ export const handler = async () => {
         const { liveVehiclesApiKey } = await getSecret<TflApiKeys>({ SecretId: tflApiArn });
         const lineIds = await getLineIds(dbClient);
         const vehicleLocations = await retrieveTflVehicleLocations(lineIds, liveVehiclesApiKey);
-        const avls = vehicleLocations.map(mapVehicleLocation);
 
-        await insertAvls(dbClient, avls);
+        await insertAvls(dbClient, vehicleLocations.map(mapVehicleLocation));
 
         logger.info("TfL location retriever successful");
     } catch (error) {

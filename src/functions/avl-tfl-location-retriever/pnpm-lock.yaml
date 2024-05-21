@@ -22,6 +22,9 @@ devDependencies:
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.25
+  mockdate:
+    specifier: ^3.0.5
+    version: 3.0.5
 
 packages:
 
@@ -95,6 +98,10 @@ packages:
     dependencies:
       mime-db: 1.52.0
     dev: false
+
+  /mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
+    dev: true
 
   /proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
