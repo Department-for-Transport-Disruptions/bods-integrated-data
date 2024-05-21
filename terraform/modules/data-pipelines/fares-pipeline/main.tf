@@ -10,11 +10,24 @@ terraform {
 }
 
 resource "aws_s3_bucket" "integrated_data_bods_fares_zipped_bucket" {
-  bucket = "integrated-data-fares-${var.environment}"
+  bucket = "integrated-data-bods-fares-zipped-${var.environment}"
+}
+
+resource "aws_s3_bucket" "integrated_data_bods_fares_bucket" {
+  bucket = "integrated-data-bods-fares-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_bods_fares_zipped_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_bods_fares_zipped_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_bods_fares_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_bods_fares_bucket.bucket
 
   block_public_acls       = true
   block_public_policy     = true
@@ -53,5 +66,43 @@ module "integrated_data_bods_fares_retriever_function" {
   env_vars = {
     STAGE                    = var.environment
     FARES_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_fares_zipped_bucket.bucket
+  }
+}
+
+module "integrated_data_bods_fares_unzipper_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-bods-fares-unzipper"
+  zip_path      = "${path.module}/../../../../src/functions/dist/bods-fares-unzipper.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 120
+  memory        = 3072
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_fares_zipped_bucket.arn}/*",
+      ]
+    },
+    {
+      Action = [
+        "s3:PutObject"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_fares_bucket.arn}/*",
+      ]
+    },
+  ]
+
+  env_vars = {
+    STAGE                      = var.environment
+    UNZIPPED_FARES_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_fares_bucket.id
   }
 }
