@@ -137,6 +137,13 @@ export const mapTimingLinkToStopTime = (
         );
     }
 
+    let destinationStopPointRef = "";
+
+    if (stopUsageType === "from") {
+        destinationStopPointRef =
+            journeyPatternTimingLink.To?.StopPointRef || vehicleJourneyTimingLink?.To?.StopPointRef || "";
+    }
+
     const activity = journeyPatternTimingLinkStopUsage?.Activity || vehicleJourneyTimingLinkStopUsage?.Activity;
     const timingStatus =
         journeyPatternTimingLinkStopUsage?.TimingStatus || vehicleJourneyTimingLinkStopUsage?.TimingStatus;
@@ -176,6 +183,7 @@ export const mapTimingLinkToStopTime = (
         stopTime: {
             trip_id: tripId,
             stop_id: stopPointRef,
+            destination_stop_id: destinationStopPointRef,
             arrival_time: arrivalTime.format("HH:mm:ss"),
             departure_time: departureTime.format("HH:mm:ss"),
             stop_sequence: sequenceNumber,

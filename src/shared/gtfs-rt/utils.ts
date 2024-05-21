@@ -140,6 +140,13 @@ export const getAvlDataForGtfs = async (
                     .onRef("calendar_date.service_id", "=", "trip.service_id")
                     .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
             )
+            .leftJoin("stop_time", (eb) =>
+                eb
+                    .onRef("stop_time.trip_id", "=", "trip.id")
+                    .on("avl_bods.direction_ref", "=", "trip.direction")
+                    .on("avl_bods.origin_ref", "=", "stop_time.stop_id")
+                    .on("avl_bods.destination_ref", "=", "stop_time.destination_stop_id"),
+            )
             .selectAll("avl_bods")
             .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
             .where("avl_bods.valid_until_time", ">", sql<string>`NOW()`)

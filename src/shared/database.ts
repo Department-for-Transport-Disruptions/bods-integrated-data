@@ -346,6 +346,7 @@ export interface GtfsStopTimeTable {
     id: Generated<number>;
     trip_id: string;
     stop_id: string;
+    destination_stop_id: string;
     arrival_time: string;
     departure_time: string;
     stop_sequence: number;
