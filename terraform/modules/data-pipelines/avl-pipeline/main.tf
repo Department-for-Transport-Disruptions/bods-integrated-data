@@ -135,7 +135,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
   }
 }
 
-module "avl_feed_validator_sfn" {
+module "avl_tfl_location_retriever_sfn" {
   count                = var.environment == "local" ? 0 : 1
   step_function_name   = "integrated-data-avl-tfl-location-retriever-sfn"
   source               = "../../modules/shared/lambda-trigger-sfn"
