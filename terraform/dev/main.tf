@@ -176,12 +176,17 @@ module "integrated_data_gtfs_downloader" {
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  environment                  = local.env
+  vpc_id                       = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids           = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                     = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                      = module.integrated_data_aurora_db_dev.db_host
+  bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
+  bods_avl_processor_frequency = 120
+  bods_avl_cleardown_frequency = 240
+  bods_avl_processor_cpu       = 1024
+  bods_avl_processor_memory    = 2048
 }
 
 module "integrated_data_avl_pipeline" {

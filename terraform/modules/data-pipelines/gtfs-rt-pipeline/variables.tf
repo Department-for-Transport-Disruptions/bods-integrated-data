@@ -36,3 +36,28 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "bods_avl_processor_image_url" {
+  type        = string
+  description = "URL for the BODS AVL Processor image in ECR"
+}
+
+variable "bods_avl_processor_frequency" {
+  type        = number
+  description = "Frequency in seconds at which to run the BODS AVL Processor"
+}
+
+variable "bods_avl_cleardown_frequency" {
+  type        = number
+  description = "Frequency in seconds at which to run the BODS AVL Cleardown process"
+}
+
+variable "bods_avl_processor_cpu" {
+  type        = number
+  description = "CPU in MB to assign to the BODS AVL Processor task"
+}
+
+variable "bods_avl_processor_memory" {
+  type        = number
+  description = "Memory in MB to assign to the BODS AVL Processor task"
+}

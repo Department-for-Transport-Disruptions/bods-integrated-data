@@ -3,6 +3,7 @@ import { Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable,
 import { Pool } from "pg";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
+const isDocker = process.env.IS_DOCKER;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
@@ -11,7 +12,7 @@ export const getDatabaseClient = async (isLocal = false) => {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
                 pool: new Pool({
-                    host: localStackHost ? "bods_integrated_data_postgres" : "127.0.0.1",
+                    host: localStackHost || isDocker ? "bods_integrated_data_postgres" : "127.0.0.1",
                     port: 5432,
                     database: "bods_integrated_data",
                     user: "postgres",
@@ -190,6 +191,8 @@ export interface AvlTable {
     destination_ref: string | null;
     block_ref: string | null;
     geom: RawBuilder<string> | null;
+    route_id: number | null;
+    trip_id: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;

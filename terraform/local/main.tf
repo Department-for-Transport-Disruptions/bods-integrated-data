@@ -105,12 +105,17 @@ module "integrated_data_gtfs_downloader" {
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
-  environment        = local.env
-  vpc_id             = null
-  private_subnet_ids = null
-  db_secret_arn      = "*"
-  db_sg_id           = null
-  db_host            = null
+  environment                  = local.env
+  vpc_id                       = null
+  private_subnet_ids           = null
+  db_secret_arn                = "*"
+  db_sg_id                     = null
+  db_host                      = null
+  bods_avl_processor_cpu       = 1024
+  bods_avl_processor_memory    = 2048
+  bods_avl_processor_image_url = "bods-avl-processor:latest"
+  bods_avl_cleardown_frequency = 120
+  bods_avl_processor_frequency = 240
 }
 
 module "integrated_data_avl_pipeline" {

@@ -5,34 +5,34 @@ const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
     MonitoredVehicleJourney: z.object({
-        LineRef: z.string().optional(),
-        DirectionRef: z.string().optional(),
+        LineRef: z.coerce.string().optional(),
+        DirectionRef: z.coerce.string().optional(),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.string(),
-                DatedVehicleJourneyRef: z.string(),
+                DataFrameRef: z.coerce.string(),
+                DatedVehicleJourneyRef: z.coerce.string(),
             })
             .optional(),
-        PublishedLineName: z.string().optional(),
-        Occupancy: z.string().optional(),
-        OperatorRef: z.string(),
-        OriginRef: z.string().optional(),
-        OriginAimedDepartureTime: z.string().optional(),
-        DestinationRef: z.string().optional(),
+        PublishedLineName: z.coerce.string().optional(),
+        Occupancy: z.coerce.string().optional(),
+        OperatorRef: z.coerce.string(),
+        OriginRef: z.coerce.string().optional(),
+        OriginAimedDepartureTime: z.coerce.string().optional(),
+        DestinationRef: z.coerce.string().optional(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
-        Bearing: z.string().optional(),
-        BlockRef: z.string().optional(),
-        VehicleRef: z.string(),
+        Bearing: z.coerce.string().optional(),
+        BlockRef: z.coerce.string().optional(),
+        VehicleRef: z.coerce.string(),
     }),
 });
 
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
-        ProducerRef: z.string(),
+        ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
             ValidUntil: z.string().optional(),

@@ -1,8 +1,16 @@
-import { logger } from "@baselime/lambda-logger";
+/* eslint-disable no-console */
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
+
+const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson } = process.env;
+
+if (!bucketName) {
+    throw new Error(
+        "Missing env vars - BUCKET_NAME, PROCESSOR_FREQUENCY_IN_SECONDS and CLEARDOWN_FREQUENCY_IN_SECONDS must be set",
+    );
+}
 
 const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
     try {
@@ -14,24 +22,23 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
         });
     } catch (error) {
         if (error instanceof Error) {
-            logger.error("There was a problem uploading GTFS-RT data to S3", error);
+            console.error("There was a problem uploading GTFS-RT data to S3", error);
         }
 
         throw error;
     }
 };
 
-export const handler = async () => {
-    const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson, STAGE: stage } = process.env;
+void (async () => {
+    console.time("gtfsgenerate");
 
-    if (!bucketName) {
-        throw new Error("Missing env vars - BUCKET_NAME must be set");
-    }
-
-    const dbClient = await getDatabaseClient(stage === "local");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
+        console.info("Retrieving AVL from database...");
         const avlData = await getAvlDataForGtfs(dbClient);
+
+        console.info("Generating GTFS-RT...");
         const entities = avlData.map(mapAvlToGtfsEntity);
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
@@ -47,13 +54,15 @@ export const handler = async () => {
                 Body: JSON.stringify(encodedJson),
             });
         }
+
+        console.timeEnd("gtfsgenerate");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error running the GTFS-RT Generator", e);
+            console.error("There was an error running the GTFS-RT Generator", e);
         }
 
         throw e;
     } finally {
         await dbClient.destroy();
     }
-};
+})();
