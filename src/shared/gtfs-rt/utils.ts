@@ -127,22 +127,28 @@ export const getAvlDataForGtfs = async (
                     .onRef("trip.route_id", "=", "routes_with_noc.route_id")
                     .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref"),
             )
-            .leftJoin("calendar", (eb) => eb.onRef("calendar.id", "=", "trip.service_id"))
+            .leftJoin("calendar", (eb) =>
+                eb
+                    .onRef("calendar.id", "=", "trip.service_id")
+                    .on("calendar.start_date", "<=", currentDate)
+                    .on("calendar.end_date", ">", currentDate)
+                    .on(`calendar.${currentDay}`, "=", 1),
+            )
             .leftJoin("calendar_date", (eb) =>
                 eb
                     .onRef("calendar_date.service_id", "=", "trip.service_id")
                     .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
             )
-            .leftJoin("stop_time", "stop_time.trip_id", "trip.id")
+            .leftJoin("stop_time", (eb) =>
+                eb
+                    .onRef("stop_time.trip_id", "=", "trip.id")
+                    .on("avl_bods.direction_ref", "=", "trip.direction")
+                    .on("avl_bods.origin_ref", "=", "stop_time.stop_id")
+                    .on("avl_bods.destination_ref", "=", "stop_time.destination_stop_id"),
+            )
             .selectAll("avl_bods")
             .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
-            .where("calendar.start_date", "<=", currentDate)
-            .where("calendar.end_date", ">", currentDate)
-            .where(`calendar.${currentDay}`, "=", 1)
-            .where("calendar_date.exception_type", "is", null)
-            .where("avl_bods.direction_ref", "=", "trip.direction")
-            .where("avl_bods.origin_ref", "=", "stop_time.stop_id")
-            .where("avl_bods.destination_ref", "=", "stop_time.destination_stop_id");
+            .where("calendar_date.exception_type", "is", null);
 
         if (routeId) {
             query = query.where(
