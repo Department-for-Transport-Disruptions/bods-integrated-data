@@ -1,6 +1,6 @@
 export type TflApiKeys = {
-    generalApiKey: string;
-    liveVehiclesApiKey: string;
+    general_api_key: string;
+    live_vehicles_api_key: string;
 };
 
 export type RealTimeVehicleLocation = {

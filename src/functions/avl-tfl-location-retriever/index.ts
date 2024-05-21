@@ -94,9 +94,9 @@ export const handler = async () => {
             throw new Error("Missing env vars - TFL_API_ARN must be set");
         }
 
-        const { liveVehiclesApiKey } = await getSecret<TflApiKeys>({ SecretId: tflApiArn });
+        const { live_vehicles_api_key } = await getSecret<TflApiKeys>({ SecretId: tflApiArn });
         const lineIds = await getLineIds(dbClient);
-        const vehicleLocations = await retrieveTflVehicleLocations(lineIds, liveVehiclesApiKey);
+        const vehicleLocations = await retrieveTflVehicleLocations(lineIds, live_vehicles_api_key);
 
         await insertAvls(dbClient, vehicleLocations.map(mapVehicleLocation));
 

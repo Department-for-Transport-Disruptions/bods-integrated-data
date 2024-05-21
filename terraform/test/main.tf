@@ -195,6 +195,7 @@ module "integrated_data_avl_pipeline" {
   db_host            = module.integrated_data_aurora_db.db_host
   alarm_topic_arn    = module.integrated_data_monitoring.alarm_topic_arn
   ok_topic_arn       = module.integrated_data_monitoring.ok_topic_arn
+  tfl_api_keys       = local.secrets["tfl_api_keys"]
 }
 
 module "integrated_data_avl_aggregator" {

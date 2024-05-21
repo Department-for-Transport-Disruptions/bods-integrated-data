@@ -108,3 +108,39 @@ module "integrated_data_avl_retriever_function" {
     TARGET_BUCKET_NAME = module.integrated_data_avl_s3_sqs.bucket_id
   }
 }
+
+resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
+  description = "TfL API keys - ${var.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "tfl_api_keys_secret_version" {
+  secret_id     = aws_secretsmanager_secret.tfl_api_keys_secret.id
+  secret_string = jsonencode(var.tfl_api_keys)
+}
+
+module "integrated_data_avl_tfl_location_retriever_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-tfl-location-retriever"
+  zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-location-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  memory        = 512
+
+  env_vars = {
+    STAGE        = var.environment
+    TNDS_FTP_ARN = aws_secretsmanager_secret.tfl_api_keys_secret.arn
+  }
+}
+
+module "avl_feed_validator_sfn" {
+  count                = var.environment == "local" ? 0 : 1
+  step_function_name   = "integrated-data-avl-tfl-location-retriever-sfn"
+  source               = "../../modules/shared/lambda-trigger-sfn"
+  environment          = var.environment
+  function_arn         = module.integrated_data_avl_tfl_location_retriever_function.function_arn
+  invoke_every_seconds = 60
+  depends_on           = [module.integrated_data_avl_tfl_location_retriever_function]
+}
