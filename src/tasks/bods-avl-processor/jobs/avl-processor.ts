@@ -5,8 +5,11 @@ import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosResponse } from "axios";
 import { XMLParser } from "fast-xml-parser";
 import { sql } from "kysely";
+import Pino from "pino";
 import { Entry, Parse } from "unzipper";
 import { Stream } from "stream";
+
+const logger = Pino();
 
 const { PROCESSOR_FREQUENCY_IN_SECONDS: processorFrequency, CLEARDOWN_FREQUENCY_IN_SECONDS: cleardownFrequency } =
     process.env;
@@ -30,7 +33,7 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
-        console.error("There was an error parsing the AVL data", parsedJson.error.format());
+        logger.error("There was an error parsing the AVL data", parsedJson.error.format());
 
         throw new Error("Error parsing data");
     }
@@ -73,12 +76,12 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
 };
 
 void (async () => {
-    console.time("avlprocess");
+    console.time("avl-processor");
 
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        console.info("Starting BODS AVL processor");
+        logger.info("Starting BODS AVL processor");
 
         const avlResponse = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/avl/download/bulk_archive", {
             responseType: "stream",
@@ -90,11 +93,11 @@ void (async () => {
 
         await unzipAndUploadToDatabase(dbClient, avlResponse);
 
-        console.info("BODS AVL processor successful");
-        console.timeEnd("avlprocess");
+        logger.info("BODS AVL processor successful");
+        console.timeEnd("avl-processor");
     } catch (e) {
         if (e instanceof Error) {
-            console.error("There was a problem with the AVL retriever", e);
+            logger.error("There was a problem with the AVL retriever", e);
         }
 
         throw e;

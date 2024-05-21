@@ -1,9 +1,12 @@
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { sql } from "kysely";
+import Pino from "pino";
+
+const logger = Pino();
 
 /* eslint-disable no-console */
 void (async () => {
-    console.time("avlcleardown");
+    console.time("avl-cleardown");
 
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
@@ -13,12 +16,12 @@ void (async () => {
             .where("avl_bods.valid_until_time", "<", sql<string>`NOW() - INTERVAL '2 minutes'`)
             .execute();
 
-        console.log(`AVL cleardown successful, ${result[0].numDeletedRows} rows deleted`);
+        logger.info(`AVL cleardown successful, ${result[0].numDeletedRows} rows deleted`);
 
-        console.timeEnd("avlcleardown");
+        console.timeEnd("avl-cleardown");
     } catch (e) {
         if (e instanceof Error) {
-            console.error("There was a problem with the AVL cleardown", e);
+            logger.error("There was a problem with the AVL cleardown", e);
         }
 
         throw e;

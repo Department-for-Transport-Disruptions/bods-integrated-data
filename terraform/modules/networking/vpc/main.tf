@@ -156,7 +156,7 @@ resource "aws_route_table_association" "integrated_data_private_subnet_route_tab
   subnet_id      = each.value.id
 }
 
-resource "aws_route_table_association" "integrated_data_private_subnet_route_table_assoc" {
+resource "aws_route_table_association" "integrated_data_public_subnet_route_table_assoc" {
   for_each = aws_subnet.integrated_data_public_subnet
 
   route_table_id = aws_route_table.integrated_data_public_subnet_route_table.id

@@ -9,6 +9,8 @@ terraform {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "integrated_data_gtfs_rt_bucket" {
   bucket = "integrated-data-gtfs-rt-${var.environment}"
 }
@@ -80,7 +82,7 @@ resource "aws_lambda_function_url" "gtfs_rt_download_url" {
   authorization_type = "NONE"
 }
 
-resource "aws_ecs_cluster" "integrated_data_ecs_cluster" {
+resource "aws_ecs_cluster" "gtfs_rt_ecs_cluster" {
   name = "integrated-data-gtfs-rt-ecs-cluster-${var.environment}"
 
   setting {
@@ -89,7 +91,86 @@ resource "aws_ecs_cluster" "integrated_data_ecs_cluster" {
   }
 }
 
-resource "aws_ecs_task_definition" "integrated_data_bods_avl_processor_task_definition" {
+resource "aws_iam_policy" "bods_avl_processor_ecs_execution_policy" {
+  name = "integrated-data-bods-avl-processor-ecs-execution-policy-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect" : "Allow",
+        "Action" : "logs:CreateLogGroup",
+        "Resource" : [
+          "arn:aws:logs:eu-west-2:${data.aws_caller_identity.current.account_id}:log-group:/ecs/bods-avl-processor-${var.environment}:*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "bods_avl_processor_ecs_execution_role" {
+  name = "integrated-data-bods-avl-processor-ecs-execution-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.bods_avl_processor_ecs_execution_policy.arn]
+}
+
+resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
+  name = "integrated-data-bods-avl-processor-ecs-task-policy-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect" : "Allow",
+        "Action" : "s3:PutObject",
+        "Resource" : [
+          "${aws_s3_bucket.integrated_data_gtfs_rt_bucket.arn}/*"
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "secretsmanager:GetSecretValue",
+        "Resource" : [
+          var.db_secret_arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "bods_avl_processor_ecs_task_role" {
+  name = "integrated-data-bods-avl-processor-ecs-task-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+
+  managed_policy_arns = [aws_iam_policy.bods_avl_processor_ecs_task_policy.arn]
+}
+
+resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
   family                   = "integrated-data-bods-avl-processor"
   cpu                      = var.bods_avl_processor_cpu
   memory                   = var.bods_avl_processor_memory
@@ -99,6 +180,9 @@ resource "aws_ecs_task_definition" "integrated_data_bods_avl_processor_task_defi
     operating_system_family = "LINUX"
   }
   network_mode = "awsvpc"
+
+  task_role_arn      = aws_iam_role.bods_avl_processor_ecs_task_role.arn
+  execution_role_arn = aws_iam_role.bods_avl_processor_ecs_execution_role.arn
 
   container_definitions = jsonencode([
     {
@@ -117,7 +201,7 @@ resource "aws_ecs_task_definition" "integrated_data_bods_avl_processor_task_defi
         },
         {
           "name" : "DB_PORT",
-          "value" : var.db_port
+          "value" : tostring(var.db_port)
         },
         {
           "name" : "DB_SECRET_ARN",
@@ -129,11 +213,11 @@ resource "aws_ecs_task_definition" "integrated_data_bods_avl_processor_task_defi
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",
-          "value" : var.bods_avl_processor_frequency
+          "value" : tostring(var.bods_avl_processor_frequency)
         },
         {
           "name" : "CLEARDOWN_FREQUENCY_IN_SECONDS",
-          "value" : var.bods_avl_cleardown_frequency
+          "value" : tostring(var.bods_avl_cleardown_frequency)
         }
       ],
       "environmentFiles" : [],
@@ -154,14 +238,62 @@ resource "aws_ecs_task_definition" "integrated_data_bods_avl_processor_task_defi
       "systemControls" : []
     }
   ])
+}
 
-  volume {
-    name      = "service-storage"
-    host_path = "/ecs/service-storage"
+resource "aws_security_group" "bods_avl_processor_sg" {
+  name   = "integrated-data-bods-avl-processor-sg-${var.environment}"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "bods_avl_processor_sg_allow_all_egress_ipv4" {
+  security_group_id = aws_security_group.bods_avl_processor_sg.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_vpc_security_group_egress_rule" "bods_avl_processor_sg_allow_all_egress_ipv6" {
+  security_group_id = aws_security_group.bods_avl_processor_sg.id
+
+  cidr_ipv6   = "::/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
+  security_group_id            = var.db_sg_id
+  referenced_security_group_id = aws_security_group.bods_avl_processor_sg.id
+
+  from_port = 5432
+  to_port   = 5432
+
+  ip_protocol = "tcp"
+}
+
+resource "aws_ecs_service" "bods_avl_processor_service" {
+  name            = "integrated-data-bods-avl-processor-service-${var.environment}"
+  cluster         = aws_ecs_cluster.gtfs_rt_ecs_cluster.id
+  task_definition = aws_ecs_task_definition.bods_avl_processor_task_definition.arn
+  desired_count   = 1
+
+  capacity_provider_strategy {
+    base              = 1
+    weight            = 100
+    capacity_provider = "FARGATE"
   }
 
-  placement_constraints {
-    type       = "memberOf"
-    expression = "attribute:ecs.availability-zone in [us-west-2a, us-west-2b]"
+  platform_version    = "1.4.0"
+  scheduling_strategy = "REPLICA"
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
   }
+
+  network_configuration {
+    subnets         = var.private_subnet_ids
+    security_groups = [aws_security_group.bods_avl_processor_sg.id]
+  }
+
+  depends_on = [aws_iam_policy.bods_avl_processor_ecs_task_policy]
+
 }

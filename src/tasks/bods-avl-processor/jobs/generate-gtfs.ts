@@ -3,6 +3,9 @@ import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { transit_realtime } from "gtfs-realtime-bindings";
+import Pino from "pino";
+
+const logger = Pino();
 
 const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson } = process.env;
 
@@ -22,7 +25,7 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
         });
     } catch (error) {
         if (error instanceof Error) {
-            console.error("There was a problem uploading GTFS-RT data to S3", error);
+            logger.error("There was a problem uploading GTFS-RT data to S3", error);
         }
 
         throw error;
@@ -35,30 +38,30 @@ void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        console.info("Retrieving AVL from database...");
+        logger.info("Retrieving AVL from database...");
         const avlData = await getAvlDataForGtfs(dbClient);
 
-        console.info("Generating GTFS-RT...");
+        logger.info("Generating GTFS-RT...");
         const entities = avlData.map(mapAvlToGtfsEntity);
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
         await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
 
         if (saveJson === "true") {
-            const encodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
+            const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
 
             await putS3Object({
                 Bucket: bucketName,
                 Key: "gtfs-rt.json",
                 ContentType: "application/json",
-                Body: JSON.stringify(encodedJson),
+                Body: JSON.stringify(decodedJson),
             });
         }
 
         console.timeEnd("gtfsgenerate");
     } catch (e) {
         if (e instanceof Error) {
-            console.error("There was an error running the GTFS-RT Generator", e);
+            logger.error("There was an error running the GTFS-RT Generator", e);
         }
 
         throw e;

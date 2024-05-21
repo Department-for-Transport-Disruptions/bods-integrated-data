@@ -78,6 +78,9 @@ lint-functions:
 test-functions:
 	cd src && pnpm test:ci
 
+docker-build-%:
+	docker build src --build-arg servicePath=$* -t $*
+
 # CLI helpers
 
 commands:

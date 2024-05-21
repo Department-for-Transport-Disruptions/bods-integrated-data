@@ -113,11 +113,6 @@ resource "aws_rds_cluster" "integrated_data_rds_cluster" {
   final_snapshot_identifier   = "integrated-data-rds-db-cluster-final-snapshot-${var.environment}"
   database_name               = "bods_integrated_data"
   storage_type                = "aurora-iopt1"
-
-  serverlessv2_scaling_configuration {
-    max_capacity = var.max_db_capacity
-    min_capacity = var.min_db_capacity
-  }
 }
 
 resource "aws_rds_cluster_role_association" "integrated_data_rds_cluster_s3_export_role" {
@@ -131,7 +126,7 @@ resource "aws_rds_cluster_instance" "integrated_data_postgres_db_instance" {
   cluster_identifier                    = aws_rds_cluster.integrated_data_rds_cluster.id
   engine                                = "aurora-postgresql"
   engine_version                        = "16.1"
-  instance_class                        = "db.serverless"
+  instance_class                        = "db.r6g.large"
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
   identifier                            = "integrated-data-rds-db-instance-${count.index + 1}-${var.environment}"

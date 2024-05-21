@@ -1,6 +1,10 @@
 import Bree from "bree";
+import Pino from "pino";
+
+const logger = Pino();
 
 const bree = new Bree({
+    logger: Pino(),
     jobs: [
         {
             name: "avl-processor",
@@ -20,6 +24,9 @@ const bree = new Bree({
             timeout: 0,
         },
     ],
+    errorHandler: (error) => {
+        logger.error(error);
+    },
 });
 
 void (async () => {
