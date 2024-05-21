@@ -36,12 +36,12 @@ export type SubscriptionRequest = z.infer<typeof subscriptionRequestSchema>;
 export const subscriptionResponseSchema = z.object({
     SubscriptionResponse: z.object({
         ResponseTimestamp: z.string(),
-        ResponderRef: z.string(),
+        ResponderRef: z.string().optional(),
         RequestMessageRef: z.string().optional(),
         ResponseStatus: z.object({
             ResponseTimestamp: z.string(),
-            SubscriberRef: z.string(),
-            SubscriptionRef: z.string(),
+            SubscriberRef: z.string().optional(),
+            SubscriptionRef: z.string().optional(),
             Status: z.coerce.boolean(),
         }),
         ServiceStartedTime: z.string().optional(),
