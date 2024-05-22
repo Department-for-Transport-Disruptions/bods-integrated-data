@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { NewAvl } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema } from "../utils";
 
@@ -39,13 +40,11 @@ export const avlSchema = z.object({
     vehicle_journey_ref: z.string().nullish(),
 });
 
-export type Avl = z.infer<typeof avlSchema>;
-
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
     MonitoredVehicleJourney: z.object({
-        LineRef: z.string().optional(),
+        LineRef: z.string().nullish(),
         DirectionRef: z.string(),
         FramedVehicleJourneyRef: z
             .object({
@@ -53,21 +52,23 @@ const vehicleActivitySchema = z.object({
                 DatedVehicleJourneyRef: z.string(),
             })
             .optional(),
-        PublishedLineName: z.string().optional(),
-        Occupancy: z.string().optional(),
+        PublishedLineName: z.string().nullish(),
+        Occupancy: z.string().nullish(),
         OperatorRef: z.string(),
-        OriginRef: z.string().optional(),
-        OriginAimedDepartureTime: z.string().optional(),
-        DestinationRef: z.string().optional(),
+        OriginRef: z.string().nullish(),
+        OriginAimedDepartureTime: z.string().nullish(),
+        DestinationRef: z.string().nullish(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
-        Bearing: z.string().optional(),
-        BlockRef: z.string().optional(),
+        Bearing: z.string().nullish(),
+        BlockRef: z.string().nullish(),
         VehicleRef: z.string(),
     }),
 });
+
+export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
@@ -82,8 +83,10 @@ export const siriSchema = z.object({
     }),
 });
 
-export const siriSchemaTransformed = siriSchema.transform<Avl[]>((item) => {
-    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<Avl>((vehicleActivity) => ({
+export type SiriVM = z.infer<typeof siriSchema>;
+
+export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
+    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewAvl>((vehicleActivity) => ({
         response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
         producer_ref: item.ServiceDelivery.ProducerRef,
         recorded_at_time: vehicleActivity.RecordedAtTime,
@@ -106,8 +109,6 @@ export const siriSchemaTransformed = siriSchema.transform<Avl[]>((item) => {
         block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
     }));
 });
-
-export type VehicleActivity = z.infer<typeof siriSchemaTransformed>;
 
 export const tflVehicleLocationSchema = z.object({
     producerRef: z.string(),
@@ -142,7 +143,7 @@ export const tflVehicleLocationSchema = z.object({
 
 export type TflVehicleLocation = z.infer<typeof tflVehicleLocationSchema>;
 
-export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.transform<Avl>((item) => {
+export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.transform<NewAvl>((item) => {
     const recordedAtTime = item.recordedAtTime || getDate().toISOString();
     const validUntilTime = getDate().add(5, "minutes").toISOString();
     const originAimedDepartureTime = getDate()
@@ -150,7 +151,7 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         .add(item.originAimedDepartureTime || 0, "seconds")
         .toISOString();
 
-    const avl: Avl = {
+    const avl: NewAvl = {
         response_time_stamp: recordedAtTime,
         valid_until_time: validUntilTime,
         producer_ref: item.producerRef,
