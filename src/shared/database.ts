@@ -174,7 +174,7 @@ export interface AvlTable {
     response_time_stamp: string;
     producer_ref: string;
     recorded_at_time: string;
-    valid_until_time: string | null;
+    valid_until_time: string;
     line_ref: string | null;
     direction_ref: string | null;
     occupancy: string | null;

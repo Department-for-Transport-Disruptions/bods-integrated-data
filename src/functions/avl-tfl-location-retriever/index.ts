@@ -1,17 +1,17 @@
 import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
+import { Avl, tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
-import { RealTimeVehicleLocation, RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
+import { RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
 
 const getLineIds = async (dbClient: KyselyDb) => {
     const lineIds = await dbClient.selectFrom("tfl_line").selectAll().execute();
     return lineIds.map((lineId) => lineId.id);
 };
 
-export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string) => {
+export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string): Promise<Avl[]> => {
     const lineIdChunks = chunkArray(lineIds, 20);
 
     const requests = lineIdChunks.map(async (lineIdChunk) => {
@@ -34,47 +34,21 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
 
     const responses = await Promise.all(requests);
 
-    return responses.flatMap((response) => response.lines.flatMap((line) => line.vehicles));
-};
+    const vehicleLocations = responses.flatMap((response) => response.lines.flatMap((line) => line.vehicles));
 
-export const mapVehicleLocation = (vehicle: RealTimeVehicleLocation): NewAvl => {
-    const recordedAtTime = vehicle.recordedAtTime || getDate().toISOString();
-    const originAimedDepartureTime = getDate()
-        .startOf("day")
-        .add(vehicle.originAimedDepartureTime || 0, "seconds")
-        .toISOString();
+    return vehicleLocations.flatMap<Avl>((vehicleLocation) => {
+        const parseResult = tflVehicleLocationSchemaTransformed.safeParse(vehicleLocation);
 
-    return {
-        response_time_stamp: recordedAtTime,
-        producer_ref: vehicle.producerRef || "",
-        vehicle_ref: vehicle.vehicleRef || "",
-        vehicle_name: vehicle.vehicleName,
-        operator_ref: vehicle.operatorRef || "",
-        monitored: vehicle.monitored,
-        longitude: vehicle.longitude || 0,
-        latitude: vehicle.latitude || 0,
-        recorded_at_time: recordedAtTime,
-        bearing: vehicle.bearing?.toString(),
-        load: vehicle.load,
-        passenger_count: vehicle.passengerCount,
-        odometer: vehicle.odometer,
-        headway_deviation: vehicle.headwayDeviation,
-        schedule_deviation: vehicle.scheduleDeviation,
-        vehicle_state: vehicle.vehicleState,
-        next_stop_point_id: vehicle.nextStopPointId,
-        next_stop_point_name: vehicle.nextStopPointName,
-        previous_stop_point_id: vehicle.previousStopPointId,
-        previous_stop_point_name: vehicle.previousStopPointName,
-        line_ref: vehicle.lineRef,
-        published_line_name: vehicle.publishedLineName,
-        direction_ref: vehicle.directionRef?.toString(),
-        origin_name: vehicle.originName,
-        origin_ref: vehicle.originRef,
-        origin_aimed_departure_time: originAimedDepartureTime,
-        destination_name: vehicle.destinationName,
-        destination_ref: vehicle.destinationRef,
-        vehicle_journey_ref: vehicle.vehicleJourneyRef,
-    };
+        if (!parseResult.success) {
+            logger.warn(
+                `Invalid TfL vehicle location with vehicle ref: ${vehicleLocation.vehicleRef}`,
+                parseResult.error,
+            );
+            return [];
+        }
+
+        return [parseResult.data];
+    });
 };
 
 const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
@@ -98,7 +72,7 @@ export const handler = async () => {
         const lineIds = await getLineIds(dbClient);
         const vehicleLocations = await retrieveTflVehicleLocations(lineIds, live_vehicles_api_key);
 
-        await insertAvls(dbClient, vehicleLocations.map(mapVehicleLocation));
+        await insertAvls(dbClient, vehicleLocations);
 
         logger.info("TfL location retriever successful");
     } catch (error) {
