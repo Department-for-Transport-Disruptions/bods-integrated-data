@@ -191,6 +191,21 @@ export interface AvlTable {
     destination_ref: string | null;
     block_ref: string | null;
     geom: RawBuilder<string> | null;
+    vehicle_name: string | null;
+    monitored: string | null;
+    load: number | null;
+    passenger_count: number | null;
+    odometer: number | null;
+    headway_deviation: number | null;
+    schedule_deviation: number | null;
+    vehicle_state: number | null;
+    next_stop_point_id: string | null;
+    next_stop_point_name: string | null;
+    previous_stop_point_id: string | null;
+    previous_stop_point_name: string | null;
+    origin_name: string | null;
+    destination_name: string | null;
+    vehicle_journey_ref: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;
@@ -352,6 +367,7 @@ export interface GtfsStopTimeTable {
     id: Generated<number>;
     trip_id: string;
     stop_id: string;
+    destination_stop_id: string;
     arrival_time: string;
     departure_time: string;
     stop_sequence: number;

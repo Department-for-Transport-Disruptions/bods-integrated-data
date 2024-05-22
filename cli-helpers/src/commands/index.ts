@@ -5,6 +5,7 @@ export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-feed-validator";
 export * from "./invoke-avl-retriever";
 export * from "./invoke-avl-subscriber";
+export * from "./invoke-avl-tfl-location-retriever";
 export * from "./invoke-avl-unsubscriber";
 export * from "./invoke-bank-holidays-retriever";
 export * from "./invoke-bods-fares-retriever";

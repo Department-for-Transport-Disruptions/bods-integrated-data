@@ -17,6 +17,7 @@ BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 TFL_LINEID_BUCKET_NAME="integrated-data-tfl-data-retriever-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
+TFL_API_ARN=""
 
 # Dev
 
@@ -196,6 +197,9 @@ run-local-avl-unsubscriber:
 
 run-local-avl-tfl-line-id-retriever:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-tfl-line-id-retriever'; handler().catch(e => console.error(e))"
+
+run-local-avl-tfl-location-retriever:
+	STAGE=local TFL_API_ARN=${TFL_API_ARN} npx tsx -e "import {handler} from './src/functions/avl-tfl-location-retriever'; handler().catch(e => console.error(e))"
 
 
 # NOC

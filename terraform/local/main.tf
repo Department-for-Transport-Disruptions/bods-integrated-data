@@ -125,6 +125,7 @@ module "integrated_data_avl_pipeline" {
   alarm_topic_arn                            = ""
   ok_topic_arn                               = ""
   tfl_line_id_retriever_invoke_every_seconds = 60
+  tfl_location_retriever_invoke_every_seconds = 60
 }
 
 module "integrated_data_avl_aggregator" {
