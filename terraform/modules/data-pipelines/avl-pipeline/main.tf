@@ -130,8 +130,8 @@ module "integrated_data_avl_tfl_location_retriever_function" {
   memory        = 512
 
   env_vars = {
-    STAGE        = var.environment
-    TNDS_FTP_ARN = aws_secretsmanager_secret.tfl_api_keys_secret.arn
+    STAGE       = var.environment
+    TFL_API_ARN = aws_secretsmanager_secret.tfl_api_keys_secret.arn
   }
 }
 
@@ -141,6 +141,6 @@ module "avl_tfl_location_retriever_sfn" {
   source               = "../../shared/lambda-trigger-sfn"
   environment          = var.environment
   function_arn         = module.integrated_data_avl_tfl_location_retriever_function.function_arn
-  invoke_every_seconds = 60
+  invoke_every_seconds = var.tfl_location_retriever_invoke_every_seconds
   depends_on           = [module.integrated_data_avl_tfl_location_retriever_function]
 }
