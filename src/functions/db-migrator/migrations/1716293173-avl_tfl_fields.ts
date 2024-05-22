@@ -23,5 +23,22 @@ export async function up(db: Kysely<Database>): Promise<void> {
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
-    await db.schema.alterTable("avl").dropColumn("occupancy").execute();
+    await db.schema
+        .alterTable("avl")
+        .dropColumn("vehicle_name")
+        .dropColumn("monitored")
+        .dropColumn("load")
+        .dropColumn("passenger_count")
+        .dropColumn("odometer")
+        .dropColumn("headway_deviation")
+        .dropColumn("schedule_deviation")
+        .dropColumn("vehicle_state")
+        .dropColumn("next_stop_point_id")
+        .dropColumn("next_stop_point_name")
+        .dropColumn("previous_stop_point_id")
+        .dropColumn("previous_stop_point_name")
+        .dropColumn("origin_name")
+        .dropColumn("destination_name")
+        .dropColumn("vehicle_journey_ref")
+        .execute();
 }
