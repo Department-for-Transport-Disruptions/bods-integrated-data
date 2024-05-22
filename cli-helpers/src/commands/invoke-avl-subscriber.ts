@@ -60,7 +60,7 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
         }
 
         const invokePayload = {
-            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${producerEndpoint}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\"}`,
+            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\"}`,
         };
 
         await invokeLambda(stage, {
