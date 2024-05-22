@@ -41,7 +41,7 @@ describe("avl-feed-validator", () => {
 
         expect(getParameterSpy).not.toBeCalledTimes(2);
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(axiosSpy).not.toHaveBeenCalledOnce;
+        expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
     it("should do nothing if all subscriptions have valid heartbeat notifications associated with them", async () => {
         recursiveScanSpy.mockResolvedValue([
@@ -70,7 +70,7 @@ describe("avl-feed-validator", () => {
 
         expect(getParameterSpy).not.toBeCalledTimes(2);
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(axiosSpy).not.toHaveBeenCalledOnce;
+        expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
     it("should resubscribe to the data producer if we have not received a heartbeat notification for that subscription in the last 90 seconds", async () => {
         recursiveScanSpy.mockResolvedValue([
@@ -168,7 +168,7 @@ describe("avl-feed-validator", () => {
             status: "UNAVAILABLE",
             url: "https://mock-data-producer.com/",
         });
-        expect(axiosSpy).not.toHaveBeenCalledOnce;
+        expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
     it("should throw an error if we do not receive a 200 response from the /subscribe endpoint", async () => {
         recursiveScanSpy.mockResolvedValue([
@@ -217,7 +217,7 @@ describe("avl-feed-validator", () => {
             status: "UNAVAILABLE",
             url: "https://mock-data-producer.com/",
         });
-        expect(axiosSpy).toHaveBeenCalledOnce;
-        expect(axiosSpy).toHaveBeenCalledOnce;
+        expect(axiosSpy).toHaveBeenCalledOnce();
+        expect(axiosSpy).toHaveBeenCalledOnce();
     });
 });

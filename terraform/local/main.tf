@@ -124,6 +124,8 @@ module "integrated_data_avl_pipeline" {
   db_host            = null
   alarm_topic_arn    = ""
   ok_topic_arn       = ""
+  tfl_api_keys       = local.secrets["tfl_api_keys"]
+  tfl_location_retriever_invoke_every_seconds = 60
 }
 
 module "integrated_data_avl_aggregator" {

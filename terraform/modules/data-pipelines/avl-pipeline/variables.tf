@@ -46,3 +46,13 @@ variable "alarm_topic_arn" {
   type        = string
   description = "ARN of the SNS topic to use for alarm notifications"
 }
+
+variable "tfl_api_keys" {
+  type        = map(string)
+  description = "TfL API keys"
+}
+
+variable "tfl_location_retriever_invoke_every_seconds" {
+  type        = number
+  description = "Invoke the TfL location retriever every X seconds"
+}
