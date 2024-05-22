@@ -1,0 +1,23 @@
+{
+    "name": "@bods-integrated-data/avl-tfl-line-id-retriever",
+    "version": "0.1.0",
+    "description": "This function retrieves bank holiday data from gov.uk and stores it in an S3 bucket",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-tfl-line-id-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-tfl-line-id-retriever.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "axios": "^1.6.7"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

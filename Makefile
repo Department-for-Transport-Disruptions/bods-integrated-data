@@ -14,6 +14,7 @@ NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
+TFL_LINEID_BUCKET_NAME="integrated-data-tfl-data-retriever-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 
@@ -192,6 +193,9 @@ run-local-avl-mock-data-producer-send-data:
 
 run-local-avl-unsubscriber:
 	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+
+run-local-avl-tfl-line-id-retriever:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-tfl-line-id-retriever'; handler().catch(e => console.error(e))"
 
 
 # NOC

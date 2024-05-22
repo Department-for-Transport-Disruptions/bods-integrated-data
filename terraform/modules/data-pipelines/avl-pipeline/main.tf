@@ -108,3 +108,30 @@ module "integrated_data_avl_retriever_function" {
     TARGET_BUCKET_NAME = module.integrated_data_avl_s3_sqs.bucket_id
   }
 }
+
+module "integrated_data_avl_tfl_line_id_retriever_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-tfl-line-id-retriever"
+  zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-line-id-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  memory        = 512
+
+  env_vars = {
+    STAGE       = var.environment
+    TFL_API_ARN = aws_secretsmanager_secret.tfl_api_keys_secret.arn
+  }
+}
+
+module "avl_tfl_line_id_retriever_sfn" {
+  count                = var.environment == "local" ? 0 : 1
+  step_function_name   = "integrated-data-avl-tfl-line-id-retriever-sfn"
+  source               = "../../shared/lambda-trigger-sfn"
+  environment          = var.environment
+  function_arn         = module.integrated_data_avl_tfl_line_id_retriever_function.function_arn
+  invoke_every_seconds = var.tfl_line_id_retriever_invoke_every_seconds
+  depends_on           = [module.integrated_data_avl_tfl_line_id_retriever_function]
+}

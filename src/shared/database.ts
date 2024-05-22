@@ -82,6 +82,7 @@ export interface Database {
     trip_new: GtfsTripTable;
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
+    tfl_line: TflLineTable;
 }
 
 export interface NaptanStopTable {
@@ -195,6 +196,14 @@ export interface AvlTable {
 export type Avl = Selectable<AvlTable>;
 export type NewAvl = Insertable<AvlTable>;
 export type AvlUpdate = Updateable<AvlTable>;
+
+export interface TflLineTable {
+    id: string;
+}
+
+export type TflLine = Selectable<TflLineTable>;
+export type NewTflLine = Insertable<TflLineTable>;
+export type TflLineUpdate = Updateable<TflLineTable>;
 
 export interface GtfsAgencyTable {
     id: Generated<number>;
