@@ -187,15 +187,15 @@ module "integrated_data_gtfs_rt_pipeline" {
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc.vpc_id
-  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
-  db_host            = module.integrated_data_aurora_db.db_host
-  alarm_topic_arn    = module.integrated_data_monitoring.alarm_topic_arn
-  ok_topic_arn       = module.integrated_data_monitoring.ok_topic_arn
-  tfl_api_keys       = local.secrets["tfl_api_keys"]
+  environment                                 = local.env
+  vpc_id                                      = module.integrated_data_vpc.vpc_id
+  private_subnet_ids                          = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                               = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                                    = module.integrated_data_aurora_db.db_sg_id
+  db_host                                     = module.integrated_data_aurora_db.db_host
+  alarm_topic_arn                             = module.integrated_data_monitoring.alarm_topic_arn
+  ok_topic_arn                                = module.integrated_data_monitoring.ok_topic_arn
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
   tfl_location_retriever_invoke_every_seconds = 60
 }
 
@@ -227,6 +227,12 @@ module "integrated_data_avl_data_producer_api" {
 
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
+}
+
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
 
   environment = local.env
 }

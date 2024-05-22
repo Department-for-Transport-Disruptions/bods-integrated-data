@@ -78,7 +78,7 @@ module "integrated_data_bods_fares_unzipper_function" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 120
-  memory        = 3072
+  memory        = 1024
 
   permissions = [
     {

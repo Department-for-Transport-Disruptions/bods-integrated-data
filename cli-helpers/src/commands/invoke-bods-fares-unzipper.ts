@@ -2,7 +2,7 @@ import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
-export const invokeBodsfaresUnzipper = new Command("invoke-bods-fares-unzipper")
+export const invokeBodsFaresUnzipper = new Command("invoke-bods-fares-unzipper")
     .addOption(STAGE_OPTION_WITH_DEFAULT)
     .option("-f, --file <file>", "File to unzip")
     .action(async (options) => {
