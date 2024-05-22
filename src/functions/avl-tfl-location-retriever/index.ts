@@ -33,7 +33,6 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
     });
 
     const responses = await Promise.all(requests);
-
     const vehicleLocations = responses.flatMap((response) => response.lines.flatMap((line) => line.vehicles));
 
     return vehicleLocations.flatMap<Avl>((vehicleLocation) => {
@@ -42,7 +41,7 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
         if (!parseResult.success) {
             logger.warn(
                 `Invalid TfL vehicle location with vehicle ref: ${vehicleLocation.vehicleRef}`,
-                parseResult.error,
+                parseResult.error.format(),
             );
             return [];
         }
