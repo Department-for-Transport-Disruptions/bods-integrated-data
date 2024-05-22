@@ -68,7 +68,7 @@ module "integrated_data_gtfs_rt_downloader_function" {
   env_vars = {
     STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
-    DB_HOST       = var.db_host
+    DB_HOST       = var.db_reader_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
@@ -198,6 +198,10 @@ resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
         {
           "name" : "DB_HOST",
           "value" : var.db_host
+        },
+        {
+          "name" : "DB_READER_HOST",
+          "value" : var.db_reader_host
         },
         {
           "name" : "DB_PORT",

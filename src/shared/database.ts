@@ -7,7 +7,7 @@ const isDocker = process.env.IS_DOCKER;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
-export const getDatabaseClient = async (isLocal = false) => {
+export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
     if (isLocal) {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
@@ -22,10 +22,16 @@ export const getDatabaseClient = async (isLocal = false) => {
         });
     }
 
-    const { DB_HOST: dbHost, DB_PORT: dbPort, DB_SECRET_ARN: databaseSecretArn, DB_NAME: dbName } = process.env;
+    const {
+        DB_HOST: dbHost,
+        DB_READER_HOST: dbReaderHost,
+        DB_PORT: dbPort,
+        DB_SECRET_ARN: databaseSecretArn,
+        DB_NAME: dbName,
+    } = process.env;
 
-    if (!dbHost || !dbPort || !databaseSecretArn || !dbName) {
-        throw new Error("Missing env vars");
+    if ((!readOnly && !dbHost) || (readOnly && !dbReaderHost) || !dbPort || !databaseSecretArn || !dbName) {
+        throw new Error("Missing db env vars");
     }
 
     const databaseSecret = await smClient.send(

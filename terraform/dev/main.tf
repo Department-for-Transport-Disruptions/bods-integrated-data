@@ -182,6 +182,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_secret_arn                = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                     = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                      = module.integrated_data_aurora_db_dev.db_host
+  db_reader_host               = module.integrated_data_aurora_db_dev.db_reader_host
   bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
   bods_avl_processor_frequency = 120
   bods_avl_cleardown_frequency = 240
@@ -210,7 +211,7 @@ module "integrated_data_avl_aggregator" {
   private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  db_host            = module.integrated_data_aurora_db_dev.db_reader_host
 }
 
 module "integrated_data_avl_subscription_table" {

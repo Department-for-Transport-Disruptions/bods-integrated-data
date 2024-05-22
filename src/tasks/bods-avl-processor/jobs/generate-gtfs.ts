@@ -35,7 +35,7 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
 void (async () => {
     console.time("gtfsgenerate");
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
 
     try {
         logger.info("Retrieving AVL from database...");

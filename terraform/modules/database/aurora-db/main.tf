@@ -208,10 +208,27 @@ resource "aws_db_proxy_target" "integrated_data_rds_proxy_target" {
   target_group_name     = aws_db_proxy_default_target_group.integrated_data_rds_proxy_default_target_group[0].name
 }
 
+resource "aws_db_proxy_endpoint" "integrated_data_rds_proxy_reader_endpoint" {
+  count = var.enable_rds_proxy && var.multi_az ? 1 : 0
+
+  db_proxy_name          = aws_db_proxy.integrated_data_rds_proxy[0].name
+  db_proxy_endpoint_name = "reader"
+  vpc_subnet_ids         = var.db_subnet_ids
+  target_role            = "READ_ONLY"
+}
+
 resource "aws_route53_record" "integrated_data_db_cname_record" {
   zone_id = var.private_hosted_zone_id
   name    = "db.${var.private_hosted_zone_name}"
   type    = "CNAME"
   ttl     = 300
   records = [var.enable_rds_proxy ? aws_db_proxy.integrated_data_rds_proxy[0].endpoint : aws_rds_cluster.integrated_data_rds_cluster.endpoint]
+}
+
+resource "aws_route53_record" "integrated_data_db_reader_cname_record" {
+  zone_id = var.private_hosted_zone_id
+  name    = "db.reader.${var.private_hosted_zone_name}"
+  type    = "CNAME"
+  ttl     = 300
+  records = [var.enable_rds_proxy && var.multi_az ? aws_db_proxy_endpoint.integrated_data_rds_proxy_reader_endpoint[0].endpoint : aws_rds_cluster.integrated_data_rds_cluster.reader_endpoint]
 }
