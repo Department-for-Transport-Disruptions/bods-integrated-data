@@ -12,7 +12,6 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@aws-sdk/client-secrets-manager": "3.362.0",
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "basic-ftp": "^5.0.5"

@@ -1,22 +1,15 @@
-import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { Client } from "basic-ftp";
 import { Writable } from "stream";
-
-const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
 interface FtpCredentials {
     host: string;
     user: string;
     password: string;
 }
-
-const secretsClient = new SecretsManagerClient({
-    endpoint: localStackHost ? `http://${localStackHost}:4566` : undefined,
-    region: "eu-west-2",
-});
 
 const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Array>> => {
     const downloadedFiles: Map<string, Uint8Array> = new Map();
@@ -44,20 +37,6 @@ const uploadZipFilesToS3 = async (files: Map<string, Uint8Array>, bucket: string
         const upload = startS3Upload(bucket, `${prefix}/${fileName}`, content, "application/zip");
         await upload.done();
     }
-};
-
-const getFtpCredentials = async (ftpCredentialsArn: string): Promise<FtpCredentials> => {
-    const ftpCredentialsSecret = await secretsClient.send(
-        new GetSecretValueCommand({
-            SecretId: ftpCredentialsArn,
-        }),
-    );
-
-    if (!ftpCredentialsSecret.SecretString) {
-        throw new Error("FTP credentials secret could not be retrieved");
-    }
-
-    return JSON.parse(ftpCredentialsSecret.SecretString) as FtpCredentials;
 };
 
 const getTndsDataAndUploadToS3 = async (
@@ -97,7 +76,7 @@ export const handler = async () => {
     }
 
     try {
-        const credentials = await getFtpCredentials(ftpArn);
+        const credentials = await getSecret<FtpCredentials>({ SecretId: ftpArn });
 
         logger.info("Starting retrieval of TNDS TXC data");
 

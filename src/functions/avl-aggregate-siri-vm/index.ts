@@ -2,7 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { Avl, siriSchema } from "@bods-integrated-data/shared/schema/siri.schema";
+import { Avl, siriSchema } from "@bods-integrated-data/shared/schema";
 import { XMLBuilder } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
