@@ -3,43 +3,6 @@ import { NewAvl } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema } from "../utils";
 
-export const avlSchema = z.object({
-    response_time_stamp: z.string(),
-    producer_ref: z.string(),
-    recorded_at_time: z.string(),
-    valid_until_time: z.string(),
-    line_ref: z.string().nullish(),
-    direction_ref: z.string(),
-    occupancy: z.string().nullish(),
-    operator_ref: z.string(),
-    data_frame_ref: z.string().nullish(),
-    dated_vehicle_journey_ref: z.string().nullish(),
-    vehicle_ref: z.string(),
-    longitude: z.number(),
-    latitude: z.number(),
-    bearing: z.string().nullish(),
-    published_line_name: z.string().nullish(),
-    origin_ref: z.string().nullish(),
-    origin_aimed_departure_time: z.string().nullish(),
-    destination_ref: z.string().nullish(),
-    block_ref: z.string().nullish(),
-    vehicle_name: z.string().nullish(),
-    monitored: z.string().nullish(),
-    load: z.number().nullish(),
-    passenger_count: z.number().nullish(),
-    odometer: z.number().nullish(),
-    headway_deviation: z.number().nullish(),
-    schedule_deviation: z.number().nullish(),
-    vehicle_state: z.number().nullish(),
-    next_stop_point_id: z.string().nullish(),
-    next_stop_point_name: z.string().nullish(),
-    previous_stop_point_id: z.string().nullish(),
-    previous_stop_point_name: z.string().nullish(),
-    origin_name: z.string().nullish(),
-    destination_name: z.string().nullish(),
-    vehicle_journey_ref: z.string().nullish(),
-});
-
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
