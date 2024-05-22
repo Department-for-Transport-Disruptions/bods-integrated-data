@@ -143,7 +143,6 @@ export const getAvlDataForGtfs = async (
             .leftJoin("stop_time", (eb) =>
                 eb
                     .onRef("stop_time.trip_id", "=", "trip.id")
-                    .on("avl_bods.direction_ref", "=", "trip.direction")
                     .on("avl_bods.origin_ref", "=", "stop_time.stop_id")
                     .on("avl_bods.destination_ref", "=", "stop_time.destination_stop_id"),
             )

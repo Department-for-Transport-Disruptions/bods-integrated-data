@@ -111,6 +111,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_secret_arn                = "*"
   db_sg_id                     = null
   db_host                      = null
+  db_reader_host               = null
   bods_avl_processor_cpu       = 1024
   bods_avl_processor_memory    = 2048
   bods_avl_processor_image_url = "bods-avl-processor:latest"
@@ -121,14 +122,16 @@ module "integrated_data_gtfs_rt_pipeline" {
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
-  environment        = local.env
-  vpc_id             = null
-  private_subnet_ids = null
-  db_secret_arn      = "*"
-  db_sg_id           = null
-  db_host            = null
-  alarm_topic_arn    = ""
-  ok_topic_arn       = ""
+  environment                                 = local.env
+  vpc_id                                      = null
+  private_subnet_ids                          = null
+  db_secret_arn                               = "*"
+  db_sg_id                                    = null
+  db_host                                     = null
+  alarm_topic_arn                             = ""
+  ok_topic_arn                                = ""
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
+  tfl_location_retriever_invoke_every_seconds = 60
 }
 
 module "integrated_data_avl_aggregator" {

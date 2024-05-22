@@ -1,9 +1,12 @@
 /* eslint-disable no-console */
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
+import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { putS3Object } from "@bods-integrated-data/shared/s3";
+import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema/avl.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosResponse } from "axios";
 import { XMLParser } from "fast-xml-parser";
+import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import Pino from "pino";
 import { Entry, Parse } from "unzipper";
@@ -11,14 +14,73 @@ import { Stream } from "stream";
 
 const logger = Pino();
 
-const { PROCESSOR_FREQUENCY_IN_SECONDS: processorFrequency, CLEARDOWN_FREQUENCY_IN_SECONDS: cleardownFrequency } =
-    process.env;
+const {
+    PROCESSOR_FREQUENCY_IN_SECONDS: processorFrequency,
+    CLEARDOWN_FREQUENCY_IN_SECONDS: cleardownFrequency,
+    BUCKET_NAME: bucketName,
+    SAVE_JSON: saveJson,
+} = process.env;
 
-if (!processorFrequency || !cleardownFrequency) {
+if (!processorFrequency || !cleardownFrequency || !bucketName) {
     throw new Error(
         "Missing env vars - BUCKET_NAME, PROCESSOR_FREQUENCY_IN_SECONDS and CLEARDOWN_FREQUENCY_IN_SECONDS must be set",
     );
 }
+
+const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
+    try {
+        await putS3Object({
+            Bucket: bucketName,
+            Key: "gtfs-rt.bin",
+            ContentType: "application/octet-stream",
+            Body: data,
+        });
+    } catch (error) {
+        if (error instanceof Error) {
+            logger.error("There was a problem uploading GTFS-RT data to S3", error);
+        }
+
+        throw error;
+    }
+};
+
+const generateGtfs = async () => {
+    console.time("gtfsgenerate");
+
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
+
+    try {
+        logger.info("Retrieving AVL from database...");
+        const avlData = await getAvlDataForGtfs(dbClient);
+
+        logger.info("Generating GTFS-RT...");
+        const entities = avlData.map(mapAvlToGtfsEntity);
+        const gtfsRtFeed = generateGtfsRtFeed(entities);
+
+        await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
+
+        if (saveJson === "true") {
+            const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
+
+            await putS3Object({
+                Bucket: bucketName,
+                Key: "gtfs-rt.json",
+                ContentType: "application/json",
+                Body: JSON.stringify(decodedJson),
+            });
+        }
+
+        console.timeEnd("gtfsgenerate");
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error("There was an error running the GTFS-RT Generator", e);
+        }
+
+        throw e;
+    } finally {
+        await dbClient.destroy();
+    }
+};
 
 const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     const xmlParser = new XMLParser({
@@ -95,6 +157,8 @@ void (async () => {
 
         logger.info("BODS AVL processor successful");
         console.timeEnd("avl-processor");
+
+        await generateGtfs();
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem with the AVL retriever", e);

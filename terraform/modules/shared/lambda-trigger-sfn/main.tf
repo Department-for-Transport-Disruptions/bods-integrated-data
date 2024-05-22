@@ -114,7 +114,7 @@ resource "aws_iam_role_policy_attachment" "integrated_data_lambda_trigger_sfn_po
 
 
 resource "aws_iam_role" "sfn_event_bridge_role" {
-  name = "${var.step_function_name}-sfn-eventbridge-role-${var.environment}"
+  name = "${var.step_function_name}-sfn-eb-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -131,7 +131,7 @@ resource "aws_iam_role" "sfn_event_bridge_role" {
 }
 
 resource "aws_iam_policy" "allow_event_bridge_to_run_sfn_policy" {
-  name = "${var.step_function_name}-sfn-eventbridge-policy-${var.environment}"
+  name = "${var.step_function_name}-sfn-eb-policy-${var.environment}"
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [

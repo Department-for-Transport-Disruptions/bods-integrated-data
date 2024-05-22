@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema/siri.schema";
+import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";

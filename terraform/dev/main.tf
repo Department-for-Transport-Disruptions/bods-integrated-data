@@ -72,8 +72,6 @@ module "integrated_data_aurora_db_dev" {
   vpc_id                   = module.integrated_data_vpc_dev.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  min_db_capacity          = 0.5
-  max_db_capacity          = 16
   enable_rds_proxy         = true
 }
 
@@ -193,14 +191,16 @@ module "integrated_data_gtfs_rt_pipeline" {
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
-  alarm_topic_arn    = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn       = module.integrated_data_monitoring_dev.ok_topic_arn
+  environment                                 = local.env
+  vpc_id                                      = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids                          = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                               = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                                    = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                                     = module.integrated_data_aurora_db_dev.db_host
+  alarm_topic_arn                             = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn                                = module.integrated_data_monitoring_dev.ok_topic_arn
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
+  tfl_location_retriever_invoke_every_seconds = 60
 }
 
 module "integrated_data_avl_aggregator" {

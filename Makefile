@@ -16,6 +16,7 @@ AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
+TFL_API_ARN=""
 
 # Dev
 
@@ -195,6 +196,9 @@ run-local-avl-mock-data-producer-send-data:
 
 run-local-avl-unsubscriber:
 	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+
+run-local-avl-tfl-location-retriever:
+	STAGE=local TFL_API_ARN=${TFL_API_ARN} npx tsx -e "import {handler} from './src/functions/avl-tfl-location-retriever'; handler().catch(e => console.error(e))"
 
 
 # NOC
