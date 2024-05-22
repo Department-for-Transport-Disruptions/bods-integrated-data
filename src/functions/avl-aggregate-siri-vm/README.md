@@ -1,7 +1,7 @@
 # Aggregate SIRI-VM Function
 
-Code for the AWS Lambda that is responsible for regularly querying the AVL database to retrieve the most recent vehicle 
-location for each unique vehicle in the database and aggregate it into a single SIRI-VM file which is then uploaded to 
+Code for the AWS Lambda that is responsible for regularly querying the AVL database to retrieve the most recent vehicle
+location for each unique vehicle in the database and aggregate it into a single SIRI-VM file which is then uploaded to
 S3.
 
 ## Running Locally
@@ -17,8 +17,9 @@ Then run the following make command:
 ```bash
 make run-avl-aggregate-siri-vm
 ```
-If successful there will be a `SIRI-VM.xml` file stored in your local S3 bucket. To verify this you can run:
-```bash
-awslocal s3 ls s3://avl-siri-vm-local
-```
 
+If successful there will be a `SIRI-VM.xml` file stored in your local S3 bucket. To verify this you can run:
+
+```bash
+awslocal s3 ls s3://integrated-data-avl-aggregated-siri-vm-local
+```
