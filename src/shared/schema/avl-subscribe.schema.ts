@@ -6,7 +6,7 @@ export const avlSubscribeMessageSchema = z.object({
     shortDescription: z.string(),
     username: z.string(),
     password: z.string(),
-    requestorRef: z.string().optional(),
+    requestorRef: z.string().nullish(),
     subscriptionId: z.string().optional(),
 });
 

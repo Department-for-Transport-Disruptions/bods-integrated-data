@@ -4,7 +4,7 @@ import { z } from "zod";
 export const heartbeatNotificationSchema = z.object({
     HeartbeatNotification: z.object({
         RequestTimestamp: z.string(),
-        ProducerRef: z.string(),
+        ProducerRef: z.string().optional(),
         Status: z.string(),
         ServiceStartedTime: z.string().optional(),
     }),
