@@ -225,6 +225,13 @@ module "integrated_data_avl_data_producer_api" {
   environment                 = local.env
 }
 
+module "integrated_data_avl_siri_vm_downloader" {
+  source = "../modules/avl-siri-vm-downloader"
+
+  environment = local.env
+  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+}
+
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
 

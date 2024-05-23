@@ -69,7 +69,14 @@ export const invokeLambdaTemplate = new Command("invoke-lambda-template")
     });
 ```
 
-Add any extra configuration as necessary.
+Add any extra configuration to the file as necessary.
+
+Finally, export the CLI-helper in the `cli-helpers/src/commands/index.ts` file:
+
+```typescript
+// ...other exports
+export * from "./invoke-lambda-template";
+```
 
 ## Update Terraform resources
 
