@@ -3,7 +3,7 @@ import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema
-        .alterTable("avl")
+        .alterTable("avl_bods")
         .addColumn("vehicle_name", "text")
         .addColumn("monitored", "text")
         .addColumn("load", "integer")
@@ -24,7 +24,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
 
 export async function down(db: Kysely<Database>): Promise<void> {
     await db.schema
-        .alterTable("avl")
+        .alterTable("avl_bods")
         .dropColumn("vehicle_name")
         .dropColumn("monitored")
         .dropColumn("load")

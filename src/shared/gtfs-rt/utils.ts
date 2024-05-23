@@ -3,6 +3,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
+import { mapAvlDateStrings } from "../avl/utils";
 import { Calendar, CalendarDateExceptionType, KyselyDb } from "../database";
 import { getDate } from "../dates";
 
@@ -78,13 +79,8 @@ export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEnti
 export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("base64");
 
 /**
- * Get all AVL data from the database along with a route ID and trip ID for each AVL row.
- * The route ID is determined by looking up the route that matches the concatenation of the
- * AVL's operator and line refs with the concatenation of the route's national operator code
- * and short name. The trip ID is then determined by looking up the trip with this route ID
- * and that matches the trip's ticket machine journey code with the AVL's dated vehicle
- * journey ref, to ensure a single trip is matched. Note that it is possible for no matching
- * route ID or trip ID to be found.
+ * Get all AVL data from the database using optional filters.
+ * The route ID and trip ID for each AVL                                                                                                                                                                                                                                                                                                                                                                                                  are determined by a series of matching rules.
  * @param dbClient The database client
  * @param routeId Optional route ID or comma-separated route IDs to filter on
  * @param startTimeBefore Optional start time before to filter on using the AVL's departure time
@@ -175,7 +171,9 @@ export const getAvlDataForGtfs = async (
 
         query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);
 
-        return query.execute();
+        const avls = await query.execute();
+
+        return avls.map(mapAvlDateStrings);
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);

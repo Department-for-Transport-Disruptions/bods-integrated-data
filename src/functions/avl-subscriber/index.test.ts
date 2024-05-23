@@ -349,6 +349,7 @@ describe("avl-subscriber", () => {
             body: JSON.stringify({
                 ...mockAvlSubscribeMessage,
                 subscriptionId: "existing-subscription-id",
+                requestorRef: null,
             }),
         });
 

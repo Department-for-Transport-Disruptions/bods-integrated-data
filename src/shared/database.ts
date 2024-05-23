@@ -183,7 +183,7 @@ export interface AvlTable {
     recorded_at_time: string;
     valid_until_time: string;
     line_ref: string | null;
-    direction_ref: string | null;
+    direction_ref: string;
     occupancy: string | null;
     operator_ref: string;
     data_frame_ref: string | null;
