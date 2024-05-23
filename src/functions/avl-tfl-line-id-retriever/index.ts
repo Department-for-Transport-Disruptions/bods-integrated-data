@@ -1,6 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewTflLine, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
 import { TflLinesSchema } from "./tfl-line.schema";
 
