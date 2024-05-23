@@ -173,6 +173,13 @@ module "integrated_data_gtfs_downloader" {
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
+module "integrated_data_avl_siri_vm_downloader" {
+  source = "../modules/avl-siri-vm-downloader"
+
+  environment = local.env
+  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+}
+
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
@@ -187,15 +194,15 @@ module "integrated_data_gtfs_rt_pipeline" {
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
-  alarm_topic_arn    = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn       = module.integrated_data_monitoring_dev.ok_topic_arn
-  tfl_api_keys       = local.secrets["tfl_api_keys"]
+  environment                                 = local.env
+  vpc_id                                      = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids                          = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                               = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                                    = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                                     = module.integrated_data_aurora_db_dev.db_host
+  alarm_topic_arn                             = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn                                = module.integrated_data_monitoring_dev.ok_topic_arn
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
   tfl_location_retriever_invoke_every_seconds = 60
 }
 
@@ -288,4 +295,15 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_avl_consumer_api" {
+  source = "../modules/avl-consumer-api"
+
+  environment                   = local.env
+  sirivm_downloader_lambda_name = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_lambda_name
+  sirivm_downloader_invoke_arn  = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_invoke_arn
+  acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
+  domain                        = module.integrated_data_route53.public_hosted_zone_name
 }
