@@ -125,20 +125,14 @@ export const getAvlDataForGtfs = async (
                     .leftJoin("trip", (eb) =>
                         eb
                             .onRef("trip.route_id", "=", "routes_with_noc.route_id")
-                            .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref")
-                            .onRef("trip.direction", "=", "avl_bods.direction_ref"),
+                            .onRef("trip.direction", "=", "avl_bods.direction_ref")
+                            .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref"),
                     )
                     .leftJoin("calendar", "calendar.id", "trip.service_id")
                     .leftJoin("calendar_date", (eb) =>
                         eb
                             .onRef("calendar_date.service_id", "=", "trip.service_id")
                             .on("calendar_date.date", "=", currentDate.format(DEFAULT_DATE_FORMAT)),
-                    )
-                    .leftJoin("stop_time", (eb) =>
-                        eb
-                            .onRef("stop_time.trip_id", "=", "trip.id")
-                            .onRef("stop_time.stop_id", "=", "avl_bods.origin_ref")
-                            .onRef("stop_time.destination_stop_id", "=", "avl_bods.destination_ref"),
                     )
                     .select([
                         "routes_with_noc.route_id",
@@ -147,17 +141,14 @@ export const getAvlDataForGtfs = async (
                         "avl_bods.vehicle_ref",
                     ])
                     .where((eb) =>
-                        eb.or([
-                            eb.and([
-                                eb("calendar.start_date", "<=", currentDateIso),
-                                eb("calendar.end_date", ">", currentDateIso),
-                                eb(`calendar.${currentDay}`, "=", 1),
-                                eb.or([
-                                    eb("calendar_date.id", "is", null),
-                                    eb("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceAdded),
-                                ]),
+                        eb.and([
+                            eb("calendar.start_date", "<=", currentDateIso),
+                            eb("calendar.end_date", ">", currentDateIso),
+                            eb(`calendar.${currentDay}`, "=", 1),
+                            eb.or([
+                                eb("calendar_date.id", "is", null),
+                                eb("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceAdded),
                             ]),
-                            eb("stop_time.id", "is not", null),
                         ]),
                     ),
             )
