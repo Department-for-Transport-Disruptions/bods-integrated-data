@@ -6,6 +6,7 @@ import { ExtendedAvl } from "./types";
 import { mapAvlDateStrings } from "../avl/utils";
 import { Calendar, CalendarDateExceptionType, KyselyDb } from "../database";
 import { getDate } from "../dates";
+import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
@@ -94,73 +95,105 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: string,
-) => {
+): Promise<ExtendedAvl[]> => {
     try {
-        const currentDate = getDate().toISOString();
+        const currentDate = getDate();
+        const currentDateIso = currentDate.toISOString();
         const currentDay = daysOfWeek[getDate().day()];
+
         let query = dbClient
-            .selectFrom("avl_bods")
-            .distinctOn(["avl_bods.operator_ref", "avl_bods.vehicle_ref"])
-            .leftJoin(
-                (eb) =>
-                    eb
-                        .selectFrom("route")
-                        .innerJoin("agency", "agency.id", "route.agency_id")
-                        .select([
-                            "route.id as route_id",
-                            sql`CONCAT(agency.noc, route.route_short_name)`.as("concat_noc_route_short_name"),
-                        ])
-                        .as("routes_with_noc"),
-                (join) =>
-                    join.onRef(
-                        "routes_with_noc.concat_noc_route_short_name",
-                        "=",
-                        sql`CONCAT(avl_bods.operator_ref, avl_bods.line_ref)`,
+            .with("matched_avl", (eb) =>
+                eb
+                    .selectFrom("avl_bods")
+                    .innerJoin(
+                        (eb) =>
+                            eb
+                                .selectFrom("route")
+                                .innerJoin("agency", "agency.id", "route.agency_id")
+                                .select([
+                                    "route.id as route_id",
+                                    sql`CONCAT(agency.noc, route.route_short_name)`.as("concat_noc_route_short_name"),
+                                ])
+                                .as("routes_with_noc"),
+                        (join) =>
+                            join.onRef(
+                                "routes_with_noc.concat_noc_route_short_name",
+                                "=",
+                                sql`CONCAT(avl_bods.operator_ref, avl_bods.line_ref)`,
+                            ),
+                    )
+                    .leftJoin("trip", (eb) =>
+                        eb
+                            .onRef("trip.route_id", "=", "routes_with_noc.route_id")
+                            .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref")
+                            .onRef("trip.direction", "=", "avl_bods.direction_ref"),
+                    )
+                    .leftJoin("calendar", "calendar.id", "trip.service_id")
+                    .leftJoin("calendar_date", (eb) =>
+                        eb
+                            .onRef("calendar_date.service_id", "=", "trip.service_id")
+                            .on("calendar_date.date", "=", currentDate.format(DEFAULT_DATE_FORMAT)),
+                    )
+                    .leftJoin("stop_time", (eb) =>
+                        eb
+                            .onRef("stop_time.trip_id", "=", "trip.id")
+                            .onRef("stop_time.stop_id", "=", "avl_bods.origin_ref")
+                            .onRef("stop_time.destination_stop_id", "=", "avl_bods.destination_ref"),
+                    )
+                    .select([
+                        "routes_with_noc.route_id",
+                        "trip.id as trip_id",
+                        "avl_bods.operator_ref",
+                        "avl_bods.vehicle_ref",
+                    ])
+                    .where((eb) =>
+                        eb.or([
+                            eb.and([
+                                eb("calendar.start_date", "<=", currentDateIso),
+                                eb("calendar.end_date", ">", currentDateIso),
+                                eb(`calendar.${currentDay}`, "=", 1),
+                                eb.or([
+                                    eb("calendar_date.id", "is", null),
+                                    eb("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceAdded),
+                                ]),
+                            ]),
+                            eb("stop_time.id", "is not", null),
+                        ]),
                     ),
             )
-            .leftJoin("trip", (eb) =>
+            .selectFrom("avl_bods")
+            .distinctOn(["avl_bods.operator_ref", "avl_bods.vehicle_ref"])
+            .leftJoin("matched_avl", (eb) =>
                 eb
-                    .onRef("trip.route_id", "=", "routes_with_noc.route_id")
-                    .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref")
-                    .onRef("trip.direction", "=", "avl_bods.direction_ref"),
+                    .onRef("matched_avl.operator_ref", "=", "avl_bods.operator_ref")
+                    .onRef("matched_avl.vehicle_ref", "=", "avl_bods.vehicle_ref"),
             )
-            .leftJoin("calendar", (eb) =>
-                eb
-                    .onRef("calendar.id", "=", "trip.service_id")
-                    .on("calendar.start_date", "<=", currentDate)
-                    .on("calendar.end_date", ">", currentDate)
-                    .on(`calendar.${currentDay}`, "=", 1),
-            )
-            .leftJoin("calendar_date", (eb) =>
-                eb
-                    .onRef("calendar_date.service_id", "=", "trip.service_id")
-                    .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
-            )
-            .leftJoin("stop_time", (eb) =>
-                eb
-                    .onRef("stop_time.trip_id", "=", "trip.id")
-                    .on("avl_bods.origin_ref", "=", "stop_time.stop_id")
-                    .on("avl_bods.destination_ref", "=", "stop_time.destination_stop_id"),
-            )
+            .select(["route_id", "trip_id"])
             .selectAll("avl_bods")
-            .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
-            .where("avl_bods.valid_until_time", ">", sql<string>`NOW()`)
-            .where("calendar_date.exception_type", "is", null);
+            .where("avl_bods.valid_until_time", ">", sql<string>`NOW()`);
 
         if (routeId) {
             query = query.where(
-                "routes_with_noc.route_id",
+                "route_id",
                 "in",
                 routeId.split(",").map((id) => Number(id)),
             );
         }
 
         if (startTimeBefore) {
-            query = query.where("origin_aimed_departure_time", "<", sql<string>`to_timestamp(${startTimeBefore})`);
+            query = query.where(
+                "avl_bods.origin_aimed_departure_time",
+                "<",
+                sql<string>`to_timestamp(${startTimeBefore})`,
+            );
         }
 
         if (startTimeAfter) {
-            query = query.where("origin_aimed_departure_time", ">", sql<string>`to_timestamp(${startTimeAfter})`);
+            query = query.where(
+                "avl_bods.origin_aimed_departure_time",
+                ">",
+                sql<string>`to_timestamp(${startTimeAfter})`,
+            );
         }
 
         if (boundingBox) {

@@ -1,7 +1,7 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@7.29.3 --activate
+RUN corepack enable && corepack prepare pnpm@9.1.2 --activate
 COPY pnpm-lock.yaml .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch
 COPY . .
