@@ -161,4 +161,3 @@ resource "aws_cloudwatch_event_target" "schedule_lambda_trigger_sfn" {
   arn      = aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.arn
   role_arn = aws_iam_role.sfn_event_bridge_role.arn
 }
-
