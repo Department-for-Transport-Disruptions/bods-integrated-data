@@ -154,7 +154,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
 
 module "avl_tfl_location_retriever_sfn" {
   count                = var.environment == "local" ? 0 : 1
-  step_function_name   = "integrated-data-avl-tfl-location-retriever-sfn"
+  step_function_name   = "integrated-data-avl-tfl-location-retriever"
   source               = "../../shared/lambda-trigger-sfn"
   environment          = var.environment
   function_arn         = module.integrated_data_avl_tfl_location_retriever_function.function_arn
