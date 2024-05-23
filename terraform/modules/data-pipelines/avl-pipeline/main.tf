@@ -120,6 +120,13 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 30
   schedule      = "cron(0 2 * * *)"
+  env_vars = {
+    STAGE         = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
 }
 
 resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
@@ -138,10 +145,10 @@ module "integrated_data_avl_tfl_location_retriever_function" {
   function_name = "integrated-data-avl-tfl-location-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-location-retriever.zip"
 
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 30
-  memory        = 512
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+  timeout = 30
+  memory  = 512
 
   env_vars = {
     STAGE       = var.environment
@@ -158,6 +165,7 @@ module "avl_tfl_line_id_retriever_sfn" {
   function_arn         = module.integrated_data_avl_tfl_line_id_retriever_function.function_arn
   invoke_every_seconds = var.tfl_line_id_retriever_invoke_every_seconds
   depends_on           = [module.integrated_data_avl_tfl_line_id_retriever_function]
+}
 
 module "avl_tfl_location_retriever_sfn" {
   count                = var.environment == "local" ? 0 : 1

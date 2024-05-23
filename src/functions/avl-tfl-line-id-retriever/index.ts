@@ -2,7 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewTflLine, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
-import { TflLinesSchema, tflLinesSchema } from "./tfl-line.schema";
+import { TflLinesSchema } from "./tfl-line.schema";
 
 export const getLineIds = async () => {
     const url = "https://api.tfl.gov.uk/Line/Mode/bus";
@@ -14,7 +14,7 @@ export const getLineIds = async () => {
             throw new Error(`Did not receive any data from back TfL url: ${url}`);
         }
 
-        return response.data.map(line => ({ id: line.id }));
+        return response.data.map((line) => ({ id: line.id }));
     } catch (error) {
         if (error instanceof Error) {
             logger.error(`Error fetching TFL line IDs with URL ${url}`, error);
@@ -25,18 +25,17 @@ export const getLineIds = async () => {
 };
 
 const insertLineIds = async (dbClient: KyselyDb, lineIds: NewTflLine[]) => {
-    logger.info("Insert function");
-
-    const insertChunks = chunkArray(lineIds, 1000);
-
-    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("tfl_line").values(chunk).execute()));
+    await dbClient.transaction().execute(async (trx) => {
+        await trx.deleteFrom("tfl_line").execute();
+        await trx.insertInto("tfl_line").values(lineIds).execute();
+    });
 };
 
 export const handler = async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        logger.info("Starting retrieval of TFL Line ID's");
+        logger.info("Starting retrieval of TfL Line IDs");
 
         const lineIds = await getLineIds();
 
