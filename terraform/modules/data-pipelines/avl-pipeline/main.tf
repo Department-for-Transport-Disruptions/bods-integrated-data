@@ -129,6 +129,19 @@ module "integrated_data_avl_tfl_location_retriever_function" {
   timeout       = 30
   memory        = 512
 
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+        aws_secretsmanager_secret.tfl_api_keys_secret.arn
+      ]
+    }
+  ]
+
   env_vars = {
     STAGE         = var.environment
     DB_HOST       = var.db_host
