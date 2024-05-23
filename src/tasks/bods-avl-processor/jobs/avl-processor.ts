@@ -133,8 +133,6 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
 
         entry.autodrain();
     }
-
-    return [];
 };
 
 void (async () => {
