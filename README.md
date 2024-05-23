@@ -28,6 +28,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
     - [GTFS Realtime](#gtfs-realtime)
   - [Creating and invoking lambda functions locally](#creating-and-invoking-lambda-functions-locally)
   - [CLI Helpers](#cli-helpers)
+  - [Manually updating ECS services](#manually-updating-ecs-services)
 - [Configuration](#configuration)
   - [Adding and updating secrets](#adding-and-updating-secrets)
   - [Using secrets in Terraform](#using-secrets-in-terraform)
@@ -337,6 +338,34 @@ make command-{COMMAND_NAME}
 make command-invoke-gtfs-rt-downloader
 # with flags:
 make command-invoke-avl-unsubscriber FLAGS="--stage local"
+```
+
+### Manually updating ECS services
+
+After updating the code for an ECS task, a new image needs to be pushed up to the ECR repository.
+
+First build the image:
+
+```bash
+make docker-build-{SERVICE_NAME}
+```
+
+Then tag the image:
+
+```bash
+docker tag {SERVICE_NAME}:latest {ECR_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/{SERVICE_NAME}:latest
+```
+
+Authenticate against the ECR repository:
+
+```bash
+aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin {ECR_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com
+```
+
+Push the image to the repo:
+
+```bash
+docker push {ECR_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/{SERVICE_NAME}:latest
 ```
 
 ## Configuration

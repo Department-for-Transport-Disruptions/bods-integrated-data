@@ -14,12 +14,14 @@ import { PassThrough, Readable } from "stream";
 
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._\-!\*\'\(\)\/]/g, "_");
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
+const isDocker = process.env.IS_DOCKER;
 
 const client = new S3Client({
     region: "eu-west-2",
     ...(process.env.STAGE === "local"
         ? {
-              endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
+              endpoint:
+                  localStackHost || isDocker ? `http://bods_integrated_data_localstack:4566` : "http://localhost:4566",
               forcePathStyle: true,
               credentials: {
                   accessKeyId: "DUMMY",

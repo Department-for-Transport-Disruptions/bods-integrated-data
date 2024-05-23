@@ -61,6 +61,50 @@ resource "aws_subnet" "integrated_data_private_subnet" {
   }
 }
 
+resource "aws_subnet" "integrated_data_public_subnet" {
+  for_each = { for idx, subnet in local.public_subnet_cidr_blocks :
+    idx => {
+      name       = "integrated-data-public-subnet-${idx + 1}-${var.environment}"
+      cidr_block = subnet
+    }
+  }
+
+  vpc_id            = aws_vpc.integrated_data_vpc.id
+  cidr_block        = each.value.cidr_block
+  availability_zone = element(data.aws_availability_zones.available.names, each.key)
+
+  tags = {
+    Name = each.value.name
+  }
+}
+
+# Internet Gateway
+
+resource "aws_internet_gateway" "integrated_data_igw" {
+  vpc_id = aws_vpc.integrated_data_vpc.id
+
+  tags = {
+    Name = "integrated-data-igw-${var.environment}"
+  }
+}
+
+# NAT Gateway
+
+resource "aws_eip" "integrated_data_nat_gateway_eip" {
+  tags = {
+    Name = "integrated-data-nat-gateway-eip-${var.environment}"
+  }
+}
+
+resource "aws_nat_gateway" "integrated_data_nat_gateway" {
+  subnet_id     = aws_subnet.integrated_data_public_subnet[0].id
+  allocation_id = aws_eip.integrated_data_nat_gateway_eip.id
+
+  tags = {
+    Name = "integrated-data-nat-gateway-${var.environment}"
+  }
+}
+
 # Route Tables
 
 resource "aws_route_table" "integrated_data_db_subnet_route_table" {
@@ -74,8 +118,25 @@ resource "aws_route_table" "integrated_data_db_subnet_route_table" {
 resource "aws_route_table" "integrated_data_private_subnet_route_table" {
   vpc_id = aws_vpc.integrated_data_vpc.id
 
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.integrated_data_nat_gateway.id
+  }
+
   tags = {
     Name = "integrated-data-private-subnet-rt-${var.environment}"
+  }
+}
+
+resource "aws_route_table" "integrated_data_public_subnet_route_table" {
+  vpc_id = aws_vpc.integrated_data_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.integrated_data_igw.id
+  }
+
+  tags = {
+    Name = "integrated-data-public-subnet-rt-${var.environment}"
   }
 }
 
@@ -92,6 +153,13 @@ resource "aws_route_table_association" "integrated_data_private_subnet_route_tab
   for_each = aws_subnet.integrated_data_private_subnet
 
   route_table_id = aws_route_table.integrated_data_private_subnet_route_table.id
+  subnet_id      = each.value.id
+}
+
+resource "aws_route_table_association" "integrated_data_public_subnet_route_table_assoc" {
+  for_each = aws_subnet.integrated_data_public_subnet
+
+  route_table_id = aws_route_table.integrated_data_public_subnet_route_table.id
   subnet_id      = each.value.id
 }
 
@@ -125,21 +193,6 @@ resource "aws_vpc_security_group_ingress_rule" "integrated_data_vpc_interface_en
   to_port     = 443
 }
 
-resource "aws_vpc_endpoint" "integrated_data_vpc_interface_endpoint" {
-  for_each            = toset(local.vpc_interface_endpoint_services)
-  vpc_id              = aws_vpc.integrated_data_vpc.id
-  service_name        = "com.amazonaws.${var.region}.${each.value}"
-  vpc_endpoint_type   = "Interface"
-  private_dns_enabled = true
-  subnet_ids = [
-    for subnet in aws_subnet.integrated_data_private_subnet : subnet.id
-  ]
-  security_group_ids = [aws_security_group.integrated_data_vpc_interface_endpoint_sg.id]
-  tags = {
-    Name = "integrated-data-${each.value}-vpc-endpoint-${var.environment}"
-  }
-}
-
 resource "aws_vpc_endpoint" "integrated_data_vpc_gateway_endpoint" {
   for_each     = toset(local.vpc_gateway_endpoint_services)
   vpc_id       = aws_vpc.integrated_data_vpc.id
@@ -159,9 +212,9 @@ resource "aws_vpc_endpoint_route_table_association" "integrated_data_vpc_gateway
 }
 
 locals {
-  vpc_cidr                        = "10.0.0.0/16"
-  db_subnet_cidr_blocks           = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
-  private_subnet_cidr_blocks      = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
-  vpc_interface_endpoint_services = ["ssm", "ssmmessages", "secretsmanager", "lambda"]
-  vpc_gateway_endpoint_services   = ["s3"]
+  vpc_cidr                      = "10.0.0.0/16"
+  db_subnet_cidr_blocks         = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
+  private_subnet_cidr_blocks    = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
+  public_subnet_cidr_blocks     = ["10.0.20.0/24", "10.0.21.0/24", "10.0.22.0/24"]
+  vpc_gateway_endpoint_services = ["s3"]
 }

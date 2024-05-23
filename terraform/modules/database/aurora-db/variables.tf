@@ -34,16 +34,6 @@ variable "private_hosted_zone_name" {
   description = "Name of the private hosted zone"
 }
 
-variable "min_db_capacity" {
-  type    = number
-  default = 0.5
-}
-
-variable "max_db_capacity" {
-  type    = number
-  default = 1
-}
-
 variable "enable_rds_proxy" {
   type        = bool
   default     = false
