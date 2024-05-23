@@ -1,3 +1,4 @@
+import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { Avl } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import * as s3 from "@bods-integrated-data/shared/s3";
@@ -112,7 +113,7 @@ describe("generateSiriVmAndUploadToS3", () => {
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Bucket: "test-bucket",
-            Key: "SIRI-VM.xml",
+            Key: AGGREGATED_SIRI_VM_FILE_PATH,
             ContentType: "application/xml",
             Body: mockSiriResult,
         });
