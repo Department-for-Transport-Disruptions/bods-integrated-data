@@ -130,8 +130,12 @@ module "integrated_data_avl_tfl_location_retriever_function" {
   memory        = 512
 
   env_vars = {
-    STAGE       = var.environment
-    TFL_API_ARN = aws_secretsmanager_secret.tfl_api_keys_secret.arn
+    STAGE         = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+    TFL_API_ARN   = aws_secretsmanager_secret.tfl_api_keys_secret.arn
   }
 }
 
