@@ -1,24 +1,10 @@
 import { logger } from "@baselime/lambda-logger";
-import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
-import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { sql } from "kysely";
-
-const saveSiriToDatabase = async (vehicleActivity: NewAvl[], dbClient: KyselyDb, fromBods: boolean) => {
-    const insertChunks = chunkArray(vehicleActivity, 3000);
-
-    await Promise.all(
-        insertChunks.map((chunk) =>
-            dbClient
-                .insertInto(fromBods ? "avl_bods" : "avl")
-                .values(chunk)
-                .execute(),
-        ),
-    );
-};
 
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
@@ -50,23 +36,13 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
     const body = data.Body;
 
     if (body) {
-        const parsedSiri = parseXml(await body.transformToString());
+        const avls = parseXml(await body.transformToString());
 
-        if (!parsedSiri || parsedSiri.length === 0) {
+        if (!avls || avls.length === 0) {
             throw new Error("Error parsing data");
         }
 
-        const avlWithGeom = parsedSiri.map(
-            (item): NewAvl => ({
-                ...item,
-                geom:
-                    item.longitude && item.latitude
-                        ? sql`ST_SetSRID(ST_MakePoint(${item.longitude}, ${item.latitude}), 4326)`
-                        : null,
-            }),
-        );
-
-        await saveSiriToDatabase(avlWithGeom, dbClient, record.s3.object.key.startsWith("bods/"));
+        await insertAvls(dbClient, avls, record.s3.object.key.startsWith("bods/"));
     }
 };
 

@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
+import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { Avl, tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
+import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
@@ -11,7 +12,7 @@ const getLineIds = async (dbClient: KyselyDb) => {
     return lineIds.map((lineId) => lineId.id);
 };
 
-export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string): Promise<Avl[]> => {
+export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string): Promise<NewAvl[]> => {
     const lineIdChunks = chunkArray(lineIds, 20);
 
     const requests = lineIdChunks.map(async (lineIdChunk) => {
@@ -35,7 +36,7 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
     const responses = await Promise.all(requests);
     const vehicleLocations = responses.flatMap((response) => response.lines.flatMap((line) => line.vehicles));
 
-    return vehicleLocations.flatMap<Avl>((vehicleLocation) => {
+    return vehicleLocations.flatMap<NewAvl>((vehicleLocation) => {
         const parseResult = tflVehicleLocationSchemaTransformed.safeParse(vehicleLocation);
 
         if (!parseResult.success) {
@@ -48,11 +49,6 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
 
         return [parseResult.data];
     });
-};
-
-const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
-    const insertChunks = chunkArray(avls, 1000);
-    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
 };
 
 export const handler = async () => {
