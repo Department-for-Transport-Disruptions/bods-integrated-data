@@ -115,6 +115,12 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
   environment   = var.environment
   function_name = "integrated-data-avl-tfl-line-id-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-line-id-retriever.zip"
+  handler       = "index.handler"
+  memory        = 512
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  schedule      = "cron(0 2 * * *)"
+}
 
 resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
   description = "TfL API keys - ${var.environment}"
