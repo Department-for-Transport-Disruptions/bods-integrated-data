@@ -92,13 +92,17 @@ resource "aws_secretsmanager_secret_version" "tfl_api_keys_secret_version" {
 module "integrated_data_avl_tfl_location_retriever_function" {
   source = "../../shared/lambda-function"
 
-  environment   = var.environment
-  function_name = "integrated-data-avl-tfl-location-retriever"
-  zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-location-retriever.zip"
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 30
-  memory        = 512
+  environment     = var.environment
+  function_name   = "integrated-data-avl-tfl-location-retriever"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-tfl-location-retriever.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 30
+  memory          = 512
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [
     {

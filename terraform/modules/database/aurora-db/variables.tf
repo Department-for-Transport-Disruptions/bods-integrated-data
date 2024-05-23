@@ -19,6 +19,10 @@ variable "multi_az" {
   default     = false
 }
 
+variable "instance_class" {
+  type = string
+}
+
 variable "enable_deletion_protection" {
   type    = bool
   default = false
