@@ -5,7 +5,13 @@ running.
 
 When using this template make sure to complete the following actions:
 
-## Update the `package.json` file
+- [Update `package.json`](#update-packagejson)
+- [Create a `Makefile` command](#create-a-makefile-command)
+- [Create a CLI Helper](#create-a-cli-helper)
+- [Update Terraform resources](#update-terraform-resources)
+- [Remove this README](#remove-this-readme)
+
+## Update `package.json`
 
 After copying the lambda-template directory and renaming it to your function name update the following in your `package.json`:
 
@@ -41,6 +47,29 @@ Before testing your lambda locally run the following commands from the root dire
 cd src
 pnpm i
 ```
+
+## Create a CLI Helper
+
+In `cli-helpers/src/commands` create a `invoke-lambda-template.ts` file with the following contents, replacing `lambda-template` in the file name with the
+function name, as well as `lambda-template` and `LambdaTemplate` in the file:
+
+```typescript
+import { Command } from "@commander-js/extra-typings";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+
+export const invokeLambdaTemplate = new Command("invoke-lambda-template")
+    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .action(async (options) => {
+        const { stage } = options;
+
+        await invokeLambda(stage, {
+            FunctionName: `integrated-data-lambda-template-${stage}`,
+            InvocationType: "RequestResponse",
+        });
+    });
+```
+
+Add any extra configuration as necessary.
 
 ## Update Terraform resources
 
