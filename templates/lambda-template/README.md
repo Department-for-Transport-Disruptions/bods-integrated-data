@@ -1,7 +1,7 @@
 # Typescript Lambda Template
 
 This template can be used when creating a new typescript lambda and contains the basic config files needed to get up and
-running. 
+running.
 
 When using this template make sure to complete the following actions:
 
@@ -41,3 +41,52 @@ Before testing your lambda locally run the following commands from the root dire
 cd src
 pnpm i
 ```
+
+## Update Terraform resources
+
+Create a Terraform module for the function, replacing `lambda-template` and `lambda_template` with the function name, using the correct `-` or `_`:
+
+```yaml
+module "integrated_data_lambda_template_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-lambda-template"
+  zip_path      = "${path.module}/../../../../src/functions/dist/lambda-template.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  memory        = 512
+
+  env_vars = {
+    STAGE         = var.environment
+  }
+}
+```
+
+Make sure to include any extra env vars as variables in the module and in the relevant `variables.tf` file.
+If the function connects to the database, include the DB env vars:
+
+```yaml
+  env_vars = {
+    # ...other env vars
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+```
+
+Ensure to reference the new module in the `main.tf` files for each env workspace (dev, local, test, prod etc.), for example:
+
+```yaml
+module "integrated_lambda_template" {
+  source = "../modules/lambda-template"
+
+  environment = local.env
+}
+```
+
+## Remove this README
+
+Finally, remove this readme, or replace its contents with suitable readme instructions for the lambda function.
