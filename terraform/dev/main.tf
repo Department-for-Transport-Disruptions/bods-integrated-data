@@ -230,13 +230,6 @@ module "integrated_data_avl_data_producer_api" {
   environment                 = local.env
 }
 
-module "integrated_data_avl_siri_vm_downloader" {
-  source = "../modules/avl-siri-vm-downloader"
-
-  environment = local.env
-  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
-}
-
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
 
@@ -305,10 +298,9 @@ module "integrated_data_gtfs_api" {
 module "integrated_data_avl_consumer_api" {
   source = "../modules/avl-consumer-api"
 
-  environment                   = local.env
-  sirivm_downloader_lambda_name = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_lambda_name
-  sirivm_downloader_invoke_arn  = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_invoke_arn
-  acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
-  hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
-  domain                        = module.integrated_data_route53.public_hosted_zone_name
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }

@@ -9,34 +9,41 @@ terraform {
   }
 }
 
-resource "aws_apigatewayv2_api" "integrated_data_consumer_api" {
-  name          = "integrated-data-consumer-api-${var.environment}"
+module "integrated_data_avl_siri_vm_downloader" {
+  source = "../../modules/avl-siri-vm-downloader"
+
+  environment = var.environment
+  bucket_name = var.aggregated_siri_vm_bucket_name
+}
+
+resource "aws_apigatewayv2_api" "integrated_data_avl_consumer_api" {
+  name          = "integrated-data-avl-consumer-api-${var.environment}"
   protocol_type = "HTTP"
 }
 
-resource "aws_apigatewayv2_integration" "integrated_data_consumer_downloader_integration" {
-  api_id                 = aws_apigatewayv2_api.integrated_data_consumer_api.id
+resource "aws_apigatewayv2_integration" "integrated_data_avl_consumer_downloader_integration" {
+  api_id                 = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
   integration_type       = "AWS_PROXY"
-  integration_uri        = var.sirivm_downloader_invoke_arn
+  integration_uri        = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_invoke_arn
   integration_method     = "POST"
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "integrated_data_consumer_api_route" {
-  api_id    = aws_apigatewayv2_api.integrated_data_consumer_api.id
+resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_api_route" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
   route_key = "GET /siri-vm"
-  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_consumer_downloader_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration.id}"
 }
 
 
-resource "aws_apigatewayv2_deployment" "integrated_data_consumer_api_deployment" {
-  api_id      = aws_apigatewayv2_api.integrated_data_consumer_api.id
-  description = aws_apigatewayv2_api.integrated_data_consumer_api.name
+resource "aws_apigatewayv2_deployment" "integrated_data_avl_consumer_api_deployment" {
+  api_id      = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
+  description = aws_apigatewayv2_api.integrated_data_avl_consumer_api.name
 
   triggers = {
     redeployment = sha1(join(",", tolist([
-      jsonencode(aws_apigatewayv2_route.integrated_data_consumer_api_route),
-      jsonencode(aws_apigatewayv2_integration.integrated_data_consumer_downloader_integration),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_api_route),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration),
     ])))
   }
 
@@ -45,21 +52,21 @@ resource "aws_apigatewayv2_deployment" "integrated_data_consumer_api_deployment"
   }
 }
 
-resource "aws_apigatewayv2_stage" "integrated_data_consumer_api_stage" {
-  api_id      = aws_apigatewayv2_api.integrated_data_consumer_api.id
+resource "aws_apigatewayv2_stage" "integrated_data_avl_consumer_api_stage" {
+  api_id      = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
   name        = "$default"
   auto_deploy = true
 }
 
-resource "aws_lambda_permission" "integrated_data_consumer_downloader_api_permissions" {
-  function_name = var.sirivm_downloader_lambda_name
+resource "aws_lambda_permission" "integrated_data_avl_consumer_downloader_api_permissions" {
+  function_name = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.integrated_data_consumer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_consumer_api_stage.name}/*"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_consumer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_consumer_api_stage.name}/*"
 }
 
 
-resource "aws_apigatewayv2_domain_name" "integrated_data_consumer_api_domain" {
+resource "aws_apigatewayv2_domain_name" "integrated_data_avl_consumer_api_domain" {
   domain_name = "consumer.${var.domain}"
 
   domain_name_configuration {
@@ -69,20 +76,20 @@ resource "aws_apigatewayv2_domain_name" "integrated_data_consumer_api_domain" {
   }
 }
 
-resource "aws_route53_record" "integrated_data_consumer_api_dns_record" {
-  name    = aws_apigatewayv2_domain_name.integrated_data_consumer_api_domain.domain_name
+resource "aws_route53_record" "integrated_data_avl_consumer_api_dns_record" {
+  name    = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.domain_name
   type    = "A"
   zone_id = var.hosted_zone_id
 
   alias {
-    name                   = aws_apigatewayv2_domain_name.integrated_data_consumer_api_domain.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.integrated_data_consumer_api_domain.domain_name_configuration[0].hosted_zone_id
+    name                   = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.domain_name_configuration[0].target_domain_name
+    zone_id                = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.domain_name_configuration[0].hosted_zone_id
     evaluate_target_health = false
   }
 }
 
-resource "aws_apigatewayv2_api_mapping" "integrated_data_consumer_api_domain_mapping" {
-  api_id      = aws_apigatewayv2_api.integrated_data_consumer_api.id
-  domain_name = aws_apigatewayv2_domain_name.integrated_data_consumer_api_domain.id
-  stage       = aws_apigatewayv2_stage.integrated_data_consumer_api_stage.id
+resource "aws_apigatewayv2_api_mapping" "integrated_data_avl_consumer_api_domain_mapping" {
+  api_id      = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
+  domain_name = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.id
+  stage       = aws_apigatewayv2_stage.integrated_data_avl_consumer_api_stage.id
 }

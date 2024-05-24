@@ -3,11 +3,7 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "sirivm_downloader_invoke_arn" {
-  type = string
-}
-
-variable "sirivm_downloader_lambda_name" {
+variable "aggregated_siri_vm_bucket_name" {
   type = string
 }
 
