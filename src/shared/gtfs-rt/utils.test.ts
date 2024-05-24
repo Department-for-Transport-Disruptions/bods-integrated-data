@@ -1,7 +1,7 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { ExtendedAvl } from "./types";
-import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
+import { getOccupancyStatus, mapAvlToGtfsEntity, removeDuplicateAvls } from "./utils";
 
 describe("utils", () => {
     const mockBucketName = "mock-bucket";
@@ -521,5 +521,48 @@ describe("utils", () => {
 
         const result = mapAvlToGtfsEntity(avl);
         expect(result).toEqual(expected);
+    });
+
+    describe("removeDuplicateAvls", () => {
+        it("removes duplicate AVLs", () => {
+            const avls: Partial<ExtendedAvl>[] = [
+                {
+                    id: 0,
+                    line_ref: "1",
+                    dated_vehicle_journey_ref: "A",
+                },
+                {
+                    id: 1,
+                    line_ref: "2",
+                    dated_vehicle_journey_ref: "B",
+                },
+                {
+                    id: 2,
+                    line_ref: "2",
+                    dated_vehicle_journey_ref: "B",
+                },
+                {
+                    id: 3,
+                    line_ref: "2",
+                    dated_vehicle_journey_ref: "C",
+                },
+            ];
+
+            const expectedAvls: Partial<ExtendedAvl>[] = [
+                {
+                    id: 0,
+                    line_ref: "1",
+                    dated_vehicle_journey_ref: "A",
+                },
+                {
+                    id: 3,
+                    line_ref: "2",
+                    dated_vehicle_journey_ref: "C",
+                },
+            ];
+
+            const result = removeDuplicateAvls(avls as ExtendedAvl[]);
+            expect(result).toEqual(expectedAvls);
+        });
     });
 });

@@ -170,8 +170,9 @@ export const getAvlDataForGtfs = async (
         query = query.orderBy(["a.operator_ref", "a.vehicle_ref", "a.response_time_stamp desc"]);
 
         const avls = await query.execute();
+        const uniqueAvls = removeDuplicateAvls(avls);
 
-        return avls.map(mapAvlDateStrings);
+        return uniqueAvls.map(mapAvlDateStrings);
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);
@@ -179,6 +180,30 @@ export const getAvlDataForGtfs = async (
 
         throw error;
     }
+};
+
+/**
+ * Removes duplicates from an array of AVLs based on when both the line ref and dated vehicle journey ref match.
+ * @param avls Array of AVLs
+ * @returns Unique array of AVLs
+ */
+export const removeDuplicateAvls = (avls: ExtendedAvl[]): ExtendedAvl[] => {
+    const avlsWithDeletionMarkers: (ExtendedAvl & { delete?: boolean })[] = [...avls];
+
+    avlsWithDeletionMarkers.forEach((avlWithDeletionMarker) => {
+        const duplicateAvl = avlsWithDeletionMarkers.find(
+            (avl) =>
+                avl.id !== avlWithDeletionMarker.id &&
+                avl.line_ref === avlWithDeletionMarker.line_ref &&
+                avl.dated_vehicle_journey_ref === avlWithDeletionMarker.dated_vehicle_journey_ref,
+        );
+
+        if (duplicateAvl) {
+            avlWithDeletionMarker.delete = true;
+        }
+    });
+
+    return avlsWithDeletionMarkers.filter((avl) => !avl.delete);
 };
 
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
