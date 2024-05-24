@@ -19,6 +19,10 @@ variable "multi_az" {
   default     = false
 }
 
+variable "instance_class" {
+  type = string
+}
+
 variable "enable_deletion_protection" {
   type    = bool
   default = false
@@ -32,16 +36,6 @@ variable "private_hosted_zone_id" {
 variable "private_hosted_zone_name" {
   type        = string
   description = "Name of the private hosted zone"
-}
-
-variable "min_db_capacity" {
-  type    = number
-  default = 0.5
-}
-
-variable "max_db_capacity" {
-  type    = number
-  default = 1
 }
 
 variable "enable_rds_proxy" {
