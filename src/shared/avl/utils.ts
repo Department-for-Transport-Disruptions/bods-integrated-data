@@ -2,6 +2,8 @@ import { sql } from "kysely";
 import { Avl, KyselyDb, NewAvl } from "../database";
 import { chunkArray } from "../utils";
 
+export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
+
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], fromBods?: boolean) => {
     const avlsWithGeom = avls.map<NewAvl>((avl) => ({
         ...avl,
