@@ -17,8 +17,8 @@ module "integrated_data_db_migrator_migrate_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 120
-  memory          = 1024
+  timeout         = 900
+  memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
@@ -51,8 +51,8 @@ module "integrated_data_db_migrator_rollback_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 120
-  memory          = 1024
+  timeout         = 900
+  memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
