@@ -9,7 +9,7 @@ export const getLineIds = async () => {
     try {
         const response = await axios.get<TflLinesSchema>(url);
 
-        return response.data;
+        return response.data.map((line) => ({ id: line.id }));
     } catch (error) {
         if (error instanceof Error) {
             logger.error(`Error fetching TfL line IDs with URL ${url}`, error);
