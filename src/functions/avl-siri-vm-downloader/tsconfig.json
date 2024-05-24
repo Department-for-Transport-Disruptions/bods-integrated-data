@@ -14,5 +14,5 @@
         "noEmit": true,
         "resolveJsonModule": true
     },
-    "include": ["@bods-integrated-data/shared", ".", "../../../vitest.config.ts"]
+    "include": ["@bods-integrated-data/shared", "."]
 }

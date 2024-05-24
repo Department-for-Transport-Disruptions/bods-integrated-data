@@ -1,0 +1,32 @@
+{
+    "name": "@bods-integrated-data/bods-avl-processor",
+    "version": "0.1.0",
+    "description": "Pipeline for retrieving and processing BODS SIRI-VM data",
+    "scripts": {
+        "build": "rm -rf ./dist && tsc && node ./esbuild.mjs",
+        "test": "vitest run",
+        "lint": "eslint ."
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@baselime/lambda-logger": "^0.2.2",
+        "@bods-integrated-data/shared": "workspace:^",
+        "axios": "^1.6.7",
+        "bree": "^9.2.3",
+        "fast-xml-parser": "^4.1.2",
+        "gtfs-realtime-bindings": "^1.1.1",
+        "kysely": "^0.27.3",
+        "pino": "^9.1.0",
+        "unzipper": "^0.10.14",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19",
+        "@types/unzipper": "^0.10.9",
+        "typescript": "^5.3.3"
+    }
+}

@@ -117,7 +117,8 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "apigateway:*",
           "states:*",
           "acm:*",
-          "scheduler:*"
+          "scheduler:*",
+          "ecs:*"
         ],
         Effect   = "Allow",
         Resource = "*",

@@ -1,4 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
+import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
@@ -111,7 +112,7 @@ export const generateSiriVmAndUploadToS3 = async (
 
     await putS3Object({
         Bucket: bucketName,
-        Key: "SIRI-VM.xml",
+        Key: AGGREGATED_SIRI_VM_FILE_PATH,
         ContentType: "application/xml",
         Body: siri,
     });

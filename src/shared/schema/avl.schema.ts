@@ -7,27 +7,27 @@ const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
     MonitoredVehicleJourney: z.object({
-        LineRef: z.string().nullish(),
-        DirectionRef: z.string(),
+        LineRef: z.coerce.string().nullish(),
+        DirectionRef: z.coerce.string(),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.string(),
-                DatedVehicleJourneyRef: z.string(),
+                DataFrameRef: z.coerce.string(),
+                DatedVehicleJourneyRef: z.coerce.string(),
             })
             .optional(),
-        PublishedLineName: z.string().nullish(),
-        Occupancy: z.string().nullish(),
-        OperatorRef: z.string(),
-        OriginRef: z.string().nullish(),
-        OriginAimedDepartureTime: z.string().nullish(),
-        DestinationRef: z.string().nullish(),
+        PublishedLineName: z.coerce.string().nullish(),
+        Occupancy: z.coerce.string().nullish(),
+        OperatorRef: z.coerce.string(),
+        OriginRef: z.coerce.string().nullish(),
+        OriginAimedDepartureTime: z.coerce.string().nullish(),
+        DestinationRef: z.coerce.string().nullish(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
-        Bearing: z.string().nullish(),
-        BlockRef: z.string().nullish(),
-        VehicleRef: z.string(),
+        Bearing: z.coerce.string().nullish(),
+        BlockRef: z.coerce.string().nullish(),
+        VehicleRef: z.coerce.string(),
     }),
 });
 
@@ -36,7 +36,7 @@ export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
-        ProducerRef: z.string(),
+        ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
             ValidUntil: z.string().optional(),

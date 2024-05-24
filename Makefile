@@ -79,6 +79,9 @@ lint-functions:
 test-functions:
 	cd src && pnpm test:ci
 
+docker-build-%:
+	docker build src --build-arg servicePath=$* -t $*
+
 # CLI helpers
 
 commands:
@@ -197,6 +200,8 @@ run-local-avl-unsubscriber:
 run-local-avl-tfl-location-retriever:
 	STAGE=local TFL_API_ARN=${TFL_API_ARN} npx tsx -e "import {handler} from './src/functions/avl-tfl-location-retriever'; handler().catch(e => console.error(e))"
 
+run-local-avl-siri-vm-downloader:
+	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler().catch(e => console.error(e))"
 
 # NOC
 
