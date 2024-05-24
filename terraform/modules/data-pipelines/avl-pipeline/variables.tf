@@ -47,10 +47,6 @@ variable "alarm_topic_arn" {
   description = "ARN of the SNS topic to use for alarm notifications"
 }
 
-variable "tfl_line_id_retriever_invoke_every_seconds" {
-  type        = number
-  description = "Invoke the TfL line id retriever every X seconds"
-}
 variable "tfl_api_keys" {
   type        = map(string)
   description = "TfL API keys"

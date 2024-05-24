@@ -1,3 +1,5 @@
+import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import { Avl } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
@@ -5,7 +7,7 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { mockSiriResult } from "./test/mockSiri";
 import { generateSiriVmAndUploadToS3 } from "./index";
 
-const mockAvl = [
+const mockAvl: Avl[] = [
     {
         id: 24173,
         response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
@@ -15,6 +17,7 @@ const mockAvl = [
         line_ref: "784",
         direction_ref: "OUT",
         operator_ref: "NATX",
+        data_frame_ref: "",
         dated_vehicle_journey_ref: "784105",
         vehicle_ref: "191D44717",
         longitude: -6.238029,
@@ -26,6 +29,22 @@ const mockAvl = [
         block_ref: "784105",
         occupancy: "full",
         origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
+        geom: null,
+        vehicle_name: null,
+        monitored: null,
+        load: null,
+        passenger_count: null,
+        odometer: null,
+        headway_deviation: null,
+        schedule_deviation: null,
+        vehicle_state: null,
+        next_stop_point_id: null,
+        next_stop_point_name: null,
+        previous_stop_point_id: null,
+        previous_stop_point_name: null,
+        origin_name: null,
+        destination_name: null,
+        vehicle_journey_ref: null,
     },
     {
         id: 24183,
@@ -36,6 +55,7 @@ const mockAvl = [
         line_ref: "ra",
         direction_ref: "outbound",
         operator_ref: "TBTN",
+        data_frame_ref: "",
         dated_vehicle_journey_ref: "101405",
         vehicle_ref: "0717_-_FJ58_KKL",
         longitude: -1.471941,
@@ -47,6 +67,22 @@ const mockAvl = [
         block_ref: "DY04",
         occupancy: "full",
         origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
+        geom: null,
+        vehicle_name: null,
+        monitored: null,
+        load: null,
+        passenger_count: null,
+        odometer: null,
+        headway_deviation: null,
+        schedule_deviation: null,
+        vehicle_state: null,
+        next_stop_point_id: null,
+        next_stop_point_name: null,
+        previous_stop_point_id: null,
+        previous_stop_point_name: null,
+        origin_name: null,
+        destination_name: null,
+        vehicle_journey_ref: null,
     },
 ];
 
@@ -77,7 +113,7 @@ describe("generateSiriVmAndUploadToS3", () => {
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Bucket: "test-bucket",
-            Key: "SIRI-VM.xml",
+            Key: AGGREGATED_SIRI_VM_FILE_PATH,
             ContentType: "application/xml",
             Body: mockSiriResult,
         });

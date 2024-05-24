@@ -72,9 +72,8 @@ module "integrated_data_aurora_db" {
   vpc_id                   = module.integrated_data_vpc.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  min_db_capacity          = 0.5
-  max_db_capacity          = 16
   enable_rds_proxy         = true
+  instance_class           = "db.r6g.xlarge"
 }
 
 module "integrated_data_db_monitoring" {
@@ -176,12 +175,18 @@ module "integrated_data_gtfs_downloader" {
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc.vpc_id
-  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
-  db_host            = module.integrated_data_aurora_db.db_host
+  environment                  = local.env
+  vpc_id                       = module.integrated_data_vpc.vpc_id
+  private_subnet_ids           = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                     = module.integrated_data_aurora_db.db_sg_id
+  db_host                      = module.integrated_data_aurora_db.db_host
+  db_reader_host               = module.integrated_data_aurora_db.db_reader_host
+  bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
+  bods_avl_processor_frequency = 30
+  bods_avl_cleardown_frequency = 120
+  bods_avl_processor_cpu       = 2048
+  bods_avl_processor_memory    = 4096
 }
 
 module "integrated_data_avl_pipeline" {
@@ -195,9 +200,8 @@ module "integrated_data_avl_pipeline" {
   db_host                                     = module.integrated_data_aurora_db.db_host
   alarm_topic_arn                             = module.integrated_data_monitoring.alarm_topic_arn
   ok_topic_arn                                = module.integrated_data_monitoring.ok_topic_arn
-  tfl_line_id_retriever_invoke_every_seconds  = 60
-  tfl_location_retriever_invoke_every_seconds = 60
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
+  tfl_location_retriever_invoke_every_seconds = 60
 }
 
 module "integrated_data_avl_aggregator" {
@@ -208,7 +212,7 @@ module "integrated_data_avl_aggregator" {
   private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
   db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db.db_sg_id
-  db_host            = module.integrated_data_aurora_db.db_host
+  db_host            = module.integrated_data_aurora_db.db_reader_host
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -224,6 +228,13 @@ module "integrated_data_avl_data_producer_api" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
+}
+
+module "integrated_data_avl_siri_vm_downloader" {
+  source = "../modules/avl-siri-vm-downloader"
+
+  environment = local.env
+  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }
 
 module "integrated_data_bank_holidays_pipeline" {

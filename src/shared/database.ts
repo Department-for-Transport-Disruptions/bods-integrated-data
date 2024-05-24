@@ -3,15 +3,16 @@ import { Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable,
 import { Pool } from "pg";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
+const isDocker = process.env.IS_DOCKER;
 
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
-export const getDatabaseClient = async (isLocal = false) => {
+export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
     if (isLocal) {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
                 pool: new Pool({
-                    host: localStackHost ? "bods_integrated_data_postgres" : "127.0.0.1",
+                    host: localStackHost || isDocker ? "bods_integrated_data_postgres" : "127.0.0.1",
                     port: 5432,
                     database: "bods_integrated_data",
                     user: "postgres",
@@ -21,10 +22,16 @@ export const getDatabaseClient = async (isLocal = false) => {
         });
     }
 
-    const { DB_HOST: dbHost, DB_PORT: dbPort, DB_SECRET_ARN: databaseSecretArn, DB_NAME: dbName } = process.env;
+    const {
+        DB_HOST: dbHost,
+        DB_READER_HOST: dbReaderHost,
+        DB_PORT: dbPort,
+        DB_SECRET_ARN: databaseSecretArn,
+        DB_NAME: dbName,
+    } = process.env;
 
-    if (!dbHost || !dbPort || !databaseSecretArn || !dbName) {
-        throw new Error("Missing env vars");
+    if ((!readOnly && !dbHost) || (readOnly && !dbReaderHost) || !dbPort || !databaseSecretArn || !dbName) {
+        throw new Error("Missing db env vars");
     }
 
     const databaseSecret = await smClient.send(
@@ -176,7 +183,7 @@ export interface AvlTable {
     recorded_at_time: string;
     valid_until_time: string;
     line_ref: string | null;
-    direction_ref: string | null;
+    direction_ref: string;
     occupancy: string | null;
     operator_ref: string;
     data_frame_ref: string | null;
