@@ -109,7 +109,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   vpc_id                       = null
   private_subnet_ids           = null
   db_secret_arn                = "*"
-  db_sg_id                     = ""
+  db_sg_id                     = null
   db_host                      = null
   db_reader_host               = null
   bods_avl_processor_cpu       = 1024
