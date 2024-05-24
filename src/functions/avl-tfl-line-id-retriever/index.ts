@@ -22,7 +22,10 @@ export const getLineIds = async () => {
 const insertLineIds = async (dbClient: KyselyDb, lineIds: NewTflLine[]) => {
     await dbClient.transaction().execute(async (trx) => {
         await trx.deleteFrom("tfl_line").execute();
-        await trx.insertInto("tfl_line").values(lineIds).execute();
+
+        if (lineIds.length > 0) {
+            await trx.insertInto("tfl_line").values(lineIds).execute();
+        }
     });
 };
 
