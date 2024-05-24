@@ -5,9 +5,6 @@ export async function up(db: Kysely<Database>): Promise<void> {
     // Indexes for the route table
     await db.schema.createIndex("idx_route_id_agency_id").on("route").columns(["id", "agency_id"]).execute();
 
-    // Index for the agency table
-    await db.schema.createIndex("idx_agency_id").on("agency").columns(["id"]).execute();
-
     // Indexes for the avl_bods table
     await db.schema
         .createIndex("idx_avl_bods_operator_ref_line_ref_direction_ref_dated_vehicle_journey_ref")
@@ -93,9 +90,6 @@ export async function up(db: Kysely<Database>): Promise<void> {
 export async function down(db: Kysely<Database>): Promise<void> {
     // Drop indexes for the route table
     await db.schema.dropIndex("idx_route_id_agency_id").execute();
-
-    // Drop index for the agency table
-    await db.schema.dropIndex("idx_agency_id").execute();
 
     // Drop indexes for the avl_bods table
     await db.schema.dropIndex("idx_avl_bods_operator_ref_line_ref_direction_ref_dated_vehicle_journey_ref").execute();
