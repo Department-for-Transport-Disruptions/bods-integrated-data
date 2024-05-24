@@ -41,7 +41,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -50,7 +50,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -59,7 +59,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -78,6 +78,26 @@ module "integrated_data_avl_processor_function" {
 resource "aws_lambda_event_source_mapping" "integrated_data_avl_processor_sqs_trigger" {
   event_source_arn = module.integrated_data_avl_s3_sqs.sqs_arn
   function_name    = module.integrated_data_avl_processor_function.lambda_arn
+}
+
+module "integrated_data_avl_tfl_line_id_retriever_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-tfl-line-id-retriever"
+  zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-line-id-retriever.zip"
+  handler       = "index.handler"
+  memory        = 512
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  schedule      = "cron(0 2 * * *)"
+  env_vars = {
+    STAGE         = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
 }
 
 resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
