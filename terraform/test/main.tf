@@ -187,16 +187,17 @@ module "integrated_data_gtfs_rt_pipeline" {
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
-  environment                                = local.env
-  vpc_id                                     = module.integrated_data_vpc.vpc_id
-  private_subnet_ids                         = module.integrated_data_vpc.private_subnet_ids
-  db_secret_arn                              = module.integrated_data_aurora_db.db_secret_arn
-  db_sg_id                                   = module.integrated_data_aurora_db.db_sg_id
-  db_host                                    = module.integrated_data_aurora_db.db_host
-  alarm_topic_arn                            = module.integrated_data_monitoring.alarm_topic_arn
-  ok_topic_arn                               = module.integrated_data_monitoring.ok_topic_arn
-  tfl_line_id_retriever_invoke_every_seconds = 60
+  environment                                 = local.env
+  vpc_id                                      = module.integrated_data_vpc.vpc_id
+  private_subnet_ids                          = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                               = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                                    = module.integrated_data_aurora_db.db_sg_id
+  db_host                                     = module.integrated_data_aurora_db.db_host
+  alarm_topic_arn                             = module.integrated_data_monitoring.alarm_topic_arn
+  ok_topic_arn                                = module.integrated_data_monitoring.ok_topic_arn
+  tfl_line_id_retriever_invoke_every_seconds  = 60
   tfl_location_retriever_invoke_every_seconds = 60
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
 }
 
 module "integrated_data_avl_aggregator" {

@@ -41,7 +41,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -50,7 +50,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -59,7 +59,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -96,7 +96,7 @@ module "integrated_data_avl_retriever_function" {
       Action = [
         "s3:PutObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -154,17 +154,6 @@ module "integrated_data_avl_tfl_location_retriever_function" {
     STAGE       = var.environment
     TFL_API_ARN = aws_secretsmanager_secret.tfl_api_keys_secret.arn
   }
-}
-
-
-module "avl_tfl_line_id_retriever_sfn" {
-  count                = var.environment == "local" ? 0 : 1
-  step_function_name   = "integrated-data-avl-tfl-line-id-retriever-sfn"
-  source               = "../../shared/lambda-trigger-sfn"
-  environment          = var.environment
-  function_arn         = module.integrated_data_avl_tfl_line_id_retriever_function.function_arn
-  invoke_every_seconds = var.tfl_line_id_retriever_invoke_every_seconds
-  depends_on           = [module.integrated_data_avl_tfl_line_id_retriever_function]
 }
 
 module "avl_tfl_location_retriever_sfn" {
