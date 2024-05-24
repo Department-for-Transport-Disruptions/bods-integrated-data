@@ -24,7 +24,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_consumer_downloader_int
 
 resource "aws_apigatewayv2_route" "integrated_data_consumer_api_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_consumer_api.id
-  route_key = "GET /consumer"
+  route_key = "GET /siri-vm"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_consumer_downloader_integration.id}"
 }
 
