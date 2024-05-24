@@ -1,11 +1,36 @@
 import { z } from "zod";
 import { NewAvl } from "../database";
 import { getDate } from "../dates";
-import { makeFilteredArraySchema } from "../utils";
+import { makeFilteredArraySchema, txcEmptyProperty } from "../utils";
+
+const extensionsSchema = z
+    .object({
+        VehicleJourney: z
+            .object({
+                Operational: z
+                    .object({
+                        TicketMachine: z
+                            .object({
+                                TicketMachineServiceCode: z.coerce.string().nullish(),
+                                JourneyCode: z.coerce.string().nullish(),
+                            })
+                            .or(txcEmptyProperty)
+                            .optional(),
+                    })
+                    .or(txcEmptyProperty)
+                    .optional(),
+                VehicleUniqueId: z.coerce.string().nullish(),
+            })
+            .or(txcEmptyProperty)
+            .optional(),
+    })
+    .or(txcEmptyProperty)
+    .optional();
 
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
+    VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
         DirectionRef: z.coerce.string(),
@@ -19,15 +44,20 @@ const vehicleActivitySchema = z.object({
         Occupancy: z.coerce.string().nullish(),
         OperatorRef: z.coerce.string(),
         OriginRef: z.coerce.string().nullish(),
+        OriginName: z.coerce.string().nullish(),
         OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationRef: z.coerce.string().nullish(),
+        DestinationName: z.coerce.string().nullish(),
+        DestinationAimedArrivalTime: z.coerce.string().nullish(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
         Bearing: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
+        VehicleJourneyRef: z.coerce.string().nullish(),
         VehicleRef: z.coerce.string(),
+        Extensions: extensionsSchema,
     }),
 });
 
@@ -54,6 +84,7 @@ export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
         producer_ref: item.ServiceDelivery.ProducerRef,
         recorded_at_time: vehicleActivity.RecordedAtTime,
         valid_until_time: vehicleActivity.ValidUntilTime,
+        vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
         line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
         direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
         occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
@@ -61,15 +92,27 @@ export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
         data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
         dated_vehicle_journey_ref:
             vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
-        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+
         longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
         latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
         bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
         published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
         origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+        origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
         origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
         destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+        destination_name: vehicleActivity.MonitoredVehicleJourney.DestinationName ?? null,
+        destination_aimed_arrival_time: vehicleActivity.MonitoredVehicleJourney.DestinationAimedArrivalTime ?? null,
         block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+        vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
+        ticket_machine_service_code:
+            vehicleActivity.MonitoredVehicleJourney.Extensions?.VehicleJourney?.Operational?.TicketMachine
+                ?.TicketMachineServiceCode ?? null,
+        journey_code:
+            vehicleActivity.MonitoredVehicleJourney.Extensions?.VehicleJourney?.Operational?.TicketMachine
+                ?.JourneyCode ?? null,
+        vehicle_unique_id: vehicleActivity.MonitoredVehicleJourney.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
     }));
 });
 
