@@ -296,3 +296,13 @@ module "integrated_data_gtfs_api" {
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
 }
+
+module "integrated_data_avl_consumer_api" {
+  source = "../modules/avl-consumer-api"
+
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+}
