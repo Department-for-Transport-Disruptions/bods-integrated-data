@@ -110,11 +110,7 @@ export const getAvlDataForGtfs = async (
         const matchedAvl = dbClient
             .selectFrom("avl_bods as a")
             .innerJoin(routesWithNoc, (join) =>
-                join.onRef(
-                    "routes_with_noc.concat_noc_route_short_name",
-                    "=",
-                    sql`CONCAT(a.operator_ref, a.line_ref})`,
-                ),
+                join.onRef("routes_with_noc.concat_noc_route_short_name", "=", sql`CONCAT(a.operator_ref, a.line_ref)`),
             )
             .leftJoin("trip as t", (join) =>
                 join
