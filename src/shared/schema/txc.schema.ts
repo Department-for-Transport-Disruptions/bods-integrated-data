@@ -188,12 +188,12 @@ export const journeyPatternSectionSchema = z.object({
 export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
 
 export const vehicleTypeSchema = z.object({
-    WheelChairAccessible: z.boolean().optional(),
+    WheelchairAccessible: z.boolean().optional(),
     VehicleEquipment: z
         .object({
             WheelchairEquipment: z
                 .object({
-                    NumberOfWheelChairAreas: z.coerce.number(),
+                    NumberOfWheelchairAreas: z.coerce.number(),
                 })
                 .optional(),
         })

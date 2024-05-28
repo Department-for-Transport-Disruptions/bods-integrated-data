@@ -243,6 +243,12 @@ module "integrated_data_bank_holidays_pipeline" {
   environment = local.env
 }
 
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_db_cleardown_function" {
   source = "../modules/db-cleardown"
 
@@ -295,4 +301,14 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_avl_consumer_api" {
+  source = "../modules/avl-consumer-api"
+
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }
