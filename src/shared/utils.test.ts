@@ -45,13 +45,13 @@ describe("getWheelchairAccessibilityFromVehicleType", () => {
         [undefined, "underground"],
         [
             {
-                VehicleEquipment: { WheelchairEquipment: { NumberOfWheelChairAreas: 1 } },
+                VehicleEquipment: { WheelchairEquipment: { NumberOfWheelchairAreas: 1 } },
             },
             "bus",
         ],
-        [{ WheelChairAccessible: true }, "bus"],
+        [{ WheelchairAccessible: true }, "bus"],
     ])(
-        "should return Accessible if mode is underground, WheelChairAccessible is true, or NumberOfWheelChairs is greater than zero ",
+        "should return Accessible if mode is underground, WheelchairAccessible is true, or NumberOfWheelchairs is greater than zero ",
         (vehicleType?: VehicleType, mode?: string) => {
             expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
                 WheelchairAccessibility.Accessible,
@@ -59,15 +59,15 @@ describe("getWheelchairAccessibilityFromVehicleType", () => {
         },
     );
     it.each([
-        [{ WheelChairAccessible: false }, "bus"],
+        [{ WheelchairAccessible: false }, "bus"],
         [
             {
-                VehicleEquipment: { WheelchairEquipment: { NumberOfWheelChairAreas: 0 } },
+                VehicleEquipment: { WheelchairEquipment: { NumberOfWheelchairAreas: 0 } },
             },
             "bus",
         ],
     ])(
-        "should return NotAccessible if WheelChairAccessible is false, or if NumberOfWheelChairs is equal to zero ",
+        "should return NotAccessible if WheelchairAccessible is false, or if NumberOfWheelchairs is equal to zero ",
         (vehicleType?: VehicleType, mode?: string) => {
             expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
                 WheelchairAccessibility.NotAccessible,
@@ -78,12 +78,12 @@ describe("getWheelchairAccessibilityFromVehicleType", () => {
         [undefined, "bus"],
         [
             {
-                VehicleEquipment: { WheelChairAccessible: undefined, WheelchairEquipment: undefined },
+                VehicleEquipment: { WheelchairAccessible: undefined, WheelchairEquipment: undefined },
             },
             "bus",
         ],
     ])(
-        "should return NoAccessibilityInformation if VehicleType is undefined or if WheelChairAccessible or WheelChairEquipment is undefined,",
+        "should return NoAccessibilityInformation if VehicleType is undefined or if WheelchairAccessible or WheelchairEquipment is undefined,",
         (vehicleType?: VehicleType, mode?: string) => {
             expect(getWheelchairAccessibilityFromVehicleType(vehicleType, mode)).toStrictEqual(
                 WheelchairAccessibility.NoAccessibilityInformation,
