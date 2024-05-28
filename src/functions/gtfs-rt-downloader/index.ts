@@ -1,4 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
+import { NM_TOKEN_ARRAY_REGEX } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     base64Encode,
@@ -15,10 +16,7 @@ const queryParametersSchema = z.preprocess(
     (val) => Object(val),
     z.object({
         download: z.coerce.string().toLowerCase().optional(),
-        routeId: z.coerce
-            .string()
-            .regex(/^[0-9]+(,[0-9]+)*$/)
-            .optional(),
+        routeId: z.coerce.string().regex(NM_TOKEN_ARRAY_REGEX).optional(),
         boundingBox: z.coerce
             .string()
             .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)

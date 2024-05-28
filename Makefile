@@ -8,6 +8,7 @@ TNDS_FTP_ARN=""
 AVL_SIRI_BUCKET_NAME="integrated-data-avl-aggregated-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
+AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 NOC_BUCKET_NAME="integrated-data-noc-local"
@@ -168,7 +169,7 @@ run-local-gtfs-downloader:
 run-local-gtfs-rt-generator:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/gtfs-rt-generator'; handler().catch(e => console.error(e))"
 
-# example usage with query params: make run-local-gtfs-rt-downloader GTFS_RT_DOWNLOADER_INPUT="{ queryStringParameters: { routeId: "1,2", startTimeAfter: 1712288820 } }"
+# example usage with query params: make run-local-gtfs-rt-downloader GTFS_RT_DOWNLOADER_INPUT="{ queryStringParameters: { routeId: '1,2', startTimeAfter: 1712288820 } }"
 run-local-gtfs-rt-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler(${GTFS_RT_DOWNLOADER_INPUT}).then(r => console.log(r)).catch(e => console.error(e))"
 
@@ -204,8 +205,9 @@ run-local-avl-tfl-line-id-retriever:
 run-local-avl-tfl-location-retriever:
 	STAGE=local TFL_API_ARN=${TFL_API_ARN} npx tsx -e "import {handler} from './src/functions/avl-tfl-location-retriever'; handler().catch(e => console.error(e))"
 
+# example usage with query params: make run-local-avl-siri-vm-downloader AVL_SIRI_VM_DOWNLOADER_INPUT="{ queryStringParameters: { operatorRef: '1,2', vehicleRef: '123' } }"
 run-local-avl-siri-vm-downloader:
-	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler().catch(e => console.error(e))"
+	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).catch(e => console.error(e))"
 
 # NOC
 

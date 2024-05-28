@@ -1,3 +1,4 @@
+import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
@@ -41,15 +42,61 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
         : null,
 });
 
-export const getAvlDataForSiriVm = async (dbClient: KyselyDb) => {
-    const avls = await dbClient
-        .selectFrom("avl")
-        .distinctOn(["operator_ref", "vehicle_ref"])
-        .selectAll("avl")
-        .orderBy(["operator_ref", "vehicle_ref", "response_time_stamp desc"])
-        .execute();
+export const getAvlDataForSiriVm = async (
+    dbClient: KyselyDb,
+    boundingBox?: string,
+    operatorRef?: string,
+    vehicleRef?: string,
+    lineRef?: string,
+    producerRef?: string,
+    originRef?: string,
+    destinationRef?: string,
+) => {
+    try {
+        let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
 
-    return avls.map(mapAvlDateStrings);
+        if (boundingBox) {
+            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
+        }
+
+        if (operatorRef) {
+            query = query.where("operator_ref", "in", operatorRef.split(","));
+        }
+
+        if (vehicleRef) {
+            query = query.where("vehicle_ref", "=", vehicleRef);
+        }
+
+        if (lineRef) {
+            query = query.where("line_ref", "=", lineRef);
+        }
+
+        if (producerRef) {
+            query = query.where("producer_ref", "=", producerRef);
+        }
+
+        if (originRef) {
+            query = query.where("origin_ref", "=", originRef);
+        }
+
+        if (destinationRef) {
+            query = query.where("destination_ref", "=", destinationRef);
+        }
+
+        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
+
+        const avls = await query.execute();
+
+        return avls.map(mapAvlDateStrings);
+    } catch (error) {
+        if (error instanceof Error) {
+            logger.error("There was a problem getting AVL data from the database", error);
+        }
+
+        throw error;
+    }
 };
 
 const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
@@ -87,7 +134,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
     });
 };
 
-export const convertJsonToSiri = (avls: Avl[], RequestMessageRef: string) => {
+export const createSiriVm = (avls: Avl[], requestMessageRef: string) => {
     const date = getDate();
     const currentTime = date.toISOString();
     const validUntilTime = addIntervalToDate(date, 5, "minutes").toISOString(); // SIRI-VM ValidUntilTime field is defined as 5 minutes after the current timestamp
@@ -100,14 +147,15 @@ export const convertJsonToSiri = (avls: Avl[], RequestMessageRef: string) => {
             ProducerRef: "DepartmentForTransport",
             VehicleMonitoringDelivery: {
                 ResponseTimestamp: currentTime,
-                RequestMessageRef: RequestMessageRef,
+                RequestMessageRef: requestMessageRef,
                 ValidUntil: validUntilTime,
                 VehicleActivity: vehicleActivity,
             },
         },
     };
 
-    const verifiedObject = siriSchema.parse(cleanDeep(siriVm));
+    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false, emptyStrings: false });
+    const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
 
     const completeObject = {
         "?xml": {
