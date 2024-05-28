@@ -1,112 +1,15 @@
 import { logger } from "@baselime/lambda-logger";
-import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import {
+    AGGREGATED_SIRI_VM_FILE_PATH,
+    convertJsonToSiri,
+    getAvlDataForSiriVm,
+} from "@bods-integrated-data/shared/avl/utils";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { SiriVM, SiriVehicleActivity, siriSchema } from "@bods-integrated-data/shared/schema";
-import cleanDeep from "clean-deep";
-import { XMLBuilder } from "fast-xml-parser";
 import { randomUUID } from "crypto";
-import { getCurrentAvlData } from "./database";
 
-const currentTime = getDate();
-//SIRI-VM ValidUntilTime field is defined as 5 minutes after the current timestamp
-const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
-
-const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
-    return avls.map<SiriVehicleActivity>((avl) => {
-        const vehicleActivity: SiriVehicleActivity = {
-            RecordedAtTime: currentTime,
-            ValidUntilTime: validUntilTime,
-            MonitoredVehicleJourney: {
-                LineRef: avl.line_ref,
-                DirectionRef: avl.direction_ref,
-                PublishedLineName: avl.published_line_name,
-                Occupancy: avl.occupancy,
-                OperatorRef: avl.operator_ref,
-                OriginRef: avl.origin_ref,
-                OriginAimedDepartureTime: avl.origin_aimed_departure_time,
-                DestinationRef: avl.destination_ref,
-                VehicleLocation: {
-                    Longitude: avl.longitude,
-                    Latitude: avl.latitude,
-                },
-                Bearing: avl.bearing,
-                BlockRef: avl.block_ref,
-                VehicleRef: avl.vehicle_ref,
-            },
-        };
-
-        if (avl.data_frame_ref && avl.dated_vehicle_journey_ref) {
-            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef = {
-                DataFrameRef: avl.data_frame_ref,
-                DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref,
-            };
-        }
-
-        return vehicleActivity;
-    });
-};
-
-export const convertJsonToSiri = (
-    avls: Avl[],
-    currentTime: string,
-    validUntilTime: string,
-    RequestMessageRef: string,
-) => {
-    const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
-
-    const siriVm: SiriVM = {
-        ServiceDelivery: {
-            ResponseTimestamp: currentTime,
-            ProducerRef: "DepartmentForTransport",
-            VehicleMonitoringDelivery: {
-                ResponseTimestamp: currentTime,
-                RequestMessageRef: RequestMessageRef,
-                ValidUntil: validUntilTime,
-                VehicleActivity: vehicleActivity,
-            },
-        },
-    };
-
-    logger.info("Verifying JSON against schema...");
-    const verifiedObject = siriSchema.parse(cleanDeep(siriVm));
-
-    const completeObject = {
-        "?xml": {
-            "#text": "",
-            "@_version": "1.0",
-            "@_encoding": "UTF-8",
-            "@_standalone": "yes",
-        },
-        Siri: {
-            "@_version": "2.0",
-            "@_xmlns": "http://www.siri.org.uk/siri",
-            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...verifiedObject,
-        },
-    };
-
-    const builder = new XMLBuilder({
-        ignoreAttributes: false,
-        format: true,
-        attributeNamePrefix: "@_",
-    });
-
-    const request = builder.build(completeObject) as string;
-
-    return request;
-};
-
-export const generateSiriVmAndUploadToS3 = async (
-    avls: Avl[],
-    currentTime: string,
-    validUntilTime: string,
-    requestMessageRef: string,
-    bucketName: string,
-) => {
-    const siri = convertJsonToSiri(avls, currentTime, validUntilTime, requestMessageRef);
+export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
+    const siri = convertJsonToSiri(avls, requestMessageRef);
 
     logger.info("Uploading SIRI-VM data to S3");
 
@@ -119,7 +22,7 @@ export const generateSiriVmAndUploadToS3 = async (
 };
 
 export const handler = async () => {
-    const db = await getDatabaseClient(process.env.STAGE === "local");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
         logger.info("Starting SIRI-VM generator...");
@@ -131,16 +34,9 @@ export const handler = async () => {
         }
 
         const requestMessageRef = randomUUID();
+        const avls = await getAvlDataForSiriVm(dbClient);
 
-        const avl = await getCurrentAvlData(db);
-
-        await generateSiriVmAndUploadToS3(
-            avl,
-            currentTime.toISOString(),
-            validUntilTime.toISOString(),
-            requestMessageRef,
-            bucketName,
-        );
+        await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName);
 
         logger.info("Successfully uploaded SIRI-VM data to S3");
     } catch (e) {
@@ -150,6 +46,6 @@ export const handler = async () => {
 
         throw e;
     } finally {
-        await db.destroy();
+        await dbClient.destroy();
     }
 };
