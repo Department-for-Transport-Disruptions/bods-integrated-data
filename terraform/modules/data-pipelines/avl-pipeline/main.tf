@@ -90,7 +90,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
   memory        = 512
   runtime       = "nodejs20.x"
   timeout       = 30
-  schedule      = "cron(0 2 * * *)"
+  schedule      = "cron(0 2 * * ? *)"
   env_vars = {
     STAGE         = var.environment
     DB_HOST       = var.db_host
