@@ -188,7 +188,9 @@ export const journeyPatternSectionSchema = z.object({
 export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
 
 export const vehicleTypeSchema = z.object({
-    WheelchairAccessible: z.string().optional().transform((value) => value === "true" ? true : value === "false" ? false : undefined),
+    WheelchairAccessible: z.string()
+        .optional()
+        .transform((value) => value === "true" ? true : value === "false" ? false : undefined),
     VehicleEquipment: z
         .object({
             WheelchairEquipment: z
