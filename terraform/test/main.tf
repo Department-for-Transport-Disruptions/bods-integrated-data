@@ -243,6 +243,12 @@ module "integrated_data_bank_holidays_pipeline" {
   environment = local.env
 }
 
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_db_cleardown_function" {
   source = "../modules/db-cleardown"
 
