@@ -41,7 +41,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -50,7 +50,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -59,7 +59,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -83,14 +83,31 @@ resource "aws_lambda_event_source_mapping" "integrated_data_avl_processor_sqs_tr
 module "integrated_data_avl_tfl_line_id_retriever_function" {
   source = "../../shared/lambda-function"
 
-  environment   = var.environment
-  function_name = "integrated-data-avl-tfl-line-id-retriever"
-  zip_path      = "${path.module}/../../../../src/functions/dist/avl-tfl-line-id-retriever.zip"
-  handler       = "index.handler"
-  memory        = 512
-  runtime       = "nodejs20.x"
-  timeout       = 30
-  schedule      = "cron(0 2 * * ? *)"
+  environment     = var.environment
+  function_name   = "integrated-data-avl-tfl-line-id-retriever"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-tfl-line-id-retriever.zip"
+  handler         = "index.handler"
+  memory          = 512
+  runtime         = "nodejs20.x"
+  timeout         = 30
+  schedule        = "cron(0 2 * * ? *)"
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
+    }
+  ]
+
   env_vars = {
     STAGE         = var.environment
     DB_HOST       = var.db_host
