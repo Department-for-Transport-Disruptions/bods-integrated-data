@@ -18,6 +18,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: currentTime,
             ValidUntilTime: validUntilTime,
+            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
                 LineRef: avl.line_ref,
                 DirectionRef: avl.direction_ref,
@@ -25,14 +26,18 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                 Occupancy: avl.occupancy,
                 OperatorRef: avl.operator_ref,
                 OriginRef: avl.origin_ref,
+                OriginName: avl.origin_name,
                 OriginAimedDepartureTime: avl.origin_aimed_departure_time,
                 DestinationRef: avl.destination_ref,
+                DestinationName: avl.destination_name,
+                DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
                 VehicleLocation: {
                     Longitude: avl.longitude,
                     Latitude: avl.latitude,
                 },
                 Bearing: avl.bearing,
                 BlockRef: avl.block_ref,
+                VehicleJourneyRef: avl.vehicle_journey_ref,
                 VehicleRef: avl.vehicle_ref,
             },
         };
@@ -43,6 +48,44 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                 DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref,
             };
         }
+
+
+        if (avl.ticket_machine_service_code || avl.journey_code) {
+            vehicleActivity.MonitoredVehicleJourney.Extensions = {
+                VehicleJourney: {
+                    Operational: {
+                        TicketMachine: {},
+                    },
+                },
+            };
+
+            if (avl.ticket_machine_service_code) {
+                vehicleActivity.MonitoredVehicleJourney.Extensions = {
+                    VehicleJourney: {
+                        Operational: {
+                            TicketMachine: {
+                                TicketMachineServiceCode: avl.ticket_machine_service_code,
+                            },
+                        },
+                    },
+
+                };
+            }
+
+            if (avl.journey_code) {
+                vehicleActivity.MonitoredVehicleJourney.Extensions = {
+                    VehicleJourney: {
+                        Operational: {
+                            TicketMachine: {
+                                JourneyCode: avl.journey_code,
+                            },
+                        },
+                    },
+                };
+            }
+        }
+
+        console.log(vehicleActivity);
 
         return vehicleActivity;
     });
