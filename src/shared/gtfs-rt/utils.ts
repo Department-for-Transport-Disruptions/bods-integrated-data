@@ -3,8 +3,10 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { randomUUID } from "crypto";
 import { ExtendedAvl } from "./types";
+import { mapAvlDateStrings } from "../avl/utils";
 import { Calendar, CalendarDateExceptionType, KyselyDb } from "../database";
 import { getDate } from "../dates";
+import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
@@ -78,13 +80,8 @@ export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEnti
 export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("base64");
 
 /**
- * Get all AVL data from the database along with a route ID and trip ID for each AVL row.
- * The route ID is determined by looking up the route that matches the concatenation of the
- * AVL's operator and line refs with the concatenation of the route's national operator code
- * and short name. The trip ID is then determined by looking up the trip with this route ID
- * and that matches the trip's ticket machine journey code with the AVL's dated vehicle
- * journey ref, to ensure a single trip is matched. Note that it is possible for no matching
- * route ID or trip ID to be found.
+ * Get all AVL data from the database using optional filters.
+ * The route ID and trip ID for each AVL                                                                                                                                                                                                                                                                                                                                                                                                  are determined by a series of matching rules.
  * @param dbClient The database client
  * @param routeId Optional route ID or comma-separated route IDs to filter on
  * @param startTimeBefore Optional start time before to filter on using the AVL's departure time
@@ -98,72 +95,70 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: string,
-) => {
+): Promise<ExtendedAvl[]> => {
     try {
-        const currentDate = getDate().toISOString();
+        const currentDate = getDate();
+        const currentDateIso = currentDate.toISOString();
         const currentDay = daysOfWeek[getDate().day()];
+
+        const routesWithNoc = dbClient
+            .selectFrom("route as r")
+            .innerJoin("agency as a", "a.id", "r.agency_id")
+            .select(["r.id as route_id", sql`CONCAT(a.noc, r.route_short_name)`.as("concat_noc_route_short_name")])
+            .as("routes_with_noc");
+
+        const matchedAvl = dbClient
+            .selectFrom("avl_bods as a")
+            .innerJoin(routesWithNoc, (join) =>
+                join.onRef("routes_with_noc.concat_noc_route_short_name", "=", sql`CONCAT(a.operator_ref, a.line_ref)`),
+            )
+            .leftJoin("trip as t", (join) =>
+                join
+                    .onRef("t.route_id", "=", "routes_with_noc.route_id")
+                    .onRef("t.direction", "=", "a.direction_ref")
+                    .onRef("t.ticket_machine_journey_code", "=", "a.dated_vehicle_journey_ref"),
+            )
+            .leftJoin("calendar as c", "c.id", "t.service_id")
+            .leftJoin("calendar_date as cd", (join) =>
+                join
+                    .onRef("cd.service_id", "=", "t.service_id")
+                    .on("cd.date", "=", currentDate.format(DEFAULT_DATE_FORMAT)),
+            )
+            .where("c.start_date", "<=", currentDateIso)
+            .where("c.end_date", ">", currentDateIso)
+            .where(`c.${currentDay}`, "=", 1)
+            .where((eb) =>
+                eb.or([eb("cd.id", "is", null), eb("cd.exception_type", "=", CalendarDateExceptionType.ServiceAdded)]),
+            )
+            .select(["routes_with_noc.route_id as route_id", "t.id as trip_id", "a.operator_ref", "a.vehicle_ref"])
+            .as("matched_avl");
+
+        // Construct the main query
         let query = dbClient
-            .selectFrom("avl_bods")
-            .distinctOn(["avl_bods.operator_ref", "avl_bods.vehicle_ref"])
-            .leftJoin(
-                (eb) =>
-                    eb
-                        .selectFrom("route")
-                        .innerJoin("agency", "agency.id", "route.agency_id")
-                        .select([
-                            "route.id as route_id",
-                            sql`CONCAT(agency.noc, route.route_short_name)`.as("concat_noc_route_short_name"),
-                        ])
-                        .as("routes_with_noc"),
-                (join) =>
-                    join.onRef(
-                        "routes_with_noc.concat_noc_route_short_name",
-                        "=",
-                        sql`CONCAT(avl_bods.operator_ref, avl_bods.line_ref)`,
-                    ),
+            .selectFrom("avl_bods as a")
+            .leftJoin(matchedAvl, (join) =>
+                join
+                    .onRef("matched_avl.operator_ref", "=", "a.operator_ref")
+                    .onRef("matched_avl.vehicle_ref", "=", "a.vehicle_ref"),
             )
-            .leftJoin("trip", (eb) =>
-                eb
-                    .onRef("trip.route_id", "=", "routes_with_noc.route_id")
-                    .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref"),
-            )
-            .leftJoin("calendar", (eb) =>
-                eb
-                    .onRef("calendar.id", "=", "trip.service_id")
-                    .on("calendar.start_date", "<=", currentDate)
-                    .on("calendar.end_date", ">", currentDate)
-                    .on(`calendar.${currentDay}`, "=", 1),
-            )
-            .leftJoin("calendar_date", (eb) =>
-                eb
-                    .onRef("calendar_date.service_id", "=", "trip.service_id")
-                    .on("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceRemoved),
-            )
-            .leftJoin("stop_time", (eb) =>
-                eb
-                    .onRef("stop_time.trip_id", "=", "trip.id")
-                    .on("avl_bods.direction_ref", "=", "trip.direction")
-                    .on("avl_bods.origin_ref", "=", "stop_time.stop_id")
-                    .on("avl_bods.destination_ref", "=", "stop_time.destination_stop_id"),
-            )
-            .selectAll("avl_bods")
-            .select(["routes_with_noc.route_id as route_id", "trip.id as trip_id"])
-            .where("calendar_date.exception_type", "is", null);
+            .where("a.valid_until_time", ">", currentDateIso)
+            .select(["matched_avl.route_id", "matched_avl.trip_id"])
+            .selectAll("a");
 
         if (routeId) {
             query = query.where(
-                "routes_with_noc.route_id",
+                "route_id",
                 "in",
                 routeId.split(",").map((id) => Number(id)),
             );
         }
 
         if (startTimeBefore) {
-            query = query.where("origin_aimed_departure_time", "<", sql<string>`to_timestamp(${startTimeBefore})`);
+            query = query.where("a.origin_aimed_departure_time", "<", sql<string>`to_timestamp(${startTimeBefore})`);
         }
 
         if (startTimeAfter) {
-            query = query.where("origin_aimed_departure_time", ">", sql<string>`to_timestamp(${startTimeAfter})`);
+            query = query.where("a.origin_aimed_departure_time", ">", sql<string>`to_timestamp(${startTimeAfter})`);
         }
 
         if (boundingBox) {
@@ -172,9 +167,11 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);
+        query = query.orderBy(["a.operator_ref", "a.vehicle_ref", "a.response_time_stamp desc"]);
 
-        return query.execute();
+        const avls = await query.execute();
+
+        return avls.map(mapAvlDateStrings);
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);

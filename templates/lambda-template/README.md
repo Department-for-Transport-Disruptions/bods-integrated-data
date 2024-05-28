@@ -1,11 +1,17 @@
 # Typescript Lambda Template
 
 This template can be used when creating a new typescript lambda and contains the basic config files needed to get up and
-running. 
+running.
 
 When using this template make sure to complete the following actions:
 
-## Update the `package.json` file
+- [Update `package.json`](#update-packagejson)
+- [Create a `Makefile` command](#create-a-makefile-command)
+- [Create a CLI Helper](#create-a-cli-helper)
+- [Update Terraform resources](#update-terraform-resources)
+- [Remove this README](#remove-this-readme)
+
+## Update `package.json`
 
 After copying the lambda-template directory and renaming it to your function name update the following in your `package.json`:
 
@@ -41,3 +47,82 @@ Before testing your lambda locally run the following commands from the root dire
 cd src
 pnpm i
 ```
+
+## Create a CLI Helper
+
+In `cli-helpers/src/commands` create a `invoke-lambda-template.ts` file with the following contents, replacing `lambda-template` in the file name with the
+function name, as well as `lambda-template` and `LambdaTemplate` in the file:
+
+```typescript
+import { Command } from "@commander-js/extra-typings";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+
+export const invokeLambdaTemplate = new Command("invoke-lambda-template")
+    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .action(async (options) => {
+        const { stage } = options;
+
+        await invokeLambda(stage, {
+            FunctionName: `integrated-data-lambda-template-${stage}`,
+            InvocationType: "RequestResponse",
+        });
+    });
+```
+
+Add any extra configuration to the file as necessary.
+
+Finally, export the CLI-helper in the `cli-helpers/src/commands/index.ts` file:
+
+```typescript
+// ...other exports
+export * from "./invoke-lambda-template";
+```
+
+## Update Terraform resources
+
+Create a Terraform module for the function, replacing `lambda-template` and `lambda_template` with the function name, using the correct `-` or `_`:
+
+```yaml
+module "integrated_data_lambda_template_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-lambda-template"
+  zip_path      = "${path.module}/../../../../src/functions/dist/lambda-template.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 30
+  memory        = 512
+
+  env_vars = {
+    STAGE         = var.environment
+  }
+}
+```
+
+Make sure to include any extra env vars as variables in the module and in the relevant `variables.tf` file.
+If the function connects to the database, include the DB env vars:
+
+```yaml
+  env_vars = {
+    # ...other env vars
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+```
+
+Ensure to reference the new module in the `main.tf` files for each env workspace (dev, local, test, prod etc.), for example:
+
+```yaml
+module "integrated_lambda_template" {
+  source = "../modules/lambda-template"
+
+  environment = local.env
+}
+```
+
+## Remove this README
+
+Finally, remove this readme, or replace its contents with suitable readme instructions for the lambda function.

@@ -1,8 +1,10 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { Avl, siriSchema } from "@bods-integrated-data/shared/schema";
+import { SiriVM, SiriVehicleActivity, siriSchema } from "@bods-integrated-data/shared/schema";
+import cleanDeep from "clean-deep";
 import { XMLBuilder } from "fast-xml-parser";
 import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
@@ -11,54 +13,50 @@ const currentTime = getDate();
 //SIRI-VM ValidUntilTime field is defined as 5 minutes after the current timestamp
 const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
 
-const createVehicleActivities = (avl: Avl[], currentTime: string, validUntilTime: string) => {
-    return avl.map((record) => {
-        const monitoredVehicleJourney = {
-            LineRef: record.line_ref,
-            DirectionRef: record.direction_ref,
-            FramedVehicleJourneyRef:
-                record.data_frame_ref && record.dated_vehicle_journey_ref
-                    ? {
-                          DataFrameRef: record.data_frame_ref,
-                          DatedVehicleJourneyRef: record.dated_vehicle_journey_ref,
-                      }
-                    : null,
-            PublishedLineName: record.published_line_name,
-            Occupancy: record.occupancy,
-            OperatorRef: record.operator_ref,
-            OriginRef: record.origin_ref,
-            OriginAimedDepartureTime: record.origin_aimed_departure_time,
-            DestinationRef: record.destination_ref,
-            VehicleLocation: {
-                Longitude: record.longitude,
-                Latitude: record.latitude,
-            },
-            Bearing: record.bearing,
-            BlockRef: record.block_ref,
-            VehicleRef: record.vehicle_ref,
-        };
-
-        const monitoredVehicleJourneyWithNullEntriesRemoved = Object.fromEntries(
-            Object.entries(monitoredVehicleJourney).filter(([, value]) => value != null),
-        );
-
-        return {
+const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
+    return avls.map<SiriVehicleActivity>((avl) => {
+        const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: currentTime,
             ValidUntilTime: validUntilTime,
-            MonitoredVehicleJourney: monitoredVehicleJourneyWithNullEntriesRemoved,
+            MonitoredVehicleJourney: {
+                LineRef: avl.line_ref,
+                DirectionRef: avl.direction_ref,
+                PublishedLineName: avl.published_line_name,
+                Occupancy: avl.occupancy,
+                OperatorRef: avl.operator_ref,
+                OriginRef: avl.origin_ref,
+                OriginAimedDepartureTime: avl.origin_aimed_departure_time,
+                DestinationRef: avl.destination_ref,
+                VehicleLocation: {
+                    Longitude: avl.longitude,
+                    Latitude: avl.latitude,
+                },
+                Bearing: avl.bearing,
+                BlockRef: avl.block_ref,
+                VehicleRef: avl.vehicle_ref,
+            },
         };
+
+        if (avl.data_frame_ref && avl.dated_vehicle_journey_ref) {
+            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef = {
+                DataFrameRef: avl.data_frame_ref,
+                DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref,
+            };
+        }
+
+        return vehicleActivity;
     });
 };
 
 export const convertJsonToSiri = (
-    avl: Avl[],
+    avls: Avl[],
     currentTime: string,
     validUntilTime: string,
     RequestMessageRef: string,
 ) => {
-    const vehicleActivity = createVehicleActivities(avl, currentTime, validUntilTime);
+    const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
 
-    const jsonToXmlObject = {
+    const siriVm: SiriVM = {
         ServiceDelivery: {
             ResponseTimestamp: currentTime,
             ProducerRef: "DepartmentForTransport",
@@ -72,7 +70,7 @@ export const convertJsonToSiri = (
     };
 
     logger.info("Verifying JSON against schema...");
-    const verifiedObject = siriSchema.parse(jsonToXmlObject);
+    const verifiedObject = siriSchema.parse(cleanDeep(siriVm));
 
     const completeObject = {
         "?xml": {
@@ -102,19 +100,19 @@ export const convertJsonToSiri = (
 };
 
 export const generateSiriVmAndUploadToS3 = async (
-    avl: Avl[],
+    avls: Avl[],
     currentTime: string,
     validUntilTime: string,
     requestMessageRef: string,
     bucketName: string,
 ) => {
-    const siri = convertJsonToSiri(avl, currentTime, validUntilTime, requestMessageRef);
+    const siri = convertJsonToSiri(avls, currentTime, validUntilTime, requestMessageRef);
 
     logger.info("Uploading SIRI-VM data to S3");
 
     await putS3Object({
         Bucket: bucketName,
-        Key: "SIRI-VM.xml",
+        Key: AGGREGATED_SIRI_VM_FILE_PATH,
         ContentType: "application/xml",
         Body: siri,
     });

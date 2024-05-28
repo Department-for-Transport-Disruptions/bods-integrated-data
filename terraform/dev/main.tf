@@ -72,9 +72,8 @@ module "integrated_data_aurora_db_dev" {
   vpc_id                   = module.integrated_data_vpc_dev.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  min_db_capacity          = 0.5
-  max_db_capacity          = 16
   enable_rds_proxy         = true
+  instance_class           = "db.r6g.large"
 }
 
 module "integrated_data_db_monitoring" {
@@ -176,26 +175,32 @@ module "integrated_data_gtfs_downloader" {
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  environment                  = local.env
+  vpc_id                       = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids           = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                     = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                      = module.integrated_data_aurora_db_dev.db_host
+  db_reader_host               = module.integrated_data_aurora_db_dev.db_reader_host
+  bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
+  bods_avl_processor_frequency = 120
+  bods_avl_cleardown_frequency = 240
+  bods_avl_processor_cpu       = 1024
+  bods_avl_processor_memory    = 2048
 }
 
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
-  alarm_topic_arn    = module.integrated_data_monitoring_dev.alarm_topic_arn
-  ok_topic_arn       = module.integrated_data_monitoring_dev.ok_topic_arn
-  tfl_api_keys       = local.secrets["tfl_api_keys"]
+  environment                                 = local.env
+  vpc_id                                      = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids                          = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                               = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                                    = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                                     = module.integrated_data_aurora_db_dev.db_host
+  alarm_topic_arn                             = module.integrated_data_monitoring_dev.alarm_topic_arn
+  ok_topic_arn                                = module.integrated_data_monitoring_dev.ok_topic_arn
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
   tfl_location_retriever_invoke_every_seconds = 60
 }
 
@@ -207,7 +212,7 @@ module "integrated_data_avl_aggregator" {
   private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  db_host            = module.integrated_data_aurora_db_dev.db_reader_host
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -288,4 +293,14 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_avl_consumer_api" {
+  source = "../modules/avl-consumer-api"
+
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }

@@ -6,6 +6,10 @@ output "db_host" {
   value = aws_route53_record.integrated_data_db_cname_record.name
 }
 
+output "db_reader_host" {
+  value = aws_route53_record.integrated_data_db_reader_cname_record.name
+}
+
 output "db_secret_arn" {
   value = aws_rds_cluster.integrated_data_rds_cluster.master_user_secret[0].secret_arn
 }

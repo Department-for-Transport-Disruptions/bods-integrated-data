@@ -5,7 +5,7 @@ BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_FTP_ARN=""
-AVL_SIRI_BUCKET_NAME="avl-siri-vm-local"
+AVL_SIRI_BUCKET_NAME="integrated-data-avl-aggregated-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
@@ -79,6 +79,9 @@ lint-functions:
 
 test-functions:
 	cd src && pnpm test:ci
+
+docker-build-%:
+	docker build src --build-arg servicePath=$* -t $*
 
 # CLI helpers
 
@@ -181,7 +184,7 @@ run-local-avl-processor:
 	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
 run-local-avl-aggregate-siri-vm:
-	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler()"
+	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler().catch(e => console.error(e))"
 
 run-local-avl-retriever:
 	STAGE=local TARGET_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
@@ -195,9 +198,14 @@ run-local-avl-mock-data-producer-send-data:
 run-local-avl-unsubscriber:
 	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
+run-local-avl-tfl-line-id-retriever:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-tfl-line-id-retriever'; handler().catch(e => console.error(e))"
+
 run-local-avl-tfl-location-retriever:
 	STAGE=local TFL_API_ARN=${TFL_API_ARN} npx tsx -e "import {handler} from './src/functions/avl-tfl-location-retriever'; handler().catch(e => console.error(e))"
 
+run-local-avl-siri-vm-downloader:
+	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler().catch(e => console.error(e))"
 
 # NOC
 
