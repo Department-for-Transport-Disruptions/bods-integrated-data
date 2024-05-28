@@ -49,13 +49,13 @@ export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleT
     }
 
     const hasWheelchairEquipment = !!vehicleType.VehicleEquipment?.WheelchairEquipment;
-    const numberOfWheelChairAreas = vehicleType.VehicleEquipment?.WheelchairEquipment?.NumberOfWheelChairAreas || 0;
+    const numberOfWheelchairAreas = vehicleType.VehicleEquipment?.WheelchairEquipment?.NumberOfWheelchairAreas || 0;
 
-    if (vehicleType.WheelChairAccessible || (hasWheelchairEquipment && numberOfWheelChairAreas > 0)) {
+    if (vehicleType.WheelchairAccessible || (hasWheelchairEquipment && numberOfWheelchairAreas > 0)) {
         return WheelchairAccessibility.Accessible;
     }
 
-    if (vehicleType.WheelChairAccessible === false || (hasWheelchairEquipment && numberOfWheelChairAreas === 0)) {
+    if (vehicleType.WheelchairAccessible === false || (hasWheelchairEquipment && numberOfWheelchairAreas === 0)) {
         return WheelchairAccessibility.NotAccessible;
     }
 
