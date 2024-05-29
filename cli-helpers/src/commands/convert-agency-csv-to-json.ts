@@ -1,7 +1,7 @@
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
-import { z } from "zod";
 import { writeFile } from "fs/promises";
+import { z } from "zod";
 
 const agencyCsvSchema = z.object({
     agency_id: z.string(),
