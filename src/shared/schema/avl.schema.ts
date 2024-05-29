@@ -3,6 +3,17 @@ import { NewAvl } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema, txcEmptyProperty } from "../utils";
 
+const onwardCallSchema = z
+    .object({
+        StopPointRef: z.coerce.string().nullish(),
+        AimedArrivalTime: z.coerce.string().nullish(),
+        ExpectedArrivalTime: z.coerce.string().nullish(),
+        AimedDepartureTime: z.coerce.string().nullish(),
+        ExpectedDepartureTime: z.coerce.string().nullish(),
+    })
+    .or(txcEmptyProperty)
+    .optional();
+
 const extensionsSchema = z
     .object({
         VehicleJourney: z
@@ -57,6 +68,7 @@ const vehicleActivitySchema = z.object({
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
         VehicleRef: z.coerce.string(),
+        OnwardCalls: makeFilteredArraySchema(onwardCallSchema),
     }),
     Extensions: extensionsSchema,
 });

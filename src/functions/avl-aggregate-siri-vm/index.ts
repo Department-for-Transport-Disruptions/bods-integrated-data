@@ -18,7 +18,6 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: currentTime,
             ValidUntilTime: validUntilTime,
-            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
                 LineRef: avl.line_ref,
                 DirectionRef: avl.direction_ref,

@@ -88,7 +88,7 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
-        vehicle_monitoring_ref: null,
+        vehicle_monitoring_ref: "test",
         destination_aimed_arrival_time: null,
         ticket_machine_service_code: "123",
         journey_code: "VJ_123",
