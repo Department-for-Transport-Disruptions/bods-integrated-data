@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
+import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
@@ -67,7 +68,14 @@ export const handler = async () => {
         const lineIds = await getLineIds(dbClient);
         const vehicleLocations = await retrieveTflVehicleLocations(lineIds, live_vehicles_api_key);
 
-        await insertAvls(dbClient, vehicleLocations);
+        const vehicleLocationsWithTflOperatorRef = vehicleLocations.map((vehicleLocation) => {
+            return {
+                ...vehicleLocation,
+                operator_ref: tflOperatorRef,
+            };
+        });
+
+        await insertAvls(dbClient, vehicleLocationsWithTflOperatorRef);
 
         logger.info("TfL location retriever successful");
     } catch (error) {

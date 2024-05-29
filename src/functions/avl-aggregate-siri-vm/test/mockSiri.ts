@@ -47,6 +47,17 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
           <BlockRef>DY04</BlockRef>
           <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
+        <Extensions>
+          <VehicleJourney>
+            <Operational>
+              <TicketMachine>
+                <TicketMachineServiceCode>123</TicketMachineServiceCode>
+                <JourneyCode>VJ_123</JourneyCode>
+              </TicketMachine>
+            </Operational>
+            <VehicleUniqueId>Vehicle_123</VehicleUniqueId>
+          </VehicleJourney>
+        </Extensions>
       </VehicleActivity>
     </VehicleMonitoringDelivery>
   </ServiceDelivery>

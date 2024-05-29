@@ -45,6 +45,11 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        vehicle_monitoring_ref: null,
+        destination_aimed_arrival_time: null,
+        ticket_machine_service_code: null,
+        journey_code: null,
+        vehicle_unique_id: null,
     },
     {
         id: 24183,
@@ -83,6 +88,11 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        vehicle_monitoring_ref: null,
+        destination_aimed_arrival_time: null,
+        ticket_machine_service_code: "123",
+        journey_code: "VJ_123",
+        vehicle_unique_id: "Vehicle_123",
     },
 ];
 

@@ -7,7 +7,13 @@ export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], fromBods?: boolean) => {
     const avlsWithGeom = avls.map<NewAvl>((avl) => ({
         ...avl,
-        geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
+        geom: sql`ST_SetSRID
+        (ST_MakePoint(
+        ${avl.longitude},
+        ${avl.latitude}
+        ),
+        4326
+        )`,
     }));
 
     const insertChunks = chunkArray(avlsWithGeom, 1000);
@@ -34,5 +40,8 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
     valid_until_time: new Date(avl.valid_until_time).toISOString(),
     origin_aimed_departure_time: avl.origin_aimed_departure_time
         ? new Date(avl.origin_aimed_departure_time).toISOString()
+        : null,
+    destination_aimed_arrival_time: avl.destination_aimed_arrival_time
+        ? new Date(avl.destination_aimed_arrival_time).toISOString()
         : null,
 });

@@ -57,8 +57,8 @@ const vehicleActivitySchema = z.object({
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
         VehicleRef: z.coerce.string(),
-        Extensions: extensionsSchema,
     }),
+    Extensions: extensionsSchema,
 });
 
 export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
@@ -107,12 +107,9 @@ export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
         vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
         vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
         ticket_machine_service_code:
-            vehicleActivity.MonitoredVehicleJourney.Extensions?.VehicleJourney?.Operational?.TicketMachine
-                ?.TicketMachineServiceCode ?? null,
-        journey_code:
-            vehicleActivity.MonitoredVehicleJourney.Extensions?.VehicleJourney?.Operational?.TicketMachine
-                ?.JourneyCode ?? null,
-        vehicle_unique_id: vehicleActivity.MonitoredVehicleJourney.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
+            vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ?? null,
+        journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
+        vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
     }));
 });
 

@@ -49,43 +49,19 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
             };
         }
 
-
-        if (avl.ticket_machine_service_code || avl.journey_code) {
-            vehicleActivity.MonitoredVehicleJourney.Extensions = {
+        if (avl.ticket_machine_service_code || avl.journey_code || avl.vehicle_unique_id) {
+            vehicleActivity.Extensions = {
                 VehicleJourney: {
                     Operational: {
-                        TicketMachine: {},
+                        TicketMachine: {
+                            TicketMachineServiceCode: avl.ticket_machine_service_code ?? null,
+                            JourneyCode: avl.journey_code ?? null,
+                        },
                     },
+                    VehicleUniqueId: avl.vehicle_unique_id ?? null,
                 },
             };
-
-            if (avl.ticket_machine_service_code) {
-                vehicleActivity.MonitoredVehicleJourney.Extensions = {
-                    VehicleJourney: {
-                        Operational: {
-                            TicketMachine: {
-                                TicketMachineServiceCode: avl.ticket_machine_service_code,
-                            },
-                        },
-                    },
-
-                };
-            }
-
-            if (avl.journey_code) {
-                vehicleActivity.MonitoredVehicleJourney.Extensions = {
-                    VehicleJourney: {
-                        Operational: {
-                            TicketMachine: {
-                                JourneyCode: avl.journey_code,
-                            },
-                        },
-                    },
-                };
-            }
         }
-
-        console.log(vehicleActivity);
 
         return vehicleActivity;
     });

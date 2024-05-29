@@ -72,6 +72,11 @@ describe("utils", () => {
                 origin_name: null,
                 destination_name: null,
                 vehicle_journey_ref: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -142,6 +147,11 @@ describe("utils", () => {
                 origin_name: null,
                 destination_name: null,
                 vehicle_journey_ref: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -212,6 +222,11 @@ describe("utils", () => {
                 origin_name: null,
                 destination_name: null,
                 vehicle_journey_ref: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -282,6 +297,11 @@ describe("utils", () => {
                 origin_name: null,
                 destination_name: null,
                 vehicle_journey_ref: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -352,6 +372,11 @@ describe("utils", () => {
                 origin_name: null,
                 destination_name: null,
                 vehicle_journey_ref: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -422,6 +447,11 @@ describe("utils", () => {
                 origin_name: null,
                 destination_name: null,
                 vehicle_journey_ref: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -493,6 +523,11 @@ describe("utils", () => {
             origin_name: null,
             destination_name: null,
             vehicle_journey_ref: null,
+            vehicle_monitoring_ref: null,
+            destination_aimed_arrival_time: null,
+            ticket_machine_service_code: null,
+            journey_code: null,
+            vehicle_unique_id: null,
         };
 
         const expected: transit_realtime.IFeedEntity = {
