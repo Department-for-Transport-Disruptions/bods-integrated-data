@@ -76,10 +76,32 @@ resource "aws_apigatewayv2_deployment" "integrated_data_gtfs_api_deployment" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "gtfs_log_group" {
+  name              = "integrated-data-gtfs-api-log-group-${var.environment}"
+  retention_in_days = var.environment == "prod" ? 90 : 30
+}
+
 resource "aws_apigatewayv2_stage" "integrated_data_gtfs_api_stage" {
   api_id      = aws_apigatewayv2_api.integrated_data_gtfs_api.id
   name        = "$default"
   auto_deploy = true
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.gtfs_log_group.arn
+    format = jsonencode({
+      requestId         = "$context.requestId"
+      extendedRequestId = "$context.extendedRequestId"
+      ip                = "$context.identity.sourceIp"
+      caller            = "$context.identity.caller"
+      user              = "$context.identity.user"
+      requestTime       = "$context.requestTime"
+      requestTimeEpoch  = "$context.requestTimeEpoch"
+      resourcePath      = "$context.resourcePath"
+      httpMethod        = "$context.httpMethod"
+      status            = "$context.status"
+      protocol          = "$context.protocol"
+      responseLength    = "$context.responseLength"
+    })
+  }
 }
 
 resource "aws_lambda_permission" "integrated_data_gtfs_downloader_api_permissions" {
