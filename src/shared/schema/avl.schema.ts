@@ -3,12 +3,19 @@ import { NewAvl } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema } from "../utils";
 
+const directionMap: Record<string, string> = {
+    in: "inbound",
+    out: "outbound",
+};
+
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
-        DirectionRef: z.coerce.string(),
+        DirectionRef: z.coerce
+            .string()
+            .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
         FramedVehicleJourneyRef: z
             .object({
                 DataFrameRef: z.coerce.string(),

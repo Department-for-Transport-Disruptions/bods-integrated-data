@@ -12,7 +12,7 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <MonitoredVehicleJourney>
           <LineRef>784</LineRef>
-          <DirectionRef>OUT</DirectionRef>
+          <DirectionRef>outbound</DirectionRef>
           <PublishedLineName>784</PublishedLineName>
           <Occupancy>full</Occupancy>
           <OperatorRef>NATX</OperatorRef>
