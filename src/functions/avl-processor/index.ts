@@ -6,17 +6,24 @@ import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
+
+const arrayProperties = ["VehicleActivity", "OnwardCall"];
+
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => tagName === "VehicleActivity",
+        isArray: (tagName) => arrayProperties.some((element) => element === tagName),
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
+    logger.info("testy", parsedXml);
+
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
+
+    logger.info("test", parsedJson);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());

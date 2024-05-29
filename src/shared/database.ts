@@ -218,6 +218,7 @@ export interface AvlTable {
     ticket_machine_service_code: string | null;
     journey_code: string | null;
     vehicle_unique_id: string | null;
+    has_onward_calls: boolean | null;
 }
 
 export type Avl = Selectable<AvlTable>;

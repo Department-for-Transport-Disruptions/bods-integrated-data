@@ -68,7 +68,7 @@ const vehicleActivitySchema = z.object({
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
         VehicleRef: z.coerce.string(),
-        OnwardCalls: makeFilteredArraySchema(onwardCallSchema),
+        OnwardCalls: makeFilteredArraySchema(onwardCallSchema).or(txcEmptyProperty).optional(),
     }),
     Extensions: extensionsSchema,
 });
@@ -122,6 +122,8 @@ export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
             vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ?? null,
         journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
         vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
+        has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
+        onward_calls: vehicleActivity.MonitoredVehicleJourney.OnwardCalls ?? null,
     }));
 });
 
