@@ -102,9 +102,6 @@ resource "aws_apigatewayv2_stage" "integrated_data_gtfs_api_stage" {
       responseLength    = "$context.responseLength"
     })
   }
-  default_route_settings {
-    data_trace_enabled = true
-  }
 }
 
 resource "aws_lambda_permission" "integrated_data_gtfs_downloader_api_permissions" {
