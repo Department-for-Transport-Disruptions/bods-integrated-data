@@ -2,9 +2,9 @@ import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent } from "aws-lambda";
 import MockDate from "mockdate";
-import { beforeAll, afterEach, afterAll, describe, expect, it, vi } from "vitest";
-import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
+import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
 
 describe("AVL-data-endpoint", () => {
     beforeAll(() => {

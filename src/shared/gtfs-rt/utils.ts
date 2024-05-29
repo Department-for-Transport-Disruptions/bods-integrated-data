@@ -1,12 +1,12 @@
+import { randomUUID } from "crypto";
 import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
-import { randomUUID } from "crypto";
-import { ExtendedAvl } from "./types";
 import { mapAvlDateStrings } from "../avl/utils";
 import { Calendar, CalendarDateExceptionType, KyselyDb } from "../database";
 import { getDate } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
+import { ExtendedAvl } from "./types";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(

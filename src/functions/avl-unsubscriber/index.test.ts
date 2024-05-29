@@ -2,7 +2,8 @@ import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
-import { describe, it, expect, vi, afterAll, beforeEach, beforeAll } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { handler } from "./index";
 import {
     expectedRequestBody,
     expectedSubscriptionRequestConfig,
@@ -11,7 +12,6 @@ import {
     mockSubscriptionResponseBody,
     mockUnsubscribeEvent,
 } from "./test/mockData";
-import { handler } from "./index";
 
 vi.mock("crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",

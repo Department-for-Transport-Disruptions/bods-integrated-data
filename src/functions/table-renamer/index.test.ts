@@ -1,5 +1,5 @@
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TableKey, checkTables, renameTables } from ".";
 
 const mockExecute = vi.fn().mockResolvedValue([{ count: 100 }]);

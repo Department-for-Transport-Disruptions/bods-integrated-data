@@ -1,36 +1,28 @@
 {
-    "name": "bods-integrated-data",
-    "version": "0.1.0",
-    "description": "",
-    "scripts": {
-        "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",
-        "test:ci": "vitest run",
-        "lint": "eslint .",
-        "test": "vitest",
-        "build-tasks": "rm -rf ./tasks/dist && pnpm -r --if-present build --filter tasks"
-    },
-    "type": "module",
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "devDependencies": {
-        "@tsconfig/node20": "^20.1.2",
-        "@typescript-eslint/eslint-plugin": "^7.0.2",
-        "@typescript-eslint/parser": "^7.0.2",
-        "@vitest/coverage-v8": "^1.4.0",
-        "esbuild": "0.20.1",
-        "eslint": "^8.56.0",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-import-resolver-typescript": "^3.6.1",
-        "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-prettier": "^5.1.3",
-        "prettier": "^3.2.5",
-        "typescript": "^5.3.3",
-        "typescript-eslint": "^7.0.2",
-        "vitest": "^1.3.1"
-    },
-    "packageManager": "pnpm@8.15.3",
-    "engines": {
-        "pnpm": "^8.0.0"
-    }
+  "name": "bods-integrated-data",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",
+    "test:ci": "vitest run",
+    "lint": "pnpm biome check --apply .",
+    "test": "vitest",
+    "build-tasks": "rm -rf ./tasks/dist && pnpm -r --if-present build --filter tasks"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@biomejs/biome": "1.7.3",
+    "@tsconfig/node20": "^20.1.2",
+    "@vitest/coverage-v8": "^1.4.0",
+    "esbuild": "0.20.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1"
+  },
+  "packageManager": "pnpm@8.15.3",
+  "engines": {
+    "pnpm": "^8.0.0"
+  }
 }

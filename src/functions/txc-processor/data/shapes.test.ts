@@ -1,9 +1,9 @@
 import { KyselyDb, NewShape } from "@bods-integrated-data/shared/database";
 import { TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { VehicleJourneyMapping } from "../types";
 import * as databaseFunctions from "./database";
 import { getRouteLinks, getRouteRefs, mapRouteLinksToShapes, processShapes } from "./shapes";
-import { VehicleJourneyMapping } from "../types";
 
 describe("shapes", () => {
     let dbClient: KyselyDb;

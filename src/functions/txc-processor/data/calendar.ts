@@ -14,8 +14,8 @@ import {
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Dayjs } from "dayjs";
 import { hasher } from "node-object-hash";
-import { insertCalendarDates, insertCalendars } from "./database";
 import { CalendarWithDates, VehicleJourneyMapping } from "../types";
+import { insertCalendarDates, insertCalendars } from "./database";
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
     RegularDayType: {

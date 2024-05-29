@@ -3,14 +3,14 @@ import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/share
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
-    TxcRouteSection,
+    Operator,
     Service,
+    ServicedOrganisation,
+    TxcJourneyPatternSection,
+    TxcRoute,
+    TxcRouteSection,
     VehicleJourney,
     txcSchema,
-    TxcRoute,
-    TxcJourneyPatternSection,
-    ServicedOrganisation,
-    Operator,
 } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -20,8 +20,8 @@ import { processCalendars } from "./data/calendar";
 import { processFrequencies } from "./data/frequencies";
 import { processRoutes } from "./data/routes";
 import { processShapes } from "./data/shapes";
-import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processStopTimes } from "./data/stopTimes";
+import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
 import { processTrips } from "./data/trips";
 import { InvalidOperatorError } from "./errors";
 import { VehicleJourneyMapping } from "./types";

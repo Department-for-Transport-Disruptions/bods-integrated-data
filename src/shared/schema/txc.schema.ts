@@ -1,6 +1,6 @@
 import { ZodSchema, z } from "zod";
-import { bankHolidayOperationSchema, dateRange, formattedDateRange } from "./dates.schema";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { bankHolidayOperationSchema, dateRange, formattedDateRange } from "./dates.schema";
 
 export const operatorSchema = z.object({
     NationalOperatorCode: z.string().optional(),
