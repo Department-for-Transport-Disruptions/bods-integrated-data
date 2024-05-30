@@ -67,7 +67,7 @@ resource "aws_lambda_permission" "integrated_data_avl_consumer_downloader_api_pe
 
 
 resource "aws_apigatewayv2_domain_name" "integrated_data_avl_consumer_api_domain" {
-  domain_name = "consumer.${var.domain}"
+  domain_name = "avl.${var.domain}"
 
   domain_name_configuration {
     certificate_arn = var.acm_certificate_arn
