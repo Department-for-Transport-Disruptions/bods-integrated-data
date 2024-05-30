@@ -225,6 +225,20 @@ export type Avl = Selectable<AvlTable>;
 export type NewAvl = Insertable<AvlTable>;
 export type AvlUpdate = Updateable<AvlTable>;
 
+export interface AvlOnwardCallTable {
+    id: Generated<number>;
+    avl_id: number;
+    stop_point_ref: string | null;
+    aimed_arrival_time: string | null;
+    expected_arrival_time: string | null;
+    aimed_departure_time: string | null;
+    expected_departure_time: string | null;
+}
+
+export type AvlOnwardCall = Selectable<AvlOnwardCallTable>;
+export type NewAvlOnwardCall = Insertable<AvlOnwardCallTable>;
+export type AvlOnwardCallUpdate = Updateable<AvlOnwardCallTable>;
+
 export interface TflLineTable {
     id: string;
 }

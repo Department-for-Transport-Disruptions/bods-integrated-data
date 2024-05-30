@@ -97,8 +97,8 @@ export const siriSchema = z.object({
 
 export type SiriVM = z.infer<typeof siriSchema>;
 
-export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
-    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewAvl>((vehicleActivity) => ({
+export const siriSchemaTransformed = siriSchema.transform((item) => {
+    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
         response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
         producer_ref: item.ServiceDelivery.ProducerRef,
         recorded_at_time: vehicleActivity.RecordedAtTime,
@@ -130,6 +130,7 @@ export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
         journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
         vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
         has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
+        onward_calls: vehicleActivity.MonitoredVehicleJourney.OnwardCalls ?? null,
     }));
 });
 
