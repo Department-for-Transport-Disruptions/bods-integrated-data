@@ -1,10 +1,10 @@
+import { randomUUID } from "crypto";
 import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewShape } from "@bods-integrated-data/shared/database";
-import { TxcRouteSection, TxcRoute, TxcRouteLink } from "@bods-integrated-data/shared/schema";
+import { TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { randomUUID } from "crypto";
-import { insertShapes } from "./database";
 import { VehicleJourneyMapping } from "../types";
+import { insertShapes } from "./database";
 
 export const getRouteRefs = (routes: TxcRoute[], vehicleJourneyMappings: VehicleJourneyMapping[]) => {
     const journeyPatternToRouteRefMapping: Record<string, string> = {};

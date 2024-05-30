@@ -1,15 +1,15 @@
 import { logger } from "@baselime/lambda-logger";
 import {
+    KyselyDb,
+    NewAgency,
+    NewCalendar,
     NewCalendarDate,
     NewFrequency,
     NewRoute,
     NewShape,
-    NewTrip,
     NewStop,
-    NewAgency,
     NewStopTime,
-    KyselyDb,
-    NewCalendar,
+    NewTrip,
 } from "@bods-integrated-data/shared/database";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { BackoffOptions, backOff } from "exponential-backoff";
@@ -24,11 +24,11 @@ const retryBackOffOptions: BackoffOptions = {
     },
 };
 
-export const getAgency = async (dbClient: KyselyDb, nationalOperatorCode: string) => {
+export const getAgency = (dbClient: KyselyDb, nationalOperatorCode: string) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
 };
 
-export const getOperator = async (dbClient: KyselyDb, nationalOperatorCode: string) => {
+export const getOperator = (dbClient: KyselyDb, nationalOperatorCode: string) => {
     return dbClient
         .selectFrom("noc_operator_new")
         .selectAll()
@@ -100,7 +100,7 @@ export const insertCalendarDates = async (dbClient: KyselyDb, calendarDates: New
     );
 };
 
-export const insertFrequencies = async (dbClient: KyselyDb, frequencies: NewFrequency[]) => {
+export const insertFrequencies = (dbClient: KyselyDb, frequencies: NewFrequency[]) => {
     return dbClient.insertInto("frequency_new").values(frequencies).returningAll().execute();
 };
 
@@ -175,6 +175,6 @@ export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
 };
 
-export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
+export const insertTrips = (dbClient: KyselyDb, trips: NewTrip[]) => {
     return dbClient.insertInto("trip_new").values(trips).returningAll().execute();
 };

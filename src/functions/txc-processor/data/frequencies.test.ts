@@ -1,8 +1,8 @@
 import { Frequency, KyselyDb, NewFrequency, ServiceType } from "@bods-integrated-data/shared/database";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { VehicleJourneyMapping } from "../types";
 import * as databaseFunctions from "./database";
 import { processFrequencies } from "./frequencies";
-import { VehicleJourneyMapping } from "../types";
 
 describe("frequencies", () => {
     let dbClient: KyselyDb;

@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
 describe("gtfs-downloader-endpoint", () => {

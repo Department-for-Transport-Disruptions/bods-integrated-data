@@ -38,13 +38,20 @@ const extensionsSchema = z
     .or(txcEmptyProperty)
     .optional();
 
+const directionMap: Record<string, string> = {
+    in: "inbound",
+    out: "outbound",
+};
+
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
     ValidUntilTime: z.string(),
     VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
-        DirectionRef: z.coerce.string(),
+        DirectionRef: z.coerce
+            .string()
+            .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
         FramedVehicleJourneyRef: z
             .object({
                 DataFrameRef: z.coerce.string(),

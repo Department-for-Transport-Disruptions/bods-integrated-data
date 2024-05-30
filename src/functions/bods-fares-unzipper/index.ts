@@ -1,8 +1,8 @@
+import { Readable } from "stream";
 import { logger } from "@baselime/lambda-logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { unzip } from "@bods-integrated-data/shared/unzip";
 import { S3Event } from "aws-lambda";
-import { Readable } from "stream";
 
 export const handler = async (event: S3Event) => {
     const {

@@ -1,6 +1,6 @@
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
-import { describe, vi, afterEach, it, expect } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getBankHolidaysAndUploadToS3, handler } from ".";
 
 const mockBankHolidaysResponse = {

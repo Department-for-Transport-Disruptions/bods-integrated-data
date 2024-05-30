@@ -1,3 +1,4 @@
+import { Stream } from "stream";
 /* eslint-disable no-console */
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
@@ -10,7 +11,6 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import Pino from "pino";
 import { Entry, Parse } from "unzipper";
-import { Stream } from "stream";
 
 const logger = Pino();
 
