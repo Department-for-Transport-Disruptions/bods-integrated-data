@@ -1,8 +1,8 @@
+import { promises as fs } from "fs";
+import * as path from "path";
 import { logger } from "@baselime/lambda-logger";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { FileMigrationProvider, Migrator } from "kysely";
-import { promises as fs } from "fs";
-import * as path from "path";
 
 export const handler = async () => {
     const { ROLLBACK: rollback } = process.env;

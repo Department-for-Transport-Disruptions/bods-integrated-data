@@ -1,9 +1,9 @@
+import { Stream } from "stream";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 import { Entry, Parse } from "unzipper";
-import { Stream } from "stream";
 
 const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketName: string, prefix: string) => {
     logger.info("Starting retrieval of BODS data");

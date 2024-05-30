@@ -5,7 +5,7 @@ import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ClientError } from "./errors";
-import { dataEndpointInputSchema, HeartbeatNotification, heartbeatNotificationSchema } from "./heartbeat.schema";
+import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
 const validateHeartbeatNotificationAndUploadToDynamo = async (
     data: HeartbeatNotification,

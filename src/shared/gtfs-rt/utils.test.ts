@@ -1,5 +1,5 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ExtendedAvl } from "./types";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 

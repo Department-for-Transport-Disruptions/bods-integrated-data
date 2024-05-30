@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -7,7 +8,6 @@ import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared
 import { APIGatewayEvent } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { randomUUID } from "crypto";
 import { terminateSubscriptionRequestSchema, terminateSubscriptionResponseSchema } from "./subscription.schema";
 import { mockSubscriptionResponseBody } from "./test/mockData";
 

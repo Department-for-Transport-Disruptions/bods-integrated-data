@@ -1,7 +1,7 @@
+import { PassThrough, Stream } from "stream";
 import { logger } from "@baselime/lambda-logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
-import { PassThrough, Stream } from "stream";
 
 const getFaresDataAndUploadToS3 = async (faresZippedBucketName: string) => {
     logger.info("Starting retrieval of fares data");

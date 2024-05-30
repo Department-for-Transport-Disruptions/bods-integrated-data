@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import {
@@ -7,7 +8,6 @@ import {
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { randomUUID } from "crypto";
 
 const parseXml = (xml: string) => {
     const parser = new XMLParser({

@@ -1,8 +1,8 @@
-import { Agency, NewRoute, Route, KyselyDb } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, NewRoute, Route } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
-import { notEmpty, getRouteTypeFromServiceMode } from "@bods-integrated-data/shared/utils";
-import { getTndsRoute, insertRoute } from "./database";
+import { getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { DuplicateRouteError } from "../errors";
+import { getTndsRoute, insertRoute } from "./database";
 
 export const processRoutes = async (
     dbClient: KyselyDb,

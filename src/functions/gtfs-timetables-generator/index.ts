@@ -1,3 +1,5 @@
+import path from "path";
+import { PassThrough } from "stream";
 import { logger } from "@baselime/lambda-logger";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -9,8 +11,6 @@ import {
 } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import archiver from "archiver";
-import path from "path";
-import { PassThrough } from "stream";
 import {
     Query,
     createRegionalTripTable,
