@@ -3,10 +3,9 @@ import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapAvlDateStrings } from "../avl/utils";
-import { Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { Avl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
-import { ExtendedAvl } from "./types";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
@@ -27,7 +26,7 @@ export const getOccupancyStatus = (occupancy: string): transit_realtime.VehicleP
     }
 };
 
-export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEntity => {
+export const mapAvlToGtfsEntity = (avl: NewAvl): transit_realtime.IFeedEntity => {
     let routeId = "";
     let tripId = "";
     let startDate = null;
@@ -94,7 +93,7 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: string,
-): Promise<ExtendedAvl[]> => {
+): Promise<Avl[]> => {
     try {
         const currentDateIso = getDate().toISOString();
 
@@ -134,7 +133,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);
+        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.response_time_stamp desc"]);
 
         const avls = await query.execute();
 

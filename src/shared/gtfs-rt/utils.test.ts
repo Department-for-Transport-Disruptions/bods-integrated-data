@@ -1,6 +1,6 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ExtendedAvl } from "./types";
+import { Avl } from "../database";
 import { getOccupancyStatus, mapAvlToGtfsEntity, sanitiseTicketMachineJourneyCode } from "./utils";
 
 describe("utils", () => {
@@ -33,7 +33,7 @@ describe("utils", () => {
 
     describe("mapAvlToGtfsEntity", () => {
         it("returns a mapped GTFS entity", () => {
-            const avl: ExtendedAvl = {
+            const avl: Avl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -103,7 +103,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with an occupancy status when occupancy data exists", () => {
-            const avl: ExtendedAvl = {
+            const avl: Avl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -173,7 +173,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a bearing when bearing data exists", () => {
-            const avl: ExtendedAvl = {
+            const avl: Avl = {
                 id: 0,
                 bearing: "1",
                 latitude: 2,
@@ -243,7 +243,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a vehicle label when the vehicle ref is a valid UK vehicle registration number", () => {
-            const avl: ExtendedAvl = {
+            const avl: Avl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -313,7 +313,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a route ID if a corresponding route can be found", () => {
-            const avl: ExtendedAvl = {
+            const avl: Avl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -383,7 +383,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a trip ID if a corresponding trip can be found", () => {
-            const avl: ExtendedAvl = {
+            const avl: Avl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -454,7 +454,7 @@ describe("utils", () => {
     });
 
     it("returns a mapped GTFS entity with a start date and start time when departure time data exists", () => {
-        const avl: ExtendedAvl = {
+        const avl: Avl = {
             id: 0,
             bearing: "1",
             latitude: 2,

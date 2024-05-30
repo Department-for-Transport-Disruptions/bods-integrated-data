@@ -1,9 +1,8 @@
 import { Stream } from "stream";
 /* eslint-disable no-console */
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     generateGtfsRtFeed,
-    getAvlDataForGtfs,
     mapAvlToGtfsEntity,
     matchAvlToTimetables,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
@@ -41,24 +40,19 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
         });
     } catch (error) {
         if (error instanceof Error) {
-            logger.error("There was a problem uploading GTFS-RT data to S3", error);
+            logger.error(error);
         }
+
+        logger.error("There was a problem uploading GTFS-RT data to S3");
 
         throw error;
     }
 };
 
-const generateGtfs = async () => {
-    console.time("gtfsgenerate");
-
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
-
+const generateGtfs = async (avl: NewAvl[]) => {
     try {
-        logger.info("Retrieving AVL from database...");
-        const avlData = await getAvlDataForGtfs(dbClient);
-
         logger.info("Generating GTFS-RT...");
-        const entities = avlData.map(mapAvlToGtfsEntity);
+        const entities = avl.map(mapAvlToGtfsEntity);
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
         await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
@@ -73,16 +67,14 @@ const generateGtfs = async () => {
                 Body: JSON.stringify(decodedJson),
             });
         }
-
-        console.timeEnd("gtfsgenerate");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error running the GTFS-RT Generator", e);
+            logger.error(e);
         }
 
+        logger.error("There was an error running the GTFS-RT Generator");
+
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
 
@@ -99,7 +91,8 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
-        logger.error("There was an error parsing the AVL data", parsedJson.error.format());
+        logger.error("There was an error parsing the AVL data");
+        logger.error(parsedJson.error.format());
 
         throw new Error("Error parsing data");
     }
@@ -108,19 +101,41 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
 
     const chunkedAvl = chunkArray(enrichedAvl, 2000);
 
-    await Promise.all(
-        chunkedAvl.map((chunk) =>
+    await Promise.all([
+        generateGtfs(enrichedAvl),
+        ...chunkedAvl.map((chunk) =>
             dbClient
                 .insertInto("avl_bods")
                 .onConflict((oc) =>
-                    oc
-                        .columns(["vehicle_ref", "operator_ref", "recorded_at_time"])
-                        .doUpdateSet((eb) => ({ valid_until_time: eb.ref("excluded.valid_until_time") })),
+                    oc.columns(["vehicle_ref", "operator_ref"]).doUpdateSet((eb) => ({
+                        response_time_stamp: eb.ref("excluded.response_time_stamp"),
+                        producer_ref: eb.ref("excluded.producer_ref"),
+                        recorded_at_time: eb.ref("excluded.recorded_at_time"),
+                        valid_until_time: eb.ref("excluded.valid_until_time"),
+                        line_ref: eb.ref("excluded.line_ref"),
+                        direction_ref: eb.ref("excluded.direction_ref"),
+                        operator_ref: eb.ref("excluded.operator_ref"),
+                        dated_vehicle_journey_ref: eb.ref("excluded.dated_vehicle_journey_ref"),
+                        vehicle_ref: eb.ref("excluded.vehicle_ref"),
+                        longitude: eb.ref("excluded.longitude"),
+                        latitude: eb.ref("excluded.latitude"),
+                        bearing: eb.ref("excluded.bearing"),
+                        published_line_name: eb.ref("excluded.published_line_name"),
+                        origin_ref: eb.ref("excluded.origin_ref"),
+                        destination_ref: eb.ref("excluded.destination_ref"),
+                        block_ref: eb.ref("excluded.block_ref"),
+                        data_frame_ref: eb.ref("excluded.data_frame_ref"),
+                        occupancy: eb.ref("excluded.occupancy"),
+                        origin_aimed_departure_time: eb.ref("excluded.origin_aimed_departure_time"),
+                        geom: eb.ref("excluded.geom"),
+                        route_id: eb.ref("excluded.route_id"),
+                        trip_id: eb.ref("excluded.trip_id"),
+                    })),
                 )
                 .values(chunk)
                 .execute(),
         ),
-    );
+    ]);
 };
 
 const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosResponse<Stream>) => {
@@ -163,12 +178,12 @@ void (async () => {
 
         logger.info("BODS AVL processor successful");
         console.timeEnd("avl-processor");
-
-        await generateGtfs();
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL retriever", e);
+            logger.error(e);
         }
+
+        logger.error("There was a problem with the AVL retriever");
 
         throw e;
     } finally {
