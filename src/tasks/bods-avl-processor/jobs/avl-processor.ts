@@ -57,6 +57,8 @@ const generateGtfs = async (avl: NewAvl[]) => {
 
         await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
 
+        logger.info("GTFS-RT saved to S3 successfully");
+
         if (saveJson === "true") {
             const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
 
@@ -97,9 +99,12 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
         throw new Error("Error parsing data");
     }
 
+    logger.info("Matching AVL to timetable data...");
     const enrichedAvl = await matchAvlToTimetables(dbClient, parsedJson.data);
 
     const chunkedAvl = chunkArray(enrichedAvl, 2000);
+
+    logger.info("Writing AVL data to database...");
 
     await Promise.all([
         generateGtfs(enrichedAvl),
@@ -136,6 +141,8 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
                 .execute(),
         ),
     ]);
+
+    logger.info("AVL data written to database successfully...");
 };
 
 const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosResponse<Stream>) => {
