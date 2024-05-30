@@ -16,7 +16,10 @@ export const handler = async () => {
     }
 
     try {
-        const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: key }, 3600);
+        const presignedUrl = await getPresignedUrl(
+            { Bucket: bucketName, Key: key, ResponseContentDisposition: "inline", ResponseContentType: "application/xml" },
+            3600,
+        );
 
         return {
             statusCode: 302,
