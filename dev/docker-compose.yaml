@@ -35,7 +35,7 @@ services:
 
   bods-avl-processor:
     container_name: bods_integrated_data_avl_processor
-    image: bods-avl-processor:23
+    image: bods-avl-processor:latest
     environment:
       - IS_DOCKER=true
       - STAGE=local
