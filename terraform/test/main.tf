@@ -184,7 +184,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host               = module.integrated_data_aurora_db.db_reader_host
   bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
   bods_avl_processor_frequency = 30
-  bods_avl_cleardown_frequency = 15
+  bods_avl_cleardown_frequency = 30
   bods_avl_processor_cpu       = 2048
   bods_avl_processor_memory    = 4096
 }

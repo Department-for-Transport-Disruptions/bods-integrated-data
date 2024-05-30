@@ -1,7 +1,7 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ExtendedAvl } from "./types";
-import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
+import { getOccupancyStatus, mapAvlToGtfsEntity, sanitiseTicketMachineJourneyCode } from "./utils";
 
 describe("utils", () => {
     const mockBucketName = "mock-bucket";
@@ -521,5 +521,11 @@ describe("utils", () => {
 
         const result = mapAvlToGtfsEntity(avl);
         expect(result).toEqual(expected);
+    });
+
+    describe("sanitiseTicketMachineJourneyCode", () => {
+        it("removes colons from a string", () => {
+            expect(sanitiseTicketMachineJourneyCode("test:string")).toBe("teststring");
+        });
     });
 });

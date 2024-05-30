@@ -3,14 +3,16 @@ import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapAvlDateStrings } from "../avl/utils";
-import { KyselyDb } from "../database";
+import { Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
+import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 import { ExtendedAvl } from "./types";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
     /(^[A-Z]{2}[0-9]{2}\s?[A-Z]{3}$)|(^[A-Z][0-9]{1,3}[A-Z]{3}$)|(^[A-Z]{3}[0-9]{1,3}[A-Z]$)|(^[0-9]{1,4}[A-Z]{1,2}$)|(^[0-9]{1,3}[A-Z]{1,3}$)|(^[A-Z]{1,2}[0-9]{1,4}$)|(^[A-Z]{1,3}[0-9]{1,3}$)|(^[A-Z]{1,3}[0-9]{1,4}$)|(^[0-9]{3}[DX]{1}[0-9]{3}$)/,
 );
+const daysOfWeek: (keyof Calendar)[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export const getOccupancyStatus = (occupancy: string): transit_realtime.VehiclePosition.OccupancyStatus => {
     switch (occupancy) {
@@ -160,4 +162,107 @@ export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => 
     const data = feed.finish();
 
     return data;
+};
+
+export const sanitiseTicketMachineJourneyCode = (input: string) => input.replace(":", "");
+
+const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
+    const currentDate = getDate();
+    const currentDateIso = currentDate.toISOString();
+    const currentDay = daysOfWeek[getDate().day()];
+
+    return await dbClient
+        .selectFrom("agency")
+        .innerJoin("route", "route.agency_id", "agency.id")
+        .innerJoin("trip", "trip.route_id", "route.id")
+        .innerJoin("calendar", (join) =>
+            join
+                .onRef("calendar.id", "=", "trip.service_id")
+                .on("calendar.start_date", "<=", currentDateIso)
+                .on("calendar.end_date", ">", currentDateIso),
+        )
+        .leftJoin("calendar_date", (join) =>
+            join
+                .onRef("calendar_date.service_id", "=", "trip.service_id")
+                .on("calendar_date.date", "=", currentDate.format(DEFAULT_DATE_FORMAT)),
+        )
+        .select([
+            "agency.noc",
+            "route.id as route_id",
+            "route.route_short_name",
+            "trip.id as trip_id",
+            "trip.ticket_machine_journey_code",
+            "trip.direction",
+        ])
+        .where((eb) =>
+            eb.or([
+                eb("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceAdded),
+                eb.and([eb(`calendar.${currentDay}`, "=", 1), eb("calendar_date.exception_type", "is", null)]),
+            ]),
+        )
+        .execute();
+};
+
+export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
+    const timetableData = await retrieveMatchableTimetableData(dbClient);
+
+    const lookup: {
+        [key: string]: {
+            noc: string;
+            route_id: number;
+            route_short_name: string;
+            trips: Record<
+                string,
+                {
+                    direction: string;
+                    ticket_machine_journey_code: string | null;
+                    trip_id: string;
+                }
+            >;
+        };
+    } = {};
+
+    for (const item of timetableData) {
+        const routeKey = `${item.noc}_${item.route_short_name}`;
+        const tripKey = `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`;
+
+        if (!lookup[routeKey]) {
+            lookup[routeKey] = {
+                noc: item.noc,
+                route_id: item.route_id,
+                route_short_name: item.route_short_name,
+                trips: {},
+            };
+        }
+
+        lookup[routeKey].trips[tripKey] = {
+            direction: item.direction,
+            ticket_machine_journey_code: item.ticket_machine_journey_code,
+            trip_id: item.trip_id,
+        };
+    }
+
+    const enrichedAvl: NewAvl[] = avl.map((item) => {
+        const matchingRoute =
+            item.operator_ref && item.line_ref ? lookup[`${item.operator_ref}_${item.line_ref}`] : null;
+
+        const matchingTrip =
+            matchingRoute && item.direction_ref && item.dated_vehicle_journey_ref
+                ? matchingRoute.trips[
+                      `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}`
+                  ]
+                : null;
+
+        return {
+            ...item,
+            route_id: matchingRoute?.route_id,
+            trip_id: matchingTrip?.trip_id,
+            geom:
+                item.longitude && item.latitude
+                    ? sql`ST_SetSRID(ST_MakePoint(${item.longitude}, ${item.latitude}), 4326)`
+                    : null,
+        };
+    });
+
+    return enrichedAvl;
 };
