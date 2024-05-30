@@ -45,6 +45,8 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        route_id: null,
+        trip_id: null,
     },
     {
         id: 24183,
@@ -83,6 +85,8 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        route_id: null,
+        trip_id: null,
     },
 ];
 

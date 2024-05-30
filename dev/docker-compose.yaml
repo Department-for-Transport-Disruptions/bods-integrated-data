@@ -33,6 +33,20 @@ services:
     networks:
       - bods_integrated_data_network
 
+  bods-avl-processor:
+    container_name: bods_integrated_data_avl_processor
+    image: bods-avl-processor:23
+    environment:
+      - IS_DOCKER=true
+      - STAGE=local
+      - BUCKET_NAME=integrated-data-gtfs-rt-local
+      - PROCESSOR_FREQUENCY_IN_SECONDS=3000
+      - CLEARDOWN_FREQUENCY_IN_SECONDS=6000
+    volumes:
+      - ./:/app/data
+    networks:
+      - bods_integrated_data_network
+
 networks:
   bods_integrated_data_network:
     driver: bridge
@@ -42,4 +56,7 @@ volumes:
     driver: local
 
   localstack_volume:
+    driver: local
+
+  bods_avl_processor_volume:
     driver: local
