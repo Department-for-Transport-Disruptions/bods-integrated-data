@@ -40,6 +40,7 @@ export const testSiri = `
             <VehicleActivity>
                 <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
                 <ValidUntilTime>2018-08-17T16:22:29</ValidUntilTime>
+                <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
@@ -56,11 +57,36 @@ export const testSiri = `
                         <Latitude>63.42613</Latitude>
                     </VehicleLocation>
                     <BlockRef>blockRef</BlockRef>
+                    <VehicleJourneyRef>10</VehicleJourneyRef>
                     <OriginRef>originRef</OriginRef>
+                    <OriginName>test origin</OriginName>
                     <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>
+                    <DestinationName>Destination unknown</DestinationName>
+                    <DestinationAimedArrivalTime>2018-08-17T15:22:20</DestinationAimedArrivalTime>
                     <PublishedLineName>1</PublishedLineName>
+                    <OnwardCalls>
+                        <OnwardCall>
+                            <StopPointRef>STOP123</StopPointRef>
+                            <AimedArrivalTime>2024-05-09T09:30:00+00:00</AimedArrivalTime>
+                            <ExpectedArrivalTime>2024-05-09T09:30:00+00:00</ExpectedArrivalTime>
+                            <AimedDepartureTime>2024-05-09T09:30:00+00:00</AimedDepartureTime>
+                            <ExpectedDepartureTime>2024-05-09T09:30:00+00:00</ExpectedDepartureTime>
+                        </OnwardCall>
+                        <OnwardCall/>
+                    </OnwardCalls>
                 </MonitoredVehicleJourney>
+                <Extensions>
+                    <VehicleJourney>
+                        <Operational>
+                            <TicketMachine>
+                                <TicketMachineServiceCode>123</TicketMachineServiceCode>
+                                <JourneyCode>VJ_123</JourneyCode>
+                            </TicketMachine>
+                        </Operational>
+                        <VehicleUniqueId>Vehicle_123</VehicleUniqueId>
+                    </VehicleJourney>
+                </Extensions>
             </VehicleActivity>
         </VehicleMonitoringDelivery>
     </ServiceDelivery>
@@ -140,6 +166,7 @@ export const parsedSiri = [
         vehicle_journey_ref: null,
         vehicle_monitoring_ref: null,
         vehicle_unique_id: null,
+        has_onward_calls: false,
     },
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
@@ -162,13 +189,14 @@ export const parsedSiri = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
-        destination_aimed_arrival_time: null,
-        destination_name: null,
-        journey_code: null,
-        origin_name: null,
-        ticket_machine_service_code: null,
-        vehicle_journey_ref: null,
-        vehicle_monitoring_ref: null,
-        vehicle_unique_id: null,
+        destination_aimed_arrival_time: "2018-08-17T15:22:20",
+        destination_name: "Destination unknown",
+        journey_code: "VJ_123",
+        origin_name: "test origin",
+        ticket_machine_service_code: "123",
+        vehicle_journey_ref: "10",
+        vehicle_monitoring_ref: "TEST",
+        vehicle_unique_id: "Vehicle_123",
+        has_onward_calls: true,
     },
 ];

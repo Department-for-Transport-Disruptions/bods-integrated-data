@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { NewAvl } from "../database";
 import { getDate } from "../dates";
-import { makeFilteredArraySchema, txcEmptyProperty } from "../utils";
+import { makeFilteredArraySchema, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
 const onwardCallSchema = z
     .object({
@@ -11,7 +11,7 @@ const onwardCallSchema = z
         AimedDepartureTime: z.coerce.string().nullish(),
         ExpectedDepartureTime: z.coerce.string().nullish(),
     })
-    .or(txcEmptyProperty)
+    .or(txcSelfClosingProperty)
     .optional();
 
 const extensionsSchema = z
@@ -130,7 +130,6 @@ export const siriSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
         journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
         vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
         has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
-        onward_calls: vehicleActivity.MonitoredVehicleJourney.OnwardCalls ?? null,
     }));
 });
 

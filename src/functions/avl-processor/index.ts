@@ -6,8 +6,7 @@ import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
-
-const arrayProperties = ["VehicleActivity", "OnwardCall"];
+const arrayProperties = ["VehicleActivity", "OnwardCalls"];
 
 const parseXml = (xml: string) => {
     const parser = new XMLParser({

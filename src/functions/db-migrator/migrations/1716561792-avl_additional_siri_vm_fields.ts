@@ -9,6 +9,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("ticket_machine_service_code", "text")
         .addColumn("journey_code", "text")
         .addColumn("vehicle_unique_id", "text")
+        .addColumn("has_onward_calls", "boolean")
         .execute();
 }
 
@@ -20,5 +21,6 @@ export async function down(db: Kysely<Database>): Promise<void> {
         .dropColumn("ticket_machine_service_code")
         .dropColumn("journey_code")
         .dropColumn("vehicle_unique_id")
+        .dropColumn("has_onward_calls")
         .execute();
 }
