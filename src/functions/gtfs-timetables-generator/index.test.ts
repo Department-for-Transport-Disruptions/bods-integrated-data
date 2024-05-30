@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Query } from "./data";
 import { createGtfsZip, handler, ignoreEmptyFiles } from ".";
+import { Query } from "./data";
 
 describe("gtfs-timetables-generator", () => {
     const mocks = vi.hoisted(() => {

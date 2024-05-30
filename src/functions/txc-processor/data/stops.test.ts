@@ -2,7 +2,7 @@ import { KyselyDb, LocationType, NaptanStop, NewStop } from "@bods-integrated-da
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
-import { processAnnotatedStopPointRefs, processStopPoints, mapStop, NaptanStopWithRegionCode } from "./stops";
+import { NaptanStopWithRegionCode, mapStop, processAnnotatedStopPointRefs, processStopPoints } from "./stops";
 
 describe("stops", () => {
     let dbClient: KyselyDb;

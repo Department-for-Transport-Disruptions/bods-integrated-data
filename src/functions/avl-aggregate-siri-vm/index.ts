@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { logger } from "@baselime/lambda-logger";
 import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -6,7 +7,6 @@ import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "@bods-integrated-data/shared/schema";
 import cleanDeep from "clean-deep";
 import { XMLBuilder } from "fast-xml-parser";
-import { randomUUID } from "crypto";
 import { getCurrentAvlData } from "./database";
 
 const currentTime = getDate();

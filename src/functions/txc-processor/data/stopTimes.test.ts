@@ -1,10 +1,10 @@
 import { DropOffType, KyselyDb, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as databaseFunctions from "./database";
-import { processStopTimes } from "./stopTimes";
 import { VehicleJourneyMapping } from "../types";
 import * as utilFunctions from "../utils";
+import * as databaseFunctions from "./database";
+import { processStopTimes } from "./stopTimes";
 
 describe("stopTimes", () => {
     let dbClient: KyselyDb;

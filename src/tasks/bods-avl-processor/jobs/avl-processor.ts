@@ -1,3 +1,4 @@
+import { Stream } from "stream";
 /* eslint-disable no-console */
 import {
     Calendar,
@@ -18,7 +19,6 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import Pino from "pino";
 import { Entry, Parse } from "unzipper";
-import { Stream } from "stream";
 
 const daysOfWeek: (keyof Calendar)[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
