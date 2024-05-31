@@ -78,7 +78,7 @@ build-functions:
 	cd src && pnpm build-all
 
 lint-functions:
-	cd src && pnpm lint
+	pnpm lint
 
 test-functions:
 	cd src && pnpm test:ci

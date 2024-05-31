@@ -3,9 +3,7 @@
     "version": "1.0.0",
     "description": "Helpers for the bods-integrated-data tool",
     "scripts": {
-        "command": "npx tsx program",
-        "lint": "pnpm biome check .",
-        "lint:fix": "pnpm biome check --apply ."
+        "command": "npx tsx program"
     },
     "dependencies": {
         "@aws-sdk/client-lambda": "^3.548.0",
@@ -16,7 +14,6 @@
         "zod": "^3.23.7"
     },
     "devDependencies": {
-        "@biomejs/biome": "1.7.3",
         "@tsconfig/node20": "^20.1.4",
         "@types/inquirer": "^9.0.7",
         "typescript": "^5.4.3"

@@ -5,8 +5,6 @@
     "scripts": {
         "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",
         "test:ci": "vitest run",
-        "lint": "pnpm biome check .",
-        "lint:fix": "pnpm biome check --apply .",
         "test": "vitest",
         "build-tasks": "rm -rf ./tasks/dist && pnpm -r --if-present build --filter tasks"
     },
@@ -15,7 +13,6 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@biomejs/biome": "1.7.3",
         "@tsconfig/node20": "^20.1.2",
         "@vitest/coverage-v8": "^1.4.0",
         "esbuild": "0.20.1",
