@@ -122,8 +122,9 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
             : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
                       "Content-Type": "text/xml",
-                      Authorization:
-                          "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
+                      Authorization: `Basic ${Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString(
+                          "base64",
+                      )}`,
                   },
               });
 

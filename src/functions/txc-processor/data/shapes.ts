@@ -107,13 +107,13 @@ export const processShapes = async (
         const routeLinks = getRouteLinks(routeRef, routes, routeSections);
         const { shapeId, shapes } = mapRouteLinksToShapes(routeLinks);
 
-        updatedVehicleJourneyMappings.forEach((mapping) => {
+        for (const mapping of updatedVehicleJourneyMappings) {
             const journeyPatternRef = mapping.journeyPattern?.["@_id"];
 
             if (journeyPatternRef && journeyPatternToRouteRefMapping[journeyPatternRef] === routeRef) {
                 mapping.shapeId = shapeId;
             }
-        });
+        }
 
         return shapes;
     });

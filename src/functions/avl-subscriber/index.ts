@@ -162,9 +162,9 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            Authorization:
-                "Basic " +
-                Buffer.from(`${avlSubscribeMessage.username}:${avlSubscribeMessage.password}`).toString("base64"),
+            Authorization: `Basic ${Buffer.from(
+                `${avlSubscribeMessage.username}:${avlSubscribeMessage.password}`,
+            ).toString("base64")}`,
         },
     });
 

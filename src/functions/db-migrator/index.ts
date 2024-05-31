@@ -22,17 +22,23 @@ export const handler = async () => {
 
     const { error, results } = isRollback ? await migrator.migrateDown() : await migrator.migrateToLatest();
 
-    if (results?.length === 0) {
-        logger.info("Nothing to do");
-    }
-
-    results?.forEach((it) => {
-        if (it.status === "Success") {
-            logger.info(`${isRollback ? "Rollback of" : "migration "} ${it.migrationName}" was executed successfully`);
-        } else if (it.status === "Error") {
-            logger.error(`Failed to execute ${isRollback ? "rollback of" : "migration"}  " ${it.migrationName}"`);
+    if (results) {
+        if (results.length === 0) {
+            logger.info("Nothing to do");
         }
-    });
+
+        for (const result of results) {
+            if (result.status === "Success") {
+                logger.info(
+                    `${isRollback ? "Rollback of" : "migration "} ${result.migrationName}" was executed successfully`,
+                );
+            } else if (result.status === "Error") {
+                logger.error(
+                    `Failed to execute ${isRollback ? "rollback of" : "migration"}  " ${result.migrationName}"`,
+                );
+            }
+        }
+    }
 
     await db.destroy();
 

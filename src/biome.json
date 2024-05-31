@@ -16,12 +16,8 @@
         "enabled": true,
         "rules": {
             "recommended": true,
-            "complexity": {
-                "noForEach": "off"
-            },
             "style": {
-                "useImportType": "off",
-                "useTemplate": "off"
+                "useImportType": "off"
             }
         }
     }
