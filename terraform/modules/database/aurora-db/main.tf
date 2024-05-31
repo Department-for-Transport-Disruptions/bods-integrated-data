@@ -9,6 +9,8 @@ terraform {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "aurora_s3_output_bucket" {
   bucket = "integrated-data-aurora-output-${var.environment}"
 }
@@ -99,6 +101,32 @@ resource "aws_iam_role" "rds_s3_export_role" {
   })
 }
 
+resource "aws_iam_role" "rds_enhanced_monitoring_role" {
+  name                = "integrated-data-rds-enhanced-monitoring-role-${var.environment}"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"]
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "monitoring.rds.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole",
+        "Condition" : {
+          "StringLike" : {
+            "aws:SourceArn" : "arn:aws:rds:eu-west-2:${data.aws_caller_identity.current.account_id}:db:*"
+          },
+          "StringEquals" : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+}
+
 resource "aws_rds_cluster" "integrated_data_rds_cluster" {
   engine                      = "aurora-postgresql"
   engine_version              = "16.1"
@@ -135,6 +163,7 @@ resource "aws_rds_cluster_instance" "integrated_data_postgres_db_instance" {
   performance_insights_retention_period = 7
   identifier                            = "integrated-data-rds-db-instance-${count.index + 1}-${var.environment}"
   monitoring_interval                   = 60
+  monitoring_role_arn                   = aws_iam_role.rds_enhanced_monitoring_role.arn
 }
 
 resource "aws_iam_policy" "rds_proxy_policy" {
