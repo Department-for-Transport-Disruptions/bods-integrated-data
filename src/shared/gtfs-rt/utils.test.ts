@@ -7,7 +7,7 @@ describe("utils", () => {
     const mockBucketName = "mock-bucket";
     const { OccupancyStatus } = transit_realtime.VehiclePosition;
 
-    vi.mock("crypto", () => ({
+    vi.mock("node:crypto", () => ({
         randomUUID: () => "mock-uuid",
     }));
 

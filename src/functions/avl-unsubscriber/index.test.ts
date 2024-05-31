@@ -13,7 +13,7 @@ import {
     mockUnsubscribeEvent,
 } from "./test/mockData";
 
-vi.mock("crypto", () => ({
+vi.mock("node:crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
 

@@ -1,4 +1,4 @@
-import { Stream } from "stream";
+import { Stream } from "node:stream";
 import { Entry, Parse } from "unzipper";
 import { startS3Upload } from "./s3";
 

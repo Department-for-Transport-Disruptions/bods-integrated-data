@@ -1,4 +1,4 @@
-import { PassThrough, Readable } from "stream";
+import { PassThrough, Readable } from "node:stream";
 import {
     GetObjectCommand,
     GetObjectCommandInput,

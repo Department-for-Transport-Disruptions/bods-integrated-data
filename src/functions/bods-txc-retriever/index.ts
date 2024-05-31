@@ -1,4 +1,4 @@
-import { Stream } from "stream";
+import { Stream } from "node:stream";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
