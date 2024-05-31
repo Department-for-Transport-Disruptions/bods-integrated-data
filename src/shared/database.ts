@@ -213,6 +213,8 @@ export interface AvlTable {
     origin_name: string | null;
     destination_name: string | null;
     vehicle_journey_ref: string | null;
+    route_id: number | null;
+    trip_id: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;

@@ -4,7 +4,6 @@ import Pino from "pino";
 
 const logger = Pino();
 
-/* eslint-disable no-console */
 void (async () => {
     console.time("avl-cleardown");
 
@@ -13,7 +12,7 @@ void (async () => {
     try {
         const result = await dbClient
             .deleteFrom("avl_bods")
-            .where("avl_bods.valid_until_time", "<", sql<string>`NOW() - INTERVAL '2 minutes'`)
+            .where("avl_bods.valid_until_time", "<", sql<string>`NOW()`)
             .execute();
 
         logger.info(`AVL cleardown successful, ${result[0].numDeletedRows} rows deleted`);

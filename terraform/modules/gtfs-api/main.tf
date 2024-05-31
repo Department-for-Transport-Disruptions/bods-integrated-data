@@ -102,6 +102,12 @@ resource "aws_apigatewayv2_stage" "integrated_data_gtfs_api_stage" {
       responseLength    = "$context.responseLength"
     })
   }
+
+  default_route_settings {
+    detailed_metrics_enabled = true
+    throttling_burst_limit   = 5000
+    throttling_rate_limit    = 15000
+  }
 }
 
 resource "aws_lambda_permission" "integrated_data_gtfs_downloader_api_permissions" {

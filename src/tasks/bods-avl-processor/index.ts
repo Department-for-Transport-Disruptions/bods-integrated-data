@@ -16,6 +16,7 @@ const bree = new Bree({
             name: "avl-cleardown",
             interval: `${process.env.CLEARDOWN_FREQUENCY_IN_SECONDS}s`,
             timeout: 0,
+            closeWorkerAfterMs: 30000,
         },
     ],
     errorHandler: (error) => {

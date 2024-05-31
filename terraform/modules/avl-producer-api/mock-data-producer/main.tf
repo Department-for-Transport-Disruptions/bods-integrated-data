@@ -26,7 +26,7 @@ module "integrated_data_avl_mock_data_producer_send_data" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
@@ -57,7 +57,7 @@ module "integrated_data_avl_mock_data_producer_send_heartbeat" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
@@ -100,6 +100,12 @@ resource "aws_apigatewayv2_stage" "integrated_data_mock_avl_producer_api_stage" 
   api_id      = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
   name        = "$default"
   auto_deploy = true
+
+  default_route_settings {
+    detailed_metrics_enabled = true
+    throttling_burst_limit   = 5000
+    throttling_rate_limit    = 15000
+  }
 }
 
 resource "aws_apigatewayv2_integration" "integrated_data_avl_mock_producer_api_integration_subscribe" {
@@ -146,12 +152,12 @@ resource "aws_lambda_permission" "integrated_data_mock_avl_producer_api_subscrib
 
 output "subscribe_function_url" {
   description = "Function URL for subscribe lambda for local deployment"
-  value       = (var.environment == "local" ?
-    aws_lambda_function_url.integrated_data_mock_avl_producer_function_url[0].function_url : null)
+  value = (var.environment == "local" ?
+  aws_lambda_function_url.integrated_data_mock_avl_producer_function_url[0].function_url : null)
 }
 
 output "endpoint" {
   description = "HTTP API endpoint URL"
-  value       = (var.environment == "local" ? null :
-    aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].api_endpoint)
+  value = (var.environment == "local" ? null :
+  aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].api_endpoint)
 }

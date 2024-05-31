@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { CalendarDateExceptionType, KyselyDb, NewCalendar } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson, getDate } from "@bods-integrated-data/shared/dates";
 import { OperatingProfile, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
