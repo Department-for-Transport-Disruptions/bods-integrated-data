@@ -4,8 +4,7 @@
   "description": "Template for ECS task",
   "scripts": {
     "build": "rm -rf ./dist && tsc && node ./esbuild.mjs",
-    "test": "vitest run",
-    "lint": "eslint ."
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",

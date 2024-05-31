@@ -4,7 +4,8 @@
     "description": "Helpers for the bods-integrated-data tool",
     "scripts": {
         "command": "npx tsx program",
-        "lint": "pnpm biome check --apply ."
+        "lint": "pnpm biome check .",
+        "lint:fix": "pnpm biome check --apply ."
     },
     "dependencies": {
         "@aws-sdk/client-lambda": "^3.548.0",
