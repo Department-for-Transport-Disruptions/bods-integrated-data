@@ -147,6 +147,15 @@ export const getAvlDataForGtfs = async (
     }
 };
 
+/**
+ * Removes duplicates from an array of AVLs based on the trip ID. AVLs with missing trip IDs are ignored.
+ * @param avls Array of AVLs
+ * @returns Unique array of AVLs
+ */
+export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
+    return avls.filter((a) => !avls.some((b) => b.id !== a.id && !!a.trip_id && b.trip_id === a.trip_id));
+};
+
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
     const message = {
         header: {
@@ -263,5 +272,5 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     });
 
-    return enrichedAvl;
+    return removeDuplicateAvls(enrichedAvl);
 };

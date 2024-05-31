@@ -1,7 +1,8 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Avl } from "../database";
-import { getOccupancyStatus, mapAvlToGtfsEntity, sanitiseTicketMachineJourneyCode } from "./utils";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
+import { Avl, NewAvl } from "../database";
+import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
     const mockBucketName = "mock-bucket";
@@ -521,6 +522,67 @@ describe("utils", () => {
 
         const result = mapAvlToGtfsEntity(avl);
         expect(result).toEqual(expected);
+    });
+
+    describe("removeDuplicateAvls", () => {
+        it("removes duplicate AVLs", () => {
+            const avls: Partial<NewAvl>[] = [
+                {
+                    id: 0,
+                    trip_id: "1",
+                },
+                {
+                    id: 1,
+                    trip_id: "2",
+                },
+                {
+                    id: 2,
+                    trip_id: "2",
+                },
+            ];
+
+            const expectedAvls: Partial<NewAvl>[] = [
+                {
+                    id: 0,
+                    trip_id: "1",
+                },
+            ];
+
+            const result = removeDuplicateAvls(avls as NewAvl[]);
+            expect(result).toEqual(expectedAvls);
+        });
+
+        it("ignores AVLs that have missing trip IDs", () => {
+            const avls: Partial<NewAvl>[] = [
+                {
+                    id: 0,
+                    trip_id: "",
+                },
+                {
+                    id: 1,
+                    trip_id: "",
+                },
+                {
+                    id: 2,
+                    trip_id: null,
+                },
+                {
+                    id: 3,
+                    trip_id: null,
+                },
+                {
+                    id: 4,
+                    trip_id: undefined,
+                },
+                {
+                    id: 5,
+                    trip_id: undefined,
+                },
+            ];
+
+            const result = removeDuplicateAvls(avls as NewAvl[]);
+            expect(result).toEqual(avls);
+        });
     });
 
     describe("sanitiseTicketMachineJourneyCode", () => {
