@@ -1,8 +1,8 @@
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { S3EventRecord } from "aws-lambda";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parsedSiri, testInvalidSiri, testSiri } from "./test/testSiriVm";
 import { processSqsRecord } from ".";
+import { parsedSiri, testInvalidSiri, testSiri } from "./test/testSiriVm";
 
 describe("avl-processor", () => {
     const mocks = vi.hoisted(() => {

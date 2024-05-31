@@ -11,6 +11,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
 
 - [Table of Contents](#table-of-contents)
 - [Dependencies](#dependencies)
+  - [Code linting and formatting](#code-linting--formatting)
   - [Log in with the AWS CLI](#log-in-with-the-aws-cli)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -59,6 +60,13 @@ The following dependencies are optional:
 | Dependency                                          | Description               |
 | --------------------------------------------------- | ------------------------- |
 | [localstack desktop](https://www.localstack.cloud/) | Desktop UI for localstack |
+
+
+### Code Linting & Formatting
+
+This project uses [Biome](https://biomejs.dev/) for linting and formatting code. Follow the instructions on their
+website to set up Biome for your
+editor - [Intregate Biome in your editor](https://biomejs.dev/guides/integrate-in-editor/).
 
 ### Log in with the AWS CLI
 

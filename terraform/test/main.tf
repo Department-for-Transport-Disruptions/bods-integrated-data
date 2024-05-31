@@ -73,7 +73,7 @@ module "integrated_data_aurora_db" {
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
   enable_rds_proxy         = true
-  instance_class           = "db.r6g.xlarge"
+  instance_class           = "db.r6gd.xlarge"
 }
 
 module "integrated_data_db_monitoring" {
@@ -184,7 +184,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host               = module.integrated_data_aurora_db.db_reader_host
   bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
   bods_avl_processor_frequency = 30
-  bods_avl_cleardown_frequency = 120
+  bods_avl_cleardown_frequency = 30
   bods_avl_processor_cpu       = 2048
   bods_avl_processor_memory    = 4096
 }
@@ -230,15 +230,14 @@ module "integrated_data_avl_data_producer_api" {
   environment                 = local.env
 }
 
-module "integrated_data_avl_siri_vm_downloader" {
-  source = "../modules/avl-siri-vm-downloader"
-
-  environment = local.env
-  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
-}
-
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
+}
+
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
 
   environment = local.env
 }
@@ -295,4 +294,14 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_avl_consumer_api" {
+  source = "../modules/avl-consumer-api"
+
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }

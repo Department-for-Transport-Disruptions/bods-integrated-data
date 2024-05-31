@@ -1,6 +1,6 @@
 import { ZodSchema, z } from "zod";
-import { bankHolidayOperationSchema, dateRange, formattedDateRange } from "./dates.schema";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { bankHolidayOperationSchema, dateRange, formattedDateRange } from "./dates.schema";
 
 export const operatorSchema = z.object({
     NationalOperatorCode: z.string().optional(),
@@ -188,12 +188,15 @@ export const journeyPatternSectionSchema = z.object({
 export type TxcJourneyPatternSection = z.infer<typeof journeyPatternSectionSchema>;
 
 export const vehicleTypeSchema = z.object({
-    WheelChairAccessible: z.boolean().optional(),
+    WheelchairAccessible: z
+        .string()
+        .optional()
+        .transform((value) => (value === "true" ? true : value === "false" ? false : undefined)),
     VehicleEquipment: z
         .object({
             WheelchairEquipment: z
                 .object({
-                    NumberOfWheelChairAreas: z.coerce.number(),
+                    NumberOfWheelchairAreas: z.coerce.number(),
                 })
                 .optional(),
         })

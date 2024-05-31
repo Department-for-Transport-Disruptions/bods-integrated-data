@@ -1,29 +1,23 @@
 {
-  "name": "@bods-integrated-data/cli-helpers",
-  "version": "1.0.0",
-  "description": "Helpers for the bods-integrated-data tool",
-  "scripts": {
-    "command": "npx tsx program",
-    "lint": "eslint . --ext .ts"
-  },
-  "dependencies": {
-    "@aws-sdk/client-lambda": "^3.548.0",
-    "@commander-js/extra-typings": "^12.0.1",
-    "commander": "^12.0.0",
-    "convert-csv-to-json": "^2.46.0",
-    "inquirer": "^8.2.6",
-    "zod": "^3.23.7"
-  },
-  "devDependencies": {
-    "@tsconfig/node20": "^20.1.4",
-    "@types/inquirer": "^9.0.7",
-    "@typescript-eslint/eslint-plugin": "^7.7.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-import-resolver-typescript": "^3.6.1",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-prettier": "^5.1.3",
-    "prettier": "^3.2.5",
-    "typescript": "^5.4.3"
-  }
+    "name": "@bods-integrated-data/cli-helpers",
+    "version": "1.0.0",
+    "description": "Helpers for the bods-integrated-data tool",
+    "scripts": {
+        "command": "npx tsx program",
+        "lint": "pnpm biome check --apply ."
+    },
+    "dependencies": {
+        "@aws-sdk/client-lambda": "^3.548.0",
+        "@commander-js/extra-typings": "^12.0.1",
+        "commander": "^12.0.0",
+        "convert-csv-to-json": "^2.46.0",
+        "inquirer": "^8.2.6",
+        "zod": "^3.23.7"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.7.3",
+        "@tsconfig/node20": "^20.1.4",
+        "@types/inquirer": "^9.0.7",
+        "typescript": "^5.4.3"
+    }
 }

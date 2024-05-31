@@ -3,9 +3,9 @@ import { Avl } from "@bods-integrated-data/shared/database";
 import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
-import { describe, it, expect, afterEach, vi } from "vitest";
-import { mockSiriResult } from "./test/mockSiri";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { generateSiriVmAndUploadToS3 } from "./index";
+import { mockSiriResult } from "./test/mockSiri";
 
 const mockAvl: Avl[] = [
     {
@@ -45,6 +45,8 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        route_id: null,
+        trip_id: null,
     },
     {
         id: 24183,
@@ -83,6 +85,8 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        route_id: null,
+        trip_id: null,
     },
 ];
 

@@ -1,51 +1,8 @@
+import { Readable } from "stream";
 import { logger } from "@baselime/lambda-logger";
-import { getS3Object, startS3Upload } from "@bods-integrated-data/shared/s3";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
+import { unzip } from "@bods-integrated-data/shared/unzip";
 import { S3Event } from "aws-lambda";
-import { Entry, Parse } from "unzipper";
-import { Readable, Stream } from "stream";
-
-export const getFilePath = (filePathWithFile: string) => {
-    const path = filePathWithFile.substring(0, filePathWithFile.lastIndexOf("."));
-
-    if (!path) {
-        return "";
-    }
-
-    return `${path}/`;
-};
-
-export const unzip = async (object: Stream, unzippedBucketName: string, key: string) => {
-    const zip = object.pipe(
-        Parse({
-            forceStream: true,
-        }),
-    );
-
-    const promises = [];
-
-    for await (const item of zip) {
-        const entry = item as Entry;
-
-        const fileName = entry.path;
-
-        const type = entry.type;
-
-        if (type === "File") {
-            let upload;
-
-            if (fileName.endsWith(".zip")) {
-                await unzip(entry, unzippedBucketName, `${getFilePath(key)}${fileName}`);
-            } else if (fileName.endsWith(".xml")) {
-                upload = startS3Upload(unzippedBucketName, `${getFilePath(key)}${fileName}`, entry, "application/xml");
-                promises.push(upload.done());
-            }
-        }
-
-        entry.autodrain();
-    }
-
-    await Promise.all(promises);
-};
 
 export const handler = async (event: S3Event) => {
     const {

@@ -1,4 +1,4 @@
-import { NewStop, LocationType, NaptanStop, KyselyDb } from "@bods-integrated-data/shared/database";
+import { KyselyDb, LocationType, NaptanStop, NewStop } from "@bods-integrated-data/shared/database";
 import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { getNaptanStops, insertStops } from "./database";
 

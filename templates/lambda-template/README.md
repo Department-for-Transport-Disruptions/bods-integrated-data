@@ -95,21 +95,16 @@ module "integrated_data_lambda_template_function" {
   memory        = 512
 
   env_vars = {
-    STAGE         = var.environment
+    STAGE = var.environment
   }
 }
 ```
 
-Make sure to include any extra env vars as variables in the module and in the relevant `variables.tf` file.
-If the function connects to the database, include the DB env vars:
+Make sure to include any extra env vars as variables in the module and in the relevant `variables.tf` file:
 
 ```yaml
   env_vars = {
     # ...other env vars
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
   }
 ```
 
@@ -120,6 +115,48 @@ module "integrated_lambda_template" {
   source = "../modules/lambda-template"
 
   environment = local.env
+}
+```
+
+### Allowing lambda to connect to the database
+
+In order for the lambda function to connect to the database, it needs to be set up as a VPC lambda, this can be achieved by passing through the following properties:
+
+```yaml
+needs_db_access = var.environment != "local"
+vpc_id          = var.vpc_id
+subnet_ids      = var.private_subnet_ids
+database_sg_id  = var.db_sg_id
+```
+
+where the required values should be passed through as variables from the top-level.
+
+The lambda will also require permission to access the db credentials in secrets manager, this can be achieved by adding the following permission:
+
+```yaml
+permissions = [
+# ...other permissions
+{
+  Action = [
+    "secretsmanager:GetSecretValue",
+  ],
+  Effect = "Allow",
+  Resource = [
+    var.db_secret_arn
+  ]
+}
+]
+```
+
+Finally, it will also require the following env vars to be passed to the function alongside any other required variables:
+
+```yaml
+env_vars = {
+  # ...other env vars
+  DB_HOST       = var.db_host
+  DB_PORT       = var.db_port
+  DB_SECRET_ARN = var.db_secret_arn
+  DB_NAME       = var.db_name
 }
 ```
 

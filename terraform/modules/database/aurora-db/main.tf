@@ -134,6 +134,7 @@ resource "aws_rds_cluster_instance" "integrated_data_postgres_db_instance" {
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
   identifier                            = "integrated-data-rds-db-instance-${count.index + 1}-${var.environment}"
+  monitoring_interval                   = 60
 }
 
 resource "aws_iam_policy" "rds_proxy_policy" {

@@ -184,7 +184,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host               = module.integrated_data_aurora_db_dev.db_reader_host
   bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
   bods_avl_processor_frequency = 120
-  bods_avl_cleardown_frequency = 240
+  bods_avl_cleardown_frequency = 60
   bods_avl_processor_cpu       = 1024
   bods_avl_processor_memory    = 2048
 }
@@ -228,13 +228,6 @@ module "integrated_data_avl_data_producer_api" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-}
-
-module "integrated_data_avl_siri_vm_downloader" {
-  source = "../modules/avl-siri-vm-downloader"
-
-  environment = local.env
-  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -300,4 +293,14 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_avl_consumer_api" {
+  source = "../modules/avl-consumer-api"
+
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }
