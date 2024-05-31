@@ -1,6 +1,6 @@
+import { writeFile } from "node:fs/promises";
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
-import { writeFile } from "fs/promises";
 import { z } from "zod";
 
 const agencyCsvSchema = z.object({

@@ -16,7 +16,7 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
     const lineIdChunks = chunkArray(lineIds, 20);
 
     const requests = lineIdChunks.map(async (lineIdChunk) => {
-        const url = "https://api.tfl.gov.uk/RealTimeVehicleLocation/Lines/" + lineIdChunk.join(",");
+        const url = `https://api.tfl.gov.uk/RealTimeVehicleLocation/Lines/${lineIdChunk.join(",")}`;
 
         try {
             const response = await axios.get<RealTimeVehicleLocationsApiResponse>(url, {

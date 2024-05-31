@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
@@ -55,7 +55,7 @@ export const mapAvlToGtfsEntity = (avl: NewAvl): transit_realtime.IFeedEntity =>
         vehicle: {
             occupancyStatus: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
             position: {
-                bearing: avl.bearing ? parseInt(avl.bearing) : 0,
+                bearing: avl.bearing ? Number.parseInt(avl.bearing) : 0,
                 latitude: avl.latitude,
                 longitude: avl.longitude,
             },

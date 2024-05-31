@@ -13,7 +13,7 @@ import {
     mockUnsubscribeEvent,
 } from "./test/mockData";
 
-vi.mock("crypto", () => ({
+vi.mock("node:crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
 
@@ -102,7 +102,7 @@ describe("avl-unsubscriber", () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            `Subscription ID: mock-subscription-id not found in DynamoDB`,
+            "Subscription ID: mock-subscription-id not found in DynamoDB",
         );
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();

@@ -1,0 +1,33 @@
+{
+    "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
+    "files": {
+        "ignoreUnknown": true,
+        "ignore": [
+            "data/",
+            "**/coverage/**",
+            "**/dist/**",
+            "**/*.cjs",
+            "**/*.mjs",
+            "**/*.config.js",
+            "**/*.config.ts",
+            "./terraform/"
+        ]
+    },
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 120
+    },
+    "organizeImports": {
+        "enabled": true
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "style": {
+                "useImportType": "off"
+            }
+        }
+    }
+}

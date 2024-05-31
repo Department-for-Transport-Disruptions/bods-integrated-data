@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -122,8 +122,9 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Sub
             : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
                       "Content-Type": "text/xml",
-                      Authorization:
-                          "Basic " + Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString("base64"),
+                      Authorization: `Basic ${Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString(
+                          "base64",
+                      )}`,
                   },
               });
 

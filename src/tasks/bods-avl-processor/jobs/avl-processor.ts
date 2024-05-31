@@ -1,4 +1,4 @@
-import { Stream } from "stream";
+import { Stream } from "node:stream";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     generateGtfsRtFeed,

@@ -1,4 +1,4 @@
-import { PassThrough, Readable } from "stream";
+import { PassThrough, Readable } from "node:stream";
 import {
     GetObjectCommand,
     GetObjectCommandInput,
@@ -21,7 +21,7 @@ const client = new S3Client({
     ...(process.env.STAGE === "local"
         ? {
               endpoint:
-                  localStackHost || isDocker ? `http://bods_integrated_data_localstack:4566` : "http://localhost:4566",
+                  localStackHost || isDocker ? "http://bods_integrated_data_localstack:4566" : "http://localhost:4566",
               forcePathStyle: true,
               credentials: {
                   accessKeyId: "DUMMY",
@@ -87,7 +87,7 @@ export const createLazyDownloadStreamFrom = (bucket: string, key: string): Reada
     const stream = new PassThrough();
 
     stream.on("newListener", (event) => {
-        if (!streamCreated && event == "data") {
+        if (!streamCreated && event === "data") {
             initDownloadStream(bucket, key, stream)
                 .then(() => {
                     streamCreated = true;
