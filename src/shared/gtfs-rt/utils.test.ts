@@ -1,7 +1,7 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Avl, NewAvl } from "../database";
+import { removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
