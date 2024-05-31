@@ -17,7 +17,12 @@ export const handler = async () => {
 
     try {
         const presignedUrl = await getPresignedUrl(
-            { Bucket: bucketName, Key: key, ResponseContentDisposition: "inline", ResponseContentType: "application/xml" },
+            {
+                Bucket: bucketName,
+                Key: key,
+                ResponseContentDisposition: "inline",
+                ResponseContentType: "application/xml",
+            },
             3600,
         );
 

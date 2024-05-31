@@ -1,5 +1,4 @@
 import { Stream } from "stream";
-/* eslint-disable no-console */
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     generateGtfsRtFeed,

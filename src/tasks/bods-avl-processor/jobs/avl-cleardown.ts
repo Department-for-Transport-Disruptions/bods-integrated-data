@@ -4,7 +4,6 @@ import Pino from "pino";
 
 const logger = Pino();
 
-/* eslint-disable no-console */
 void (async () => {
     console.time("avl-cleardown");
 
