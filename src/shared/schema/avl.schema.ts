@@ -134,6 +134,8 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
     }));
 });
 
+export type SiriSchemaTransformed = z.infer<typeof siriSchemaTransformed>;
+
 export const tflVehicleLocationSchema = z.object({
     producerRef: z.string(),
     vehicleRef: z.string(),

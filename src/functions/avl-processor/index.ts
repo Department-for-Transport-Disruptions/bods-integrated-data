@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
+import { KyselyDb, getDatabaseClient, NewAvl } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
@@ -48,7 +48,13 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             throw new Error("Error parsing data");
         }
 
-        await insertAvls(dbClient, avls, record.s3.object.key.startsWith("bods/"));
+        // if (avls.some((avl) => avl.onward_calls)) {
+        await insertAvlsWithOnwardCalls(dbClient, avls);
+        // }
+        //
+        // const avlsWithoutOnwardCalls = avls.map<NewAvl>(({ onward_calls, ...avl }) => ({ ...avl }));
+        //
+        // await insertAvls(dbClient, avlsWithoutOnwardCalls, record.s3.object.key.startsWith("bods/"));
     }
 };
 

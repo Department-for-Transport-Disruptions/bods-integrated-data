@@ -90,6 +90,7 @@ export interface Database {
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
     tfl_line: TflLineTable;
+    avl_onward_calls: AvlOnwardCallTable;
 }
 
 export interface NaptanStopTable {
