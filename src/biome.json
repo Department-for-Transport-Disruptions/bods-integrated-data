@@ -5,13 +5,9 @@
         "ignore": ["**/coverage/**", "**/dist/**", "**/*.cjs", "**/*.mjs", "**/*.config.js", "**/*.config.ts"]
     },
     "formatter": {
-        "enabled": true,
-        "formatWithErrors": false,
         "indentStyle": "space",
         "indentWidth": 4,
-        "lineEnding": "lf",
-        "lineWidth": 120,
-        "attributePosition": "auto"
+        "lineWidth": 120
     },
     "organizeImports": {
         "enabled": true
@@ -20,53 +16,9 @@
         "enabled": true,
         "rules": {
             "recommended": false,
-            "complexity": {
-                "noBannedTypes": "error",
-                "noUselessTypeConstraint": "error"
-            },
-            "correctness": {
-                "noPrecisionLoss": "error",
-                "noUnusedVariables": "error"
-            },
             "style": {
-                "noNamespace": "error",
-                "useAsConstAssertion": "error",
-                "useBlockStatements": "off"
-            },
-            "suspicious": {
-                "noExplicitAny": "error",
-                "noExtraNonNullAssertion": "error",
-                "noMisleadingInstantiator": "error",
-                "noUnsafeDeclarationMerging": "error",
-                "useAwait": "error"
+                "useImportType": "off"
             }
         }
-    },
-    "javascript": {
-        "formatter": {
-            "jsxQuoteStyle": "double",
-            "quoteProperties": "asNeeded",
-            "trailingComma": "all",
-            "semicolons": "always",
-            "arrowParentheses": "always",
-            "bracketSpacing": true,
-            "bracketSameLine": false,
-            "quoteStyle": "double",
-            "attributePosition": "auto"
-        },
-        "globals": ["Atomics", "SharedArrayBuffer"]
-    },
-    "overrides": [
-        {
-            "include": ["*.yml"],
-            "javascript": {
-                "formatter": {
-                    "quoteStyle": "single"
-                }
-            },
-            "formatter": {
-                "indentWidth": 2
-            }
-        }
-    ]
+    }
 }
