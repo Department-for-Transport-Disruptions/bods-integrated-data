@@ -8,7 +8,7 @@ import { handler } from ".";
 describe("avl-siri-vm-downloader-endpoint", () => {
     const mocks = vi.hoisted(() => {
         return {
-            getS3Object: vi.fn(),
+            getPresignedUrl: vi.fn(),
             execute: vi.fn(),
             destroy: vi.fn(),
             mockDbClient: {
@@ -19,7 +19,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
-        getS3Object: mocks.getS3Object,
+        getPresignedUrl: mocks.getPresignedUrl,
     }));
 
     vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
@@ -63,23 +63,30 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     describe("fetching SIRI-VM in-place", () => {
         it("returns a 200 with SIRI-VM in-place", async () => {
-            mocks.getS3Object.mockResolvedValue({ Body: { transformToString: () => Promise.resolve("test") } });
+            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${AGGREGATED_SIRI_VM_FILE_PATH}`;
+            mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
             await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/xml" },
-                body: "test",
+                statusCode: 302,
+                headers: {
+                    Location: mockPresignedUrl,
+                },
             });
 
-            expect(mocks.getS3Object).toHaveBeenCalledWith({
-                Bucket: mockBucketName,
-                Key: AGGREGATED_SIRI_VM_FILE_PATH,
-            });
+            expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
+                {
+                    Bucket: mockBucketName,
+                    Key: AGGREGATED_SIRI_VM_FILE_PATH,
+                    ResponseContentDisposition: "inline",
+                    ResponseContentType: "application/xml",
+                },
+                3600,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
-        it("returns a 500 when no SIRI-VM data can be found", async () => {
-            mocks.getS3Object.mockResolvedValueOnce({ Body: undefined });
+        it("returns a 500 when an unexpected error occurs", async () => {
+            mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
 
             await expect(handler(mockRequest)).resolves.toEqual({
                 statusCode: 500,

@@ -7,7 +7,7 @@ import {
 } from "@bods-integrated-data/shared/avl/utils";
 import { NM_TOKEN_ARRAY_REGEX, NM_TOKEN_REGEX } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
+import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
