@@ -71,8 +71,9 @@ create-local-env:
 # Build
 
 install-deps:
+	pnpm i && \
 	(cd src && pnpm i) && \
-	cd cli-helpers && pnpm i
+	(cd cli-helpers && pnpm i)
 
 build-functions:
 	cd src && pnpm build-all
