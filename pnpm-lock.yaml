@@ -8,6 +8,9 @@ devDependencies:
   '@biomejs/biome':
     specifier: 1.7.3
     version: 1.7.3
+  husky:
+    specifier: ^9.0.11
+    version: 9.0.11
 
 packages:
 
@@ -98,3 +101,9 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /husky@9.0.11:
+    resolution: {integrity: sha512-AB6lFlbwwyIqMdHYhwPe+kjOC3Oc5P3nThEoW/AaO2BX3vJDjWPFxYLxokUZOo6RNX20He3AaT8sESs9NJcmEw==}
+    engines: {node: '>=18'}
+    hasBin: true
+    dev: true

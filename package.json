@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "scripts": {
+        "prepare": "husky",
         "lint": "pnpm biome check .",
         "lint:fix": "pnpm biome check --apply ."
     },
@@ -10,7 +11,8 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@biomejs/biome": "1.7.3"
+        "@biomejs/biome": "1.7.3",
+        "husky": "^9.0.11"
     },
     "packageManager": "pnpm@8.15.3",
     "engines": {
