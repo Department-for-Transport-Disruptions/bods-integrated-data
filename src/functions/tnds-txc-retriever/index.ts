@@ -1,9 +1,9 @@
+import { Writable } from "stream";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { Client } from "basic-ftp";
-import { Writable } from "stream";
 
 interface FtpCredentials {
     host: string;
@@ -19,7 +19,7 @@ const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Arra
     for (const file of zipFiles) {
         const chunks: Buffer[] = [];
         const writableStream = new Writable({
-            write(chunk: Buffer, encoding, callback) {
+            write(chunk: Buffer, _encoding, callback) {
                 chunks.push(chunk);
                 callback();
             },

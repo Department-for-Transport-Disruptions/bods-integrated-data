@@ -1,7 +1,7 @@
+import { PassThrough, Stream } from "stream";
 import { logger } from "@baselime/lambda-logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
-import { PassThrough, Stream } from "stream";
 
 const getNocDataAndUploadToS3 = async (nocBucketName: string) => {
     const response = await axios.get<Stream>("https://www.travelinedata.org.uk/noc/api/1.0/nocrecords.xml", {

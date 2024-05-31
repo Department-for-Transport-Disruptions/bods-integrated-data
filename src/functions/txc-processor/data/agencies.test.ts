@@ -1,9 +1,9 @@
 import { Agency, KyselyDb, NewAgency } from "@bods-integrated-data/shared/database";
 import { Operator } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { InvalidOperatorError } from "../errors";
 import { processAgencies } from "./agencies";
 import * as databaseFunctions from "./database";
-import { InvalidOperatorError } from "../errors";
 
 describe("agencies", () => {
     let dbClient: KyselyDb;

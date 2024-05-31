@@ -1,9 +1,9 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import axios from "axios";
 import * as MockDate from "mockdate";
-import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from "vitest";
-import { expectedHeartbeatNotification, mockSubscriptionsFromDynamo } from "./test/mockData";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
+import { expectedHeartbeatNotification, mockSubscriptionsFromDynamo } from "./test/mockData";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);

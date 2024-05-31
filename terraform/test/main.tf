@@ -73,7 +73,7 @@ module "integrated_data_aurora_db" {
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
   enable_rds_proxy         = true
-  instance_class           = "db.r6g.xlarge"
+  instance_class           = "db.r6gd.xlarge"
 }
 
 module "integrated_data_db_monitoring" {
@@ -184,7 +184,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host               = module.integrated_data_aurora_db.db_reader_host
   bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
   bods_avl_processor_frequency = 30
-  bods_avl_cleardown_frequency = 120
+  bods_avl_cleardown_frequency = 30
   bods_avl_processor_cpu       = 2048
   bods_avl_processor_memory    = 4096
 }
@@ -228,13 +228,6 @@ module "integrated_data_avl_data_producer_api" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-}
-
-module "integrated_data_avl_siri_vm_downloader" {
-  source = "../modules/avl-siri-vm-downloader"
-
-  environment = local.env
-  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
 }
 
 module "integrated_data_bank_holidays_pipeline" {

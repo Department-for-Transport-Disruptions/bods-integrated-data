@@ -1,9 +1,9 @@
 import { KyselyDb, NewAgency } from "@bods-integrated-data/shared/database";
 import { Operator } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { getAgency, getOperator, insertAgency } from "./database";
 import { InvalidOperatorError } from "../errors";
 import { getNationalOperatorCode } from "../utils";
+import { getAgency, getOperator, insertAgency } from "./database";
 
 export const processAgencies = async (dbClient: KyselyDb, operators: Operator[]) => {
     const agencyPromises = operators.map(async (operator) => {

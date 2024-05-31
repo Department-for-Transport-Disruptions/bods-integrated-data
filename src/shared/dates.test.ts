@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import {
     BankHolidayName,
     BankHolidaysJson,
+    createBankHolidayFunctions,
     getDate,
     getDatesInRange,
-    createBankHolidayFunctions,
     getNextOccurrenceOfDate,
 } from "./dates";
 

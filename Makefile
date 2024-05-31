@@ -22,7 +22,7 @@ TFL_API_ARN=""
 
 # Dev
 
-setup: dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
+setup: docker-build-bods-avl-processor dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add awscli && \
@@ -39,6 +39,9 @@ dev-containers-down:
 
 dev-containers-kill:
 	docker compose --project-directory dev kill
+
+dev-containers-stop-%:
+	docker compose --project-directory dev stop $*
 
 # Terraform
 
@@ -82,7 +85,7 @@ test-functions:
 	cd src && pnpm test:ci
 
 docker-build-%:
-	docker build src --build-arg servicePath=$* -t $*
+	docker build src --build-arg servicePath=$* -t $*:latest
 
 # CLI helpers
 

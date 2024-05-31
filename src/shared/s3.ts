@@ -1,3 +1,4 @@
+import { PassThrough, Readable } from "stream";
 import {
     GetObjectCommand,
     GetObjectCommandInput,
@@ -10,7 +11,6 @@ import {
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@baselime/lambda-logger";
-import { PassThrough, Readable } from "stream";
 
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._\-!\*\'\(\)\/]/g, "_");
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
