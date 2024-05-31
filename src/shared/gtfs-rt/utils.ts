@@ -136,9 +136,8 @@ export const getAvlDataForGtfs = async (
         query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.response_time_stamp desc"]);
 
         const avls = await query.execute();
-        const uniqueAvls = removeDuplicateAvls(avls);
 
-        return uniqueAvls.map(mapAvlDateStrings);
+        return avls.map(mapAvlDateStrings);
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);
@@ -149,27 +148,12 @@ export const getAvlDataForGtfs = async (
 };
 
 /**
- * Removes duplicates from an array of AVLs based on when both the line ref and dated vehicle journey ref match.
+ * Removes duplicates from an array of AVLs based on the trip ID.
  * @param avls Array of AVLs
  * @returns Unique array of AVLs
  */
-export const removeDuplicateAvls = (avls: Avl[]): Avl[] => {
-    const avlsWithDeletionMarkers: (Avl & { delete?: boolean })[] = [...avls];
-
-    avlsWithDeletionMarkers.forEach((avlWithDeletionMarker) => {
-        const duplicateAvl = avlsWithDeletionMarkers.find(
-            (avl) =>
-                avl.id !== avlWithDeletionMarker.id &&
-                avl.line_ref === avlWithDeletionMarker.line_ref &&
-                avl.dated_vehicle_journey_ref === avlWithDeletionMarker.dated_vehicle_journey_ref,
-        );
-
-        if (duplicateAvl) {
-            avlWithDeletionMarker.delete = true;
-        }
-    });
-
-    return avlsWithDeletionMarkers.filter((avl) => !avl.delete);
+export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
+    return avls.filter((a) => !avls.some((b) => b.id !== a.id && b.trip_id === a.trip_id));
 };
 
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
@@ -288,5 +272,5 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     });
 
-    return enrichedAvl;
+    return removeDuplicateAvls(enrichedAvl);
 };

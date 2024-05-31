@@ -1,7 +1,7 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
-import { Avl } from "../database";
+import { Avl, NewAvl } from "../database";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
@@ -526,43 +526,29 @@ describe("utils", () => {
 
     describe("removeDuplicateAvls", () => {
         it("removes duplicate AVLs", () => {
-            const avls: Partial<Avl>[] = [
+            const avls: Partial<NewAvl>[] = [
                 {
                     id: 0,
-                    line_ref: "1",
-                    dated_vehicle_journey_ref: "A",
+                    trip_id: "1",
                 },
                 {
                     id: 1,
-                    line_ref: "2",
-                    dated_vehicle_journey_ref: "B",
+                    trip_id: "2",
                 },
                 {
                     id: 2,
-                    line_ref: "2",
-                    dated_vehicle_journey_ref: "B",
-                },
-                {
-                    id: 3,
-                    line_ref: "2",
-                    dated_vehicle_journey_ref: "C",
+                    trip_id: "2",
                 },
             ];
 
-            const expectedAvls: Partial<Avl>[] = [
+            const expectedAvls: Partial<NewAvl>[] = [
                 {
                     id: 0,
-                    line_ref: "1",
-                    dated_vehicle_journey_ref: "A",
-                },
-                {
-                    id: 3,
-                    line_ref: "2",
-                    dated_vehicle_journey_ref: "C",
+                    trip_id: "1",
                 },
             ];
 
-            const result = removeDuplicateAvls(avls as Avl[]);
+            const result = removeDuplicateAvls(avls as NewAvl[]);
             expect(result).toEqual(expectedAvls);
         });
     });
