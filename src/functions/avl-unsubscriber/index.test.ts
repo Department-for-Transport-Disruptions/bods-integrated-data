@@ -102,7 +102,7 @@ describe("avl-unsubscriber", () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            `Subscription ID: mock-subscription-id not found in DynamoDB`,
+            "Subscription ID: mock-subscription-id not found in DynamoDB",
         );
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();

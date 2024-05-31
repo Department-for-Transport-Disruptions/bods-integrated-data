@@ -29,7 +29,7 @@ export const unzip = async (object: Stream, unzippedBucketName: string, key: str
         const type = entry.type;
 
         if (type === "File") {
-            let upload;
+            let upload: ReturnType<typeof startS3Upload>;
 
             if (fileName.endsWith(".zip")) {
                 await unzip(entry, unzippedBucketName, `${getFilePath(key)}${fileName}`);

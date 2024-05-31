@@ -132,7 +132,7 @@ export const handler = async (event: S3Event) => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        logger.info(`Starting naptan uploader`);
+        logger.info("Starting naptan uploader");
 
         const naptanData = await getAndParseNaptanFile(event);
         const naptanDataWithLonsAndLats = addLonAndLatData(naptanData);

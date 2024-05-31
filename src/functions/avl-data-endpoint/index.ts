@@ -37,7 +37,7 @@ const validateHeartbeatNotificationAndUploadToDynamo = async (
 const processNotification = async (xml: string, bucketName: string, subscriptionId: string, tableName: string) => {
     const data = parseXml(xml);
 
-    if (data.hasOwnProperty("HeartbeatNotification")) {
+    if (Object.hasOwn(data, "HeartbeatNotification")) {
         logger.info("Heartbeat notification received: processing notification");
 
         return validateHeartbeatNotificationAndUploadToDynamo(

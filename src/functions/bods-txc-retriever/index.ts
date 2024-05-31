@@ -28,7 +28,7 @@ const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketNa
         const type = entry.type;
 
         if (type === "File") {
-            let upload;
+            let upload: ReturnType<typeof startS3Upload>;
 
             if (fileName.endsWith(".zip")) {
                 upload = startS3Upload(txcZippedBucketName, `${prefix}/${fileName}`, entry, "application/zip");

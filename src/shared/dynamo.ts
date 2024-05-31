@@ -58,7 +58,7 @@ export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise
                 ExclusiveStartKey: dbData.LastEvaluatedKey,
             })),
         ];
-    } else {
-        return dbData.Items;
     }
+
+    return dbData.Items;
 };

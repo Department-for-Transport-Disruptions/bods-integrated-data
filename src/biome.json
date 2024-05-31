@@ -15,9 +15,13 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "recommended": false,
+            "recommended": true,
+            "complexity": {
+                "noForEach": "off"
+            },
             "style": {
-                "useImportType": "off"
+                "useImportType": "off",
+                "useTemplate": "off"
             }
         }
     }

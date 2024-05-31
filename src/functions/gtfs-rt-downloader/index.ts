@@ -124,7 +124,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = parseResult.data;
 
-    if (routeId || startTimeBefore !== undefined || startTimeAfter != undefined || boundingBox) {
+    if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
         if (boundingBox && boundingBox.split(",").length !== 4) {
