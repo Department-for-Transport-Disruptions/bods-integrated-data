@@ -153,7 +153,24 @@ export const getAvlDataForGtfs = async (
  * @returns Unique array of AVLs
  */
 export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
-    return avls.filter((a) => !avls.some((b) => b.id !== a.id && !!a.trip_id && b.trip_id === a.trip_id));
+    const avlsWithTripIdsDictionary: Record<string, NewAvl & { delete?: boolean }> = {};
+    const avlsWithoutTripIds: NewAvl[] = [];
+
+    for (const avl of avls) {
+        if (avl.trip_id) {
+            if (avlsWithTripIdsDictionary[avl.trip_id]) {
+                avlsWithTripIdsDictionary[avl.trip_id].delete = true;
+            } else {
+                avlsWithTripIdsDictionary[avl.trip_id] = avl;
+            }
+        } else {
+            avlsWithoutTripIds.push(avl);
+        }
+    }
+
+    const avlsWithTripIds = Object.values(avlsWithTripIdsDictionary).filter((avl) => !avl.delete);
+
+    return [...avlsWithTripIds, ...avlsWithoutTripIds];
 };
 
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
