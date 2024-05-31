@@ -551,6 +551,38 @@ describe("utils", () => {
             const result = removeDuplicateAvls(avls as NewAvl[]);
             expect(result).toEqual(expectedAvls);
         });
+
+        it("ignores AVLs that have missing trip IDs", () => {
+            const avls: Partial<NewAvl>[] = [
+                {
+                    id: 0,
+                    trip_id: "",
+                },
+                {
+                    id: 1,
+                    trip_id: "",
+                },
+                {
+                    id: 2,
+                    trip_id: null,
+                },
+                {
+                    id: 3,
+                    trip_id: null,
+                },
+                {
+                    id: 4,
+                    trip_id: undefined,
+                },
+                {
+                    id: 5,
+                    trip_id: undefined,
+                },
+            ];
+
+            const result = removeDuplicateAvls(avls as NewAvl[]);
+            expect(result).toEqual(avls);
+        });
     });
 
     describe("sanitiseTicketMachineJourneyCode", () => {
