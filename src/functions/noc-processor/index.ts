@@ -63,7 +63,7 @@ export const handler = async (event: S3Event) => {
         logger.info("NOC processor successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(`There was a problem with the NOC processor, rolling back transaction`, e);
+            logger.error("There was a problem with the NOC processor, rolling back transaction", e);
         }
 
         throw e;

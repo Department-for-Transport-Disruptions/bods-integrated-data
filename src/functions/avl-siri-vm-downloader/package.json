@@ -13,7 +13,9 @@
     "type": "module",
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
-        "@bods-integrated-data/shared": "workspace:^"
+        "@bods-integrated-data/shared": "workspace:^",
+        "zod": "^3.22.4",
+        "zod-validation-error": "^3.0.3"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

@@ -63,6 +63,12 @@ module "integrated_data_gtfs_rt_downloader_function" {
       Resource = [
         var.db_secret_arn,
       ]
+      }, {
+      Action = [
+        "cloudwatch:PutMetricData",
+      ],
+      Effect   = "Allow",
+      Resource = "*"
   }]
 
   env_vars = {
@@ -146,6 +152,11 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
         "Resource" : [
           var.db_secret_arn
         ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "cloudwatch:PutMetricData",
+        "Resource" : "*"
       }
     ]
   })
@@ -279,6 +290,7 @@ resource "aws_ecs_service" "bods_avl_processor_service" {
   task_definition = aws_ecs_task_definition.bods_avl_processor_task_definition.arn
   desired_count   = 1
 
+
   capacity_provider_strategy {
     base              = 1
     weight            = 100
@@ -300,4 +312,7 @@ resource "aws_ecs_service" "bods_avl_processor_service" {
 
   depends_on = [aws_iam_policy.bods_avl_processor_ecs_task_policy]
 
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }

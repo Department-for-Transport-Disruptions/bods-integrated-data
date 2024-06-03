@@ -1,6 +1,5 @@
 import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { Avl } from "@bods-integrated-data/shared/database";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -45,6 +44,8 @@ const mockAvl: Avl[] = [
         origin_name: null,
         destination_name: null,
         vehicle_journey_ref: null,
+        route_id: null,
+        trip_id: null,
         vehicle_monitoring_ref: null,
         destination_aimed_arrival_time: null,
         ticket_machine_service_code: null,
@@ -95,6 +96,8 @@ const mockAvl: Avl[] = [
         journey_code: "VJ_123",
         vehicle_unique_id: "Vehicle_123",
         has_onward_calls: false,
+        route_id: null,
+        trip_id: null,
     },
 ];
 
@@ -109,18 +112,10 @@ describe("generateSiriVmAndUploadToS3", () => {
 
     MockDate.set("2024-02-26T14:36:11+00:00");
 
-    const currentTime = getDate();
-    const validUntilTime = addIntervalToDate(currentTime, 5, "minutes");
     const requestMessageRef = "acde070d-8c4c-4f0d-9d8a-162843c10333";
 
     it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
-        await generateSiriVmAndUploadToS3(
-            mockAvl,
-            currentTime.toISOString(),
-            validUntilTime.toISOString(),
-            requestMessageRef,
-            "test-bucket",
-        );
+        await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket");
 
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({

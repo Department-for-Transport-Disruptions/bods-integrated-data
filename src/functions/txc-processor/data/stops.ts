@@ -33,11 +33,11 @@ export const mapStop = (
         }
 
         if (naptanStop.latitude) {
-            stop.stop_lat = parseFloat(naptanStop.latitude);
+            stop.stop_lat = Number.parseFloat(naptanStop.latitude);
         }
 
         if (naptanStop.longitude) {
-            stop.stop_lon = parseFloat(naptanStop.longitude);
+            stop.stop_lon = Number.parseFloat(naptanStop.longitude);
         }
 
         if (naptanStop.stop_type === "RSE") {

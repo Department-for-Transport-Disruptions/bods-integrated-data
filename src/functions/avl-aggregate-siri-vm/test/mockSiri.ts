@@ -31,6 +31,7 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
+        <VehicleMonitoringRef>test</VehicleMonitoringRef>
         <MonitoredVehicleJourney>
           <LineRef>ra</LineRef>
           <DirectionRef>outbound</DirectionRef>

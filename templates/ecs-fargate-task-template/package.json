@@ -1,23 +1,22 @@
 {
-  "name": "@bods-integrated-data/template-ecs-task",
-  "version": "0.1.0",
-  "description": "Template for ECS task",
-  "scripts": {
-    "build": "rm -rf ./dist && tsc && node ./esbuild.mjs",
-    "test": "vitest run",
-    "lint": "eslint ."
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "@bods-integrated-data/shared": "workspace:^",
-    "pino": "^9.1.0"
-  },
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.110",
-    "@types/node": "^20.11.19",
-    "typescript": "^5.3.3"
-  }
+    "name": "@bods-integrated-data/template-ecs-task",
+    "version": "0.1.0",
+    "description": "Template for ECS task",
+    "scripts": {
+        "build": "rm -rf ./dist && tsc && node ./esbuild.mjs",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "pino": "^9.1.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19",
+        "typescript": "^5.3.3"
+    }
 }

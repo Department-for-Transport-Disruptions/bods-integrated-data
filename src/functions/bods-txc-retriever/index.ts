@@ -1,4 +1,4 @@
-import { Stream } from "stream";
+import { Stream } from "node:stream";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
@@ -28,7 +28,7 @@ const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketNa
         const type = entry.type;
 
         if (type === "File") {
-            let upload;
+            let upload: ReturnType<typeof startS3Upload>;
 
             if (fileName.endsWith(".zip")) {
                 upload = startS3Upload(txcZippedBucketName, `${prefix}/${fileName}`, entry, "application/zip");

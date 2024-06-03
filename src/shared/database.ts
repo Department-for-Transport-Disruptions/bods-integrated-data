@@ -220,6 +220,8 @@ export interface AvlTable {
     journey_code: string | null;
     vehicle_unique_id: string | null;
     has_onward_calls: boolean | null;
+    route_id: number | null;
+    trip_id: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;

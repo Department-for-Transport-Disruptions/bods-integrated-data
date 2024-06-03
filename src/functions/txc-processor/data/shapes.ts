@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewShape } from "@bods-integrated-data/shared/database";
 import { TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
@@ -107,13 +107,13 @@ export const processShapes = async (
         const routeLinks = getRouteLinks(routeRef, routes, routeSections);
         const { shapeId, shapes } = mapRouteLinksToShapes(routeLinks);
 
-        updatedVehicleJourneyMappings.forEach((mapping) => {
+        for (const mapping of updatedVehicleJourneyMappings) {
             const journeyPatternRef = mapping.journeyPattern?.["@_id"];
 
             if (journeyPatternRef && journeyPatternToRouteRefMapping[journeyPatternRef] === routeRef) {
                 mapping.shapeId = shapeId;
             }
-        });
+        }
 
         return shapes;
     });

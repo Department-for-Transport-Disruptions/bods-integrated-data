@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { VehicleJourneyMapping } from "../types";

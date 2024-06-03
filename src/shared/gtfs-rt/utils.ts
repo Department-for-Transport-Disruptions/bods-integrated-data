@@ -1,18 +1,16 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapAvlDateStrings } from "../avl/utils";
-import { Calendar, CalendarDateExceptionType, KyselyDb } from "../database";
+import { Avl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
-import { ExtendedAvl } from "./types";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
     /(^[A-Z]{2}[0-9]{2}\s?[A-Z]{3}$)|(^[A-Z][0-9]{1,3}[A-Z]{3}$)|(^[A-Z]{3}[0-9]{1,3}[A-Z]$)|(^[0-9]{1,4}[A-Z]{1,2}$)|(^[0-9]{1,3}[A-Z]{1,3}$)|(^[A-Z]{1,2}[0-9]{1,4}$)|(^[A-Z]{1,3}[0-9]{1,3}$)|(^[A-Z]{1,3}[0-9]{1,4}$)|(^[0-9]{3}[DX]{1}[0-9]{3}$)/,
 );
-
 const daysOfWeek: (keyof Calendar)[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export const getOccupancyStatus = (occupancy: string): transit_realtime.VehiclePosition.OccupancyStatus => {
@@ -28,7 +26,7 @@ export const getOccupancyStatus = (occupancy: string): transit_realtime.VehicleP
     }
 };
 
-export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEntity => {
+export const mapAvlToGtfsEntity = (avl: NewAvl): transit_realtime.IFeedEntity => {
     let routeId = "";
     let tripId = "";
     let startDate = null;
@@ -57,7 +55,7 @@ export const mapAvlToGtfsEntity = (avl: ExtendedAvl): transit_realtime.IFeedEnti
         vehicle: {
             occupancyStatus: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
             position: {
-                bearing: avl.bearing ? parseInt(avl.bearing) : 0,
+                bearing: avl.bearing ? Number.parseInt(avl.bearing) : 0,
                 latitude: avl.latitude,
                 longitude: avl.longitude,
             },
@@ -95,68 +93,14 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: string,
-): Promise<ExtendedAvl[]> => {
+): Promise<Avl[]> => {
     try {
-        const currentDate = getDate();
-        const currentDateIso = currentDate.toISOString();
-        const currentDay = daysOfWeek[getDate().day()];
-
-        const routesWithNoc = dbClient
-            .selectFrom("route")
-            .innerJoin("agency", "agency.id", "route.agency_id")
-            .select([
-                "route.id as route_id",
-                sql`CONCAT(agency.noc, route.route_short_name)`.as("concat_noc_route_short_name"),
-            ])
-            .as("routes_with_noc");
-
-        const matchedAvl = dbClient
-            .selectFrom("avl_bods")
-            .innerJoin(routesWithNoc, (join) =>
-                join.onRef(
-                    "routes_with_noc.concat_noc_route_short_name",
-                    "=",
-                    sql`CONCAT(avl_bods.operator_ref, avl_bods.line_ref)`,
-                ),
-            )
-            .leftJoin("trip", (join) =>
-                join
-                    .onRef("trip.route_id", "=", "routes_with_noc.route_id")
-                    .onRef("trip.direction", "=", "avl_bods.direction_ref")
-                    .onRef("trip.ticket_machine_journey_code", "=", "avl_bods.dated_vehicle_journey_ref"),
-            )
-            .leftJoin("calendar", "calendar.id", "trip.service_id")
-            .leftJoin("calendar_date", (join) =>
-                join
-                    .onRef("calendar_date.service_id", "=", "trip.service_id")
-                    .on("calendar_date.date", "=", currentDate.format(DEFAULT_DATE_FORMAT)),
-            )
-            .where("calendar.start_date", "<=", currentDateIso)
-            .where("calendar.end_date", ">", currentDateIso)
-            .where((eb) =>
-                eb.or([
-                    eb("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceAdded),
-                    eb.and([eb(`calendar.${currentDay}`, "=", 1), eb("calendar_date.id", "is", null)]),
-                ]),
-            )
-            .select([
-                "routes_with_noc.route_id as route_id",
-                "trip.id as trip_id",
-                "avl_bods.operator_ref",
-                "avl_bods.vehicle_ref",
-            ])
-            .as("matched_avl");
+        const currentDateIso = getDate().toISOString();
 
         let query = dbClient
             .selectFrom("avl_bods")
-            .distinctOn(["avl_bods.vehicle_ref", "avl_bods.operator_ref"])
-            .leftJoin(matchedAvl, (join) =>
-                join
-                    .onRef("matched_avl.operator_ref", "=", "avl_bods.operator_ref")
-                    .onRef("matched_avl.vehicle_ref", "=", "avl_bods.vehicle_ref"),
-            )
+            .distinctOn(["vehicle_ref", "operator_ref"])
             .where("avl_bods.valid_until_time", ">", currentDateIso)
-            .select(["matched_avl.route_id", "matched_avl.trip_id"])
             .selectAll("avl_bods");
 
         if (routeId) {
@@ -189,7 +133,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl_bods.operator_ref", "avl_bods.vehicle_ref", "avl_bods.response_time_stamp desc"]);
+        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.response_time_stamp desc"]);
 
         const avls = await query.execute();
 
@@ -201,6 +145,32 @@ export const getAvlDataForGtfs = async (
 
         throw error;
     }
+};
+
+/**
+ * Removes duplicates from an array of AVLs based on the trip ID. AVLs with missing trip IDs are ignored.
+ * @param avls Array of AVLs
+ * @returns Unique array of AVLs
+ */
+export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
+    const avlsWithTripIdsDictionary: Record<string, NewAvl & { delete?: boolean }> = {};
+    const avlsWithoutTripIds: NewAvl[] = [];
+
+    for (const avl of avls) {
+        if (avl.trip_id) {
+            if (avlsWithTripIdsDictionary[avl.trip_id]) {
+                avlsWithTripIdsDictionary[avl.trip_id].delete = true;
+            } else {
+                avlsWithTripIdsDictionary[avl.trip_id] = avl;
+            }
+        } else {
+            avlsWithoutTripIds.push(avl);
+        }
+    }
+
+    const avlsWithTripIds = Object.values(avlsWithTripIdsDictionary).filter((avl) => !avl.delete);
+
+    return [...avlsWithTripIds, ...avlsWithoutTripIds];
 };
 
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
@@ -217,4 +187,144 @@ export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => 
     const data = feed.finish();
 
     return data;
+};
+
+/**
+ * Get route key for matching lookup, accounting for any special operator rules
+ *
+ * @param avl
+ * @returns Route key for given AVL item
+ */
+export const getRouteKey = (avl: NewAvl) => {
+    if (!avl.operator_ref || !avl.line_ref) {
+        return null;
+    }
+
+    const operatorNocMap: Record<
+        string,
+        { getOperatorRef: (noc: string) => string; getLineRef: (lineRef: string) => string }
+    > = {
+        NT: {
+            getOperatorRef: () => "NCTR",
+            getLineRef: (lineRef) => lineRef.split("NT")[1],
+        },
+    };
+
+    return operatorNocMap[avl.operator_ref]
+        ? `${operatorNocMap[avl.operator_ref].getOperatorRef(avl.operator_ref)}_${operatorNocMap[
+              avl.operator_ref
+          ].getLineRef(avl.line_ref)}`
+        : `${avl.operator_ref}_${avl.line_ref}`;
+};
+
+export const sanitiseTicketMachineJourneyCode = (input: string) => input.replace(":", "");
+
+export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
+    const currentDate = getDate();
+    const currentDateIso = currentDate.toISOString();
+    const currentDay = daysOfWeek[getDate().day()];
+
+    return await dbClient
+        .selectFrom("agency")
+        .innerJoin("route", "route.agency_id", "agency.id")
+        .innerJoin("trip", "trip.route_id", "route.id")
+        .innerJoin("calendar", (join) =>
+            join
+                .onRef("calendar.id", "=", "trip.service_id")
+                .on("calendar.start_date", "<=", currentDateIso)
+                .on("calendar.end_date", ">", currentDateIso),
+        )
+        .leftJoin("calendar_date", (join) =>
+            join
+                .onRef("calendar_date.service_id", "=", "trip.service_id")
+                .on("calendar_date.date", "=", currentDate.format(DEFAULT_DATE_FORMAT)),
+        )
+        .select([
+            "agency.noc",
+            "route.id as route_id",
+            "route.route_short_name",
+            "trip.id as trip_id",
+            "trip.ticket_machine_journey_code",
+            "trip.direction",
+        ])
+        .where((eb) =>
+            eb.or([
+                eb("calendar_date.exception_type", "=", CalendarDateExceptionType.ServiceAdded),
+                eb.and([eb(`calendar.${currentDay}`, "=", 1), eb("calendar_date.exception_type", "is", null)]),
+            ]),
+        )
+        .execute();
+};
+
+export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
+    const timetableData = await retrieveMatchableTimetableData(dbClient);
+
+    const lookup: {
+        [key: string]: {
+            noc: string;
+            route_id: number;
+            route_short_name: string;
+            trips: Record<
+                string,
+                {
+                    direction: string;
+                    ticket_machine_journey_code: string | null;
+                    trip_id: string;
+                }
+            >;
+        };
+    } = {};
+
+    for (const item of timetableData) {
+        const routeKey = `${item.noc}_${item.route_short_name}`;
+        const tripKey = `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`;
+
+        if (!lookup[routeKey]) {
+            lookup[routeKey] = {
+                noc: item.noc,
+                route_id: item.route_id,
+                route_short_name: item.route_short_name,
+                trips: {},
+            };
+        }
+
+        lookup[routeKey].trips[tripKey] = {
+            direction: item.direction,
+            ticket_machine_journey_code: item.ticket_machine_journey_code,
+            trip_id: item.trip_id,
+        };
+    }
+
+    let matchedAvlCount = 0;
+    let totalAvlCount = 0;
+
+    const enrichedAvl: NewAvl[] = avl.map((item) => {
+        const routeKey = getRouteKey(item);
+        const matchingRoute = routeKey ? lookup[routeKey] : null;
+
+        const matchingTrip =
+            matchingRoute && item.direction_ref && item.dated_vehicle_journey_ref
+                ? matchingRoute.trips[
+                      `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}`
+                  ]
+                : null;
+
+        if (matchingTrip) {
+            matchedAvlCount++;
+        }
+
+        totalAvlCount++;
+
+        return {
+            ...item,
+            route_id: matchingRoute?.route_id,
+            trip_id: matchingTrip?.trip_id,
+            geom:
+                item.longitude && item.latitude
+                    ? sql`ST_SetSRID(ST_MakePoint(${item.longitude}, ${item.latitude}), 4326)`
+                    : null,
+        };
+    });
+
+    return { avls: removeDuplicateAvls(enrichedAvl), matchedAvlCount: matchedAvlCount, totalAvlCount: totalAvlCount };
 };
