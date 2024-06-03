@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { NewAvl } from "../database";
+import { AvlOnwardCall, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
-import { makeFilteredArraySchema, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
 const onwardCallSchema = z
     .object({
@@ -75,7 +75,12 @@ const vehicleActivitySchema = z.object({
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
         VehicleRef: z.coerce.string(),
-        OnwardCalls: makeFilteredArraySchema(onwardCallSchema).or(txcEmptyProperty).optional(),
+        OnwardCalls: z
+            .object({
+                OnwardCall: makeFilteredArraySchema(onwardCallSchema),
+            })
+            .or(txcEmptyProperty)
+            .optional(),
     }),
     Extensions: extensionsSchema,
 });
@@ -98,40 +103,61 @@ export const siriSchema = z.object({
 export type SiriVM = z.infer<typeof siriSchema>;
 
 export const siriSchemaTransformed = siriSchema.transform((item) => {
-    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
-        response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-        producer_ref: item.ServiceDelivery.ProducerRef,
-        recorded_at_time: vehicleActivity.RecordedAtTime,
-        valid_until_time: vehicleActivity.ValidUntilTime,
-        vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
-        line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
-        occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
-        operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-        data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
-        dated_vehicle_journey_ref:
-            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
+    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
+        let onwardCalls: Omit<NewAvlOnwardCall, "avl_id">[] = [];
 
-        longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-        latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
-        bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-        published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-        origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-        origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
-        origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
-        destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-        destination_name: vehicleActivity.MonitoredVehicleJourney.DestinationName ?? null,
-        destination_aimed_arrival_time: vehicleActivity.MonitoredVehicleJourney.DestinationAimedArrivalTime ?? null,
-        block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
-        vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
-        ticket_machine_service_code:
-            vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ?? null,
-        journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
-        vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
-        has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
-        onward_calls: vehicleActivity.MonitoredVehicleJourney.OnwardCalls ?? null,
-    }));
+        if (vehicleActivity.MonitoredVehicleJourney.OnwardCalls) {
+            onwardCalls = vehicleActivity.MonitoredVehicleJourney.OnwardCalls.map((onwardCall) => {
+                if (onwardCall) {
+                    return {
+                        stop_point_ref: onwardCall.StopPointRef ?? null,
+                        aimed_arrival_time: onwardCall.AimedArrivalTime ?? null,
+                        expected_arrival_time: onwardCall.ExpectedArrivalTime ?? null,
+                        aimed_departure_time: onwardCall.AimedDepartureTime ?? null,
+                        expected_departure_time: onwardCall.ExpectedDepartureTime ?? null,
+                    };
+                }
+
+                console.log("call", onwardCall);
+            }).filter(notEmpty);
+        }
+
+        return {
+            response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+            producer_ref: item.ServiceDelivery.ProducerRef,
+            recorded_at_time: vehicleActivity.RecordedAtTime,
+            valid_until_time: vehicleActivity.ValidUntilTime,
+            vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
+            line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
+            occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
+            operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
+            data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
+            dated_vehicle_journey_ref:
+                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
+
+            longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+            latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+            bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+            origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+            origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
+            origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
+            destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+            destination_name: vehicleActivity.MonitoredVehicleJourney.DestinationName ?? null,
+            destination_aimed_arrival_time: vehicleActivity.MonitoredVehicleJourney.DestinationAimedArrivalTime ?? null,
+            block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+            vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
+            ticket_machine_service_code:
+                vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ??
+                null,
+            journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
+            vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
+            has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
+            onward_calls: onwardCalls ?? null,
+        };
+    });
 });
 
 export type SiriSchemaTransformed = z.infer<typeof siriSchemaTransformed>;

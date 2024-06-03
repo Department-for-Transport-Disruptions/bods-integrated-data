@@ -77,6 +77,7 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
+                has_onward_calls: false,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -152,6 +153,7 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
+                has_onward_calls: false,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -227,6 +229,7 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
+                has_onward_calls: false,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -302,6 +305,7 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
+                has_onward_calls: false,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -377,6 +381,7 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
+                has_onward_calls: false,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -452,6 +457,7 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
+                has_onward_calls: false,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -528,6 +534,7 @@ describe("utils", () => {
             ticket_machine_service_code: null,
             journey_code: null,
             vehicle_unique_id: null,
+            has_onward_calls: false,
         };
 
         const expected: transit_realtime.IFeedEntity = {

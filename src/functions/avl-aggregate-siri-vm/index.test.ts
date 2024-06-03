@@ -50,6 +50,7 @@ const mockAvl: Avl[] = [
         ticket_machine_service_code: null,
         journey_code: null,
         vehicle_unique_id: null,
+        has_onward_calls: false,
     },
     {
         id: 24183,
@@ -93,6 +94,7 @@ const mockAvl: Avl[] = [
         ticket_machine_service_code: "123",
         journey_code: "VJ_123",
         vehicle_unique_id: "Vehicle_123",
+        has_onward_calls: false,
     },
 ];
 

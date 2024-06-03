@@ -45,26 +45,12 @@ export const insertAvlsWithOnwardCalls = async (dbClient: KyselyDb, avlsWithOnwa
 
             const res = await dbClient.insertInto("avl").values(avlWithGeom).returning("avl.id").executeTakeFirst();
 
-            const test_onward_calls = [
-                {
-                    stop_point_ref: "test1",
-                    aimed_arrival_time: "2024-02-26T14:36:18+00:00",
-                    expected_arrival_time: "2024-02-26T14:36:18+00:00",
-                },
-                {
-                    stop_point_ref: "test2",
-                    aimed_arrival_time: "2024-02-26T14:36:18+00:00",
-                    expected_arrival_time: "2024-02-26T14:36:18+00:00",
-                },
-            ];
-
             if (!!onward_calls && !!res) {
-                const onwardCalls: NewAvlOnwardCall[] = test_onward_calls.map((onwardCall) => ({
+                const onwardCalls: NewAvlOnwardCall[] = onward_calls.map((onwardCall) => ({
                     ...onwardCall,
                     avl_id: res.id,
                 }));
 
-                console.log("test", onwardCalls);
                 await dbClient.insertInto("avl_onward_call").values(onwardCalls).execute();
             }
         }),
