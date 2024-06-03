@@ -133,15 +133,21 @@ export const getTndsRoute = (dbClient: KyselyDb, nocLineName: string) => {
     return dbClient.selectFrom("route_new").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
 };
 
-export const insertRoute = (dbClient: KyselyDb, route: NewRoute) => {
-    const { route_short_name, route_type } = route;
+export const getPreviousRouteIdByLineId = async (dbClient: KyselyDb, lineId: string) =>
+    dbClient.selectFrom("route").select("id").where("line_id", "=", lineId).executeTakeFirst();
 
+export const insertRoutes = (dbClient: KyselyDb, routes: NewRoute[]) => {
     return dbClient
         .insertInto("route_new")
-        .values(route)
-        .onConflict((oc) => oc.column("line_id").doUpdateSet({ route_short_name, route_type }))
+        .values(routes)
+        .onConflict((oc) =>
+            oc.column("line_id").doUpdateSet((eb) => ({
+                route_short_name: eb.ref("excluded.route_short_name"),
+                route_type: eb.ref("excluded.route_type"),
+            })),
+        )
         .returningAll()
-        .executeTakeFirst();
+        .execute();
 };
 
 export const insertStops = async (dbClient: KyselyDb, stops: NewStop[]) => {

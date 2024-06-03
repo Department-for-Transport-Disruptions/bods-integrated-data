@@ -7,7 +7,10 @@ import { processRoutes } from "./routes";
 describe("routes", () => {
     let dbClient: KyselyDb;
     const getTndsRouteMock = vi.spyOn(databaseFunctions, "getTndsRoute");
-    const insertRouteMock = vi.spyOn(databaseFunctions, "insertRoute");
+    const insertRoutesMock = vi.spyOn(databaseFunctions, "insertRoutes");
+    const getPreviousRouteIdMock = vi
+        .spyOn(databaseFunctions, "getPreviousRouteIdByLineId")
+        .mockResolvedValue(undefined);
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -57,7 +60,60 @@ describe("routes", () => {
             },
         ];
 
-        insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
+
+        const result = await processRoutes(dbClient, service as Service, agency as Agency, false);
+        expect(result).toEqual({ routes: expectedRoutes });
+    });
+
+    it("uses previous route ID if one found in database", async () => {
+        getPreviousRouteIdMock.mockResolvedValueOnce({ id: 123 });
+
+        const service: Partial<Service> = {
+            RegisteredOperatorRef: "1",
+            ServiceCode: "test-code",
+            Lines: {
+                Line: [
+                    {
+                        "@_id": "1",
+                        LineName: "A",
+                    },
+                    {
+                        "@_id": "2",
+                        LineName: "B",
+                    },
+                ],
+            },
+        };
+
+        const agency: Partial<Agency> = {
+            id: 0,
+            noc: "noc",
+        };
+
+        const expectedRoutes: NewRoute[] = [
+            {
+                id: 123,
+                line_id: "1",
+                agency_id: 0,
+                route_short_name: "A",
+                route_long_name: "",
+                route_type: RouteType.Bus,
+                data_source: "bods",
+                noc_line_name: "nocA",
+            },
+            {
+                line_id: "2",
+                agency_id: 0,
+                route_short_name: "B",
+                route_long_name: "",
+                route_type: RouteType.Bus,
+                data_source: "bods",
+                noc_line_name: "nocB",
+            },
+        ];
+
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
 
         const result = await processRoutes(dbClient, service as Service, agency as Agency, false);
         expect(result).toEqual({ routes: expectedRoutes });
@@ -108,7 +164,7 @@ describe("routes", () => {
         ];
 
         getTndsRouteMock.mockResolvedValue(undefined);
-        insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
 
         const result = await processRoutes(dbClient, service as Service, agency as Agency, true);
         expect(result).toEqual({ routes: expectedRoutes });
@@ -146,7 +202,7 @@ describe("routes", () => {
         ];
 
         getTndsRouteMock.mockResolvedValueOnce(expectedRoutes[0] as Route);
-        insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
 
         const bodsResult = await processRoutes(dbClient, service as Service, agency as Agency, false);
         expect(bodsResult).toEqual({ routes: expectedRoutes });
@@ -174,7 +230,7 @@ describe("routes", () => {
             noc: "noc",
         };
 
-        insertRouteMock.mockRejectedValue(new Error("a"));
+        insertRoutesMock.mockRejectedValue(new Error("a"));
 
         await expect(processRoutes(dbClient, service as Service, agency as Agency, false)).rejects.toThrowError("a");
     });
