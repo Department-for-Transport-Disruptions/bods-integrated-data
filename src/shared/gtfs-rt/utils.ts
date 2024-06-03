@@ -147,6 +147,32 @@ export const getAvlDataForGtfs = async (
     }
 };
 
+/**
+ * Removes duplicates from an array of AVLs based on the trip ID. AVLs with missing trip IDs are ignored.
+ * @param avls Array of AVLs
+ * @returns Unique array of AVLs
+ */
+export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
+    const avlsWithTripIdsDictionary: Record<string, NewAvl & { delete?: boolean }> = {};
+    const avlsWithoutTripIds: NewAvl[] = [];
+
+    for (const avl of avls) {
+        if (avl.trip_id) {
+            if (avlsWithTripIdsDictionary[avl.trip_id]) {
+                avlsWithTripIdsDictionary[avl.trip_id].delete = true;
+            } else {
+                avlsWithTripIdsDictionary[avl.trip_id] = avl;
+            }
+        } else {
+            avlsWithoutTripIds.push(avl);
+        }
+    }
+
+    const avlsWithTripIds = Object.values(avlsWithTripIdsDictionary).filter((avl) => !avl.delete);
+
+    return [...avlsWithTripIds, ...avlsWithoutTripIds];
+};
+
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
     const message = {
         header: {
@@ -300,5 +326,5 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     });
 
-    return { avls: enrichedAvl, matchedAvlCount: matchedAvlCount, totalAvlCount: totalAvlCount };
+    return { avls: removeDuplicateAvls(enrichedAvl), matchedAvlCount: matchedAvlCount, totalAvlCount: totalAvlCount };
 };
