@@ -196,6 +196,7 @@ export interface AvlTable {
     origin_ref: string | null;
     origin_aimed_departure_time: string | null;
     destination_ref: string | null;
+    subscription_id: string | null;
     block_ref: string | null;
     geom: RawBuilder<string> | null;
     vehicle_name: string | null;

@@ -51,6 +51,7 @@ export const getAvlDataForSiriVm = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
+    subscriptionId?: string,
 ) => {
     try {
         let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -83,6 +84,10 @@ export const getAvlDataForSiriVm = async (
 
         if (destinationRef) {
             query = query.where("destination_ref", "=", destinationRef);
+        }
+
+        if (subscriptionId) {
+            query = query.where("subscription_id", "=", subscriptionId);
         }
 
         query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
