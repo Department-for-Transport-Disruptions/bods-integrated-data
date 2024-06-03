@@ -18,8 +18,6 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    console.log(JSON.stringify(parsedXml));
-
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
@@ -27,8 +25,6 @@ const parseXml = (xml: string) => {
 
         throw new Error("Error parsing data");
     }
-
-    console.log("parsedJson", parsedJson.data[0].onward_calls);
 
     return parsedJson.data;
 };
@@ -48,13 +44,13 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             throw new Error("Error parsing data");
         }
 
-        // if (avls.some((avl) => avl.onward_calls)) {
-        await insertAvlsWithOnwardCalls(dbClient, avls);
-        // }
-        //
-        // const avlsWithoutOnwardCalls = avls.map<NewAvl>(({ onward_calls, ...avl }) => ({ ...avl }));
-        //
-        // await insertAvls(dbClient, avlsWithoutOnwardCalls, record.s3.object.key.startsWith("bods/"));
+        if (avls.some((avl) => avl.onward_calls)) {
+            await insertAvlsWithOnwardCalls(dbClient, avls);
+        }
+
+        const avlsWithoutOnwardCalls = avls.map<NewAvl>(({ onward_calls, ...avl }) => ({ ...avl }));
+
+        await insertAvls(dbClient, avlsWithoutOnwardCalls, record.s3.object.key.startsWith("bods/"));
     }
 };
 

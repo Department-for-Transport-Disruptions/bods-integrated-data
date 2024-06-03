@@ -107,7 +107,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
         let onwardCalls: Omit<NewAvlOnwardCall, "avl_id">[] = [];
 
         if (vehicleActivity.MonitoredVehicleJourney.OnwardCalls) {
-            onwardCalls = vehicleActivity.MonitoredVehicleJourney.OnwardCalls.map((onwardCall) => {
+            onwardCalls = vehicleActivity.MonitoredVehicleJourney.OnwardCalls.OnwardCall.map((onwardCall) => {
                 if (onwardCall) {
                     return {
                         stop_point_ref: onwardCall.StopPointRef ?? null,
