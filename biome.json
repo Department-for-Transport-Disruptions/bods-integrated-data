@@ -3,7 +3,7 @@
     "files": {
         "ignoreUnknown": true,
         "ignore": [
-            "data/",
+            "./data/",
             "**/coverage/**",
             "**/dist/**",
             "**/*.cjs",
