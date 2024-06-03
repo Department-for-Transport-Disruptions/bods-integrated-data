@@ -4,8 +4,7 @@
     "description": "Pipeline for retrieving and processing BODS SIRI-VM data",
     "scripts": {
         "build": "rm -rf ./dist && tsc && node ./esbuild.mjs",
-        "test": "vitest run",
-        "lint": "eslint ."
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",

@@ -4,7 +4,6 @@
     "description": "This function is to regularly query the AVL database to get the most recent vehicle location for each unique vehicle in the database and aggregate it into a single SIRI-VM file.",
     "scripts": {
         "test": "vitest run",
-        "lint": "eslint .",
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-aggregate-siri-vm.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-aggregate-siri-vm.zip ../dist/avl-aggregate-siri-vm.zip"
     },

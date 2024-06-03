@@ -32,7 +32,7 @@ export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbC
         queries.map((query) => {
             let options = "format csv, header true";
 
-            if (!!query.forceQuote?.length) {
+            if (query.forceQuote?.length) {
                 options += `, force_quote(${query.forceQuote.join(",")})`;
             }
 
@@ -248,7 +248,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("route", "route.id", "trip_region.route_id")
                 .innerJoin("agency", "agency.id", "route.agency_id")
                 .select(({ ref }) => [
@@ -272,7 +272,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("stop_time", "stop_time.trip_id", "trip_region.id")
                 .innerJoin("stop", "stop.id", "stop_time.stop_id")
                 .select([
@@ -297,7 +297,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("route", "route.id", "trip_region.route_id")
                 .select(({ ref }) => [
                     "route.id as route_id",
@@ -318,7 +318,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("calendar", "calendar.id", "trip_region.service_id")
                 .select([
                     "calendar.id as service_id",
@@ -354,7 +354,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("calendar_date", "calendar_date.service_id", "trip_region.service_id")
                 .select(["calendar_date.service_id", "calendar_date.date", "calendar_date.exception_type"])
                 .distinct();
@@ -367,7 +367,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .select([
                     "trip_region.route_id",
                     "trip_region.service_id",
@@ -389,7 +389,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("shape", "shape.shape_id", "trip_region.shape_id")
                 .select([
                     "shape.shape_id",
@@ -408,7 +408,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("frequency", "frequency.trip_id", "trip_region.id")
                 .select([
                     "frequency.trip_id",
@@ -427,7 +427,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("calendar", "calendar.id", "trip_region.service_id")
                 .select(({ fn }) => [
                     sql.lit<string>(`'Bus Open Data Service (BODS)'`).as("feed_publisher_name"),
@@ -447,7 +447,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as(`trip_region`))
+                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("stop_time", "stop_time.trip_id", "trip_region.id")
                 .select([
                     "stop_time.trip_id",

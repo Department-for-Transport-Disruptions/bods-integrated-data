@@ -170,9 +170,9 @@ export const getTransformedBankHolidayOperationSchema = (
                 return schema[key]?.flatMap((holiday) =>
                     holiday.Date ? getDate(holiday.Date).format(DEFAULT_DATE_FORMAT) : null,
                 );
-            } else {
-                return completeBankHolidayMapping[key];
             }
+
+            return completeBankHolidayMapping[key];
         })
         .filter(notEmpty);
 

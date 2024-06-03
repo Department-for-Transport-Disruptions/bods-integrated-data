@@ -1,7 +1,8 @@
 {
-  "recommendations": [
-    "yzhang.markdown-all-in-one",
-    "cweijan.vscode-database-client2",
-    "streetsidesoftware.code-spell-checker"
-  ]
+    "recommendations": [
+        "yzhang.markdown-all-in-one",
+        "cweijan.vscode-database-client2",
+        "streetsidesoftware.code-spell-checker",
+        "biomejs.biome"
+    ]
 }
