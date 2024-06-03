@@ -32,9 +32,15 @@ dependencies:
   '@baselime/lambda-logger':
     specifier: ^0.2.2
     version: 0.2.2
+  clean-deep:
+    specifier: ^3.4.0
+    version: 3.4.0
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
+  fast-xml-parser:
+    specifier: ^4.4.0
+    version: 4.4.0
   gtfs-realtime-bindings:
     specifier: ^1.1.1
     version: 1.1.1
@@ -4489,6 +4495,15 @@ packages:
       supports-color: 7.2.0
     dev: false
 
+  /clean-deep@3.4.0:
+    resolution: {integrity: sha512-Lo78NV5ItJL/jl+B5w0BycAisaieJGXK1qYi/9m4SjR8zbqmrUtO7Yhro40wEShGmmxs/aJLI/A+jNhdkXK8mw==}
+    engines: {node: '>=4'}
+    dependencies:
+      lodash.isempty: 4.4.0
+      lodash.isplainobject: 4.0.6
+      lodash.transform: 4.6.0
+    dev: false
+
   /color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
     engines: {node: '>=7.0.0'}
@@ -4591,6 +4606,13 @@ packages:
 
   /fast-xml-parser@4.2.5:
     resolution: {integrity: sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==}
+    hasBin: true
+    dependencies:
+      strnum: 1.0.5
+    dev: false
+
+  /fast-xml-parser@4.4.0:
+    resolution: {integrity: sha512-kLY3jFlwIYwBNDojclKsNAC12sfD6NwW74QB2CoNGPvtVxjliYehVunB3HYyNi+n4Tt1dAcgwYvmKF/Z18flqg==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
@@ -4727,6 +4749,18 @@ packages:
 
   /listenercount@1.0.1:
     resolution: {integrity: sha512-3mk/Zag0+IJxeDrxSgaDPy4zZ3w05PRZeJNnlWhzFz5OkX49J4krc+A8X2d2M69vGMBEX0uyl8M+W+8gH+kBqQ==}
+    dev: false
+
+  /lodash.isempty@4.4.0:
+    resolution: {integrity: sha512-oKMuF3xEeqDltrGMfDxAPGIVMSSRv8tbRSODbrs4KGsRRLEhrW8N8Rd4DRgB2+621hY8A8XwwrTVhXWpxFvMzg==}
+    dev: false
+
+  /lodash.isplainobject@4.0.6:
+    resolution: {integrity: sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==}
+    dev: false
+
+  /lodash.transform@4.6.0:
+    resolution: {integrity: sha512-LO37ZnhmBVx0GvOU/caQuipEh4GN82TcWv3yHlebGDgOxbxiwwzW5Pcx2AcvpIv2WmvmSMoC492yQFNhy/l/UQ==}
     dev: false
 
   /lodash@4.17.21:

@@ -202,7 +202,7 @@ describe("gtfs-downloader-endpoint", () => {
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockRequest.queryStringParameters = {
-                routeId: "asdf",
+                routeId: "asdf123!@£",
             };
 
             await expect(handler(mockRequest)).resolves.toEqual({
