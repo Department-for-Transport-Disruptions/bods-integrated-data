@@ -1,4 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     base64Encode,
@@ -27,6 +28,28 @@ const queryParametersSchema = z.preprocess(
         startTimeAfter: z.coerce.number().optional(),
     }),
 );
+
+const putMetrics = async (
+    download: string | undefined,
+    routeId: string | undefined,
+    startTimeAfter: number | undefined,
+    startTimeBefore: number | undefined,
+    boundingBox: string | undefined,
+) => {
+    await putMetricData(
+        "custom/GTFSRTDownloader",
+        [
+            { name: "download", set: !!download },
+            { name: "routeId", set: !!routeId },
+            { name: "startTimeAfter", set: !!startTimeAfter },
+            { name: "startTimeBefore", set: !!startTimeBefore },
+            { name: "boundingBox", set: !!boundingBox },
+        ].map((item) => ({
+            MetricName: item.name,
+            Value: item.set ? 1 : 0,
+        })),
+    );
+};
 
 const retrieveRouteData = async (
     dbClient: KyselyDb,
@@ -111,6 +134,8 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
+    logger.info("GTFS-RT Downloader invoked", event.queryStringParameters);
+
     const parseResult = queryParametersSchema.safeParse(event.queryStringParameters);
 
     if (!parseResult.success) {
@@ -123,6 +148,8 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     }
 
     const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = parseResult.data;
+
+    await putMetrics(download, routeId, startTimeAfter, startTimeBefore, boundingBox);
 
     if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");

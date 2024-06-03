@@ -1,4 +1,6 @@
+import { performance } from "node:perf_hooks";
 import { Stream } from "node:stream";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     generateGtfsRtFeed,
@@ -99,7 +101,18 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     }
 
     logger.info("Matching AVL to timetable data...");
-    const enrichedAvl = await matchAvlToTimetables(dbClient, parsedJson.data);
+    const { avls: enrichedAvl, matchedAvl, totalAvl } = await matchAvlToTimetables(dbClient, parsedJson.data);
+
+    await putMetricData("custom/BODSAVLProcessor", [
+        {
+            MetricName: "MatchedAVL",
+            Value: matchedAvl,
+        },
+        {
+            MetricName: "TotalAVL",
+            Value: totalAvl,
+        },
+    ]);
 
     const chunkedAvl = chunkArray(enrichedAvl, 2000);
 
@@ -165,7 +178,7 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
 };
 
 void (async () => {
-    console.time("avl-processor");
+    performance.mark("avl-processor-start");
 
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
@@ -183,7 +196,13 @@ void (async () => {
         await unzipAndUploadToDatabase(dbClient, avlResponse);
 
         logger.info("BODS AVL processor successful");
-        console.timeEnd("avl-processor");
+        performance.mark("avl-processor-end");
+
+        const time = performance.measure("avl-processor", "avl-processor-start", "avl-processor-end");
+
+        await putMetricData("custom/BODSAVLProcessor", [
+            { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
+        ]);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e);

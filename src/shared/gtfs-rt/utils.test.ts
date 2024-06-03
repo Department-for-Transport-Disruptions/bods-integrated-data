@@ -1,7 +1,7 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Avl, NewAvl } from "../database";
-import { removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
+import { Avl, KyselyDb, NewAvl } from "../database";
+import { matchAvlToTimetables, sanitiseTicketMachineJourneyCode } from "./utils";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
@@ -524,70 +524,184 @@ describe("utils", () => {
         expect(result).toEqual(expected);
     });
 
-    describe("removeDuplicateAvls", () => {
-        it("removes duplicate AVLs", () => {
-            const avls: Partial<NewAvl>[] = [
-                {
-                    id: 0,
-                    trip_id: "1",
-                },
-                {
-                    id: 1,
-                    trip_id: "2",
-                },
-                {
-                    id: 2,
-                    trip_id: "2",
-                },
-            ];
-
-            const expectedAvls: Partial<NewAvl>[] = [
-                {
-                    id: 0,
-                    trip_id: "1",
-                },
-            ];
-
-            const result = removeDuplicateAvls(avls as NewAvl[]);
-            expect(result).toEqual(expectedAvls);
-        });
-
-        it("ignores AVLs that have missing trip IDs", () => {
-            const avls: Partial<NewAvl>[] = [
-                {
-                    id: 0,
-                    trip_id: "",
-                },
-                {
-                    id: 1,
-                    trip_id: "",
-                },
-                {
-                    id: 2,
-                    trip_id: null,
-                },
-                {
-                    id: 3,
-                    trip_id: null,
-                },
-                {
-                    id: 4,
-                    trip_id: undefined,
-                },
-                {
-                    id: 5,
-                    trip_id: undefined,
-                },
-            ];
-
-            const result = removeDuplicateAvls(avls as NewAvl[]);
-            expect(result).toEqual(avls);
-        });
-    });
-
     describe("sanitiseTicketMachineJourneyCode", () => {
         it("removes colons from a string", () => {
             expect(sanitiseTicketMachineJourneyCode("test:string")).toBe("teststring");
+        });
+    });
+
+    describe("matchAvlToTimetables", () => {
+        const mocks = vi.hoisted(() => ({
+            executeMock: vi.fn(),
+        }));
+
+        let dbClientMock: KyselyDb;
+
+        beforeEach(() => {
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "1",
+                },
+                {
+                    direction: "inbound",
+                    noc: "NOC2",
+                    route_id: 2,
+                    route_short_name: "R2",
+                    ticket_machine_journey_code: "tmjc2",
+                    trip_id: "2",
+                },
+            ]);
+
+            dbClientMock = {
+                selectFrom: vi.fn().mockReturnThis(),
+                select: vi.fn().mockReturnThis(),
+                innerJoin: vi.fn().mockReturnThis(),
+                leftJoin: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                execute: mocks.executeMock,
+            } as unknown as KyselyDb;
+        });
+
+        it("correctly matches AVL data to timetable data", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NOC1",
+                    line_ref: "R1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+                {
+                    operator_ref: "NOC2",
+                    line_ref: "R2",
+                    dated_vehicle_journey_ref: "tmjc2",
+                    direction_ref: "inbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: "1",
+                    },
+                    {
+                        ...avl[1],
+                        geom: {},
+                        route_id: 2,
+                        trip_id: "2",
+                    },
+                ],
+                matchedAvl: 2,
+                totalAvl: 2,
+            });
+        });
+
+        it("correctly matches AVL data with a NOC in the operatorNocMap to timetable data", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: "nctr_trip",
+                    },
+                ],
+                matchedAvl: 1,
+                totalAvl: 1,
+            });
+        });
+
+        it("sets route_id when matching route found but no matching trip", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NOC1",
+                    line_ref: "R1",
+                    dated_vehicle_journey_ref: "invalid",
+                    direction_ref: "1",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: undefined,
+                    },
+                ],
+                matchedAvl: 0,
+                totalAvl: 1,
+            });
+        });
+
+        it("does not set route_id or trip_id if no matching route found", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NOC1",
+                    line_ref: "R2",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: undefined,
+                        trip_id: undefined,
+                    },
+                ],
+                matchedAvl: 0,
+                totalAvl: 1,
+            });
         });
     });
 });

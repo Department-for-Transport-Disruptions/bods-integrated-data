@@ -147,15 +147,6 @@ export const getAvlDataForGtfs = async (
     }
 };
 
-/**
- * Removes duplicates from an array of AVLs based on the trip ID. AVLs with missing trip IDs are ignored.
- * @param avls Array of AVLs
- * @returns Unique array of AVLs
- */
-export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
-    return avls.filter((a) => !avls.some((b) => b.id !== a.id && !!a.trip_id && b.trip_id === a.trip_id));
-};
-
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
     const message = {
         header: {
@@ -172,9 +163,37 @@ export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => 
     return data;
 };
 
+/**
+ * Get route key for matching lookup, accounting for any special operator rules
+ *
+ * @param avl
+ * @returns Route key for given AVL item
+ */
+export const getRouteKey = (avl: NewAvl) => {
+    if (!avl.operator_ref || !avl.line_ref) {
+        return null;
+    }
+
+    const operatorNocMap: Record<
+        string,
+        { getOperatorRef: (noc: string) => string; getLineRef: (lineRef: string) => string }
+    > = {
+        NT: {
+            getOperatorRef: () => "NCTR",
+            getLineRef: (lineRef) => lineRef.split("NT")[1],
+        },
+    };
+
+    return operatorNocMap[avl.operator_ref]
+        ? `${operatorNocMap[avl.operator_ref].getOperatorRef(avl.operator_ref)}_${operatorNocMap[
+              avl.operator_ref
+          ].getLineRef(avl.line_ref)}`
+        : `${avl.operator_ref}_${avl.line_ref}`;
+};
+
 export const sanitiseTicketMachineJourneyCode = (input: string) => input.replace(":", "");
 
-const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
+export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
     const currentDate = getDate();
     const currentDateIso = currentDate.toISOString();
     const currentDay = daysOfWeek[getDate().day()];
@@ -250,9 +269,12 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     }
 
+    let matchedAvl = 0;
+    let totalAvl = 0;
+
     const enrichedAvl: NewAvl[] = avl.map((item) => {
-        const matchingRoute =
-            item.operator_ref && item.line_ref ? lookup[`${item.operator_ref}_${item.line_ref}`] : null;
+        const routeKey = getRouteKey(item);
+        const matchingRoute = routeKey ? lookup[routeKey] : null;
 
         const matchingTrip =
             matchingRoute && item.direction_ref && item.dated_vehicle_journey_ref
@@ -260,6 +282,12 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
                       `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}`
                   ]
                 : null;
+
+        if (matchingTrip) {
+            matchedAvl++;
+        }
+
+        totalAvl++;
 
         return {
             ...item,
@@ -272,5 +300,5 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     });
 
-    return removeDuplicateAvls(enrichedAvl);
+    return { avls: enrichedAvl, matchedAvl, totalAvl };
 };
