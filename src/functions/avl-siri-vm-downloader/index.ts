@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
-import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
+import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 
 export const handler = async () => {
     const { BUCKET_NAME: bucketName } = process.env;

@@ -73,6 +73,7 @@ module "integrated_data_aurora_db" {
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
   enable_rds_proxy         = true
+  multi_az                 = true
   instance_class           = "db.r6gd.xlarge"
 }
 

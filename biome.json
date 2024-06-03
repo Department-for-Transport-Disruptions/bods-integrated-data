@@ -10,7 +10,8 @@
             "**/*.mjs",
             "**/*.config.js",
             "**/*.config.ts",
-            "./terraform/"
+            "./terraform/",
+            "./load-testing/"
         ]
     },
     "formatter": {
@@ -27,6 +28,10 @@
             "recommended": true,
             "style": {
                 "useImportType": "off"
+            },
+            "correctness": {
+                "noUnusedImports": "error",
+                "noUnusedVariables": "error"
             }
         }
     }
