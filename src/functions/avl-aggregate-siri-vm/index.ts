@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import {
     AGGREGATED_SIRI_VM_FILE_PATH,

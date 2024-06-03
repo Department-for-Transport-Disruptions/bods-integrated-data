@@ -54,28 +54,34 @@ export const insertNptgData = async (dbClient: KyselyDb, data: NptgSchema) => {
     const localities: NewNptgLocality[] = [];
     const regions: NewNptgRegion[] = [];
 
-    NptgLocalities?.NptgLocality.forEach((locality) => {
-        localities.push({
-            locality_code: locality.NptgLocalityCode,
-            admin_area_ref: locality.AdministrativeAreaRef,
-        });
-    });
-
-    Regions?.Region.forEach((region) => {
-        regions.push({
-            region_code: region.RegionCode,
-            name: region.Name,
-        });
-
-        region.AdministrativeAreas?.AdministrativeArea.forEach((adminArea) => {
-            adminAreas.push({
-                admin_area_code: adminArea.AdministrativeAreaCode,
-                atco_code: adminArea.AtcoAreaCode,
-                name: adminArea.Name,
-                region_code: region.RegionCode,
+    if (NptgLocalities) {
+        for (const locality of NptgLocalities.NptgLocality) {
+            localities.push({
+                locality_code: locality.NptgLocalityCode,
+                admin_area_ref: locality.AdministrativeAreaRef,
             });
-        });
-    });
+        }
+    }
+
+    if (Regions) {
+        for (const region of Regions.Region) {
+            regions.push({
+                region_code: region.RegionCode,
+                name: region.Name,
+            });
+
+            if (region.AdministrativeAreas) {
+                for (const adminArea of region.AdministrativeAreas.AdministrativeArea) {
+                    adminAreas.push({
+                        admin_area_code: adminArea.AdministrativeAreaCode,
+                        atco_code: adminArea.AtcoAreaCode,
+                        name: adminArea.Name,
+                        region_code: region.RegionCode,
+                    });
+                }
+            }
+        }
+    }
 
     const localityChunks = chunkArray(localities, 3000);
 

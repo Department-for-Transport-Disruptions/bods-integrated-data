@@ -1,4 +1,4 @@
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import { logger } from "@baselime/lambda-logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { unzip } from "@bods-integrated-data/shared/unzip";
