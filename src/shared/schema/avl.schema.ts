@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AvlOnwardCall, NewAvl, NewAvlOnwardCall } from "../database";
+import { NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 
@@ -117,8 +117,6 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
                         expected_departure_time: onwardCall.ExpectedDepartureTime ?? null,
                     };
                 }
-
-                console.log("call", onwardCall);
             }).filter(notEmpty);
         }
 
@@ -155,7 +153,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
             vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
             has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
-            onward_calls: onwardCalls ?? null,
+            onward_calls: onwardCalls && onwardCalls.length > 0 ? onwardCalls : null,
         };
     });
 });

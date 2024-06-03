@@ -5,12 +5,12 @@ import { sql } from "kysely";
 import { Avl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { addIntervalToDate, getDate } from "../dates";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
-import { chunkArray } from "../utils";
 import { SiriSchemaTransformed } from "../schema";
+import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 
-export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], fromBods?: boolean) => {
+export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
     const avlsWithGeom = avls.map<NewAvl>((avl) => ({
         ...avl,
         geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
@@ -18,14 +18,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], fromBods?: 
 
     const insertChunks = chunkArray(avlsWithGeom, 1000);
 
-    await Promise.all(
-        insertChunks.map((chunk) =>
-            dbClient
-                .insertInto(fromBods ? "avl_bods" : "avl")
-                .values(chunk)
-                .execute(),
-        ),
-    );
+    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
 };
 
 export const insertAvlsWithOnwardCalls = async (dbClient: KyselyDb, avlsWithOnwardCalls: SiriSchemaTransformed) => {
