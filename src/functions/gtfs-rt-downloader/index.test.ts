@@ -17,6 +17,8 @@ describe("gtfs-downloader-endpoint", () => {
         };
     });
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch");
+
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object,
@@ -36,6 +38,7 @@ describe("gtfs-downloader-endpoint", () => {
 
     vi.mock("@baselime/lambda-logger", () => ({
         logger: {
+            info: vi.fn(),
             error: vi.fn(),
         },
     }));
