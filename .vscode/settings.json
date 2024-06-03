@@ -1,4 +1,10 @@
 {
     "markdown.extension.toc.levels": "2..6",
-    "cSpell.words": ["CICD", "GTFS", "localstack", "NPTG", "Siri", "timestamptz", "Traveline", "unsubscriber"]
+    "cSpell.words": ["CICD", "GTFS", "localstack", "NPTG", "Siri", "timestamptz", "Traveline", "unsubscriber"],
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "quickfix.biome": "explicit",
+        "source.organizeImports.biome": "explicit"
+    }
 }
