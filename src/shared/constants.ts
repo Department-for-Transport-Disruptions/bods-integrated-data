@@ -1,3 +1,7 @@
+// TXC and SIRI-VM use the XML NMTOKEN data type for various properties: https://www.w3.org/TR/xml/#NT-Nmtoken
+export const NM_TOKEN_REGEX = /^[a-zA-Z0-9.\-_:]{1,100}$/;
+export const NM_TOKEN_ARRAY_REGEX = /^[a-zA-Z0-9.\-_:]{1,100}(,[a-zA-Z0-9.\-_:]{1,100})*$/;
+
 export const GTFS_FILE_SUFFIX = "_gtfs";
 
 export const regionCodes = ["E", "EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y", "ALL"] as const;

@@ -63,6 +63,12 @@ module "integrated_data_gtfs_rt_downloader_function" {
       Resource = [
         var.db_secret_arn,
       ]
+      }, {
+      Action = [
+        "cloudwatch:PutMetricData",
+      ],
+      Effect   = "Allow",
+      Resource = "*"
   }]
 
   env_vars = {
@@ -146,6 +152,11 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
         "Resource" : [
           var.db_secret_arn
         ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "cloudwatch:PutMetricData",
+        "Resource" : "*"
       }
     ]
   })
