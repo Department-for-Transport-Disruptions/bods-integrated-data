@@ -604,8 +604,8 @@ describe("utils", () => {
                         trip_id: "2",
                     },
                 ],
-                matchedAvl: 2,
-                totalAvl: 2,
+                matchedAvlCount: 2,
+                totalAvlCount: 2,
             });
         });
 
@@ -643,8 +643,8 @@ describe("utils", () => {
                         trip_id: "nctr_trip",
                     },
                 ],
-                matchedAvl: 1,
-                totalAvl: 1,
+                matchedAvlCount: 1,
+                totalAvlCount: 1,
             });
         });
 
@@ -671,8 +671,8 @@ describe("utils", () => {
                         trip_id: undefined,
                     },
                 ],
-                matchedAvl: 0,
-                totalAvl: 1,
+                matchedAvlCount: 0,
+                totalAvlCount: 1,
             });
         });
 
@@ -699,8 +699,8 @@ describe("utils", () => {
                         trip_id: undefined,
                     },
                 ],
-                matchedAvl: 0,
-                totalAvl: 1,
+                matchedAvlCount: 0,
+                totalAvlCount: 1,
             });
         });
     });

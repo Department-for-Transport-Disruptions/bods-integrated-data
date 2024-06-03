@@ -101,16 +101,16 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     }
 
     logger.info("Matching AVL to timetable data...");
-    const { avls: enrichedAvl, matchedAvl, totalAvl } = await matchAvlToTimetables(dbClient, parsedJson.data);
+    const { avls: enrichedAvl, matchedAvlCount, totalAvlCount } = await matchAvlToTimetables(dbClient, parsedJson.data);
 
     await putMetricData("custom/BODSAVLProcessor", [
         {
             MetricName: "MatchedAVL",
-            Value: matchedAvl,
+            Value: matchedAvlCount,
         },
         {
             MetricName: "TotalAVL",
-            Value: totalAvl,
+            Value: totalAvlCount,
         },
     ]);
 

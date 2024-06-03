@@ -269,8 +269,8 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     }
 
-    let matchedAvl = 0;
-    let totalAvl = 0;
+    let matchedAvlCount = 0;
+    let totalAvlCount = 0;
 
     const enrichedAvl: NewAvl[] = avl.map((item) => {
         const routeKey = getRouteKey(item);
@@ -284,10 +284,10 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
                 : null;
 
         if (matchingTrip) {
-            matchedAvl++;
+            matchedAvlCount++;
         }
 
-        totalAvl++;
+        totalAvlCount++;
 
         return {
             ...item,
@@ -300,5 +300,5 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         };
     });
 
-    return { avls: enrichedAvl, matchedAvl, totalAvl };
+    return { avls: enrichedAvl, matchedAvlCount: matchedAvlCount, totalAvlCount: totalAvlCount };
 };
