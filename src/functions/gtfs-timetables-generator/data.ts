@@ -54,8 +54,9 @@ export const queryBuilder = (dbClient: KyselyDb): Query[] => [
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom("route")
-                .innerJoin("agency", "agency.id", "route.agency_id")
+                .selectFrom("agency")
+                .innerJoin("route", "route.agency_id", "agency.id")
+                .innerJoin("trip", "trip.route_id", "route.id")
                 .select(({ ref }) => [
                     sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
                     "agency.name as agency_name",
@@ -100,13 +101,15 @@ export const queryBuilder = (dbClient: KyselyDb): Query[] => [
         getQuery: () => {
             const query = dbClient
                 .selectFrom("route")
+                .innerJoin("trip", "trip.route_id", "route.id")
                 .select(({ ref }) => [
-                    "id as route_id",
+                    "route.id as route_id",
                     sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
-                    "route_short_name",
-                    "route_long_name",
-                    "route_type",
+                    "route.route_short_name",
+                    "route.route_long_name",
+                    "route.route_type",
                 ])
+                .distinct()
                 .orderBy("route_id asc");
 
             return query.compile().sql;

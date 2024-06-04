@@ -78,7 +78,6 @@ export interface Database {
     calendar_date: GtfsCalendarDateTable;
     calendar_date_new: GtfsCalendarDateTable;
     route: GtfsRouteTable;
-    route_new: GtfsRouteTable;
     shape: GtfsShapeTable;
     shape_new: GtfsShapeTable;
     stop: GtfsStopTable;

@@ -12,7 +12,6 @@ export interface TableKey {
 const databaseTables: TableKey[] = [
     { table: "calendar", newTable: "calendar_new", key: "id" },
     { table: "calendar_date", newTable: "calendar_date_new", key: "id" },
-    { table: "route", newTable: "route_new", key: "id" },
     { table: "stop", newTable: "stop_new", key: "id" },
     { table: "shape", newTable: "shape_new", key: "id" },
     { table: "trip", newTable: "trip_new", key: "id" },

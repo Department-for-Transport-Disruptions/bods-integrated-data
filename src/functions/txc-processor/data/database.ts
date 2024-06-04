@@ -130,15 +130,12 @@ export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopL
 };
 
 export const getTndsRoute = (dbClient: KyselyDb, nocLineName: string) => {
-    return dbClient.selectFrom("route_new").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
+    return dbClient.selectFrom("route").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
 };
-
-export const getPreviousRouteIdByLineId = async (dbClient: KyselyDb, lineId: string) =>
-    dbClient.selectFrom("route").select("id").where("line_id", "=", lineId).executeTakeFirst();
 
 export const insertRoutes = (dbClient: KyselyDb, routes: NewRoute[]) => {
     return dbClient
-        .insertInto("route_new")
+        .insertInto("route")
         .values(routes)
         .onConflict((oc) =>
             oc.column("line_id").doUpdateSet((eb) => ({

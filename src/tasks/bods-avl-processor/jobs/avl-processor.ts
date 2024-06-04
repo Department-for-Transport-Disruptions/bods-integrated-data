@@ -81,7 +81,7 @@ const generateGtfs = async (avl: NewAvl[]) => {
     }
 };
 
-const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
+const uploadToDatabase = async (dbClient: KyselyDb, xml: string, stage: string) => {
     const xmlParser = new XMLParser({
         numberParseOptions: {
             hex: false,
@@ -103,7 +103,7 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     logger.info("Matching AVL to timetable data...");
     const { avls: enrichedAvl, matchedAvlCount, totalAvlCount } = await matchAvlToTimetables(dbClient, parsedJson.data);
 
-    await putMetricData("custom/BODSAVLProcessor", [
+    await putMetricData(`custom/BODSAVLProcessor-${stage}`, [
         {
             MetricName: "MatchedAVL",
             Value: matchedAvlCount,
@@ -157,7 +157,7 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string) => {
     logger.info("AVL data written to database successfully...");
 };
 
-const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosResponse<Stream>) => {
+const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosResponse<Stream>, stage: string) => {
     const zip = avlResponse.data.pipe(
         Parse({
             forceStream: true,
@@ -170,7 +170,7 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
         const fileName = entry.path;
 
         if (fileName === "siri.xml") {
-            await uploadToDatabase(dbClient, (await entry.buffer()).toString());
+            await uploadToDatabase(dbClient, (await entry.buffer()).toString(), stage);
         }
 
         entry.autodrain();
@@ -180,7 +180,9 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
 void (async () => {
     performance.mark("avl-processor-start");
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    const stage = process.env.STAGE || "";
+
+    const dbClient = await getDatabaseClient(stage === "local");
 
     try {
         logger.info("Starting BODS AVL processor");
@@ -193,14 +195,14 @@ void (async () => {
             throw new Error("No AVL data found");
         }
 
-        await unzipAndUploadToDatabase(dbClient, avlResponse);
+        await unzipAndUploadToDatabase(dbClient, avlResponse, stage);
 
         logger.info("BODS AVL processor successful");
         performance.mark("avl-processor-end");
 
         const time = performance.measure("avl-processor", "avl-processor-start", "avl-processor-end");
 
-        await putMetricData("custom/BODSAVLProcessor", [
+        await putMetricData(`custom/BODSAVLProcessor-${stage}`, [
             { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
         ]);
     } catch (e) {
