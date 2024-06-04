@@ -28,6 +28,8 @@ const parseXml = (xml: string) => {
 };
 
 export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb) => {
+    const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
+
     const data = await getS3Object({
         Bucket: record.s3.bucket.name,
         Key: record.s3.object.key,
@@ -42,7 +44,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             throw new Error("Error parsing data");
         }
 
-        await insertAvls(dbClient, avls, record.s3.object.key.startsWith("bods/"));
+        await insertAvls(dbClient, avls, record.s3.object.key.startsWith("bods/"), subscriptionId);
     }
 };
 
