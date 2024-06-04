@@ -11,7 +11,7 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
 
 - [Table of Contents](#table-of-contents)
 - [Dependencies](#dependencies)
-  - [Code linting and formatting](#code-linting--formatting)
+  - [Code Linting \& Formatting](#code-linting--formatting)
   - [Log in with the AWS CLI](#log-in-with-the-aws-cli)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -276,9 +276,9 @@ make run-local-table-renamer
 This will update the `_new` tables to be the primary tables and update the primary tables to be `_old`, for example:
 
 ```text
-route_new -> route
-route -> route_old
-route_old -> <Deleted>
+trip_new -> trip
+trip -> trip_old
+trip_old -> <Deleted>
 ```
 
 ### GTFS feed generation

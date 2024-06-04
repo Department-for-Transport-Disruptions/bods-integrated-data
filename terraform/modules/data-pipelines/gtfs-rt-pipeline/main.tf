@@ -182,7 +182,7 @@ resource "aws_iam_role" "bods_avl_processor_ecs_task_role" {
 }
 
 resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
-  family                   = "integrated-data-bods-avl-processor"
+  family                   = var.environment == "prod-temp" ? "integrated-data-bods-avl-processor-temp" : "integrated-data-bods-avl-processor"
   cpu                      = var.bods_avl_processor_cpu
   memory                   = var.bods_avl_processor_memory
   requires_compatibilities = ["FARGATE"]
@@ -233,6 +233,10 @@ resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
         {
           "name" : "CLEARDOWN_FREQUENCY_IN_SECONDS",
           "value" : tostring(var.bods_avl_cleardown_frequency)
+        },
+        {
+          "name" : "STAGE",
+          "value" : var.environment
         }
       ],
       "environmentFiles" : [],

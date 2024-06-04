@@ -6,7 +6,6 @@ const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
     const gtfsTables: (keyof Database)[] = [
         "calendar",
         "calendar_date",
-        "route",
         "stop",
         "shape",
         "trip",
