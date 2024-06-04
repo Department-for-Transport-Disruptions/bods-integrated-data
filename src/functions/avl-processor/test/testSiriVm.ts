@@ -132,6 +132,7 @@ export const parsedSiri = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
+        subscriptionId: "",
     },
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
@@ -154,5 +155,6 @@ export const parsedSiri = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
+        subscriptionId: "",
     },
 ];

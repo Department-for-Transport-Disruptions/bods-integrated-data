@@ -38,7 +38,7 @@ describe("avl-processor", () => {
     };
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        vi.resetAllMocks();
     });
 
     it("correctly processes a siri-vm file", async () => {

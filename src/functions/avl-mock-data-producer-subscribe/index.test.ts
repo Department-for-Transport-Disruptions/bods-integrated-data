@@ -39,7 +39,6 @@ describe("avl-mock-data-producer-subscribe", () => {
     it("should send a subscription response if valid subscription request is received", async () => {
         await expect(handler(mockSubscriptionRequest)).resolves.toEqual({
             statusCode: 200,
-            ok: true,
             body: expectedSubscriptionResponse,
         });
     });
