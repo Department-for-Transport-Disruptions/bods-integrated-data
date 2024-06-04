@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { Agency, KyselyDb, NewRoute, Route } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, NewRoute, Route, RouteType } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
 import { getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { DuplicateRouteError } from "../errors";
@@ -14,7 +14,7 @@ export const processRoutes = async (
     agency: Agency,
     isTnds: boolean,
 ): Promise<{ routes?: Route[]; isDuplicateRoute?: boolean }> => {
-    const routeType = getRouteTypeFromServiceMode(service.Mode);
+    let routeType = getRouteTypeFromServiceMode(service.Mode);
 
     try {
         const routes = await Promise.all(
@@ -37,6 +37,10 @@ export const processRoutes = async (
                     logger.info(`Using route ID from previous import, routeId: ${previousRoute.id}, lineId: ${lineId}`);
                 } else {
                     logger.info(`Creating new route ID for line: ${lineId}`);
+                }
+
+                if (line.LineName === "London Cable Car") {
+                    routeType = RouteType.CableCar;
                 }
 
                 return {

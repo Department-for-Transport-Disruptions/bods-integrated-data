@@ -66,6 +66,43 @@ describe("routes", () => {
         expect(result).toEqual({ routes: expectedRoutes });
     });
 
+    it("sets the route type as RouteType.CableCar for routes whose line names equal 'London Cable Car'", async () => {
+        const service: Partial<Service> = {
+            RegisteredOperatorRef: "1",
+            ServiceCode: "test-code",
+            Lines: {
+                Line: [
+                    {
+                        "@_id": "1",
+                        LineName: "London Cable Car",
+                    },
+                ],
+            },
+        };
+
+        const agency: Partial<Agency> = {
+            id: 0,
+            noc: "noc",
+        };
+
+        const expectedRoutes: NewRoute[] = [
+            {
+                line_id: "1",
+                agency_id: 0,
+                route_short_name: "London Cable Car",
+                route_long_name: "",
+                route_type: RouteType.CableCar,
+                data_source: "bods",
+                noc_line_name: "nocLondon Cable Car",
+            },
+        ];
+
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
+
+        const result = await processRoutes(dbClient, service as Service, agency as Agency, false);
+        expect(result).toEqual({ routes: expectedRoutes });
+    });
+
     it("uses previous route ID if one found in database", async () => {
         getPreviousRouteIdMock.mockResolvedValueOnce({ id: 123 });
 

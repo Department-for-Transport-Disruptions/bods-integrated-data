@@ -29,9 +29,13 @@ export const getRouteTypeFromServiceMode = (mode?: string) => {
         case "ferry":
             return RouteType.Ferry;
         case "metro":
-            return RouteType.TramOrMetro;
+            return RouteType.Metro;
+        case "rail":
+            return RouteType.Rail;
         case "tram":
-            return RouteType.TramOrMetro;
+            return RouteType.Tram;
+        case "trolleyBus":
+            return RouteType.TrolleyBus;
         case "underground":
             return RouteType.Underground;
         default:
