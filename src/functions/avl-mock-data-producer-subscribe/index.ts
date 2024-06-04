@@ -6,7 +6,7 @@ import {
     subscriptionRequestSchema,
     subscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
 const parseXml = (xml: string) => {
@@ -79,21 +79,19 @@ export const generateSubscriptionResponse = (subscriptionRequest: SubscriptionRe
     return response;
 };
 
-export const handler = (event: APIGatewayEvent) => {
-    return new Promise((resolve) => {
-        logger.info("Handling subscription request");
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+    logger.info("Handling subscription request");
 
-        const parsedBody = parseXml(event.body ?? "");
+    const parsedBody = parseXml(event.body ?? "");
 
-        logger.info("Successfully parsed xml");
+    logger.info("Successfully parsed xml");
 
-        const subscriptionResponse = generateSubscriptionResponse(parsedBody);
+    const subscriptionResponse = generateSubscriptionResponse(parsedBody);
 
-        logger.info("Returning subscription response");
-        resolve({
-            statusCode: 200,
-            ok: true,
-            body: subscriptionResponse,
-        });
-    });
+    logger.info("Returning subscription response");
+
+    return {
+        statusCode: 200,
+        body: subscriptionResponse,
+    };
 };
