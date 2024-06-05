@@ -59,6 +59,7 @@ const vehicleActivitySchema = z.object({
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
+        Monitored: z.coerce.string().nullish(),
         Occupancy: z.coerce.string().nullish(),
         OperatorRef: z.coerce.string(),
         OriginRef: z.coerce.string().nullish(),
@@ -138,6 +139,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
             bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
             published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+            monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
             origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
             origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
             origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,

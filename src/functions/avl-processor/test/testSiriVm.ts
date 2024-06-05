@@ -66,6 +66,7 @@ export const testSiri = `
                     <DestinationName>Destination unknown</DestinationName>
                     <DestinationAimedArrivalTime>2018-08-17T15:22:20</DestinationAimedArrivalTime>
                     <PublishedLineName>1</PublishedLineName>
+                    <Monitored>true</Monitored>
                 </MonitoredVehicleJourney>
                 <Extensions>
                     <VehicleJourney>
@@ -149,6 +150,7 @@ export const testSiriWithOnwardCalls = `
                     <DestinationName>Destination unknown</DestinationName>
                     <DestinationAimedArrivalTime>2018-08-17T15:22:20</DestinationAimedArrivalTime>
                     <PublishedLineName>1</PublishedLineName>
+                    <Monitored>true</Monitored>
                     <OnwardCalls>
                         <OnwardCall>
                             <StopPointRef>STOP123</StopPointRef>
@@ -245,6 +247,7 @@ export const parsedSiri = [
         latitude: 63.43613,
         bearing: "0",
         published_line_name: "1",
+        monitored: null,
         origin_ref: "originRef",
         origin_aimed_departure_time: "2018-08-17T15:13:20",
         destination_ref: "destinationRef",
@@ -274,6 +277,7 @@ export const parsedSiri = [
         latitude: 63.42613,
         bearing: "0",
         published_line_name: "1",
+        monitored: "true",
         origin_ref: "originRef",
         origin_aimed_departure_time: "2018-08-17T15:22:20",
         destination_ref: "destinationRef",
@@ -310,6 +314,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         latitude: 63.43613,
         bearing: "0",
         published_line_name: "1",
+        monitored: null,
         origin_ref: "originRef",
         origin_aimed_departure_time: "2018-08-17T15:13:20",
         destination_ref: "destinationRef",
@@ -339,6 +344,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         latitude: 63.42613,
         bearing: "0",
         published_line_name: "1",
+        monitored: "true",
         origin_ref: "originRef",
         origin_aimed_departure_time: "2018-08-17T15:22:20",
         destination_ref: "destinationRef",
