@@ -34,6 +34,7 @@ export const processTrips = async (
                 ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
                 file_path: filePath,
                 direction: journeyPattern?.Direction || "",
+                revision_number: vehicleJourney["@_RevisionNumber"],
             };
         })
         .filter(notEmpty);

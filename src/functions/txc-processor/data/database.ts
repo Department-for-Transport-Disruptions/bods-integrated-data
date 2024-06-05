@@ -181,3 +181,19 @@ export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime
 export const insertTrips = (dbClient: KyselyDb, trips: NewTrip[]) => {
     return dbClient.insertInto("trip_new").values(trips).returningAll().execute();
 };
+
+export const updateTripWithOriginAndDestinationRef = async (
+    dbClient: KyselyDb,
+    tripId: string,
+    originRef: string | null,
+    destinationRef: string | null,
+) => {
+    await dbClient
+        .updateTable("trip_new")
+        .set({
+            origin_stop_ref: originRef,
+            destination_stop_ref: destinationRef,
+        })
+        .where("id", "=", tripId)
+        .execute();
+};

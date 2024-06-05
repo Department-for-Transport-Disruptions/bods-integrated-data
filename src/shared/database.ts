@@ -428,6 +428,9 @@ export interface GtfsTripTable {
     ticket_machine_journey_code: string;
     file_path: string;
     direction: string;
+    origin_stop_ref: string | null;
+    destination_stop_ref: string | null;
+    revision_number: string | null;
 }
 
 export type Trip = Selectable<GtfsTripTable>;

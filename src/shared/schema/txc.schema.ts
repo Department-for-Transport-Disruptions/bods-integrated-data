@@ -211,6 +211,7 @@ export const vehicleJourneyTimingLinkSchema = abstractTimingLinkSchema.extend({
 });
 
 export const vehicleJourneySchema = z.object({
+    "@_RevisionNumber": z.string().optional(),
     VehicleJourneyCode: z.string(),
     DepartureTime: z.string(),
     DestinationDisplay: z.string().optional(),
