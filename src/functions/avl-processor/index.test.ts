@@ -89,9 +89,9 @@ describe("avl-processor", () => {
         mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiriWithOnwardCalls } });
         await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb);
 
-        expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls[0]);
-        expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls[1]);
-        expect(valuesMock).toHaveBeenCalledWith(onwardCallInsertQuery);
+        expect(valuesMock).toHaveBeenNthCalledWith(1, [parsedSiriWithOnwardCalls[0]]);
+        expect(valuesMock).toHaveBeenNthCalledWith(2, parsedSiriWithOnwardCalls[1]);
+        expect(valuesMock).toHaveBeenNthCalledWith(3, onwardCallInsertQuery);
     });
 
     it("does not insert to database if invalid", async () => {

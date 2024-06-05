@@ -10,11 +10,15 @@ import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 
+const includeAdditionalFields = (avl: NewAvl): NewAvl => ({
+    ...avl,
+    geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
+});
+
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
-    const avlsWithGeom = avls.map<NewAvl>((avl) => ({
-        ...avl,
-        geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
-    }));
+    const avlsWithGeom = avls.map(includeAdditionalFields);
+
+    console.log("without", avls);
 
     const insertChunks = chunkArray(avlsWithGeom, 1000);
 
@@ -22,18 +26,10 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
 };
 
 export const insertAvlsWithOnwardCalls = async (dbClient: KyselyDb, avlsWithOnwardCalls: SiriSchemaTransformed) => {
+    console.log("with", avlsWithOnwardCalls);
     await Promise.all(
         avlsWithOnwardCalls.map(async ({ onward_calls, ...avl }) => {
-            const avlWithGeom: NewAvl = {
-                ...avl,
-                geom: sql`ST_SetSRID
-                (ST_MakePoint(
-                ${avl.longitude},
-                ${avl.latitude}
-                ),
-                4326
-                )`,
-            };
+            const avlWithGeom: NewAvl = includeAdditionalFields(avl);
 
             const res = await dbClient.insertInto("avl").values(avlWithGeom).returning("avl.id").executeTakeFirst();
 

@@ -1,3 +1,4 @@
+import { NewAvl } from "@bods-integrated-data/shared/database";
 import { expect } from "vitest";
 
 export const testSiri = `
@@ -290,7 +291,7 @@ export const parsedSiri = [
     },
 ];
 
-export const parsedSiriWithOnwardCalls = [
+export const parsedSiriWithOnwardCalls: NewAvl[] = [
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
         producer_ref: "ATB",
@@ -353,7 +354,7 @@ export const parsedSiriWithOnwardCalls = [
         vehicle_unique_id: "Vehicle_123",
         has_onward_calls: true,
     },
-];
+] as NewAvl[];
 
 export const onwardCallInsertQuery = [
     {

@@ -44,14 +44,16 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             throw new Error("Error parsing data");
         }
 
-        if (avls.some((avl) => avl.onward_calls)) {
-            await insertAvlsWithOnwardCalls(dbClient, avls);
-            return;
-        }
-
-        const avlsWithoutOnwardCalls = avls.map<NewAvl>(({ onward_calls, ...avl }) => ({ ...avl }));
+        const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
+        const avlsWithoutOnwardCalls = avls
+            .filter((avl) => !avl.onward_calls)
+            .map<NewAvl>(({ onward_calls, ...rest }) => rest);
 
         await insertAvls(dbClient, avlsWithoutOnwardCalls);
+
+        if (avlsWithOnwardCalls && avlsWithOnwardCalls.length > 0) {
+            await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls);
+        }
     }
 };
 
