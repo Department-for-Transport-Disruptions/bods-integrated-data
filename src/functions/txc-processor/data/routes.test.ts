@@ -7,7 +7,7 @@ import { processRoutes } from "./routes";
 describe("routes", () => {
     let dbClient: KyselyDb;
     const getTndsRouteMock = vi.spyOn(databaseFunctions, "getTndsRoute");
-    const insertRouteMock = vi.spyOn(databaseFunctions, "insertRoute");
+    const insertRoutesMock = vi.spyOn(databaseFunctions, "insertRoutes");
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -57,7 +57,7 @@ describe("routes", () => {
             },
         ];
 
-        insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
 
         const result = await processRoutes(dbClient, service as Service, agency as Agency, false);
         expect(result).toEqual({ routes: expectedRoutes });
@@ -108,7 +108,7 @@ describe("routes", () => {
         ];
 
         getTndsRouteMock.mockResolvedValue(undefined);
-        insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
 
         const result = await processRoutes(dbClient, service as Service, agency as Agency, true);
         expect(result).toEqual({ routes: expectedRoutes });
@@ -146,7 +146,7 @@ describe("routes", () => {
         ];
 
         getTndsRouteMock.mockResolvedValueOnce(expectedRoutes[0] as Route);
-        insertRouteMock.mockImplementation((_dbClient, route) => Promise.resolve(route) as Promise<Route>);
+        insertRoutesMock.mockImplementation((_dbClient, routes) => Promise.resolve(routes) as Promise<Route[]>);
 
         const bodsResult = await processRoutes(dbClient, service as Service, agency as Agency, false);
         expect(bodsResult).toEqual({ routes: expectedRoutes });
@@ -174,7 +174,7 @@ describe("routes", () => {
             noc: "noc",
         };
 
-        insertRouteMock.mockRejectedValue(new Error("a"));
+        insertRoutesMock.mockRejectedValue(new Error("a"));
 
         await expect(processRoutes(dbClient, service as Service, agency as Agency, false)).rejects.toThrowError("a");
     });

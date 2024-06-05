@@ -1,17 +1,19 @@
 import { logger } from "@baselime/lambda-logger";
-import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
+import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+
+const arrayProperties = ["VehicleActivity", "OnwardCall"];
 
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => tagName === "VehicleActivity",
+        isArray: (tagName) => arrayProperties.some((element) => element === tagName),
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
@@ -44,7 +46,14 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             throw new Error("Error parsing data");
         }
 
-        await insertAvls(dbClient, avls, record.s3.object.key.startsWith("bods/"), subscriptionId);
+        const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
+        const avlsWithoutOnwardCalls = avls
+            .filter((avl) => !avl.onward_calls)
+            .map<NewAvl>(({ onward_calls, ...rest }) => rest);
+
+        await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
+
+        await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
     }
 };
 
