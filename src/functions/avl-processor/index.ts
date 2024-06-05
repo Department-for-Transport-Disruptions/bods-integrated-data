@@ -51,9 +51,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
 
         await insertAvls(dbClient, avlsWithoutOnwardCalls);
 
-        if (avlsWithOnwardCalls && avlsWithOnwardCalls.length > 0) {
-            await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls);
-        }
+        await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls);
     }
 };
 

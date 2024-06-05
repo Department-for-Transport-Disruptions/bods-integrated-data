@@ -18,15 +18,12 @@ const includeAdditionalFields = (avl: NewAvl): NewAvl => ({
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
     const avlsWithGeom = avls.map(includeAdditionalFields);
 
-    console.log("without", avls);
-
     const insertChunks = chunkArray(avlsWithGeom, 1000);
 
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
 };
 
 export const insertAvlsWithOnwardCalls = async (dbClient: KyselyDb, avlsWithOnwardCalls: SiriSchemaTransformed) => {
-    console.log("with", avlsWithOnwardCalls);
     await Promise.all(
         avlsWithOnwardCalls.map(async ({ onward_calls, ...avl }) => {
             const avlWithGeom: NewAvl = includeAdditionalFields(avl);
