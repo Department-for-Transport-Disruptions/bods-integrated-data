@@ -53,12 +53,10 @@ export const getAvlDataForSiriVm = async (
     destinationRef?: string,
 ) => {
     try {
-        const currentDateIso = getDate().toISOString();
-
         let query = dbClient
             .selectFrom("avl")
             .distinctOn(["operator_ref", "vehicle_ref"])
-            .where("avl.valid_until_time", ">", currentDateIso)
+            .where("avl.valid_until_time", ">", sql<string>`NOW()`)
             .selectAll("avl");
 
         if (boundingBox) {
