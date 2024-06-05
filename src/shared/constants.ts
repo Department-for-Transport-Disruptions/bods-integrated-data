@@ -96,3 +96,5 @@ export const REGIONS: Record<
         regionName: "all",
     },
 };
+
+export const tflOperatorRef = "TFLO";

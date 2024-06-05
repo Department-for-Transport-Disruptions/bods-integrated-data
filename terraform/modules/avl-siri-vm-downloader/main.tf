@@ -32,7 +32,7 @@ module "integrated_data_avl_siri_vm_downloader_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:s3:::${var.bucket_name}/*"
       ]

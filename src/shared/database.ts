@@ -89,6 +89,7 @@ export interface Database {
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
     tfl_line: TflLineTable;
+    avl_onward_call: AvlOnwardCallTable;
 }
 
 export interface NaptanStopTable {
@@ -181,6 +182,7 @@ export interface AvlTable {
     producer_ref: string;
     recorded_at_time: string;
     valid_until_time: string;
+    vehicle_monitoring_ref: string | null;
     line_ref: string | null;
     direction_ref: string;
     occupancy: string | null;
@@ -193,9 +195,13 @@ export interface AvlTable {
     bearing: string | null;
     published_line_name: string | null;
     origin_ref: string | null;
+    origin_name: string | null;
     origin_aimed_departure_time: string | null;
     destination_ref: string | null;
+    destination_name: string | null;
+    destination_aimed_arrival_time: string | null;
     block_ref: string | null;
+    vehicle_journey_ref: string | null;
     geom: RawBuilder<string> | null;
     vehicle_name: string | null;
     monitored: string | null;
@@ -209,9 +215,10 @@ export interface AvlTable {
     next_stop_point_name: string | null;
     previous_stop_point_id: string | null;
     previous_stop_point_name: string | null;
-    origin_name: string | null;
-    destination_name: string | null;
-    vehicle_journey_ref: string | null;
+    ticket_machine_service_code: string | null;
+    journey_code: string | null;
+    vehicle_unique_id: string | null;
+    has_onward_calls: boolean | null;
     route_id: number | null;
     trip_id: string | null;
 }
@@ -219,6 +226,20 @@ export interface AvlTable {
 export type Avl = Selectable<AvlTable>;
 export type NewAvl = Insertable<AvlTable>;
 export type AvlUpdate = Updateable<AvlTable>;
+
+export interface AvlOnwardCallTable {
+    id: Generated<number>;
+    avl_id: number;
+    stop_point_ref: string | null;
+    aimed_arrival_time: string | null;
+    expected_arrival_time: string | null;
+    aimed_departure_time: string | null;
+    expected_departure_time: string | null;
+}
+
+export type AvlOnwardCall = Selectable<AvlOnwardCallTable>;
+export type NewAvlOnwardCall = Insertable<AvlOnwardCallTable>;
+export type AvlOnwardCallUpdate = Updateable<AvlOnwardCallTable>;
 
 export interface TflLineTable {
     id: string;

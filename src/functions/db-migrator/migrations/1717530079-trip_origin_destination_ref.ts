@@ -6,9 +6,15 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .alterTable("trip")
         .addColumn("origin_stop_ref", "text")
         .addColumn("destination_stop_ref", "text")
+        .addColumn("revision_number", "text")
         .execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
-    await db.schema.alterTable("trip").dropColumn("origin_stop_ref").dropColumn("destination_stop_ref").execute();
+    await db.schema
+        .alterTable("trip")
+        .dropColumn("origin_stop_ref")
+        .dropColumn("destination_stop_ref")
+        .dropColumn("revision_number")
+        .execute();
 }
