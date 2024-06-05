@@ -2,28 +2,43 @@ import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
-import { Avl, KyselyDb, NewAvl } from "../database";
+import { Avl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { addIntervalToDate, getDate } from "../dates";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
+import { SiriSchemaTransformed } from "../schema";
 import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 
-export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], fromBods?: boolean) => {
-    const avlsWithGeom = avls.map<NewAvl>((avl) => ({
-        ...avl,
-        geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
-    }));
+const includeAdditionalFields = (avl: NewAvl): NewAvl => ({
+    ...avl,
+    geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
+});
+
+export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
+    const avlsWithGeom = avls.map(includeAdditionalFields);
 
     const insertChunks = chunkArray(avlsWithGeom, 1000);
 
+    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
+};
+
+export const insertAvlsWithOnwardCalls = async (dbClient: KyselyDb, avlsWithOnwardCalls: SiriSchemaTransformed) => {
     await Promise.all(
-        insertChunks.map((chunk) =>
-            dbClient
-                .insertInto(fromBods ? "avl_bods" : "avl")
-                .values(chunk)
-                .execute(),
-        ),
+        avlsWithOnwardCalls.map(async ({ onward_calls, ...avl }) => {
+            const avlWithGeom: NewAvl = includeAdditionalFields(avl);
+
+            const res = await dbClient.insertInto("avl").values(avlWithGeom).returning("avl.id").executeTakeFirst();
+
+            if (!!onward_calls && !!res) {
+                const onwardCalls: NewAvlOnwardCall[] = onward_calls.map((onwardCall) => ({
+                    ...onwardCall,
+                    avl_id: res.id,
+                }));
+
+                await dbClient.insertInto("avl_onward_call").values(onwardCalls).execute();
+            }
+        }),
     );
 };
 
@@ -39,6 +54,9 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
     valid_until_time: new Date(avl.valid_until_time).toISOString(),
     origin_aimed_departure_time: avl.origin_aimed_departure_time
         ? new Date(avl.origin_aimed_departure_time).toISOString()
+        : null,
+    destination_aimed_arrival_time: avl.destination_aimed_arrival_time
+        ? new Date(avl.destination_aimed_arrival_time).toISOString()
         : null,
 });
 
@@ -104,6 +122,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: currentTime,
             ValidUntilTime: validUntilTime,
+            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
                 LineRef: avl.line_ref,
                 DirectionRef: avl.direction_ref,
@@ -111,8 +130,11 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                 Occupancy: avl.occupancy,
                 OperatorRef: avl.operator_ref,
                 OriginRef: avl.origin_ref,
+                OriginName: avl.origin_name,
                 OriginAimedDepartureTime: avl.origin_aimed_departure_time,
                 DestinationRef: avl.destination_ref,
+                DestinationName: avl.destination_name,
+                DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
                 VehicleLocation: {
                     Longitude: avl.longitude,
                     Latitude: avl.latitude,
@@ -120,6 +142,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                 Bearing: avl.bearing,
                 BlockRef: avl.block_ref,
                 VehicleRef: avl.vehicle_ref,
+                VehicleJourneyRef: avl.vehicle_journey_ref,
             },
         };
 
@@ -127,6 +150,20 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
             vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef = {
                 DataFrameRef: avl.data_frame_ref,
                 DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref,
+            };
+        }
+
+        if (avl.ticket_machine_service_code || avl.journey_code || avl.vehicle_unique_id) {
+            vehicleActivity.Extensions = {
+                VehicleJourney: {
+                    Operational: {
+                        TicketMachine: {
+                            TicketMachineServiceCode: avl.ticket_machine_service_code ?? null,
+                            JourneyCode: avl.journey_code ?? null,
+                        },
+                    },
+                    VehicleUniqueId: avl.vehicle_unique_id ?? null,
+                },
             };
         }
 
