@@ -10,13 +10,13 @@ import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 
-const includeAdditionalFields = (avl: NewAvl, subscriptionId?: string): NewAvl => ({
+const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl => ({
     ...avl,
     geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
     subscription_id: subscriptionId,
 });
 
-export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId?: string) => {
+export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
     const modifiedAvls = avls.map((avl) => includeAdditionalFields(avl, subscriptionId));
 
     const insertChunks = chunkArray(modifiedAvls, 1000);
@@ -27,7 +27,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
 export const insertAvlsWithOnwardCalls = async (
     dbClient: KyselyDb,
     avlsWithOnwardCalls: SiriSchemaTransformed,
-    subscriptionId?: string,
+    subscriptionId: string,
 ) => {
     await Promise.all(
         avlsWithOnwardCalls.map(async ({ onward_calls, ...avl }) => {

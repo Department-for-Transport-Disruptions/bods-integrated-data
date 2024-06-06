@@ -75,7 +75,7 @@ export const handler = async () => {
             };
         });
 
-        await insertAvls(dbClient, vehicleLocationsWithTflOperatorRef);
+        await insertAvls(dbClient, vehicleLocationsWithTflOperatorRef, "");
 
         logger.info("TfL location retriever successful");
     } catch (error) {
