@@ -134,6 +134,9 @@ module "integrated_data_avl_pipeline" {
   ok_topic_arn                                = ""
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
   tfl_location_retriever_invoke_every_seconds = 60
+  avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id                              = data.aws_caller_identity.current.account_id
+  aws_region                                  = data.aws_region.current.name
 }
 
 module "integrated_data_avl_aggregator" {

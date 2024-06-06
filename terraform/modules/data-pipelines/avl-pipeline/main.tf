@@ -63,6 +63,12 @@ module "integrated_data_avl_processor_function" {
       Resource = [
         var.db_secret_arn
       ]
+    },
+
+    {
+      Action   = ["dynamodb:PutItem", "dynamodb:GetItem"],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
     }
   ]
 
