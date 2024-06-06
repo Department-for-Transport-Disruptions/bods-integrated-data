@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { avlSubscriptionStatuses } from "../constants";
 
 export const avlSubscribeMessageSchema = z.object({
     dataProducerEndpoint: z.string().url(),
@@ -12,7 +13,7 @@ export const avlSubscribeMessageSchema = z.object({
 
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
 
-export const subscriptionRequestSchema = z.object({
+export const avlSubscriptionRequestSchema = z.object({
     SubscriptionRequest: z.object({
         RequestTimestamp: z.string(),
         ConsumerAddress: z.string().url(),
@@ -31,9 +32,9 @@ export const subscriptionRequestSchema = z.object({
     }),
 });
 
-export type SubscriptionRequest = z.infer<typeof subscriptionRequestSchema>;
+export type AvlSubscriptionRequest = z.infer<typeof avlSubscriptionRequestSchema>;
 
-export const subscriptionResponseSchema = z.object({
+export const avlSubscriptionResponseSchema = z.object({
     SubscriptionResponse: z.object({
         ResponseTimestamp: z.string(),
         ResponderRef: z.string().optional(),
@@ -48,25 +49,25 @@ export const subscriptionResponseSchema = z.object({
     }),
 });
 
-export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>;
+export type AvlSubscriptionResponse = z.infer<typeof avlSubscriptionResponseSchema>;
 
-export const subscriptionSchema = z.object({
+export const avlSubscriptionSchema = z.object({
     PK: z.string(),
     url: z.string().url(),
     description: z.string(),
     shortDescription: z.string(),
-    status: z.string(),
+    status: z.enum(avlSubscriptionStatuses),
     requestorRef: z.string().nullish(),
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),
     serviceEndDatetime: z.string().nullish(),
 });
 
-export type Subscription = z.infer<typeof subscriptionSchema>;
+export type AvlSubscription = z.infer<typeof avlSubscriptionSchema>;
 
-export const subscriptionSchemaTransformed = subscriptionSchema.transform((data) => ({
+export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform((data) => ({
     subscriptionId: data.PK,
     ...data,
 }));
 
-export const subscriptionsSchema = z.array(subscriptionSchema);
+export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);

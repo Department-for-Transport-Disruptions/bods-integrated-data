@@ -25,6 +25,7 @@ const queryParametersSchema = z.preprocess(
         producerRef: z.coerce.string().regex(NM_TOKEN_REGEX).optional(),
         originRef: z.coerce.string().regex(NM_TOKEN_REGEX).optional(),
         destinationRef: z.coerce.string().regex(NM_TOKEN_REGEX).optional(),
+        subscriptionId: z.coerce.string().optional(),
     }),
 );
 
@@ -37,6 +38,7 @@ const retrieveSiriVmData = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
+    subscriptionId?: string,
 ): Promise<APIGatewayProxyResultV2> => {
     const avls = await getAvlDataForSiriVm(
         dbClient,
@@ -47,6 +49,7 @@ const retrieveSiriVmData = async (
         producerRef,
         originRef,
         destinationRef,
+        subscriptionId,
     );
 
     const requestMessageRef = randomUUID();
@@ -112,9 +115,19 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { boundingBox, operatorRef, vehicleRef, lineRef, producerRef, originRef, destinationRef } = parseResult.data;
+    const { boundingBox, operatorRef, vehicleRef, lineRef, producerRef, originRef, destinationRef, subscriptionId } =
+        parseResult.data;
 
-    if (boundingBox || operatorRef || vehicleRef || lineRef || producerRef || originRef || destinationRef) {
+    if (
+        boundingBox ||
+        operatorRef ||
+        vehicleRef ||
+        lineRef ||
+        producerRef ||
+        originRef ||
+        destinationRef ||
+        subscriptionId
+    ) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
         if (boundingBox && boundingBox.split(",").length !== 4) {
@@ -134,6 +147,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
                 producerRef,
                 originRef,
                 destinationRef,
+                subscriptionId,
             );
         } catch (error) {
             if (error instanceof Error) {

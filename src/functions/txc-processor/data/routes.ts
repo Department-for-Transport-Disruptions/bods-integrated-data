@@ -1,4 +1,4 @@
-import { Agency, KyselyDb, NewRoute, Route } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, NewRoute, Route, RouteType } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
 import { getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { DuplicateRouteError } from "../errors";
@@ -13,7 +13,7 @@ export const processRoutes = async (
     agency: Agency,
     isTnds: boolean,
 ): Promise<{ routes?: Route[]; isDuplicateRoute?: boolean }> => {
-    const routeType = getRouteTypeFromServiceMode(service.Mode);
+    let routeType = getRouteTypeFromServiceMode(service.Mode);
 
     try {
         const routes = await Promise.all(
@@ -29,6 +29,12 @@ export const processRoutes = async (
                 }
 
                 const lineId = getLineId(isTnds, line["@_id"], service.ServiceCode);
+
+                // The London Cable Car is a unique route that does not have a corresponding mode in TXC,
+                // thus its route type is set via its line name instead of mode mapping.
+                if (line.LineName === "London Cable Car") {
+                    routeType = RouteType.CableCar;
+                }
 
                 return {
                     agency_id: agency.id,

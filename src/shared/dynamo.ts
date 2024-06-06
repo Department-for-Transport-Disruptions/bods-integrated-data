@@ -19,7 +19,12 @@ const dynamoDbDocClient = DynamoDBDocumentClient.from(
     }),
 );
 
-export const putDynamoItem = async (tableName: string, pk: string, sk: string, tableItems: Record<string, unknown>) => {
+export const putDynamoItem = async <T extends Record<string, unknown>>(
+    tableName: string,
+    pk: string,
+    sk: string,
+    tableItems: T,
+) => {
     await dynamoDbDocClient.send(
         new PutCommand({
             TableName: tableName,

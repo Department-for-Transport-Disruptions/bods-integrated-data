@@ -198,6 +198,7 @@ export interface AvlTable {
     origin_name: string | null;
     origin_aimed_departure_time: string | null;
     destination_ref: string | null;
+    subscription_id: string | null;
     destination_name: string | null;
     destination_aimed_arrival_time: string | null;
     block_ref: string | null;
@@ -345,11 +346,15 @@ export type Frequency = Selectable<GtfsFrequencyTable>;
 export type NewFrequency = Insertable<GtfsFrequencyTable>;
 
 export enum RouteType {
-    TramOrMetro = 0,
-    Underground = 1,
     Bus = 3,
-    Ferry = 4,
+    CableCar = 6,
     Coach = 200,
+    Ferry = 4,
+    Metro = 1,
+    Rail = 2,
+    Tram = 0,
+    TrolleyBus = 11,
+    Underground = 1,
 }
 
 export interface GtfsRouteTable {

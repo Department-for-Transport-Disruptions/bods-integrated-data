@@ -10,6 +10,7 @@ export const invokeAvlSiriVmDownloader = new Command("invoke-avl-siri-vm-downloa
     .option("--producerRef <producerRef>", "Pass producerRef parameter to function")
     .option("--originRef <originRef>", "Pass originRef parameter to function")
     .option("--destinationRef <destinationRef>", "Pass destinationRef parameter to function")
+    .option("--subscriptionId <subscriptionId>", "Pass subscriptionId parameter to function")
     .action(async (options) => {
         const { stage, ...params } = options;
 

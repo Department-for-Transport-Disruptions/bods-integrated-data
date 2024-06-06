@@ -4,31 +4,51 @@ import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { addIntervalToDate, getDate } from "../dates";
+import { getDynamoItem } from "../dynamo";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
+import { avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 
-const includeAdditionalFields = (avl: NewAvl): NewAvl => ({
+export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
+    const subscription = await getDynamoItem(tableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
+
+    if (!subscription) {
+        throw new Error(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
+    }
+
+    return avlSubscriptionSchema.parse(subscription);
+};
+
+const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl => ({
     ...avl,
     geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
+    subscription_id: subscriptionId,
 });
 
-export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[]) => {
-    const avlsWithGeom = avls.map(includeAdditionalFields);
+export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
+    const modifiedAvls = avls.map((avl) => includeAdditionalFields(avl, subscriptionId));
 
-    const insertChunks = chunkArray(avlsWithGeom, 1000);
+    const insertChunks = chunkArray(modifiedAvls, 1000);
 
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
 };
 
-export const insertAvlsWithOnwardCalls = async (dbClient: KyselyDb, avlsWithOnwardCalls: SiriSchemaTransformed) => {
+export const insertAvlsWithOnwardCalls = async (
+    dbClient: KyselyDb,
+    avlsWithOnwardCalls: SiriSchemaTransformed,
+    subscriptionId: string,
+) => {
     await Promise.all(
         avlsWithOnwardCalls.map(async ({ onward_calls, ...avl }) => {
-            const avlWithGeom: NewAvl = includeAdditionalFields(avl);
+            const modifiedAvl = includeAdditionalFields(avl, subscriptionId);
 
-            const res = await dbClient.insertInto("avl").values(avlWithGeom).returning("avl.id").executeTakeFirst();
+            const res = await dbClient.insertInto("avl").values(modifiedAvl).returning("avl.id").executeTakeFirst();
 
             if (!!onward_calls && !!res) {
                 const onwardCalls: NewAvlOnwardCall[] = onward_calls.map((onwardCall) => ({
@@ -84,6 +104,7 @@ export const getAvlDataForSiriVm = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
+    subscriptionId?: string,
 ) => {
     try {
         let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -116,6 +137,10 @@ export const getAvlDataForSiriVm = async (
 
         if (destinationRef) {
             query = query.where("destination_ref", "=", destinationRef);
+        }
+
+        if (subscriptionId) {
+            query = query.where("subscription_id", "=", subscriptionId);
         }
 
         query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);

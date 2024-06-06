@@ -95,12 +95,10 @@ export const getAvlDataForGtfs = async (
     boundingBox?: string,
 ): Promise<BodsAvl[]> => {
     try {
-        const currentDateIso = getDate().toISOString();
-
         let query = dbClient
             .selectFrom("avl_bods")
             .distinctOn(["vehicle_ref", "operator_ref"])
-            .where("avl_bods.valid_until_time", ">", currentDateIso)
+            .where("avl_bods.valid_until_time", ">", sql<string>`NOW()`)
             .selectAll("avl_bods");
 
         if (routeId) {

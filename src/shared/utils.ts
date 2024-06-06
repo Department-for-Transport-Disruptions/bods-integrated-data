@@ -3,7 +3,7 @@ import { ZodSchema, z } from "zod";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
 import { VehicleType } from "./schema";
-import { subscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
+import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
@@ -29,9 +29,13 @@ export const getRouteTypeFromServiceMode = (mode?: string) => {
         case "ferry":
             return RouteType.Ferry;
         case "metro":
-            return RouteType.TramOrMetro;
+            return RouteType.Metro;
+        case "rail":
+            return RouteType.Rail;
         case "tram":
-            return RouteType.TramOrMetro;
+            return RouteType.Tram;
+        case "trolleyBus":
+            return RouteType.TrolleyBus;
         case "underground":
             return RouteType.Underground;
         default:
@@ -104,7 +108,7 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
         return null;
     }
 
-    const parsedSubscriptions = z.array(subscriptionSchemaTransformed).parse(subscriptions);
+    const parsedSubscriptions = z.array(avlSubscriptionSchemaTransformed).parse(subscriptions);
 
     return parsedSubscriptions.filter(
         (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "ACTIVE",

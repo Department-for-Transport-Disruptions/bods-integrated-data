@@ -4,9 +4,10 @@ import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
     AvlSubscribeMessage,
+    AvlSubscription,
     avlSubscribeMessageSchema,
-    subscriptionRequestSchema,
-    subscriptionResponseSchema,
+    avlSubscriptionRequestSchema,
+    avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
@@ -40,7 +41,7 @@ export const generateSubscriptionRequestXml = (
         },
     };
 
-    const verifiedSubscriptionRequest = subscriptionRequestSchema.parse(subscriptionRequestJson);
+    const verifiedSubscriptionRequest = avlSubscriptionRequestSchema.parse(subscriptionRequestJson);
 
     const completeObject = {
         "?xml": {
@@ -89,7 +90,7 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = subscriptionResponseSchema.safeParse(parsedXml.Siri);
+    const parsedJson = avlSubscriptionResponseSchema.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
         logger.error(
@@ -109,7 +110,7 @@ const updateDynamoWithSubscriptionInfo = async (
     status: "ACTIVE" | "FAILED",
     currentTimestamp?: string,
 ) => {
-    const subscriptionTableItems = {
+    const subscriptionTableItems: Omit<AvlSubscription, "PK"> = {
         url: avlSubscribeMessage.dataProducerEndpoint,
         status: status,
         description: avlSubscribeMessage.description,
