@@ -28,6 +28,7 @@ const queryParametersSchema = z.preprocess(
 );
 
 const putMetrics = async (
+    stage: string,
     download: string | undefined,
     routeId: string | undefined,
     startTimeAfter: number | undefined,
@@ -35,7 +36,7 @@ const putMetrics = async (
     boundingBox: string | undefined,
 ) => {
     await putMetricData(
-        "custom/GTFSRTDownloader",
+        `custom/GTFSRTDownloader-${stage}`,
         [
             { name: "download", set: !!download },
             { name: "routeId", set: !!routeId },
@@ -120,7 +121,7 @@ const retrieveContents = async (bucketName: string, key: string): Promise<APIGat
 };
 
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-    const { BUCKET_NAME: bucketName } = process.env;
+    const { BUCKET_NAME: bucketName, STAGE: stage } = process.env;
     const key = "gtfs-rt.bin";
 
     if (!bucketName) {
@@ -147,7 +148,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = parseResult.data;
 
-    await putMetrics(download, routeId, startTimeAfter, startTimeBefore, boundingBox);
+    await putMetrics(stage || "", download, routeId, startTimeAfter, startTimeBefore, boundingBox);
 
     if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");

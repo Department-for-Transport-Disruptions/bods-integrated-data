@@ -110,10 +110,16 @@ rollback-last-local-db-migration:
 	STAGE=local ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
 bastion-tunnel:
-	./scripts/bastion-tunnel.sh
+	./scripts/bastion-tunnel.sh false
+
+bastion-tunnel-temp:
+	./scripts/bastion-tunnel.sh true
 
 get-db-credentials:
-	./scripts/get-db-credentials.sh
+	./scripts/get-db-credentials.sh false
+
+get-db-credentials-temp:
+	./scripts/get-db-credentials.sh true
 
 # Dates
 

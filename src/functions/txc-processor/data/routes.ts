@@ -1,9 +1,8 @@
-import { logger } from "@baselime/lambda-logger";
 import { Agency, KyselyDb, NewRoute, Route, RouteType } from "@bods-integrated-data/shared/database";
 import { Service } from "@bods-integrated-data/shared/schema";
 import { getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { DuplicateRouteError } from "../errors";
-import { getPreviousRouteIdByLineId, getTndsRoute, insertRoutes } from "./database";
+import { getTndsRoute, insertRoutes } from "./database";
 
 const getLineId = (isTnds: boolean, lineId: string, serviceCode?: string) =>
     isTnds ? `${serviceCode}_${lineId}` : lineId;
@@ -31,20 +30,11 @@ export const processRoutes = async (
 
                 const lineId = getLineId(isTnds, line["@_id"], service.ServiceCode);
 
-                const previousRoute = await getPreviousRouteIdByLineId(dbClient, lineId);
-
-                if (previousRoute) {
-                    logger.info(`Using route ID from previous import, routeId: ${previousRoute.id}, lineId: ${lineId}`);
-                } else {
-                    logger.info(`Creating new route ID for line: ${lineId}`);
-                }
-
                 if (line.LineName === "London Cable Car") {
                     routeType = RouteType.CableCar;
                 }
 
                 return {
-                    id: previousRoute?.id,
                     agency_id: agency.id,
                     route_short_name: line.LineName,
                     route_long_name: "",
