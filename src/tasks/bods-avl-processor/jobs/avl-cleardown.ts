@@ -10,12 +10,14 @@ void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        const result = await dbClient
-            .deleteFrom("avl_bods")
-            .where("avl_bods.valid_until_time", "<", sql<string>`NOW()`)
-            .execute();
+        const result = await Promise.all([
+            dbClient.deleteFrom("avl").where("valid_until_time", "<", sql<string>`NOW()`).executeTakeFirst(),
+            dbClient.deleteFrom("avl_bods").where("valid_until_time", "<", sql<string>`NOW()`).executeTakeFirst(),
+        ]);
 
-        logger.info(`AVL cleardown successful, ${result[0].numDeletedRows} rows deleted`);
+        logger.info(
+            `AVL cleardown successful: deleted ${result[0].numDeletedRows} avl rows, ${result[1].numDeletedRows} avl_bods rows`,
+        );
 
         console.timeEnd("avl-cleardown");
     } catch (e) {
