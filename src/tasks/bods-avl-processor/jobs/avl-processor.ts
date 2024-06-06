@@ -8,7 +8,7 @@ import {
     matchAvlToTimetables,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema/avl.schema";
+import { siriBodsSchemaTransformed } from "@bods-integrated-data/shared/schema/avl.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosResponse } from "axios";
 import { XMLParser } from "fast-xml-parser";
@@ -91,7 +91,7 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string, stage: string) 
 
     const parsedXml = xmlParser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
+    const parsedJson = siriBodsSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data");
