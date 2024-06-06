@@ -1,4 +1,6 @@
-export const mockSubscriptionsFromDynamo = [
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+
+export const mockSubscriptionsFromDynamo: AvlSubscription[] = [
     {
         PK: "subscription-one",
         url: "https://www.mock-data-producer-one.com",

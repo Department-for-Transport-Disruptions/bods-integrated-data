@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import {
-    SubscriptionRequest,
-    subscriptionRequestSchema,
-    subscriptionResponseSchema,
+    AvlSubscriptionRequest,
+    avlSubscriptionRequestSchema,
+    avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
@@ -18,7 +18,7 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = subscriptionRequestSchema.safeParse(parsedXml.Siri);
+    const parsedJson = avlSubscriptionRequestSchema.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the subscription request.", parsedJson.error.format());
@@ -29,7 +29,7 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const generateSubscriptionResponse = (subscriptionRequest: SubscriptionRequest) => {
+export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptionRequest) => {
     const currentTimestamp = getDate().toISOString();
     const requestMessageRef = randomUUID();
 
@@ -50,7 +50,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: SubscriptionRe
         },
     };
 
-    const verifiedSubscriptionResponse = subscriptionResponseSchema.parse(subscriptionResponseJson);
+    const verifiedSubscriptionResponse = avlSubscriptionResponseSchema.parse(subscriptionResponseJson);
 
     const completeObject = {
         "?xml": {

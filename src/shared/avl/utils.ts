@@ -4,11 +4,26 @@ import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
 import { Avl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { addIntervalToDate, getDate } from "../dates";
+import { getDynamoItem } from "../dynamo";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
+import { avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
+
+export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
+    const subscription = await getDynamoItem(tableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
+
+    if (!subscription) {
+        throw new Error(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
+    }
+
+    return avlSubscriptionSchema.parse(subscription);
+};
 
 const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl => ({
     ...avl,
