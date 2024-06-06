@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { avlSubscriptionStatuses } from "../constants";
 
 export const avlSubscribeMessageSchema = z.object({
     dataProducerEndpoint: z.string().url(),
@@ -55,7 +56,7 @@ export const avlSubscriptionSchema = z.object({
     url: z.string().url(),
     description: z.string(),
     shortDescription: z.string(),
-    status: z.enum(["ACTIVE", "FAILED", "TERMINATED", "UNAVAILABLE"]),
+    status: z.enum(avlSubscriptionStatuses),
     requestorRef: z.string().nullish(),
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),
