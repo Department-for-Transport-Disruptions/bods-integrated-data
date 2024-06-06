@@ -141,6 +141,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                 },
                 Bearing: avl.bearing,
                 BlockRef: avl.block_ref,
+                Monitored: avl.monitored,
                 VehicleRef: avl.vehicle_ref,
                 VehicleJourneyRef: avl.vehicle_journey_ref,
             },
