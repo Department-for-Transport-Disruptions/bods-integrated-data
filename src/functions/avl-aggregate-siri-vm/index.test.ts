@@ -52,6 +52,7 @@ const mockAvl: Avl[] = [
         journey_code: null,
         vehicle_unique_id: null,
         has_onward_calls: false,
+        subscription_id: "",
     },
     {
         id: 24183,
@@ -98,6 +99,7 @@ const mockAvl: Avl[] = [
         has_onward_calls: true,
         route_id: null,
         trip_id: null,
+        subscription_id: "",
     },
 ];
 
