@@ -257,22 +257,54 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
         .execute();
 };
 
-type MatchedTrips = Record<
-    string,
-    | {
-          trip_id: string;
-          revision: number;
-          use: boolean;
-      }
-    | undefined
-    | null
->;
+type MatchingTimetable = Awaited<ReturnType<typeof retrieveMatchableTimetableData>>[0];
 
-// export const assignTripValueToLookup = (trips: MatchedTrips, tripKey: string) => {};
+type MatchedTrip = {
+    trip_id: string;
+    revision: number;
+    use: boolean;
+};
 
-export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
-    const timetableData = await retrieveMatchableTimetableData(dbClient);
+type MatchedTrips = Record<string, MatchedTrip | undefined | null>;
 
+export const assignTripValueToLookup = (
+    tripValue: MatchedTrip | null | undefined,
+    timetable: MatchingTimetable,
+    revision: number,
+) => {
+    if (tripValue === undefined) {
+        return {
+            trip_id: timetable.trip_id,
+            revision,
+            use: true,
+        };
+    }
+
+    if (tripValue) {
+        if (!revision) {
+            return null;
+        }
+
+        if (revision > tripValue.revision) {
+            return {
+                trip_id: timetable.trip_id,
+                revision,
+                use: true,
+            };
+        }
+
+        if (revision === tripValue.revision) {
+            return {
+                ...tripValue,
+                use: false,
+            };
+        }
+    }
+
+    return tripValue;
+};
+
+const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
     const lookup: {
         [key: string]: {
             noc: string;
@@ -308,59 +340,47 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         const revision = item.revision_number && !Number.isNaN(item.revision_number) ? Number(item.revision_number) : 0;
 
         if (tripKey) {
-            const tripValue = lookup[routeKey].matchedTrips[tripKey];
-
-            if (tripValue === undefined) {
-                lookup[routeKey].matchedTrips[tripKey] = {
-                    trip_id: item.trip_id,
-                    revision,
-                    use: true,
-                };
-            } else if (tripValue) {
-                if (!revision) {
-                    lookup[routeKey].matchedTrips[tripKey] = null;
-                } else if (revision > tripValue.revision) {
-                    lookup[routeKey].matchedTrips[tripKey] = {
-                        trip_id: item.trip_id,
-                        revision,
-                        use: true,
-                    };
-                } else if (revision === tripValue.revision) {
-                    lookup[routeKey].matchedTrips[tripKey] = {
-                        ...tripValue,
-                        use: false,
-                    };
-                }
-            }
+            lookup[routeKey].matchedTrips[tripKey] = assignTripValueToLookup(
+                lookup[routeKey].matchedTrips[tripKey],
+                item,
+                revision,
+            );
         }
 
         if (tripKeyWithOriginAndDestination) {
-            const tripValue = lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination];
-
-            if (tripValue === undefined) {
-                lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = {
-                    trip_id: item.trip_id,
+            lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] =
+                assignTripValueToLookup(
+                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination],
+                    item,
                     revision,
-                    use: true,
-                };
-            } else if (tripValue) {
-                if (!revision) {
-                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = null;
-                } else if (revision > tripValue.revision) {
-                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = {
-                        trip_id: item.trip_id,
-                        revision,
-                        use: true,
-                    };
-                } else if (revision === tripValue.revision) {
-                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = {
-                        ...tripValue,
-                        use: false,
-                    };
-                }
-            }
+                );
         }
     }
+
+    return lookup;
+};
+
+/**
+ * Attempts to match the AVL data to timetable data to obtain a route_id and trip_id. This is done
+ * by creating a lookup map containing the timetable data with route and trip keys. The process is as follows:
+ *
+ * 1. Create a route key of the form `${operator_ref}_${line_ref}`
+ * 2. For the given route create a map of trips with a key of the form `${direction_ref}_${journey_code}`
+ *      a. If a duplicate trip is found, check if there is a revision with a higher value and use that
+ *      b. If there is no revision for any of the duplicate trips or the highest revision number is duplicated then
+ *         return no match for this check
+ * 3. For the given route create a map of trips with a key of the form `${direction_ref}_${journey_code}_${origin_ref}_${destination_ref}`, this
+ *    is used in case the above check still returns duplicate trips
+ * 4. Cross reference the avl data against the lookup to see if there is a match
+ *
+ *
+ * @param dbClient
+ * @param avl
+ * @returns Array of matched and unmatched AVL data and count of total and matched AVL
+ */
+export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
+    const timetableData = await retrieveMatchableTimetableData(dbClient);
+    const lookup = createTimetableMatchingLookup(timetableData);
 
     let matchedAvlCount = 0;
     let totalAvlCount = 0;

@@ -6,7 +6,8 @@
         "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",
         "test:ci": "vitest run",
         "test": "vitest",
-        "build-tasks": "rm -rf ./tasks/dist && pnpm -r --if-present build --filter tasks"
+        "build-tasks": "rm -rf ./tasks/dist && pnpm -r --if-present build --filter tasks",
+        "build-test": "tsc --noEmit"
     },
     "type": "module",
     "keywords": [],

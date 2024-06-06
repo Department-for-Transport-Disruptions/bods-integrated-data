@@ -786,7 +786,7 @@ describe("utils", () => {
             });
         });
 
-        it("does not set route_id or trip_id if no matching route found", async () => {
+        it("returns no matching data if no matching route found", async () => {
             const avl: Partial<NewAvl>[] = [
                 {
                     operator_ref: "NOC1",
@@ -861,7 +861,7 @@ describe("utils", () => {
             });
         });
 
-        it("uses latest revisions if multiple matching trips with revisions", async () => {
+        it("returns match with latest revision if multiple matching trips with revisions", async () => {
             const avl: Partial<NewAvl>[] = [
                 {
                     operator_ref: "NT",
@@ -1025,7 +1025,7 @@ describe("utils", () => {
             });
         });
 
-        it("returns match if multiple possible trips are found for initial matching attempt but a single match is found with origin/destination checks", async () => {
+        it("returns a match if multiple possible trips are found for initial matching attempt but a single match is found with origin/destination checks", async () => {
             const avl: Partial<NewAvl>[] = [
                 {
                     operator_ref: "NT",
@@ -1148,7 +1148,7 @@ describe("utils", () => {
             });
         });
 
-        it("returns match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks but one has a higher version", async () => {
+        it("returns a match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks but one has a higher version", async () => {
             const avl: Partial<NewAvl>[] = [
                 {
                     operator_ref: "NT",
@@ -1192,9 +1192,8 @@ describe("utils", () => {
                     route_short_name: "R1",
                     ticket_machine_journey_code: "tmjc1",
                     trip_id: "nctr_trip3",
-                    revision_number: "2",
-                    origin_stop_ref: "xyz123",
-                    destination_stop_ref: "abc123",
+                    origin_stop_ref: "123abc",
+                    destination_stop_ref: "123xyz",
                 },
             ]);
 

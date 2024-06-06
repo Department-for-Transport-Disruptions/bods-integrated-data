@@ -88,6 +88,9 @@ test-functions:
 docker-build-%:
 	docker build src --build-arg servicePath=$* -t $*:latest
 
+typescript-build-test:
+	cd src && pnpm run build-test
+
 # CLI helpers
 
 commands:
