@@ -53,11 +53,7 @@ export const getAvlDataForSiriVm = async (
     destinationRef?: string,
 ) => {
     try {
-        let query = dbClient
-            .selectFrom("avl")
-            .distinctOn(["operator_ref", "vehicle_ref"])
-            .where("avl.valid_until_time", ">", sql<string>`NOW()`)
-            .selectAll("avl");
+        let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
 
         if (boundingBox) {
             const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
