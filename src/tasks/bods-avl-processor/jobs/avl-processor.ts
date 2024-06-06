@@ -1,7 +1,7 @@
 import { performance } from "node:perf_hooks";
 import { Stream } from "node:stream";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewBodsAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     generateGtfsRtFeed,
     mapAvlToGtfsEntity,
@@ -50,7 +50,7 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
     }
 };
 
-const generateGtfs = async (avl: NewAvl[]) => {
+const generateGtfs = async (avl: NewBodsAvl[]) => {
     try {
         logger.info("Generating GTFS-RT...");
         const entities = avl.map(mapAvlToGtfsEntity);

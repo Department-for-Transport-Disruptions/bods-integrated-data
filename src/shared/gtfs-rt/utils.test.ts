@@ -806,5 +806,405 @@ describe("utils", () => {
                 totalAvlCount: 1,
             });
         });
+
+        it("returns no match if multiple possible trip ids are found for a single location", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: undefined,
+                    },
+                ],
+                matchedAvlCount: 0,
+                totalAvlCount: 1,
+            });
+        });
+
+        it("uses latest revisions if multiple matching trips with revisions", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                    revision_number: "1",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    revision_number: "2",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: "nctr_trip2",
+                    },
+                ],
+                matchedAvlCount: 1,
+                totalAvlCount: 1,
+            });
+        });
+
+        it("returns no match if multiple possible trips and any do not have a revision", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                    revision_number: "1",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    revision_number: "2",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip3",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: undefined,
+                    },
+                ],
+                matchedAvlCount: 0,
+                totalAvlCount: 1,
+            });
+        });
+
+        it("returns no match if multiple possible trips and 2 share the highest revision number", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                    revision_number: "1",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    revision_number: "2",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip3",
+                    revision_number: "2",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: undefined,
+                    },
+                ],
+                matchedAvlCount: 0,
+                totalAvlCount: 1,
+            });
+        });
+
+        it("returns match if multiple possible trips are found for initial matching attempt but a single match is found with origin/destination checks", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                    origin_ref: "abc123",
+                    destination_ref: "xyz123",
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                    revision_number: "1",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    revision_number: "2",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip3",
+                    revision_number: "2",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: "nctr_trip2",
+                    },
+                ],
+                matchedAvlCount: 1,
+                totalAvlCount: 1,
+            });
+        });
+
+        it("returns no match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                    origin_ref: "abc123",
+                    destination_ref: "xyz123",
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip3",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: undefined,
+                    },
+                ],
+                matchedAvlCount: 0,
+                totalAvlCount: 1,
+            });
+        });
+
+        it("returns match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks but one has a higher version", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "NT",
+                    line_ref: "NTR1",
+                    dated_vehicle_journey_ref: "tmjc1",
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                    origin_ref: "abc123",
+                    destination_ref: "xyz123",
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                    revision_number: "5",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    revision_number: "2",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip3",
+                    revision_number: "2",
+                    origin_stop_ref: "xyz123",
+                    destination_stop_ref: "abc123",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: "nctr_trip",
+                    },
+                ],
+                matchedAvlCount: 1,
+                totalAvlCount: 1,
+            });
+        });
     });
 });

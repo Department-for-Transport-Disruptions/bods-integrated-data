@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
-import { mapAvlDateStrings } from "../avl/utils";
-import { Avl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { mapBodsAvlDateStrings } from "../avl/utils";
+import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
@@ -93,7 +93,7 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: string,
-): Promise<Avl[]> => {
+): Promise<BodsAvl[]> => {
     try {
         const currentDateIso = getDate().toISOString();
 
@@ -137,7 +137,7 @@ export const getAvlDataForGtfs = async (
 
         const avls = await query.execute();
 
-        return avls.map(mapAvlDateStrings);
+        return avls.map(mapBodsAvlDateStrings);
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);
@@ -246,6 +246,9 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
             "trip.id as trip_id",
             "trip.ticket_machine_journey_code",
             "trip.direction",
+            "trip.revision_number",
+            "trip.origin_stop_ref",
+            "trip.destination_stop_ref",
         ])
         .where((eb) =>
             eb.or([
@@ -256,6 +259,19 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
         .execute();
 };
 
+type MatchedTrips = Record<
+    string,
+    | {
+          trip_id: string;
+          revision: number;
+          use: boolean;
+      }
+    | undefined
+    | null
+>;
+
+// export const assignTripValueToLookup = (trips: MatchedTrips, tripKey: string) => {};
+
 export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
     const timetableData = await retrieveMatchableTimetableData(dbClient);
 
@@ -264,35 +280,88 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
             noc: string;
             route_id: number;
             route_short_name: string;
-            trips: Record<
-                string,
-                {
-                    direction: string;
-                    ticket_machine_journey_code: string | null;
-                    trip_id: string;
-                }
-            >;
+            matchedTrips: MatchedTrips;
+            matchedTripsWithOriginAndDestination: MatchedTrips;
         };
     } = {};
 
     for (const item of timetableData) {
         const routeKey = `${item.noc}_${item.route_short_name}`;
-        const tripKey = `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`;
+        const tripKey =
+            item.direction && item.ticket_machine_journey_code
+                ? `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`
+                : null;
+
+        const tripKeyWithOriginAndDestination =
+            item.origin_stop_ref && item.destination_stop_ref
+                ? `${tripKey}_${item.origin_stop_ref}_${item.destination_stop_ref}`
+                : null;
 
         if (!lookup[routeKey]) {
             lookup[routeKey] = {
                 noc: item.noc,
                 route_id: item.route_id,
                 route_short_name: item.route_short_name,
-                trips: {},
+                matchedTrips: {},
+                matchedTripsWithOriginAndDestination: {},
             };
         }
 
-        lookup[routeKey].trips[tripKey] = {
-            direction: item.direction,
-            ticket_machine_journey_code: item.ticket_machine_journey_code,
-            trip_id: item.trip_id,
-        };
+        const revision = item.revision_number && !Number.isNaN(item.revision_number) ? Number(item.revision_number) : 0;
+
+        if (tripKey) {
+            const tripValue = lookup[routeKey].matchedTrips[tripKey];
+
+            if (tripValue === undefined) {
+                lookup[routeKey].matchedTrips[tripKey] = {
+                    trip_id: item.trip_id,
+                    revision,
+                    use: true,
+                };
+            } else if (tripValue) {
+                if (!revision) {
+                    lookup[routeKey].matchedTrips[tripKey] = null;
+                } else if (revision > tripValue.revision) {
+                    lookup[routeKey].matchedTrips[tripKey] = {
+                        trip_id: item.trip_id,
+                        revision,
+                        use: true,
+                    };
+                } else if (revision === tripValue.revision) {
+                    lookup[routeKey].matchedTrips[tripKey] = {
+                        ...tripValue,
+                        use: false,
+                    };
+                }
+            }
+        }
+
+        if (tripKeyWithOriginAndDestination) {
+            const tripValue = lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination];
+
+            if (tripValue === undefined) {
+                lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = {
+                    trip_id: item.trip_id,
+                    revision,
+                    use: true,
+                };
+            } else if (tripValue) {
+                if (!revision) {
+                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = null;
+                } else if (revision > tripValue.revision) {
+                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = {
+                        trip_id: item.trip_id,
+                        revision,
+                        use: true,
+                    };
+                } else if (revision === tripValue.revision) {
+                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = {
+                        ...tripValue,
+                        use: false,
+                    };
+                }
+            }
+        }
     }
 
     let matchedAvlCount = 0;
@@ -302,12 +371,29 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         const routeKey = getRouteKey(item);
         const matchingRoute = routeKey ? lookup[routeKey] : null;
 
-        const matchingTrip =
+        let potentialMatchingTrip =
             matchingRoute && item.direction_ref && item.dated_vehicle_journey_ref
-                ? matchingRoute.trips[
+                ? matchingRoute.matchedTrips[
                       `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}`
                   ]
                 : null;
+
+        if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
+            potentialMatchingTrip =
+                matchingRoute &&
+                item.direction_ref &&
+                item.dated_vehicle_journey_ref &&
+                item.origin_ref &&
+                item.destination_ref
+                    ? matchingRoute.matchedTripsWithOriginAndDestination[
+                          `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}_${
+                              item.origin_ref
+                          }_${item.destination_ref}`
+                      ]
+                    : null;
+        }
+
+        const matchingTrip = potentialMatchingTrip?.use === true ? potentialMatchingTrip : null;
 
         if (matchingTrip) {
             matchedAvlCount++;

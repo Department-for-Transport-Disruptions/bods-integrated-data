@@ -69,7 +69,7 @@ export interface Database {
     nptg_region: NptgRegionTable;
     nptg_region_new: NptgRegionTable;
     avl: AvlTable;
-    avl_bods: AvlTable;
+    avl_bods: BodsAvlTable;
     agency: GtfsAgencyTable;
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
@@ -226,6 +226,36 @@ export interface AvlTable {
 export type Avl = Selectable<AvlTable>;
 export type NewAvl = Insertable<AvlTable>;
 export type AvlUpdate = Updateable<AvlTable>;
+
+export interface BodsAvlTable {
+    id: Generated<number>;
+    response_time_stamp: string;
+    producer_ref: string;
+    recorded_at_time: string;
+    valid_until_time: string;
+    line_ref: string | null;
+    direction_ref: string;
+    occupancy: string | null;
+    operator_ref: string;
+    data_frame_ref: string | null;
+    dated_vehicle_journey_ref: string | null;
+    vehicle_ref: string;
+    longitude: number;
+    latitude: number;
+    bearing: string | null;
+    published_line_name: string | null;
+    origin_ref: string | null;
+    origin_aimed_departure_time: string | null;
+    destination_ref: string | null;
+    block_ref: string | null;
+    geom: RawBuilder<string> | null;
+    route_id: number | null;
+    trip_id: string | null;
+}
+
+export type BodsAvl = Selectable<BodsAvlTable>;
+export type NewBodsAvl = Insertable<BodsAvlTable>;
+export type BodsAvlUpdate = Updateable<BodsAvlTable>;
 
 export interface AvlOnwardCallTable {
     id: Generated<number>;
