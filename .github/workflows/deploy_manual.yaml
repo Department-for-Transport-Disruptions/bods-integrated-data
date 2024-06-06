@@ -5,6 +5,7 @@ on:
         options:
           - dev
           - test
+          - prod-temp
         type: choice
         description: Environment to deploy to
 
@@ -35,6 +36,17 @@ jobs:
     uses: ./.github/workflows/terraform_apply.yaml
     name: Terraform Apply Test
     if: inputs.stage == 'test'
+    with:
+      stage: ${{ inputs.stage }}
+      terraform_version: 1.6.6
+      use_artifacts: false
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST}}
+
+  terraform_apply_prod_temp:
+    uses: ./.github/workflows/terraform_apply.yaml
+    name: Terraform Apply Test
+    if: inputs.stage == 'prod-temp'
     with:
       stage: ${{ inputs.stage }}
       terraform_version: 1.6.6
