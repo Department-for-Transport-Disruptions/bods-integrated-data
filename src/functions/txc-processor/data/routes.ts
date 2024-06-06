@@ -30,6 +30,8 @@ export const processRoutes = async (
 
                 const lineId = getLineId(isTnds, line["@_id"], service.ServiceCode);
 
+                // The London Cable car is a unique route that does not have a corresponding mode in TXC,
+                // thus its route type is set via its line name instead of mode mapping.
                 if (line.LineName === "London Cable Car") {
                     routeType = RouteType.CableCar;
                 }
