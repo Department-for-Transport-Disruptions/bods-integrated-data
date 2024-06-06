@@ -1,6 +1,8 @@
 import { NewAvl } from "@bods-integrated-data/shared/database";
 import { expect } from "vitest";
 
+export const mockSubscriptionId = "123";
+
 export const testSiri = `
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns="http://www.siri.org.uk/siri"
@@ -226,7 +228,7 @@ export const testInvalidSiri = `
 </Siri>
 `;
 
-export const parsedSiri = [
+export const parsedSiri: NewAvl[] = [
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
         producer_ref: "ATB",
@@ -250,6 +252,7 @@ export const parsedSiri = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
+        subscription_id: mockSubscriptionId,
         journey_code: null,
         origin_name: null,
         ticket_machine_service_code: null,
@@ -279,6 +282,7 @@ export const parsedSiri = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
+        subscription_id: mockSubscriptionId,
         destination_aimed_arrival_time: "2018-08-17T15:22:20",
         destination_name: "Destination unknown",
         journey_code: "VJ_123",
@@ -289,7 +293,7 @@ export const parsedSiri = [
         vehicle_unique_id: "Vehicle_123",
         has_onward_calls: false,
     },
-];
+] as NewAvl[];
 
 export const parsedSiriWithOnwardCalls: NewAvl[] = [
     {
@@ -315,6 +319,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
+        subscription_id: mockSubscriptionId,
         journey_code: null,
         origin_name: null,
         ticket_machine_service_code: null,
@@ -344,6 +349,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         destination_ref: "destinationRef",
         block_ref: "blockRef",
         geom: expect.anything() as unknown,
+        subscription_id: mockSubscriptionId,
         destination_aimed_arrival_time: "2018-08-17T15:22:20",
         destination_name: "Destination unknown",
         journey_code: "VJ_123",

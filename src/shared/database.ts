@@ -198,6 +198,7 @@ export interface AvlTable {
     origin_name: string | null;
     origin_aimed_departure_time: string | null;
     destination_ref: string | null;
+    subscription_id: string | null;
     destination_name: string | null;
     destination_aimed_arrival_time: string | null;
     block_ref: string | null;

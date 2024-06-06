@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { getDate, isDateAfter, subtractIntervalFromDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem, recursiveScan } from "@bods-integrated-data/shared/dynamo";
-import { Subscription, subscriptionsSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { AvlSubscription, avlSubscriptionsSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosError } from "axios";
 
@@ -14,12 +14,12 @@ export const getSubscriptions = async (tableName: string) => {
         return null;
     }
 
-    const parsedSubscriptions = subscriptionsSchema.parse(subscriptions);
+    const parsedSubscriptions = avlSubscriptionsSchema.parse(subscriptions);
 
     return parsedSubscriptions.filter((subscription) => subscription.status !== "TERMINATED");
 };
 
-export const resubscribeToDataProducer = async (subscription: Subscription, subscribeEndpoint: string) => {
+export const resubscribeToDataProducer = async (subscription: AvlSubscription, subscribeEndpoint: string) => {
     logger.info(`Attempting to resubscribe to subscription ID: ${subscription.PK}`);
 
     const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscription.PK);
@@ -75,7 +75,7 @@ export const handler = async () => {
                     return;
                 }
 
-                await putDynamoItem(tableName, subscription.PK, "SUBSCRIPTION", {
+                await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                     ...subscription,
                     status: "UNAVAILABLE",
                 });

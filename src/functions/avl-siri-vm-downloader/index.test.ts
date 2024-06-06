@@ -119,6 +119,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 undefined,
+                undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -176,6 +177,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 undefined,
+                undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -198,6 +200,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 mocks.mockDbClient,
                 undefined,
                 "1,2,3",
+                undefined,
                 undefined,
                 undefined,
                 undefined,
@@ -245,6 +248,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 undefined,
+                undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -284,6 +288,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 "1",
+                undefined,
                 undefined,
                 undefined,
                 undefined,
@@ -329,6 +334,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 "1",
                 undefined,
                 undefined,
+                undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -370,6 +376,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 "1",
+                undefined,
                 undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
@@ -413,6 +420,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 "1",
+                undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -430,6 +438,34 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             });
 
             expect(getAvlDataForSiriVmMock).not.toHaveBeenCalled();
+        });
+
+        it("returns a 200 with filtered data when the subscriptionId query param is a string", async () => {
+            getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
+            createSiriVmMock.mockReturnValueOnce("siri-output");
+
+            mockRequest.queryStringParameters = {
+                subscriptionId: "1",
+            };
+
+            await expect(handler(mockRequest)).resolves.toEqual({
+                statusCode: 200,
+                headers: { "Content-Type": "application/xml" },
+                body: "siri-output",
+            });
+
+            expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                "1",
+            );
+            expect(logger.error).not.toHaveBeenCalled();
         });
 
         it("returns a 500 when an unexpected error occurs", async () => {

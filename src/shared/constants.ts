@@ -98,3 +98,4 @@ export const REGIONS: Record<
 };
 
 export const tflOperatorRef = "TFLO";
+export const avlSubscriptionStatuses = ["ACTIVE", "FAILED", "TERMINATED", "UNAVAILABLE"] as const;

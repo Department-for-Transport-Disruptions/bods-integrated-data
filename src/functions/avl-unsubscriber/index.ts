@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
+import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { Subscription, subscriptionSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import { APIGatewayEvent } from "aws-lambda";
@@ -10,19 +11,6 @@ import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { terminateSubscriptionRequestSchema, terminateSubscriptionResponseSchema } from "./subscription.schema";
 import { mockSubscriptionResponseBody } from "./test/mockData";
-
-const getSubscriptionInfo = async (subscriptionId: string, tableName: string) => {
-    const subscription = await getDynamoItem(tableName, {
-        PK: subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-
-    if (!subscription) {
-        throw new Error(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
-    }
-
-    return subscriptionSchema.parse(subscription);
-};
 
 export const generateTerminationSubscriptionRequest = (
     subscriptionId: string,
@@ -93,7 +81,7 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Subscription, tableName: string) => {
+const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: AvlSubscription, tableName: string) => {
     const currentTimestamp = getDate().toISOString();
     const messageIdentifier = randomUUID();
 
@@ -177,7 +165,7 @@ export const handler = async (event: APIGatewayEvent) => {
 
         logger.info(`Starting AVL unsubscriber to unsubscribe from subscription: ${subscriptionId}`);
 
-        const subscription = await getSubscriptionInfo(subscriptionId, tableName);
+        const subscription = await getAvlSubscription(subscriptionId, tableName);
 
         try {
             await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);

@@ -68,7 +68,6 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockResolvedValue({
             status: 200,
-            ok: true,
         } as unknown as Response);
 
         await handler();
@@ -101,7 +100,6 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockResolvedValue({
             status: 200,
-            ok: true,
         } as unknown as Response);
 
         await handler();

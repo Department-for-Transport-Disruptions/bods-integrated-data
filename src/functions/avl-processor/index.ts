@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription, insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
@@ -29,7 +29,15 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb) => {
+export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb, tableName: string) => {
+    const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
+
+    const subscription = await getAvlSubscription(subscriptionId, tableName);
+
+    if (subscription.status !== "ACTIVE") {
+        throw new Error(`Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`);
+    }
+
     const data = await getS3Object({
         Bucket: record.s3.bucket.name,
         Key: record.s3.object.key,
@@ -49,13 +57,19 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             .filter((avl) => !avl.onward_calls)
             .map<NewAvl>(({ onward_calls, ...rest }) => rest);
 
-        await insertAvls(dbClient, avlsWithoutOnwardCalls);
+        await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
 
-        await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls);
+        await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
     }
 };
 
 export const handler = async (event: SQSEvent) => {
+    const { TABLE_NAME: tableName } = process.env;
+
+    if (!tableName) {
+        throw new Error("Missing env var: TABLE_NAME must be set.");
+    }
+
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
@@ -65,7 +79,7 @@ export const handler = async (event: SQSEvent) => {
             event.Records.map((record) =>
                 Promise.all(
                     (JSON.parse(record.body) as S3Event).Records.map((s3Record) =>
-                        processSqsRecord(s3Record, dbClient),
+                        processSqsRecord(s3Record, dbClient, tableName),
                     ),
                 ),
             ),
