@@ -1,3 +1,4 @@
+import { logger } from "@baselime/lambda-logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
@@ -69,5 +70,5 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
             Payload: JSON.stringify(invokePayload),
         });
 
-        console.log(`Subscription request for producer: ${producerEndpoint} sent to subscribe endpoint`);
+        logger.info(`Subscription request for producer: ${producerEndpoint} sent to subscribe endpoint`);
     });

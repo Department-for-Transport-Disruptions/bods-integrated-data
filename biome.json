@@ -32,6 +32,9 @@
             "correctness": {
                 "noUnusedImports": "error",
                 "noUnusedVariables": "error"
+            },
+            "suspicious": {
+                "noConsoleLog": "error"
             }
         }
     }

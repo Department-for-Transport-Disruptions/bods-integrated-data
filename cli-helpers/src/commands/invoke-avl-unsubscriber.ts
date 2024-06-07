@@ -1,3 +1,4 @@
+import { logger } from "@baselime/lambda-logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
@@ -48,5 +49,5 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
             Payload: JSON.stringify(invokePayload),
         });
 
-        console.log(`Unsubscribe request sent for subscription ID: ${subscriptionId}.`);
+        logger.info(`Unsubscribe request sent for subscription ID: ${subscriptionId}.`);
     });
