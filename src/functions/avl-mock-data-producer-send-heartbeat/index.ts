@@ -8,7 +8,7 @@ export const handler = async () => {
     try {
         const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
 
-        const currentTimestamp = getDate().toISOString();
+        const currentTime = getDate().toISOString();
 
         if (!stage || !dataEndpoint || !tableName) {
             throw new Error("Missing env vars: STAGE, DATA_ENDPOINT and TABLE_NAME must be set");
@@ -28,7 +28,7 @@ export const handler = async () => {
                         ? `${dataEndpoint}?subscription_id=${subscription.subscriptionId}`
                         : `${dataEndpoint}/${subscription.subscriptionId}`;
 
-                const HeartbeatNotification = generateMockHeartbeat(subscription.subscriptionId, currentTimestamp);
+                const HeartbeatNotification = generateMockHeartbeat(subscription.subscriptionId, currentTime);
 
                 await axios.post(url, HeartbeatNotification, {
                     headers: {

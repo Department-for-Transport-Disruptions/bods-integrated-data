@@ -41,10 +41,12 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
             subscriptionId = response.subscriptionId;
         }
 
+        const currentTime = new Date().toISOString();
+
         const heartbeatNotificationBody = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri>
   <HeartbeatNotification>
-  <RequestTimestamp>${new Date().toISOString()}</RequestTimestamp>
+  <RequestTimestamp>${currentTime}</RequestTimestamp>
   <ProducerRef>${subscriptionId}</ProducerRef>
   <Status>true</Status>
   <ServiceStartedTime>2024-04-15T13:25:00+01:00</ServiceStartedTime>
@@ -58,13 +60,13 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
     xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
     version="2.0">
     <ServiceDelivery>
-        <ResponseTimestamp>${new Date().toISOString()}</ResponseTimestamp>
+        <ResponseTimestamp>${currentTime}</ResponseTimestamp>
         <ProducerRef>${subscriptionId}</ProducerRef>
         <VehicleMonitoringDelivery version="2.0">
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
             <VehicleActivity>
-                <RecordedAtTime>${new Date().toISOString()}</RecordedAtTime>
-                <ValidUntilTime>${new Date().toISOString()}</ValidUntilTime>
+                <RecordedAtTime>${currentTime}</RecordedAtTime>
+                <ValidUntilTime>${currentTime}</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
@@ -86,8 +88,8 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
                 </MonitoredVehicleJourney>
             </VehicleActivity>
             <VehicleActivity>
-                <RecordedAtTime>${new Date().toISOString()}</RecordedAtTime>
-                <ValidUntilTime>${new Date().toISOString()}</ValidUntilTime>
+                <RecordedAtTime>${currentTime}</RecordedAtTime>
+                <ValidUntilTime>${currentTime}</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>

@@ -1,4 +1,4 @@
-import dayjs, { extend as dayjsExtend, Dayjs, ManipulateType } from "dayjs";
+import dayjs, { extend as dayjsExtend, Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";
@@ -98,12 +98,6 @@ export const getNextOccurrenceOfDate = (dateOfMonth: number, month: number) => {
 
     return date;
 };
-
-export const addIntervalToDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
-    dayjs.utc(date).add(interval, intervalUnit);
-
-export const subtractIntervalFromDate = (date: string | Date | Dayjs, interval: number, intervalUnit: ManipulateType) =>
-    dayjs.utc(date).subtract(interval, intervalUnit);
 
 export const getDateWithCustomFormat = (date: string, format: string) => dayjs.utc(date, format);
 

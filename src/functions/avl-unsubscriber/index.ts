@@ -82,12 +82,12 @@ const parseXml = (xml: string) => {
 };
 
 const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: AvlSubscription, tableName: string) => {
-    const currentTimestamp = getDate().toISOString();
+    const currentTime = getDate().toISOString();
     const messageIdentifier = randomUUID();
 
     const terminateSubscriptionRequestMessage = generateTerminationSubscriptionRequest(
         subscription.PK,
-        currentTimestamp,
+        currentTime,
         messageIdentifier,
         subscription.requestorRef ?? null,
     );
@@ -138,7 +138,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Avl
         {
             ...subscription,
             status: "TERMINATED",
-            serviceEndDatetime: currentTimestamp,
+            serviceEndDatetime: currentTime,
         },
     );
 };

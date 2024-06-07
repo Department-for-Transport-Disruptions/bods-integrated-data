@@ -6,10 +6,12 @@ import {
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 
 export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
-    const siri = createSiriVm(avls, requestMessageRef);
+    const responseTime = getDate();
+    const siri = createSiriVm(avls, requestMessageRef, responseTime);
 
     logger.info("Uploading SIRI-VM data to S3");
 

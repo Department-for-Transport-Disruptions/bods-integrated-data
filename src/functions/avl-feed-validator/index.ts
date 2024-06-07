@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import { getDate, isDateAfter, subtractIntervalFromDate } from "@bods-integrated-data/shared/dates";
+import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem, recursiveScan } from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription, avlSubscriptionsSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
@@ -68,7 +68,7 @@ export const handler = async () => {
                 // If we do not receive a heartbeat notification after 90 seconds we will attempt to resubscribe to the data producer.
                 const isHeartbeatValid = isDateAfter(
                     getDate(subscription.heartbeatLastReceivedDateTime ?? subscription.serviceStartDatetime),
-                    subtractIntervalFromDate(currentTime, 90, "s"),
+                    currentTime.subtract(90, "seconds"),
                 );
 
                 if (isHeartbeatValid) {

@@ -7,6 +7,7 @@ import {
 } from "@bods-integrated-data/shared/avl/utils";
 import { NM_TOKEN_ARRAY_REGEX, NM_TOKEN_REGEX } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { z } from "zod";
@@ -53,7 +54,8 @@ const retrieveSiriVmData = async (
     );
 
     const requestMessageRef = randomUUID();
-    const siri = createSiriVm(avls, requestMessageRef);
+    const responseTime = getDate();
+    const siri = createSiriVm(avls, requestMessageRef, responseTime);
 
     return {
         statusCode: 200,
