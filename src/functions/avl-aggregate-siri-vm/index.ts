@@ -2,25 +2,40 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import {
     AGGREGATED_SIRI_VM_FILE_PATH,
+    AGGREGATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
+import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 
 export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
     const responseTime = getDate();
-    const siri = createSiriVm(avls, requestMessageRef, responseTime);
+    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
+    const siriVmTfl = createSiriVm(
+        avls.filter((avl) => avl.operator_ref === tflOperatorRef),
+        requestMessageRef,
+        responseTime,
+    );
 
     logger.info("Uploading SIRI-VM data to S3");
 
-    await putS3Object({
-        Bucket: bucketName,
-        Key: AGGREGATED_SIRI_VM_FILE_PATH,
-        ContentType: "application/xml",
-        Body: siri,
-    });
+    await Promise.all([
+        putS3Object({
+            Bucket: bucketName,
+            Key: AGGREGATED_SIRI_VM_FILE_PATH,
+            ContentType: "application/xml",
+            Body: siriVm,
+        }),
+        putS3Object({
+            Bucket: bucketName,
+            Key: AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+            ContentType: "application/xml",
+            Body: siriVmTfl,
+        }),
+    ]);
 };
 
 export const handler = async () => {

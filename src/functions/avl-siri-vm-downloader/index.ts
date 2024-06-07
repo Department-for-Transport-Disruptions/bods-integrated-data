@@ -55,12 +55,12 @@ const retrieveSiriVmData = async (
 
     const requestMessageRef = randomUUID();
     const responseTime = getDate();
-    const siri = createSiriVm(avls, requestMessageRef, responseTime);
+    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
 
     return {
         statusCode: 200,
         headers: { "Content-Type": "application/xml" },
-        body: siri,
+        body: siriVm,
     };
 };
 

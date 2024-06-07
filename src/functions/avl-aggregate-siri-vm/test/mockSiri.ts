@@ -1,4 +1,4 @@
-export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+export const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <ServiceDelivery>
     <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
@@ -37,7 +37,57 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
           <DirectionRef>outbound</DirectionRef>
           <PublishedLineName>ra</PublishedLineName>
           <Occupancy>full</Occupancy>
-          <OperatorRef>TBTN</OperatorRef>
+          <OperatorRef>TFLO</OperatorRef>
+          <OriginRef>3390VB01</OriginRef>
+          <OriginName>test origin name</OriginName>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
+          <DestinationRef>1090BSTN05</DestinationRef>
+          <DestinationName>test destination name</DestinationName>
+          <DestinationAimedArrivalTime>2024-02-26T14:36:18+00:00</DestinationAimedArrivalTime>
+          <VehicleLocation>
+            <Longitude>-1.471941</Longitude>
+            <Latitude>52.92178</Latitude>
+          </VehicleLocation>
+          <BlockRef>DY04</BlockRef>
+          <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
+          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+        </MonitoredVehicleJourney>
+        <Extensions>
+          <VehicleJourney>
+            <Operational>
+              <TicketMachine>
+                <TicketMachineServiceCode>123</TicketMachineServiceCode>
+                <JourneyCode>VJ_123</JourneyCode>
+              </TicketMachine>
+            </Operational>
+            <VehicleUniqueId>Vehicle_123</VehicleUniqueId>
+          </VehicleJourney>
+        </Extensions>
+      </VehicleActivity>
+    </VehicleMonitoringDelivery>
+  </ServiceDelivery>
+</Siri>
+`;
+
+export const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+  <ServiceDelivery>
+    <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
+    <ProducerRef>DepartmentForTransport</ProducerRef>
+    <VehicleMonitoringDelivery>
+      <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
+      <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
+      <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
+      <VehicleActivity>
+        <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
+        <VehicleMonitoringRef>test</VehicleMonitoringRef>
+        <MonitoredVehicleJourney>
+          <LineRef>ra</LineRef>
+          <DirectionRef>outbound</DirectionRef>
+          <PublishedLineName>ra</PublishedLineName>
+          <Occupancy>full</Occupancy>
+          <OperatorRef>TFLO</OperatorRef>
           <OriginRef>3390VB01</OriginRef>
           <OriginName>test origin name</OriginName>
           <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
