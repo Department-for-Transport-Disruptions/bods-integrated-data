@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import {
     AGGREGATED_SIRI_VM_FILE_PATH,
+    AGGREGATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
@@ -16,6 +17,7 @@ import { fromZodError } from "zod-validation-error";
 const queryParametersSchema = z.preprocess(
     (val) => Object(val),
     z.object({
+        downloadTfl: z.coerce.string().toLowerCase().optional(),
         boundingBox: z.coerce
             .string()
             .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)
@@ -117,8 +119,17 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { boundingBox, operatorRef, vehicleRef, lineRef, producerRef, originRef, destinationRef, subscriptionId } =
-        parseResult.data;
+    const {
+        downloadTfl,
+        boundingBox,
+        operatorRef,
+        vehicleRef,
+        lineRef,
+        producerRef,
+        originRef,
+        destinationRef,
+        subscriptionId,
+    } = parseResult.data;
 
     if (
         boundingBox ||
@@ -163,6 +174,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         } finally {
             await dbClient.destroy();
         }
+    }
+
+    if (downloadTfl === "true") {
+        return retrieveSiriVmFile(bucketName, AGGREGATED_SIRI_VM_TFL_FILE_PATH);
     }
 
     return retrieveSiriVmFile(bucketName, AGGREGATED_SIRI_VM_FILE_PATH);
