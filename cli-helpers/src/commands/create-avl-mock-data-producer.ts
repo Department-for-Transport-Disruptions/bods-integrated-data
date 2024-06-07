@@ -1,3 +1,4 @@
+import { logger } from "@baselime/lambda-logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
@@ -32,5 +33,5 @@ export const createAvlMockDataProducer = new Command("create-avl-mock-data-produ
             Payload: JSON.stringify(invokePayload),
         });
 
-        console.log(`Mock AVL data producer created, name: ${cleanName}`);
+        logger.info(`Mock AVL data producer created, name: ${cleanName}`);
     });

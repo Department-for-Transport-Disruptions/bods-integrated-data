@@ -1,3 +1,4 @@
+import { logger } from "@baselime/lambda-logger";
 import { Command, Option } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
@@ -127,5 +128,5 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
             Payload: JSON.stringify(invokePayload),
         });
 
-        console.log(`${notificationType} sent to data endpoint`);
+        logger.info(`${notificationType} sent to data endpoint`);
     });

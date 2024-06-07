@@ -1,4 +1,5 @@
 import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/client-lambda";
+import { logger } from "@baselime/lambda-logger";
 import { Option } from "@commander-js/extra-typings";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
@@ -26,24 +27,24 @@ export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandIn
     });
 
     try {
-        console.log("Invoking lambda:", invokeCommand.FunctionName);
+        logger.info(`Invoking lambda: ${invokeCommand.FunctionName}`);
 
         const response = await lambdaClient.send(new InvokeCommand(invokeCommand));
 
-        console.log("Invoke complete");
+        logger.info("Invoke complete");
 
         if (invokeCommand.InvocationType === "RequestResponse") {
             const payload = response?.Payload?.transformToString();
 
             // Lambdas without a return statement will return a "null" payload
             if (payload && payload !== "null") {
-                console.log("Response", JSON.stringify(JSON.parse(payload), null, 2));
+                logger.info(`Response", ${JSON.stringify(JSON.parse(payload), null, 2)}`);
             }
         }
 
         return response;
     } catch (error) {
-        console.log("Failed to execute lambda:", error);
+        logger.info(`Failed to execute lambda:", ${JSON.stringify(error)}`);
     } finally {
         lambdaClient.destroy();
     }

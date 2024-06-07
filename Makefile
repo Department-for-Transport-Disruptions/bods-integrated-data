@@ -82,6 +82,9 @@ build-functions:
 lint-functions:
 	pnpm lint
 
+lint-functions-with-fix:
+	pnpm lint:fix
+
 test-functions:
 	cd src && pnpm test:ci
 
