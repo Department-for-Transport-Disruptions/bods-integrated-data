@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
-import { mapAvlDateStrings } from "../avl/utils";
-import { Avl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { mapBodsAvlDateStrings } from "../avl/utils";
+import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
@@ -93,7 +93,7 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: string,
-): Promise<Avl[]> => {
+): Promise<BodsAvl[]> => {
     try {
         let query = dbClient
             .selectFrom("avl_bods")
@@ -135,7 +135,7 @@ export const getAvlDataForGtfs = async (
 
         const avls = await query.execute();
 
-        return avls.map(mapAvlDateStrings);
+        return avls.map(mapBodsAvlDateStrings);
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem getting AVL data from the database", error);
@@ -244,6 +244,9 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
             "trip.id as trip_id",
             "trip.ticket_machine_journey_code",
             "trip.direction",
+            "trip.revision_number",
+            "trip.origin_stop_ref",
+            "trip.destination_stop_ref",
         ])
         .where((eb) =>
             eb.or([
@@ -254,44 +257,130 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
         .execute();
 };
 
-export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
-    const timetableData = await retrieveMatchableTimetableData(dbClient);
+type MatchingTimetable = Awaited<ReturnType<typeof retrieveMatchableTimetableData>>[0];
 
+type MatchedTrip = {
+    trip_id: string;
+    revision: number;
+    use: boolean;
+};
+
+type MatchedTrips = Record<string, MatchedTrip | undefined | null>;
+
+export const assignTripValueToLookup = (
+    tripValue: MatchedTrip | null | undefined,
+    timetable: MatchingTimetable,
+    revision: number,
+) => {
+    if (tripValue === undefined) {
+        return {
+            trip_id: timetable.trip_id,
+            revision,
+            use: true,
+        };
+    }
+
+    if (tripValue) {
+        if (!revision) {
+            return null;
+        }
+
+        if (revision > tripValue.revision) {
+            return {
+                trip_id: timetable.trip_id,
+                revision,
+                use: true,
+            };
+        }
+
+        if (revision === tripValue.revision) {
+            return {
+                ...tripValue,
+                use: false,
+            };
+        }
+    }
+
+    return tripValue;
+};
+
+const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
     const lookup: {
         [key: string]: {
             noc: string;
             route_id: number;
             route_short_name: string;
-            trips: Record<
-                string,
-                {
-                    direction: string;
-                    ticket_machine_journey_code: string | null;
-                    trip_id: string;
-                }
-            >;
+            matchedTrips: MatchedTrips;
+            matchedTripsWithOriginAndDestination: MatchedTrips;
         };
     } = {};
 
     for (const item of timetableData) {
         const routeKey = `${item.noc}_${item.route_short_name}`;
-        const tripKey = `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`;
+        const tripKey =
+            item.direction && item.ticket_machine_journey_code
+                ? `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`
+                : null;
+
+        const tripKeyWithOriginAndDestination =
+            item.origin_stop_ref && item.destination_stop_ref
+                ? `${tripKey}_${item.origin_stop_ref}_${item.destination_stop_ref}`
+                : null;
 
         if (!lookup[routeKey]) {
             lookup[routeKey] = {
                 noc: item.noc,
                 route_id: item.route_id,
                 route_short_name: item.route_short_name,
-                trips: {},
+                matchedTrips: {},
+                matchedTripsWithOriginAndDestination: {},
             };
         }
 
-        lookup[routeKey].trips[tripKey] = {
-            direction: item.direction,
-            ticket_machine_journey_code: item.ticket_machine_journey_code,
-            trip_id: item.trip_id,
-        };
+        const revision = item.revision_number && !Number.isNaN(item.revision_number) ? Number(item.revision_number) : 0;
+
+        if (tripKey) {
+            lookup[routeKey].matchedTrips[tripKey] = assignTripValueToLookup(
+                lookup[routeKey].matchedTrips[tripKey],
+                item,
+                revision,
+            );
+        }
+
+        if (tripKeyWithOriginAndDestination) {
+            lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] =
+                assignTripValueToLookup(
+                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination],
+                    item,
+                    revision,
+                );
+        }
     }
+
+    return lookup;
+};
+
+/**
+ * Attempts to match the AVL data to timetable data to obtain a route_id and trip_id. This is done
+ * by creating a lookup map containing the timetable data with route and trip keys. The process is as follows:
+ *
+ * 1. Create a route key of the form `${operator_ref}_${line_ref}`
+ * 2. For the given route create a map of trips with a key of the form `${direction_ref}_${journey_code}`
+ *      a. If a duplicate trip is found, check if there is a revision with a higher value and use that
+ *      b. If there is no revision for any of the duplicate trips or the highest revision number is duplicated then
+ *         return no match for this check
+ * 3. For the given route create a map of trips with a key of the form `${direction_ref}_${journey_code}_${origin_ref}_${destination_ref}`, this
+ *    is used in case the above check still returns duplicate trips
+ * 4. Cross reference the avl data against the lookup to see if there is a match
+ *
+ *
+ * @param dbClient
+ * @param avl
+ * @returns Array of matched and unmatched AVL data and count of total and matched AVL
+ */
+export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
+    const timetableData = await retrieveMatchableTimetableData(dbClient);
+    const lookup = createTimetableMatchingLookup(timetableData);
 
     let matchedAvlCount = 0;
     let totalAvlCount = 0;
@@ -300,12 +389,29 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
         const routeKey = getRouteKey(item);
         const matchingRoute = routeKey ? lookup[routeKey] : null;
 
-        const matchingTrip =
+        let potentialMatchingTrip =
             matchingRoute && item.direction_ref && item.dated_vehicle_journey_ref
-                ? matchingRoute.trips[
+                ? matchingRoute.matchedTrips[
                       `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}`
                   ]
                 : null;
+
+        if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
+            potentialMatchingTrip =
+                matchingRoute &&
+                item.direction_ref &&
+                item.dated_vehicle_journey_ref &&
+                item.origin_ref &&
+                item.destination_ref
+                    ? matchingRoute.matchedTripsWithOriginAndDestination[
+                          `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}_${
+                              item.origin_ref
+                          }_${item.destination_ref}`
+                      ]
+                    : null;
+        }
+
+        const matchingTrip = potentialMatchingTrip?.use === true ? potentialMatchingTrip : null;
 
         if (matchingTrip) {
             matchedAvlCount++;

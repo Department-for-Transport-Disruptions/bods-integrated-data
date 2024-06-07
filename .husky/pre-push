@@ -1,3 +1,4 @@
 pnpm lint
 cd src
 pnpm test:ci
+pnpm build-test
