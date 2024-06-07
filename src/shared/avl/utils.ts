@@ -160,6 +160,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                 DestinationRef: avl.destination_ref,
                 DestinationName: avl.destination_name,
                 DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
+                Monitored: avl.monitored,
                 VehicleLocation: {
                     Longitude: avl.longitude,
                     Latitude: avl.latitude,

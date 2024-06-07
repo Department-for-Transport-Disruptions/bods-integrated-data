@@ -49,8 +49,8 @@ export const mockSiriResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalo
             <Latitude>52.92178</Latitude>
           </VehicleLocation>
           <BlockRef>DY04</BlockRef>
-          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
           <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
+          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
         </MonitoredVehicleJourney>
         <Extensions>
           <VehicleJourney>

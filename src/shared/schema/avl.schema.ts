@@ -67,14 +67,15 @@ const vehicleActivitySchema = z.object({
         DestinationRef: z.coerce.string().nullish(),
         DestinationName: z.coerce.string().nullish(),
         DestinationAimedArrivalTime: z.coerce.string().nullish(),
+        Monitored: z.coerce.string().nullish(),
         VehicleLocation: z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
         Bearing: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
-        VehicleJourneyRef: z.coerce.string().nullish(),
         VehicleRef: z.coerce.string(),
+        VehicleJourneyRef: z.coerce.string().nullish(),
         OnwardCalls: z
             .object({
                 OnwardCall: makeFilteredArraySchema(onwardCallSchema),
@@ -138,6 +139,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
             bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
             published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+            monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
             origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
             origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
             origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
