@@ -2,7 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
-import { Avl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
+import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { addIntervalToDate, getDate } from "../dates";
 import { getDynamoItem } from "../dynamo";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
@@ -77,6 +77,21 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
         : null,
     destination_aimed_arrival_time: avl.destination_aimed_arrival_time
         ? new Date(avl.destination_aimed_arrival_time).toISOString()
+        : null,
+});
+
+/**
+ * Maps AVL timestamp fields as ISO strings.
+ * @param avl The AVL
+ * @returns The AVL with date strings
+ */
+export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
+    ...avl,
+    response_time_stamp: new Date(avl.response_time_stamp).toISOString(),
+    recorded_at_time: new Date(avl.recorded_at_time).toISOString(),
+    valid_until_time: new Date(avl.valid_until_time).toISOString(),
+    origin_aimed_departure_time: avl.origin_aimed_departure_time
+        ? new Date(avl.origin_aimed_departure_time).toISOString()
         : null,
 });
 

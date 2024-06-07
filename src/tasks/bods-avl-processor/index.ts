@@ -1,3 +1,4 @@
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import Bree from "bree";
 import Pino from "pino";
 
@@ -19,8 +20,15 @@ const bree = new Bree({
             closeWorkerAfterMs: 30000,
         },
     ],
-    errorHandler: (error) => {
+    errorHandler: async (error) => {
         logger.error(error);
+
+        await putMetricData("custom/BODSAVLProcessor", [
+            {
+                MetricName: "Errors",
+                Value: 1,
+            },
+        ]);
     },
 });
 
