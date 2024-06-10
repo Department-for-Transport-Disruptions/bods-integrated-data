@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
+import { getSiriVmValidUntilTimeOffset } from "@bods-integrated-data/shared/avl/utils";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
 import { generateMockSiriVm } from "./mockSiriVm";
@@ -8,9 +9,9 @@ export const handler = async () => {
     try {
         const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
 
-        const currentTimestamp = getDate().toISOString();
-        // ValidUntilTime for a SIRI-VM is defined as 5 minutes after the current time
-        const validUntilTime = addIntervalToDate(currentTimestamp, 5, "minutes").toISOString();
+        const responseTime = getDate();
+        const currentTime = responseTime.toISOString();
+        const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
         if (!stage || !dataEndpoint || !tableName) {
             throw new Error("Missing env vars: STAGE, DATA_ENDPOINT and TABLE_NAME must be set");
@@ -30,7 +31,7 @@ export const handler = async () => {
                         ? `${dataEndpoint}?subscription_id=${subscription.subscriptionId}`
                         : `${dataEndpoint}/${subscription.subscriptionId}`;
 
-                const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTimestamp, validUntilTime);
+                const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTime, validUntilTime);
 
                 await axios.post(url, siriVm, {
                     headers: {

@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
-import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import { AGGREGATED_SIRI_VM_FILE_PATH, AGGREGATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -77,6 +77,33 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 {
                     Bucket: mockBucketName,
                     Key: AGGREGATED_SIRI_VM_FILE_PATH,
+                    ResponseContentDisposition: "inline",
+                    ResponseContentType: "application/xml",
+                },
+                3600,
+            );
+            expect(logger.error).not.toHaveBeenCalled();
+        });
+
+        it("returns a 200 with SIRI-VM TfL in-place when the downloadTfl param is true", async () => {
+            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${AGGREGATED_SIRI_VM_TFL_FILE_PATH}`;
+            mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
+
+            mockRequest.queryStringParameters = {
+                downloadTfl: "true",
+            };
+
+            await expect(handler(mockRequest)).resolves.toEqual({
+                statusCode: 302,
+                headers: {
+                    Location: mockPresignedUrl,
+                },
+            });
+
+            expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
+                {
+                    Bucket: mockBucketName,
+                    Key: AGGREGATED_SIRI_VM_TFL_FILE_PATH,
                     ResponseContentDisposition: "inline",
                     ResponseContentType: "application/xml",
                 },

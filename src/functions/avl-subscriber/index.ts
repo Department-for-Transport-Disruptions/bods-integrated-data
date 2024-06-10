@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { addIntervalToDate, getDate } from "@bods-integrated-data/shared/dates";
+import { getSiriVmTerminationTimeOffset } from "@bods-integrated-data/shared/avl/utils";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
     AvlSubscribeMessage,
@@ -140,16 +141,16 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     dataEndpoint: string,
     mockProducerSubscribeEndpoint?: string,
 ) => {
-    const currentTimestamp = getDate().toISOString();
-    // Initial termination time for a SIRI-VM subscription request is defined as 10 years after the current time
-    const initialTerminationTime = addIntervalToDate(currentTimestamp, 10, "years").toISOString();
+    const requestTime = getDate();
+    const currentTime = requestTime.toISOString();
+    const initialTerminationTime = getSiriVmTerminationTimeOffset(requestTime);
 
     const messageIdentifier = randomUUID();
 
     const subscriptionRequestMessage = generateSubscriptionRequestXml(
         avlSubscribeMessage,
         subscriptionId,
-        currentTimestamp,
+        currentTime,
         initialTerminationTime,
         messageIdentifier,
         dataEndpoint,
@@ -192,7 +193,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         );
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTimestamp);
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTime);
 };
 
 export const handler = async (event: APIGatewayEvent) => {

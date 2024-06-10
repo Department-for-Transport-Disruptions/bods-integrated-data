@@ -30,23 +30,23 @@ const parseXml = (xml: string) => {
 };
 
 export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptionRequest) => {
-    const currentTimestamp = getDate().toISOString();
+    const currentTime = getDate().toISOString();
     const requestMessageRef = randomUUID();
 
     const subscriptionResponseJson = {
         SubscriptionResponse: {
-            ResponseTimestamp: currentTimestamp,
+            ResponseTimestamp: currentTime,
             ResponderRef: "Mock AVL Producer",
             RequestMessageRef: requestMessageRef,
             ResponseStatus: {
-                ResponseTimestamp: currentTimestamp,
+                ResponseTimestamp: currentTime,
                 RequestMessageRef: subscriptionRequest.SubscriptionRequest.RequestorRef,
                 SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
                 Status: "ACTIVE",
             },
-            ServiceStartedTime: currentTimestamp,
+            ServiceStartedTime: currentTime,
         },
     };
 

@@ -3,6 +3,7 @@ import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 export const invokeAvlSiriVmDownloader = new Command("invoke-avl-siri-vm-downloader")
     .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .option("--downloadTfl <downloadTfl>", "Pass downloadTfl parameter to function")
     .option("--boundingBox <boundingBox>", "Pass boundingBox parameter to function")
     .option("--operatorRef <operatorRef>", "Pass operatorRef parameter to function")
     .option("--vehicleRef <vehicleRef>", "Pass vehicleRef parameter to function")

@@ -1,10 +1,10 @@
-import { AGGREGATED_SIRI_VM_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import { AGGREGATED_SIRI_VM_FILE_PATH, AGGREGATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { Avl } from "@bods-integrated-data/shared/database";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { generateSiriVmAndUploadToS3 } from "./index";
-import { mockSiriResult } from "./test/mockSiri";
+import { mockSiriVmResult, mockSiriVmTflResult } from "./test/mockSiri";
 
 const mockAvl: Avl[] = [
     {
@@ -62,7 +62,7 @@ const mockAvl: Avl[] = [
         valid_until_time: "2024-02-26 14:42:12",
         line_ref: "ra",
         direction_ref: "outbound",
-        operator_ref: "TBTN",
+        operator_ref: "TFLO",
         data_frame_ref: "",
         dated_vehicle_journey_ref: "101405",
         vehicle_ref: "0717_-_FJ58_KKL",
@@ -119,12 +119,18 @@ describe("generateSiriVmAndUploadToS3", () => {
     it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
         await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket");
 
-        expect(s3.putS3Object).toBeCalled();
-        expect(s3.putS3Object).toBeCalledWith({
+        expect(s3.putS3Object).toHaveBeenCalledTimes(2);
+        expect(s3.putS3Object).toHaveBeenNthCalledWith(1, {
             Bucket: "test-bucket",
             Key: AGGREGATED_SIRI_VM_FILE_PATH,
             ContentType: "application/xml",
-            Body: mockSiriResult,
+            Body: mockSiriVmResult,
+        });
+        expect(s3.putS3Object).toHaveBeenNthCalledWith(2, {
+            Bucket: "test-bucket",
+            Key: AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+            ContentType: "application/xml",
+            Body: mockSiriVmTflResult,
         });
     });
 });

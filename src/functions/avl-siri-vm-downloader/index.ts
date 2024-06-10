@@ -2,11 +2,13 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import {
     AGGREGATED_SIRI_VM_FILE_PATH,
+    AGGREGATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
 import { NM_TOKEN_ARRAY_REGEX, NM_TOKEN_REGEX } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { z } from "zod";
@@ -15,6 +17,7 @@ import { fromZodError } from "zod-validation-error";
 const queryParametersSchema = z.preprocess(
     (val) => Object(val),
     z.object({
+        downloadTfl: z.coerce.string().toLowerCase().optional(),
         boundingBox: z.coerce
             .string()
             .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)
@@ -53,12 +56,13 @@ const retrieveSiriVmData = async (
     );
 
     const requestMessageRef = randomUUID();
-    const siri = createSiriVm(avls, requestMessageRef);
+    const responseTime = getDate();
+    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
 
     return {
         statusCode: 200,
         headers: { "Content-Type": "application/xml" },
-        body: siri,
+        body: siriVm,
     };
 };
 
@@ -115,8 +119,17 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
-    const { boundingBox, operatorRef, vehicleRef, lineRef, producerRef, originRef, destinationRef, subscriptionId } =
-        parseResult.data;
+    const {
+        downloadTfl,
+        boundingBox,
+        operatorRef,
+        vehicleRef,
+        lineRef,
+        producerRef,
+        originRef,
+        destinationRef,
+        subscriptionId,
+    } = parseResult.data;
 
     if (
         boundingBox ||
@@ -161,6 +174,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         } finally {
             await dbClient.destroy();
         }
+    }
+
+    if (downloadTfl === "true") {
+        return retrieveSiriVmFile(bucketName, AGGREGATED_SIRI_VM_TFL_FILE_PATH);
     }
 
     return retrieveSiriVmFile(bucketName, AGGREGATED_SIRI_VM_FILE_PATH);

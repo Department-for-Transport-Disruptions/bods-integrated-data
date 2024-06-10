@@ -1,9 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
+import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
-import { addIntervalToDate, getDate } from "../dates";
 import { getDynamoItem } from "../dynamo";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
@@ -11,6 +11,7 @@ import { avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
+export const AGGREGATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem(tableName, {
@@ -212,10 +213,9 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
     });
 };
 
-export const createSiriVm = (avls: Avl[], requestMessageRef: string) => {
-    const date = getDate();
-    const currentTime = date.toISOString();
-    const validUntilTime = addIntervalToDate(date, 5, "minutes").toISOString(); // SIRI-VM ValidUntilTime field is defined as 5 minutes after the current timestamp
+export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
+    const currentTime = responseTime.toISOString();
+    const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
     const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
 
@@ -261,3 +261,17 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string) => {
 
     return request;
 };
+
+/**
+ * Returns a SIRI-VM valid until time value defined as 5 minutes after the given time.
+ * @param time The response time to offset from.
+ * @returns The valid until time.
+ */
+export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minutes").toISOString();
+
+/**
+ * Returns a SIRI-VM termination time value defined as 10 years after the given time.
+ * @param time The response time to offset from.
+ * @returns The termination.
+ */
+export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
