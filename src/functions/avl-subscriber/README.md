@@ -2,10 +2,10 @@
 
 ### Overview
 
-The purpose of this Lambda is to handle the SIRI-VM subscription process when a data producer adds a new AVL feed via 
-the main BODS website. 
+The purpose of this Lambda is to handle the SIRI-VM subscription process when a data producer adds a new AVL feed via
+the main BODS website.
 
-It should also securely store auth credentials in parameter store and create an addition to the subscription DynamoDB 
+It should also securely store auth credentials in parameter store and create an addition to the subscription DynamoDB
 table so that we can keep an up-to-date record of AVL data feeds and their status.
 
 ### User Flow
@@ -34,5 +34,9 @@ The Lambda performs the following actions
 4. Sends the request to the data producer endpoint
 5. Processes the response from the data producer endpoint
 6. Store the subscription details in a DynamoDB table
-   1. The subscription will have a status of "ACTIVE" if the subscription process was successful
-   2. The subscription will have a status of "FAILED" if the subscription process failed
+    1. The subscription will have a status of "ACTIVE" if the subscription process was successful
+    2. The subscription will have a status of "FAILED" if the subscription process failed
+
+The following checks are made throughout the function:
+
+![subscribe-flow.png](subscribe-flow.png)
