@@ -55,7 +55,7 @@ describe("avl-subscriber", () => {
     it("should process a subscription request if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
         mockedAxios.post.mockResolvedValue({
             data: mockSubscriptionResponseBody,
-            status: 200,
+            status: 201,
         } as AxiosResponse);
 
         const expectedSubscription: Omit<AvlSubscription, "PK"> = {
@@ -132,7 +132,7 @@ describe("avl-subscriber", () => {
         },
     );
 
-    it("should throw an error if we do not receive a 200 response from the data producer", async () => {
+    it("should throw an error if we do not receive a 201 response from the data producer", async () => {
         const axiosHeaders = new AxiosHeaders();
         const axiosConfig = { url: "http://localhost:3000", headers: axiosHeaders };
         mockedAxios.post.mockRejectedValue(
@@ -189,7 +189,7 @@ describe("avl-subscriber", () => {
     it("should throw an error if we receive an empty response from the data producer", async () => {
         mockedAxios.post.mockResolvedValue({
             data: null,
-            status: 200,
+            status: 201,
         } as AxiosResponse);
 
         const expectedSubscription: Omit<AvlSubscription, "PK"> = {
@@ -235,7 +235,7 @@ describe("avl-subscriber", () => {
 
         mockedAxios.post.mockResolvedValue({
             data: mockSubscriptionResponseBody,
-            status: 200,
+            status: 201,
         } as AxiosResponse);
 
         const expectedSubscription: Omit<AvlSubscription, "PK"> = {
@@ -282,7 +282,7 @@ describe("avl-subscriber", () => {
     it("should throw an error if it cannot parse subscription response", async () => {
         mockedAxios.post.mockResolvedValue({
             data: "<Siri/>",
-            status: 200,
+            status: 201,
         } as AxiosResponse);
 
         const expectedSubscription: Omit<AvlSubscription, "PK"> = {
@@ -331,7 +331,7 @@ describe("avl-subscriber", () => {
     it("should throw an error if the data producers subscription response doesn't include a response status of true", async () => {
         mockedAxios.post.mockResolvedValue({
             data: mockSubscriptionResponseBodyFalseStatus,
-            status: 200,
+            status: 201,
         } as AxiosResponse);
 
         const expectedSubscription: Omit<AvlSubscription, "PK"> = {

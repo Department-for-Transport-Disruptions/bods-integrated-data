@@ -11,7 +11,7 @@ import {
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
@@ -198,7 +198,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTime);
 };
 
-export const handler = async (event: APIGatewayEvent) => {
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
         const {
             TABLE_NAME: tableName,
@@ -252,6 +252,10 @@ export const handler = async (event: APIGatewayEvent) => {
         }
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
+
+        return {
+            statusCode: 201,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem subscribing to the AVL feed.", e);
