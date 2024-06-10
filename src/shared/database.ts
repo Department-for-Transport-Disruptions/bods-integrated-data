@@ -466,6 +466,7 @@ export interface GtfsTripTable {
     origin_stop_ref: string | null;
     destination_stop_ref: string | null;
     revision_number: string | null;
+    departure_time: string | null;
 }
 
 export type Trip = Selectable<GtfsTripTable>;
