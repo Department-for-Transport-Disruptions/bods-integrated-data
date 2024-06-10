@@ -114,6 +114,8 @@ export const isDateAfter = (date: Dayjs, dateToCompare: Dayjs) => date.isSameOrA
 
 export const getDuration = (duration: string) => dayjs.duration(duration);
 
+export const getLocalTime = (time: string) => dayjs.tz(dayjs(time, "HH:mm:ss"));
+
 /**
  * Gets an array of dates between a given start and end date, if the end date
  * is more than 9 months in the future then it is capped
