@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
+import { getLocalTime } from "@bods-integrated-data/shared/dates";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { VehicleJourneyMapping } from "../types";
 import { insertTrips } from "./database";
@@ -35,6 +36,7 @@ export const processTrips = async (
                 file_path: filePath,
                 direction: journeyPattern?.Direction || "",
                 revision_number: vehicleJourney["@_RevisionNumber"],
+                departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
             };
         })
         .filter(notEmpty);

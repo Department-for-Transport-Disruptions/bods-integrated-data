@@ -1,15 +1,22 @@
 import { KyselyDb, NewTrip, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import MockDate from "mockdate";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { VehicleJourneyMapping } from "../types";
 import * as databaseFunctions from "./database";
 import { processTrips } from "./trips";
 
 describe("trips", () => {
+    MockDate.set("2024-02-10");
+
     let dbClient: KyselyDb;
     const insertTripsMock = vi.spyOn(databaseFunctions, "insertTrips");
 
     beforeEach(() => {
         vi.resetAllMocks();
+    });
+
+    afterAll(() => {
+        MockDate.reset();
     });
 
     it("inserts trips into the database", async () => {
@@ -50,6 +57,7 @@ describe("trips", () => {
                 tripId: "",
                 serviceCode: "test",
                 vehicleJourney: {
+                    "@_RevisionNumber": "2",
                     LineRef: "15",
                     ServiceRef: "16",
                     JourneyPatternRef: "17",
@@ -76,6 +84,7 @@ describe("trips", () => {
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
                 direction: "inbound",
+                departure_time: "00:00:00z",
             },
             {
                 id: expect.any(String) as string,
@@ -89,6 +98,8 @@ describe("trips", () => {
                 ticket_machine_journey_code: "",
                 file_path: "",
                 direction: "",
+                revision_number: "2",
+                departure_time: "00:01:00z",
             },
         ];
 
@@ -102,6 +113,8 @@ describe("trips", () => {
     });
 
     it("uses the journey pattern destination display when the vehicle journey destination display is omitted", async () => {
+        MockDate.set("2024-06-10");
+
         const vehicleJourneyMappings: VehicleJourneyMapping[] = [
             {
                 routeId: 1,
@@ -114,7 +127,7 @@ describe("trips", () => {
                     ServiceRef: "6",
                     JourneyPatternRef: "7",
                     VehicleJourneyCode: "8",
-                    DepartureTime: "00:00:00",
+                    DepartureTime: "06:00:00",
                     Operational: {
                         Block: {
                             BlockNumber: "block1",
@@ -145,6 +158,7 @@ describe("trips", () => {
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
                 direction: "",
+                departure_time: "05:00:00z",
             },
         ];
 

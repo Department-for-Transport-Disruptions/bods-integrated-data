@@ -226,8 +226,8 @@ module "integrated_data_avl_data_producer_api" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-  sg_id                       = module.integrated_data_vpc_dev.default_sg_id
-  subnet_ids                  = module.integrated_data_vpc_dev.db_subnet_ids
+  sg_id                       = module.integrated_data_vpc.default_sg_id
+  subnet_ids                  = module.integrated_data_vpc.db_subnet_ids
 }
 
 module "integrated_data_bank_holidays_pipeline" {
