@@ -8,6 +8,7 @@ export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
     username: "test-user",
     password: "dummy-password",
     subscriptionId: "mock-subscription-id",
+    publisherId: "mock-publisher-id",
 };
 
 export const mockSubscribeEvent = {

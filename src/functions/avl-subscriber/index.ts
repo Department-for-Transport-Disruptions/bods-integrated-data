@@ -14,6 +14,7 @@ import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { fromZodError } from "zod-validation-error";
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
@@ -118,6 +119,7 @@ const updateDynamoWithSubscriptionInfo = async (
         shortDescription: avlSubscribeMessage.shortDescription,
         requestorRef: avlSubscribeMessage.requestorRef ?? null,
         serviceStartDatetime: currentTimestamp ?? null,
+        publisherId: avlSubscribeMessage.publisherId ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");
@@ -218,8 +220,12 @@ export const handler = async (event: APIGatewayEvent) => {
         const parsedBody = avlSubscribeMessageSchema.safeParse(JSON.parse(event.body ?? ""));
 
         if (!parsedBody.success) {
-            logger.error(JSON.stringify(parsedBody.error));
-            throw new Error("Invalid subscribe message from event body.");
+            const validationError = fromZodError(parsedBody.error);
+
+            return {
+                statusCode: 400,
+                body: validationError.message,
+            };
         }
 
         const avlSubscribeMessage = parsedBody.data;

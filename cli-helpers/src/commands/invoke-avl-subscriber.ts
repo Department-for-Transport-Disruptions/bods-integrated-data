@@ -9,8 +9,9 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .option("-u, --username <username>", "Data producer username")
     .option("-p, --password <password>", "Data producer password")
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
+    .option("--publisherId <publisherId>", "Data producer publisher ID")
     .action(async (options) => {
-        let { stage, producerEndpoint, username, password, subscriptionId } = options;
+        let { stage, producerEndpoint, username, password, subscriptionId, publisherId } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -73,8 +74,20 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
             subscriptionId = response.subscriptionId;
         }
 
+        if (!publisherId) {
+            const response = await inquirer.prompt<{ publisherId: string }>([
+                {
+                    name: "publisherId",
+                    message: "Enter the data producer's publisherId",
+                    type: "input",
+                },
+            ]);
+
+            publisherId = response.publisherId;
+        }
+
         const invokePayload = {
-            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\"}`,
+            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\"\"publisherId\": \"${publisherId}\"}`,
         };
 
         await invokeLambda(stage, {

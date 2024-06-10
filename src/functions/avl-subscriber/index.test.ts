@@ -1,4 +1,5 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
@@ -57,6 +58,16 @@ describe("avl-subscriber", () => {
             status: 200,
         } as AxiosResponse);
 
+        const expectedSubscription: Omit<AvlSubscription, "PK"> = {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+            publisherId: "mock-publisher-id",
+        };
+
         await handler(mockSubscribeEvent);
 
         expect(axiosSpy).toBeCalledWith(
@@ -66,14 +77,12 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
-            description: "description",
-            requestorRef: null,
-            shortDescription: "shortDescription",
-            status: "ACTIVE",
-            url: "https://mock-data-producer.com",
-            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
-        });
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "mock-subscription-id",
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
@@ -95,6 +104,7 @@ describe("avl-subscriber", () => {
             {
                 test: "invalid event",
             },
+            'Validation error: Required at "dataProducerEndpoint"; Required at "description"; Required at "shortDescription"; Required at "username"; Required at "password"; Required at "subscriptionId"; Required at "publisherId"',
         ],
         [
             {
@@ -105,13 +115,17 @@ describe("avl-subscriber", () => {
                 password: "test-password",
                 requestorRef: "test-requestorRef",
             },
+            'Validation error: Invalid url at "dataProducerEndpoint"; Required at "subscriptionId"; Required at "publisherId"',
         ],
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
-        async (input) => {
+        async (input, expected) => {
             const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayEvent;
 
-            await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
+            await expect(handler(invalidEvent)).resolves.toEqual({
+                statusCode: 400,
+                body: expected,
+            });
 
             expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
             expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
@@ -137,17 +151,25 @@ describe("avl-subscriber", () => {
             ),
         );
 
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
-
-        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+        const expectedSubscription: Omit<AvlSubscription, "PK"> = {
             description: "description",
             requestorRef: null,
             shortDescription: "shortDescription",
             status: "FAILED",
             url: "https://mock-data-producer.com",
             serviceStartDatetime: null,
-        });
+            publisherId: "mock-publisher-id",
+        };
+
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "mock-subscription-id",
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
@@ -170,19 +192,27 @@ describe("avl-subscriber", () => {
             status: 200,
         } as AxiosResponse);
 
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
-            "No response body received from the data producer: https://mock-data-producer.com",
-        );
-
-        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+        const expectedSubscription: Omit<AvlSubscription, "PK"> = {
             description: "description",
             requestorRef: null,
             shortDescription: "shortDescription",
             status: "FAILED",
             url: "https://mock-data-producer.com",
             serviceStartDatetime: null,
-        });
+            publisherId: "mock-publisher-id",
+        };
+
+        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
+            "No response body received from the data producer: https://mock-data-producer.com",
+        );
+
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "mock-subscription-id",
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
@@ -208,6 +238,16 @@ describe("avl-subscriber", () => {
             status: 200,
         } as AxiosResponse);
 
+        const expectedSubscription: Omit<AvlSubscription, "PK"> = {
+            description: "description",
+            requestorRef: "BODS_MOCK_PRODUCER",
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+            publisherId: "mock-publisher-id",
+        };
+
         await handler(mockSubscribeEventToMockDataProducer);
 
         expect(axiosSpy).toBeCalledWith(
@@ -217,14 +257,12 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
-            description: "description",
-            requestorRef: "BODS_MOCK_PRODUCER",
-            shortDescription: "shortDescription",
-            status: "ACTIVE",
-            url: "https://mock-data-producer.com",
-            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
-        });
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "mock-subscription-id",
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
@@ -247,9 +285,20 @@ describe("avl-subscriber", () => {
             status: 200,
         } as AxiosResponse);
 
+        const expectedSubscription: Omit<AvlSubscription, "PK"> = {
+            description: "description",
+            requestorRef: "BODS_MOCK_PRODUCER",
+            shortDescription: "shortDescription",
+            status: "FAILED",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: null,
+            publisherId: "mock-publisher-id",
+        };
+
         await expect(handler(mockSubscribeEventToMockDataProducer)).rejects.toThrowError(
             "Error parsing subscription response from: https://mock-data-producer.com",
         );
+
         expect(axiosSpy).toBeCalledWith(
             "www.local.com",
             expectedRequestBodyForMockProducer,
@@ -257,14 +306,12 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
-            description: "description",
-            requestorRef: "BODS_MOCK_PRODUCER",
-            shortDescription: "shortDescription",
-            status: "FAILED",
-            url: "https://mock-data-producer.com",
-            serviceStartDatetime: null,
-        });
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "mock-subscription-id",
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
@@ -287,6 +334,16 @@ describe("avl-subscriber", () => {
             status: 200,
         } as AxiosResponse);
 
+        const expectedSubscription: Omit<AvlSubscription, "PK"> = {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "FAILED",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: null,
+            publisherId: "mock-publisher-id",
+        };
+
         await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
             "The data producer: https://mock-data-producer.com did not return a status of true.",
         );
@@ -297,14 +354,12 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
-            description: "description",
-            requestorRef: null,
-            shortDescription: "shortDescription",
-            status: "FAILED",
-            url: "https://mock-data-producer.com",
-            serviceStartDatetime: null,
-        });
+        expect(putDynamoItemSpy).toBeCalledWith(
+            "test-dynamo-table",
+            "mock-subscription-id",
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
