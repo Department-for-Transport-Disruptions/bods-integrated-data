@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
-    AGGREGATED_SIRI_VM_FILE_PATH,
-    AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+    GENERATED_SIRI_VM_FILE_PATH,
+    GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
@@ -27,13 +27,13 @@ export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef
     await Promise.all([
         putS3Object({
             Bucket: bucketName,
-            Key: AGGREGATED_SIRI_VM_FILE_PATH,
+            Key: GENERATED_SIRI_VM_FILE_PATH,
             ContentType: "application/xml",
             Body: siriVm,
         }),
         putS3Object({
             Bucket: bucketName,
-            Key: AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+            Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
             ContentType: "application/xml",
             Body: siriVmTfl,
         }),

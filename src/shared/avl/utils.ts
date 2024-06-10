@@ -10,8 +10,8 @@ import { SiriSchemaTransformed } from "../schema";
 import { avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
-export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
-export const AGGREGATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
+export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
+export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem(tableName, {

@@ -1,6 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
-import { AGGREGATED_SIRI_VM_FILE_PATH, AGGREGATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -63,7 +63,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     describe("fetching SIRI-VM in-place", () => {
         it("returns a 200 with SIRI-VM in-place", async () => {
-            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${AGGREGATED_SIRI_VM_FILE_PATH}`;
+            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
             await expect(handler(mockRequest)).resolves.toEqual({
@@ -76,7 +76,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
                 {
                     Bucket: mockBucketName,
-                    Key: AGGREGATED_SIRI_VM_FILE_PATH,
+                    Key: GENERATED_SIRI_VM_FILE_PATH,
                     ResponseContentDisposition: "inline",
                     ResponseContentType: "application/xml",
                 },
@@ -86,7 +86,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         });
 
         it("returns a 200 with SIRI-VM TfL in-place when the downloadTfl param is true", async () => {
-            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${AGGREGATED_SIRI_VM_TFL_FILE_PATH}`;
+            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_TFL_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
             mockRequest.queryStringParameters = {
@@ -103,7 +103,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
                 {
                     Bucket: mockBucketName,
-                    Key: AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+                    Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
                     ResponseContentDisposition: "inline",
                     ResponseContentType: "application/xml",
                 },
