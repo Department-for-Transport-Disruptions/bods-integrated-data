@@ -61,17 +61,17 @@ variable "tfl_location_retriever_invoke_every_seconds" {
   description = "Invoke the TfL location retriever every X seconds"
 }
 
-variable avl_subscription_table_name {
+variable "avl_subscription_table_name" {
   type        = string
   description = "AVL Subscription DynamoDB table name"
 }
 
-variable aws_account_id {
+variable "aws_account_id" {
   type        = string
   description = "AWS account id"
 }
 
-variable aws_region {
+variable "aws_region" {
   type        = string
   description = "AWS region"
 }

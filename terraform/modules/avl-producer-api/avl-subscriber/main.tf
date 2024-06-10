@@ -12,18 +12,21 @@ terraform {
 module "avl_subscriber" {
   source = "../../shared/lambda-function"
 
-  environment   = var.environment
-  function_name = "integrated-data-avl-subscriber"
-  zip_path      = "${path.module}/../../../../src/functions/dist/avl-subscriber.zip"
-  handler       = "index.handler"
-  memory        = 1024
-  runtime       = "nodejs20.x"
-  timeout       = 120
+  environment      = var.environment
+  function_name    = "integrated-data-avl-subscriber"
+  zip_path         = "${path.module}/../../../../src/functions/dist/avl-subscriber.zip"
+  handler          = "index.handler"
+  memory           = 1024
+  runtime          = "nodejs20.x"
+  timeout          = 120
+  needs_vpc_access = true
+  custom_sg_id     = var.sg_id
+  subnet_ids       = var.subnet_ids
 
   permissions = [
     {
-      Action   = "ssm:PutParameter",
-      Effect   = "Allow",
+      Action = "ssm:PutParameter",
+      Effect = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"

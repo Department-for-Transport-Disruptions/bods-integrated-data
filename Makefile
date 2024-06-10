@@ -53,6 +53,12 @@ tf-plan-%:
 tf-apply-%:
 	terraform -chdir=terraform/$* apply
 
+tf-fmt:
+	terraform -chdir=terraform fmt -recursive
+
+tf-fmt-check:
+	terraform -chdir=terraform fmt -recursive -check
+
 # Terraform local
 
 tf-init-local:

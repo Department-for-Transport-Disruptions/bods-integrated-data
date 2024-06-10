@@ -52,6 +52,11 @@ variable "needs_db_access" {
   default = false
 }
 
+variable "needs_vpc_access" {
+  type    = bool
+  default = false
+}
+
 variable "vpc_id" {
   type        = string
   nullable    = true
@@ -98,4 +103,10 @@ variable "architectures" {
   type        = list(string)
   default     = ["arm64"]
   description = "Arhcitectures to use for lambda function"
+}
+
+variable "custom_sg_id" {
+  type        = string
+  default     = null
+  description = "ID of a custom VPC security group"
 }

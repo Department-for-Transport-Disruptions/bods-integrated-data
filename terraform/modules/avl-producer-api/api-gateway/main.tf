@@ -94,6 +94,13 @@ resource "aws_lambda_permission" "integrated_data_avl_producer_api_subscribe_per
   source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"
 }
 
+resource "aws_lambda_permission" "integrated_data_avl_producer_api_unsubscribe_permissions" {
+  function_name = var.unsubscribe_lambda_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"
+}
+
 resource "aws_lambda_permission" "integrated_data_avl_producer_api_data_permissions" {
   function_name = var.data_endpoint_lambda_name
   action        = "lambda:InvokeFunction"

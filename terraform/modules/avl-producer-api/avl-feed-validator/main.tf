@@ -28,8 +28,8 @@ module "avl_feed_validator" {
 
     },
     {
-      Action   = ["ssm:GetParameter"],
-      Effect   = "Allow",
+      Action = ["ssm:GetParameter"],
+      Effect = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"

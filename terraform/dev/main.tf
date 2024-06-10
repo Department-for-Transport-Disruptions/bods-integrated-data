@@ -72,7 +72,6 @@ module "integrated_data_aurora_db_dev" {
   vpc_id                   = module.integrated_data_vpc_dev.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  enable_rds_proxy         = true
   instance_class           = "db.r6g.large"
 }
 
@@ -226,6 +225,8 @@ module "integrated_data_avl_data_producer_api" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
+  sg_id                       = module.integrated_data_vpc_dev.default_sg_id
+  subnet_ids                  = module.integrated_data_vpc_dev.db_subnet_ids
 }
 
 module "integrated_data_bank_holidays_pipeline" {

@@ -21,3 +21,7 @@ output "private_subnet_ids" {
 output "interface_endpoint_sg_id" {
   value = aws_security_group.integrated_data_vpc_interface_endpoint_sg.id
 }
+
+output "default_sg_id" {
+  value = aws_vpc.integrated_data_vpc.default_security_group_id
+}
