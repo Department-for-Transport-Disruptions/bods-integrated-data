@@ -71,3 +71,5 @@ export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform(
     subscriptionId: data.PK,
     ...data,
 }));
+
+export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);
