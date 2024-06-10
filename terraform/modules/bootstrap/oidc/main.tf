@@ -49,15 +49,19 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
     Statement = [
       {
         Action = [
-          "ecr:*",
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:CompleteLayerUpload",
+          "ecr:InitiateLayerUpload",
+          "ecr:PutImage",
+          "ecr:UploadLayerPart"
         ],
         Effect   = "Allow",
         Resource = "*",
         Condition = {
           "StringLike" = {
             "aws:RequestedRegion" = [
-              "eu-west-2",
-              "us-east-1"
+              "eu-west-2"
             ]
           }
         }
