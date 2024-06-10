@@ -22,6 +22,10 @@ variable "db_host" {
   type = string
 }
 
+variable "db_reader_host" {
+  type = string
+}
+
 variable "db_port" {
   type    = number
   default = 5432
@@ -70,4 +74,29 @@ variable aws_account_id {
 variable aws_region {
   type        = string
   description = "AWS region"
+}
+
+variable "siri_vm_generator_image_url" {
+  type        = string
+  description = "URL for the BODS AVL Processor image in ECR"
+}
+
+variable "siri_vm_generator_frequency" {
+  type        = number
+  description = "Frequency in seconds at which to run the BODS AVL Processor"
+}
+
+variable "avl_cleardown_frequency" {
+  type        = number
+  description = "Frequency in seconds at which to run the BODS AVL Cleardown process"
+}
+
+variable "siri_vm_generator_cpu" {
+  type        = number
+  description = "CPU in MB to assign to the BODS AVL Processor task"
+}
+
+variable "siri_vm_generator_memory" {
+  type        = number
+  description = "Memory in MB to assign to the BODS AVL Processor task"
 }
