@@ -8,7 +8,7 @@ export const avlSubscribeMessageSchema = z.object({
     username: z.string(),
     password: z.string(),
     requestorRef: z.string().nullish(),
-    subscriptionId: z.string().optional(),
+    subscriptionId: z.string(),
 });
 
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;

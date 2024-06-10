@@ -223,17 +223,8 @@ export const handler = async (event: APIGatewayEvent) => {
         }
 
         const avlSubscribeMessage = parsedBody.data;
-
-        const subscriptionId = avlSubscribeMessage.subscriptionId ?? randomUUID();
-
-        // Add username and password to parameter store if we are processing a new subscription
-        if (!avlSubscribeMessage.subscriptionId) {
-            await addSubscriptionAuthCredsToSsm(
-                subscriptionId,
-                avlSubscribeMessage.username,
-                avlSubscribeMessage.password,
-            );
-        }
+        const { subscriptionId, username, password } = avlSubscribeMessage;
+        await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
         try {
             await sendSubscriptionRequestAndUpdateDynamo(

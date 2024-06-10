@@ -7,10 +7,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { handler } from "./index";
 import {
     expectedRequestBody,
-    expectedRequestBodyForExistingSubscription,
     expectedRequestBodyForMockProducer,
     expectedSubscriptionRequestConfig,
-    mockAvlSubscribeMessage,
     mockSubscribeEvent,
     mockSubscribeEventToMockDataProducer,
     mockSubscriptionResponseBody,
@@ -68,47 +66,57 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith(
-            "test-dynamo-table",
-            "5965q7gh-5428-43e2-a75c-1782a48637d5",
-            "SUBSCRIPTION",
-            {
-                description: "description",
-                requestorRef: null,
-                shortDescription: "shortDescription",
-                status: "ACTIVE",
-                url: "https://mock-data-producer.com",
-                serviceStartDatetime: "2024-03-11T15:20:02.093Z",
-            },
-        );
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+        });
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/mock-subscription-id/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/mock-subscription-id/password",
             "dummy-password",
             "SecureString",
             true,
         );
     });
 
-    it("should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.", async () => {
-        const invalidEvent = {
-            body: JSON.stringify({
+    it.each([
+        [
+            {
                 test: "invalid event",
-            }),
-        } as unknown as APIGatewayEvent;
+            },
+        ],
+        [
+            {
+                dataProducerEndpoint: "test-dataProducerEndpoint",
+                description: "test-description",
+                shortDescription: "test-shortDescription",
+                username: "test-username",
+                password: "test-password",
+                requestorRef: "test-requestorRef",
+            },
+        ],
+    ])(
+        "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
+        async (input) => {
+            const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayEvent;
 
-        await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
+            await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
 
-        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
-        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
-    });
+            expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+            expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
+        },
+    );
 
     it("should throw an error if we do not receive a 200 response from the data producer", async () => {
         const axiosHeaders = new AxiosHeaders();
@@ -132,29 +140,24 @@ describe("avl-subscriber", () => {
         await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith(
-            "test-dynamo-table",
-            "5965q7gh-5428-43e2-a75c-1782a48637d5",
-            "SUBSCRIPTION",
-            {
-                description: "description",
-                requestorRef: null,
-                shortDescription: "shortDescription",
-                status: "FAILED",
-                url: "https://mock-data-producer.com",
-                serviceStartDatetime: null,
-            },
-        );
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "FAILED",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: null,
+        });
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/mock-subscription-id/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/mock-subscription-id/password",
             "dummy-password",
             "SecureString",
             true,
@@ -172,29 +175,24 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith(
-            "test-dynamo-table",
-            "5965q7gh-5428-43e2-a75c-1782a48637d5",
-            "SUBSCRIPTION",
-            {
-                description: "description",
-                requestorRef: null,
-                shortDescription: "shortDescription",
-                status: "FAILED",
-                url: "https://mock-data-producer.com",
-                serviceStartDatetime: null,
-            },
-        );
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "FAILED",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: null,
+        });
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/mock-subscription-id/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/mock-subscription-id/password",
             "dummy-password",
             "SecureString",
             true,
@@ -219,29 +217,24 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith(
-            "test-dynamo-table",
-            "5965q7gh-5428-43e2-a75c-1782a48637d5",
-            "SUBSCRIPTION",
-            {
-                description: "description",
-                requestorRef: "BODS_MOCK_PRODUCER",
-                shortDescription: "shortDescription",
-                status: "ACTIVE",
-                url: "https://mock-data-producer.com",
-                serviceStartDatetime: "2024-03-11T15:20:02.093Z",
-            },
-        );
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: "BODS_MOCK_PRODUCER",
+            shortDescription: "shortDescription",
+            status: "ACTIVE",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
+        });
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/mock-subscription-id/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/mock-subscription-id/password",
             "dummy-password",
             "SecureString",
             true,
@@ -264,29 +257,24 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith(
-            "test-dynamo-table",
-            "5965q7gh-5428-43e2-a75c-1782a48637d5",
-            "SUBSCRIPTION",
-            {
-                description: "description",
-                requestorRef: "BODS_MOCK_PRODUCER",
-                shortDescription: "shortDescription",
-                status: "FAILED",
-                url: "https://mock-data-producer.com",
-                serviceStartDatetime: null,
-            },
-        );
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: "BODS_MOCK_PRODUCER",
+            shortDescription: "shortDescription",
+            status: "FAILED",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: null,
+        });
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/mock-subscription-id/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/mock-subscription-id/password",
             "dummy-password",
             "SecureString",
             true,
@@ -309,66 +297,27 @@ describe("avl-subscriber", () => {
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith(
-            "test-dynamo-table",
-            "5965q7gh-5428-43e2-a75c-1782a48637d5",
-            "SUBSCRIPTION",
-            {
-                description: "description",
-                requestorRef: null,
-                shortDescription: "shortDescription",
-                status: "FAILED",
-                url: "https://mock-data-producer.com",
-                serviceStartDatetime: null,
-            },
-        );
+        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+            description: "description",
+            requestorRef: null,
+            shortDescription: "shortDescription",
+            status: "FAILED",
+            url: "https://mock-data-producer.com",
+            serviceStartDatetime: null,
+        });
 
         expect(putParameterSpy).toHaveBeenCalledTimes(2);
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/username",
+            "/subscription/mock-subscription-id/username",
             "test-user",
             "SecureString",
             true,
         );
         expect(putParameterSpy).toBeCalledWith(
-            "/subscription/5965q7gh-5428-43e2-a75c-1782a48637d5/password",
+            "/subscription/mock-subscription-id/password",
             "dummy-password",
             "SecureString",
             true,
         );
-    });
-
-    it("should handle resubscription requests to a data producer", async () => {
-        mockedAxios.post.mockResolvedValue({
-            data: mockSubscriptionResponseBody,
-            status: 200,
-        } as AxiosResponse);
-
-        await handler({
-            ...mockSubscribeEvent,
-            body: JSON.stringify({
-                ...mockAvlSubscribeMessage,
-                subscriptionId: "existing-subscription-id",
-                requestorRef: null,
-            }),
-        });
-
-        expect(axiosSpy).toBeCalledWith(
-            "https://mock-data-producer.com",
-            expectedRequestBodyForExistingSubscription,
-            expectedSubscriptionRequestConfig,
-        );
-
-        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "existing-subscription-id", "SUBSCRIPTION", {
-            description: "description",
-            requestorRef: null,
-            shortDescription: "shortDescription",
-            status: "ACTIVE",
-            url: "https://mock-data-producer.com",
-            serviceStartDatetime: "2024-03-11T15:20:02.093Z",
-        });
-
-        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
     });
 });
