@@ -19,12 +19,6 @@ terraform {
   }
 }
 
-module "sops" {
-  source = "../../modules/bootstrap/sops"
-
-  environment = local.env
-}
-
 module "oidc" {
   source = "../../modules/bootstrap/oidc"
 

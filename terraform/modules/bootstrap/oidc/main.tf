@@ -61,13 +61,6 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
             ]
           }
         }
-      },
-      {
-        Action = [
-          "kms:Decrypt"
-        ],
-        Effect   = "Allow",
-        Resource = [var.sops_kms_key_arn]
       }
     ]
   }): jsonencode({
