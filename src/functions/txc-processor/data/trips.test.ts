@@ -113,6 +113,8 @@ describe("trips", () => {
     });
 
     it("uses the journey pattern destination display when the vehicle journey destination display is omitted", async () => {
+        MockDate.set("2024-06-10");
+
         const vehicleJourneyMappings: VehicleJourneyMapping[] = [
             {
                 routeId: 1,
@@ -156,7 +158,7 @@ describe("trips", () => {
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
                 direction: "",
-                departure_time: "06:00:00z",
+                departure_time: "05:00:00z",
             },
         ];
 
