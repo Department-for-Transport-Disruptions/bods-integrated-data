@@ -13,12 +13,12 @@ variable "avl_subscription_table_name" {
   description = "Table name for AVL subscriptions"
 }
 
-variable aws_account_id {
+variable "aws_account_id" {
   type        = string
   description = "AWS account id"
 }
 
-variable aws_region {
+variable "aws_region" {
   type        = string
   description = "AWS region"
 }

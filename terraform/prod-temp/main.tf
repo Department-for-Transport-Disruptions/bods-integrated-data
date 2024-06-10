@@ -24,7 +24,6 @@ terraform {
 }
 
 data "aws_region" "current" {}
-data "aws_caller_identity" "current" {}
 
 data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
@@ -72,7 +71,6 @@ module "integrated_data_aurora_db" {
   vpc_id                   = module.integrated_data_vpc.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  enable_rds_proxy         = true
   multi_az                 = true
   instance_class           = "db.r6g.large"
 }

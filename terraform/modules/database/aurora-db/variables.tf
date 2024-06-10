@@ -37,9 +37,3 @@ variable "private_hosted_zone_name" {
   type        = string
   description = "Name of the private hosted zone"
 }
-
-variable "enable_rds_proxy" {
-  type        = bool
-  default     = false
-  description = "Whether to enable RDS proxy or not"
-}

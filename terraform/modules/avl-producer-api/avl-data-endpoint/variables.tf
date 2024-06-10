@@ -13,12 +13,20 @@ variable "avl_subscription_table_name" {
   description = "The name of AVL subscription DynamoDB table"
 }
 
-variable aws_account_id {
+variable "aws_account_id" {
   type        = string
   description = "AWS account id"
 }
 
-variable aws_region {
+variable "aws_region" {
   type        = string
   description = "AWS region"
+}
+
+variable "sg_id" {
+  type = string
+}
+
+variable "subnet_ids" {
+  type = list(string)
 }

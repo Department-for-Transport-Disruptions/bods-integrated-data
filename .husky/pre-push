@@ -1,4 +1,8 @@
 pnpm lint
+
 cd src
 pnpm test:ci
 pnpm build-test
+
+cd ../terraform
+terraform fmt -check -recursive

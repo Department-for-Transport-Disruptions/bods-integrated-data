@@ -10,8 +10,9 @@ terraform {
 }
 
 locals {
-  source_code_hash = fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].source_code_hash
-  function_name    = "${var.function_name}-${var.environment}"
+  source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) :
+  data.aws_lambda_function.existing_function[0].source_code_hash)
+  function_name = "${var.function_name}-${var.environment}"
 }
 
 data "aws_lambda_function" "existing_function" {
@@ -80,8 +81,9 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {
-  role       = aws_iam_role.lambda_role.id
-  policy_arn = var.subnet_ids != null ? "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" : "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role = aws_iam_role.lambda_role.id
+  policy_arn = (var.subnet_ids != null ? "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" :
+  "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_custom_policy_attachment" {
@@ -106,13 +108,13 @@ resource "aws_lambda_function" "function" {
   reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
 
   dynamic "vpc_config" {
-    for_each = var.needs_db_access ? [1] : []
+    for_each = var.needs_db_access || var.needs_vpc_access ? [1] : []
 
     content {
       subnet_ids = var.subnet_ids
-      security_group_ids = [
+      security_group_ids = var.needs_db_access ? [
         aws_security_group.db_sg[0].id
-      ]
+      ] : [var.custom_sg_id]
     }
   }
 
