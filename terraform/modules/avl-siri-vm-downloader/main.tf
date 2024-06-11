@@ -44,11 +44,11 @@ module "integrated_data_avl_siri_vm_downloader_function" {
   ]
 
   env_vars = {
-    STAGE       = var.environment
+    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
-    BUCKET_NAME = var.bucket_name
+    BUCKET_NAME   = var.bucket_name
   }
 }
