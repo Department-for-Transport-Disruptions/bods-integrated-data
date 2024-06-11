@@ -232,6 +232,9 @@ module "integrated_data_avl_data_producer_api" {
   environment                 = local.env
   sg_id                       = module.integrated_data_vpc_dev.default_sg_id
   subnet_ids                  = module.integrated_data_vpc_dev.db_subnet_ids
+  acm_certificate_arn         = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id              = module.integrated_data_route53.public_hosted_zone_id
+  domain                      = module.integrated_data_route53.public_hosted_zone_name
 }
 
 module "integrated_data_bank_holidays_pipeline" {

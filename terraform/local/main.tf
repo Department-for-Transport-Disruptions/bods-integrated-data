@@ -165,6 +165,9 @@ module "integrated_data_avl_data_producer_api" {
   environment                 = local.env
   sg_id                       = ""
   subnet_ids                  = []
+  acm_certificate_arn         = ""
+  hosted_zone_id              = ""
+  domain                      = ""
 }
 
 module "integrated_data_avl_siri_vm_downloader" {

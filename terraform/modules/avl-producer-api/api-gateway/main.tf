@@ -107,3 +107,31 @@ resource "aws_lambda_permission" "integrated_data_avl_producer_api_data_permissi
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"
 }
+
+resource "aws_apigatewayv2_domain_name" "integrated_data_avl_producer_api_domain" {
+  domain_name = "avl-producer.${var.domain}"
+
+  domain_name_configuration {
+    certificate_arn = var.acm_certificate_arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+}
+
+resource "aws_route53_record" "integrated_data_avl_producer_api_dns_record" {
+  name    = aws_apigatewayv2_domain_name.integrated_data_avl_producer_api_domain.domain_name
+  type    = "A"
+  zone_id = var.hosted_zone_id
+
+  alias {
+    name                   = aws_apigatewayv2_domain_name.integrated_data_avl_producer_api_domain.domain_name_configuration[0].target_domain_name
+    zone_id                = aws_apigatewayv2_domain_name.integrated_data_avl_producer_api_domain.domain_name_configuration[0].hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_apigatewayv2_api_mapping" "integrated_data_avl_producer_api_domain_mapping" {
+  api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  domain_name = aws_apigatewayv2_domain_name.integrated_data_avl_producer_api_domain.id
+  stage       = aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.id
+}

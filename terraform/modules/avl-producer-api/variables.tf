@@ -31,3 +31,16 @@ variable "sg_id" {
 variable "subnet_ids" {
   type = list(string)
 }
+
+variable "domain" {
+  type = string
+}
+
+variable "acm_certificate_arn" {
+  type = string
+}
+
+variable "hosted_zone_id" {
+  type = string
+}
+
