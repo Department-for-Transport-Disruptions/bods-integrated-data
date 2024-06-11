@@ -187,7 +187,9 @@ describe("AVL-data-endpoint", () => {
             },
         } as unknown as APIGatewayEvent;
 
-        await expect(handler(mockEvent)).rejects.toThrowError("Subscription not found in DynamoDB");
+        await expect(handler(mockEvent)).rejects.toThrowError(
+            `Subscription ID: ${mockSubscriptionId} not found in DynamoDB`,
+        );
         expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 });

@@ -1,26 +1,13 @@
 import { logger } from "@baselime/lambda-logger";
+import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
-
-const getSubscription = async (tableName: string, subscriptionId: string) => {
-    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
-        PK: subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-
-    if (!subscription) {
-        logger.error(`Subscription ID ${subscriptionId} not found in DynamoDB`);
-        throw new Error("Subscription not found in DynamoDB");
-    }
-
-    return subscription;
-};
 
 const processHeartbeatNotification = async (
     data: HeartbeatNotification,
@@ -105,7 +92,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("No body sent with event");
         }
 
-        const subscription = await getSubscription(tableName, subscriptionId);
+        const subscription = await getAvlSubscription(subscriptionId, tableName);
         const data = parseXml(event.body);
 
         if (Object.hasOwn(data, "HeartbeatNotification")) {
