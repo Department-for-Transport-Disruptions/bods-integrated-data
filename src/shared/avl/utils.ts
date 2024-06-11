@@ -13,6 +13,13 @@ import { chunkArray } from "../utils";
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const AGGREGATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
 
+export class SubscriptionIdNotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "SubscriptionIdNotFoundError";
+        Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
+    }
+}
 export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem<AvlSubscription>(tableName, {
         PK: subscriptionId,
@@ -29,7 +36,7 @@ export const getAvlSubscription = async (subscriptionId: string, tableName: stri
     });
 
     if (!subscription) {
-        throw new Error(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
+        throw new SubscriptionIdNotFoundError(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
     }
 
     return avlSubscriptionSchema.parse(subscription);

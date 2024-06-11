@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { terminateSubscriptionRequestSchema, terminateSubscriptionResponseSchema } from "./subscription.schema";
@@ -149,7 +149,7 @@ const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     await deleteParameters([`/subscription/${subscriptionId}/username`, `/subscription/${subscriptionId}/password`]);
 };
 
-export const handler = async (event: APIGatewayEvent) => {
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
         const { TABLE_NAME: tableName } = process.env;
 
@@ -182,7 +182,17 @@ export const handler = async (event: APIGatewayEvent) => {
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 
         logger.info(`Successfully unsubscribed to data producer with subscription ID: ${subscriptionId}.`);
+
+        return {
+            statusCode: 204,
+        };
     } catch (e) {
+        if (e instanceof SubscriptionIdNotFoundError) {
+            return {
+                statusCode: 404,
+                body: e.message,
+            };
+        }
         if (e instanceof Error) {
             logger.error("There was a problem unsubscribing from  the AVL feed.", e);
 
