@@ -5,8 +5,9 @@ import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDynamoItem } from "../dynamo";
-import { SiriSchemaTransformed, SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
-import { avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
+import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
+import { SiriSchemaTransformed } from "../schema";
+import { AvlSubscription, avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -19,9 +20,17 @@ export class SubscriptionIdNotFoundError extends Error {
         Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
     }
 }
+export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
+    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
+
+    return subscription?.status === "ACTIVE";
+};
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
-    const subscription = await getDynamoItem(tableName, {
+    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
         PK: subscriptionId,
         SK: "SUBSCRIPTION",
     });
