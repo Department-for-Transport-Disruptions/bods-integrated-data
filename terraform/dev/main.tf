@@ -307,4 +307,9 @@ module "integrated_data_avl_consumer_api" {
   hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
   domain                         = module.integrated_data_route53.public_hosted_zone_name
   aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+  vpc_id                         = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids             = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                  = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                       = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                        = module.integrated_data_aurora_db_dev.db_host
 }

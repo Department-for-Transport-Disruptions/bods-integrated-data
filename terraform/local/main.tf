@@ -170,8 +170,13 @@ module "integrated_data_avl_data_producer_api" {
 module "integrated_data_avl_siri_vm_downloader" {
   source = "../modules/avl-siri-vm-downloader"
 
-  environment = local.env
-  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+  environment        = local.env
+  bucket_name        = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
 }
 
 module "integrated_data_bank_holidays_pipeline" {

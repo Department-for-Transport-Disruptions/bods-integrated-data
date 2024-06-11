@@ -19,13 +19,17 @@ resource "aws_lambda_function_url" "avl_siri_vm_download_url" {
 module "integrated_data_avl_siri_vm_downloader_function" {
   source = "../shared/lambda-function"
 
-  environment   = var.environment
-  function_name = "integrated-data-avl-siri-vm-downloader"
-  zip_path      = "${path.module}/../../../src/functions/dist/avl-siri-vm-downloader.zip"
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 60
-  memory        = 512
+  environment     = var.environment
+  function_name   = "integrated-data-avl-siri-vm-downloader"
+  zip_path        = "${path.module}/../../../src/functions/dist/avl-siri-vm-downloader.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 60
+  memory          = 512
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [
     {
@@ -41,6 +45,10 @@ module "integrated_data_avl_siri_vm_downloader_function" {
 
   env_vars = {
     STAGE       = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
     BUCKET_NAME = var.bucket_name
   }
 }
