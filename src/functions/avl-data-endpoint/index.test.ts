@@ -81,7 +81,7 @@ describe("AVL-data-endpoint", () => {
     });
 
     it("Should add valid AVL data with a single vehicle activity to S3", async () => {
-        getDynamoItemSpy.mockResolvedValue({
+        const subscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
             description: "test-description",
@@ -89,7 +89,8 @@ describe("AVL-data-endpoint", () => {
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             status: "ACTIVE",
             requestorRef: null,
-        });
+        };
+        getDynamoItemSpy.mockResolvedValue(subscription);
 
         const mockEvent = {
             body: testSiriWithSingleVehicleActivity,
@@ -106,6 +107,13 @@ describe("AVL-data-endpoint", () => {
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
         });
+
+        expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+            "test-dynamodb",
+            subscription.PK,
+            "SUBSCRIPTION",
+            subscription,
+        );
     });
 
     it("Should throw an error if the body is empty", async () => {
