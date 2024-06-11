@@ -30,6 +30,7 @@ describe("avl-subscriber", () => {
     });
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+        getDynamoItem: vi.fn(),
         putDynamoItem: vi.fn(),
     }));
 
@@ -37,6 +38,7 @@ describe("avl-subscriber", () => {
         putParameter: vi.fn(),
     }));
 
+    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const putParameterSpy = vi.spyOn(ssm, "putParameter");
 
@@ -46,6 +48,7 @@ describe("avl-subscriber", () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        getDynamoItemSpy.mockResolvedValue(null);
     });
 
     afterAll(() => {
@@ -222,6 +225,30 @@ describe("avl-subscriber", () => {
             "SecureString",
             true,
         );
+    });
+
+    it("returns a 409 when attempting to subscribe with a subscription ID that is already active", async () => {
+        getDynamoItemSpy.mockResolvedValue({
+            status: "ACTIVE",
+        });
+
+        await expect(handler(mockSubscribeEvent)).resolves.toEqual({
+            statusCode: 409,
+            body: "Subscription ID already active",
+        });
+
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
+    });
+
+    getDynamoItemSpy.mockResolvedValue({
+        PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+        url: "https://mock-data-producer.com/",
+        description: "test-description",
+        shortDescription: "test-short-description",
+        lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+        status: "ACTIVE",
+        requestorRef: null,
     });
 
     it("should process a subscription request for mock data producer if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { getSiriVmTerminationTimeOffset } from "@bods-integrated-data/shared/avl/utils";
+import { getSiriVmTerminationTimeOffset, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
@@ -229,6 +229,16 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         const avlSubscribeMessage = parsedBody.data;
         const { subscriptionId, username, password } = avlSubscribeMessage;
+
+        const isActiveSubscription = await isActiveAvlSubscription(subscriptionId, tableName);
+
+        if (isActiveSubscription) {
+            return {
+                statusCode: 409,
+                body: "Subscription ID already active",
+            };
+        }
+
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
         try {
