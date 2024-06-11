@@ -8,7 +8,8 @@ export const avlSubscribeMessageSchema = z.object({
     username: z.string(),
     password: z.string(),
     requestorRef: z.string().nullish(),
-    subscriptionId: z.string().optional(),
+    subscriptionId: z.string(),
+    publisherId: z.string(),
 });
 
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
@@ -61,6 +62,7 @@ export const avlSubscriptionSchema = z.object({
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),
     serviceEndDatetime: z.string().nullish(),
+    publisherId: z.string().nullish(),
     lastAvlDataReceivedDateTime: z.string().nullish(),
 });
 

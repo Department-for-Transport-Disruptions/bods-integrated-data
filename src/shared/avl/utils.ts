@@ -13,6 +13,15 @@ import { chunkArray } from "../utils";
 export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const AGGREGATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
 
+export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
+    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
+
+    return subscription?.status === "ACTIVE";
+};
+
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem<AvlSubscription>(tableName, {
         PK: subscriptionId,
