@@ -37,7 +37,7 @@ export const createAvlMockDataProducer = new Command("create-avl-mock-data-produ
 
         const cleanName = name.replace(/\s+/g, "-");
         const invokePayload = {
-            body: `{\"dataProducerEndpoint\": \"https://www.${cleanName}.com\",\"description\": \"Mock AVL producer - ${name}\",\"shortDescription\": \"shortDescription\",\"username\": \"test-username\",\"password\": \"test-password\",\"requestorRef\": \"BODS_MOCK_PRODUCER\",\"subscriptionId\": \"${subscriptionId}\"\"publisherId\": \"bods-mock-producer\"}`,
+            body: `{\"dataProducerEndpoint\": \"https://www.${cleanName}.com\",\"description\": \"Mock AVL producer - ${name}\",\"shortDescription\": \"shortDescription\",\"username\": \"test-username\",\"password\": \"test-password\",\"requestorRef\": \"BODS_MOCK_PRODUCER\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"bods-mock-producer\"}`,
         };
 
         await invokeLambda(stage, {
