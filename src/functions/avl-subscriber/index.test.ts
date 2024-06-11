@@ -104,7 +104,6 @@ describe("avl-subscriber", () => {
             {
                 test: "invalid event",
             },
-            'Validation error: Required at "dataProducerEndpoint"; Required at "description"; Required at "shortDescription"; Required at "username"; Required at "password"; Required at "subscriptionId"; Required at "publisherId"',
         ],
         [
             {
@@ -115,17 +114,13 @@ describe("avl-subscriber", () => {
                 password: "test-password",
                 requestorRef: "test-requestorRef",
             },
-            'Validation error: Invalid url at "dataProducerEndpoint"; Required at "subscriptionId"; Required at "publisherId"',
         ],
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
-        async (input, expected) => {
+        async (input) => {
             const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayEvent;
 
-            await expect(handler(invalidEvent)).resolves.toEqual({
-                statusCode: 400,
-                body: expected,
-            });
+            await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
 
             expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
             expect(putParameterSpy).not.toHaveBeenCalledTimes(2);

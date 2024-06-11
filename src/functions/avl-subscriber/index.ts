@@ -14,7 +14,6 @@ import { putParameter } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { fromZodError } from "zod-validation-error";
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
@@ -217,15 +216,15 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         logger.info("Starting AVL subscriber");
 
-        const parsedBody = avlSubscribeMessageSchema.safeParse(JSON.parse(event.body ?? ""));
+        if (!event.body) {
+            throw new Error("No body sent with event");
+        }
+
+        const parsedBody = avlSubscribeMessageSchema.safeParse(JSON.parse(event.body));
 
         if (!parsedBody.success) {
-            const validationError = fromZodError(parsedBody.error);
-
-            return {
-                statusCode: 400,
-                body: validationError.message,
-            };
+            logger.error(JSON.stringify(parsedBody.error));
+            throw new Error("Invalid subscribe message from event body.");
         }
 
         const avlSubscribeMessage = parsedBody.data;
