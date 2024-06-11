@@ -12,6 +12,12 @@ For a given subscription it should:
 - Update the AVL subscriptions table for that subscription to have the status of `TERMINATED`
 - Remove the auth credentials for that subscription from parameter store
 
+### Function Logic
+
+The following checks are made throughout the function:
+
+![unsubscribe-flow.png](unsubscribe-flow.png)
+
 ### Running locally
 
 To run this function locally:
@@ -26,5 +32,4 @@ To run this function locally:
     ```makefile
     SUBSCRIPTION_ID=YOUR_SUBSCRIPTION_ID make invoke-local-avl-unsubscriber
     ```
-
 

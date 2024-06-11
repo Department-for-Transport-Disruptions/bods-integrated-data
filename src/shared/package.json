@@ -10,8 +10,7 @@
         "@types/node": "^20.11.19",
         "@types/pg": "^8.11.0",
         "@types/unzipper": "^0.10.9",
-        "mockdate": "^3.0.5",
-        "zod": "^3.22.4"
+        "mockdate": "^3.0.5"
     },
     "dependencies": {
         "@aws-sdk/client-cloudwatch": "^3.588.0",
@@ -29,7 +28,8 @@
         "gtfs-realtime-bindings": "^1.1.1",
         "kysely": "^0.27.3",
         "pg": "^8.11.3",
-        "unzipper": "^0.10.14"
+        "unzipper": "^0.10.14",
+        "zod": "^3.22.4"
     },
     "scripts": {
         "test": "vitest run"

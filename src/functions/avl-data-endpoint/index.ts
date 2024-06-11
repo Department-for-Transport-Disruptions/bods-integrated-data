@@ -1,67 +1,55 @@
 import { logger } from "@baselime/lambda-logger";
+import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
-const validateHeartbeatNotificationAndUploadToDynamo = async (
+const processHeartbeatNotification = async (
     data: HeartbeatNotification,
-    subscriptionId: string,
+    subscription: AvlSubscription,
     tableName: string,
 ) => {
+    logger.info("Heartbeat notification received: processing notification");
+
     if (data.HeartbeatNotification.Status !== "true") {
-        logger.warn(`Heartbeat notification for subscription: ${subscriptionId} did not include a status of true`);
+        logger.warn(`Heartbeat notification for subscription: ${subscription.PK} did not include a status of true`);
         return;
-    }
-
-    const subscription = await getDynamoItem(tableName, { PK: subscriptionId, SK: "SUBSCRIPTION" });
-
-    if (!subscription) {
-        logger.error(`Subscription ID ${subscriptionId} not found in DynamoDB`);
-        throw new Error("Subscription not found in DynamoDB");
     }
 
     logger.info("Updating DynamoDB with heartbeat notification information");
 
-    await putDynamoItem(tableName, subscriptionId, "SUBSCRIPTION", {
+    await putDynamoItem(tableName, subscription.PK, "SUBSCRIPTION", {
         ...subscription,
         heartbeatLastReceivedDateTime: data.HeartbeatNotification.RequestTimestamp,
     });
-
-    return;
 };
 
-const processNotification = async (xml: string, bucketName: string, subscriptionId: string, tableName: string) => {
-    const data = parseXml(xml);
-
-    if (Object.hasOwn(data, "HeartbeatNotification")) {
-        logger.info("Heartbeat notification received: processing notification");
-
-        return validateHeartbeatNotificationAndUploadToDynamo(
-            heartbeatNotificationSchema.parse(data),
-            subscriptionId,
-            tableName,
-        );
-    }
-
+const uploadSiriVmToS3 = async (xml: string, bucketName: string, subscription: AvlSubscription, tableName: string) => {
     logger.info("SIRI-VM Vehicle Journey data received - uploading data to S3");
 
-    const currentTime = getDate();
+    const currentTime = getDate().toISOString();
 
     await putS3Object({
         Bucket: bucketName,
-        Key: `${subscriptionId}/${currentTime.toISOString()}.xml`,
+        Key: `${subscription.PK}/${currentTime}.xml`,
         ContentType: "application/xml",
         Body: xml,
+    });
+
+    await putDynamoItem(tableName, subscription.PK, "SUBSCRIPTION", {
+        ...subscription,
+        lastAvlDataReceivedDateTime: currentTime,
     });
 
     logger.info("Successfully uploaded SIRI-VM to S3");
 };
 
-export const parseXml = (xml: string) => {
+const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
@@ -91,6 +79,8 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
+        logger.info("Starting Data Endpoint");
+
         const subscriptionId =
             stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;
 
@@ -98,12 +88,18 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Subscription ID missing from path parameters");
         }
 
-        logger.info("Starting Data Endpoint");
-
         if (!event.body) {
             throw new Error("No body sent with event");
         }
-        await processNotification(event.body, bucketName, subscriptionId, tableName);
+
+        const subscription = await getAvlSubscription(subscriptionId, tableName);
+        const data = parseXml(event.body);
+
+        if (Object.hasOwn(data, "HeartbeatNotification")) {
+            await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
+        } else {
+            await uploadSiriVmToS3(event.body, bucketName, subscription, tableName);
+        }
 
         return {
             statusCode: 200,
