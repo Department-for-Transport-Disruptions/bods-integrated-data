@@ -86,7 +86,7 @@ describe("AVL-data-endpoint", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            lastAvlDataReceivedDateTime: "2024-03-11T00:00:00.000Z",
             status: "ACTIVE",
             requestorRef: null,
         };
@@ -112,7 +112,7 @@ describe("AVL-data-endpoint", () => {
             "test-dynamodb",
             subscription.PK,
             "SUBSCRIPTION",
-            subscription,
+            { ...subscription, lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z" },
         );
     });
 
