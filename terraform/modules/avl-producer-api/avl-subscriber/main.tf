@@ -25,15 +25,18 @@ module "avl_subscriber" {
 
   permissions = [
     {
-      Action   = "ssm:PutParameter",
-      Effect   = "Allow",
+      Action = "ssm:PutParameter",
+      Effect = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
       ]
     },
     {
-      Action   = ["dynamodb:PutItem", "dynamodb:GetItem"],
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem"
+      ],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
 
