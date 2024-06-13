@@ -2,11 +2,11 @@ import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import Bree from "bree";
 import Pino from "pino";
 
-const { CLEARDOWN_FREQUENCY_IN_SECONDS: cleardownFrequency, GENERATOR_FREQUENCY_IN_SECONDS: generatorFrequency } =
+const { CLEARDOWN_FREQUENCY_IN_SECONDS: cleardownFrequency, PROCESSOR_FREQUENCY_IN_SECONDS: generatorFrequency } =
     process.env;
 
 if (!cleardownFrequency || !generatorFrequency) {
-    throw new Error("Missing env vars - CLEARDOWN_FREQUENCY_IN_SECONDS, GENERATOR_FREQUENCY_IN_SECONDS must be set");
+    throw new Error("Missing env vars - CLEARDOWN_FREQUENCY_IN_SECONDS, PROCESSOR_FREQUENCY_IN_SECONDS must be set");
 }
 
 const logger = Pino();

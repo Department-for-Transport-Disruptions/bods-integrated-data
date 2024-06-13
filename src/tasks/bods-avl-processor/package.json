@@ -1,5 +1,5 @@
 {
-    "name": "@bods-integrated-data/bods-avl-processor",
+    "name": "@bods-integrated-data/bods-avl-processor-task",
     "version": "0.1.0",
     "description": "Pipeline for retrieving and processing BODS SIRI-VM data",
     "scripts": {
