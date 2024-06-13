@@ -40,7 +40,7 @@ export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef
     ]);
 };
 
-export const handler = async () => {
+void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
@@ -67,4 +67,4 @@ export const handler = async () => {
     } finally {
         await dbClient.destroy();
     }
-};
+})();
