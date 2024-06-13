@@ -3,6 +3,7 @@
         "yzhang.markdown-all-in-one",
         "cweijan.vscode-database-client2",
         "streetsidesoftware.code-spell-checker",
-        "biomejs.biome"
+        "biomejs.biome",
+        "hashicorp.terraform"
     ]
 }

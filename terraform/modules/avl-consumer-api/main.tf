@@ -13,7 +13,7 @@ module "integrated_data_avl_siri_vm_downloader" {
   source = "../../modules/avl-siri-vm-downloader"
 
   environment        = var.environment
-  bucket_name        = var.aggregated_siri_vm_bucket_name
+  bucket_name        = var.generated_siri_vm_bucket_name
   vpc_id             = var.vpc_id
   private_subnet_ids = var.private_subnet_ids
   db_secret_arn      = var.db_secret_arn

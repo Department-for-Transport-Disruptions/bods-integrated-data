@@ -3,7 +3,7 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "aggregated_siri_vm_bucket_name" {
+variable "generated_siri_vm_bucket_name" {
   type = string
 }
 

@@ -198,6 +198,7 @@ module "integrated_data_avl_pipeline" {
   db_secret_arn                               = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                                    = module.integrated_data_aurora_db.db_sg_id
   db_host                                     = module.integrated_data_aurora_db.db_host
+  db_reader_host                              = module.integrated_data_aurora_db.db_reader_host
   alarm_topic_arn                             = module.integrated_data_monitoring.alarm_topic_arn
   ok_topic_arn                                = module.integrated_data_monitoring.ok_topic_arn
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
@@ -205,17 +206,11 @@ module "integrated_data_avl_pipeline" {
   avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
   aws_account_id                              = data.aws_caller_identity.current.account_id
   aws_region                                  = data.aws_region.current.name
-}
-
-module "integrated_data_avl_aggregator" {
-  source = "../modules/data-pipelines/avl-aggregate-siri-vm"
-
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc.vpc_id
-  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
-  db_host            = module.integrated_data_aurora_db.db_reader_host
+  siri_vm_generator_image_url                 = local.secrets["siri_vm_generator_image_url"]
+  siri_vm_generator_cpu                       = 1024
+  siri_vm_generator_memory                    = 2048
+  siri_vm_generator_frequency                 = 30
+  avl_cleardown_frequency                     = 30
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -226,7 +221,7 @@ module "integrated_data_avl_subscription_table" {
 
 module "integrated_data_avl_data_producer_api" {
   source                      = "../modules/avl-producer-api"
-  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.bucket_name
+  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.avl_siri_bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
@@ -304,14 +299,14 @@ module "integrated_data_gtfs_api" {
 module "integrated_data_avl_consumer_api" {
   source = "../modules/avl-consumer-api"
 
-  environment                    = local.env
-  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
-  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
-  domain                         = module.integrated_data_route53.public_hosted_zone_name
-  aggregated_siri_vm_bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
-  vpc_id                         = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids             = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn                  = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id                       = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host                        = module.integrated_data_aurora_db_dev.db_host
+  environment                   = local.env
+  acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
+  domain                        = module.integrated_data_route53.public_hosted_zone_name
+  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_siri_bucket_name
+  vpc_id                        = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids            = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                       = module.integrated_data_aurora_db_dev.db_host
 }
