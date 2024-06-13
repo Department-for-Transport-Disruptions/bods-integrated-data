@@ -9,6 +9,8 @@ import { XMLParser } from "fast-xml-parser";
 import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
+const arrayProperties = ["VehicleActivity", "OnwardCall"];
+
 const processHeartbeatNotification = async (
     data: HeartbeatNotification,
     subscription: AvlSubscription,
@@ -30,6 +32,14 @@ const processHeartbeatNotification = async (
 };
 
 const uploadSiriVmToS3 = async (xml: string, bucketName: string, subscription: AvlSubscription, tableName: string) => {
+    if (subscription.status !== "ACTIVE") {
+        logger.warn(`Subscription: ${subscription.PK} is not ACTIVE, data will not be processed...`);
+        return {
+            statusCode: 404,
+            body: `Subscription with Subscription ID: ${subscription.PK} is not ACTIVE in the service.`,
+        };
+    }
+
     logger.info("SIRI-VM Vehicle Journey data received - uploading data to S3");
 
     const currentTime = getDate().toISOString();
@@ -54,7 +64,7 @@ const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => tagName === "VehicleActivity",
+        isArray: (tagName) => arrayProperties.some((element) => element === tagName),
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
@@ -92,8 +102,15 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("No body sent with event");
         }
 
+        logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
+
         const subscription = await getAvlSubscription(subscriptionId, tableName);
+
+        logger.info(event.body);
+
         const data = parseXml(event.body);
+
+        logger.info("data", data);
 
         if (Object.hasOwn(data, "HeartbeatNotification")) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
