@@ -213,7 +213,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
-        isArray: (tagName) => txcArrayProperties.some((element) => element === tagName),
+        isArray: (tagName) => txcArrayProperties.includes(tagName),
     });
 
     const xml = await file.Body?.transformToString();
