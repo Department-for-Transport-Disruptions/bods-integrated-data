@@ -1374,5 +1374,51 @@ describe("utils", () => {
                 totalAvlCount: 1,
             });
         });
+
+        it("returns a match for TFLO AVL data", async () => {
+            const avl: Partial<NewAvl>[] = [
+                {
+                    operator_ref: "TFLO",
+                    line_ref: "LINE1",
+                    published_line_name: "R3",
+                    dated_vehicle_journey_ref: null,
+                    direction_ref: "outbound",
+                    longitude: -1.123,
+                    latitude: 51.123,
+                    origin_aimed_departure_time: "2024-06-10T19:00:00+00:00",
+                    origin_ref: "abc123",
+                    destination_ref: "xyz123",
+                },
+            ];
+
+            mocks.executeMock.mockResolvedValue([
+                {
+                    direction: "outbound",
+                    noc: "METR",
+                    route_id: 1,
+                    route_short_name: "R3",
+                    trip_id: "trip1",
+                    revision_number: "1",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                    departure_time: "19:00:00+00",
+                },
+            ]);
+
+            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+
+            expect(matchedAvl).toEqual({
+                avls: [
+                    {
+                        ...avl[0],
+                        geom: {},
+                        route_id: 1,
+                        trip_id: "trip1",
+                    },
+                ],
+                matchedAvlCount: 1,
+                totalAvlCount: 1,
+            });
+        });
     });
 });
