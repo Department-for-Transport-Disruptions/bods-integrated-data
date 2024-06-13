@@ -102,24 +102,22 @@ module "integrated_data_gtfs_downloader" {
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
-# TODO: GTFS-RT pipeline module fails to deploy in local env - needs looking at
-#
-# module "integrated_data_gtfs_rt_pipeline" {
-#   source = "../modules/data-pipelines/gtfs-rt-pipeline"
-#
-#   environment                  = local.env
-#   vpc_id                       = null
-#   private_subnet_ids           = null
-#   db_secret_arn                = "*"
-#   db_sg_id                     = null
-#   db_host                      = null
-#   db_reader_host               = null
-#   bods_avl_processor_cpu       = 1024
-#   bods_avl_processor_memory    = 2048
-#   bods_avl_processor_image_url = "bods-avl-processor:latest"
-#   bods_avl_cleardown_frequency = 120
-#   bods_avl_processor_frequency = 240
-# }
+module "integrated_data_gtfs_rt_pipeline" {
+  source = "../modules/data-pipelines/gtfs-rt-pipeline"
+
+  environment                  = local.env
+  vpc_id                       = null
+  private_subnet_ids           = null
+  db_secret_arn                = "*"
+  db_sg_id                     = null
+  db_host                      = null
+  db_reader_host               = null
+  bods_avl_processor_cpu       = 1024
+  bods_avl_processor_memory    = 2048
+  bods_avl_processor_image_url = "bods-avl-processor:latest"
+  bods_avl_cleardown_frequency = 120
+  bods_avl_processor_frequency = 240
+}
 
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
@@ -163,6 +161,8 @@ module "integrated_data_avl_data_producer_api" {
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
+  subnet_ids                  = []
+  sg_id                       = ""
 }
 
 module "integrated_data_avl_siri_vm_downloader" {
