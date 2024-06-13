@@ -106,11 +106,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
-        logger.info(event.body);
-
         const data = parseXml(event.body);
-
-        logger.info("data", data);
 
         if (Object.hasOwn(data, "HeartbeatNotification")) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
