@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { logger } from "@baselime/lambda-logger";
 import {
-    AGGREGATED_SIRI_VM_FILE_PATH,
-    AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+    GENERATED_SIRI_VM_FILE_PATH,
+    GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
@@ -10,6 +9,9 @@ import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { Avl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
+import Pino from "pino";
+
+const logger = Pino();
 
 export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
     const responseTime = getDate();
@@ -25,13 +27,13 @@ export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef
     await Promise.all([
         putS3Object({
             Bucket: bucketName,
-            Key: AGGREGATED_SIRI_VM_FILE_PATH,
+            Key: GENERATED_SIRI_VM_FILE_PATH,
             ContentType: "application/xml",
             Body: siriVm,
         }),
         putS3Object({
             Bucket: bucketName,
-            Key: AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+            Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
             ContentType: "application/xml",
             Body: siriVmTfl,
         }),
@@ -42,7 +44,7 @@ export const handler = async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        logger.info("Starting SIRI-VM generator...");
+        logger.info("Starting SIRI-VM file generator");
 
         const { BUCKET_NAME: bucketName } = process.env;
 
@@ -58,7 +60,7 @@ export const handler = async () => {
         logger.info("Successfully uploaded SIRI-VM data to S3");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Error aggregating AVL data", e);
+            logger.error("Error generating SIRI-VM file", e);
         }
 
         throw e;

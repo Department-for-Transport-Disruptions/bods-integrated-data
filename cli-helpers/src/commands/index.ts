@@ -1,6 +1,5 @@
 export * from "./convert-agency-csv-to-json";
 export * from "./create-avl-mock-data-producer";
-export * from "./invoke-avl-aggregator";
 export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-feed-validator";
 export * from "./invoke-avl-siri-vm-downloader";
