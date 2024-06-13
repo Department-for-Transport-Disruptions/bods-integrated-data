@@ -82,6 +82,9 @@ module "avl_producer_api_gateway" {
   subscribe_lambda_name           = module.avl_subscriber.lambda_name
   unsubscribe_lambda_invoke_arn   = module.avl_unsubscriber.invoke_arn
   unsubscribe_lambda_name         = module.avl_unsubscriber.lambda_name
+  domain                          = var.domain
+  acm_certificate_arn             = var.acm_certificate_arn
+  hosted_zone_id                  = var.hosted_zone_id
 }
 
 module "avl_feed_validator" {
