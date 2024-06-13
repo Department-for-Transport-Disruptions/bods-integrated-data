@@ -1,5 +1,5 @@
 {
-    "name": "@bods-integrated-data/template-ecs-task",
+    "name": "@bods-integrated-data/siri-vm-generator-task",
     "version": "0.1.0",
     "description": "ECS task for generating SIRI-VM data",
     "scripts": {
