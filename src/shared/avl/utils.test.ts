@@ -1,9 +1,8 @@
-import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
-import { Avl } from "@bods-integrated-data/shared/database";
-import * as s3 from "@bods-integrated-data/shared/s3";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { generateSiriVmAndUploadToS3 } from "./jobs/siri-vm-generator";
+import { Avl } from "../database";
+import * as s3 from "../s3";
+import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH, generateSiriVmAndUploadToS3 } from "./utils";
 
 const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
@@ -223,9 +222,9 @@ const mockAvl: Avl[] = [
     },
 ];
 
-describe("siri-vm-generator", () => {
+describe("utils", () => {
     describe("generateSiriVmAndUploadToS3", () => {
-        vi.mock("@bods-integrated-data/shared/s3", () => ({
+        vi.mock("../s3", () => ({
             putS3Object: vi.fn(),
         }));
 

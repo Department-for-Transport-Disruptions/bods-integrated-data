@@ -220,16 +220,16 @@ module "integrated_data_avl_subscription_table" {
 
 module "integrated_data_avl_data_producer_api" {
   source                      = "../modules/avl-producer-api"
-  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.avl_siri_vm_bucket_name
+  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.avl_siri_bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
   sg_id                       = module.integrated_data_vpc_dev.default_sg_id
-  subnet_ids                  = module.integrated_data_vpc_dev.db_subnet_ids
   acm_certificate_arn         = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id              = module.integrated_data_route53.public_hosted_zone_id
   domain                      = module.integrated_data_route53.public_hosted_zone_name
+  subnet_ids                  = module.integrated_data_vpc_dev.private_subnet_ids
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -304,5 +304,10 @@ module "integrated_data_avl_consumer_api" {
   acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
   domain                        = module.integrated_data_route53.public_hosted_zone_name
-  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_siri_vm_bucket_name
+  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_siri_bucket_name
+  vpc_id                        = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids            = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                       = module.integrated_data_aurora_db_dev.db_host
 }

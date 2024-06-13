@@ -54,7 +54,7 @@ services:
       - IS_DOCKER=true
       - STAGE=local
       - BUCKET_NAME=integrated-data-avl-generated-siri-vm
-      - GENERATOR_FREQUENCY_IN_SECONDS=30
+      - PROCESSOR_FREQUENCY_IN_SECONDS=30
       - CLEARDOWN_FREQUENCY_IN_SECONDS=60
     volumes:
       - ./:/app/data

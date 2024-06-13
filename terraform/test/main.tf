@@ -227,10 +227,10 @@ module "integrated_data_avl_data_producer_api" {
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
   sg_id                       = module.integrated_data_vpc.default_sg_id
-  subnet_ids                  = module.integrated_data_vpc.db_subnet_ids
   acm_certificate_arn         = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id              = module.integrated_data_route53.public_hosted_zone_id
   domain                      = module.integrated_data_route53.public_hosted_zone_name
+  subnet_ids                  = module.integrated_data_vpc.private_subnet_ids
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -306,5 +306,10 @@ module "integrated_data_avl_consumer_api" {
   acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
   domain                        = module.integrated_data_route53.public_hosted_zone_name
-  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_siri_vm_bucket_name
+  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_siri_bucket_name
+  vpc_id                        = module.integrated_data_vpc.vpc_id
+  private_subnet_ids            = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                 = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                      = module.integrated_data_aurora_db.db_sg_id
+  db_host                       = module.integrated_data_aurora_db.db_host
 }

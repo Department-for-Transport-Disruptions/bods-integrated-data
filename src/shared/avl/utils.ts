@@ -3,8 +3,11 @@ import cleanDeep from "clean-deep";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
+import { getDate } from "../dates";
 import { getDynamoItem } from "../dynamo";
+import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
@@ -291,3 +294,28 @@ export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minut
  * @returns The termination.
  */
 export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
+
+export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
+    const responseTime = getDate();
+    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
+    const siriVmTfl = createSiriVm(
+        avls.filter((avl) => avl.operator_ref === tflOperatorRef),
+        requestMessageRef,
+        responseTime,
+    );
+
+    await Promise.all([
+        putS3Object({
+            Bucket: bucketName,
+            Key: GENERATED_SIRI_VM_FILE_PATH,
+            ContentType: "application/xml",
+            Body: siriVm,
+        }),
+        putS3Object({
+            Bucket: bucketName,
+            Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
+            ContentType: "application/xml",
+            Body: siriVmTfl,
+        }),
+    ]);
+};

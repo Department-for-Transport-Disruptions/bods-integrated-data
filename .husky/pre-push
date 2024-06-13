@@ -1,3 +1,3 @@
 pnpm lint
 (cd src && pnpm test:ci && pnpm build-test)
-terraform fmt -check -recursive
+pnpm terraform:format
