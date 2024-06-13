@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { getSiriVmTerminationTimeOffset } from "@bods-integrated-data/shared/avl/utils";
+import { getSiriVmTerminationTimeOffset, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
@@ -11,7 +11,7 @@ import {
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
@@ -118,6 +118,7 @@ const updateDynamoWithSubscriptionInfo = async (
         shortDescription: avlSubscribeMessage.shortDescription,
         requestorRef: avlSubscribeMessage.requestorRef ?? null,
         serviceStartDatetime: currentTimestamp ?? null,
+        publisherId: avlSubscribeMessage.publisherId ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");
@@ -196,7 +197,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTime);
 };
 
-export const handler = async (event: APIGatewayEvent) => {
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
         const {
             TABLE_NAME: tableName,
@@ -215,7 +216,11 @@ export const handler = async (event: APIGatewayEvent) => {
 
         logger.info("Starting AVL subscriber");
 
-        const parsedBody = avlSubscribeMessageSchema.safeParse(JSON.parse(event.body ?? ""));
+        if (!event.body) {
+            throw new Error("No body sent with event");
+        }
+
+        const parsedBody = avlSubscribeMessageSchema.safeParse(JSON.parse(event.body));
 
         if (!parsedBody.success) {
             logger.error(JSON.stringify(parsedBody.error));
@@ -223,17 +228,18 @@ export const handler = async (event: APIGatewayEvent) => {
         }
 
         const avlSubscribeMessage = parsedBody.data;
+        const { subscriptionId, username, password } = avlSubscribeMessage;
 
-        const subscriptionId = avlSubscribeMessage.subscriptionId ?? randomUUID();
+        const isActiveSubscription = await isActiveAvlSubscription(subscriptionId, tableName);
 
-        // Add username and password to parameter store if we are processing a new subscription
-        if (!avlSubscribeMessage.subscriptionId) {
-            await addSubscriptionAuthCredsToSsm(
-                subscriptionId,
-                avlSubscribeMessage.username,
-                avlSubscribeMessage.password,
-            );
+        if (isActiveSubscription) {
+            return {
+                statusCode: 409,
+                body: "Subscription ID already active",
+            };
         }
+
+        await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
         try {
             await sendSubscriptionRequestAndUpdateDynamo(
@@ -255,6 +261,10 @@ export const handler = async (event: APIGatewayEvent) => {
         }
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
+
+        return {
+            statusCode: 201,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was a problem subscribing to the AVL feed.", e);

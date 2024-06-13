@@ -37,7 +37,10 @@ export const putDynamoItem = async <T extends Record<string, unknown>>(
     );
 };
 
-export const getDynamoItem = async (tableName: string, key: Record<string, NativeAttributeValue>) => {
+export const getDynamoItem = async <T extends Record<string, unknown>>(
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+) => {
     const data = await dynamoDbDocClient.send(
         new GetCommand({
             TableName: tableName,
@@ -45,7 +48,7 @@ export const getDynamoItem = async (tableName: string, key: Record<string, Nativ
         }),
     );
 
-    return data.Item ?? null;
+    return data.Item ? (data.Item as T) : null;
 };
 
 export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise<Record<string, unknown>[]> => {

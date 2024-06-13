@@ -128,6 +128,7 @@ module "integrated_data_avl_pipeline" {
   db_secret_arn                               = "*"
   db_sg_id                                    = null
   db_host                                     = null
+  db_reader_host                              = null
   alarm_topic_arn                             = ""
   ok_topic_arn                                = ""
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
@@ -135,17 +136,11 @@ module "integrated_data_avl_pipeline" {
   avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
   aws_account_id                              = data.aws_caller_identity.current.account_id
   aws_region                                  = data.aws_region.current.name
-}
-
-module "integrated_data_avl_aggregator" {
-  source = "../modules/data-pipelines/avl-aggregate-siri-vm"
-
-  environment        = local.env
-  vpc_id             = null
-  private_subnet_ids = null
-  db_secret_arn      = "*"
-  db_sg_id           = null
-  db_host            = null
+  siri_vm_generator_cpu                       = 1024
+  siri_vm_generator_memory                    = 2048
+  siri_vm_generator_image_url                 = "siri-vm-generator:latest"
+  siri_vm_generator_frequency                 = 240
+  avl_cleardown_frequency                     = 120
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -156,20 +151,28 @@ module "integrated_data_avl_subscription_table" {
 
 module "integrated_data_avl_data_producer_api" {
   source                      = "../modules/avl-producer-api"
-  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.bucket_name
+  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.avl_siri_bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
   environment                 = local.env
-  subnet_ids                  = []
   sg_id                       = ""
+  subnet_ids                  = []
+  acm_certificate_arn         = ""
+  hosted_zone_id              = ""
+  domain                      = ""
 }
 
 module "integrated_data_avl_siri_vm_downloader" {
   source = "../modules/avl-siri-vm-downloader"
 
-  environment = local.env
-  bucket_name = module.integrated_data_avl_aggregator.avl_siri_vm_bucket_name
+  environment        = local.env
+  bucket_name        = module.integrated_data_avl_pipeline.avl_siri_bucket_name
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
 }
 
 module "integrated_data_bank_holidays_pipeline" {

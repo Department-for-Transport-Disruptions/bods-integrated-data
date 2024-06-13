@@ -4,7 +4,7 @@ import { Option } from "@commander-js/extra-typings";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
-export const STAGES = ["local", "dev"];
+export const STAGES = ["local", "dev", "test"];
 
 export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
 

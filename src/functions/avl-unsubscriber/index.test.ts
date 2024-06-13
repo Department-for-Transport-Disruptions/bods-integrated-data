@@ -101,9 +101,10 @@ describe("avl-unsubscriber", () => {
     it("should throw an error if subscription id not found in dynamo.", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            "Subscription ID: mock-subscription-id not found in DynamoDB",
-        );
+        await expect(handler(mockUnsubscribeEvent)).resolves.toStrictEqual({
+            statusCode: 404,
+            body: "Subscription ID: mock-subscription-id not found in DynamoDB",
+        });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
