@@ -9,14 +9,14 @@ void (async () => {
 
     try {
         const result = await dbClient
-            .deleteFrom("avl_bods")
+            .deleteFrom("avl")
             .where("valid_until_time", "<", sql<string>`NOW()`)
             .executeTakeFirst();
 
-        logger.info(`AVL bods cleardown successful: deleted ${result.numDeletedRows} rows`);
+        logger.info(`AVL cleardown successful: deleted ${result.numDeletedRows} rows`);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL bods cleardown", e);
+            logger.error("There was a problem with the AVL cleardown", e);
         }
 
         throw e;

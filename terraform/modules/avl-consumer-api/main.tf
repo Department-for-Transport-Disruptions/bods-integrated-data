@@ -13,7 +13,7 @@ module "integrated_data_avl_siri_vm_downloader" {
   source = "../../modules/avl-siri-vm-downloader"
 
   environment = var.environment
-  bucket_name = var.aggregated_siri_vm_bucket_name
+  bucket_name = var.generated_siri_vm_bucket_name
 }
 
 resource "aws_apigatewayv2_api" "integrated_data_avl_consumer_api" {
