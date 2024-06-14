@@ -82,7 +82,7 @@ export const generateSubscriptionRequestXml = (
     return request;
 };
 
-const parseXml = (xml: string) => {
+const parseXml = (xml: string, subscriptionId: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
@@ -95,7 +95,7 @@ const parseXml = (xml: string) => {
 
     if (!parsedJson.success) {
         logger.error(
-            "There was an error parsing the subscription response from the data producer",
+            `There was an error parsing the subscription response from the data producer with subscription ID: ${subscriptionId}`,
             parsedJson.error.format(),
         );
         return null;
@@ -180,7 +180,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         );
     }
 
-    const parsedResponseBody = parseXml(subscriptionResponseBody);
+    const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
     if (!parsedResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
