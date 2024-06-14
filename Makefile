@@ -227,6 +227,9 @@ run-local-avl-tfl-location-retriever:
 run-local-avl-siri-vm-downloader:
 	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).catch(e => console.error(e))"
 
+run-local-avl-subscriptions:
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler().then(console.log).catch(console.error)"
+
 # NOC
 
 run-local-noc-retriever:
