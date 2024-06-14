@@ -14,7 +14,7 @@ data "aws_caller_identity" "current" {}
 module "integrated_data_avl_s3_sqs" {
   source = "../../shared/s3-sqs"
 
-  bucket_name     = "integrated-data-avl-${var.environment}"
+  bucket_name     = "integrated-data-avl-raw-siri-${var.environment}"
   sqs_name        = "integrated-data-avl-queue-${var.environment}"
   dlq_name        = "integrated-data-avl-dlq-${var.environment}"
   alarm_topic_arn = var.alarm_topic_arn
@@ -43,7 +43,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -52,7 +52,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -61,7 +61,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -109,7 +109,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -154,7 +154,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn,
         aws_secretsmanager_secret.tfl_api_keys_secret.arn
@@ -182,12 +182,12 @@ module "avl_tfl_location_retriever_sfn" {
   depends_on           = [module.integrated_data_avl_tfl_location_retriever_function]
 }
 
-resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
+resource "aws_s3_bucket" "integrated_data_avl_generated_siri_vm_bucket" {
   bucket = "integrated-data-avl-generated-siri-vm-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_public" {
-  bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
+  bucket = aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -196,7 +196,7 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_
 }
 
 resource "aws_s3_bucket_versioning" "integrated_data_avl_siri_vm_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
+  bucket = aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -215,7 +215,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
   name = "integrated-data-siri-vm-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -244,20 +244,23 @@ resource "aws_iam_role" "siri_vm_generator_ecs_execution_role" {
     ]
   })
 
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.siri_vm_generator_ecs_execution_policy.arn]
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    aws_iam_policy.siri_vm_generator_ecs_execution_policy.arn
+  ]
 }
 
 resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
   name = "integrated-data-siri-vm-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
         "Action" : "s3:PutObject",
         "Resource" : [
-          "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
+          "${aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.arn}/*"
         ]
       },
       {
@@ -325,7 +328,8 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 }
 
 resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
-  family                   = var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" : "integrated-data-siri-vm-generator"
+  family                   = var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" :
+    "integrated-data-siri-vm-generator"
   cpu                      = var.siri_vm_generator_cpu
   memory                   = var.siri_vm_generator_memory
   requires_compatibilities = ["FARGATE"]
@@ -367,7 +371,7 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
         },
         {
           "name" : "BUCKET_NAME",
-          "value" : aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+          "value" : aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.bucket
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",
