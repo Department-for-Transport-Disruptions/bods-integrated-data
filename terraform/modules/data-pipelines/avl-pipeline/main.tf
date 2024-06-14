@@ -14,7 +14,7 @@ data "aws_caller_identity" "current" {}
 module "integrated_data_avl_s3_sqs" {
   source = "../../shared/s3-sqs"
 
-  bucket_name     = "integrated-data-avl-${var.environment}"
+  bucket_name     = "integrated-data-avl-raw-siri-${var.environment}"
   sqs_name        = "integrated-data-avl-queue-${var.environment}"
   dlq_name        = "integrated-data-avl-dlq-${var.environment}"
   alarm_topic_arn = var.alarm_topic_arn
@@ -80,6 +80,7 @@ module "integrated_data_avl_processor_function" {
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
+    TABLE_NAME    = var.avl_subscription_table_name
   }
 }
 
@@ -250,7 +251,10 @@ resource "aws_iam_role" "siri_vm_generator_ecs_execution_role" {
     ]
   })
 
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.siri_vm_generator_ecs_execution_policy[0].arn]
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    aws_iam_policy.siri_vm_generator_ecs_execution_policy[0].arn
+  ]
 }
 
 resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
@@ -345,7 +349,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
   count = var.environment != "local" ? 1 : 0
 
-  family                   = var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" : "integrated-data-siri-vm-generator"
+  family                   = (var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" : "integrated-data-siri-vm-generator")
   cpu                      = var.siri_vm_generator_cpu
   memory                   = var.siri_vm_generator_memory
   requires_compatibilities = ["FARGATE"]

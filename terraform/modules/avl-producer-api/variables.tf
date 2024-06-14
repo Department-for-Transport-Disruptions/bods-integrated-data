@@ -18,7 +18,7 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-variable "avl_siri_bucket_name" {
+variable "avl_raw_siri_bucket_name" {
   type        = string
   description = "Bucket Name for SIRI-VM data"
 }

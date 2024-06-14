@@ -13,7 +13,7 @@ module "avl_data_endpoint" {
   source = "./avl-data-endpoint"
 
   environment                 = var.environment
-  bucket_name                 = var.avl_siri_bucket_name
+  bucket_name                 = var.avl_raw_siri_bucket_name
   avl_subscription_table_name = var.avl_subscription_table_name
   aws_account_id              = var.aws_account_id
   aws_region                  = var.aws_region
