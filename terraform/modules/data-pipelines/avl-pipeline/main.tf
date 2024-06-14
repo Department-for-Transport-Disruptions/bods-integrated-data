@@ -43,7 +43,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -52,7 +52,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -61,7 +61,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -109,7 +109,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -154,7 +154,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn,
         aws_secretsmanager_secret.tfl_api_keys_secret.arn
@@ -215,7 +215,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
   name = "integrated-data-siri-vm-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -254,7 +254,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
   name = "integrated-data-siri-vm-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -328,8 +328,8 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 }
 
 resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
-  family                   = var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" :
-    "integrated-data-siri-vm-generator"
+  family = (var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" :
+  "integrated-data-siri-vm-generator")
   cpu                      = var.siri_vm_generator_cpu
   memory                   = var.siri_vm_generator_memory
   requires_compatibilities = ["FARGATE"]
