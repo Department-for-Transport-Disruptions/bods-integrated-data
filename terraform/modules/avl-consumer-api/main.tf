@@ -21,6 +21,18 @@ module "integrated_data_avl_siri_vm_downloader" {
   db_host            = var.db_host
 }
 
+module "integrated_data_avl_subscriptions" {
+  source = "./avl-subscriptions"
+
+  environment        = var.environment
+  vpc_id             = var.vpc_id
+  private_subnet_ids = var.private_subnet_ids
+  db_secret_arn      = var.db_secret_arn
+  db_sg_id           = var.db_sg_id
+  db_host            = var.db_host
+  table_name         = var.avl_subscription_table_name
+}
+
 resource "aws_apigatewayv2_api" "integrated_data_avl_consumer_api" {
   name          = "integrated-data-avl-consumer-api-${var.environment}"
   protocol_type = "HTTP"
@@ -34,10 +46,24 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_consumer_downloader
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_api_route" {
+resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_downloader_api_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
   route_key = "GET /siri-vm"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration.id}"
+}
+
+resource "aws_apigatewayv2_integration" "integrated_data_avl_consumer_subscriptions_integration" {
+  api_id                 = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = module.integrated_data_avl_subscriptions.avl_subscriptions_invoke_arn
+  integration_method     = "GET"
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_subscriptions_api_route" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
+  route_key = "GET /subscriptions"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_consumer_subscriptions_integration.id}"
 }
 
 
@@ -47,8 +73,10 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_consumer_api_deploym
 
   triggers = {
     redeployment = sha1(join(",", tolist([
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_api_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_downloader_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_consumer_subscriptions_integration),
     ])))
   }
 
@@ -71,6 +99,13 @@ resource "aws_apigatewayv2_stage" "integrated_data_avl_consumer_api_stage" {
 
 resource "aws_lambda_permission" "integrated_data_avl_consumer_downloader_api_permissions" {
   function_name = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_lambda_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_consumer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_consumer_api_stage.name}/*"
+}
+
+resource "aws_lambda_permission" "integrated_data_avl_consumer_subscriptions_api_permissions" {
+  function_name = module.integrated_data_avl_subscriptions.avl_subscriptions_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_consumer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_consumer_api_stage.name}/*"

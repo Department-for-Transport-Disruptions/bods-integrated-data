@@ -146,6 +146,10 @@ module "integrated_data_gtfs_downloader" {
 #   avl_cleardown_frequency                     = 120
 # }
 
+resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
+  bucket = "integrated-data-avl-generated-siri-vm-local"
+}
+
 module "integrated_data_avl_subscription_table" {
   source = "../modules/database/dynamo"
 
@@ -154,7 +158,7 @@ module "integrated_data_avl_subscription_table" {
 
 module "integrated_data_avl_data_producer_api" {
   source                      = "../modules/avl-producer-api"
-  avl_siri_bucket_name        = module.integrated_data_avl_pipeline.avl_siri_bucket_name
+  avl_siri_bucket_name        = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
@@ -170,12 +174,24 @@ module "integrated_data_avl_siri_vm_downloader" {
   source = "../modules/avl-siri-vm-downloader"
 
   environment        = local.env
-  bucket_name        = module.integrated_data_avl_pipeline.avl_siri_bucket_name
+  bucket_name        = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
   vpc_id             = null
   private_subnet_ids = null
   db_secret_arn      = "*"
   db_sg_id           = null
   db_host            = null
+}
+
+module "integrated_data_avl_subscriptions" {
+  source = "../modules/avl-consumer-api/avl-subscriptions"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+  table_name         = module.integrated_data_avl_subscription_table.table_name
 }
 
 module "integrated_data_bank_holidays_pipeline" {

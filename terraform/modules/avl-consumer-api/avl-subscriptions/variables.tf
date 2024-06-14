@@ -3,22 +3,6 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "generated_siri_vm_bucket_name" {
-  type = string
-}
-
-variable "domain" {
-  type = string
-}
-
-variable "acm_certificate_arn" {
-  type = string
-}
-
-variable "hosted_zone_id" {
-  type = string
-}
-
 variable "vpc_id" {
   type        = string
   description = "VPC ID"
@@ -53,7 +37,7 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "avl_subscription_table_name" {
+variable "table_name" {
   type        = string
-  description = "AVL Subscription DynamoDB table name"
+  description = "Name of the dynamoDB table containing the subscriptions data"
 }
