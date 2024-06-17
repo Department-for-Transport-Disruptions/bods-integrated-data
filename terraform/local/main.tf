@@ -173,6 +173,11 @@ module "integrated_data_avl_data_producer_api" {
   acm_certificate_arn         = ""
   hosted_zone_id              = ""
   domain                      = ""
+  vpc_id                      = null
+  private_subnet_ids          = null
+  db_secret_arn               = "*"
+  db_sg_id                    = null
+  db_host                     = null
 }
 
 module "integrated_data_avl_siri_vm_downloader" {
@@ -185,20 +190,6 @@ module "integrated_data_avl_siri_vm_downloader" {
   db_secret_arn      = "*"
   db_sg_id           = null
   db_host            = null
-}
-
-module "integrated_data_avl_subscriptions" {
-  source = "../modules/avl-consumer-api/avl-subscriptions"
-
-  environment        = local.env
-  aws_account_id     = data.aws_caller_identity.current.account_id
-  aws_region         = data.aws_region.current.name
-  vpc_id             = null
-  private_subnet_ids = null
-  db_secret_arn      = "*"
-  db_sg_id           = null
-  db_host            = null
-  table_name         = module.integrated_data_avl_subscription_table.table_name
 }
 
 module "integrated_data_bank_holidays_pipeline" {

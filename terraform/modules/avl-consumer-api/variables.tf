@@ -3,16 +3,6 @@ variable "environment" {
   description = "Environment"
 }
 
-variable "aws_account_id" {
-  type        = string
-  description = "AWS account id"
-}
-
-variable "aws_region" {
-  type        = string
-  description = "AWS region"
-}
-
 variable "generated_siri_vm_bucket_name" {
   type = string
 }
@@ -61,9 +51,4 @@ variable "db_secret_arn" {
 variable "db_name" {
   type    = string
   default = "bods_integrated_data"
-}
-
-variable "avl_subscription_table_name" {
-  type        = string
-  description = "AVL Subscription DynamoDB table name"
 }

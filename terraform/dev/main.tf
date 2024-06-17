@@ -230,6 +230,11 @@ module "integrated_data_avl_data_producer_api" {
   hosted_zone_id              = module.integrated_data_route53.public_hosted_zone_id
   domain                      = module.integrated_data_route53.public_hosted_zone_name
   subnet_ids                  = module.integrated_data_vpc_dev.private_subnet_ids
+  vpc_id                      = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids          = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn               = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id                    = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host                     = module.integrated_data_aurora_db_dev.db_host
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -301,8 +306,6 @@ module "integrated_data_avl_consumer_api" {
   source = "../modules/avl-consumer-api"
 
   environment                   = local.env
-  aws_account_id                = data.aws_caller_identity.current.account_id
-  aws_region                    = data.aws_region.current.name
   acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
   domain                        = module.integrated_data_route53.public_hosted_zone_name
@@ -312,5 +315,4 @@ module "integrated_data_avl_consumer_api" {
   db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                       = module.integrated_data_aurora_db_dev.db_host
-  avl_subscription_table_name   = module.integrated_data_avl_subscription_table.table_name
 }
