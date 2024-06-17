@@ -245,6 +245,13 @@ module "integrated_data_fares_pipeline" {
   environment = local.env
 }
 
+module "integrated_data_disruptions_pipeline" {
+  source = "../modules/data-pipelines/disruptions-pipeline"
+
+  environment = local.env
+}
+
+
 module "integrated_data_db_cleardown_function" {
   source = "../modules/db-cleardown"
 
