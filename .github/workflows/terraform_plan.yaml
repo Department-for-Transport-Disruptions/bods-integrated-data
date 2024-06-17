@@ -50,7 +50,7 @@ jobs:
         run: make install-deps
 
       - name: Typescript Build
-        run: make typescript-build-test
+        run: make check-types
 
       - name: Lint Functions
         run: make lint-functions
