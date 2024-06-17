@@ -191,6 +191,8 @@ module "integrated_data_avl_subscriptions" {
   source = "../modules/avl-consumer-api/avl-subscriptions"
 
   environment        = local.env
+  aws_account_id     = data.aws_caller_identity.current.account_id
+  aws_region         = data.aws_region.current.name
   vpc_id             = null
   private_subnet_ids = null
   db_secret_arn      = "*"

@@ -301,6 +301,8 @@ module "integrated_data_avl_consumer_api" {
   source = "../modules/avl-consumer-api"
 
   environment                   = local.env
+  aws_account_id                = data.aws_caller_identity.current.account_id
+  aws_region                    = data.aws_region.current.name
   acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
   domain                        = module.integrated_data_route53.public_hosted_zone_name

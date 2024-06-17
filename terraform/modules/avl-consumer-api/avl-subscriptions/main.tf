@@ -40,7 +40,13 @@ module "integrated_data_avl_subscriptions_function" {
       Resource = [
         var.db_secret_arn
       ]
-    }
+    },
+    {
+      Action   = ["dynamodb:Scan"]
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.table_name}"
+
+    },
   ]
 
   env_vars = {

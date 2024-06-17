@@ -25,6 +25,8 @@ module "integrated_data_avl_subscriptions" {
   source = "./avl-subscriptions"
 
   environment        = var.environment
+  aws_account_id     = var.aws_account_id
+  aws_region         = var.aws_region
   vpc_id             = var.vpc_id
   private_subnet_ids = var.private_subnet_ids
   db_secret_arn      = var.db_secret_arn
