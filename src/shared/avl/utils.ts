@@ -163,7 +163,7 @@ export const getAvlDataForSiriVm = async (
             query = query.where("subscription_id", "=", subscriptionId);
         }
 
-        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
+        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
 
         const avls = await query.execute();
 

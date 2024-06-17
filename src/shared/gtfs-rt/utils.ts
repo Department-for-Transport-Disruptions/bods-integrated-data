@@ -131,7 +131,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.response_time_stamp desc"]);
+        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.recorded_at_time desc"]);
 
         const avls = await query.execute();
 
