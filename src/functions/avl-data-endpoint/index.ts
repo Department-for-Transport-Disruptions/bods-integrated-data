@@ -104,10 +104,10 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
         } else {
             if (subscription.status !== "LIVE") {
-                logger.warn(`Subscription: ${subscriptionId} is not ACTIVE, data will not be processed...`);
+                logger.warn(`Subscription: ${subscriptionId} is not LIVE, data will not be processed...`);
                 return {
                     statusCode: 404,
-                    body: `Subscription with Subscription ID: ${subscriptionId} is not ACTIVE in the service.`,
+                    body: `Subscription with Subscription ID: ${subscriptionId} is not LIVE in the service.`,
                 };
             }
             await uploadSiriVmToS3(event.body, bucketName, subscription, tableName);
