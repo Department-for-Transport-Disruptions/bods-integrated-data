@@ -151,7 +151,7 @@ resource "aws_s3_bucket" "integrated_data_avl_raw_siri_vm_bucket" {
   bucket = "integrated-data-avl-raw-siri-vm-local"
 }
 
-resource "aws_s3_bucket" "integrated_data_avl_generated_siri_vm_bucket" {
+resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
   bucket = "integrated-data-avl-generated-siri-vm-local"
 }
 
@@ -179,7 +179,7 @@ module "integrated_data_avl_siri_vm_downloader" {
   source = "../modules/avl-siri-vm-downloader"
 
   environment        = local.env
-  bucket_name        = aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.id
+  bucket_name        = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
   vpc_id             = null
   private_subnet_ids = null
   db_secret_arn      = "*"
