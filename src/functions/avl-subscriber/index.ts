@@ -6,6 +6,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
     AvlSubscribeMessage,
     AvlSubscription,
+    AvlSubscriptionStatuses,
     avlSubscribeMessageSchema,
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
@@ -108,7 +109,7 @@ const updateDynamoWithSubscriptionInfo = async (
     tableName: string,
     subscriptionId: string,
     avlSubscribeMessage: AvlSubscribeMessage,
-    status: "ACTIVE" | "FAILED",
+    status: AvlSubscriptionStatuses,
     currentTimestamp?: string,
 ) => {
     const subscriptionTableItems: Omit<AvlSubscription, "PK"> = {
@@ -194,7 +195,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
         );
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTime);
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "LIVE", currentTime);
 };
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {

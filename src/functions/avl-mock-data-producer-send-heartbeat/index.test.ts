@@ -43,7 +43,7 @@ describe("avl-mock-data-producer-send-data", () => {
                 url: "https://www.mock-data-producer-one.com",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: "REAL_DATA_PRODUCER",
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             },

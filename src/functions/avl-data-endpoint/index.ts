@@ -103,7 +103,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         if (Object.hasOwn(data, "HeartbeatNotification")) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
         } else {
-            if (subscription.status !== "ACTIVE") {
+            if (subscription.status !== "LIVE") {
                 logger.warn(`Subscription: ${subscriptionId} is not ACTIVE, data will not be processed...`);
                 return {
                     statusCode: 404,

@@ -65,7 +65,7 @@ describe("avl-processor", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
         });
     });
@@ -121,7 +121,7 @@ describe("avl-processor", () => {
         expect(valuesMock).not.toBeCalled();
     });
 
-    it.each(["FAILED", "TERMINATED", "UNAVAILABLE"])(
+    it.each(["FAILED", "INACTIVE", "UNAVAILABLE"])(
         "throws an error when the subscription is not active",
         async (status) => {
             getDynamoItemSpy.mockResolvedValue({

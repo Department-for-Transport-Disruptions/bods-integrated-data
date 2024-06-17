@@ -16,7 +16,7 @@ export const getSubscriptions = async (tableName: string) => {
 
     const parsedSubscriptions = avlSubscriptionsSchema.parse(subscriptions);
 
-    return parsedSubscriptions.filter((subscription) => subscription.status !== "TERMINATED");
+    return parsedSubscriptions.filter((subscription) => subscription.status !== "INACTIVE");
 };
 
 export const resubscribeToDataProducer = async (subscription: AvlSubscription, subscribeEndpoint: string) => {

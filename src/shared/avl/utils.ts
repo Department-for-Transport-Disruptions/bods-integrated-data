@@ -29,7 +29,7 @@ export const isActiveAvlSubscription = async (subscriptionId: string, tableName:
         SK: "SUBSCRIPTION",
     });
 
-    return subscription?.status === "ACTIVE";
+    return subscription?.status === "LIVE";
 };
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {

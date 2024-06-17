@@ -65,7 +65,7 @@ describe("avl-subscriber", () => {
             description: "description",
             requestorRef: null,
             shortDescription: "shortDescription",
-            status: "ACTIVE",
+            status: "LIVE",
             url: "https://mock-data-producer.com",
             serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
@@ -229,7 +229,7 @@ describe("avl-subscriber", () => {
 
     it("returns a 409 when attempting to subscribe with a subscription ID that is already active", async () => {
         getDynamoItemSpy.mockResolvedValue({
-            status: "ACTIVE",
+            status: "LIVE",
         });
 
         await expect(handler(mockSubscribeEvent)).resolves.toEqual({
@@ -247,7 +247,7 @@ describe("avl-subscriber", () => {
         description: "test-description",
         shortDescription: "test-short-description",
         lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
-        status: "ACTIVE",
+        status: "LIVE",
         requestorRef: null,
     });
 
@@ -264,7 +264,7 @@ describe("avl-subscriber", () => {
             description: "description",
             requestorRef: "BODS_MOCK_PRODUCER",
             shortDescription: "shortDescription",
-            status: "ACTIVE",
+            status: "LIVE",
             url: "https://mock-data-producer.com",
             serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",

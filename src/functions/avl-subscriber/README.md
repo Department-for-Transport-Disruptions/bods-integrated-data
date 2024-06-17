@@ -34,7 +34,7 @@ The Lambda performs the following actions
 4. Sends the request to the data producer endpoint
 5. Processes the response from the data producer endpoint
 6. Store the subscription details in a DynamoDB table
-    1. The subscription will have a status of "ACTIVE" if the subscription process was successful
+    1. The subscription will have a status of "LIVE" if the subscription process was successful
     2. The subscription will have a status of "FAILED" if the subscription process failed
 
 The following checks are made throughout the function:
