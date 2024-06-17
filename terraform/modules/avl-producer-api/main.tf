@@ -30,10 +30,10 @@ resource "aws_lambda_function_url" "avl_data_endpoint_function_url" {
 module "avl_mock_data_producer" {
   source = "./mock-data-producer"
 
-  environment = var.environment
+  environment                = var.environment
   avl_consumer_data_endpoint = (var.environment == "local" ?
     aws_lambda_function_url.avl_data_endpoint_function_url[0].function_url :
-  "${module.avl_producer_api_gateway[0].endpoint}/data")
+    "${module.avl_producer_api_gateway[0].endpoint}/data")
   avl_subscription_table_name = var.avl_subscription_table_name
   aws_account_id              = var.aws_account_id
   aws_region                  = var.aws_region
@@ -42,13 +42,13 @@ module "avl_mock_data_producer" {
 module "avl_subscriber" {
   source = "./avl-subscriber"
 
-  environment                 = var.environment
-  avl_subscription_table_name = var.avl_subscription_table_name
+  environment                               = var.environment
+  avl_subscription_table_name               = var.avl_subscription_table_name
   avl_mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
     module.avl_mock_data_producer.subscribe_function_url :
-  "${module.avl_mock_data_producer.endpoint}/subscribe")
+    "${module.avl_mock_data_producer.endpoint}/subscribe")
   avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/data" :
-  "${module.avl_producer_api_gateway[0].endpoint}/data")
+    "${module.avl_producer_api_gateway[0].endpoint}/data")
   aws_account_id = var.aws_account_id
   aws_region     = var.aws_region
   sg_id          = var.sg_id
@@ -72,6 +72,17 @@ module "avl_unsubscriber" {
   subnet_ids                  = var.subnet_ids
 }
 
+module "avl_update_endpoint" {
+  source = "./avl-update-endpoint"
+
+  avl_subscription_table_name = var.avl_subscription_table_name
+  aws_account_id              = var.aws_account_id
+  aws_region                  = var.aws_region
+  environment                 = var.environment
+  sg_id                       = var.sg_id
+  subnet_ids                  = var.subnet_ids
+}
+
 module "avl_producer_api_gateway" {
   count                           = var.environment == "local" ? 0 : 1
   source                          = "./api-gateway"
@@ -82,20 +93,22 @@ module "avl_producer_api_gateway" {
   subscribe_lambda_name           = module.avl_subscriber.lambda_name
   unsubscribe_lambda_invoke_arn   = module.avl_unsubscriber.invoke_arn
   unsubscribe_lambda_name         = module.avl_unsubscriber.lambda_name
+  update_lambda_invoke_arn        = module.avl_update_endpoint.invoke_arn
+  update_lambda_name              = module.avl_update_endpoint.lambda_name
   domain                          = var.domain
   acm_certificate_arn             = var.acm_certificate_arn
   hosted_zone_id                  = var.hosted_zone_id
 }
 
 module "avl_feed_validator" {
-  source                      = "./avl-feed-validator"
-  avl_subscription_table_name = var.avl_subscription_table_name
-  aws_account_id              = var.aws_account_id
-  aws_region                  = var.aws_region
-  environment                 = var.environment
+  source                          = "./avl-feed-validator"
+  avl_subscription_table_name     = var.avl_subscription_table_name
+  aws_account_id                  = var.aws_account_id
+  aws_region                      = var.aws_region
+  environment                     = var.environment
   avl_consumer_subscribe_endpoint = (var.environment == "local" ?
     aws_lambda_function_url.avl_subscribe_endpoint_function_url[0].function_url :
-  "${module.avl_producer_api_gateway[0].endpoint}/subscribe")
+    "${module.avl_producer_api_gateway[0].endpoint}/subscribe")
 }
 
 module "avl_feed_validator_sfn" {
