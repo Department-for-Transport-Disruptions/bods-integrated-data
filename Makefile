@@ -201,7 +201,7 @@ run-local-avl-subscriber:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
 run-local-avl-data-endpoint:
-	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
 	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
@@ -216,7 +216,7 @@ run-local-avl-mock-data-producer-send-data:
 	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
 
 run-local-avl-unsubscriber:
-	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscriptionId':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
 run-local-avl-tfl-line-id-retriever:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-tfl-line-id-retriever'; handler().catch(e => console.error(e))"

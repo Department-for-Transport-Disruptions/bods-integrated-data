@@ -49,7 +49,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: testSiri,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -95,7 +95,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: testSiriWithSingleVehicleActivity,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -120,7 +120,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: null,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
         await expect(handler(mockEvent)).rejects.toThrowError("No body sent with event");
@@ -141,7 +141,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: "abc",
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -162,7 +162,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: mockHeartbeatNotification,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -191,7 +191,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: mockHeartbeatNotification,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 

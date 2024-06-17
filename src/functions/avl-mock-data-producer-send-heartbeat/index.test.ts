@@ -73,7 +73,7 @@ describe("avl-mock-data-producer-send-data", () => {
         await handler();
         expect(axiosSpy).toBeCalledTimes(2);
         expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com?subscription_id=subscription-one",
+            "https://www.test-data-endpoint.com?subscriptionId=subscription-one",
             expectedHeartbeatNotification("subscription-one"),
             {
                 headers: {
@@ -83,7 +83,7 @@ describe("avl-mock-data-producer-send-data", () => {
         );
 
         expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com?subscription_id=subscription-two",
+            "https://www.test-data-endpoint.com?subscriptionId=subscription-two",
             expectedHeartbeatNotification("subscription-two"),
             {
                 headers: {

@@ -84,7 +84,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         logger.info("Starting Data Endpoint");
 
         const subscriptionId =
-            stage === "local" ? event?.queryStringParameters?.subscription_id : event?.pathParameters?.subscription_id;
+            stage === "local" ? event?.queryStringParameters?.subscriptionId : event?.pathParameters?.subscriptionId;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID missing from path parameters");

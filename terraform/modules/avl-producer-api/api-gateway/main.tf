@@ -48,7 +48,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_data" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /data/{subscription_id}"
+  route_key = "POST /data/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data.id}"
 }
 
@@ -60,7 +60,7 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_subscr
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_unsubscribe" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /unsubscribe/{subscription_id}"
+  route_key = "POST /unsubscribe/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_unsubscribe.id}"
 }
 

@@ -106,7 +106,7 @@ describe("avl-subscriptions", () => {
 
     it("returns a 200 with a single subscription when passing a subscription ID param", async () => {
         mockEvent.pathParameters = {
-            subscription_id: "subscription-one",
+            subscriptionId: "subscription-one",
         };
 
         getAvlSubscriptionMock.mockResolvedValueOnce({
