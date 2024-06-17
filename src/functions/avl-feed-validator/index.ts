@@ -72,12 +72,19 @@ export const handler = async () => {
                 );
 
                 if (isHeartbeatValid) {
+                    if (subscription.status !== "LIVE") {
+                        await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
+                            ...subscription,
+                            status: "LIVE",
+                        });
+                    }
+
                     return;
                 }
 
                 await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                     ...subscription,
-                    status: "UNAVAILABLE",
+                    status: "ERROR",
                 });
 
                 try {

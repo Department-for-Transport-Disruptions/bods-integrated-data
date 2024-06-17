@@ -123,7 +123,7 @@ describe("avl-feed-validator", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
-            status: "UNAVAILABLE",
+            status: "ERROR",
             url: "https://mock-data-producer.com/",
         });
     });
@@ -165,7 +165,7 @@ describe("avl-feed-validator", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
-            status: "UNAVAILABLE",
+            status: "ERROR",
             url: "https://mock-data-producer.com/",
         });
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -214,7 +214,7 @@ describe("avl-feed-validator", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
-            status: "UNAVAILABLE",
+            status: "ERROR",
             url: "https://mock-data-producer.com/",
         });
         expect(axiosSpy).toHaveBeenCalledOnce();

@@ -52,7 +52,7 @@ describe("avl-mock-data-producer-send-data", () => {
                 url: "https://www.mock-data-producer-one.com",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "FAILED",
+                status: "ERROR",
                 requestorRef: "BODS_MOCK_PRODUCER",
             },
         ]);
