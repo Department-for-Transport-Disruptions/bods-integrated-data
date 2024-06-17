@@ -14,7 +14,7 @@ data "aws_caller_identity" "current" {}
 module "integrated_data_avl_s3_sqs" {
   source = "../../shared/s3-sqs"
 
-  bucket_name     = "integrated-data-avl-raw-siri-${var.environment}"
+  bucket_name     = "integrated-data-avl-raw-siri-vm-${var.environment}"
   sqs_name        = "integrated-data-avl-queue-${var.environment}"
   dlq_name        = "integrated-data-avl-dlq-${var.environment}"
   alarm_topic_arn = var.alarm_topic_arn
@@ -183,12 +183,12 @@ module "avl_tfl_location_retriever_sfn" {
   depends_on           = [module.integrated_data_avl_tfl_location_retriever_function]
 }
 
-resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
+resource "aws_s3_bucket" "integrated_data_avl_generated_siri_vm_bucket" {
   bucket = "integrated-data-avl-generated-siri-vm-${var.environment}"
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_public" {
-  bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
+  bucket = aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -196,8 +196,8 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_avl_siri_vm_block_
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_versioning" "integrated_data_avl_siri_vm_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
+resource "aws_s3_bucket_versioning" "integrated_data_avl_generated_siri_vm_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -261,7 +261,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
         "Effect" : "Allow",
         "Action" : "s3:PutObject",
         "Resource" : [
-          "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
+          "${aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.arn}/*"
         ]
       },
       {
@@ -372,7 +372,7 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
         },
         {
           "name" : "BUCKET_NAME",
-          "value" : aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+          "value" : aws_s3_bucket.integrated_data_avl_generated_siri_vm_bucket.bucket
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",
