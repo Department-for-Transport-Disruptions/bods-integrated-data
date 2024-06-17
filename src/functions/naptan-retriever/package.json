@@ -13,7 +13,7 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "axios": "^1.6.7"
+        "axios": "^1.7.2"
     },
     "devDependencies": {
         "@types/node": "^20.11.19"

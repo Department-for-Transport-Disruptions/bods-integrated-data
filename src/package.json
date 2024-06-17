@@ -7,7 +7,7 @@
         "test:ci": "vitest run",
         "test": "vitest",
         "build-tasks": "rm -rf ./tasks/dist && pnpm -r --if-present build --filter tasks",
-        "build-test": "tsc --noEmit"
+        "check-types": "tsc --noEmit"
     },
     "type": "module",
     "keywords": [],
