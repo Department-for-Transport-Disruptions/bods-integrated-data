@@ -4,6 +4,7 @@ export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-feed-validator";
 export * from "./invoke-avl-siri-vm-downloader";
 export * from "./invoke-avl-subscriber";
+export * from "./invoke-avl-subscriptions";
 export * from "./invoke-avl-tfl-line-id-retriever";
 export * from "./invoke-avl-tfl-location-retriever";
 export * from "./invoke-avl-unsubscriber";

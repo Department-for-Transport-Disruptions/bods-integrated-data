@@ -16,6 +16,7 @@ AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-zipped-local"
 BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
+BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 
@@ -227,6 +228,9 @@ run-local-avl-tfl-location-retriever:
 run-local-avl-siri-vm-downloader:
 	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).catch(e => console.error(e))"
 
+run-local-avl-subscriptions:
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler().then(console.log).catch(console.error)"
+
 # NOC
 
 run-local-noc-retriever:
@@ -252,3 +256,8 @@ run-local-bods-fares-retriever:
 
 run-local-bods-fares-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_FARES_BUCKET_NAME=${BODS_FARES_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-fares-unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_FARES_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+
+# Disruptions retriever
+
+run-local-bods-disruptions-retriever:
+	STAGE=local DISRUPTIONS_ZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(e => console.error(e))"

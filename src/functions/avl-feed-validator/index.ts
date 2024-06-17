@@ -1,23 +1,10 @@
 import { logger } from "@baselime/lambda-logger";
+import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
-import { putDynamoItem, recursiveScan } from "@bods-integrated-data/shared/dynamo";
-import { AvlSubscription, avlSubscriptionsSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosError } from "axios";
-
-export const getSubscriptions = async (tableName: string) => {
-    const subscriptions = await recursiveScan({
-        TableName: tableName,
-    });
-
-    if (!subscriptions || subscriptions.length === 0) {
-        return null;
-    }
-
-    const parsedSubscriptions = avlSubscriptionsSchema.parse(subscriptions);
-
-    return parsedSubscriptions.filter((subscription) => subscription.status !== "INACTIVE");
-};
 
 export const resubscribeToDataProducer = async (subscription: AvlSubscription, subscribeEndpoint: string) => {
     logger.info(`Attempting to resubscribe to subscription ID: ${subscription.PK}`);
@@ -55,15 +42,16 @@ export const handler = async () => {
             throw new Error("Missing env vars: STAGE, TABLE_NAME and SUBSCRIBE_ENDPOINT must be set");
         }
 
-        const subscriptions = await getSubscriptions(tableName);
+        const subscriptions = await getAvlSubscriptions(tableName);
+        const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "INACTIVE");
 
-        if (!subscriptions) {
+        if (!nonTerminatedSubscriptions) {
             logger.info("No subscriptions found in DynamoDb to validate");
             return;
         }
 
         await Promise.all(
-            subscriptions.map(async (subscription) => {
+            nonTerminatedSubscriptions.map(async (subscription) => {
                 // We expect to receive a heartbeat notification from a data producer every 30 seconds.
                 // If we do not receive a heartbeat notification after 90 seconds we will attempt to resubscribe to the data producer.
                 const isHeartbeatValid = isDateAfter(

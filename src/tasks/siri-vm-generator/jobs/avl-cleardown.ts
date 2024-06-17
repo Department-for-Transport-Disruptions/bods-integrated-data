@@ -1,5 +1,5 @@
+import { getQueryForLatestAvl } from "@bods-integrated-data/shared/avl/utils";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { sql } from "kysely";
 import Pino from "pino";
 
 const logger = Pino();
@@ -8,9 +8,12 @@ void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
+        const latestAvlQuery = getQueryForLatestAvl(dbClient).as("avl_latest");
+
         const result = await dbClient
             .deleteFrom("avl")
-            .where("valid_until_time", "<", sql<string>`NOW()`)
+            .leftJoin(latestAvlQuery, "avl_latest.id", "id")
+            .where("avl_latest.id", "is", null)
             .executeTakeFirst();
 
         logger.info(`AVL cleardown successful: deleted ${result.numDeletedRows} rows`);
