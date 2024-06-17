@@ -42,7 +42,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
   api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   integration_type       = "AWS_PROXY"
   integration_uri        = var.subscriptions_lambda_invoke_arn
-  integration_method     = "GET"
+  integration_method     = "POST"
   payload_format_version = "2.0"
 }
 
