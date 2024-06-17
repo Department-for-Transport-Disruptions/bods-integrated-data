@@ -6,11 +6,11 @@ import { sql } from "kysely";
 import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
-import { getDynamoItem } from "../dynamo";
+import { getDynamoItem, recursiveScan } from "../dynamo";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
-import { AvlSubscription, avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
+import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -30,6 +30,18 @@ export const isActiveAvlSubscription = async (subscriptionId: string, tableName:
     });
 
     return subscription?.status === "ACTIVE";
+};
+
+export const getAvlSubscriptions = async (tableName: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: tableName,
+    });
+
+    if (!subscriptions) {
+        return [];
+    }
+
+    return avlSubscriptionsSchema.parse(subscriptions);
 };
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {

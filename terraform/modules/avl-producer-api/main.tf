@@ -9,6 +9,15 @@ terraform {
   }
 }
 
+module "avl_subscriptions" {
+  source = "./avl-subscriptions"
+
+  environment    = var.environment
+  aws_account_id = var.aws_account_id
+  aws_region     = var.aws_region
+  table_name     = var.avl_subscription_table_name
+}
+
 module "avl_data_endpoint" {
   source = "./avl-data-endpoint"
 
@@ -82,6 +91,8 @@ module "avl_producer_api_gateway" {
   subscribe_lambda_name           = module.avl_subscriber.lambda_name
   unsubscribe_lambda_invoke_arn   = module.avl_unsubscriber.invoke_arn
   unsubscribe_lambda_name         = module.avl_unsubscriber.lambda_name
+  subscriptions_lambda_invoke_arn = module.avl_subscriptions.invoke_arn
+  subscriptions_lambda_name       = module.avl_subscriptions.lambda_name
   domain                          = var.domain
   acm_certificate_arn             = var.acm_certificate_arn
   hosted_zone_id                  = var.hosted_zone_id

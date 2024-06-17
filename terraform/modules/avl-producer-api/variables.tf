@@ -43,4 +43,3 @@ variable "acm_certificate_arn" {
 variable "hosted_zone_id" {
   type = string
 }
-

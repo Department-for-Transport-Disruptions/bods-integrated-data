@@ -14,7 +14,7 @@ data "aws_caller_identity" "current" {}
 module "integrated_data_avl_s3_sqs" {
   source = "../../shared/s3-sqs"
 
-  bucket_name     = "integrated-data-avl-raw-siri-${var.environment}"
+  bucket_name     = "integrated-data-avl-raw-siri-vm-${var.environment}"
   sqs_name        = "integrated-data-avl-queue-${var.environment}"
   dlq_name        = "integrated-data-avl-dlq-${var.environment}"
   alarm_topic_arn = var.alarm_topic_arn

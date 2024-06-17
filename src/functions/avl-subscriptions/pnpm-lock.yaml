@@ -1,0 +1,41 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@baselime/lambda-logger':
+    specifier: ^0.2.2
+    version: 0.2.2
+  '@bods-integrated-data/shared':
+    specifier: workspace:^
+    version: link:../../shared
+
+devDependencies:
+  '@types/aws-lambda':
+    specifier: ^8.10.110
+    version: 8.10.138
+  '@types/node':
+    specifier: ^20.11.19
+    version: 20.14.2
+
+packages:
+
+  /@baselime/lambda-logger@0.2.2:
+    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
+    dev: false
+
+  /@types/aws-lambda@8.10.138:
+    resolution: {integrity: sha512-71EHMl70TPWIAsFuHd85NHq6S6T2OOjiisPTrH7RgcjzpJpPh4RQJv7PvVvIxc6PIp8CLV7F9B+TdjcAES5vcA==}
+    dev: true
+
+  /@types/node@20.14.2:
+    resolution: {integrity: sha512-xyu6WAMVwv6AKFLB+e/7ySZVr/0zLCzOa7rSpq6jNwpqOrUbcACDWC+53d4n2QHOnDou0fbIsg8wZu/sxrnI4Q==}
+    dependencies:
+      undici-types: 5.26.5
+    dev: true
+
+  /undici-types@5.26.5:
+    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+    dev: true

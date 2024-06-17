@@ -34,12 +34,11 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_consumer_downloader
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_api_route" {
+resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_downloader_api_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
   route_key = "GET /siri-vm"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration.id}"
 }
-
 
 resource "aws_apigatewayv2_deployment" "integrated_data_avl_consumer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
@@ -47,7 +46,7 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_consumer_api_deploym
 
   triggers = {
     redeployment = sha1(join(",", tolist([
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_api_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_downloader_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration),
     ])))
   }
@@ -75,7 +74,6 @@ resource "aws_lambda_permission" "integrated_data_avl_consumer_downloader_api_pe
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_consumer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_consumer_api_stage.name}/*"
 }
-
 
 resource "aws_apigatewayv2_domain_name" "integrated_data_avl_consumer_api_domain" {
   domain_name = "avl.${var.domain}"
