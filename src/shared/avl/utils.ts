@@ -115,6 +115,56 @@ export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
         : null,
 });
 
+export const getQueryForLatestAvl = (
+    dbClient: KyselyDb,
+    boundingBox?: string,
+    operatorRef?: string,
+    vehicleRef?: string,
+    lineRef?: string,
+    producerRef?: string,
+    originRef?: string,
+    destinationRef?: string,
+    subscriptionId?: string,
+) => {
+    let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
+
+    if (boundingBox) {
+        const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+        const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+        query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
+    }
+
+    if (operatorRef) {
+        query = query.where("operator_ref", "in", operatorRef.split(","));
+    }
+
+    if (vehicleRef) {
+        query = query.where("vehicle_ref", "=", vehicleRef);
+    }
+
+    if (lineRef) {
+        query = query.where("line_ref", "=", lineRef);
+    }
+
+    if (producerRef) {
+        query = query.where("producer_ref", "=", producerRef);
+    }
+
+    if (originRef) {
+        query = query.where("origin_ref", "=", originRef);
+    }
+
+    if (destinationRef) {
+        query = query.where("destination_ref", "=", destinationRef);
+    }
+
+    if (subscriptionId) {
+        query = query.where("subscription_id", "=", subscriptionId);
+    }
+
+    return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
+};
+
 export const getAvlDataForSiriVm = async (
     dbClient: KyselyDb,
     boundingBox?: string,
@@ -127,43 +177,17 @@ export const getAvlDataForSiriVm = async (
     subscriptionId?: string,
 ) => {
     try {
-        let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
-
-        if (boundingBox) {
-            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
-            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
-            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
-        }
-
-        if (operatorRef) {
-            query = query.where("operator_ref", "in", operatorRef.split(","));
-        }
-
-        if (vehicleRef) {
-            query = query.where("vehicle_ref", "=", vehicleRef);
-        }
-
-        if (lineRef) {
-            query = query.where("line_ref", "=", lineRef);
-        }
-
-        if (producerRef) {
-            query = query.where("producer_ref", "=", producerRef);
-        }
-
-        if (originRef) {
-            query = query.where("origin_ref", "=", originRef);
-        }
-
-        if (destinationRef) {
-            query = query.where("destination_ref", "=", destinationRef);
-        }
-
-        if (subscriptionId) {
-            query = query.where("subscription_id", "=", subscriptionId);
-        }
-
-        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
+        const query = getQueryForLatestAvl(
+            dbClient,
+            boundingBox,
+            operatorRef,
+            vehicleRef,
+            lineRef,
+            producerRef,
+            originRef,
+            destinationRef,
+            subscriptionId,
+        );
 
         const avls = await query.execute();
 
