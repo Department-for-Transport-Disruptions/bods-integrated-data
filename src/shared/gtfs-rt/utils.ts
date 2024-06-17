@@ -203,7 +203,7 @@ export const getRouteKey = (avl: NewAvl) => {
     let lineRef = avl.line_ref;
 
     if (operatorRef === "TFLO" && avl.published_line_name) {
-        operatorRef = tflMapping[avl.published_line_name as keyof typeof tflMapping];
+        operatorRef = tflMapping[avl.published_line_name as keyof typeof tflMapping] ?? operatorRef;
         lineRef = avl.published_line_name;
     }
 
