@@ -15,7 +15,6 @@ describe("avl-subscriptions", () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
-        process.env.STAGE = "local";
         process.env.TABLE_NAME = "test-dynamo-table";
     });
 

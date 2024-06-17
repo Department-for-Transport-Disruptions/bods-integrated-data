@@ -12,15 +12,10 @@ terraform {
 module "avl_subscriptions" {
   source = "./avl-subscriptions"
 
-  environment        = var.environment
-  aws_account_id     = var.aws_account_id
-  aws_region         = var.aws_region
-  vpc_id             = var.vpc_id
-  private_subnet_ids = var.private_subnet_ids
-  db_secret_arn      = var.db_secret_arn
-  db_sg_id           = var.db_sg_id
-  db_host            = var.db_host
-  table_name         = var.avl_subscription_table_name
+  environment    = var.environment
+  aws_account_id = var.aws_account_id
+  aws_region     = var.aws_region
+  table_name     = var.avl_subscription_table_name
 }
 
 module "avl_data_endpoint" {

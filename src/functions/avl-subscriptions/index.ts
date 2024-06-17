@@ -1,6 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayProxyResultV2 } from "aws-lambda";
 
@@ -38,8 +37,6 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
         };
     }
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
-
     try {
         const subscriptions = await getAvlSubscriptions(tableName);
         const apiAvlSubscriptionsResponse = subscriptions.map(mapApiAvlSubscriptionResponse);
@@ -57,7 +54,5 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
             statusCode: 500,
             body: "An unknown error occurred. Please try again.",
         };
-    } finally {
-        await dbClient.destroy();
     }
 };

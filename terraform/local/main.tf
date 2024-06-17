@@ -173,11 +173,6 @@ module "integrated_data_avl_data_producer_api" {
   acm_certificate_arn         = ""
   hosted_zone_id              = ""
   domain                      = ""
-  vpc_id                      = null
-  private_subnet_ids          = null
-  db_secret_arn               = "*"
-  db_sg_id                    = null
-  db_host                     = null
 }
 
 module "integrated_data_avl_siri_vm_downloader" {
