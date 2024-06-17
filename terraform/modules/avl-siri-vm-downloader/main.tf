@@ -25,7 +25,7 @@ module "integrated_data_avl_siri_vm_downloader_function" {
   handler         = "index.handler"
   runtime         = "nodejs20.x"
   timeout         = 60
-  memory          = 1024
+  memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
