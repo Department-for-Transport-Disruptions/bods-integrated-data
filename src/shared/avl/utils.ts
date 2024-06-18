@@ -1,17 +1,29 @@
 import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
 import { Dayjs } from "dayjs";
-import { XMLBuilder } from "fast-xml-parser";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { sql } from "kysely";
 import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
-import { getDynamoItem, recursiveScan } from "../dynamo";
+import { getDynamoItem, putDynamoItem, recursiveScan } from "../dynamo";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
-import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
+import {
+    AvlSubscribeMessage,
+    AvlSubscription,
+    avlSubscriptionRequestSchema,
+    avlSubscriptionResponseSchema,
+    avlSubscriptionSchema,
+    avlSubscriptionsSchema,
+    AvlSubscriptionStatuses,
+    AvlUpdateBody,
+} from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
+import { putParameter } from "../ssm";
+import { randomUUID } from "node:crypto";
+import axios from "axios";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";

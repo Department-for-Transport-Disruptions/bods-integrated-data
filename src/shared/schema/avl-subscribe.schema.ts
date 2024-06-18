@@ -78,3 +78,13 @@ export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform(
 }));
 
 export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);
+
+export const avlUpdateBodySchema = z.object({
+    dataProducerEndpoint: z.string().url(),
+    description: z.string().nullish(),
+    shortDescription: z.string().nullish(),
+    username: z.string(),
+    password: z.string(),
+});
+
+export type AvlUpdateBody = z.infer<typeof avlUpdateBodySchema>;
