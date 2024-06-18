@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/gtfs-timetables-region-retriever",
-    "version": "0.1.0",
     "description": "Lambda to retrieve a list of GTFS timetable regions",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-timetables-region-retriever.zip .",

@@ -1,0 +1,86 @@
+on:
+  push:
+    branches:
+      - release-please-setup
+
+name: PR Merged
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: write # This is required for release please
+  pull-requests: write # This is required for release please
+
+env:
+  TERRAFORM_VERSION: 1.6.6
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  HUSKY: 0
+
+jobs:
+  release_please:
+    runs-on: ubuntu-22.04
+    name: Release Please
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      release_created: ${{ steps.release.outputs.release_created }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node
+          target-branch: release-please-setup
+  
+  check_for_function_changes:
+    uses: ./.github/workflows/get_directories_with_changes.yaml
+    name: Get list of updated functions
+    if: ${{ needs.release_please.outputs.release_created }}
+    needs:
+      - release_please
+    with:
+      path: "./src/functions"
+
+  zip_functions:
+    uses: ./.github/workflows/zip_function.yaml
+    name: Zip updated functions
+    if: ${{ needs.check_for_function_changes.outputs.changed_directories && needs.release_please.outputs.release_created }}
+    strategy:
+      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+    needs:
+      - check_for_function_changes
+      - release_please
+    with:
+      function_dir: ${{ matrix.dir }}
+
+  upload_artifact_to_release:
+    runs-on: ubuntu-22.04
+    name: Upload Release Artifact
+    needs:
+      - zip_functions
+      - release_please
+    if: ${{ needs.zip_functions.result == 'success' && needs.release_please.outputs.release_created }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ./src/functions/dist
+          merge-multiple: true
+      - name: Zip artifact
+        run: zip updated_functions.zip ./* -rq
+      - name: Upload Release Artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ needs.release_please.outputs.tag_name }} ./updated_functions.zip
+
+  # terraform_apply_test:
+  #   uses: ./.github/workflows/shared/terraform_apply.yaml
+  #   name: Terraform Apply Test
+  #   needs:
+  #     - check_for_function_changes
+  #     - zip_functions
+  #     - release_please
+  #   if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' && needs.release_please.outputs.release_created }}
+  #   with:
+  #     stage: "test"
+  #     terraform_version: 1.6.6
+  #     use_artifacts: true

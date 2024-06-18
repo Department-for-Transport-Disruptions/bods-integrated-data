@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/bods-txc-retriever",
-    "version": "0.1.0",
     "description": "This function retrieves TXC data from BODS and stores it in an S3 bucket",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-txc-retriever.zip .",

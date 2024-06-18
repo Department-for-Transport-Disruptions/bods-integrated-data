@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-siri-vm-downloader",
-    "version": "0.1.0",
     "description": "Download siri-vm data",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-siri-vm-downloader.zip .",

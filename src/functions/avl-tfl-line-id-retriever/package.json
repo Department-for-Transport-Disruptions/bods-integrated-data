@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-tfl-line-id-retriever",
-    "version": "0.1.0",
     "description": "This function retrieves line IDs and stores it in Database table called tfl_line",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-tfl-line-id-retriever.zip .",

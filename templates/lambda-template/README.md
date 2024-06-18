@@ -22,7 +22,6 @@ After copying the lambda-template directory and renaming it to your function nam
 
 ```JSON
 "name": "@bods-integrated-data/lambda-template",
-    "version": "0.1.0",
     "description": "Template for a typescript lambda",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./lambda-template.zip .",

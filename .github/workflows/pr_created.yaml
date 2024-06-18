@@ -1,7 +1,7 @@
 on:
   pull_request:
 
-name: Terraform Plan
+name: PR Created
 
 permissions:
   id-token: write # This is required for aws oidc connection
@@ -13,6 +13,7 @@ env:
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
   HUSKY: 0
   TZ: "Europe/London"
+
 
 jobs:
   lint_and_test_functions:
@@ -84,6 +85,7 @@ jobs:
       - check_for_function_changes
       - zip_functions
     if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    environment: dev
     env:
       stage: "dev"
     defaults:
@@ -101,7 +103,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 

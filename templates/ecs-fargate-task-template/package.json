@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/template-ecs-task",
-    "version": "0.1.0",
     "description": "Template for ECS task",
     "scripts": {
         "build": "rm -rf ./dist && tsc && node ./esbuild.mjs",

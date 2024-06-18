@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/noc-processor",
-    "version": "0.1.0",
     "description": "Processes NOC XML file and stores the data in a database",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./noc-processor.zip .",

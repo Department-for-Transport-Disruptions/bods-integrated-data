@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/nptg-retriever",
-    "version": "0.1.0",
     "description": "Retrieve NPTG data and store it in S3",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./nptg-retriever.zip .",

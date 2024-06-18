@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/nptg-uploader",
-    "version": "0.1.0",
     "description": "Upload NPTG data from S3 into the database",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./nptg-uploader.zip .",
