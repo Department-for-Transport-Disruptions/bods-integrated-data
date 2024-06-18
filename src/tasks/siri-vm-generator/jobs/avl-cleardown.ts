@@ -12,7 +12,9 @@ void (async () => {
 
         const result = await dbClient
             .deleteFrom("avl")
-            .leftJoin(latestAvlQuery, "avl_latest.id", "id")
+            .using("avl as avl_all")
+            .leftJoin(latestAvlQuery, "avl_latest.id", "avl_all.id")
+            .whereRef("avl.id", "=", "avl_all.id")
             .where("avl_latest.id", "is", null)
             .executeTakeFirst();
 
