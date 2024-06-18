@@ -31,10 +31,19 @@ const unsubscribeFromExistingSubscription = async (subscriptionId: string, url: 
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
-        const { TABLE_NAME: tableName, UNSUBSCRIBE_ENDPOINT: unsubscribeEndpoint } = process.env;
+        const {
+            STAGE: stage,
+            TABLE_NAME: tableName,
+            MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
+            DATA_ENDPOINT: dataEndpoint,
+        } = process.env;
 
-        if (!tableName || !unsubscribeEndpoint) {
-            throw new Error("Missing env vars: TABLE_NAME and UNSUBSCRIBE_ENDPOINT must be set.");
+        if (!tableName || !dataEndpoint) {
+            throw new Error("Missing env vars: TABLE_NAME and DATA_ENDPOINT must be set.");
+        }
+
+        if (stage === "local" && !mockProducerSubscribeEndpoint) {
+            throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
         logger.info("Starting AVL subscriber");
@@ -57,28 +66,37 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         }
 
         const updateBody = parsedBody.data;
+        const { username, password } = updateBody;
 
-        const subscriptions = await getAvlSubscription(subscriptionId, tableName);
+        const subscription = await getAvlSubscription(subscriptionId, tableName);
 
-        if (!subscriptions) {
+        if (!subscription) {
             logger.info(`Subscription with ID: ${subscriptionId} not found in subscription table`);
         }
 
         logger.info(`Starting lambda to update subscription with ID: ${subscriptionId}`);
 
-        await unsubscribeFromExistingSubscription(subscriptionId, unsubscribeEndpoint);
+        // await unsubscribeFromExistingSubscription(subscriptionId, unsubscribeEndpoint);
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, updateBody.username, updateBody.password);
 
-        const subscription: Omit<AvlSubscription, "PK" | "status"> = {
-                    url: updateBody.dataProducerEndpoint,
-                    description: avlSubscribeMessage.description,
-                    shortDescription: avlSubscribeMessage.shortDescription,
-                    requestorRef: avlSubscribeMessage.requestorRef,
-                    publisherId: avlSubscribeMessage.publisherId,
-                };
+        const subscriptionDetail: Omit<AvlSubscription, "PK" | "status"> = {
+            url: updateBody.dataProducerEndpoint,
+            description: updateBody.description ?? subscription.description,
+            shortDescription: updateBody.shortDescription ?? subscription.shortDescription,
+            requestorRef: subscription.requestorRef,
+            publisherId: subscription.publisherId,
+        };
 
-        await sendSubscriptionRequestAndUpdateDynamo(subscriptionId, ,unsubscribeBody.username, unsubscribeBody.password, dataEndpoint, mockProducerSubscribeEndpoint);
+        await sendSubscriptionRequestAndUpdateDynamo(
+            subscriptionId,
+            subscriptionDetail,
+            username,
+            password,
+            tableName,
+            dataEndpoint,
+            mockProducerSubscribeEndpoint,
+        );
 
         return {
             statusCode: 204,
