@@ -1,76 +1,76 @@
 version: "3.9"
 
 services:
-    db:
-        container_name: bods_integrated_data_postgres
-        image: postgis/postgis
-        platform: linux/amd64
-        restart: always
-        shm_size: 128mb
-        environment:
-            POSTGRES_PASSWORD: password
-            POSTGRES_USER: postgres
-            POSTGRES_DB: bods_integrated_data
-        ports:
-            - 5432:5432
-        volumes:
-            - postgres_db:/var/lib/postgresql/data
-        networks:
-            - bods_integrated_data_network
+  db:
+    container_name: bods_integrated_data_postgres
+    image: postgis/postgis
+    platform: linux/amd64
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: bods_integrated_data
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    networks:
+      - bods_integrated_data_network
 
-    localstack:
-        container_name: bods_integrated_data_localstack
-        image: localstack/localstack
-        ports:
-            - "127.0.0.1:4566:4566" # LocalStack Gateway
-            - "127.0.0.1:4510-4559:4510-4559" # external services port range
-        environment:
-            # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
-            - DEBUG=${DEBUG:-0}
-        volumes:
-            - localstack_volume:/var/lib/localstack
-            - /var/run/docker.sock:/var/run/docker.sock
-        networks:
-            - bods_integrated_data_network
+  localstack:
+    container_name: bods_integrated_data_localstack
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566" # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559" # external services port range
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      - DEBUG=${DEBUG:-0}
+    volumes:
+      - localstack_volume:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - bods_integrated_data_network
 
-    bods-avl-processor:
-        container_name: bods_integrated_data_avl_processor
-        image: bods-avl-processor:latest
-        environment:
-            - IS_DOCKER=true
-            - STAGE=local
-            - BUCKET_NAME=integrated-data-gtfs-rt-local
-            - PROCESSOR_FREQUENCY_IN_SECONDS=30
-            - CLEARDOWN_FREQUENCY_IN_SECONDS=60
-        volumes:
-            - ./:/app/data
-        networks:
-            - bods_integrated_data_network
+  bods-avl-processor:
+    container_name: bods_integrated_data_avl_processor
+    image: bods-avl-processor:latest
+    environment:
+      - IS_DOCKER=true
+      - STAGE=local
+      - BUCKET_NAME=integrated-data-gtfs-rt-local
+      - PROCESSOR_FREQUENCY_IN_SECONDS=30
+      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
+    volumes:
+      - ./:/app/data
+    networks:
+      - bods_integrated_data_network
 
-    siri-vm-generator:
-        container_name: bods_integrated_data_siri_vm_generator
-        image: siri-vm-generator:latest
-        environment:
-            - IS_DOCKER=true
-            - STAGE=local
-            - BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
-            - PROCESSOR_FREQUENCY_IN_SECONDS=30
-            - CLEARDOWN_FREQUENCY_IN_SECONDS=60
-        volumes:
-            - ./:/app/data
-        networks:
-            - bods_integrated_data_network
+  siri-vm-generator:
+    container_name: bods_integrated_data_siri_vm_generator
+    image: siri-vm-generator:latest
+    environment:
+      - IS_DOCKER=true
+      - STAGE=local
+      - BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
+      - PROCESSOR_FREQUENCY_IN_SECONDS=30
+      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
+    volumes:
+      - ./:/app/data
+    networks:
+      - bods_integrated_data_network
 
 networks:
-    bods_integrated_data_network:
-        driver: bridge
+  bods_integrated_data_network:
+    driver: bridge
 
 volumes:
-    postgres_db:
-        driver: local
+  postgres_db:
+    driver: local
 
-    localstack_volume:
-        driver: local
+  localstack_volume:
+    driver: local
 
-    bods_avl_processor_volume:
-        driver: local
+  bods_avl_processor_volume:
+    driver: local
