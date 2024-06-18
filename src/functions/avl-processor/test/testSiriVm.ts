@@ -2,6 +2,8 @@ import { NewAvl } from "@bods-integrated-data/shared/database";
 import { expect } from "vitest";
 
 export const mockSubscriptionId = "123";
+export const mockItemId = "12a345b6-2be9-49bb-852f-21e5a2400ea6";
+export const mockDefinedItemId = "12a345b6-2be9-49bb-852f-21e5a2400ea7";
 
 export const testSiri = `
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -42,6 +44,7 @@ export const testSiri = `
             </VehicleActivity>
             <VehicleActivity>
                 <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <ItemIdentifier>${mockDefinedItemId}</ItemIdentifier>
                 <ValidUntilTime>2018-08-17T16:22:29</ValidUntilTime>
                 <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
                 <MonitoredVehicleJourney>
@@ -126,6 +129,7 @@ export const testSiriWithOnwardCalls = `
             </VehicleActivity>
             <VehicleActivity>
                 <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <ItemIdentifier>${mockDefinedItemId}</ItemIdentifier>
                 <ValidUntilTime>2018-08-17T16:22:29</ValidUntilTime>
                 <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
                 <MonitoredVehicleJourney>
@@ -235,6 +239,7 @@ export const parsedSiri: NewAvl[] = [
         response_time_stamp: "2018-08-17T15:14:21.432",
         producer_ref: "ATB",
         recorded_at_time: "2018-08-17T15:13:20",
+        item_id: mockItemId,
         valid_until_time: "2018-08-17T16:13:29",
         line_ref: "ATB:Line:60",
         direction_ref: "2",
@@ -268,6 +273,7 @@ export const parsedSiri: NewAvl[] = [
         response_time_stamp: "2018-08-17T15:14:21.432",
         producer_ref: "ATB",
         recorded_at_time: "2018-08-17T15:22:20",
+        item_id: mockDefinedItemId,
         valid_until_time: "2018-08-17T16:22:29",
         line_ref: "ATB:Line:60",
         direction_ref: "2",
@@ -304,6 +310,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         response_time_stamp: "2018-08-17T15:14:21.432",
         producer_ref: "ATB",
         recorded_at_time: "2018-08-17T15:13:20",
+        item_id: mockItemId,
         valid_until_time: "2018-08-17T16:13:29",
         line_ref: "ATB:Line:60",
         direction_ref: "2",
@@ -337,6 +344,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         response_time_stamp: "2018-08-17T15:14:21.432",
         producer_ref: "ATB",
         recorded_at_time: "2018-08-17T15:22:20",
+        item_id: mockDefinedItemId,
         valid_until_time: "2018-08-17T16:22:29",
         line_ref: "ATB:Line:60",
         direction_ref: "2",
