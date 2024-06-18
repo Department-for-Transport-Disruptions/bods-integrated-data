@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-processor",
-    "version": "0.1.0",
     "description": "This function is to process SIRI-VM AVL data and upload it to the database",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-processor.zip .",

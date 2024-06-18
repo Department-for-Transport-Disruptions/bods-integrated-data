@@ -12,16 +12,12 @@ on:
       use_artifacts:
         default: true
         type: boolean
-    secrets:
-      oidc_role_arn:
-        required: true
 
 jobs:
   terraform_apply:
     runs-on: ubuntu-22.04
     name: Terraform Apply
-    env:
-      stage: ${{ inputs.stage }}
+    environment: ${{ inputs.stage }}
 
     steps:
       - name: Checkout
@@ -71,7 +67,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.oidc_role_arn }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 

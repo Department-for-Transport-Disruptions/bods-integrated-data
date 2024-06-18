@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-feed-validator",
-    "version": "0.1.0",
     "description": "AVL Feed Validator",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-feed-validator.zip .",

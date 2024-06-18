@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/db-cleardown",
-    "version": "0.1.0",
     "description": "Clears down existing data and sets up required db tables",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./db-cleardown.zip .",

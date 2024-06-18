@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-tfl-location-retriever",
-    "version": "0.1.0",
     "description": "Retrieve TfL realtime vehicle location data",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-tfl-location-retriever.zip .",

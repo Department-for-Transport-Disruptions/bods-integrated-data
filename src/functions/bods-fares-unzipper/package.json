@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/bods-fares-unzipper",
-    "version": "0.1.0",
     "description": "Unzips BODS fares data.",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-fares-unzipper.zip .",

@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/gtfs-downloader",
-    "version": "0.1.0",
     "description": "Download BODS data in GTFS format",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-downloader.zip .",
