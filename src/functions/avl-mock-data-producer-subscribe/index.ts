@@ -44,7 +44,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
                 SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
-                Status: "ACTIVE",
+                Status: "LIVE",
             },
             ServiceStartedTime: currentTime,
         },

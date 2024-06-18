@@ -66,7 +66,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
@@ -85,7 +85,7 @@ describe("avl-unsubscriber", () => {
             description: "test-description",
             requestorRef: null,
             shortDescription: "test-short-description",
-            status: "TERMINATED",
+            status: "INACTIVE",
             url: "https://mock-data-producer.com/",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             serviceEndDatetime: "2024-03-11T15:20:02.093Z",
@@ -127,7 +127,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
@@ -152,7 +152,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
@@ -179,7 +179,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
@@ -206,7 +206,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
@@ -228,7 +228,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });

@@ -65,7 +65,7 @@ describe("avl-processor", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
         });
     });
@@ -121,25 +121,20 @@ describe("avl-processor", () => {
         expect(valuesMock).not.toBeCalled();
     });
 
-    it.each(["FAILED", "TERMINATED", "UNAVAILABLE"])(
-        "throws an error when the subscription is not active",
-        async (status) => {
-            getDynamoItemSpy.mockResolvedValue({
-                PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-                url: "https://mock-data-producer.com/",
-                description: "test-description",
-                shortDescription: "test-short-description",
-                status,
-                requestorRef: null,
-            });
+    it.each(["ERROR", "INACTIVE"])("throws an error when the subscription is not active", async (status) => {
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status,
+            requestorRef: null,
+        });
 
-            await expect(
-                processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name"),
-            ).rejects.toThrowError(
-                `Unable to process AVL for subscription ${mockSubscriptionId} with status ${status}`,
-            );
+        await expect(
+            processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name"),
+        ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} with status ${status}`);
 
-            expect(valuesMock).not.toBeCalled();
-        },
-    );
+        expect(valuesMock).not.toBeCalled();
+    });
 });
