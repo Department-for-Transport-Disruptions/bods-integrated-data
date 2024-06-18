@@ -3,8 +3,9 @@ import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapBodsAvlDateStrings } from "../avl/utils";
+import tflMapping from "../data/tflRouteToNocMapping.json";
 import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
-import { getDate } from "../dates";
+import { getDate, getDateWithCustomFormat } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
@@ -131,7 +132,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.response_time_stamp desc"]);
+        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.recorded_at_time desc"]);
 
         const avls = await query.execute();
 
@@ -198,6 +199,14 @@ export const getRouteKey = (avl: NewAvl) => {
         return null;
     }
 
+    let operatorRef = avl.operator_ref;
+    let lineRef = avl.line_ref;
+
+    if (operatorRef === "TFLO" && avl.published_line_name) {
+        operatorRef = tflMapping[avl.published_line_name as keyof typeof tflMapping] ?? operatorRef;
+        lineRef = avl.published_line_name;
+    }
+
     const operatorNocMap: Record<
         string,
         { getOperatorRef: (noc: string) => string; getLineRef: (lineRef: string) => string }
@@ -208,14 +217,26 @@ export const getRouteKey = (avl: NewAvl) => {
         },
     };
 
-    return operatorNocMap[avl.operator_ref]
-        ? `${operatorNocMap[avl.operator_ref].getOperatorRef(avl.operator_ref)}_${operatorNocMap[
-              avl.operator_ref
-          ].getLineRef(avl.line_ref)}`
-        : `${avl.operator_ref}_${avl.line_ref}`;
+    return operatorNocMap[operatorRef]
+        ? `${operatorNocMap[operatorRef].getOperatorRef(operatorRef)}_${operatorNocMap[operatorRef].getLineRef(
+              lineRef,
+          )}`
+        : `${operatorRef}_${lineRef}`;
 };
 
 export const sanitiseTicketMachineJourneyCode = (input: string) => input.replace(":", "");
+
+export const getDirectionRef = (direction: string) => {
+    if (direction === "1") {
+        return "outbound";
+    }
+
+    if (direction === "2") {
+        return "inbound";
+    }
+
+    return direction;
+};
 
 export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
     const currentDate = getDate();
@@ -247,6 +268,7 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
             "trip.revision_number",
             "trip.origin_stop_ref",
             "trip.destination_stop_ref",
+            "trip.departure_time",
         ])
         .where((eb) =>
             eb.or([
@@ -260,6 +282,7 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
 type MatchingTimetable = Awaited<ReturnType<typeof retrieveMatchableTimetableData>>[0];
 
 type MatchedTrip = {
+    route_id: number;
     trip_id: string;
     revision: number;
     use: boolean;
@@ -271,9 +294,11 @@ export const assignTripValueToLookup = (
     tripValue: MatchedTrip | null | undefined,
     timetable: MatchingTimetable,
     revision: number,
+    routeId: number,
 ) => {
     if (tripValue === undefined) {
         return {
+            route_id: routeId,
             trip_id: timetable.trip_id,
             revision,
             use: true,
@@ -287,6 +312,7 @@ export const assignTripValueToLookup = (
 
         if (revision > tripValue.revision) {
             return {
+                route_id: routeId,
                 trip_id: timetable.trip_id,
                 revision,
                 use: true,
@@ -305,21 +331,16 @@ export const assignTripValueToLookup = (
 };
 
 const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
-    const lookup: {
-        [key: string]: {
-            noc: string;
-            route_id: number;
-            route_short_name: string;
-            matchedTrips: MatchedTrips;
-            matchedTripsWithOriginAndDestination: MatchedTrips;
-        };
-    } = {};
+    const matchedTrips: MatchedTrips = {};
+    const matchedTripsWithOriginAndDestination: MatchedTrips = {};
+    const matchedTripsWithDepartureTime: MatchedTrips = {};
 
     for (const item of timetableData) {
         const routeKey = `${item.noc}_${item.route_short_name}`;
+
         const tripKey =
             item.direction && item.ticket_machine_journey_code
-                ? `${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`
+                ? `${routeKey}_${item.direction}_${sanitiseTicketMachineJourneyCode(item.ticket_machine_journey_code)}`
                 : null;
 
         const tripKeyWithOriginAndDestination =
@@ -327,37 +348,43 @@ const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
                 ? `${tripKey}_${item.origin_stop_ref}_${item.destination_stop_ref}`
                 : null;
 
-        if (!lookup[routeKey]) {
-            lookup[routeKey] = {
-                noc: item.noc,
-                route_id: item.route_id,
-                route_short_name: item.route_short_name,
-                matchedTrips: {},
-                matchedTripsWithOriginAndDestination: {},
-            };
-        }
+        const tripKeyWithDepartureTime =
+            item.direction && item.origin_stop_ref && item.destination_stop_ref && item.departure_time
+                ? `${routeKey}_${item.direction}_${item.origin_stop_ref}_${
+                      item.destination_stop_ref
+                  }_${getDateWithCustomFormat(item.departure_time, "HH:mm:ssZZ").format("HHmmss")}`
+                : null;
 
         const revision = item.revision_number && !Number.isNaN(item.revision_number) ? Number(item.revision_number) : 0;
 
         if (tripKey) {
-            lookup[routeKey].matchedTrips[tripKey] = assignTripValueToLookup(
-                lookup[routeKey].matchedTrips[tripKey],
-                item,
-                revision,
-            );
+            matchedTrips[tripKey] = assignTripValueToLookup(matchedTrips[tripKey], item, revision, item.route_id);
         }
 
         if (tripKeyWithOriginAndDestination) {
-            lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] =
-                assignTripValueToLookup(
-                    lookup[routeKey].matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination],
-                    item,
-                    revision,
-                );
+            matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination] = assignTripValueToLookup(
+                matchedTripsWithOriginAndDestination[tripKeyWithOriginAndDestination],
+                item,
+                revision,
+                item.route_id,
+            );
+        }
+
+        if (tripKeyWithDepartureTime) {
+            matchedTripsWithDepartureTime[tripKeyWithDepartureTime] = assignTripValueToLookup(
+                matchedTripsWithDepartureTime[tripKeyWithDepartureTime],
+                item,
+                revision,
+                item.route_id,
+            );
         }
     }
 
-    return lookup;
+    return {
+        matchedTrips,
+        matchedTripsWithOriginAndDestination,
+        matchedTripsWithDepartureTime,
+    };
 };
 
 /**
@@ -365,13 +392,15 @@ const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
  * by creating a lookup map containing the timetable data with route and trip keys. The process is as follows:
  *
  * 1. Create a route key of the form `${operator_ref}_${line_ref}`
- * 2. For the given route create a map of trips with a key of the form `${direction_ref}_${journey_code}`
+ * 2. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${journey_code}`
  *      a. If a duplicate trip is found, check if there is a revision with a higher value and use that
  *      b. If there is no revision for any of the duplicate trips or the highest revision number is duplicated then
  *         return no match for this check
- * 3. For the given route create a map of trips with a key of the form `${direction_ref}_${journey_code}_${origin_ref}_${destination_ref}`, this
+ * 3. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${journey_code}_${origin_ref}_${destination_ref}`, this
  *    is used in case the above check still returns duplicate trips
- * 4. Cross reference the avl data against the lookup to see if there is a match
+ * 4. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${origin_ref}_${destination_ref}_${departure_time}`, this
+ *    is used in case the above check still returns duplicate trips
+ * 5. Cross reference the avl data against the lookup to see if there is a match
  *
  *
  * @param dbClient
@@ -387,31 +416,47 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
 
     const enrichedAvl: NewAvl[] = avl.map((item) => {
         const routeKey = getRouteKey(item);
-        const matchingRoute = routeKey ? lookup[routeKey] : null;
 
-        let potentialMatchingTrip =
-            matchingRoute && item.direction_ref && item.dated_vehicle_journey_ref
-                ? matchingRoute.matchedTrips[
-                      `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}`
-                  ]
-                : null;
+        let matchingTrip: MatchedTrip | null = null;
 
-        if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
-            potentialMatchingTrip =
-                matchingRoute &&
-                item.direction_ref &&
-                item.dated_vehicle_journey_ref &&
-                item.origin_ref &&
-                item.destination_ref
-                    ? matchingRoute.matchedTripsWithOriginAndDestination[
-                          `${item.direction_ref}_${sanitiseTicketMachineJourneyCode(item.dated_vehicle_journey_ref)}_${
-                              item.origin_ref
-                          }_${item.destination_ref}`
+        if (routeKey) {
+            let potentialMatchingTrip =
+                item.direction_ref && item.dated_vehicle_journey_ref
+                    ? lookup.matchedTrips[
+                          `${routeKey}_${item.direction_ref}_${sanitiseTicketMachineJourneyCode(
+                              item.dated_vehicle_journey_ref,
+                          )}`
                       ]
                     : null;
-        }
 
-        const matchingTrip = potentialMatchingTrip?.use === true ? potentialMatchingTrip : null;
+            if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
+                potentialMatchingTrip =
+                    item.direction_ref && item.dated_vehicle_journey_ref && item.origin_ref && item.destination_ref
+                        ? lookup.matchedTripsWithOriginAndDestination[
+                              `${routeKey}_${item.direction_ref}_${sanitiseTicketMachineJourneyCode(
+                                  item.dated_vehicle_journey_ref,
+                              )}_${item.origin_ref}_${item.destination_ref}`
+                          ]
+                        : null;
+            }
+
+            if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
+                const departureTime = item.origin_aimed_departure_time
+                    ? getDate(item.origin_aimed_departure_time).format("HHmmss")
+                    : null;
+
+                const directionRef = getDirectionRef(item.direction_ref);
+
+                potentialMatchingTrip =
+                    directionRef && item.origin_ref && item.destination_ref && departureTime
+                        ? lookup.matchedTripsWithDepartureTime[
+                              `${routeKey}_${directionRef}_${item.origin_ref}_${item.destination_ref}_${departureTime}`
+                          ]
+                        : null;
+            }
+
+            matchingTrip = potentialMatchingTrip?.use === true ? potentialMatchingTrip : null;
+        }
 
         if (matchingTrip) {
             matchedAvlCount++;
@@ -421,7 +466,7 @@ export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) =>
 
         return {
             ...item,
-            route_id: matchingRoute?.route_id,
+            route_id: matchingTrip?.route_id,
             trip_id: matchingTrip?.trip_id,
             geom:
                 item.longitude && item.latitude

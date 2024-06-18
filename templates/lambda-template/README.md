@@ -9,6 +9,7 @@ When using this template make sure to complete the following actions:
 - [Create a `Makefile` command](#create-a-makefile-command)
 - [Create a CLI Helper](#create-a-cli-helper)
 - [Update Terraform resources](#update-terraform-resources)
+  - [Allowing lambda to connect to the database](#allowing-lambda-to-connect-to-the-database)
 - [Remove this README](#remove-this-readme)
 
 ## Update `package.json`
@@ -36,7 +37,8 @@ To make it easy to test the lambda function locally create a make command. You c
 the below command:
 
 ```makefile
-run-lambda-template: STAGE=local npx tsx -e "import {handler} from './src/functions/lambda-template'; handler().catch(e => console.error(e))"
+run-lambda-template:
+  STAGE=local npx tsx -e "import {handler} from './src/functions/lambda-template'; handler().then(console.log).catch(console.error)"
 ```
 
 Replace `lambda-template` with the name of your new function's directory. `STAGE=local` is an example of how to pass an environment variable to the lambda.

@@ -6,11 +6,11 @@ import { sql } from "kysely";
 import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
-import { getDynamoItem } from "../dynamo";
+import { getDynamoItem, recursiveScan } from "../dynamo";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
-import { AvlSubscription, avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
+import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -29,7 +29,19 @@ export const isActiveAvlSubscription = async (subscriptionId: string, tableName:
         SK: "SUBSCRIPTION",
     });
 
-    return subscription?.status === "ACTIVE";
+    return subscription?.status === "LIVE";
+};
+
+export const getAvlSubscriptions = async (tableName: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: tableName,
+    });
+
+    if (!subscriptions) {
+        return [];
+    }
+
+    return avlSubscriptionsSchema.parse(subscriptions);
 };
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
@@ -115,6 +127,56 @@ export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
         : null,
 });
 
+export const getQueryForLatestAvl = (
+    dbClient: KyselyDb,
+    boundingBox?: string,
+    operatorRef?: string,
+    vehicleRef?: string,
+    lineRef?: string,
+    producerRef?: string,
+    originRef?: string,
+    destinationRef?: string,
+    subscriptionId?: string,
+) => {
+    let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
+
+    if (boundingBox) {
+        const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+        const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+        query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
+    }
+
+    if (operatorRef) {
+        query = query.where("operator_ref", "in", operatorRef.split(","));
+    }
+
+    if (vehicleRef) {
+        query = query.where("vehicle_ref", "=", vehicleRef);
+    }
+
+    if (lineRef) {
+        query = query.where("line_ref", "=", lineRef);
+    }
+
+    if (producerRef) {
+        query = query.where("producer_ref", "=", producerRef);
+    }
+
+    if (originRef) {
+        query = query.where("origin_ref", "=", originRef);
+    }
+
+    if (destinationRef) {
+        query = query.where("destination_ref", "=", destinationRef);
+    }
+
+    if (subscriptionId) {
+        query = query.where("subscription_id", "=", subscriptionId);
+    }
+
+    return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
+};
+
 export const getAvlDataForSiriVm = async (
     dbClient: KyselyDb,
     boundingBox?: string,
@@ -127,43 +189,17 @@ export const getAvlDataForSiriVm = async (
     subscriptionId?: string,
 ) => {
     try {
-        let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
-
-        if (boundingBox) {
-            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
-            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
-            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
-        }
-
-        if (operatorRef) {
-            query = query.where("operator_ref", "in", operatorRef.split(","));
-        }
-
-        if (vehicleRef) {
-            query = query.where("vehicle_ref", "=", vehicleRef);
-        }
-
-        if (lineRef) {
-            query = query.where("line_ref", "=", lineRef);
-        }
-
-        if (producerRef) {
-            query = query.where("producer_ref", "=", producerRef);
-        }
-
-        if (originRef) {
-            query = query.where("origin_ref", "=", originRef);
-        }
-
-        if (destinationRef) {
-            query = query.where("destination_ref", "=", destinationRef);
-        }
-
-        if (subscriptionId) {
-            query = query.where("subscription_id", "=", subscriptionId);
-        }
-
-        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
+        const query = getQueryForLatestAvl(
+            dbClient,
+            boundingBox,
+            operatorRef,
+            vehicleRef,
+            lineRef,
+            producerRef,
+            originRef,
+            destinationRef,
+            subscriptionId,
+        );
 
         const avls = await query.execute();
 

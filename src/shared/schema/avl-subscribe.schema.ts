@@ -52,12 +52,16 @@ export const avlSubscriptionResponseSchema = z.object({
 
 export type AvlSubscriptionResponse = z.infer<typeof avlSubscriptionResponseSchema>;
 
+export const avlSubscriptionStatusesSchema = z.enum(avlSubscriptionStatuses);
+
+export type AvlSubscriptionStatuses = z.infer<typeof avlSubscriptionStatusesSchema>;
+
 export const avlSubscriptionSchema = z.object({
     PK: z.string(),
     url: z.string().url(),
     description: z.string(),
     shortDescription: z.string(),
-    status: z.enum(avlSubscriptionStatuses),
+    status: avlSubscriptionStatusesSchema,
     requestorRef: z.string().nullish(),
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),
