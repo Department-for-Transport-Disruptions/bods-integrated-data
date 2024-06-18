@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/unzipper",
-    "version": "0.1.0",
     "description": "Clears down existing data and triggers the BODS and TNDS retrievers.",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./unzipper.zip .",

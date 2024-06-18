@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/cli-helpers",
-    "version": "1.0.0",
     "description": "Helpers for the bods-integrated-data tool",
     "scripts": {
         "command": "npx tsx program"

@@ -1,6 +1,5 @@
 {
     "name": "bods-integrated-data",
-    "version": "0.1.0",
     "description": "",
     "scripts": {
         "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",

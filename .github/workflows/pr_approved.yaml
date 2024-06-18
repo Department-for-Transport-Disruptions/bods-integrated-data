@@ -3,7 +3,7 @@ on:
     types: [submitted]
   workflow_dispatch:
 
-name: Terraform Apply Dev
+name: PR Approved
 
 permissions:
   id-token: write # This is required for aws oidc connection
@@ -43,5 +43,3 @@ jobs:
       stage: "dev"
       terraform_version: 1.6.6
       use_artifacts: true
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}

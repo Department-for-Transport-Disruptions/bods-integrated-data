@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-subscriber",
-    "version": "0.1.0",
     "description": "",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-subscriber.zip .",

@@ -1,6 +1,5 @@
 {
     "name": "@bods-integrated-data/avl-mock-data-producer-subscribe",
-    "version": "0.1.0",
     "description": "Subscribe endpoint for the mock AVL data producer",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-mock-data-producer-subscribe.zip .",
