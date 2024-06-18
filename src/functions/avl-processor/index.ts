@@ -16,9 +16,9 @@ const parseXml = (xml: string) => {
         isArray: (tagName) => arrayProperties.includes(tagName),
     });
 
-    const parsedXml = parser.parse(xml) as Record<string, unknown>;
+    const parsedXml1 = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
+    const parsedJson = siriSchemaTransformed.safeParse(parsedXml1.Siri);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
