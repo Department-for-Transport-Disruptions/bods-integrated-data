@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/Department-for-Transport-Disruptions/bods-integrated-data/compare/v1.0.0...v1.1.0) (2024-06-18)
+
+
+### Features
+
+* test release-please ([5506b17](https://github.com/Department-for-Transport-Disruptions/bods-integrated-data/commit/5506b17ee2f61e025714b48fbf45280b3aa22ff4))
+* test release-please ([e1a8dd0](https://github.com/Department-for-Transport-Disruptions/bods-integrated-data/commit/e1a8dd084dcd5bbdcfe6782a7fecd09276aa8431))
+
 ## 1.0.0 (2024-06-18)
 
 
