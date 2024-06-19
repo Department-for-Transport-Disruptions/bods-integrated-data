@@ -11,8 +11,8 @@ terraform {
 
 // oidc provider
 resource "aws_iam_openid_connect_provider" "main" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
   thumbprint_list = [
     "6938fd4d98bab03faadb97b34396831e3780aea1",
     "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
@@ -45,7 +45,7 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
   name = "integrated-data-github-actions-policy-${var.environment}"
 
   policy = var.environment == "shared-services" ? jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Action = [
@@ -67,8 +67,8 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
         }
       }
     ]
-  }) : jsonencode({
-    Version   = "2012-10-17"
+    }) : jsonencode({
+    Version = "2012-10-17"
     Statement = [
       {
         Action = [
@@ -167,9 +167,9 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
 }
 
 resource "aws_iam_role" "oidc_github_actions_role" {
-  name                = "integrated-data-github-actions-role-${var.environment}"
-  path                = "/"
-  assume_role_policy  = data.aws_iam_policy_document.github_oidc_assume_role_policy.json
+  name               = "integrated-data-github-actions-role-${var.environment}"
+  path               = "/"
+  assume_role_policy = data.aws_iam_policy_document.github_oidc_assume_role_policy.json
   managed_policy_arns = [
     aws_iam_policy.integrated_data_oidc_github_actions_policy.arn
   ]
