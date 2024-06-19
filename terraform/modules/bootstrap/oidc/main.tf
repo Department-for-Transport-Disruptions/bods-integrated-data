@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
   }
 }
@@ -116,7 +116,8 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "secretsmanager:DescribeSecret",
           "secretsmanager:TagResource",
           "secretsmanager:UntagResource",
-          "secretsmanager:GetResourcePolicy"
+          "secretsmanager:GetResourcePolicy",
+          "cloudfront:*"
         ]
         Effect   = "Allow"
         Resource = "*"
@@ -141,7 +142,7 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "states:*",
           "acm:*",
           "scheduler:*",
-          "ecs:*"
+          "ecs:*",
         ],
         Effect   = "Allow",
         Resource = "*",
