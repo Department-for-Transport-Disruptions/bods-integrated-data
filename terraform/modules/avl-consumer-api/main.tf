@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
   }
 }
@@ -26,28 +26,12 @@ resource "aws_apigatewayv2_api" "integrated_data_avl_consumer_api" {
   protocol_type = "HTTP"
 }
 
-resource "aws_apigatewayv2_integration" "integrated_data_avl_consumer_downloader_integration" {
-  api_id                 = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_invoke_arn
-  integration_method     = "POST"
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_route" "integrated_data_avl_consumer_downloader_api_route" {
-  api_id    = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
-  route_key = "GET /siri-vm"
-  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration.id}"
-}
-
 resource "aws_apigatewayv2_deployment" "integrated_data_avl_consumer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_avl_consumer_api.id
   description = aws_apigatewayv2_api.integrated_data_avl_consumer_api.name
 
   triggers = {
     redeployment = sha1(join(",", tolist([
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_consumer_downloader_api_route),
-      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_consumer_downloader_integration),
     ])))
   }
 
@@ -66,13 +50,6 @@ resource "aws_apigatewayv2_stage" "integrated_data_avl_consumer_api_stage" {
     throttling_burst_limit   = 5000
     throttling_rate_limit    = 15000
   }
-}
-
-resource "aws_lambda_permission" "integrated_data_avl_consumer_downloader_api_permissions" {
-  function_name = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_lambda_name
-  action        = "lambda:InvokeFunction"
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_consumer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_consumer_api_stage.name}/*"
 }
 
 resource "aws_apigatewayv2_domain_name" "integrated_data_avl_consumer_api_domain" {

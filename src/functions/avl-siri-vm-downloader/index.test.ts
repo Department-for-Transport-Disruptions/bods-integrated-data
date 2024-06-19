@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { APIGatewayProxyEventV2, Context } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -14,8 +14,15 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             mockDbClient: {
                 destroy: vi.fn(),
             },
+            createResponseStream: vi.fn((_responseStream, response) => response),
+            streamifyResponse: vi.fn((handler) => handler),
         };
     });
+
+    vi.mock("./utils", async () => ({
+        createResponseStream: mocks.createResponseStream,
+        streamifyResponse: mocks.streamifyResponse,
+    }));
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
@@ -53,7 +60,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        await expect(handler(mockRequest)).resolves.toEqual({
+        await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
             statusCode: 500,
             body: "An internal error occurred.",
         });
@@ -66,7 +73,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 302,
                 headers: {
                     Location: mockPresignedUrl,
@@ -93,7 +100,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 downloadTfl: "true",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 302,
                 headers: {
                     Location: mockPresignedUrl,
@@ -115,7 +122,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         it("returns a 500 when an unexpected error occurs", async () => {
             mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 500,
                 body: "An unknown error occurred. Please try again.",
             });
@@ -131,7 +138,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 boundingBox: "1,2,3,4",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -158,7 +165,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 boundingBox: "asdf",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "boundingBox"',
             });
@@ -173,7 +180,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 boundingBox: "1,2,3",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: "Bounding box must contain 4 items; minLongitude, minLatitude, maxLongitude and maxLatitude",
             });
@@ -189,7 +196,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 operatorRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -217,7 +224,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 operatorRef: "1,2,3",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -244,7 +251,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 operatorRef: "asdf123!@£",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "operatorRef"',
             });
@@ -260,7 +267,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 vehicleRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -287,7 +294,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 vehicleRef: "asdf123!@£",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "vehicleRef"',
             });
@@ -303,7 +310,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 lineRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -330,7 +337,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 lineRef: "asdf123!@£",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "lineRef"',
             });
@@ -346,7 +353,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 producerRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -373,7 +380,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 producerRef: "asdf123!@£",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "producerRef"',
             });
@@ -389,7 +396,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 originRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -416,7 +423,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 originRef: "asdf123!@£",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "originRef"',
             });
@@ -432,7 +439,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 destinationRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -459,7 +466,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 destinationRef: "asdf123!@£",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 400,
                 body: 'Validation error: Invalid at "destinationRef"',
             });
@@ -475,7 +482,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 subscriptionId: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 200,
                 headers: { "Content-Type": "application/xml" },
                 body: "siri-output",
@@ -502,7 +509,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 operatorRef: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
                 statusCode: 500,
                 body: "An unknown error occurred. Please try again.",
             });
