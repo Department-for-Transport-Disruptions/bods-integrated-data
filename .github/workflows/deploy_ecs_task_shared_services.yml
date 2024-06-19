@@ -11,6 +11,15 @@ on:
       task_dir:
         required: true
         type: string
+      ECR_REPOSITORY:
+        required: true
+        type: string
+      ECS_SERVICE:
+        required: true
+        type: string
+      ECS_CLUSTER:
+        required: true
+        type: string
 
 
 permissions:
@@ -20,9 +29,6 @@ permissions:
 
 env:
     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-    ECR_REPOSITORY: bods-avl-processor
-    ECS_SERVICE: integrated-data-bods-avl-processor-service-dev
-    ECS_CLUSTER: integrated-data-gtfs-rt-ecs-cluster-dev
 
 jobs:
     deploy:
@@ -66,13 +72,13 @@ jobs:
           uses: aws-actions/amazon-ecs-render-task-definition@v1
           with:
             task-definition: task-definition.json
-            container-name: ${{ env.ECR_REPOSITORY }}
+            container-name: ${{ inputs.ECR_REPOSITORY }}
             image: ${{ steps.build-image.outputs.image }}
     
         - name: Deploy Amazon ECS task definition
           uses: aws-actions/amazon-ecs-deploy-task-definition@v1
           with:
             task-definition: ${{ steps.task-def.outputs.task-definition }}
-            service: ${{ env.ECS_SERVICE }}
-            cluster: ${{ env.ECS_CLUSTER }}
+            service: ${{ inputs.ECS_SERVICE }}
+            cluster: ${{ inputs.ECS_CLUSTER }}
             wait-for-service-stability: true
