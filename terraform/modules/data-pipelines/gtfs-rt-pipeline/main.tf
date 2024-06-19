@@ -89,6 +89,8 @@ resource "aws_lambda_function_url" "gtfs_rt_download_url" {
 }
 
 resource "aws_ecs_cluster" "gtfs_rt_ecs_cluster" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-gtfs-rt-ecs-cluster-${var.environment}"
 
   setting {
@@ -98,6 +100,8 @@ resource "aws_ecs_cluster" "gtfs_rt_ecs_cluster" {
 }
 
 resource "aws_iam_policy" "bods_avl_processor_ecs_execution_policy" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-bods-avl-processor-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
@@ -115,6 +119,8 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_execution_policy" {
 }
 
 resource "aws_iam_role" "bods_avl_processor_ecs_execution_role" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-bods-avl-processor-ecs-execution-role-${var.environment}"
 
   assume_role_policy = jsonencode({
@@ -130,10 +136,12 @@ resource "aws_iam_role" "bods_avl_processor_ecs_execution_role" {
     ]
   })
 
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.bods_avl_processor_ecs_execution_policy.arn]
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.bods_avl_processor_ecs_execution_policy[0].arn]
 }
 
 resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-bods-avl-processor-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
@@ -163,6 +171,8 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
 }
 
 resource "aws_iam_role" "bods_avl_processor_ecs_task_role" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-bods-avl-processor-ecs-task-role-${var.environment}"
 
   assume_role_policy = jsonencode({
@@ -178,10 +188,12 @@ resource "aws_iam_role" "bods_avl_processor_ecs_task_role" {
     ]
   })
 
-  managed_policy_arns = [aws_iam_policy.bods_avl_processor_ecs_task_policy.arn]
+  managed_policy_arns = [aws_iam_policy.bods_avl_processor_ecs_task_policy[0].arn]
 }
 
 resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
+  count = var.environment != "local" ? 1 : 0
+
   family                   = var.environment == "prod-temp" ? "integrated-data-bods-avl-processor-temp" : "integrated-data-bods-avl-processor"
   cpu                      = var.bods_avl_processor_cpu
   memory                   = var.bods_avl_processor_memory
@@ -192,8 +204,8 @@ resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
   }
   network_mode = "awsvpc"
 
-  task_role_arn      = aws_iam_role.bods_avl_processor_ecs_task_role.arn
-  execution_role_arn = aws_iam_role.bods_avl_processor_ecs_execution_role.arn
+  task_role_arn      = aws_iam_role.bods_avl_processor_ecs_task_role[0].arn
+  execution_role_arn = aws_iam_role.bods_avl_processor_ecs_execution_role[0].arn
 
   container_definitions = jsonencode([
     {
@@ -260,27 +272,35 @@ resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
 }
 
 resource "aws_security_group" "bods_avl_processor_sg" {
+  count = var.environment != "local" ? 1 : 0
+
   name   = "integrated-data-bods-avl-processor-sg-${var.environment}"
   vpc_id = var.vpc_id
 }
 
 resource "aws_vpc_security_group_egress_rule" "bods_avl_processor_sg_allow_all_egress_ipv4" {
-  security_group_id = aws_security_group.bods_avl_processor_sg.id
+  count = var.environment != "local" ? 1 : 0
+
+  security_group_id = aws_security_group.bods_avl_processor_sg[0].id
 
   cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = "-1"
 }
 
 resource "aws_vpc_security_group_egress_rule" "bods_avl_processor_sg_allow_all_egress_ipv6" {
-  security_group_id = aws_security_group.bods_avl_processor_sg.id
+  count = var.environment != "local" ? 1 : 0
+
+  security_group_id = aws_security_group.bods_avl_processor_sg[0].id
 
   cidr_ipv6   = "::/0"
   ip_protocol = "-1"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
+  count = var.environment != "local" ? 1 : 0
+
   security_group_id            = var.db_sg_id
-  referenced_security_group_id = aws_security_group.bods_avl_processor_sg.id
+  referenced_security_group_id = aws_security_group.bods_avl_processor_sg[0].id
 
   from_port = 5432
   to_port   = 5432
@@ -289,9 +309,11 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 }
 
 resource "aws_ecs_service" "bods_avl_processor_service" {
+  count = var.environment != "local" ? 1 : 0
+
   name            = "integrated-data-bods-avl-processor-service-${var.environment}"
-  cluster         = aws_ecs_cluster.gtfs_rt_ecs_cluster.id
-  task_definition = aws_ecs_task_definition.bods_avl_processor_task_definition.arn
+  cluster         = aws_ecs_cluster.gtfs_rt_ecs_cluster[0].id
+  task_definition = aws_ecs_task_definition.bods_avl_processor_task_definition[0].arn
   desired_count   = 1
 
 
@@ -311,10 +333,10 @@ resource "aws_ecs_service" "bods_avl_processor_service" {
 
   network_configuration {
     subnets         = var.private_subnet_ids
-    security_groups = [aws_security_group.bods_avl_processor_sg.id]
+    security_groups = [aws_security_group.bods_avl_processor_sg[0].id]
   }
 
-  depends_on = [aws_iam_policy.bods_avl_processor_ecs_task_policy]
+  depends_on = [aws_iam_policy.bods_avl_processor_ecs_task_policy[0]]
 
   lifecycle {
     ignore_changes = [task_definition]

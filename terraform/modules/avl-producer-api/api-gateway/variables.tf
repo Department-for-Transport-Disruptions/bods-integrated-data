@@ -32,3 +32,25 @@ variable "data_endpoint_lambda_invoke_arn" {
   type        = string
   description = "Data endpoint Lambda Invoke ARN"
 }
+
+variable "subscriptions_lambda_name" {
+  type        = string
+  description = "Subscriptions Lambda Name"
+}
+
+variable "subscriptions_lambda_invoke_arn" {
+  type        = string
+  description = "Subscriptions Lambda Invoke ARN"
+}
+
+variable "domain" {
+  type = string
+}
+
+variable "acm_certificate_arn" {
+  type = string
+}
+
+variable "hosted_zone_id" {
+  type = string
+}

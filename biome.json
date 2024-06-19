@@ -2,17 +2,7 @@
     "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
     "files": {
         "ignoreUnknown": true,
-        "ignore": [
-            "./data/",
-            "**/coverage/**",
-            "**/dist/**",
-            "**/*.cjs",
-            "**/*.mjs",
-            "**/*.config.js",
-            "**/*.config.ts",
-            "./terraform/",
-            "./load-testing/"
-        ]
+        "ignore": ["coverage", "dist", "./data/", "./terraform/", "./load-testing/"]
     },
     "formatter": {
         "indentStyle": "space",

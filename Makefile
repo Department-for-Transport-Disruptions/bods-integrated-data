@@ -5,7 +5,6 @@ BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_FTP_ARN=""
-AVL_SIRI_BUCKET_NAME="integrated-data-avl-aggregated-siri-vm-local"
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
@@ -17,12 +16,13 @@ AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-zipped-local"
 BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
+BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 
 # Dev
 
-setup: docker-build-bods-avl-processor dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
+setup: docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add awscli && \
@@ -97,8 +97,8 @@ test-functions:
 docker-build-%:
 	docker build src --build-arg servicePath=$* -t $*:latest
 
-typescript-build-test:
-	cd src && pnpm run build-test
+check-types:
+	cd src && pnpm run check-types
 
 # CLI helpers
 
@@ -206,9 +206,6 @@ run-local-avl-data-endpoint:
 run-local-avl-processor:
 	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
-run-local-avl-aggregate-siri-vm:
-	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-aggregate-siri-vm'; handler().catch(e => console.error(e))"
-
 run-local-avl-retriever:
 	STAGE=local TARGET_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
 
@@ -230,6 +227,9 @@ run-local-avl-tfl-location-retriever:
 # example usage with query params: make run-local-avl-siri-vm-downloader AVL_SIRI_VM_DOWNLOADER_INPUT="{ queryStringParameters: { operatorRef: '1,2', vehicleRef: '123' } }"
 run-local-avl-siri-vm-downloader:
 	STAGE=local BUCKET_NAME=${AVL_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).catch(e => console.error(e))"
+
+run-local-avl-subscriptions:
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler().then(console.log).catch(console.error)"
 
 # NOC
 
@@ -256,3 +256,8 @@ run-local-bods-fares-retriever:
 
 run-local-bods-fares-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_FARES_BUCKET_NAME=${BODS_FARES_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-fares-unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_FARES_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
+
+# Disruptions retriever
+
+run-local-bods-disruptions-retriever:
+	STAGE=local DISRUPTIONS_ZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(e => console.error(e))"

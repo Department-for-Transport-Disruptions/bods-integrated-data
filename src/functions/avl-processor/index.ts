@@ -13,7 +13,7 @@ const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.some((element) => element === tagName),
+        isArray: (tagName) => arrayProperties.includes(tagName),
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
@@ -34,7 +34,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
 
     const subscription = await getAvlSubscription(subscriptionId, tableName);
 
-    if (subscription.status !== "ACTIVE") {
+    if (subscription.status !== "LIVE") {
         throw new Error(`Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`);
     }
 

@@ -38,12 +38,12 @@ export type AvlSubscriptionRequest = z.infer<typeof avlSubscriptionRequestSchema
 export const avlSubscriptionResponseSchema = z.object({
     SubscriptionResponse: z.object({
         ResponseTimestamp: z.string(),
-        ResponderRef: z.string().optional(),
-        RequestMessageRef: z.string().optional(),
+        ResponderRef: z.coerce.string().optional(),
+        RequestMessageRef: z.coerce.string().optional(),
         ResponseStatus: z.object({
             ResponseTimestamp: z.string(),
-            SubscriberRef: z.string().optional(),
-            SubscriptionRef: z.string().optional(),
+            SubscriberRef: z.coerce.string().optional(),
+            SubscriptionRef: z.coerce.string().optional(),
             Status: z.coerce.boolean(),
         }),
         ServiceStartedTime: z.string().optional(),
@@ -52,12 +52,16 @@ export const avlSubscriptionResponseSchema = z.object({
 
 export type AvlSubscriptionResponse = z.infer<typeof avlSubscriptionResponseSchema>;
 
+export const avlSubscriptionStatusesSchema = z.enum(avlSubscriptionStatuses);
+
+export type AvlSubscriptionStatuses = z.infer<typeof avlSubscriptionStatusesSchema>;
+
 export const avlSubscriptionSchema = z.object({
     PK: z.string(),
     url: z.string().url(),
     description: z.string(),
     shortDescription: z.string(),
-    status: z.enum(avlSubscriptionStatuses),
+    status: avlSubscriptionStatusesSchema,
     requestorRef: z.string().nullish(),
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),

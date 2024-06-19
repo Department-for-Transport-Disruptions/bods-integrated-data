@@ -18,7 +18,7 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-variable "avl_siri_bucket_name" {
+variable "avl_raw_siri_bucket_name" {
   type        = string
   description = "Bucket Name for SIRI-VM data"
 }
@@ -30,4 +30,16 @@ variable "sg_id" {
 
 variable "subnet_ids" {
   type = list(string)
+}
+
+variable "domain" {
+  type = string
+}
+
+variable "acm_certificate_arn" {
+  type = string
+}
+
+variable "hosted_zone_id" {
+  type = string
 }

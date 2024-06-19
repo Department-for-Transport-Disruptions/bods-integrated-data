@@ -137,7 +137,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Avl
 
         {
             ...subscription,
-            status: "TERMINATED",
+            status: "INACTIVE",
             serviceEndDatetime: currentTime,
         },
     );

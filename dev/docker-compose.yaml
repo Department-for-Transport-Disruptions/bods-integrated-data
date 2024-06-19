@@ -40,8 +40,22 @@ services:
       - IS_DOCKER=true
       - STAGE=local
       - BUCKET_NAME=integrated-data-gtfs-rt-local
-      - PROCESSOR_FREQUENCY_IN_SECONDS=3000
-      - CLEARDOWN_FREQUENCY_IN_SECONDS=6000
+      - PROCESSOR_FREQUENCY_IN_SECONDS=30
+      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
+    volumes:
+      - ./:/app/data
+    networks:
+      - bods_integrated_data_network
+
+  siri-vm-generator:
+    container_name: bods_integrated_data_siri_vm_generator
+    image: siri-vm-generator:latest
+    environment:
+      - IS_DOCKER=true
+      - STAGE=local
+      - BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
+      - PROCESSOR_FREQUENCY_IN_SECONDS=30
+      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
     volumes:
       - ./:/app/data
     networks:

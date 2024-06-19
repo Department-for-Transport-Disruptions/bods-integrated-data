@@ -23,12 +23,13 @@ resource "aws_vpc" "integrated_data_vpc" {
   }
 }
 
-# Subnets 
+# Subnets
 
 data "aws_availability_zones" "available" {}
 
 resource "aws_subnet" "integrated_data_db_subnet" {
-  for_each = { for idx, subnet in local.db_subnet_cidr_blocks :
+  for_each = {
+    for idx, subnet in local.db_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-db-subnet-${idx + 1}-${var.environment}"
       cidr_block = subnet
@@ -45,7 +46,8 @@ resource "aws_subnet" "integrated_data_db_subnet" {
 }
 
 resource "aws_subnet" "integrated_data_private_subnet" {
-  for_each = { for idx, subnet in local.private_subnet_cidr_blocks :
+  for_each = {
+    for idx, subnet in local.private_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-private-subnet-${idx + 1}-${var.environment}"
       cidr_block = subnet
@@ -62,7 +64,8 @@ resource "aws_subnet" "integrated_data_private_subnet" {
 }
 
 resource "aws_subnet" "integrated_data_public_subnet" {
-  for_each = { for idx, subnet in local.public_subnet_cidr_blocks :
+  for_each = {
+    for idx, subnet in local.public_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-public-subnet-${idx + 1}-${var.environment}"
       cidr_block = subnet
@@ -216,5 +219,5 @@ locals {
   db_subnet_cidr_blocks         = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
   private_subnet_cidr_blocks    = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
   public_subnet_cidr_blocks     = ["10.0.20.0/24", "10.0.21.0/24", "10.0.22.0/24"]
-  vpc_gateway_endpoint_services = ["s3"]
+  vpc_gateway_endpoint_services = ["s3", "dynamodb"]
 }

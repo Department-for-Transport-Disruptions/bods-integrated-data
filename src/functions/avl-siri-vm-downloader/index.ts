@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
 import {
-    AGGREGATED_SIRI_VM_FILE_PATH,
-    AGGREGATED_SIRI_VM_TFL_FILE_PATH,
+    GENERATED_SIRI_VM_FILE_PATH,
+    GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
@@ -177,8 +177,8 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     }
 
     if (downloadTfl === "true") {
-        return retrieveSiriVmFile(bucketName, AGGREGATED_SIRI_VM_TFL_FILE_PATH);
+        return retrieveSiriVmFile(bucketName, GENERATED_SIRI_VM_TFL_FILE_PATH);
     }
 
-    return retrieveSiriVmFile(bucketName, AGGREGATED_SIRI_VM_FILE_PATH);
+    return retrieveSiriVmFile(bucketName, GENERATED_SIRI_VM_FILE_PATH);
 };
