@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import {} from "node:stream";
 import { logger } from "@baselime/lambda-logger";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
@@ -10,9 +11,10 @@ import { NM_TOKEN_ARRAY_REGEX, NM_TOKEN_REGEX } from "@bods-integrated-data/shar
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
-import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { createResponseStream, streamifyResponse } from "./utils";
 
 const queryParametersSchema = z.preprocess(
     (val) => Object(val),
@@ -42,7 +44,7 @@ const retrieveSiriVmData = async (
     originRef?: string,
     destinationRef?: string,
     subscriptionId?: string,
-): Promise<APIGatewayProxyResultV2> => {
+) => {
     const avls = await getAvlDataForSiriVm(
         dbClient,
         boundingBox,
@@ -57,16 +59,10 @@ const retrieveSiriVmData = async (
 
     const requestMessageRef = randomUUID();
     const responseTime = getDate();
-    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
-
-    return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/xml" },
-        body: siriVm,
-    };
+    return createSiriVm(avls, requestMessageRef, responseTime);
 };
 
-const retrieveSiriVmFile = async (bucketName: string, key: string) => {
+const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<APIGatewayProxyStructuredResultV2> => {
     try {
         const presignedUrl = await getPresignedUrl(
             {
@@ -96,16 +92,16 @@ const retrieveSiriVmFile = async (bucketName: string, key: string) => {
     }
 };
 
-export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
+export const handler = streamifyResponse(async (event, responseStream) => {
     const { BUCKET_NAME: bucketName } = process.env;
 
     if (!bucketName) {
         logger.error("Missing env vars - BUCKET_NAME must be set");
 
-        return {
+        return createResponseStream(responseStream, {
             statusCode: 500,
             body: "An internal error occurred.",
-        };
+        });
     }
 
     const parseResult = queryParametersSchema.safeParse(event.queryStringParameters);
@@ -113,10 +109,10 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
 
-        return {
+        return createResponseStream(responseStream, {
             statusCode: 400,
             body: validationError.message,
-        };
+        });
     }
 
     const {
@@ -144,14 +140,14 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
         if (boundingBox && boundingBox.split(",").length !== 4) {
-            return {
+            return createResponseStream(responseStream, {
                 statusCode: 400,
                 body: "Bounding box must contain 4 items; minLongitude, minLatitude, maxLongitude and maxLatitude",
-            };
+            });
         }
 
         try {
-            return await retrieveSiriVmData(
+            const siriVm = await retrieveSiriVmData(
                 dbClient,
                 boundingBox,
                 operatorRef,
@@ -162,23 +158,31 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
                 destinationRef,
                 subscriptionId,
             );
+
+            return createResponseStream(responseStream, {
+                statusCode: 200,
+                headers: { "Content-Type": "application/xml" },
+                body: siriVm,
+            });
         } catch (error) {
             if (error instanceof Error) {
                 logger.error("There was an error retrieving the SIRI-VM data", error);
             }
 
-            return {
+            return createResponseStream(responseStream, {
                 statusCode: 500,
                 body: "An unknown error occurred. Please try again.",
-            };
+            });
         } finally {
             await dbClient.destroy();
         }
     }
 
     if (downloadTfl === "true") {
-        return retrieveSiriVmFile(bucketName, GENERATED_SIRI_VM_TFL_FILE_PATH);
+        const response = await retrieveSiriVmFile(bucketName, GENERATED_SIRI_VM_TFL_FILE_PATH);
+        return createResponseStream(responseStream, response);
     }
 
-    return retrieveSiriVmFile(bucketName, GENERATED_SIRI_VM_FILE_PATH);
-};
+    const response = await retrieveSiriVmFile(bucketName, GENERATED_SIRI_VM_FILE_PATH);
+    return createResponseStream(responseStream, response);
+});
