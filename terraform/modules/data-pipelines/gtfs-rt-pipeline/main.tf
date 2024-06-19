@@ -67,8 +67,9 @@ module "integrated_data_gtfs_rt_downloader_function" {
       Action = [
         "cloudwatch:PutMetricData",
       ],
-      Effect   = "Allow",
-      Resource = "*"
+      Effect = "Allow",
+      Resource = ["arn:aws:logs:eu-west-2:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/integrated-data-gtfs-rt-downloader-2-${var.environment}:*"
+      ]
   }]
 
   env_vars = {
@@ -156,7 +157,9 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
       {
         "Effect" : "Allow",
         "Action" : "cloudwatch:PutMetricData",
-        "Resource" : "*"
+        "Resource" : [
+          "arn:aws:logs:eu-west-2:${data.aws_caller_identity.current.account_id}:log-group:/ecs/bods-avl-processor-${var.environment}:*"
+        ]
       }
     ]
   })
