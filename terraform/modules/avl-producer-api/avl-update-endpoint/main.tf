@@ -25,7 +25,7 @@ module "avl_update_endpoint" {
 
   permissions = [
     {
-      Action   = "ssm:PutParameter",
+      Action   = ["ssm:GetParameter", "ssm:PutParameter"],
       Effect   = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",

@@ -1,5 +1,4 @@
 import { logger } from "@baselime/lambda-logger";
-import { getAvlSubscription, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import {
     AvlSubscription,
@@ -43,8 +42,6 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
-        logger.info("Starting AVL subscriber");
-
         const subscriptionId = event.pathParameters?.subscription_id;
 
         if (!subscriptionId) {
@@ -83,6 +80,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         };
 
         try {
+            logger.info(`Unsubscribing from subscription ID: ${subscriptionId} using existing credentials `);
             await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);
         } catch (e) {
             logger.warn(
@@ -92,6 +90,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, updateBody.username, updateBody.password);
 
+        logger.info(`Subscribing to subscription ID: ${subscriptionId} using new details`);
         await sendSubscriptionRequestAndUpdateDynamo(
             subscriptionId,
             subscriptionDetail,
@@ -102,6 +101,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             mockProducerSubscribeEndpoint,
         );
 
+        logger.info(`Successfully updated subscription ID: ${subscriptionId}`);
         return {
             statusCode: 204,
         };

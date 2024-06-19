@@ -142,7 +142,9 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
         throw new Error(`The data producer did not return a status of true - subscription ID: ${subscriptionId}`);
     }
 
-    logger.info("Updating subscription status in DynamoDB");
+    logger.info(
+        `Successfully unsubscribed from subscription ID: ${subscriptionId} - updating subscription status in DynamoDB`,
+    );
 
     await putDynamoItem(
         tableName,

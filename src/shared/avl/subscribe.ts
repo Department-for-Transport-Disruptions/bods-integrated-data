@@ -14,7 +14,7 @@ import axios from "axios";
 import { getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
-    logger.info("Uploading subscription auth credentials to parameter store");
+    logger.info(`Uploading subscription auth credentials to parameter store for subscription ID: ${subscriptionId}`);
 
     await Promise.all([
         putParameter(`/subscription/${subscriptionId}/username`, username, "SecureString", true),
