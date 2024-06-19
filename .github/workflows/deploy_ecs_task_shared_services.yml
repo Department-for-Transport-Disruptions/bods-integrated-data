@@ -74,6 +74,13 @@ jobs:
             task-definition: task-definition.json
             container-name: ${{ inputs.ECR_REPOSITORY }}
             image: ${{ steps.build-image.outputs.image }}
+
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+              role-to-assume: ${{ secrets.application_oidc_role_arn }}
+              aws-region: "eu-west-2"
+              role-session-name: GitHub-OIDC-TERRAFORM
     
         - name: Deploy Amazon ECS task definition
           uses: aws-actions/amazon-ecs-deploy-task-definition@v1
