@@ -44,7 +44,30 @@ data "aws_iam_policy_document" "github_oidc_assume_role_policy" {
 resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
   name = "integrated-data-github-actions-policy-${var.environment}"
 
-  policy = jsonencode({
+  policy = var.environment == "shared-services" ? jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:CompleteLayerUpload",
+          "ecr:InitiateLayerUpload",
+          "ecr:PutImage",
+          "ecr:UploadLayerPart"
+        ],
+        Effect   = "Allow",
+        Resource = "*",
+        Condition = {
+          "StringLike" = {
+            "aws:RequestedRegion" = [
+              "eu-west-2"
+            ]
+          }
+        }
+      }
+    ]
+    }) : jsonencode({
     Version = "2012-10-17"
     Statement = [
       {

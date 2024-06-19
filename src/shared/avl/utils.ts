@@ -3,15 +3,18 @@ import cleanDeep from "clean-deep";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
-import { getDynamoItem } from "../dynamo";
+import { getDate } from "../dates";
+import { getDynamoItem, recursiveScan } from "../dynamo";
+import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
-import { AvlSubscription, avlSubscriptionSchema } from "../schema/avl-subscribe.schema";
+import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { chunkArray } from "../utils";
 
-export const AGGREGATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
-export const AGGREGATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
+export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
+export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
 
 export class SubscriptionIdNotFoundError extends Error {
     constructor(message: string) {
@@ -26,7 +29,19 @@ export const isActiveAvlSubscription = async (subscriptionId: string, tableName:
         SK: "SUBSCRIPTION",
     });
 
-    return subscription?.status === "ACTIVE";
+    return subscription?.status === "LIVE";
+};
+
+export const getAvlSubscriptions = async (tableName: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: tableName,
+    });
+
+    if (!subscriptions) {
+        return [];
+    }
+
+    return avlSubscriptionsSchema.parse(subscriptions);
 };
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
@@ -112,6 +127,56 @@ export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
         : null,
 });
 
+export const getQueryForLatestAvl = (
+    dbClient: KyselyDb,
+    boundingBox?: string,
+    operatorRef?: string,
+    vehicleRef?: string,
+    lineRef?: string,
+    producerRef?: string,
+    originRef?: string,
+    destinationRef?: string,
+    subscriptionId?: string,
+) => {
+    let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
+
+    if (boundingBox) {
+        const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+        const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+        query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
+    }
+
+    if (operatorRef) {
+        query = query.where("operator_ref", "in", operatorRef.split(","));
+    }
+
+    if (vehicleRef) {
+        query = query.where("vehicle_ref", "=", vehicleRef);
+    }
+
+    if (lineRef) {
+        query = query.where("line_ref", "=", lineRef);
+    }
+
+    if (producerRef) {
+        query = query.where("producer_ref", "=", producerRef);
+    }
+
+    if (originRef) {
+        query = query.where("origin_ref", "=", originRef);
+    }
+
+    if (destinationRef) {
+        query = query.where("destination_ref", "=", destinationRef);
+    }
+
+    if (subscriptionId) {
+        query = query.where("subscription_id", "=", subscriptionId);
+    }
+
+    return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
+};
+
 export const getAvlDataForSiriVm = async (
     dbClient: KyselyDb,
     boundingBox?: string,
@@ -124,43 +189,17 @@ export const getAvlDataForSiriVm = async (
     subscriptionId?: string,
 ) => {
     try {
-        let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
-
-        if (boundingBox) {
-            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
-            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
-            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
-        }
-
-        if (operatorRef) {
-            query = query.where("operator_ref", "in", operatorRef.split(","));
-        }
-
-        if (vehicleRef) {
-            query = query.where("vehicle_ref", "=", vehicleRef);
-        }
-
-        if (lineRef) {
-            query = query.where("line_ref", "=", lineRef);
-        }
-
-        if (producerRef) {
-            query = query.where("producer_ref", "=", producerRef);
-        }
-
-        if (originRef) {
-            query = query.where("origin_ref", "=", originRef);
-        }
-
-        if (destinationRef) {
-            query = query.where("destination_ref", "=", destinationRef);
-        }
-
-        if (subscriptionId) {
-            query = query.where("subscription_id", "=", subscriptionId);
-        }
-
-        query = query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.response_time_stamp desc"]);
+        const query = getQueryForLatestAvl(
+            dbClient,
+            boundingBox,
+            operatorRef,
+            vehicleRef,
+            lineRef,
+            producerRef,
+            originRef,
+            destinationRef,
+            subscriptionId,
+        );
 
         const avls = await query.execute();
 
@@ -291,3 +330,28 @@ export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minut
  * @returns The termination.
  */
 export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
+
+export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
+    const responseTime = getDate();
+    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
+    const siriVmTfl = createSiriVm(
+        avls.filter((avl) => avl.operator_ref === tflOperatorRef),
+        requestMessageRef,
+        responseTime,
+    );
+
+    await Promise.all([
+        putS3Object({
+            Bucket: bucketName,
+            Key: GENERATED_SIRI_VM_FILE_PATH,
+            ContentType: "application/xml",
+            Body: siriVm,
+        }),
+        putS3Object({
+            Bucket: bucketName,
+            Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
+            ContentType: "application/xml",
+            Body: siriVmTfl,
+        }),
+    ]);
+};

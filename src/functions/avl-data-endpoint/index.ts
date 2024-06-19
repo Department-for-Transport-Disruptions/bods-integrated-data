@@ -9,6 +9,8 @@ import { XMLParser } from "fast-xml-parser";
 import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
+const arrayProperties = ["VehicleActivity", "OnwardCall"];
+
 const processHeartbeatNotification = async (
     data: HeartbeatNotification,
     subscription: AvlSubscription,
@@ -54,7 +56,7 @@ const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => tagName === "VehicleActivity",
+        isArray: (tagName) => arrayProperties.includes(tagName),
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
@@ -92,12 +94,22 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("No body sent with event");
         }
 
+        logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
+
         const subscription = await getAvlSubscription(subscriptionId, tableName);
+
         const data = parseXml(event.body);
 
         if (Object.hasOwn(data, "HeartbeatNotification")) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
         } else {
+            if (subscription.status !== "LIVE") {
+                logger.warn(`Subscription: ${subscriptionId} is not LIVE, data will not be processed...`);
+                return {
+                    statusCode: 404,
+                    body: `Subscription with Subscription ID: ${subscriptionId} is not LIVE in the service.`,
+                };
+            }
             await uploadSiriVmToS3(event.body, bucketName, subscription, tableName);
         }
 

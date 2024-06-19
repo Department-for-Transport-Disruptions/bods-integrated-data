@@ -1,5 +1,5 @@
 {
-    "name": "@bods-integrated-data/bods-avl-processor",
+    "name": "@bods-integrated-data/bods-avl-processor-task",
     "version": "0.1.0",
     "description": "Pipeline for retrieving and processing BODS SIRI-VM data",
     "scripts": {
@@ -13,7 +13,7 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
-        "axios": "^1.6.7",
+        "axios": "^1.7.2",
         "bree": "^9.2.3",
         "fast-xml-parser": "^4.1.2",
         "gtfs-realtime-bindings": "^1.1.1",

@@ -5,14 +5,16 @@
     "scripts": {
         "prepare": "husky",
         "lint": "pnpm biome check .",
-        "lint:fix": "pnpm biome check --apply ."
+        "lint:fix": "pnpm biome check --apply .",
+        "terraform:format": "cd terraform && terraform fmt -check -recursive"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
         "@biomejs/biome": "1.7.3",
-        "husky": "^9.0.11"
+        "husky": "^9.0.11",
+        "tsx": "4.15.4"
     },
     "packageManager": "pnpm@8.15.3",
     "engines": {

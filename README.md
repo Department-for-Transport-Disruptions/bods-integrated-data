@@ -38,8 +38,6 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
   - [Workflow](#workflow)
   - [Environments](#environments)
   - [Deploying changes locally](#deploying-changes-locally)
-- [Getting involved](#getting-involved)
-- [Licence](#licence)
 
 ## Dependencies
 
@@ -475,11 +473,3 @@ To deploy lambda functions, first build the functions before applying:
 make install-deps build-functions
 make tf-apply-{ENV}
 ```
-
-## Getting involved
-
-todo
-
-## Licence
-
-todo

@@ -19,7 +19,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.some((element) => element === tagName),
+        isArray: (tagName) => arrayProperties.includes(tagName),
     });
 
     const xml = await file.Body?.transformToString();

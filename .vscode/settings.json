@@ -6,5 +6,8 @@
     "editor.codeActionsOnSave": {
         "quickfix.biome": "explicit",
         "source.organizeImports.biome": "explicit"
+    },
+    "[terraform]": {
+        "editor.defaultFormatter": "hashicorp.terraform"
     }
 }
