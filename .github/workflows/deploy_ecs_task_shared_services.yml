@@ -2,8 +2,13 @@ name: Deploy ECS task for shared servies
 
 on:
   workflow_call:
+    secrets:
+      shared_services_oidc_role_arn:
+          required: true
+      application_oidc_role_arn:
+          required: true
     inputs:
-      function_dir:
+      task_dir:
         required: true
         type: string
 
@@ -26,12 +31,12 @@ jobs:
       environment: development
       steps:
         - name: Checkout
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
 
         - name: Configure AWS Credentials
           uses: aws-actions/configure-aws-credentials@v4
           with:
-            role-to-assume: ${{ secrets.oidc_role_arn }}
+            role-to-assume: ${{ secrets.shared_services_oidc_role_arn }}
             aws-region: "eu-west-2"
             role-session-name: GitHub-OIDC-TERRAFORM
 
@@ -52,7 +57,7 @@ jobs:
             ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
             IMAGE_TAG: ${{ steps.tag_version.outputs.new_tag }}
           run: |
-            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG src --build-arg servicePath=${{ inputs.task_dir }}
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
             echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
     
@@ -61,7 +66,7 @@ jobs:
           uses: aws-actions/amazon-ecs-render-task-definition@v1
           with:
             task-definition: task-definition.json
-            container-name: my-container
+            container-name: ${{ env.ECR_REPOSITORY }}
             image: ${{ steps.build-image.outputs.image }}
     
         - name: Deploy Amazon ECS task definition

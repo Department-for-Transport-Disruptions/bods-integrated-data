@@ -19,7 +19,7 @@ jobs:
     name: Get list of updated functions
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
-      path: "./src/task_definition"
+      path: "./src/tasks"
 
   build_and_deploy_ecs_tasks:
     uses: ./.github/workflows/deploy_ecs_task_shared_services.yaml
@@ -30,7 +30,7 @@ jobs:
     needs:
       - check_for_function_changes
     with:
-      function_dir: ${{ matrix.dir }}
+      task_dir: ${{ matrix.dir }}
     secrets:
       oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
 
