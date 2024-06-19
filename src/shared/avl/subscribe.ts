@@ -124,8 +124,11 @@ export const updateDynamoWithSubscriptionInfo = async (
         description: subscription.description,
         shortDescription: subscription.shortDescription,
         requestorRef: subscription.requestorRef ?? null,
-        serviceStartDatetime: currentTimestamp ?? null,
+        serviceStartDatetime: subscription.serviceStartDatetime
+            ? subscription.serviceStartDatetime
+            : currentTimestamp ?? null,
         publisherId: subscription.publisherId ?? null,
+        lastModifiedDateTime: currentTimestamp ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");

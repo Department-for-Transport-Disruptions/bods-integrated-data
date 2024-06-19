@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/template-lambda",
+    "name": "@bods-integrated-data/avl-update-endpoint",
     "version": "0.1.0",
-    "description": "Template for a typescript lambda",
+    "description": "Lambda to update AVL subscription",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./lambda-template.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/lambda-template.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-update-endpoint.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-update-endpoint.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],

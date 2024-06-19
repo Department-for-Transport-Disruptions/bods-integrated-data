@@ -30,7 +30,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
         try {
-            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription, tableName);
+            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscription, tableName);
         } catch (e) {
             if (e instanceof AxiosError) {
                 logger.error(

@@ -6,6 +6,10 @@ import { putDynamoItem } from "../dynamo";
 import { logger } from "@baselime/lambda-logger";
 import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import {
+    terminateSubscriptionRequestSchema,
+    terminateSubscriptionResponseSchema,
+} from "../schema/avl-unsubscribe.schema";
 
 export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <Siri version='2.0' xmlns='http://www.siri.org.uk/siri' xmlns:ns2='http://www.ifopt.org.uk/acsb' xmlns:ns3='http://www.ifopt.org.uk/ifopt' xmlns:ns4='http://datex2.eu/schema/2_0RC1/2_0'>
@@ -88,23 +92,24 @@ const parseXml = (xml: string) => {
 };
 
 export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
-    subscription: AvlSubscription,
+    subscriptionId: string,
+    subscription: Omit<AvlSubscription, "PK" | "status">,
     tableName: string,
 ) => {
     const currentTime = getDate().toISOString();
     const messageIdentifier = randomUUID();
 
     const terminateSubscriptionRequestMessage = generateTerminationSubscriptionRequest(
-        subscription.PK,
+        subscriptionId,
         currentTime,
         messageIdentifier,
         subscription.requestorRef ?? null,
     );
 
-    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscription.PK);
+    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscriptionId);
 
     if (!subscriptionUsername || !subscriptionPassword) {
-        logger.error(`Missing auth credentials for subscription id: ${subscription.PK}`);
+        logger.error(`Missing auth credentials for subscription id: ${subscriptionId}`);
         throw new Error("Missing auth credentials for subscription");
     }
 
@@ -128,20 +133,20 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
     const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data;
 
     if (!terminateSubscriptionResponseBody) {
-        throw new Error(`No response body received from the data producer - subscription ID: ${subscription.PK}`);
+        throw new Error(`No response body received from the data producer - subscription ID: ${subscriptionId}`);
     }
 
     const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
 
     if (parsedResponseBody.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
-        throw new Error(`The data producer did not return a status of true - subscription ID: ${subscription.PK}`);
+        throw new Error(`The data producer did not return a status of true - subscription ID: ${subscriptionId}`);
     }
 
     logger.info("Updating subscription status in DynamoDB");
 
     await putDynamoItem(
         tableName,
-        subscription.PK,
+        subscriptionId,
         "SUBSCRIPTION",
 
         {

@@ -1,6 +1,10 @@
 import { logger } from "@baselime/lambda-logger";
 import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
-import { avlSubscribeMessageSchema, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import {
+    AvlSubscribeMessage,
+    avlSubscribeMessageSchema,
+    AvlSubscription,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { AxiosError } from "axios";
 import {
@@ -8,6 +12,16 @@ import {
     sendSubscriptionRequestAndUpdateDynamo,
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
+
+const formatSubscriptionDetail = (
+    avlSubscribeMessage: AvlSubscribeMessage,
+): Omit<AvlSubscription, "PK" | "status"> => ({
+    url: avlSubscribeMessage.dataProducerEndpoint,
+    description: avlSubscribeMessage.description,
+    shortDescription: avlSubscribeMessage.shortDescription,
+    requestorRef: avlSubscribeMessage.requestorRef,
+    publisherId: avlSubscribeMessage.publisherId,
+});
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     try {
@@ -54,17 +68,11 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
         try {
-            const subscription: Omit<AvlSubscription, "PK" | "status"> = {
-                url: avlSubscribeMessage.dataProducerEndpoint,
-                description: avlSubscribeMessage.description,
-                shortDescription: avlSubscribeMessage.shortDescription,
-                requestorRef: avlSubscribeMessage.requestorRef,
-                publisherId: avlSubscribeMessage.publisherId,
-            };
+            const subscriptionDetails = formatSubscriptionDetail(avlSubscribeMessage);
 
             await sendSubscriptionRequestAndUpdateDynamo(
                 subscriptionId,
-                subscription,
+                subscriptionDetails,
                 avlSubscribeMessage.username,
                 avlSubscribeMessage.password,
                 tableName,
@@ -73,14 +81,10 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             );
         } catch (e) {
             if (e instanceof AxiosError) {
-                const subscription: Omit<AvlSubscription, "PK" | "status"> = {
-                    url: avlSubscribeMessage.dataProducerEndpoint,
-                    description: avlSubscribeMessage.description,
-                    shortDescription: avlSubscribeMessage.shortDescription,
-                    requestorRef: avlSubscribeMessage.requestorRef,
-                    publisherId: avlSubscribeMessage.publisherId,
-                };
-                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscription, "ERROR");
+                const subscriptionDetails = formatSubscriptionDetail(avlSubscribeMessage);
+
+                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+
                 logger.error(
                     `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
                 );

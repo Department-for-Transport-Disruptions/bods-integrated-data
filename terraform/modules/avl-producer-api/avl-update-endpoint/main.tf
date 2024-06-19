@@ -45,8 +45,10 @@ module "avl_update_endpoint" {
 
 
   env_vars = {
-    STAGE         = var.environment
-    TABLE_NAME    = var.avl_subscription_table_name
-    DATA_ENDPOINT = var.avl_data_endpoint
+    STAGE                            = var.environment
+    TABLE_NAME                       = var.avl_subscription_table_name
+    MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = var.avl_mock_data_producer_subscribe_endpoint
+    DATA_ENDPOINT                    = var.avl_data_endpoint
+
   }
 }

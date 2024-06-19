@@ -1,32 +1,29 @@
 import { logger } from "@baselime/lambda-logger";
-import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
-import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import axios, { AxiosError } from "axios";
+import {
+    AvlSubscription,
+    avlSubscriptionSchema,
+    avlUpdateBodySchema,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
 } from "@bods-integrated-data/shared/avl/subscribe";
+import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
+import { getDynamoItem } from "@bods-integrated-data/shared/dynamo";
 
-const unsubscribeFromExistingSubscription = async (subscriptionId: string, url: string) => {
-    const unsubscribeUrl = `${url}/${subscriptionId}`;
+export const getSubscription = async (subscriptionId: string, tableName: string) => {
+    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
 
-    try {
-        logger.info(`Unsubscribing from subscription ID: ${subscriptionId}`);
-
-        await axios.post(unsubscribeUrl);
-
-        logger.info(`Successfully unsubscribed from subscription ID: ${subscriptionId}`);
-    } catch (e) {
-        if (e instanceof AxiosError) {
-            //TODO: should this be logger.error instead?
-            logger.warn(
-                `There was an error when attempting to unsubscribe from subscription ID: ${subscriptionId} - code: ${e.code}, message: ${e.message}`,
-            );
-        } else {
-            throw e;
-        }
+    if (!subscription) {
+        return null;
     }
+
+    return avlSubscriptionSchema.parse(subscription);
 };
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
@@ -48,7 +45,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         logger.info("Starting AVL subscriber");
 
-        const subscriptionId = event.pathParameters?.subscriptionId;
+        const subscriptionId = event.pathParameters?.subscription_id;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID must be passed as a path parameter");
@@ -68,17 +65,14 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         const updateBody = parsedBody.data;
         const { username, password } = updateBody;
 
-        const subscription = await getAvlSubscription(subscriptionId, tableName);
+        const subscription = await getSubscription(subscriptionId, tableName);
 
         if (!subscription) {
             logger.info(`Subscription with ID: ${subscriptionId} not found in subscription table`);
+            return { statusCode: 404 };
         }
 
         logger.info(`Starting lambda to update subscription with ID: ${subscriptionId}`);
-
-        // await unsubscribeFromExistingSubscription(subscriptionId, unsubscribeEndpoint);
-
-        await addSubscriptionAuthCredsToSsm(subscriptionId, updateBody.username, updateBody.password);
 
         const subscriptionDetail: Omit<AvlSubscription, "PK" | "status"> = {
             url: updateBody.dataProducerEndpoint,
@@ -87,6 +81,16 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             requestorRef: subscription.requestorRef,
             publisherId: subscription.publisherId,
         };
+
+        try {
+            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);
+        } catch (e) {
+            logger.warn(
+                `An error occurred when trying to unsubscribe from subscription with ID: ${subscriptionId}. Error ${e}`,
+            );
+        }
+
+        await addSubscriptionAuthCredsToSsm(subscriptionId, updateBody.username, updateBody.password);
 
         await sendSubscriptionRequestAndUpdateDynamo(
             subscriptionId,
@@ -103,7 +107,10 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         };
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Lambda has failed", e);
+            logger.error(
+                `An error occurred when updating subscription ID: ${event.pathParameters?.subscriptionId ?? ""}`,
+                e,
+            );
         }
 
         throw e;
