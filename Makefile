@@ -233,6 +233,9 @@ run-local-avl-siri-vm-downloader:
 run-local-avl-subscriptions:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler().then(console.log).catch(console.error)"
 
+run-local-avl-validate:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-validate'; handler({ body: '\{\"url\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).then(console.log).catch(console.error)"
+
 # NOC
 
 run-local-noc-retriever:

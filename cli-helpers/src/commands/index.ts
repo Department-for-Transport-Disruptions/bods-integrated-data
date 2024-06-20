@@ -8,6 +8,7 @@ export * from "./invoke-avl-subscriptions";
 export * from "./invoke-avl-tfl-line-id-retriever";
 export * from "./invoke-avl-tfl-location-retriever";
 export * from "./invoke-avl-unsubscriber";
+export * from "./invoke-avl-validate";
 export * from "./invoke-bank-holidays-retriever";
 export * from "./invoke-bods-fares-retriever";
 export * from "./invoke-bods-txc-processor";

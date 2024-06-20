@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { getSiriVmTerminationTimeOffset, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import {
+    createAuthorizationHeader,
+    getSiriVmTerminationTimeOffset,
+    isActiveAvlSubscription,
+} from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
@@ -166,9 +170,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            Authorization: `Basic ${Buffer.from(
-                `${avlSubscribeMessage.username}:${avlSubscribeMessage.password}`,
-            ).toString("base64")}`,
+            Authorization: createAuthorizationHeader(avlSubscribeMessage.username, avlSubscribeMessage.password),
         },
     });
 

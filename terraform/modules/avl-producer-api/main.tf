@@ -81,6 +81,12 @@ module "avl_unsubscriber" {
   subnet_ids                  = var.subnet_ids
 }
 
+module "avl_validate" {
+  source = "./avl-validate"
+
+  environment = var.environment
+}
+
 module "avl_producer_api_gateway" {
   count                           = var.environment == "local" ? 0 : 1
   source                          = "./api-gateway"
@@ -93,6 +99,8 @@ module "avl_producer_api_gateway" {
   unsubscribe_lambda_name         = module.avl_unsubscriber.lambda_name
   subscriptions_lambda_invoke_arn = module.avl_subscriptions.invoke_arn
   subscriptions_lambda_name       = module.avl_subscriptions.lambda_name
+  validate_lambda_invoke_arn      = module.avl_validate.invoke_arn
+  validate_lambda_name            = module.avl_validate.lambda_name
   domain                          = var.domain
   acm_certificate_arn             = var.acm_certificate_arn
   hosted_zone_id                  = var.hosted_zone_id

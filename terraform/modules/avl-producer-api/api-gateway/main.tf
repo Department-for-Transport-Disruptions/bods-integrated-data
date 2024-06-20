@@ -46,6 +46,14 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integration_validate" {
+  api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.validate_lambda_invoke_arn
+  integration_method     = "POST"
+  payload_format_version = "2.0"
+}
+
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_data" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   route_key = "POST /data/{subscription_id}"
@@ -70,6 +78,12 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscriptions_ap
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
 }
 
+resource "aws_apigatewayv2_route" "integrated_data_avl_producer_validate_api_route" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  route_key = "POST /validate"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_validate.id}"
+}
+
 resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   description = aws_apigatewayv2_api.integrated_data_avl_producer_api.name
@@ -82,6 +96,8 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deploym
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscribe),
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_validate_api_route),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_validate),
     ])))
   }
 
@@ -125,6 +141,13 @@ resource "aws_lambda_permission" "integrated_data_avl_producer_api_data_permissi
 
 resource "aws_lambda_permission" "integrated_data_avl_producer_api_subscriptions_permissions" {
   function_name = var.subscriptions_lambda_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"
+}
+
+resource "aws_lambda_permission" "integrated_data_avl_producer_api_validate_permissions" {
+  function_name = var.validate_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"

@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import {
+    SubscriptionIdNotFoundError,
+    createAuthorizationHeader,
+    getAvlSubscription,
+} from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -110,9 +114,7 @@ const sendTerminateSubscriptionRequestAndUpdateDynamo = async (subscription: Avl
             : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
                       "Content-Type": "text/xml",
-                      Authorization: `Basic ${Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString(
-                          "base64",
-                      )}`,
+                      Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword),
                   },
               });
 
