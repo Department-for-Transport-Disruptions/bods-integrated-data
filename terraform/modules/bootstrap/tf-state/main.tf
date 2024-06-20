@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
   }
 }
@@ -43,4 +43,3 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
     type = "S"
   }
 }
-

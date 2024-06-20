@@ -4,16 +4,15 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
   }
 }
 
-resource "aws_lambda_function_url" "avl_siri_vm_download_url" {
-  count = var.environment == "local" ? 1 : 0
-
+resource "aws_lambda_function_url" "avl_siri_vm_downloader_function_url" {
   function_name      = module.integrated_data_avl_siri_vm_downloader_function.function_name
-  authorization_type = "NONE"
+  authorization_type = var.environment == "local" ? "NONE" : "AWS_IAM"
+  invoke_mode        = "RESPONSE_STREAM"
 }
 
 module "integrated_data_avl_siri_vm_downloader_function" {

@@ -42,7 +42,7 @@ describe("AVL-data-endpoint", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
         });
 
@@ -59,7 +59,7 @@ describe("AVL-data-endpoint", () => {
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             url: "https://mock-data-producer.com/",
         };
 
@@ -87,7 +87,7 @@ describe("AVL-data-endpoint", () => {
             description: "test-description",
             shortDescription: "test-short-description",
             lastAvlDataReceivedDateTime: "2024-03-11T00:00:00.000Z",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
@@ -134,7 +134,7 @@ describe("AVL-data-endpoint", () => {
             description: "test-description",
             shortDescription: "test-short-description",
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
         });
 
@@ -155,7 +155,7 @@ describe("AVL-data-endpoint", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: null,
         });
 
@@ -172,7 +172,7 @@ describe("AVL-data-endpoint", () => {
             heartbeatLastReceivedDateTime: "2024-04-15T13:25:00+01:00",
             requestorRef: null,
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             url: "https://mock-data-producer.com/",
         };
 

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
 
     sops = {
@@ -102,57 +102,45 @@ module "integrated_data_gtfs_downloader" {
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
-# TODO: modules containing ECS resources (gtfs-rt-pipeline and avl-pipeline) fail to deploy in local env - needs looking at
+module "integrated_data_gtfs_rt_pipeline" {
+  source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
-#
-# module "integrated_data_gtfs_rt_pipeline" {
-#   source = "../modules/data-pipelines/gtfs-rt-pipeline"
-#
-#   environment                  = local.env
-#   vpc_id                       = null
-#   private_subnet_ids           = null
-#   db_secret_arn                = "*"
-#   db_sg_id                     = null
-#   db_host                      = null
-#   db_reader_host               = null
-#   bods_avl_processor_cpu       = 1024
-#   bods_avl_processor_memory    = 2048
-#   bods_avl_processor_image_url = "bods-avl-processor:latest"
-#   bods_avl_cleardown_frequency = 120
-#   bods_avl_processor_frequency = 240
-# }
-
-# module "integrated_data_avl_pipeline" {
-#   source = "../modules/data-pipelines/avl-pipeline"
-
-#   environment                                 = local.env
-#   vpc_id                                      = null
-#   private_subnet_ids                          = null
-#   db_secret_arn                               = "*"
-#   db_sg_id                                    = null
-#   db_host                                     = null
-#   db_reader_host                              = null
-#   alarm_topic_arn                             = ""
-#   ok_topic_arn                                = ""
-#   tfl_api_keys                                = local.secrets["tfl_api_keys"]
-#   tfl_location_retriever_invoke_every_seconds = 60
-#   avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
-#   aws_account_id                              = data.aws_caller_identity.current.account_id
-#   aws_region                                  = data.aws_region.current.name
-#   siri_vm_generator_cpu                       = 1024
-#   siri_vm_generator_memory                    = 2048
-#   siri_vm_generator_image_url                 = "siri-vm-generator:latest"
-#   siri_vm_generator_frequency                 = 240
-#   avl_cleardown_frequency                     = 120
-# }
-
-# These two buckets are only in the local env in order to setup the local AVL producer and consumer APIs
-resource "aws_s3_bucket" "integrated_data_avl_raw_siri_vm_bucket" {
-  bucket = "integrated-data-avl-raw-siri-vm-local"
+  environment                  = local.env
+  vpc_id                       = null
+  private_subnet_ids           = null
+  db_secret_arn                = "*"
+  db_sg_id                     = null
+  db_host                      = null
+  db_reader_host               = null
+  bods_avl_processor_cpu       = 1024
+  bods_avl_processor_memory    = 2048
+  bods_avl_processor_image_url = "bods-avl-processor:latest"
+  bods_avl_cleardown_frequency = 120
+  bods_avl_processor_frequency = 240
 }
 
-resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
-  bucket = "integrated-data-avl-generated-siri-vm-local"
+module "integrated_data_avl_pipeline" {
+  source = "../modules/data-pipelines/avl-pipeline"
+
+  environment                                 = local.env
+  vpc_id                                      = null
+  private_subnet_ids                          = null
+  db_secret_arn                               = "*"
+  db_sg_id                                    = null
+  db_host                                     = null
+  db_reader_host                              = null
+  alarm_topic_arn                             = ""
+  ok_topic_arn                                = ""
+  tfl_api_keys                                = local.secrets["tfl_api_keys"]
+  tfl_location_retriever_invoke_every_seconds = 60
+  avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id                              = data.aws_caller_identity.current.account_id
+  aws_region                                  = data.aws_region.current.name
+  siri_vm_generator_cpu                       = 1024
+  siri_vm_generator_memory                    = 2048
+  siri_vm_generator_image_url                 = "siri-vm-generator:latest"
+  siri_vm_generator_frequency                 = 240
+  avl_cleardown_frequency                     = 120
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -163,7 +151,7 @@ module "integrated_data_avl_subscription_table" {
 
 module "integrated_data_avl_data_producer_api" {
   source                      = "../modules/avl-producer-api"
-  avl_raw_siri_bucket_name    = aws_s3_bucket.integrated_data_avl_raw_siri_vm_bucket.id
+  avl_raw_siri_bucket_name    = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
   avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
   aws_account_id              = data.aws_caller_identity.current.account_id
   aws_region                  = data.aws_region.current.name
@@ -179,7 +167,7 @@ module "integrated_data_avl_siri_vm_downloader" {
   source = "../modules/avl-siri-vm-downloader"
 
   environment        = local.env
-  bucket_name        = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
+  bucket_name        = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   vpc_id             = null
   private_subnet_ids = null
   db_secret_arn      = "*"

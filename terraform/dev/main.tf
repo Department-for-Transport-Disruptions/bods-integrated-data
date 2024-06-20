@@ -13,7 +13,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
 
     sops = {
@@ -317,4 +317,12 @@ module "integrated_data_avl_consumer_api" {
   db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                       = module.integrated_data_aurora_db_dev.db_host
+}
+
+module "integrated_data_cloudfront" {
+  source = "../modules/networking/cloudfront"
+
+  environment                          = local.env
+  avl_siri_vm_downloader_domain        = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_function_url
+  avl_siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
 }

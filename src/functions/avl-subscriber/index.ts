@@ -6,6 +6,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import {
     AvlSubscribeMessage,
     AvlSubscription,
+    AvlSubscriptionStatuses,
     avlSubscribeMessageSchema,
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
@@ -108,7 +109,7 @@ const updateDynamoWithSubscriptionInfo = async (
     tableName: string,
     subscriptionId: string,
     avlSubscribeMessage: AvlSubscribeMessage,
-    status: "ACTIVE" | "FAILED",
+    status: AvlSubscriptionStatuses,
     currentTimestamp?: string,
 ) => {
     const subscriptionTableItems: Omit<AvlSubscription, "PK"> = {
@@ -174,7 +175,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponseBody = subscriptionResponse.data;
 
     if (!subscriptionResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ERROR");
         throw new Error(
             `No response body received from the data producer: ${avlSubscribeMessage.dataProducerEndpoint}`,
         );
@@ -183,18 +184,18 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
     if (!parsedResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ERROR");
         throw new Error(`Error parsing subscription response from: ${avlSubscribeMessage.dataProducerEndpoint}`);
     }
 
     if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ERROR");
         throw new Error(
             `The data producer: ${avlSubscribeMessage.dataProducerEndpoint} did not return a status of true.`,
         );
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ACTIVE", currentTime);
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "LIVE", currentTime);
 };
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
@@ -251,7 +252,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             );
         } catch (e) {
             if (e instanceof AxiosError) {
-                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "FAILED");
+                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ERROR");
                 logger.error(
                     `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
                 );

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.33"
+      version = "~> 5.54"
     }
   }
 }
@@ -204,6 +204,8 @@ resource "aws_s3_bucket_versioning" "integrated_data_avl_siri_vm_bucket_versioni
 }
 
 resource "aws_ecs_cluster" "avl_ecs_cluster" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-siri-vm-generator-ecs-cluster-${var.environment}"
 
   setting {
@@ -213,6 +215,8 @@ resource "aws_ecs_cluster" "avl_ecs_cluster" {
 }
 
 resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-siri-vm-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
@@ -230,6 +234,8 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
 }
 
 resource "aws_iam_role" "siri_vm_generator_ecs_execution_role" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-siri-vm-generator-ecs-execution-role-${var.environment}"
 
   assume_role_policy = jsonencode({
@@ -247,11 +253,13 @@ resource "aws_iam_role" "siri_vm_generator_ecs_execution_role" {
 
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
-    aws_iam_policy.siri_vm_generator_ecs_execution_policy.arn
+    aws_iam_policy.siri_vm_generator_ecs_execution_policy[0].arn
   ]
 }
 
 resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-siri-vm-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
@@ -281,6 +289,8 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
 }
 
 resource "aws_iam_role" "siri_vm_generator_ecs_task_role" {
+  count = var.environment != "local" ? 1 : 0
+
   name = "integrated-data-siri-vm-generator-ecs-task-role-${var.environment}"
 
   assume_role_policy = jsonencode({
@@ -296,31 +306,39 @@ resource "aws_iam_role" "siri_vm_generator_ecs_task_role" {
     ]
   })
 
-  managed_policy_arns = [aws_iam_policy.siri_vm_generator_ecs_task_policy.arn]
+  managed_policy_arns = [aws_iam_policy.siri_vm_generator_ecs_task_policy[0].arn]
 }
 
 resource "aws_security_group" "siri_vm_generator_sg" {
+  count = var.environment != "local" ? 1 : 0
+
   name   = "integrated-data-siri-vm-generator-sg-${var.environment}"
   vpc_id = var.vpc_id
 }
 
 resource "aws_vpc_security_group_egress_rule" "siri_vm_generator_sg_allow_all_egress_ipv4" {
-  security_group_id = aws_security_group.siri_vm_generator_sg.id
+  count = var.environment != "local" ? 1 : 0
+
+  security_group_id = aws_security_group.siri_vm_generator_sg[0].id
 
   cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = "-1"
 }
 
 resource "aws_vpc_security_group_egress_rule" "siri_vm_generator_sg_allow_all_egress_ipv6" {
-  security_group_id = aws_security_group.siri_vm_generator_sg.id
+  count = var.environment != "local" ? 1 : 0
+
+  security_group_id = aws_security_group.siri_vm_generator_sg[0].id
 
   cidr_ipv6   = "::/0"
   ip_protocol = "-1"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
+  count = var.environment != "local" ? 1 : 0
+
   security_group_id            = var.db_sg_id
-  referenced_security_group_id = aws_security_group.siri_vm_generator_sg.id
+  referenced_security_group_id = aws_security_group.siri_vm_generator_sg[0].id
 
   from_port = 5432
   to_port   = 5432
@@ -329,8 +347,9 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 }
 
 resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
-  family = (var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" :
-  "integrated-data-siri-vm-generator")
+  count = var.environment != "local" ? 1 : 0
+
+  family                   = (var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" : "integrated-data-siri-vm-generator")
   cpu                      = var.siri_vm_generator_cpu
   memory                   = var.siri_vm_generator_memory
   requires_compatibilities = ["FARGATE"]
@@ -340,8 +359,8 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
   }
   network_mode = "awsvpc"
 
-  task_role_arn      = aws_iam_role.siri_vm_generator_ecs_task_role.arn
-  execution_role_arn = aws_iam_role.siri_vm_generator_ecs_execution_role.arn
+  task_role_arn      = aws_iam_role.siri_vm_generator_ecs_task_role[0].arn
+  execution_role_arn = aws_iam_role.siri_vm_generator_ecs_execution_role[0].arn
 
   container_definitions = jsonencode([
     {
@@ -408,9 +427,11 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
 }
 
 resource "aws_ecs_service" "siri_vm_generator_service" {
+  count = var.environment != "local" ? 1 : 0
+
   name            = "integrated-data-siri-vm-generator-service-${var.environment}"
-  cluster         = aws_ecs_cluster.avl_ecs_cluster.id
-  task_definition = aws_ecs_task_definition.siri_vm_generator_task_definition.arn
+  cluster         = aws_ecs_cluster.avl_ecs_cluster[0].id
+  task_definition = aws_ecs_task_definition.siri_vm_generator_task_definition[0].arn
   desired_count   = 1
 
 
@@ -430,10 +451,10 @@ resource "aws_ecs_service" "siri_vm_generator_service" {
 
   network_configuration {
     subnets         = var.private_subnet_ids
-    security_groups = [aws_security_group.siri_vm_generator_sg.id]
+    security_groups = [aws_security_group.siri_vm_generator_sg[0].id]
   }
 
-  depends_on = [aws_iam_policy.siri_vm_generator_ecs_task_policy]
+  depends_on = [aws_iam_policy.siri_vm_generator_ecs_task_policy[0]]
 
   lifecycle {
     ignore_changes = [task_definition]

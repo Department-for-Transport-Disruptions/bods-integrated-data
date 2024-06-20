@@ -50,7 +50,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
@@ -60,7 +60,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:14:30.000Z",
             },
@@ -72,6 +72,37 @@ describe("avl-feed-validator", () => {
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
+    it("should do update subscriptions table if subscription has valid heartbeat notification associated with it but the status is not LIVE", async () => {
+        recursiveScanSpy.mockResolvedValue([
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "ERROR",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
+            },
+        ]);
+
+        await handler();
+
+        expect(getParameterSpy).not.toBeCalledTimes(2);
+        expect(putDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(putDynamoItemSpy).toHaveBeenCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
+            PK: "mock-subscription-id-1",
+            description: "test-description",
+            heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
+            requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            shortDescription: "test-short-description",
+            status: "LIVE",
+            url: "https://mock-data-producer.com/",
+        });
+
+        expect(axiosSpy).not.toHaveBeenCalledOnce();
+    });
     it("should resubscribe to the data producer if we have not received a heartbeat notification for that subscription in the last 90 seconds", async () => {
         recursiveScanSpy.mockResolvedValue([
             {
@@ -79,7 +110,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
@@ -89,7 +120,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
             },
@@ -123,7 +154,7 @@ describe("avl-feed-validator", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
-            status: "UNAVAILABLE",
+            status: "ERROR",
             url: "https://mock-data-producer.com/",
         });
     });
@@ -134,7 +165,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
@@ -144,7 +175,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
             },
@@ -165,7 +196,7 @@ describe("avl-feed-validator", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
-            status: "UNAVAILABLE",
+            status: "ERROR",
             url: "https://mock-data-producer.com/",
         });
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -177,7 +208,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
@@ -187,7 +218,7 @@ describe("avl-feed-validator", () => {
                 url: "https://mock-data-producer.com/",
                 description: "test-description",
                 shortDescription: "test-short-description",
-                status: "ACTIVE",
+                status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
             },
@@ -214,7 +245,7 @@ describe("avl-feed-validator", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
-            status: "UNAVAILABLE",
+            status: "ERROR",
             url: "https://mock-data-producer.com/",
         });
         expect(axiosSpy).toHaveBeenCalledOnce();
