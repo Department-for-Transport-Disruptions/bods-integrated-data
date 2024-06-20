@@ -10,7 +10,7 @@ describe("avl-feed-validator", () => {
     beforeAll(() => {
         process.env.TABLE_NAME = "test-dynamo-table";
         process.env.STAGE = "dev";
-        process.env.SUBSCRIBE_ENDPOINT = "www.avl-service.com/subscribe";
+        process.env.SUBSCRIBE_ENDPOINT = "www.avl-service.com/subscriptions";
     });
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -137,7 +137,7 @@ describe("avl-feed-validator", () => {
 
         expect(getParameterSpy).toBeCalledTimes(2);
         expect(axiosSpy).toHaveBeenCalledTimes(1);
-        expect(axiosSpy).toBeCalledWith("www.avl-service.com/subscribe", {
+        expect(axiosSpy).toBeCalledWith("www.avl-service.com/subscriptions", {
             dataProducerEndpoint: "https://mock-data-producer.com/",
             description: "test-description",
             password: "test-password",
@@ -201,7 +201,7 @@ describe("avl-feed-validator", () => {
         });
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
-    it("should throw an error if we do not receive a 200 response from the /subscribe endpoint", async () => {
+    it("should throw an error if we do not receive a 200 response from the /subscriptions endpoint", async () => {
         recursiveScanSpy.mockResolvedValue([
             {
                 PK: "mock-subscription-id-1",
