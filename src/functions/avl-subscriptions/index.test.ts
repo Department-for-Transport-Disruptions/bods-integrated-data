@@ -114,7 +114,7 @@ describe("avl-subscriptions", () => {
             url: "https://www.mock-data-producer-one.com",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "ACTIVE",
+            status: "LIVE",
             requestorRef: "BODS_MOCK_PRODUCER",
             lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
@@ -124,7 +124,7 @@ describe("avl-subscriptions", () => {
         const expectedResponse: ApiAvlSubscription = {
             id: "subscription-one",
             publisherId: "publisher-one",
-            status: "ACTIVE",
+            status: "LIVE",
             lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
             heartbeatLastReceivedDateTime: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
