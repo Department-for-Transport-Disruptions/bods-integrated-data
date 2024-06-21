@@ -48,7 +48,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_data" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "GET /subscriptions/{subscription_id}"
+  route_key = "POST /subscriptions/{subscription_id}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data.id}"
 }
 
