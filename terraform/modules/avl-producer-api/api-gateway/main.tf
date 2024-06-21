@@ -48,7 +48,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_data" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /data/{subscription_id}"
+  route_key = "POST /data/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data.id}"
 }
 
@@ -60,13 +60,19 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_subscr
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_unsubscribe" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /unsubscribe/{subscription_id}"
+  route_key = "POST /unsubscribe/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_unsubscribe.id}"
 }
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscriptions_api_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   route_key = "GET /subscriptions"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
+}
+
+resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscription_api_route" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  route_key = "GET /subscriptions/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
 }
 
@@ -77,10 +83,13 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deploym
   triggers = {
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_subscribe),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_unsubscribe),
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_data),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscription_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscribe),
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_unsubscribe),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions),
     ])))
   }
