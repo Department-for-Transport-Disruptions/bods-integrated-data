@@ -92,7 +92,7 @@ export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
-        ItemIdentifier: z.string().uuid().optional(),
+        ItemIdentifier: z.string().optional(),
         ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
