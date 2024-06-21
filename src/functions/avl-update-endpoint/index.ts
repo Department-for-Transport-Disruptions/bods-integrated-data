@@ -1,16 +1,16 @@
 import { logger } from "@baselime/lambda-logger";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
-import {
-    AvlSubscription,
-    avlSubscriptionSchema,
-    avlUpdateBodySchema,
-} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { getDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import {
+    AvlSubscription,
+    avlSubscriptionSchema,
+    avlUpdateBodySchema,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 
 export const getSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem<AvlSubscription>(tableName, {

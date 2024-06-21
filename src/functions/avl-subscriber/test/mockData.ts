@@ -1,4 +1,4 @@
-import { AvlSubscribeMessage } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayEvent } from "aws-lambda";
 
 export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
@@ -9,6 +9,14 @@ export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
     password: "dummy-password",
     subscriptionId: "mock-subscription-id",
     publisherId: "mock-publisher-id",
+};
+
+export const mockAvlSubscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
+    url: mockAvlSubscribeMessage.dataProducerEndpoint,
+    description: mockAvlSubscribeMessage.description,
+    shortDescription: mockAvlSubscribeMessage.shortDescription,
+    publisherId: mockAvlSubscribeMessage.publisherId,
+    requestorRef: undefined,
 };
 
 export const mockSubscribeEvent = {

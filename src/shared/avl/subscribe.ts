@@ -1,16 +1,16 @@
+import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { putParameter } from "../ssm";
+import axios from "axios";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { getDate } from "../dates";
+import { putDynamoItem } from "../dynamo";
 import {
     AvlSubscription,
+    AvlSubscriptionStatuses,
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
-    AvlSubscriptionStatuses,
 } from "../schema/avl-subscribe.schema";
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { putDynamoItem } from "../dynamo";
-import { getDate } from "../dates";
-import { randomUUID } from "node:crypto";
-import axios from "axios";
+import { putParameter } from "../ssm";
 import { getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
@@ -138,7 +138,7 @@ export const updateDynamoWithSubscriptionInfo = async (
 
 export const sendSubscriptionRequestAndUpdateDynamo = async (
     subscriptionId: string,
-    subscription: Omit<AvlSubscription, "PK" | "status">,
+    subscriptionDetails: Omit<AvlSubscription, "PK" | "status">,
     username: string,
     password: string,
     tableName: string,
@@ -157,13 +157,13 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         initialTerminationTime,
         messageIdentifier,
         dataEndpoint,
-        subscription.requestorRef ?? null,
+        subscriptionDetails.requestorRef ?? null,
     );
 
     const url =
-        mockProducerSubscribeEndpoint && subscription.requestorRef === "BODS_MOCK_PRODUCER"
+        mockProducerSubscribeEndpoint && subscriptionDetails.requestorRef === "BODS_MOCK_PRODUCER"
             ? mockProducerSubscribeEndpoint
-            : subscription.url;
+            : subscriptionDetails.url;
 
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
@@ -175,21 +175,21 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponseBody = subscriptionResponse.data;
 
     if (!subscriptionResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscription, "ERROR");
-        throw new Error(`No response body received from the data producer: ${subscription.url}`);
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
     }
 
     const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
     if (!parsedResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscription, "ERROR");
-        throw new Error(`Error parsing subscription response from: ${subscription.url}`);
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        throw new Error(`Error parsing subscription response from: ${subscriptionDetails.url}`);
     }
 
     if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscription, "ERROR");
-        throw new Error(`The data producer: ${subscription.url} did not return a status of true.`);
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscription, "LIVE", currentTime);
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "LIVE", currentTime);
 };

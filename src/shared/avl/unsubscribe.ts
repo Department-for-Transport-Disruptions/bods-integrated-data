@@ -1,15 +1,15 @@
-import { AvlSubscription } from "../schema/avl-subscribe.schema";
-import { getDate } from "../dates";
 import { randomUUID } from "node:crypto";
-import { getSubscriptionUsernameAndPassword } from "../utils";
-import { putDynamoItem } from "../dynamo";
 import { logger } from "@baselime/lambda-logger";
 import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { getDate } from "../dates";
+import { putDynamoItem } from "../dynamo";
+import { AvlSubscription } from "../schema/avl-subscribe.schema";
 import {
     terminateSubscriptionRequestSchema,
     terminateSubscriptionResponseSchema,
 } from "../schema/avl-unsubscribe.schema";
+import { getSubscriptionUsernameAndPassword } from "../utils";
 
 export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <Siri version='2.0' xmlns='http://www.siri.org.uk/siri' xmlns:ns2='http://www.ifopt.org.uk/acsb' xmlns:ns3='http://www.ifopt.org.uk/ifopt' xmlns:ns4='http://datex2.eu/schema/2_0RC1/2_0'>

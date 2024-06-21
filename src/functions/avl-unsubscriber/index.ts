@@ -1,9 +1,9 @@
 import { logger } from "@baselime/lambda-logger";
+import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { AxiosError } from "axios";
-import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 
 const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     logger.info("Deleting subscription auth credentials from parameter store");
