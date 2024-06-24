@@ -1,10 +1,10 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { APIGatewayEvent } from "aws-lambda";
-import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
-import { handler } from "./index";
+import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { APIGatewayEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { handler } from "./index";
 
 const mockUpdateEventBody = {
     dataProducerEndpoint: "https://www.updated-endpoint.com",
