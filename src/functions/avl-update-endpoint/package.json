@@ -14,6 +14,7 @@
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
+        "mockdate": "^3.0.5",
         "axios": "^1.7.2"
     },
     "devDependencies": {

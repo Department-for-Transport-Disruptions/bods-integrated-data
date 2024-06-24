@@ -42,7 +42,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
-        const subscriptionId = event.pathParameters?.subscription_id;
+        const subscriptionId = event.pathParameters?.subscriptionId;
 
         if (!subscriptionId) {
             throw new Error("Subscription ID must be passed as a path parameter");
