@@ -9,15 +9,17 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { createZodStringLengthValidation } from "@bods-integrated-data/shared/utils";
+import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { ZodError, z } from "zod";
+import { ZodRawShape, z } from "zod";
 import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
-const requestParamsSchema = z.object({
-    subscriptionId: createZodStringLengthValidation("subscriptionId"),
+const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
+
+const requestParamsSchema = createRequestParamsSchema({
+    subscriptionId: createStringLengthValidation("subscriptionId"),
 });
 
 const requestBodySchema = z.string({
@@ -122,7 +124,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             body: "",
         };
     } catch (e) {
-        if (e instanceof ZodError) {
+        if (e instanceof z.ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
