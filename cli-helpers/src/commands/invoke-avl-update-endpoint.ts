@@ -89,7 +89,7 @@ export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
         const invokePayload = {
             body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"${description}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\"}`,
             pathParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId: subscriptionId,
             },
         };
 

@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
-import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 
 export type ApiAvlSubscription = {
     id: string;
@@ -25,7 +25,7 @@ export const mapApiAvlSubscriptionResponse = (subscription: AvlSubscription): Ap
     };
 };
 
-export const handler = async (): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     const { TABLE_NAME: tableName } = process.env;
 
     if (!tableName) {
@@ -37,13 +37,22 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
         };
     }
 
+    const subscriptionId = event.pathParameters?.subscriptionId;
+
     try {
-        const subscriptions = await getAvlSubscriptions(tableName);
-        const apiAvlSubscriptionsResponse = subscriptions.map(mapApiAvlSubscriptionResponse);
+        let response = null;
+
+        if (subscriptionId) {
+            const subscription = await getAvlSubscription(subscriptionId, tableName);
+            response = mapApiAvlSubscriptionResponse(subscription);
+        } else {
+            const subscriptions = await getAvlSubscriptions(tableName);
+            response = subscriptions.map(mapApiAvlSubscriptionResponse);
+        }
 
         return {
             statusCode: 200,
-            body: JSON.stringify(apiAvlSubscriptionsResponse),
+            body: JSON.stringify(response),
         };
     } catch (error) {
         if (error instanceof Error) {

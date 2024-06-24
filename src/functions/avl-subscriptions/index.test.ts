@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import * as avlUtils from "@bods-integrated-data/shared/avl/utils";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { APIGatewayEvent } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiAvlSubscription, handler, mapApiAvlSubscriptionResponse } from "./index";
 
@@ -11,28 +12,34 @@ describe("avl-subscriptions", () => {
         },
     }));
 
+    const getAvlSubscriptionMock = vi.spyOn(avlUtils, "getAvlSubscription");
     const getAvlSubscriptionsMock = vi.spyOn(avlUtils, "getAvlSubscriptions");
+
+    let mockEvent: APIGatewayEvent;
 
     beforeEach(() => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
+        mockEvent = {} as APIGatewayEvent;
     });
 
     it("returns a 500 when not all the env vars are set", async () => {
         process.env.TABLE_NAME = "";
 
-        await expect(handler()).resolves.toEqual({
+        await expect(handler(mockEvent)).resolves.toEqual({
             statusCode: 500,
             body: "An internal error occurred.",
         });
 
         expect(logger.error).toHaveBeenCalledWith("Missing env vars - TABLE_NAME must be set");
+        expect(getAvlSubscriptionMock).not.toHaveBeenCalled();
+        expect(getAvlSubscriptionsMock).not.toHaveBeenCalled();
     });
 
     it("returns a 500 when an unexpected error occurs retrieving subscriptions data", async () => {
         getAvlSubscriptionsMock.mockRejectedValueOnce(new Error());
 
-        await expect(handler()).resolves.toEqual({
+        await expect(handler(mockEvent)).resolves.toEqual({
             statusCode: 500,
             body: "An unknown error occurred. Please try again.",
         });
@@ -43,7 +50,7 @@ describe("avl-subscriptions", () => {
         );
     });
 
-    it("returns a 200 with all subscriptions data", async () => {
+    it("returns a 200 with all subscriptions data when passing no subscription ID param", async () => {
         getAvlSubscriptionsMock.mockResolvedValueOnce([
             {
                 PK: "subscription-one",
@@ -89,10 +96,47 @@ describe("avl-subscriptions", () => {
             },
         ];
 
-        await expect(handler()).resolves.toEqual({
+        await expect(handler(mockEvent)).resolves.toEqual({
             statusCode: 200,
             body: JSON.stringify(expectedResponse),
         });
+        expect(getAvlSubscriptionMock).not.toHaveBeenCalled();
+        expect(getAvlSubscriptionsMock).toHaveBeenCalledWith("test-dynamo-table");
+    });
+
+    it("returns a 200 with a single subscription when passing a subscription ID param", async () => {
+        mockEvent.pathParameters = {
+            subscriptionId: "subscription-one",
+        };
+
+        getAvlSubscriptionMock.mockResolvedValueOnce({
+            PK: "subscription-one",
+            url: "https://www.mock-data-producer-one.com",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "LIVE",
+            requestorRef: "BODS_MOCK_PRODUCER",
+            lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "publisher-one",
+        });
+
+        const expectedResponse: ApiAvlSubscription = {
+            id: "subscription-one",
+            publisherId: "publisher-one",
+            status: "LIVE",
+            lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
+            heartbeatLastReceivedDateTime: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            serviceEndDatetime: null,
+        };
+
+        await expect(handler(mockEvent)).resolves.toEqual({
+            statusCode: 200,
+            body: JSON.stringify(expectedResponse),
+        });
+        expect(getAvlSubscriptionMock).toHaveBeenCalledWith("subscription-one", "test-dynamo-table");
+        expect(getAvlSubscriptionsMock).not.toHaveBeenCalled();
     });
 
     describe("mapApiAvlSubscriptionResponse", () => {

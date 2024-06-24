@@ -10,7 +10,7 @@ import { handler } from "./index";
 describe("avl-unsubscriber", () => {
     const mockUnsubscribeEvent = {
         pathParameters: {
-            subscription_id: "mock-subscription-id",
+            subscriptionId: "mock-subscription-id",
         },
     } as unknown as APIGatewayEvent;
 
@@ -64,7 +64,7 @@ describe("avl-unsubscriber", () => {
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
-            mockUnsubscribeEvent.pathParameters?.subscription_id,
+            mockUnsubscribeEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             "test-dynamo-table",
         );
@@ -107,7 +107,7 @@ describe("avl-unsubscriber", () => {
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
-            mockUnsubscribeEvent.pathParameters?.subscription_id,
+            mockUnsubscribeEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             "test-dynamo-table",
         );
