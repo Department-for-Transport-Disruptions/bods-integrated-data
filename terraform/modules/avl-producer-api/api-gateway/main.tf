@@ -70,6 +70,12 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscriptions_ap
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
 }
 
+resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscription_api_route" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  route_key = "GET /subscriptions/{subscriptionId}"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
+}
+
 resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   description = aws_apigatewayv2_api.integrated_data_avl_producer_api.name
@@ -77,10 +83,13 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deploym
   triggers = {
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_subscribe),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_unsubscribe),
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_data),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscription_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscribe),
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_unsubscribe),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions),
     ])))
   }
