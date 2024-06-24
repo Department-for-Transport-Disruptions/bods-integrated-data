@@ -5,11 +5,11 @@ import {
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
-import { REQUEST_PARAM_MAX_LENGTH } from "@bods-integrated-data/shared/constants";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { createZodStringLengthValidation } from "@bods-integrated-data/shared/utils";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
@@ -17,17 +17,7 @@ import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
 const requestParamsSchema = z.object({
-    subscriptionId: z
-        .string({
-            required_error: "Subscription ID is required",
-            invalid_type_error: "Subscription ID must be a string",
-        })
-        .min(1, {
-            message: "Subscription ID is required",
-        })
-        .max(REQUEST_PARAM_MAX_LENGTH, {
-            message: `Subscription ID must be ${REQUEST_PARAM_MAX_LENGTH} or fewer characters long`,
-        }),
+    subscriptionId: createZodStringLengthValidation("subscriptionId"),
 });
 
 const requestBodySchema = z.string({

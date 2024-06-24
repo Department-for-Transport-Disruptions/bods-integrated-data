@@ -6,7 +6,7 @@ import {
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
 const parseXml = (xml: string) => {
@@ -79,7 +79,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
     return response;
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResultV2> => {
     logger.info("Handling subscription request");
 
     const parsedBody = parseXml(event.body ?? "");

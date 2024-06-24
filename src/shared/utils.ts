@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { ZodSchema, z } from "zod";
+import { REQUEST_PARAM_MAX_LENGTH } from "./constants";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
 import { VehicleType } from "./schema";
@@ -113,4 +114,18 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
     return parsedSubscriptions.filter(
         (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "LIVE",
     );
+};
+
+export const createZodStringLengthValidation = (propertyName: string) => {
+    return z
+        .string({
+            required_error: `${propertyName} is required`,
+            invalid_type_error: `${propertyName} must be a string`,
+        })
+        .min(1, {
+            message: `${propertyName} is required`,
+        })
+        .max(REQUEST_PARAM_MAX_LENGTH, {
+            message: `${propertyName} must be ${REQUEST_PARAM_MAX_LENGTH} or fewer characters long`,
+        });
 };

@@ -147,12 +147,12 @@ describe("AVL-data-endpoint", () => {
     });
 
     it.each([
-        ["", "Subscription ID is required"],
-        [undefined, "Subscription ID is required"],
-        [null, "Subscription ID must be a string"],
-        [1, "Subscription ID must be a string"],
-        [{}, "Subscription ID must be a string"],
-        ["1".repeat(257), "Subscription ID must be 256 or fewer characters long"],
+        ["", "subscriptionId is required"],
+        [undefined, "subscriptionId is required"],
+        [null, "subscriptionId must be a string"],
+        [1, "subscriptionId must be a string"],
+        [{}, "subscriptionId must be a string"],
+        ["1".repeat(257), "subscriptionId must be 256 or fewer characters long"],
     ])(
         "Throws an error when the subscription ID fails validation (test %#)",
         async (subscriptionId, expectedErrorMessage) => {
