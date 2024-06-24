@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
 import { AxiosError } from "axios";
@@ -29,8 +30,17 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
+        const subscriptionDetail: Omit<AvlSubscription, "PK" | "status"> = {
+            url: subscription.url,
+            description: subscription.description,
+            shortDescription: subscription.shortDescription,
+            requestorRef: subscription.requestorRef,
+            publisherId: subscription.publisherId,
+            serviceStartDatetime: subscription.serviceStartDatetime,
+            lastModifiedDateTime: subscription.lastModifiedDateTime,
+        };
         try {
-            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscription, tableName);
+            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);
         } catch (e) {
             if (e instanceof AxiosError) {
                 logger.error(

@@ -11,7 +11,7 @@ import {
     mockInput,
     mockSubscriptionResponseBody,
     mockSubscriptionResponseBodyFalseStatus,
-} from "./test/mockData";
+} from "./test/subscribeMockData";
 
 vi.mock("node:crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",

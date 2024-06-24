@@ -155,6 +155,7 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
             ...subscription,
             status: "INACTIVE",
             serviceEndDatetime: currentTime,
+            lastModifiedDateTime: currentTime,
         },
     );
 };

@@ -77,6 +77,8 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             shortDescription: updateBody.shortDescription ?? subscription.shortDescription,
             requestorRef: subscription.requestorRef,
             publisherId: subscription.publisherId,
+            serviceStartDatetime: subscription.serviceStartDatetime,
+            lastModifiedDateTime: subscription.lastModifiedDateTime ?? null,
         };
 
         try {

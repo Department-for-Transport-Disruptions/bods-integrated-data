@@ -85,7 +85,7 @@ describe("avl-subscriber", () => {
         },
     );
 
-    it("should throw an error if an sendSubscriptionRequestAndUpdateDynamo was not successful", async () => {
+    it("should throw an error if a sendSubscriptionRequestAndUpdateDynamo was not successful", async () => {
         sendSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
 
         await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
