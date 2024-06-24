@@ -1,9 +1,11 @@
+import * as crypto from "node:crypto";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { S3EventRecord } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { processSqsRecord } from ".";
 import {
+    mockItemId,
     mockSubscriptionId,
     onwardCallInsertQuery,
     parsedSiri,
@@ -19,6 +21,12 @@ describe("avl-processor", () => {
             getS3Object: vi.fn(),
         };
     });
+
+    vi.mock("node:crypto", () => ({
+        randomUUID: vi.fn(),
+    }));
+
+    const uuidSpy = vi.spyOn(crypto, "randomUUID");
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
@@ -68,6 +76,8 @@ describe("avl-processor", () => {
             status: "LIVE",
             requestorRef: null,
         });
+
+        uuidSpy.mockReturnValue(mockItemId);
     });
 
     it("correctly processes a siri-vm file", async () => {
@@ -83,6 +93,8 @@ describe("avl-processor", () => {
 
         mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiri } });
         await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name");
+
+        expect(uuidSpy).toHaveBeenCalledOnce();
 
         expect(valuesMock).toBeCalledWith(parsedSiri);
     });

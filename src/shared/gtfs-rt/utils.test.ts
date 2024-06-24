@@ -80,6 +80,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 has_onward_calls: false,
                 subscription_id: "",
+                item_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -157,6 +158,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 has_onward_calls: false,
                 subscription_id: "",
+                item_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -234,6 +236,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 has_onward_calls: false,
                 subscription_id: "",
+                item_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -311,6 +314,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 has_onward_calls: false,
                 subscription_id: "",
+                item_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -388,6 +392,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 has_onward_calls: false,
                 subscription_id: "",
+                item_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -465,6 +470,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 has_onward_calls: false,
                 subscription_id: "",
+                item_id: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -543,6 +549,7 @@ describe("utils", () => {
             vehicle_unique_id: null,
             has_onward_calls: false,
             subscription_id: "",
+            item_id: null,
         };
 
         const expected: transit_realtime.IFeedEntity = {
