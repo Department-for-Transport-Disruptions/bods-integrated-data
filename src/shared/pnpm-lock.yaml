@@ -58,6 +58,9 @@ dependencies:
     version: 3.22.4
 
 devDependencies:
+  '@types/aws-lambda':
+    specifier: ^8.10.140
+    version: 8.10.140
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.19
@@ -4347,6 +4350,10 @@ packages:
       '@smithy/types': 3.0.0
       tslib: 2.6.2
     dev: false
+
+  /@types/aws-lambda@8.10.140:
+    resolution: {integrity: sha512-4Dh3dk2TUcbdfHrX0Al90mNGJDvA9NBiTQPzbrjGi/dLxzKCGOYgT8YQ47jUKNFALkAJAadifq0pzyjIUlhVhg==}
+    dev: true
 
   /@types/linkify-it@5.0.0:
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
