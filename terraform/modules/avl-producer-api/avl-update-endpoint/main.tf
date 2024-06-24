@@ -16,7 +16,7 @@ module "avl_update_endpoint" {
   function_name    = "integrated-data-avl-update-endpoint"
   zip_path         = "${path.module}/../../../../src/functions/dist/avl-update-endpoint.zip"
   handler          = "index.handler"
-  memory           = 1024
+  memory           = 512
   runtime          = "nodejs20.x"
   timeout          = 120
   needs_vpc_access = true
@@ -25,8 +25,8 @@ module "avl_update_endpoint" {
 
   permissions = [
     {
-      Action   = ["ssm:GetParameter", "ssm:PutParameter"],
-      Effect   = "Allow",
+      Action = ["ssm:GetParameter", "ssm:PutParameter"],
+      Effect = "Allow",
       Resource = [
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
