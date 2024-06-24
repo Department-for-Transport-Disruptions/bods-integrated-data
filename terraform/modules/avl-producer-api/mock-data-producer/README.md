@@ -21,15 +21,15 @@ For background on the lifecycle for a SIRI-VM subscription see here:
 The mock data producer should accept subscription requests from the BODS AVL service, generate a subscription response
 and return this back to the requestor.
 
-The BODS AVL service sends subscription requests to the mock data producer through its own /subscribe endpoint. When a
-response is received from the mock data producer, the BODS AVL service /subscribe function will update a DynamoDB table
+The BODS AVL service sends subscription requests to the mock data producer through its own /subscriptions endpoint. When a
+response is received from the mock data producer, the BODS AVL service /subscriptions function will update a DynamoDB table
 with the subscription details.
 
 For the local environment, the subscribe lambda is invoked using a function URL. The reason for this is that
 deploying Api Gateway V2 resources is a premium feature of localstack.
 
 For all other environments, a mock data producer API gateway is created and the subscribe lambda is invoked using
-/subscribe endpoint.
+/subscriptions endpoint.
 
 ### Send Data Functionality
 
