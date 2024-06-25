@@ -15,37 +15,37 @@ for more information about BODS.
 
 - [Table of Contents](#table-of-contents)
 - [Dependencies](#dependencies)
-    - [Code Linting \& Formatting](#code-linting--formatting)
-    - [Log in with the AWS CLI](#log-in-with-the-aws-cli)
+  - [Code Linting \& Formatting](#code-linting--formatting)
+  - [Log in with the AWS CLI](#log-in-with-the-aws-cli)
 - [Installation](#installation)
 - [Usage](#usage)
-    - [AVL subscriptions](#avl-subscriptions)
-    - [NOC data retrieval](#noc-data-retrieval)
-    - [NaPTAN data retrieval](#naptan-data-retrieval)
-    - [NPTG data retrieval](#nptg-data-retrieval)
-    - [Bank holidays data retrieval](#bank-holidays-data-retrieval)
-    - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
-        - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
-        - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
-        - [Renaming tables](#renaming-tables)
-    - [GTFS feed generation](#gtfs-feed-generation)
-        - [GTFS Schedule](#gtfs-schedule)
-        - [GTFS Realtime](#gtfs-realtime)
-    - [Creating and invoking lambda functions locally](#creating-and-invoking-lambda-functions-locally)
-    - [CLI Helpers](#cli-helpers)
-    - [Manually updating ECS services](#manually-updating-ecs-services)
+  - [AVL subscriptions](#avl-subscriptions)
+  - [NOC data retrieval](#noc-data-retrieval)
+  - [NaPTAN data retrieval](#naptan-data-retrieval)
+  - [NPTG data retrieval](#nptg-data-retrieval)
+  - [Bank holidays data retrieval](#bank-holidays-data-retrieval)
+  - [TXC data retrieval and processing](#txc-data-retrieval-and-processing)
+    - [Bus Open Data Service (BODS)](#bus-open-data-service-bods)
+    - [Traveline National Dataset (TNDS)](#traveline-national-dataset-tnds)
+    - [Renaming tables](#renaming-tables)
+  - [GTFS feed generation](#gtfs-feed-generation)
+    - [GTFS Schedule](#gtfs-schedule)
+    - [GTFS Realtime](#gtfs-realtime)
+  - [Creating and invoking lambda functions locally](#creating-and-invoking-lambda-functions-locally)
+  - [CLI Helpers](#cli-helpers)
+  - [Manually updating ECS services](#manually-updating-ecs-services)
 - [Configuration](#configuration)
-    - [Adding and updating secrets](#adding-and-updating-secrets)
-    - [Using secrets in Terraform](#using-secrets-in-terraform)
+  - [Adding and updating secrets](#adding-and-updating-secrets)
+  - [Using secrets in Terraform](#using-secrets-in-terraform)
 - [Testing](#testing)
 - [CICD](#cicd)
-    - [Workflow](#workflow)
-    - [Environments](#environments)
-    - [Deploying changes locally](#deploying-changes-locally)
+  - [Workflow](#workflow)
+  - [Environments](#environments)
+  - [Deploying changes locally](#deploying-changes-locally)
 
 ## Dependencies
 
-The following dependencies are required. An AWS account is also required.
+    The following dependencies are required. An AWS account is also required.
 
 | Dependency                                                                                                                                  | Description                                                                                                      |
 |---------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
@@ -412,16 +412,16 @@ secrets file in a data block. The secrets can then be extracted. An example of t
 
 ```terraform
 sops = {
-    source  = "carlpett/sops"
-    version = "~> 1.0"
+  source  = "carlpett/sops"
+  version = "~> 1.0"
 }
 
 data "sops_file" "secrets" {
-    source_file = "secrets.enc.json"
+  source_file = "secrets.enc.json"
 }
 
 locals {
-    secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
+  secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
 }
 ```
 
