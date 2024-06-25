@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
+import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { getSiriVmTerminationTimeOffset, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -12,9 +13,15 @@ import {
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { ZodError, z } from "zod";
+
+const requestBodySchema = z.string({
+    required_error: "Body is required",
+    invalid_type_error: "Body must be a string",
+});
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
@@ -198,7 +205,7 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
     await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "LIVE", currentTime);
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const {
             TABLE_NAME: tableName,
@@ -217,11 +224,9 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         logger.info("Starting AVL subscriber");
 
-        if (!event.body) {
-            throw new Error("No body sent with event");
-        }
+        const body = requestBodySchema.parse(event.body);
 
-        const parsedBody = avlSubscribeMessageSchema.safeParse(JSON.parse(event.body));
+        const parsedBody = avlSubscribeMessageSchema.safeParse(body);
 
         if (!parsedBody.success) {
             logger.error(JSON.stringify(parsedBody.error));
@@ -265,12 +270,18 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         return {
             statusCode: 201,
+            body: "",
         };
     } catch (e) {
-        if (e instanceof Error) {
-            logger.error("There was a problem subscribing to the AVL feed.", e);
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
-        throw e;
+        if (e instanceof Error) {
+            logger.error("There was a problem with the AVL subscriber endpoint", e);
+        }
+
+        return createServerErrorResponse();
     }
 };

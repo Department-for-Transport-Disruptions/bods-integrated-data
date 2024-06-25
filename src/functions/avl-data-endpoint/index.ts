@@ -9,11 +9,10 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, ZodRawShape, z } from "zod";
-import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
 const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
@@ -85,7 +84,7 @@ const parseXml = (xml: string) => {
     if (!parsedJson.success) {
         logger.error("There was an error parsing the xml from the data producer.", parsedJson.error.format());
 
-        throw new ClientError();
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
@@ -129,9 +128,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
-        if (e instanceof ClientError) {
-            logger.warn("Invalid SIRI-VM provided", e);
-            return createValidationErrorResponse(["Body must be valid SIRI-VM"]);
+        if (e instanceof InvalidXmlError) {
+            logger.warn("Invalid SIRI-VM XML provided", e);
+            return createValidationErrorResponse(["Body must be valid SIRI-VM XML"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {

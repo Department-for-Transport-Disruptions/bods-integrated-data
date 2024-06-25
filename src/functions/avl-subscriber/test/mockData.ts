@@ -1,5 +1,5 @@
 import { AvlSubscribeMessage } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 
 export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
     dataProducerEndpoint: "https://mock-data-producer.com",
@@ -13,14 +13,14 @@ export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
 
 export const mockSubscribeEvent = {
     body: JSON.stringify(mockAvlSubscribeMessage),
-} as unknown as APIGatewayEvent;
+} as unknown as APIGatewayProxyEvent;
 
 export const mockSubscribeEventToMockDataProducer = {
     body: JSON.stringify({
         ...mockAvlSubscribeMessage,
         requestorRef: "BODS_MOCK_PRODUCER",
     }),
-} as unknown as APIGatewayEvent;
+} as unknown as APIGatewayProxyEvent;
 
 export const expectedRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:ns2=\"http://www.ifopt.org.uk/acsb\" xmlns:ns3=\"http://www.ifopt.org.uk/ifopt\" xmlns:ns4=\"http://datex2.eu/schema/2_0RC1/2_0\">

@@ -2,7 +2,7 @@ import { logger } from "@baselime/lambda-logger";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {} from "zod";
@@ -61,7 +61,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: testSiri,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -107,7 +107,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: testSiriWithSingleVehicleActivity,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toBeCalled();
@@ -135,7 +135,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: testSiriWithSingleVehicleActivity,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
         const responseBody = JSON.parse(response.body);
@@ -161,7 +161,7 @@ describe("AVL-data-endpoint", () => {
                     subscriptionId,
                 },
                 body: null,
-            } as unknown as APIGatewayEvent;
+            } as unknown as APIGatewayProxyEvent;
 
             const response = await handler(mockEvent);
             const responseBody = JSON.parse(response.body);
@@ -184,7 +184,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
         const responseBody = JSON.parse(response.body);
@@ -211,14 +211,14 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: "abc",
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
         const responseBody = JSON.parse(response.body);
 
         expect(response.statusCode).toEqual(400);
-        expect(responseBody).toEqual({ errors: ["Body must be valid SIRI-VM"] });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM provided", expect.anything());
+        expect(responseBody).toEqual({ errors: ["Body must be valid SIRI-VM XML"] });
+        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM XML provided", expect.anything());
         expect(s3.putS3Object).not.toBeCalled();
     });
 
@@ -237,7 +237,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: testSiriWithSingleVehicleActivity,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
         const responseBody = JSON.parse(response.body);
@@ -265,7 +265,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: mockHeartbeatNotification,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -294,7 +294,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: mockSubscriptionId,
             },
             body: mockHeartbeatNotification,
-        } as unknown as APIGatewayEvent;
+        } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
         const responseBody = JSON.parse(response.body);

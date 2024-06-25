@@ -1,8 +1,10 @@
+import { logger } from "@baselime/lambda-logger";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 import {
     expectedRequestBody,
@@ -21,9 +23,13 @@ vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-unsubscriber", () => {
-    beforeAll(() => {
-        process.env.TABLE_NAME = "test-dynamo-table";
-    });
+    vi.mock("@baselime/lambda-logger", () => ({
+        logger: {
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+    }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
@@ -45,6 +51,7 @@ describe("avl-unsubscriber", () => {
     MockDate.set("2024-03-11T15:20:02.093Z");
 
     beforeEach(() => {
+        process.env.TABLE_NAME = "test-dynamo-table";
         vi.resetAllMocks();
     });
 
@@ -73,14 +80,14 @@ describe("avl-unsubscriber", () => {
 
         await handler(mockUnsubscribeEvent);
 
-        expect(axiosSpy).toBeCalledWith(
+        expect(axiosSpy).toHaveBeenCalledWith(
             "https://mock-data-producer.com/",
             expectedRequestBody,
             expectedSubscriptionRequestConfig,
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
+        expect(putDynamoItemSpy).toHaveBeenCalledWith("test-dynamo-table", "mock-subscription-id", "SUBSCRIPTION", {
             PK: "mock-subscription-id",
             description: "test-description",
             requestorRef: null,
@@ -92,19 +99,49 @@ describe("avl-unsubscriber", () => {
         });
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
-        expect(deleteParametersSpy).toBeCalledWith([
+        expect(deleteParametersSpy).toHaveBeenCalledWith([
             "/subscription/mock-subscription-id/username",
             "/subscription/mock-subscription-id/password",
         ]);
     });
 
+    it.each([
+        [undefined, "subscriptionId is required"],
+        [null, "subscriptionId must be a string"],
+        [1, "subscriptionId must be a string"],
+        [{}, "subscriptionId must be a string"],
+        ["", "subscriptionId must be 1-256 characters"],
+        ["1".repeat(257), "subscriptionId must be 1-256 characters"],
+    ])(
+        "Throws an error when the subscription ID fails validation (test: %o)",
+        async (subscriptionId, expectedErrorMessage) => {
+            const mockEvent = {
+                pathParameters: {
+                    subscriptionId,
+                },
+                body: null,
+            } as unknown as APIGatewayProxyEvent;
+
+            const response = await handler(mockEvent);
+            const responseBody = JSON.parse(response.body);
+
+            expect(response.statusCode).toEqual(400);
+            expect(responseBody).toEqual({ errors: [expectedErrorMessage] });
+            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(putDynamoItemSpy).not.toHaveBeenCalled();
+            expect(deleteParametersSpy).not.toHaveBeenCalled();
+        },
+    );
+
     it("should throw an error if subscription id not found in dynamo.", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
-        await expect(handler(mockUnsubscribeEvent)).resolves.toStrictEqual({
-            statusCode: 404,
-            body: "Subscription ID: mock-subscription-id not found in DynamoDB",
-        });
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(404);
+        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
+        expect(responseBody).toEqual({ errors: ["Subscription not found"] });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -132,7 +169,11 @@ describe("avl-unsubscriber", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Request failed with status code 500");
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -157,9 +198,11 @@ describe("avl-unsubscriber", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            "No response body received from the data producer - subscription ID: mock-subscription-id",
-        );
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -184,9 +227,12 @@ describe("avl-unsubscriber", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            "Error parsing the terminate subscription response from the data producer",
-        );
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(400);
+        expect(responseBody).toEqual({ errors: ["Body must be valid SIRI-VM XML"] });
+        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM XML provided", expect.anything());
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -211,9 +257,11 @@ describe("avl-unsubscriber", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
-            "The data producer did not return a status of true - subscription ID: mock-subscription-id",
-        );
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -233,9 +281,29 @@ describe("avl-unsubscriber", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Missing auth credentials for subscription");
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it("Throws an error when the required env vars are missing", async () => {
+        process.env.TABLE_NAME = "";
+
+        const response = await handler(mockUnsubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was a problem with the AVL unsubscribe endpoint",
+            expect.any(Error),
+        );
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+        expect(deleteParametersSpy).not.toHaveBeenCalled();
     });
 });

@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import * as avlUtils from "@bods-integrated-data/shared/avl/utils";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiAvlSubscription, handler, mapApiAvlSubscriptionResponse } from "./index";
 
@@ -15,12 +15,12 @@ describe("avl-subscriptions", () => {
     const getAvlSubscriptionMock = vi.spyOn(avlUtils, "getAvlSubscription");
     const getAvlSubscriptionsMock = vi.spyOn(avlUtils, "getAvlSubscriptions");
 
-    let mockEvent: APIGatewayEvent;
+    let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
-        mockEvent = {} as APIGatewayEvent;
+        mockEvent = {} as APIGatewayProxyEvent;
     });
 
     it("returns a 500 when not all the env vars are set", async () => {

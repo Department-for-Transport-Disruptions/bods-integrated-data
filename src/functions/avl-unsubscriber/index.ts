@@ -1,16 +1,29 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
+import {
+    createNotFoundErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { ZodError, ZodRawShape, z } from "zod";
 import { terminateSubscriptionRequestSchema, terminateSubscriptionResponseSchema } from "./subscription.schema";
 import { mockSubscriptionResponseBody } from "./test/mockData";
+
+const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
+
+const requestParamsSchema = createRequestParamsSchema({
+    subscriptionId: createStringLengthValidation("subscriptionId"),
+});
 
 export const generateTerminationSubscriptionRequest = (
     subscriptionId: string,
@@ -75,7 +88,7 @@ const parseXml = (xml: string) => {
             parsedJson.error.format(),
         );
 
-        throw new Error("Error parsing the terminate subscription response from the data producer");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
@@ -149,7 +162,7 @@ const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     await deleteParameters([`/subscription/${subscriptionId}/username`, `/subscription/${subscriptionId}/password`]);
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const { TABLE_NAME: tableName } = process.env;
 
@@ -157,11 +170,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env var: TABLE_NAME must be set.");
         }
 
-        const subscriptionId = event.pathParameters?.subscriptionId;
-
-        if (!subscriptionId) {
-            throw new Error("Subscription ID must be provided in the path parameters");
-        }
+        const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
 
         logger.info(`Starting AVL unsubscriber to unsubscribe from subscription: ${subscriptionId}`);
 
@@ -185,20 +194,28 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         return {
             statusCode: 204,
+            body: "",
         };
     } catch (e) {
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidXmlError) {
+            logger.warn("Invalid SIRI-VM XML provided", e);
+            return createValidationErrorResponse(["Body must be valid SIRI-VM XML"]);
+        }
+
         if (e instanceof SubscriptionIdNotFoundError) {
-            return {
-                statusCode: 404,
-                body: e.message,
-            };
+            logger.error("Subscription not found", e);
+            return createNotFoundErrorResponse("Subscription not found");
         }
+
         if (e instanceof Error) {
-            logger.error("There was a problem unsubscribing from  the AVL feed.", e);
-
-            throw e;
+            logger.error("There was a problem with the AVL unsubscribe endpoint", e);
         }
 
-        throw e;
+        return createServerErrorResponse();
     }
 };

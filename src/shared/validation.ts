@@ -56,3 +56,11 @@ export const createBoundingBoxValidation = (propertyName: string) => {
             message: `${propertyName} must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude`,
         });
 };
+
+export class InvalidXmlError extends Error {
+    constructor(message = "Invalid XML") {
+        super(message);
+
+        Object.setPrototypeOf(this, InvalidXmlError.prototype);
+    }
+}

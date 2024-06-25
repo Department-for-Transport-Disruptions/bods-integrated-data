@@ -1,7 +1,7 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as ssm from "@bods-integrated-data/shared/ssm";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -121,7 +121,7 @@ describe("avl-subscriber", () => {
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
         async (input) => {
-            const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayEvent;
+            const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
 
             await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
 

@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscription, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 export type ApiAvlSubscription = {
     id: string;
@@ -25,7 +25,7 @@ export const mapApiAvlSubscriptionResponse = (subscription: AvlSubscription): Ap
     };
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const { TABLE_NAME: tableName } = process.env;
 
     if (!tableName) {
