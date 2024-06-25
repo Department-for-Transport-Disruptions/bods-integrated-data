@@ -12,7 +12,7 @@ import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscri
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { ZodRawShape, z } from "zod";
+import { ZodError, ZodRawShape, z } from "zod";
 import { ClientError } from "./errors";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
@@ -124,7 +124,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             body: "",
         };
     } catch (e) {
-        if (e instanceof z.ZodError) {
+        if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }

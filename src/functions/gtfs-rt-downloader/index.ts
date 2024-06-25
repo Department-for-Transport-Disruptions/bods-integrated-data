@@ -1,6 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { NM_TOKEN_ARRAY_REGEX } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     base64Encode,
@@ -9,6 +8,7 @@ import {
     mapAvlToGtfsEntity,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
+import { BOUNDING_BOX_REGEX, NM_TOKEN_ARRAY_REGEX } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -18,10 +18,7 @@ const queryParametersSchema = z.preprocess(
     z.object({
         download: z.coerce.string().toLowerCase().optional(),
         routeId: z.coerce.string().regex(NM_TOKEN_ARRAY_REGEX).optional(),
-        boundingBox: z.coerce
-            .string()
-            .regex(/^[-]?[0-9]+(\.[0-9]+)?(,[-]?[0-9]+(\.[0-9]+)?)*$/)
-            .optional(),
+        boundingBox: z.coerce.string().regex(BOUNDING_BOX_REGEX).optional(),
         startTimeBefore: z.coerce.number().optional(),
         startTimeAfter: z.coerce.number().optional(),
     }),
