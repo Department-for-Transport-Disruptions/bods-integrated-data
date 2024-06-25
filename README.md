@@ -45,7 +45,7 @@ for more information about BODS.
 
 ## Dependencies
 
-    The following dependencies are required. An AWS account is also required.
+The following dependencies are required. An AWS account is also required.
 
 | Dependency                                                                                                                                  | Description                                                                                                      |
 |---------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
