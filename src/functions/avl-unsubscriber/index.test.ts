@@ -69,6 +69,7 @@ describe("avl-unsubscriber", () => {
             status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         await handler(mockUnsubscribeEvent);
@@ -89,6 +90,7 @@ describe("avl-unsubscriber", () => {
             url: "https://mock-data-producer.com/",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             serviceEndDatetime: "2024-03-11T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
@@ -130,6 +132,7 @@ describe("avl-unsubscriber", () => {
             status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Request failed with status code 500");
@@ -155,6 +158,7 @@ describe("avl-unsubscriber", () => {
             status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -182,6 +186,7 @@ describe("avl-unsubscriber", () => {
             status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -209,6 +214,7 @@ describe("avl-unsubscriber", () => {
             status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError(
@@ -231,6 +237,7 @@ describe("avl-unsubscriber", () => {
             status: "LIVE",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            publisherId: "test-publisher-id",
         });
 
         await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError("Missing auth credentials for subscription");
