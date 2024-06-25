@@ -171,6 +171,7 @@ describe("avl-subscriptions", () => {
         it("maps AVL table data to API response data with null values for missing properties", () => {
             const subscription: AvlSubscription = {
                 PK: "mock-PK",
+                publisherId: "publisher-one",
                 url: "mock-url",
                 description: "mock-description",
                 shortDescription: "mock-shortDescription",
@@ -179,8 +180,8 @@ describe("avl-subscriptions", () => {
 
             const expectedApiResponse: ApiAvlSubscription = {
                 id: "mock-PK",
-                publisherId: null,
                 status: "LIVE",
+                publisherId: "publisher-one",
                 lastAvlDataReceivedDateTime: null,
                 heartbeatLastReceivedDateTime: null,
                 serviceStartDatetime: null,
