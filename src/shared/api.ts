@@ -14,6 +14,13 @@ export const createNotFoundErrorResponse = (error: string): APIGatewayProxyResul
     };
 };
 
+export const createConflictErrorResponse = (error: string): APIGatewayProxyResult => {
+    return {
+        statusCode: 409,
+        body: JSON.stringify({ errors: [error] }),
+    };
+};
+
 export const createServerErrorResponse = (error?: string): APIGatewayProxyResult => {
     return {
         statusCode: 500,

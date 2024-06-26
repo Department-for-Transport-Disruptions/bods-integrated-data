@@ -203,8 +203,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         }
 
         if (e instanceof InvalidXmlError) {
-            logger.warn("Invalid SIRI-VM XML provided", e);
-            return createValidationErrorResponse(["Body must be valid SIRI-VM XML"]);
+            logger.warn("Invalid SIRI-VM XML provided by the data producer", e);
+            return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {

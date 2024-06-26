@@ -231,8 +231,11 @@ describe("avl-unsubscriber", () => {
         const responseBody = JSON.parse(response.body);
 
         expect(response.statusCode).toEqual(400);
-        expect(responseBody).toEqual({ errors: ["Body must be valid SIRI-VM XML"] });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM XML provided", expect.anything());
+        expect(responseBody).toEqual({ errors: ["Invalid SIRI-VM XML provided by the data producer"] });
+        expect(logger.warn).toHaveBeenCalledWith(
+            "Invalid SIRI-VM XML provided by the data producer",
+            expect.anything(),
+        );
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();

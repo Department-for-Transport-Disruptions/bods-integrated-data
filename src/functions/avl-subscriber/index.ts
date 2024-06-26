@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@baselime/lambda-logger";
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
+import {
+    createConflictErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
 import { getSiriVmTerminationTimeOffset, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -8,20 +12,46 @@ import {
     AvlSubscribeMessage,
     AvlSubscription,
     AvlSubscriptionStatuses,
-    avlSubscribeMessageSchema,
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { putParameter } from "@bods-integrated-data/shared/ssm";
+import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 
-const requestBodySchema = z.string({
-    required_error: "Body is required",
-    invalid_type_error: "Body must be a string",
-});
+const requestBodySchema = z
+    .string({
+        required_error: "Body is required",
+        invalid_type_error: "Body must be a string",
+    })
+    .transform((body) => JSON.parse(body))
+    .pipe(
+        z.object(
+            {
+                dataProducerEndpoint: z
+                    .string({
+                        required_error: "dataProducerEndpoint is required",
+                        invalid_type_error: "dataProducerEndpoint must be a string",
+                    })
+                    .url({
+                        message: "dataProducerEndpoint must be a URL",
+                    }),
+                description: createStringLengthValidation("description"),
+                shortDescription: createStringLengthValidation("shortDescription"),
+                username: createStringLengthValidation("username"),
+                password: createStringLengthValidation("password"),
+                requestorRef: createStringLengthValidation("requestorRef").optional(),
+                subscriptionId: createStringLengthValidation("subscriptionId"),
+                publisherId: createStringLengthValidation("publisherId"),
+            },
+            {
+                message: "Body must be an object with required properties",
+            },
+        ),
+    );
 
 export const generateSubscriptionRequestXml = (
     avlSubscribeMessage: AvlSubscribeMessage,
@@ -106,6 +136,7 @@ const parseXml = (xml: string, subscriptionId: string) => {
             `There was an error parsing the subscription response from the data producer with subscription ID: ${subscriptionId}`,
             parsedJson.error.format(),
         );
+
         return null;
     }
 
@@ -126,7 +157,7 @@ const updateDynamoWithSubscriptionInfo = async (
         shortDescription: avlSubscribeMessage.shortDescription,
         requestorRef: avlSubscribeMessage.requestorRef ?? null,
         serviceStartDatetime: currentTimestamp ?? null,
-        publisherId: avlSubscribeMessage.publisherId ?? null,
+        publisherId: avlSubscribeMessage.publisherId,
     };
 
     logger.info("Updating DynamoDB with subscription information");
@@ -192,7 +223,9 @@ const sendSubscriptionRequestAndUpdateDynamo = async (
 
     if (!parsedResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, avlSubscribeMessage, "ERROR");
-        throw new Error(`Error parsing subscription response from: ${avlSubscribeMessage.dataProducerEndpoint}`);
+        throw new InvalidXmlError(
+            `Error parsing subscription response from: ${avlSubscribeMessage.dataProducerEndpoint}`,
+        );
     }
 
     if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
@@ -224,25 +257,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         logger.info("Starting AVL subscriber");
 
-        const body = requestBodySchema.parse(event.body);
-
-        const parsedBody = avlSubscribeMessageSchema.safeParse(body);
-
-        if (!parsedBody.success) {
-            logger.error(JSON.stringify(parsedBody.error));
-            throw new Error("Invalid subscribe message from event body.");
-        }
-
-        const avlSubscribeMessage = parsedBody.data;
+        const avlSubscribeMessage = requestBodySchema.parse(event.body);
         const { subscriptionId, username, password } = avlSubscribeMessage;
 
         const isActiveSubscription = await isActiveAvlSubscription(subscriptionId, tableName);
 
         if (isActiveSubscription) {
-            return {
-                statusCode: 409,
-                body: "Subscription ID already active",
-            };
+            return createConflictErrorResponse("Subscription ID already active");
         }
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
@@ -276,6 +297,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidXmlError) {
+            logger.warn("Invalid SIRI-VM XML provided by the data producer", e);
+            return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
         }
 
         if (e instanceof Error) {

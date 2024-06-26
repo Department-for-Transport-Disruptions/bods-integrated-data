@@ -242,7 +242,7 @@ describe("AVL-data-endpoint", () => {
         const response = await handler(mockEvent);
         const responseBody = JSON.parse(response.body);
 
-        // expect(response.statusCode).toEqual(404);
+        expect(response.statusCode).toEqual(404);
         expect(logger.error).toHaveBeenCalledWith(
             `Subscription: ${mockSubscriptionId} is not LIVE, data will not be processed...`,
         );

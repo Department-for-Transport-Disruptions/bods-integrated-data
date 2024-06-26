@@ -4,7 +4,7 @@ import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 import {
     expectedRequestBody,
@@ -24,11 +24,6 @@ vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-subscriber", () => {
-    beforeAll(() => {
-        process.env.TABLE_NAME = "test-dynamo-table";
-        process.env.DATA_ENDPOINT = "https://www.test.com/data";
-    });
-
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
         putDynamoItem: vi.fn(),
@@ -49,6 +44,10 @@ describe("avl-subscriber", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         getDynamoItemSpy.mockResolvedValue(null);
+        process.env.TABLE_NAME = "test-dynamo-table";
+        process.env.DATA_ENDPOINT = "https://www.test.com/data";
+        process.env.STAGE = "";
+        process.env.MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = "";
     });
 
     afterAll(() => {
@@ -103,27 +102,153 @@ describe("avl-subscriber", () => {
     });
 
     it.each([
+        [null, ["Body must be an object with required properties"]],
+        ["", ["Body must be an object with required properties"]],
+        [
+            {},
+            [
+                "dataProducerEndpoint is required",
+                "description is required",
+                "shortDescription is required",
+                "username is required",
+                "password is required",
+                "subscriptionId is required",
+                "publisherId is required",
+            ],
+        ],
         [
             {
                 test: "invalid event",
             },
+            [
+                "dataProducerEndpoint is required",
+                "description is required",
+                "shortDescription is required",
+                "username is required",
+                "password is required",
+                "subscriptionId is required",
+                "publisherId is required",
+            ],
         ],
         [
             {
-                dataProducerEndpoint: "test-dataProducerEndpoint",
-                description: "test-description",
-                shortDescription: "test-shortDescription",
-                username: "test-username",
-                password: "test-password",
-                requestorRef: "test-requestorRef",
+                dataProducerEndpoint: null,
+                description: null,
+                shortDescription: null,
+                username: null,
+                password: null,
+                requestorRef: null,
+                subscriptionId: null,
+                publisherId: null,
             },
+            [
+                "dataProducerEndpoint must be a string",
+                "description must be a string",
+                "shortDescription must be a string",
+                "username must be a string",
+                "password must be a string",
+                "requestorRef must be a string",
+                "subscriptionId must be a string",
+                "publisherId must be a string",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: 1,
+                description: 1,
+                shortDescription: 1,
+                username: 1,
+                password: 1,
+                requestorRef: 1,
+                subscriptionId: 1,
+                publisherId: 1,
+            },
+            [
+                "dataProducerEndpoint must be a string",
+                "description must be a string",
+                "shortDescription must be a string",
+                "username must be a string",
+                "password must be a string",
+                "requestorRef must be a string",
+                "subscriptionId must be a string",
+                "publisherId must be a string",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: {},
+                description: {},
+                shortDescription: {},
+                username: {},
+                password: {},
+                requestorRef: {},
+                subscriptionId: {},
+                publisherId: {},
+            },
+            [
+                "dataProducerEndpoint must be a string",
+                "description must be a string",
+                "shortDescription must be a string",
+                "username must be a string",
+                "password must be a string",
+                "requestorRef must be a string",
+                "subscriptionId must be a string",
+                "publisherId must be a string",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: "https://example.com",
+                description: "",
+                shortDescription: "",
+                username: "",
+                password: "",
+                requestorRef: "",
+                subscriptionId: "",
+                publisherId: "",
+            },
+            [
+                "description must be 1-256 characters",
+                "shortDescription must be 1-256 characters",
+                "username must be 1-256 characters",
+                "password must be 1-256 characters",
+                "requestorRef must be 1-256 characters",
+                "subscriptionId must be 1-256 characters",
+                "publisherId must be 1-256 characters",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: "asdf",
+                description: "1".repeat(257),
+                shortDescription: "1".repeat(257),
+                username: "1".repeat(257),
+                password: "1".repeat(257),
+                requestorRef: "1".repeat(257),
+                subscriptionId: "1".repeat(257),
+                publisherId: "1".repeat(257),
+            },
+            [
+                "dataProducerEndpoint must be a URL",
+                "description must be 1-256 characters",
+                "shortDescription must be 1-256 characters",
+                "username must be 1-256 characters",
+                "password must be 1-256 characters",
+                "requestorRef must be 1-256 characters",
+                "subscriptionId must be 1-256 characters",
+                "publisherId must be 1-256 characters",
+            ],
         ],
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
-        async (input) => {
+        async (input, expectedErrorMessages) => {
             const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
 
-            await expect(handler(invalidEvent)).rejects.toThrowError("Invalid subscribe message from event body.");
+            const response = await handler(invalidEvent);
+            const responseBody = JSON.parse(response.body);
+
+            expect(response.statusCode).toEqual(400);
+            expect(responseBody).toEqual({ errors: expectedErrorMessages });
 
             expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
             expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
@@ -159,7 +284,11 @@ describe("avl-subscriber", () => {
             publisherId: "mock-publisher-id",
         };
 
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError();
+        const response = await handler(mockSubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -200,9 +329,11 @@ describe("avl-subscriber", () => {
             publisherId: "mock-publisher-id",
         };
 
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
-            "No response body received from the data producer: https://mock-data-producer.com",
-        );
+        const response = await handler(mockSubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -232,23 +363,14 @@ describe("avl-subscriber", () => {
             status: "LIVE",
         });
 
-        await expect(handler(mockSubscribeEvent)).resolves.toEqual({
-            statusCode: 409,
-            body: "Subscription ID already active",
-        });
+        const response = await handler(mockSubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(409);
+        expect(responseBody).toEqual({ errors: ["Subscription ID already active"] });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
-    });
-
-    getDynamoItemSpy.mockResolvedValue({
-        PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-        url: "https://mock-data-producer.com/",
-        description: "test-description",
-        shortDescription: "test-short-description",
-        lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
-        status: "LIVE",
-        requestorRef: null,
     });
 
     it("should process a subscription request for mock data producer if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
@@ -317,12 +439,14 @@ describe("avl-subscriber", () => {
             publisherId: "mock-publisher-id",
         };
 
-        await expect(handler(mockSubscribeEventToMockDataProducer)).rejects.toThrowError(
-            "Error parsing subscription response from: https://mock-data-producer.com",
-        );
+        const response = await handler(mockSubscribeEventToMockDataProducer);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(400);
+        expect(responseBody).toEqual({ errors: ["Invalid SIRI-VM XML provided by the data producer"] });
 
         expect(axiosSpy).toBeCalledWith(
-            "www.local.com",
+            "https://mock-data-producer.com",
             expectedRequestBodyForMockProducer,
             expectedSubscriptionRequestConfig,
         );
@@ -366,9 +490,12 @@ describe("avl-subscriber", () => {
             publisherId: "mock-publisher-id",
         };
 
-        await expect(handler(mockSubscribeEvent)).rejects.toThrowError(
-            "The data producer: https://mock-data-producer.com did not return a status of true.",
-        );
+        const response = await handler(mockSubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+
         expect(axiosSpy).toBeCalledWith(
             "https://mock-data-producer.com",
             expectedRequestBody,
@@ -396,5 +523,26 @@ describe("avl-subscriber", () => {
             "SecureString",
             true,
         );
+    });
+
+    it("throws an error when the required env vars are missing", async () => {
+        process.env.DATA_ENDPOINT = "";
+        process.env.TABLE_NAME = "";
+
+        const response = await handler(mockSubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+    });
+
+    it("throws an error when the stage is local and the mock data producer env var is missing", async () => {
+        process.env.STAGE = "local";
+
+        const response = await handler(mockSubscribeEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
     });
 });
