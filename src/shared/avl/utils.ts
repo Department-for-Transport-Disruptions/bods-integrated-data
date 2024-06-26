@@ -223,6 +223,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
     return avls.map<SiriVehicleActivity>((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: currentTime,
+            ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
             VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {

@@ -45,6 +45,7 @@ const directionMap: Record<string, string> = {
 
 const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string(),
+    ItemIdentifier: z.string().nullish(),
     ValidUntilTime: z.string(),
     VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
@@ -91,6 +92,7 @@ export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
+        ItemIdentifier: z.string().optional(),
         ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
@@ -125,6 +127,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
             producer_ref: item.ServiceDelivery.ProducerRef,
             recorded_at_time: vehicleActivity.RecordedAtTime,
+            item_id: vehicleActivity.ItemIdentifier,
             valid_until_time: vehicleActivity.ValidUntilTime,
             vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
             line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
@@ -163,6 +166,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
 export const siriBodsSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
     return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewAvl>((vehicleActivity) => ({
         response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+        item_id: item.ServiceDelivery.ItemIdentifier ?? null,
         producer_ref: item.ServiceDelivery.ProducerRef,
         recorded_at_time: vehicleActivity.RecordedAtTime,
         valid_until_time: vehicleActivity.ValidUntilTime,
@@ -196,6 +200,7 @@ export const tflVehicleLocationSchema = z.object({
     longitude: z.number(),
     latitude: z.number(),
     recordedAtTime: z.string(),
+    item_id: z.string().nullish(),
     bearing: z.number().nullish(),
     load: z.number().nullish(),
     passengerCount: z.number().nullish(),
@@ -230,6 +235,7 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
 
     const avl: NewAvl = {
         response_time_stamp: recordedAtTime,
+        item_id: item.item_id,
         valid_until_time: validUntilTime,
         producer_ref: item.producerRef,
         vehicle_ref: item.vehicleRef,
