@@ -222,6 +222,7 @@ export interface AvlTable {
     has_onward_calls: boolean | null;
     route_id: number | null;
     trip_id: string | null;
+    item_id: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;

@@ -66,7 +66,7 @@ export const avlSubscriptionSchema = z.object({
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),
     serviceEndDatetime: z.string().nullish(),
-    publisherId: z.string().nullish(),
+    publisherId: z.string(),
     lastAvlDataReceivedDateTime: z.string().nullish(),
 });
 

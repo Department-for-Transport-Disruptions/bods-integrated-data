@@ -47,6 +47,7 @@ describe("avl-mock-data-producer-send-data", () => {
                 status: "LIVE",
                 requestorRef: "REAL_DATA_PRODUCER",
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "subscription-one",
@@ -55,6 +56,7 @@ describe("avl-mock-data-producer-send-data", () => {
                 shortDescription: "test-short-description",
                 status: "ERROR",
                 requestorRef: "BODS_MOCK_PRODUCER",
+                publisherId: "test-publisher-id",
             },
         ]);
         await handler();
