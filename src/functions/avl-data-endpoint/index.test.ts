@@ -44,12 +44,13 @@ describe("AVL-data-endpoint", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             requestorRef: null,
+            publisherId: "test-publisher-id",
         });
 
         const mockEvent = {
             body: testSiri,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -61,6 +62,7 @@ describe("AVL-data-endpoint", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
@@ -89,13 +91,14 @@ describe("AVL-data-endpoint", () => {
             lastAvlDataReceivedDateTime: "2024-03-11T00:00:00.000Z",
             status: "LIVE",
             requestorRef: null,
+            publisherId: "test-publisher-id",
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
 
         const mockEvent = {
             body: testSiriWithSingleVehicleActivity,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -120,7 +123,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: null,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
         await expect(handler(mockEvent)).rejects.toThrowError("No body sent with event");
@@ -136,12 +139,13 @@ describe("AVL-data-endpoint", () => {
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             status: "LIVE",
             requestorRef: null,
+            publisherId: "test-publisher-id",
         });
 
         const mockEvent = {
             body: "abc",
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -157,12 +161,13 @@ describe("AVL-data-endpoint", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             requestorRef: null,
+            publisherId: "test-publisher-id",
         });
 
         const mockEvent = {
             body: mockHeartbeatNotification,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 
@@ -174,6 +179,7 @@ describe("AVL-data-endpoint", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
@@ -191,7 +197,7 @@ describe("AVL-data-endpoint", () => {
         const mockEvent = {
             body: mockHeartbeatNotification,
             pathParameters: {
-                subscription_id: mockSubscriptionId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayEvent;
 

@@ -2,7 +2,7 @@ import { APIGatewayEvent } from "aws-lambda";
 
 export const mockUnsubscribeEvent = {
     pathParameters: {
-        subscription_id: "mock-subscription-id",
+        subscriptionId: "mock-subscription-id",
     },
 } as unknown as APIGatewayEvent;
 

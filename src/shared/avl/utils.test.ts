@@ -15,6 +15,7 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
       <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea6</ItemIdentifier>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <MonitoredVehicleJourney>
           <LineRef>784</LineRef>
@@ -36,6 +37,7 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
       </VehicleActivity>
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <VehicleMonitoringRef>test</VehicleMonitoringRef>
         <MonitoredVehicleJourney>
@@ -86,6 +88,7 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
       <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <VehicleMonitoringRef>test</VehicleMonitoringRef>
         <MonitoredVehicleJourney>
@@ -131,6 +134,7 @@ const mockAvl: Avl[] = [
         response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
         producer_ref: "DfT",
         recorded_at_time: "2024-02-26T14:36:18+00:00",
+        item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea6",
         valid_until_time: "2024-02-26 14:42:12",
         line_ref: "784",
         direction_ref: "OUT",
@@ -178,6 +182,7 @@ const mockAvl: Avl[] = [
         response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
         producer_ref: "ItoWorld",
         recorded_at_time: "2024-02-26T14:36:11+00:00",
+        item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea7",
         valid_until_time: "2024-02-26 14:42:12",
         line_ref: "ra",
         direction_ref: "outbound",

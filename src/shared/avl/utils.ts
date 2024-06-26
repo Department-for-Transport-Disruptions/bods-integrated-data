@@ -66,6 +66,7 @@ const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl =>
     ...avl,
     geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
     subscription_id: subscriptionId,
+    item_id: avl.item_id ?? randomUUID(),
 });
 
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
@@ -322,6 +323,27 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     return request;
 };
 
+/**
+ * Returns a SIRI-VM valid until time value defined as 5 minutes after the given time.
+ * @param time The response time to offset from.
+ * @returns The valid until time.
+ */
+export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minutes").toISOString();
+
+/**
+ * Returns a SIRI-VM termination time value defined as 10 years after the given time.
+ * @param time The response time to offset from.
+ * @returns The termination.
+ */
+export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
+
+/**
+ * Spawns a child process to use the xmllint CLI command in order to validate
+ * the SIRI-VM files against the XSD. If the file fails validation then it will
+ * throw an error and log out the validation issues.
+ *
+ * @param xml
+ */
 const runXmlLint = async (xml: string) => {
     const fileName = randomUUID();
     await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
@@ -335,15 +357,17 @@ const runXmlLint = async (xml: string) => {
     ]);
 
     let error = "";
+
     for await (const chunk of command.stderr) {
         error += chunk;
     }
+
     const exitCode = await new Promise((resolve) => {
         command.on("close", resolve);
     });
 
     if (exitCode) {
-        logger.error(error);
+        logger.error(error.slice(0, 10000));
 
         throw new Error();
     }
@@ -402,17 +426,3 @@ export const generateSiriVmAndUploadToS3 = async (
         }),
     ]);
 };
-
-/**
- * Returns a SIRI-VM valid until time value defined as 5 minutes after the given time.
- * @param time The response time to offset from.
- * @returns The valid until time.
- */
-export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minutes").toISOString();
-
-/**
- * Returns a SIRI-VM termination time value defined as 10 years after the given time.
- * @param time The response time to offset from.
- * @returns The termination.
- */
-export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
