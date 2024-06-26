@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import { deleteDynamoItem } from "../data/dynamo";
-import exp = require("node:constants");
 
 const { AVL_PRODUCER_API_BASE_URL: apiProducerBaseUrl } = process.env;
 
