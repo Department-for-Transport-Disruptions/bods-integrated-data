@@ -1,5 +1,5 @@
 import { logger } from "@baselime/lambda-logger";
-import * as avlUtils from "@bods-integrated-data/shared/avl/utils";
+import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,12 +8,19 @@ import { ApiAvlSubscription, handler, mapApiAvlSubscriptionResponse } from "./in
 describe("avl-subscriptions", () => {
     vi.mock("@baselime/lambda-logger", () => ({
         logger: {
+            warn: vi.fn(),
             error: vi.fn(),
         },
     }));
 
-    const getAvlSubscriptionMock = vi.spyOn(avlUtils, "getAvlSubscription");
-    const getAvlSubscriptionsMock = vi.spyOn(avlUtils, "getAvlSubscriptions");
+    vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+        getDynamoItem: vi.fn(),
+        putDynamoItem: vi.fn(),
+        recursiveScan: vi.fn(),
+    }));
+
+    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
     let mockEvent: APIGatewayProxyEvent;
 
@@ -26,32 +33,78 @@ describe("avl-subscriptions", () => {
     it("returns a 500 when not all the env vars are set", async () => {
         process.env.TABLE_NAME = "";
 
-        await expect(handler(mockEvent)).resolves.toEqual({
-            statusCode: 500,
-            body: "An internal error occurred.",
-        });
+        const response = await handler(mockEvent);
+        const responseBody = JSON.parse(response.body);
 
-        expect(logger.error).toHaveBeenCalledWith("Missing env vars - TABLE_NAME must be set");
-        expect(getAvlSubscriptionMock).not.toHaveBeenCalled();
-        expect(getAvlSubscriptionsMock).not.toHaveBeenCalled();
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was a problem with the AVL subscriptions endpoint",
+            expect.any(Error),
+        );
+        expect(getDynamoItemSpy).not.toHaveBeenCalled();
+        expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
 
     it("returns a 500 when an unexpected error occurs retrieving subscriptions data", async () => {
-        getAvlSubscriptionsMock.mockRejectedValueOnce(new Error());
+        recursiveScanSpy.mockRejectedValueOnce(new Error());
 
-        await expect(handler(mockEvent)).resolves.toEqual({
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        });
+        const response = await handler(mockEvent);
+        const responseBody = JSON.parse(response.body);
 
+        expect(response.statusCode).toEqual(500);
+        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
         expect(logger.error).toHaveBeenCalledWith(
-            "There was an error retrieving AVL subscription data",
+            "There was a problem with the AVL subscriptions endpoint",
             expect.any(Error),
         );
     });
 
+    it.each([
+        [null, "subscriptionId must be a string"],
+        [1, "subscriptionId must be a string"],
+        [{}, "subscriptionId must be a string"],
+        ["", "subscriptionId must be 1-256 characters"],
+        ["1".repeat(257), "subscriptionId must be 1-256 characters"],
+    ])(
+        "Throws an error when the subscription ID fails validation (test: %o)",
+        async (subscriptionId, expectedErrorMessage) => {
+            const mockEvent = {
+                pathParameters: {
+                    subscriptionId,
+                },
+                body: null,
+            } as unknown as APIGatewayProxyEvent;
+
+            const response = await handler(mockEvent);
+            const responseBody = JSON.parse(response.body);
+
+            expect(response.statusCode).toEqual(400);
+            expect(responseBody).toEqual({ errors: [expectedErrorMessage] });
+            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(getDynamoItemSpy).not.toHaveBeenCalled();
+            expect(recursiveScanSpy).not.toHaveBeenCalled();
+        },
+    );
+
+    it("returns a 404 when getting a subscription but the subscription does not exist in dynamodb", async () => {
+        getDynamoItemSpy.mockResolvedValueOnce(null);
+
+        mockEvent.pathParameters = {
+            subscriptionId: "subscription-one",
+        };
+
+        const response = await handler(mockEvent);
+        const responseBody = JSON.parse(response.body);
+
+        expect(response.statusCode).toEqual(404);
+        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
+        expect(responseBody).toEqual({ errors: ["Subscription not found"] });
+        expect(dynamo.putDynamoItem).not.toBeCalled();
+    });
+
     it("returns a 200 with all subscriptions data when passing no subscription ID param", async () => {
-        getAvlSubscriptionsMock.mockResolvedValueOnce([
+        recursiveScanSpy.mockResolvedValueOnce([
             {
                 PK: "subscription-one",
                 url: "https://www.mock-data-producer-one.com",
@@ -100,8 +153,8 @@ describe("avl-subscriptions", () => {
             statusCode: 200,
             body: JSON.stringify(expectedResponse),
         });
-        expect(getAvlSubscriptionMock).not.toHaveBeenCalled();
-        expect(getAvlSubscriptionsMock).toHaveBeenCalledWith("test-dynamo-table");
+        expect(getDynamoItemSpy).not.toHaveBeenCalled();
+        expect(recursiveScanSpy).toHaveBeenCalled();
     });
 
     it("returns a 200 with a single subscription when passing a subscription ID param", async () => {
@@ -109,7 +162,7 @@ describe("avl-subscriptions", () => {
             subscriptionId: "subscription-one",
         };
 
-        getAvlSubscriptionMock.mockResolvedValueOnce({
+        getDynamoItemSpy.mockResolvedValueOnce({
             PK: "subscription-one",
             url: "https://www.mock-data-producer-one.com",
             description: "test-description",
@@ -135,8 +188,8 @@ describe("avl-subscriptions", () => {
             statusCode: 200,
             body: JSON.stringify(expectedResponse),
         });
-        expect(getAvlSubscriptionMock).toHaveBeenCalledWith("subscription-one", "test-dynamo-table");
-        expect(getAvlSubscriptionsMock).not.toHaveBeenCalled();
+        expect(getDynamoItemSpy).toHaveBeenCalled();
+        expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
 
     describe("mapApiAvlSubscriptionResponse", () => {
