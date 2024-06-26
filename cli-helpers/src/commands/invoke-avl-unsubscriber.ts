@@ -36,10 +36,10 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
 
         const invokePayload = {
             pathParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
             queryStringParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
         };
 

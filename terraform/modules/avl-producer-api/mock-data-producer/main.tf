@@ -120,7 +120,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_mock_producer_api_i
 resource "aws_apigatewayv2_route" "integrated_data_avl_mock_data_producer_api_route_subscribe" {
   count     = var.environment == "local" ? 0 : 1
   api_id    = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
-  route_key = "POST /subscribe"
+  route_key = "POST /subscriptions"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_mock_producer_api_integration_subscribe[0].id}"
 }
 

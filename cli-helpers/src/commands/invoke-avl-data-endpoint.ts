@@ -117,10 +117,10 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
         const invokePayload = {
             body: notificationType === "Heartbeat Notification" ? heartbeatNotificationBody : avlDataBody,
             pathParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
             queryStringParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
         };
 

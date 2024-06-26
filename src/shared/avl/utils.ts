@@ -66,6 +66,7 @@ const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl =>
     ...avl,
     geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
     subscription_id: subscriptionId,
+    item_id: avl.item_id ?? randomUUID(),
 });
 
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
@@ -222,6 +223,7 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
     return avls.map<SiriVehicleActivity>((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: currentTime,
+            ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
             VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
