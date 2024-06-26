@@ -234,6 +234,7 @@ describe("AVL-data-endpoint", () => {
             shortDescription: "test-short-description",
             status: "INACTIVE",
             requestorRef: null,
+            publisherId: "test-publisher-id",
         });
 
         const mockEvent = {
