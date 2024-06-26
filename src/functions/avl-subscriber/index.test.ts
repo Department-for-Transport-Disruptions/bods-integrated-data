@@ -245,10 +245,10 @@ describe("avl-subscriber", () => {
             const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
 
             const response = await handler(invalidEvent);
-            const responseBody = JSON.parse(response.body);
-
-            expect(response.statusCode).toEqual(400);
-            expect(responseBody).toEqual({ errors: expectedErrorMessages });
+            expect(response).toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: expectedErrorMessages }),
+            });
 
             expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
             expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
@@ -285,10 +285,10 @@ describe("avl-subscriber", () => {
         };
 
         const response = await handler(mockSubscribeEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -330,10 +330,10 @@ describe("avl-subscriber", () => {
         };
 
         const response = await handler(mockSubscribeEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith(
@@ -364,10 +364,10 @@ describe("avl-subscriber", () => {
         });
 
         const response = await handler(mockSubscribeEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(409);
-        expect(responseBody).toEqual({ errors: ["Subscription ID already active"] });
+        expect(response).toEqual({
+            statusCode: 409,
+            body: JSON.stringify({ errors: ["Subscription ID already active"] }),
+        });
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(putParameterSpy).not.toHaveBeenCalledTimes(2);
@@ -440,10 +440,10 @@ describe("avl-subscriber", () => {
         };
 
         const response = await handler(mockSubscribeEventToMockDataProducer);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(400);
-        expect(responseBody).toEqual({ errors: ["Invalid SIRI-VM XML provided by the data producer"] });
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({ errors: ["Invalid SIRI-VM XML provided by the data producer"] }),
+        });
 
         expect(axiosSpy).toBeCalledWith(
             "https://mock-data-producer.com",
@@ -491,10 +491,10 @@ describe("avl-subscriber", () => {
         };
 
         const response = await handler(mockSubscribeEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
 
         expect(axiosSpy).toBeCalledWith(
             "https://mock-data-producer.com",
@@ -530,19 +530,19 @@ describe("avl-subscriber", () => {
         process.env.TABLE_NAME = "";
 
         const response = await handler(mockSubscribeEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
     });
 
     it("throws an error when the stage is local and the mock data producer env var is missing", async () => {
         process.env.STAGE = "local";
 
         const response = await handler(mockSubscribeEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
     });
 });

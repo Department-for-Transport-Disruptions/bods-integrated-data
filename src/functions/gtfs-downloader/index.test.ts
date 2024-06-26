@@ -32,10 +32,10 @@ describe("gtfs-downloader-endpoint", () => {
         } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
 
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS downloader endpoint",
@@ -52,10 +52,10 @@ describe("gtfs-downloader-endpoint", () => {
         } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
 
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS downloader endpoint",
@@ -137,10 +137,10 @@ describe("gtfs-downloader-endpoint", () => {
         } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
-        // const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(400);
-        // expect(responseBody).toEqual({ errors: ["Invalid region code"] });
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({ errors: ["Invalid region code"] }),
+        });
     });
 
     it("retrieves regional dataset if region name passed", async () => {
@@ -177,9 +177,9 @@ describe("gtfs-downloader-endpoint", () => {
         } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(400);
-        expect(responseBody).toEqual({ errors: ["Invalid region name"] });
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({ errors: ["Invalid region name"] }),
+        });
     });
 });

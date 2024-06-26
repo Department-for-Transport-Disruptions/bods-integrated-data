@@ -34,10 +34,10 @@ describe("avl-subscriptions", () => {
         process.env.TABLE_NAME = "";
 
         const response = await handler(mockEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the AVL subscriptions endpoint",
             expect.any(Error),
@@ -50,10 +50,10 @@ describe("avl-subscriptions", () => {
         recursiveScanSpy.mockRejectedValueOnce(new Error());
 
         const response = await handler(mockEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the AVL subscriptions endpoint",
             expect.any(Error),
@@ -77,10 +77,10 @@ describe("avl-subscriptions", () => {
             } as unknown as APIGatewayProxyEvent;
 
             const response = await handler(mockEvent);
-            const responseBody = JSON.parse(response.body);
-
-            expect(response.statusCode).toEqual(400);
-            expect(responseBody).toEqual({ errors: [expectedErrorMessage] });
+            expect(response).toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            });
             expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
             expect(getDynamoItemSpy).not.toHaveBeenCalled();
             expect(recursiveScanSpy).not.toHaveBeenCalled();
@@ -95,11 +95,11 @@ describe("avl-subscriptions", () => {
         };
 
         const response = await handler(mockEvent);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(404);
+        expect(response).toEqual({
+            statusCode: 404,
+            body: JSON.stringify({ errors: ["Subscription not found"] }),
+        });
         expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
-        expect(responseBody).toEqual({ errors: ["Subscription not found"] });
         expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 

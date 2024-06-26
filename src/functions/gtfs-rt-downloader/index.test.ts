@@ -58,10 +58,10 @@ describe("gtfs-downloader-endpoint", () => {
         process.env.BUCKET_NAME = "";
 
         const response = await handler(mockRequest);
-        const responseBody = JSON.parse(response.body);
-
-        expect(response.statusCode).toEqual(500);
-        expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS-RT downloader endpoint",
             expect.any(Error),
@@ -87,10 +87,10 @@ describe("gtfs-downloader-endpoint", () => {
             mocks.getS3Object.mockResolvedValueOnce({ Body: undefined });
 
             const response = await handler(mockRequest);
-            const responseBody = JSON.parse(response.body);
-
-            expect(response.statusCode).toEqual(500);
-            expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+            expect(response).toEqual({
+                statusCode: 500,
+                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+            });
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
@@ -145,10 +145,10 @@ describe("gtfs-downloader-endpoint", () => {
             };
 
             const response = await handler(mockRequest);
-            const responseBody = JSON.parse(response.body);
-
-            expect(response.statusCode).toEqual(500);
-            expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+            expect(response).toEqual({
+                statusCode: 500,
+                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+            });
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
@@ -183,10 +183,10 @@ describe("gtfs-downloader-endpoint", () => {
         ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
             mockRequest.queryStringParameters = params;
             const response = await handler(mockRequest);
-            const responseBody = JSON.parse(response.body);
-
-            expect(response.statusCode).toEqual(400);
-            expect(responseBody).toEqual({ errors: [expectedErrorMessage] });
+            expect(response).toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            });
             expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
             expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
         });
@@ -324,10 +324,10 @@ describe("gtfs-downloader-endpoint", () => {
             };
 
             const response = await handler(mockRequest);
-            const responseBody = JSON.parse(response.body);
-
-            expect(response.statusCode).toEqual(500);
-            expect(responseBody).toEqual({ errors: ["An unexpected error occurred"] });
+            expect(response).toEqual({
+                statusCode: 500,
+                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+            });
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
