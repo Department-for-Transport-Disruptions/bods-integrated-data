@@ -10,7 +10,10 @@ import {
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { logger } from "@baselime/lambda-logger";
+//import { logger } from "@baselime/lambda-logger";
+import Pino from "pino";
+
+const logger = Pino();
 
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._\-!\*\'\(\)\/]/g, "_");
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { logger } from "@baselime/lambda-logger";
+//import { logger } from "@baselime/lambda-logger";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapBodsAvlDateStrings } from "../avl/utils";
@@ -7,6 +7,9 @@ import tflMapping from "../data/tflRouteToNocMapping.json";
 import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
+import Pino from "pino";
+
+const logger = Pino();
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
