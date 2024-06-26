@@ -12,14 +12,15 @@ import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscri
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { ZodError, ZodRawShape, z } from "zod";
+import { ZodError, z } from "zod";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
 
-const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
-
-const requestParamsSchema = createRequestParamsSchema({
-    subscriptionId: createStringLengthValidation("subscriptionId"),
-});
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        subscriptionId: createStringLengthValidation("subscriptionId"),
+    }),
+);
 
 const requestBodySchema = z.string({
     required_error: "Body is required",

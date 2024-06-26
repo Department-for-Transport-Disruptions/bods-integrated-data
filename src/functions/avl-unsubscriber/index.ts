@@ -15,15 +15,16 @@ import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { ZodError, ZodRawShape, z } from "zod";
+import { ZodError, z } from "zod";
 import { terminateSubscriptionRequestSchema, terminateSubscriptionResponseSchema } from "./subscription.schema";
 import { mockSubscriptionResponseBody } from "./test/mockData";
 
-const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
-
-const requestParamsSchema = createRequestParamsSchema({
-    subscriptionId: createStringLengthValidation("subscriptionId"),
-});
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        subscriptionId: createStringLengthValidation("subscriptionId"),
+    }),
+);
 
 export const generateTerminationSubscriptionRequest = (
     subscriptionId: string,

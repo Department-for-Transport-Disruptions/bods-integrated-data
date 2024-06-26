@@ -12,13 +12,14 @@ import {
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { ZodError, ZodRawShape, z } from "zod";
+import { ZodError, z } from "zod";
 
-const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
-
-const requestParamsSchema = createRequestParamsSchema({
-    subscriptionId: createStringLengthValidation("subscriptionId").optional(),
-});
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        subscriptionId: createStringLengthValidation("subscriptionId").optional(),
+    }),
+);
 
 export type ApiAvlSubscription = {
     id: string;

@@ -1,4 +1,4 @@
-import { ZodRawShape, z } from "zod";
+import { z } from "zod";
 
 export const REQUEST_PARAM_MAX_LENGTH = 256;
 export const STRING_LENGTH_REGEX = new RegExp(`^.{1,${REQUEST_PARAM_MAX_LENGTH}}$`);
@@ -10,8 +10,6 @@ export const NM_TOKEN_REGEX = new RegExp(`^[a-zA-Z0-9.\-_:]{1,${REQUEST_PARAM_MA
 export const NM_TOKEN_ARRAY_REGEX = new RegExp(
     `^[a-zA-Z0-9.\-_:]{1,${REQUEST_PARAM_MAX_LENGTH}}(,[a-zA-Z0-9.\-_:]{1,${REQUEST_PARAM_MAX_LENGTH}})*$`,
 );
-
-export const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
 
 export const createStringLengthValidation = (propertyName: string) => {
     return z

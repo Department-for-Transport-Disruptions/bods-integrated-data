@@ -18,22 +18,23 @@ import {
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyResult } from "aws-lambda";
-import { ZodError, ZodRawShape, z } from "zod";
+import { ZodError, z } from "zod";
 import { createResponseStream, streamifyResponse } from "./utils";
 
-const createRequestParamsSchema = (shape: ZodRawShape) => z.preprocess(Object, z.object(shape));
-
-const requestParamsSchema = createRequestParamsSchema({
-    downloadTfl: createStringLengthValidation("downloadTfl").toLowerCase().optional(),
-    boundingBox: createBoundingBoxValidation("boundingBox").optional(),
-    operatorRef: createNmTokenArrayValidation("operatorRef").optional(),
-    vehicleRef: createNmTokenValidation("vehicleRef").optional(),
-    lineRef: createNmTokenValidation("lineRef").optional(),
-    producerRef: createNmTokenValidation("producerRef").optional(),
-    originRef: createNmTokenValidation("originRef").optional(),
-    destinationRef: createNmTokenValidation("destinationRef").optional(),
-    subscriptionId: createStringLengthValidation("subscriptionId").optional(),
-});
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        downloadTfl: createStringLengthValidation("downloadTfl").toLowerCase().optional(),
+        boundingBox: createBoundingBoxValidation("boundingBox").optional(),
+        operatorRef: createNmTokenArrayValidation("operatorRef").optional(),
+        vehicleRef: createNmTokenValidation("vehicleRef").optional(),
+        lineRef: createNmTokenValidation("lineRef").optional(),
+        producerRef: createNmTokenValidation("producerRef").optional(),
+        originRef: createNmTokenValidation("originRef").optional(),
+        destinationRef: createNmTokenValidation("destinationRef").optional(),
+        subscriptionId: createStringLengthValidation("subscriptionId").optional(),
+    }),
+);
 
 const retrieveSiriVmData = async (
     dbClient: KyselyDb,
