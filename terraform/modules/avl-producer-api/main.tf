@@ -57,7 +57,7 @@ module "avl_subscriber" {
     module.avl_mock_data_producer.subscribe_function_url :
   "${module.avl_mock_data_producer.endpoint}/subscriptions")
   avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/data" :
-  "${module.avl_producer_api_gateway[0].endpoint}/data")
+  "${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
   aws_account_id = var.aws_account_id
   aws_region     = var.aws_region
   sg_id          = var.sg_id
