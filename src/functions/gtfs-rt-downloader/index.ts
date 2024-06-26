@@ -1,6 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
+import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     base64Encode,
     generateGtfsRtFeed,
@@ -8,19 +9,22 @@ import {
     mapAvlToGtfsEntity,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
-import { BOUNDING_BOX_REGEX, NM_TOKEN_ARRAY_REGEX } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
+import {
+    createBoundingBoxValidation,
+    createNmTokenArrayValidation,
+    createStringLengthValidation,
+} from "@bods-integrated-data/shared/validation";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { ZodError, z } from "zod";
 
-const queryParametersSchema = z.preprocess(
-    (val) => Object(val),
+const requestParamsSchema = z.preprocess(
+    Object,
     z.object({
-        download: z.coerce.string().toLowerCase().optional(),
-        routeId: z.coerce.string().regex(NM_TOKEN_ARRAY_REGEX).optional(),
-        boundingBox: z.coerce.string().regex(BOUNDING_BOX_REGEX).optional(),
-        startTimeBefore: z.coerce.number().optional(),
-        startTimeAfter: z.coerce.number().optional(),
+        download: createStringLengthValidation("download").toLowerCase().optional(),
+        boundingBox: createBoundingBoxValidation("boundingBox").optional(),
+        routeId: createNmTokenArrayValidation("routeId").optional(),
+        startTimeBefore: z.coerce.number({ message: "startTimeBefore must be a number" }).optional(),
+        startTimeAfter: z.coerce.number({ message: "startTimeAfter must be a number" }).optional(),
     }),
 );
 
@@ -47,50 +51,65 @@ const putMetrics = async (
     );
 };
 
-const retrieveRouteData = async (
-    dbClient: KyselyDb,
-    routeId?: string,
-    startTimeBefore?: number,
-    startTimeAfter?: number,
-    boundingBox?: string,
-): Promise<APIGatewayProxyResultV2> => {
-    const avlData = await getAvlDataForGtfs(dbClient, routeId, startTimeBefore, startTimeAfter, boundingBox);
-    const entities = avlData.map(mapAvlToGtfsEntity);
-    const gtfsRtFeed = generateGtfsRtFeed(entities);
-    const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
-
-    return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/octet-stream" },
-        body: base64GtfsRtFeed,
-        isBase64Encoded: true,
-    };
-};
-
-const downloadData = async (bucketName: string, key: string): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
-        const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: key }, 3600);
+        const { BUCKET_NAME: bucketName, STAGE: stage } = process.env;
+        const key = "gtfs-rt.bin";
 
-        return {
-            statusCode: 302,
-            headers: {
-                Location: presignedUrl,
-            },
-        };
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was an error generating a presigned URL for GTFS-RT download", error);
+        if (!bucketName) {
+            throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
-        return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        };
-    }
-};
+        const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = requestParamsSchema.parse(
+            event.queryStringParameters,
+        );
 
-const retrieveContents = async (bucketName: string, key: string): Promise<APIGatewayProxyResultV2> => {
-    try {
+        await putMetrics(stage || "", download, routeId, startTimeAfter, startTimeBefore, boundingBox);
+
+        if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
+            const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+
+            try {
+                const avlData = await getAvlDataForGtfs(
+                    dbClient,
+                    routeId,
+                    startTimeBefore,
+                    startTimeAfter,
+                    boundingBox,
+                );
+                const entities = avlData.map(mapAvlToGtfsEntity);
+                const gtfsRtFeed = generateGtfsRtFeed(entities);
+                const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
+
+                return {
+                    statusCode: 200,
+                    headers: { "Content-Type": "application/octet-stream" },
+                    body: base64GtfsRtFeed,
+                    isBase64Encoded: true,
+                };
+            } catch (error) {
+                if (error instanceof Error) {
+                    logger.error("There was an error retrieving the route data", error);
+                }
+
+                throw error;
+            } finally {
+                await dbClient.destroy();
+            }
+        }
+
+        if (download === "true") {
+            const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: key }, 3600);
+
+            return {
+                statusCode: 302,
+                headers: {
+                    Location: presignedUrl,
+                },
+                body: "",
+            };
+        }
+
         const data = await getS3Object({ Bucket: bucketName, Key: key });
 
         if (!data.Body) {
@@ -105,77 +124,16 @@ const retrieveContents = async (bucketName: string, key: string): Promise<APIGat
             body: encodedBody,
             isBase64Encoded: true,
         };
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was an error retrieving the contents of the GTFS-RT data", error);
+    } catch (e) {
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
-        return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        };
-    }
-};
-
-export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-    const { BUCKET_NAME: bucketName, STAGE: stage } = process.env;
-    const key = "gtfs-rt.bin";
-
-    if (!bucketName) {
-        logger.error("Missing env vars - BUCKET_NAME must be set");
-
-        return {
-            statusCode: 500,
-            body: "An internal error occurred.",
-        };
-    }
-
-    logger.info("GTFS-RT Downloader invoked", event.queryStringParameters);
-
-    const parseResult = queryParametersSchema.safeParse(event.queryStringParameters);
-
-    if (!parseResult.success) {
-        const validationError = fromZodError(parseResult.error);
-
-        return {
-            statusCode: 400,
-            body: validationError.message,
-        };
-    }
-
-    const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = parseResult.data;
-
-    await putMetrics(stage || "", download, routeId, startTimeAfter, startTimeBefore, boundingBox);
-
-    if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
-        const dbClient = await getDatabaseClient(process.env.STAGE === "local");
-
-        if (boundingBox && boundingBox.split(",").length !== 4) {
-            return {
-                statusCode: 400,
-                body: "Bounding box must contain 4 items; minLongitude, minLatitude, maxLongitude and maxLatitude",
-            };
+        if (e instanceof Error) {
+            logger.error("There was a problem with the GTFS-RT downloader endpoint", e);
         }
 
-        try {
-            return await retrieveRouteData(dbClient, routeId, startTimeBefore, startTimeAfter, boundingBox);
-        } catch (error) {
-            if (error instanceof Error) {
-                logger.error("There was an error retrieving the route data", error);
-            }
-
-            return {
-                statusCode: 500,
-                body: "An unknown error occurred. Please try again.",
-            };
-        } finally {
-            await dbClient.destroy();
-        }
+        return createServerErrorResponse();
     }
-
-    if (download === "true") {
-        return await downloadData(bucketName, key);
-    }
-
-    return await retrieveContents(bucketName, key);
 };
