@@ -18,8 +18,8 @@ dependencies:
     specifier: ^0.27.3
     version: 0.27.3
   zod-validation-error:
-    specifier: ^3.0.3
-    version: 3.1.0(zod@3.22.4)
+    specifier: ^3.3.0
+    version: 3.3.0(zod@3.22.4)
 
 devDependencies:
   '@types/aws-lambda':
@@ -65,8 +65,8 @@ packages:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
     dev: true
 
-  /zod-validation-error@3.1.0(zod@3.22.4):
-    resolution: {integrity: sha512-zujS6HqJjMZCsvjfbnRs7WI3PXN39ovTcY1n8a+KTm4kOH0ZXYsNiJkH1odZf4xZKMkBDL7M2rmQ913FCS1p9w==}
+  /zod-validation-error@3.3.0(zod@3.22.4):
+    resolution: {integrity: sha512-Syib9oumw1NTqEv4LT0e6U83Td9aVRk9iTXPUQr1otyV1PuXQKOvOwhMNqZIq5hluzHP2pMgnOmHEo7kPdI2mw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.18.0
