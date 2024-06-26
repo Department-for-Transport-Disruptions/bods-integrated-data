@@ -101,6 +101,9 @@ docker-build-%:
 check-types:
 	cd src && pnpm run check-types
 
+run-integration-tests:
+	cd integration-testing && pnpm run test
+
 # CLI helpers
 
 commands:
