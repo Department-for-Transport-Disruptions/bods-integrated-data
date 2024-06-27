@@ -116,7 +116,8 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
     // TODO: This block of code is to mock out the data producers response when running locally, it will be removed
     //  when we create an unsubscribe endpoint for the mock data producer.
     const terminateSubscriptionResponse =
-        process.env.STAGE === "local" && subscription.requestorRef === "BODS_MOCK_PRODUCER"
+        (process.env.STAGE === "local" || process.env.STAGE === "dev" || process.env.STAGE === "test") &&
+        subscription.requestorRef === "BODS_MOCK_PRODUCER"
             ? {
                   data: mockSubscriptionResponseBody,
                   status: 200,
