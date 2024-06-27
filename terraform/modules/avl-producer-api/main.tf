@@ -88,8 +88,8 @@ module "avl_update_endpoint" {
   avl_mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
     module.avl_mock_data_producer.subscribe_function_url :
   "${module.avl_mock_data_producer.endpoint}/subscribe")
-  avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/data" :
-  "https://${module.avl_producer_api_gateway[0].endpoint}/data")
+  avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/subscriptions" :
+  "https://${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
   aws_account_id = var.aws_account_id
   aws_region     = var.aws_region
   environment    = var.environment
