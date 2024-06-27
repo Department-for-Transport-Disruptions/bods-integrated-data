@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
-    "scripts": { "test": "playwright test" },
+    "scripts": {
+        "test": "STAGE=local AVL_PRODUCER_API_BASE_URL=https://avl-producer.dev.integrated-data.dft-create-data.com playwright test"
+    },
     "keywords": [],
     "author": "",
     "license": "ISC",

@@ -1,10 +1,14 @@
 import { test, expect } from "@playwright/test";
 import { deleteDynamoItem } from "../data/dynamo";
 
-const { AVL_PRODUCER_API_BASE_URL: apiProducerBaseUrl } = process.env;
+const {
+    STAGE: stage,
+    AVL_PRODUCER_API_BASE_URL: avlProducerApiUrl,
+    AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName,
+} = process.env;
 
-const avlApiUrl = "https://avl-producer.dev.integrated-data.dft-create-data.com";
-const tableName = "integrated-data-avl-subscription-table-dev";
+// Run integration tests to run against dev when running locally as we do not have an API in localstack
+const tableName = stage === "local" ? "integrated-data-avl-subscription-table-dev" : avlSubscriptionTableName;
 
 const testSubscription = {
     dataProducerEndpoint: "http://siri.ticketer.org.uk/api/vm",
@@ -34,14 +38,14 @@ test.afterAll(async () => {
 
 test.describe("avl-producer-api", () => {
     test("should allow a new data producer subscription to be created", async ({ request }) => {
-        const newSubscription = await request.post(`${avlApiUrl}/subscriptions`, {
+        const newSubscription = await request.post(`${avlProducerApiUrl}/subscriptions`, {
             data: testSubscription,
         });
 
         expect(newSubscription.status()).toBe(201);
 
         const getSubscriptionResponse = await request.get(
-            `${avlApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
         );
 
         expect(getSubscriptionResponse.status()).toBe(200);
@@ -54,20 +58,23 @@ test.describe("avl-producer-api", () => {
             }),
         );
 
-        const listSubscriptionsResponse = await request.get(`${avlApiUrl}/subscriptions/`);
+        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
 
         expect(listSubscriptionsResponse.status()).toBe(200);
     });
 
     test("should allow an existing data producer subscription to be updated", async ({ request }) => {
-        const updateSubscription = await request.put(`${avlApiUrl}/subscriptions/${testSubscription.subscriptionId}`, {
-            data: { ...testSubscription, username: "newUsername", password: "newPassword" },
-        });
+        const updateSubscription = await request.put(
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            {
+                data: { ...testSubscription, username: "newUsername", password: "newPassword" },
+            },
+        );
 
         expect(updateSubscription.status()).toBe(204);
 
         const getSubscriptionResponse = await request.get(
-            `${avlApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
         );
 
         expect(getSubscriptionResponse.status()).toBe(200);
@@ -80,23 +87,23 @@ test.describe("avl-producer-api", () => {
             }),
         );
 
-        const listSubscriptionsResponse = await request.get(`${avlApiUrl}/subscriptions/`);
+        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
 
         expect(listSubscriptionsResponse.status()).toBe(200);
     });
 
     test("should allow a data producer subscription to be deleted", async ({ request }) => {
         const deleteSubscription = await request.delete(
-            `${avlApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
         );
 
-        expect(deleteSubscription.status()).toBe(201);
+        expect(deleteSubscription.status()).toBe(204);
 
         const getSubscriptionResponse = await request.get(
-            `${avlApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
         );
 
-        expect(getSubscriptionResponse.status()).toBe(404);
+        expect(getSubscriptionResponse.status()).toBe(200);
 
         expect(await getSubscriptionResponse.json()).toEqual(
             expect.objectContaining({
@@ -106,7 +113,7 @@ test.describe("avl-producer-api", () => {
             }),
         );
 
-        const listSubscriptionsResponse = await request.get(`${avlApiUrl}/subscriptions/`);
+        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
 
         expect(listSubscriptionsResponse.status()).toBe(200);
     });
