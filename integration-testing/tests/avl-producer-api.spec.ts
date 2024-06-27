@@ -1,14 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { deleteDynamoItem } from "../data/dynamo";
 
-const {
-    STAGE: stage,
-    AVL_PRODUCER_API_BASE_URL: avlProducerApiUrl,
-    AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName,
-} = process.env;
+const { AVL_PRODUCER_API_BASE_URL: avlProducerApiUrl, AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName } =
+    process.env;
 
-// Run integration tests to run against dev when running locally as we do not have an API in localstack
-const tableName = stage === "local" ? "integrated-data-avl-subscription-table-dev" : avlSubscriptionTableName;
+const avlProducerApiUrl = `https://avl-producer.${process.env.STAGE}.integrated-data.dft-create-data.com`;
 
 const testSubscription = {
     dataProducerEndpoint: "http://siri.ticketer.org.uk/api/vm",
@@ -22,7 +18,7 @@ const testSubscription = {
 };
 
 const cleardownTestSubscription = async () => {
-    await deleteDynamoItem(tableName, {
+    await deleteDynamoItem(avlSubscriptionTableName, {
         PK: testSubscription.subscriptionId,
         SK: "SUBSCRIPTION",
     });

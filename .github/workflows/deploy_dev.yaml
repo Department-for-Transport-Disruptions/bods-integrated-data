@@ -1,6 +1,6 @@
 on:
   pull_request_review:
-    types: [submitted]
+    types: [ submitted ]
   workflow_dispatch:
 
 name: Terraform Apply Dev
@@ -45,3 +45,5 @@ jobs:
       use_artifacts: true
     secrets:
       oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+
+  run_integration_test:

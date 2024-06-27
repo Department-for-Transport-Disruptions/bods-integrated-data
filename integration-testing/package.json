@@ -4,15 +4,19 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "STAGE=local AVL_PRODUCER_API_BASE_URL=https://avl-producer.dev.integrated-data.dft-create-data.com playwright test"
+        "test": "playwright test",
+        "test:local": "playwright test"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@playwright/test": "^1.45.0",
-        "@types/node": "^20.14.8",
         "@aws-sdk/client-dynamodb": "^3.529.1",
-        "@aws-sdk/lib-dynamodb": "^3.529.1"
+        "@aws-sdk/lib-dynamodb": "^3.529.1",
+        "@playwright/test": "^1.45.0",
+        "@types/node": "^20.14.8"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5"
     }
 }
