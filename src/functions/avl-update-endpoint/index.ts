@@ -10,7 +10,7 @@ import {
     avlSubscriptionSchema,
     avlUpdateBodySchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 export const getSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem<AvlSubscription>(tableName, {
@@ -25,7 +25,7 @@ export const getSubscription = async (subscriptionId: string, tableName: string)
     return avlSubscriptionSchema.parse(subscription);
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const {
             STAGE: stage,
@@ -66,7 +66,10 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         if (!subscription) {
             logger.info(`Subscription with ID: ${subscriptionId} not found in subscription table`);
-            return { statusCode: 404 };
+            return {
+                statusCode: 404,
+                body: `Subscription with ID: ${subscriptionId} not found in subscription table.`,
+            };
         }
 
         logger.info(`Starting lambda to update subscription with ID: ${subscriptionId}`);
@@ -106,6 +109,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         logger.info(`Successfully updated subscription ID: ${subscriptionId}`);
         return {
             statusCode: 204,
+            body: "",
         };
     } catch (e) {
         if (e instanceof Error) {
@@ -115,6 +119,9 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             );
         }
 
-        throw e;
+        return {
+            statusCode: 500,
+            body: "An unknown error occurred. Please try again.",
+        };
     }
 };

@@ -1,9 +1,9 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 const mockUpdateEventBody = {
@@ -19,7 +19,7 @@ const mockUpdateEvent = {
         subscriptionId: "mock-subscription-id",
     },
     body: JSON.stringify(mockUpdateEventBody),
-} as unknown as APIGatewayEvent;
+} as unknown as APIGatewayProxyEvent;
 
 const expectedSubscriptionDetails = {
     description: "updated description",
@@ -32,11 +32,6 @@ const expectedSubscriptionDetails = {
 };
 
 describe("avl-update-endpoint", () => {
-    beforeAll(() => {
-        process.env.TABLE_NAME = "test-dynamo-table";
-        process.env.DATA_ENDPOINT = "https://www.test.com/data";
-    });
-
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
     }));
@@ -62,6 +57,8 @@ describe("avl-update-endpoint", () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        process.env.TABLE_NAME = "test-dynamo-table";
+        process.env.DATA_ENDPOINT = "https://www.test.com/data";
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
@@ -80,7 +77,7 @@ describe("avl-update-endpoint", () => {
     });
 
     it("should unsubscribe from data producer and resubscribe with new details", async () => {
-        await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204 });
+        await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204, body: "" });
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
@@ -109,7 +106,7 @@ describe("avl-update-endpoint", () => {
     it("should resubscribe with new details from data producer even if unsubscribe step is unsuccessful", async () => {
         sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
 
-        await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204 });
+        await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204, body: "" });
 
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
@@ -134,6 +131,7 @@ describe("avl-update-endpoint", () => {
 
         await expect(handler(mockUpdateEvent)).resolves.toEqual({
             statusCode: 404,
+            body: "Subscription with ID: mock-subscription-id not found in subscription table.",
         });
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
@@ -157,9 +155,26 @@ describe("avl-update-endpoint", () => {
             },
         ],
     ])("should throw a 500 status code if body does not match expected schema", async (input) => {
-        const invalidEvent = { ...mockUpdateEvent, body: JSON.stringify(input) } as unknown as APIGatewayEvent;
+        const invalidEvent = { ...mockUpdateEvent, body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidEvent)).rejects.toThrowError();
+        await expect(handler(invalidEvent)).resolves.toEqual({
+            body: "An unknown error occurred. Please try again.",
+            statusCode: 500,
+        });
+
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
+        expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it("should throw an error is env vars are missing", async () => {
+        process.env.TABLE_NAME = "";
+        process.env.DATA_ENDPOINT = "";
+
+        await expect(handler(mockUpdateEvent)).resolves.toEqual({
+            body: "An unknown error occurred. Please try again.",
+            statusCode: 500,
+        });
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
