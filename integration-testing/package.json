@@ -1,11 +1,11 @@
 {
     "name": "integration-testing",
     "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
+    "description": "Integration tests for the bods-integrated-data platform",
     "scripts": {
         "test": "playwright test",
-        "test:local": "playwright test"
+        "test:dev": "STAGE=dev playwright test",
+        "test:test": "STAGE=test playwright test"
     },
     "keywords": [],
     "author": "",

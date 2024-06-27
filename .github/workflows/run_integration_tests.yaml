@@ -10,10 +10,6 @@ on:
       oidc_role_arn:
         required: true
 
-env:
-
-
-
 jobs:
   integration_test:
     runs-on: ubuntu-22.04

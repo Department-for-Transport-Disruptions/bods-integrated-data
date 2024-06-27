@@ -47,3 +47,12 @@ jobs:
       oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
 
   run_integration_test:
+    uses: ./.github/workflows/run_integration_tests.yaml
+    name: Run Integration Tests - Dev
+    needs:
+      - terraform_apply
+    if: ${{ always() && !cancelled() && needs.terraform_apply.result == 'success' }}
+    with:
+      stage: "dev"
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}

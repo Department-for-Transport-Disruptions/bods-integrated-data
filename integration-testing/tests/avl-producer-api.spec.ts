@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { deleteDynamoItem } from "../data/dynamo";
 
-const { AVL_PRODUCER_API_BASE_URL: avlProducerApiUrl, AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName } =
-    process.env;
+const { STAGE: stage } = process.env;
 
-const avlProducerApiUrl = `https://avl-producer.${process.env.STAGE}.integrated-data.dft-create-data.com`;
+const avlProducerApiUrl = `https://avl-producer.${stage}.integrated-data.dft-create-data.com`;
+const avlSubscriptionTableName = `integrated-data-avl-subscription-table-${stage}`;
 
 const testSubscription = {
     dataProducerEndpoint: "http://siri.ticketer.org.uk/api/vm",
