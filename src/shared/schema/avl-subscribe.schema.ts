@@ -68,6 +68,7 @@ export const avlSubscriptionSchema = z.object({
     serviceEndDatetime: z.string().nullish(),
     publisherId: z.string(),
     lastAvlDataReceivedDateTime: z.string().nullish(),
+    lastModifiedDateTime: z.string().nullish(),
 });
 
 export type AvlSubscription = z.infer<typeof avlSubscriptionSchema>;
@@ -78,3 +79,13 @@ export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform(
 }));
 
 export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);
+
+export const avlUpdateBodySchema = z.object({
+    dataProducerEndpoint: z.string().url(),
+    description: z.string().nullish(),
+    shortDescription: z.string().nullish(),
+    username: z.string(),
+    password: z.string(),
+});
+
+export type AvlUpdateBody = z.infer<typeof avlUpdateBodySchema>;
