@@ -9,7 +9,6 @@ AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
-AVL_PRODUCER_API_BASE_URL="https://avl-producer.dev.integrated-data.dft-create-data.com"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 NOC_BUCKET_NAME="integrated-data-noc-local"
@@ -82,7 +81,8 @@ create-local-env:
 install-deps:
 	pnpm i && \
 	(cd src && pnpm i) && \
-	(cd cli-helpers && pnpm i)
+	(cd cli-helpers && pnpm i) && \
+	(cd integration-testing && pnpm i)
 
 build-functions:
 	cd src && pnpm build-all

@@ -14,7 +14,6 @@ permissions:
   id-token: write # This is required for aws oidc connection
   contents: read # This is required for actions/checkout.
 
-
 env:
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 

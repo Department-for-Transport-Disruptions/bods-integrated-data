@@ -56,7 +56,11 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Run Playwright tests
-        run: make run-integration-tests
+        run: |
+          cd ./integration-testing
+          pnpm i
+          pnpm run test
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
