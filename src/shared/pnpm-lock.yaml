@@ -38,6 +38,9 @@ dependencies:
   clean-deep:
     specifier: ^3.4.0
     version: 3.4.0
+  command-exists:
+    specifier: ^1.2.9
+    version: 1.2.9
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
@@ -61,6 +64,9 @@ dependencies:
     version: 3.22.4
 
 devDependencies:
+  '@types/command-exists':
+    specifier: ^1.2.3
+    version: 1.2.3
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.19
@@ -4351,6 +4357,10 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@types/command-exists@1.2.3:
+    resolution: {integrity: sha512-PpbaE2XWLaWYboXD6k70TcXO/OdOyyRFq5TVpmlUELNxdkkmXU9fkImNosmXU1DtsNrqdUgWd/nJQYXgwmtdXQ==}
+    dev: true
+
   /@types/linkify-it@5.0.0:
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
     dev: false
@@ -4530,6 +4540,10 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+    dev: false
+
+  /command-exists@1.2.9:
+    resolution: {integrity: sha512-LTQ/SGc+s0Xc0Fu5WaKnR0YiygZkm9eKFvyS+fRsU7/ZWFF8ykFM6Pc9aCVf1+xasOOZpO3BAVgVrKvsqKHV7w==}
     dev: false
 
   /combined-stream@1.0.8:

@@ -11,8 +11,8 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
     <ProducerRef>DepartmentForTransport</ProducerRef>
     <VehicleMonitoringDelivery>
       <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
-      <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
+      <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
         <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea6</ItemIdentifier>
@@ -21,16 +21,16 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
           <LineRef>784</LineRef>
           <DirectionRef>outbound</DirectionRef>
           <PublishedLineName>784</PublishedLineName>
-          <Occupancy>full</Occupancy>
           <OperatorRef>NATX</OperatorRef>
           <OriginRef>98010</OriginRef>
-          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationRef>98045</DestinationRef>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <VehicleLocation>
             <Longitude>-6.238029</Longitude>
             <Latitude>53.42605</Latitude>
           </VehicleLocation>
           <Bearing>119</Bearing>
+          <Occupancy>full</Occupancy>
           <BlockRef>784105</BlockRef>
           <VehicleRef>191D44717</VehicleRef>
         </MonitoredVehicleJourney>
@@ -44,21 +44,21 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
           <LineRef>ra</LineRef>
           <DirectionRef>outbound</DirectionRef>
           <PublishedLineName>ra</PublishedLineName>
-          <Occupancy>full</Occupancy>
           <OperatorRef>TFLO</OperatorRef>
           <OriginRef>3390VB01</OriginRef>
           <OriginName>test origin name</OriginName>
-          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationRef>1090BSTN05</DestinationRef>
           <DestinationName>test destination name</DestinationName>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationAimedArrivalTime>2024-02-26T14:36:18+00:00</DestinationAimedArrivalTime>
           <VehicleLocation>
             <Longitude>-1.471941</Longitude>
             <Latitude>52.92178</Latitude>
           </VehicleLocation>
+          <Occupancy>full</Occupancy>
           <BlockRef>DY04</BlockRef>
-          <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
           <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
         <Extensions>
           <VehicleJourney>
@@ -84,8 +84,8 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
     <ProducerRef>DepartmentForTransport</ProducerRef>
     <VehicleMonitoringDelivery>
       <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
-      <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
+      <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
         <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
@@ -95,21 +95,21 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
           <LineRef>ra</LineRef>
           <DirectionRef>outbound</DirectionRef>
           <PublishedLineName>ra</PublishedLineName>
-          <Occupancy>full</Occupancy>
           <OperatorRef>TFLO</OperatorRef>
           <OriginRef>3390VB01</OriginRef>
           <OriginName>test origin name</OriginName>
-          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationRef>1090BSTN05</DestinationRef>
           <DestinationName>test destination name</DestinationName>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
           <DestinationAimedArrivalTime>2024-02-26T14:36:18+00:00</DestinationAimedArrivalTime>
           <VehicleLocation>
             <Longitude>-1.471941</Longitude>
             <Latitude>52.92178</Latitude>
           </VehicleLocation>
+          <Occupancy>full</Occupancy>
           <BlockRef>DY04</BlockRef>
-          <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
           <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
         <Extensions>
           <VehicleJourney>
@@ -233,6 +233,10 @@ describe("utils", () => {
             putS3Object: vi.fn(),
         }));
 
+        vi.mock("../cloudwatch", () => ({
+            putMetricData: vi.fn(),
+        }));
+
         afterEach(() => {
             vi.resetAllMocks();
         });
@@ -242,7 +246,7 @@ describe("utils", () => {
         const requestMessageRef = "acde070d-8c4c-4f0d-9d8a-162843c10333";
 
         it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
-            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket");
+            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", "local", false);
 
             expect(s3.putS3Object).toHaveBeenCalledTimes(2);
             expect(s3.putS3Object).toHaveBeenNthCalledWith(1, {
