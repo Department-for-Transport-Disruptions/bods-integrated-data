@@ -50,13 +50,18 @@ The following dependencies are required. An AWS account is also required.
 | Dependency                                                                                                                                  | Description                                                                                                      |
 |---------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 | [asdf](https://asdf-vm.com/guide/getting-started.html)                                                                                      | Runtime version manager                                                                                          |
-| [AWS CLI](https://aws.amazon.com/cli/)                                                                                                      | AWS command line tool                                                                                            |
 | [AWS Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) | Session management plugin for AWS CLI                                                                            |
 | [awslocal](https://github.com/localstack/awscli-local)                                                                                      | localstack wrapper for AWS CLI                                                                                   |
 | [Docker](https://rancherdesktop.io/)                                                                                                        | Platform for running containerised code                                                                          |
-| [pnpm](https://pnpm.io/installation)                                                                                                        | Package manager                                                                                                  |
-| [terraform](https://www.terraform.io/)                                                                                                      | Terraform                                                                                                        |
 | [tflocal](https://github.com/localstack/terraform-local)                                                                                    | A small wrapper script to run [Terraform](https://terraform.io/) against [localstack](https://localstack.cloud/) |
+
+The following dependencies are installed via asdf:
+
+| Dependency                             | Description           |
+|----------------------------------------|-----------------------|
+| [AWS CLI](https://aws.amazon.com/cli/) | AWS command line tool |
+| [pnpm](https://pnpm.io/installation)   | Package manager       |
+| [terraform](https://www.terraform.io/) | Terraform             |
 
 The following dependencies are optional:
 
