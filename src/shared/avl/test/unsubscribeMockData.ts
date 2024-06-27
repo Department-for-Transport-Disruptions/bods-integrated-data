@@ -1,10 +1,15 @@
-import { APIGatewayProxyEvent } from "aws-lambda";
-
-export const mockUnsubscribeEvent = {
-    pathParameters: {
-        subscriptionId: "mock-subscription-id",
+export const mockInput = {
+    subscriptionId: "mock-subscription-id",
+    subscription: {
+        url: "https://mock-data-producer.com",
+        description: "description",
+        shortDescription: "shortDescription",
+        publisherId: "mock-publisher-id",
+        serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+        lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
     },
-} as unknown as APIGatewayProxyEvent;
+    tableName: "test-dynamo-table",
+};
 
 export const expectedRequestBody =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:ns2="http://www.ifopt.org.uk/acsb" xmlns:ns3="http://www.ifopt.org.uk/ifopt" xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"><TerminateSubscriptionRequest><RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp><RequestorRef>BODS</RequestorRef><MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier><SubscriptionRef>mock-subscription-id</SubscriptionRef></TerminateSubscriptionRequest></Siri>';
