@@ -54,6 +54,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -63,6 +64,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -83,6 +85,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -99,6 +102,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
 
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -114,6 +118,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -123,6 +128,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -145,6 +151,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             subscriptionId: "mock-subscription-id-1",
             username: "test-password",
+            publisherId: "test-publisher-id",
         });
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
@@ -156,6 +163,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "ERROR",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
     });
     it("should throw an error if we resubscribe to a data producer and a username or password is not found for that subscription", async () => {
@@ -169,6 +177,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -178,6 +187,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -198,6 +208,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "ERROR",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
@@ -212,6 +223,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -221,6 +233,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -247,6 +260,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "ERROR",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
         expect(axiosSpy).toHaveBeenCalledOnce();
         expect(axiosSpy).toHaveBeenCalledOnce();
