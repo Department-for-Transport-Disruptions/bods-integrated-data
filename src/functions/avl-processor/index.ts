@@ -1,5 +1,5 @@
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { logger } from "@baselime/lambda-logger";
-import { Metrics, MetricUnits } from '@aws-lambda-powertools/metrics';
 import { getAvlSubscription, insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -12,7 +12,7 @@ const arrayProperties = ["VehicleActivity", "OnwardCall"];
 const metrics = new Metrics({
     namespace: 'BODSAVLProcessor',
     serviceName: 'BODSAVLProcessor-Service',
-  });
+});
 
 
 const parseXml = (xml: string) => {
@@ -58,10 +58,10 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
         const avls = parseXml(await body.transformToString());
 
         if (!avls || avls.length === 0) {
-            metrics.addDimension('subscriptionID', subscriptionId);
-            metrics.addMetric('invalidSiriSchema', MetricUnits.Count, 1);
+            metrics.addDimension("subscriptionID", subscriptionId);
+            metrics.addMetric("invalidSiriSchema", MetricUnits.Count, 1);
             metrics.publishStoredMetrics();
-            throw new Error("Error parsing data");          
+            throw new Error("Error parsing data");
         }
 
         const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
@@ -96,7 +96,7 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-        metrics.addMetric('totalAvlProcessed', MetricUnits.Count,1);
+        metrics.addMetric("totalAvlProcessed", MetricUnits.Count,1);
         metrics.publishStoredMetrics();
         logger.info("AVL uploaded to database successfully");
     } catch (e) {
