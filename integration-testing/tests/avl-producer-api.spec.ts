@@ -57,6 +57,16 @@ test.describe("avl-producer-api", () => {
         const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
 
         expect(listSubscriptionsResponse.status()).toBe(200);
+
+        expect(await listSubscriptionsResponse.json()).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: testSubscription.subscriptionId,
+                    publisherId: testSubscription.publisherId,
+                    status: "LIVE",
+                }),
+            ]),
+        );
     });
 
     test("should allow an existing data producer subscription to be updated", async ({ request }) => {
@@ -86,6 +96,16 @@ test.describe("avl-producer-api", () => {
         const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
 
         expect(listSubscriptionsResponse.status()).toBe(200);
+
+        expect(await listSubscriptionsResponse.json()).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: testSubscription.subscriptionId,
+                    publisherId: testSubscription.publisherId,
+                    status: "LIVE",
+                }),
+            ]),
+        );
     });
 
     test("should allow a data producer subscription to be deleted", async ({ request }) => {
@@ -112,5 +132,15 @@ test.describe("avl-producer-api", () => {
         const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
 
         expect(listSubscriptionsResponse.status()).toBe(200);
+
+        expect(await listSubscriptionsResponse.json()).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: testSubscription.subscriptionId,
+                    publisherId: testSubscription.publisherId,
+                    status: "INACTIVE",
+                }),
+            ]),
+        );
     });
 });
