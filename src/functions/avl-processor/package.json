@@ -13,6 +13,7 @@
     "type": "module",
     "dependencies": {
         "@baselime/lambda-logger": "^0.2.2",
+        "@aws-lambda-powertools/metrics": "^1.15.0",
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "^4.3.5"
     },
