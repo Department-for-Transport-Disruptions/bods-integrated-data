@@ -18,6 +18,8 @@ const testSubscription = {
 };
 
 const cleardownTestSubscription = async () => {
+    // biome-ignore lint/suspicious/noConsoleLog: <explanation>
+    console.log(avlSubscriptionTableName);
     await deleteDynamoItem(avlSubscriptionTableName, {
         PK: testSubscription.subscriptionId,
         SK: "SUBSCRIPTION",
