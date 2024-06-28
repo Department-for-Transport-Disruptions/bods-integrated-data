@@ -14,7 +14,6 @@ const metrics = new Metrics({
     serviceName: "BODSAVLProcessor-Service",
 });
 
-
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
@@ -30,7 +29,6 @@ const parseXml = (xml: string) => {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
 
         throw new Error("Error parsing data");
-
     }
 
     return parsedJson.data;
