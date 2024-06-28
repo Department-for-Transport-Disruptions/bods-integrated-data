@@ -1,9 +1,13 @@
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { writeFile } from "node:fs/promises";
 import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
+import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { putMetricData } from "../cloudwatch";
 import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
@@ -334,7 +338,53 @@ export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minut
  */
 export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
 
-export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
+/**
+ * Spawns a child process to use the xmllint CLI command in order to validate
+ * the SIRI-VM files against the XSD. If the file fails validation then it will
+ * throw an error and log out the validation issues.
+ *
+ * @param xml
+ */
+const runXmlLint = async (xml: string) => {
+    const fileName = randomUUID();
+    await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
+
+    const command = spawn("xmllint", [
+        `/app/${fileName}.xml`,
+        "--noout",
+        "--nowarning",
+        "--schema",
+        "/app/xsd/www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+    ]);
+
+    let error = "";
+
+    for await (const chunk of command.stderr) {
+        error += chunk;
+    }
+
+    const exitCode = await new Promise((resolve) => {
+        command.on("close", resolve);
+    });
+
+    if (exitCode) {
+        logger.error(error.slice(0, 10000));
+
+        throw new Error();
+    }
+};
+
+export const generateSiriVmAndUploadToS3 = async (
+    avls: Avl[],
+    requestMessageRef: string,
+    bucketName: string,
+    stage: string,
+    lintSiri = true,
+) => {
+    if (lintSiri && !commandExists("xmllint")) {
+        throw new Error("xmllint not available");
+    }
+
     const responseTime = getDate();
     const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
     const siriVmTfl = createSiriVm(
@@ -342,6 +392,25 @@ export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef
         requestMessageRef,
         responseTime,
     );
+
+    if (lintSiri) {
+        const [siriVmValidation, siriVmTflValidation] = await Promise.allSettled([
+            runXmlLint(siriVm),
+            runXmlLint(siriVmTfl),
+        ]);
+
+        if (siriVmValidation.status === "rejected") {
+            await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "ValidationError", Value: 1 }]);
+
+            throw new Error("SIRI-VM file failed validation");
+        }
+
+        if (siriVmTflValidation.status === "rejected") {
+            await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "TfLValidationError", Value: 1 }]);
+
+            throw new Error("SIRI-VM TfL file failed validation");
+        }
+    }
 
     await Promise.all([
         putS3Object({
