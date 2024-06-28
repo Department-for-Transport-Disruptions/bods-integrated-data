@@ -52,9 +52,6 @@ jobs:
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
-
       - name: Run Playwright tests
         run: |
           cd ./integration-testing
