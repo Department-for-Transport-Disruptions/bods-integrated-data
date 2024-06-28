@@ -1,4 +1,4 @@
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { MetricUnits, Metrics } from "@aws-lambda-powertools/metrics";
 import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscription, insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -10,8 +10,8 @@ import { XMLParser } from "fast-xml-parser";
 const arrayProperties = ["VehicleActivity", "OnwardCall"];
 
 const metrics = new Metrics({
-    namespace: 'BODSAVLProcessor',
-    serviceName: 'BODSAVLProcessor-Service',
+    namespace: "BODSAVLProcessor",
+    serviceName: "BODSAVLProcessor-Service",
 });
 
 
@@ -96,7 +96,7 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-        metrics.addMetric("totalAvlProcessed", MetricUnits.Count,1);
+        metrics.addMetric("totalAvlProcessed", MetricUnits.Count, 1);
         metrics.publishStoredMetrics();
         logger.info("AVL uploaded to database successfully");
     } catch (e) {
