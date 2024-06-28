@@ -22,13 +22,11 @@ const parseXml = (xml: string) => {
         parseTagValue: false,
         isArray: (tagName) => arrayProperties.includes(tagName),
     });
-
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
-        
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
 
         throw new Error("Error parsing data");
