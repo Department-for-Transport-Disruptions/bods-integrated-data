@@ -25,6 +25,8 @@ void (async () => {
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
 
+        logger.info("avlData", avls);
+
         await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName, stage);
 
         performance.mark("siri-vm-generator-end");

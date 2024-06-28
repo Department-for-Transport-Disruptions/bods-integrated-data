@@ -96,6 +96,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         await addSubscriptionAuthCredsToSsm(subscriptionId, updateBody.username, updateBody.password);
 
         logger.info(`Subscribing to subscription ID: ${subscriptionId} using new details`);
+        logger.info("subscriptionDetail", subscriptionDetail);
         await sendSubscriptionRequestAndUpdateDynamo(
             subscriptionId,
             subscriptionDetail,

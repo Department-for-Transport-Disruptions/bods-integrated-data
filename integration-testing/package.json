@@ -1,0 +1,22 @@
+{
+    "name": "integration-testing",
+    "version": "1.0.0",
+    "description": "Integration tests for the bods-integrated-data platform",
+    "scripts": {
+        "test": "playwright test",
+        "test:dev": "STAGE=dev playwright test",
+        "test:test": "STAGE=test playwright test"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@aws-sdk/client-dynamodb": "^3.529.1",
+        "@aws-sdk/lib-dynamodb": "^3.529.1",
+        "@playwright/test": "^1.45.0",
+        "@types/node": "^20.14.8"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5"
+    }
+}
