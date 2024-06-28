@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: Run integration tests
     env:
-      stage: ${{ inputs.stage }}
+      STAGE: ${{ inputs.stage }}
 
     steps:
       - name: Checkout
