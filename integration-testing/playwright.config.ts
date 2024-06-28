@@ -1,8 +1,4 @@
-import * as path from "node:path";
-import { defineConfig, devices } from "@playwright/test";
-import * as dotenv from "dotenv";
-
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
     testDir: "./tests",
@@ -14,11 +10,4 @@ export default defineConfig({
     use: {
         trace: "on-first-retry",
     },
-
-    projects: [
-        {
-            name: "chromium",
-            use: { ...devices["Desktop Chrome"] },
-        },
-    ],
 });
