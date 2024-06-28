@@ -1,0 +1,91 @@
+name: Deploy ECS task for shared servies
+
+on:
+  workflow_call:
+    secrets:
+      shared_services_oidc_role_arn:
+          required: true
+      application_oidc_role_arn:
+          required: true
+    inputs:
+      task_dir:
+        required: true
+        type: string
+      ECR_REPOSITORY:
+        required: true
+        type: string
+      ECS_SERVICE:
+        required: true
+        type: string
+      ECS_CLUSTER:
+        required: true
+        type: string
+
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+
+env:
+    AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+jobs:
+    deploy:
+      name: Deploy
+      runs-on: ubuntu-latest
+      environment: development
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Configure AWS Credentials for shared services
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            role-to-assume: ${{ secrets.shared_services_oidc_role_arn }}
+            aws-region: "eu-west-2"
+            role-session-name: GitHub-OIDC-TERRAFORM
+
+        - name: Login to Amazon ECR 
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v1
+
+        - name: Bump version and push tag
+          id: tag_version
+          uses: mathieudutour/github-tag-action@v6.2
+          with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+    
+        - name: Build and push image to Amazon ECR
+          id: build-image
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+            IMAGE_TAG: ${{ steps.tag_version.outputs.new_tag }}
+          run: |
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG src --build-arg servicePath=${{ inputs.task_dir }}
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+    
+        - name: Fill in the new image ID in the Amazon ECS task definition
+          id: task-def
+          uses: aws-actions/amazon-ecs-render-task-definition@v1
+          with:
+            task-definition: task-definition.json
+            container-name: ${{ inputs.ECR_REPOSITORY }}
+            image: ${{ steps.build-image.outputs.image }}
+
+        - name: Configure AWS Credentials for app
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+              role-to-assume: ${{ secrets.application_oidc_role_arn }}
+              aws-region: "eu-west-2"
+              role-session-name: GitHub-OIDC-TERRAFORM
+    
+        - name: Deploy Amazon ECS task definition
+          uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+          with:
+            task-definition: ${{ steps.task-def.outputs.task-definition }}
+            service: ${{ inputs.ECS_SERVICE }}
+            cluster: ${{ inputs.ECS_CLUSTER }}
+            wait-for-service-stability: true
