@@ -60,13 +60,12 @@ const vehicleActivitySchema = z.object({
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        Occupancy: z.coerce.string().nullish(),
         OperatorRef: z.coerce.string(),
         OriginRef: z.coerce.string().nullish(),
         OriginName: z.coerce.string().nullish(),
-        OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationRef: z.coerce.string().nullish(),
         DestinationName: z.coerce.string().nullish(),
+        OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationAimedArrivalTime: z.coerce.string().nullish(),
         Monitored: z.coerce.string().nullish(),
         VehicleLocation: z.object({
@@ -74,9 +73,10 @@ const vehicleActivitySchema = z.object({
             Latitude: z.coerce.number(),
         }),
         Bearing: z.coerce.string().nullish(),
+        Occupancy: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
-        VehicleRef: z.coerce.string(),
         VehicleJourneyRef: z.coerce.string().nullish(),
+        VehicleRef: z.coerce.string().transform((ref) => ref.replace(/\s/g, "")),
         OnwardCalls: z
             .object({
                 OnwardCall: makeFilteredArraySchema(onwardCallSchema),
@@ -96,8 +96,8 @@ export const siriSchema = z.object({
         ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
-            ValidUntil: z.string().optional(),
             RequestMessageRef: z.string().uuid().optional(),
+            ValidUntil: z.string().optional(),
             VehicleActivity: makeFilteredArraySchema(vehicleActivitySchema),
         }),
     }),
@@ -141,8 +141,8 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
             latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
             bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
             monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
+            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
             origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
             origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
             origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
