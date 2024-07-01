@@ -1,13 +1,31 @@
 import { logger } from "@baselime/lambda-logger";
-import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import {
+    createNotFoundErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
+import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { ClientError } from "./errors";
+import { ZodError, z } from "zod";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
+
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        subscriptionId: createStringLengthValidation("subscriptionId"),
+    }),
+);
+
+const requestBodySchema = z.string({
+    required_error: "Body is required",
+    invalid_type_error: "Body must be a string",
+});
 
 const arrayProperties = ["VehicleActivity", "OnwardCall"];
 
@@ -67,13 +85,13 @@ const parseXml = (xml: string) => {
     if (!parsedJson.success) {
         logger.error("There was an error parsing the xml from the data producer.", parsedJson.error.format());
 
-        throw new ClientError();
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
         const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;
 
@@ -81,49 +99,50 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
-        logger.info("Starting Data Endpoint");
-
-        const subscriptionId =
-            stage === "local" ? event?.queryStringParameters?.subscriptionId : event?.pathParameters?.subscriptionId;
-
-        if (!subscriptionId) {
-            throw new Error("Subscription ID missing from path parameters");
-        }
-
-        if (!event.body) {
-            throw new Error("No body sent with event");
-        }
+        const parameters = stage === "local" ? event.queryStringParameters : event.pathParameters;
+        const { subscriptionId } = requestParamsSchema.parse(parameters);
+        const body = requestBodySchema.parse(event.body);
 
         logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
-        const data = parseXml(event.body);
+        const xml = parseXml(body);
 
-        if (Object.hasOwn(data, "HeartbeatNotification")) {
-            await processHeartbeatNotification(heartbeatNotificationSchema.parse(data), subscription, tableName);
+        if (Object.hasOwn(xml, "HeartbeatNotification")) {
+            await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
         } else {
             if (subscription.status !== "LIVE") {
-                logger.warn(`Subscription: ${subscriptionId} is not LIVE, data will not be processed...`);
-                return {
-                    statusCode: 404,
-                    body: `Subscription with Subscription ID: ${subscriptionId} is not LIVE in the service.`,
-                };
+                logger.error(`Subscription: ${subscriptionId} is not LIVE, data will not be processed...`);
+                return createNotFoundErrorResponse("Subscription is not live");
             }
-            await uploadSiriVmToS3(event.body, bucketName, subscription, tableName);
+            await uploadSiriVmToS3(body, bucketName, subscription, tableName);
         }
 
         return {
             statusCode: 200,
+            body: "",
         };
     } catch (e) {
-        if (e instanceof ClientError) {
-            logger.warn("Invalid XML provided.", e);
-            return { statusCode: 400 };
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
+
+        if (e instanceof InvalidXmlError) {
+            logger.warn("Invalid SIRI-VM XML provided", e);
+            return createValidationErrorResponse(["Body must be valid SIRI-VM XML"]);
+        }
+
+        if (e instanceof SubscriptionIdNotFoundError) {
+            logger.error("Subscription not found", e);
+            return createNotFoundErrorResponse("Subscription not found");
+        }
+
         if (e instanceof Error) {
             logger.error("There was a problem with the Data endpoint", e);
         }
-        throw e;
+
+        return createServerErrorResponse();
     }
 };

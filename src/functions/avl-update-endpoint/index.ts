@@ -1,29 +1,34 @@
 import { logger } from "@baselime/lambda-logger";
 import {
+    createNotFoundErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
+import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
-import { getDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import {
-    AvlSubscription,
-    avlSubscriptionSchema,
-    avlUpdateBodySchema,
-} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { ZodError, z } from "zod";
 
-export const getSubscription = async (subscriptionId: string, tableName: string) => {
-    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
-        PK: subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        subscriptionId: createStringLengthValidation("subscriptionId"),
+    }),
+);
 
-    if (!subscription) {
-        return null;
-    }
-
-    return avlSubscriptionSchema.parse(subscription);
-};
+const requestBodySchema = z
+    .string({
+        required_error: "Body is required",
+        invalid_type_error: "Body must be a string",
+    })
+    .transform((body) => JSON.parse(body))
+    .pipe(avlUpdateBodySchema);
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
@@ -42,35 +47,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
-        const subscriptionId = event.pathParameters?.subscriptionId;
-
-        if (!subscriptionId) {
-            throw new Error("Subscription ID must be passed as a path parameter");
-        }
+        const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
 
         if (!event.body) {
             throw new Error("No body sent with event");
         }
 
-        const parsedBody = avlUpdateBodySchema.safeParse(JSON.parse(event.body));
-
-        if (!parsedBody.success) {
-            logger.error(JSON.stringify(parsedBody.error));
-            throw new Error("Invalid event body for updating subscription.");
-        }
-
-        const updateBody = parsedBody.data;
+        const updateBody = requestBodySchema.parse(event.body);
         const { username, password } = updateBody;
 
-        const subscription = await getSubscription(subscriptionId, tableName);
-
-        if (!subscription) {
-            logger.info(`Subscription with ID: ${subscriptionId} not found in subscription table`);
-            return {
-                statusCode: 404,
-                body: `Subscription with ID: ${subscriptionId} not found in subscription table.`,
-            };
-        }
+        const subscription = await getAvlSubscription(subscriptionId, tableName);
 
         logger.info(`Starting lambda to update subscription with ID: ${subscriptionId}`);
 
@@ -113,16 +99,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             body: "",
         };
     } catch (e) {
-        if (e instanceof Error) {
-            logger.error(
-                `An error occurred when updating subscription ID: ${event.pathParameters?.subscriptionId ?? ""}`,
-                e,
-            );
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
-        return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        };
+        if (e instanceof SubscriptionIdNotFoundError) {
+            logger.error("Subscription not found", e);
+            return createNotFoundErrorResponse("Subscription not found");
+        }
+
+        if (e instanceof Error) {
+            logger.error("There was a problem with the AVL subscriptions endpoint", e);
+        }
+
+        return createServerErrorResponse();
     }
 };

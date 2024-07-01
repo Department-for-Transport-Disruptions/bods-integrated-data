@@ -1,10 +1,11 @@
+import { logger } from "@baselime/lambda-logger";
 import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMockData";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as ssm from "@bods-integrated-data/shared/ssm";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("avl-unsubscriber", () => {
@@ -12,14 +13,19 @@ describe("avl-unsubscriber", () => {
         pathParameters: {
             subscriptionId: "mock-subscription-id",
         },
-    } as unknown as APIGatewayEvent;
+    } as unknown as APIGatewayProxyEvent;
 
-    beforeAll(() => {
-        process.env.TABLE_NAME = "test-dynamo-table";
-    });
+    vi.mock("@baselime/lambda-logger", () => ({
+        logger: {
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+    }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
+        putDynamoItem: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/ssm", () => ({
@@ -31,6 +37,7 @@ describe("avl-unsubscriber", () => {
     }));
 
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const deleteParametersSpy = vi.spyOn(ssm, "deleteParameters");
     const sendTerminateSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(
         unsubscribe,
@@ -40,6 +47,7 @@ describe("avl-unsubscriber", () => {
     MockDate.set("2024-03-11T15:20:02.093Z");
 
     beforeEach(() => {
+        process.env.TABLE_NAME = "test-dynamo-table";
         vi.resetAllMocks();
     });
 
@@ -70,19 +78,49 @@ describe("avl-unsubscriber", () => {
         );
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
-        expect(deleteParametersSpy).toBeCalledWith([
+        expect(deleteParametersSpy).toHaveBeenCalledWith([
             "/subscription/mock-subscription-id/username",
             "/subscription/mock-subscription-id/password",
         ]);
     });
 
+    it.each([
+        [undefined, "subscriptionId is required"],
+        [null, "subscriptionId must be a string"],
+        [1, "subscriptionId must be a string"],
+        [{}, "subscriptionId must be a string"],
+        ["", "subscriptionId must be 1-256 characters"],
+        ["1".repeat(257), "subscriptionId must be 1-256 characters"],
+    ])(
+        "Throws an error when the subscription ID fails validation (test: %o)",
+        async (subscriptionId, expectedErrorMessage) => {
+            const mockEvent = {
+                pathParameters: {
+                    subscriptionId,
+                },
+                body: null,
+            } as unknown as APIGatewayProxyEvent;
+
+            const response = await handler(mockEvent);
+            expect(response).toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            });
+            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(putDynamoItemSpy).not.toHaveBeenCalled();
+            expect(deleteParametersSpy).not.toHaveBeenCalled();
+        },
+    );
+
     it("should throw an error if subscription id not found in dynamo.", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
-        await expect(handler(mockUnsubscribeEvent)).resolves.toStrictEqual({
+        const response = await handler(mockUnsubscribeEvent);
+        expect(response).toEqual({
             statusCode: 404,
-            body: "Subscription ID: mock-subscription-id not found in DynamoDB",
+            body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
+        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -103,7 +141,11 @@ describe("avl-unsubscriber", () => {
 
         sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
 
-        await expect(handler(mockUnsubscribeEvent)).rejects.toThrowError();
+        const response = await handler(mockUnsubscribeEvent);
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
@@ -112,5 +154,21 @@ describe("avl-unsubscriber", () => {
             "test-dynamo-table",
         );
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it("Throws an error when the required env vars are missing", async () => {
+        process.env.TABLE_NAME = "";
+
+        const response = await handler(mockUnsubscribeEvent);
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was a problem with the AVL unsubscribe endpoint",
+            expect.any(Error),
+        );
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+        expect(deleteParametersSpy).not.toHaveBeenCalled();
     });
 });

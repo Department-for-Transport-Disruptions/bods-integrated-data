@@ -11,6 +11,7 @@ import {
     avlSubscriptionResponseSchema,
 } from "../schema/avl-subscribe.schema";
 import { putParameter } from "../ssm";
+import { InvalidXmlError } from "../validation";
 import { getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
@@ -187,7 +188,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
 
     if (!parsedResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
-        throw new Error(`Error parsing subscription response from: ${subscriptionDetails.url}`);
+        throw new InvalidXmlError(`Error parsing subscription response from: ${subscriptionDetails.url}`);
     }
 
     if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {

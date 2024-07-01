@@ -1,17 +1,27 @@
+import { logger } from "@baselime/lambda-logger";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {} from "zod";
 import { handler } from ".";
 import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
 
 describe("AVL-data-endpoint", () => {
-    beforeAll(() => {
+    beforeEach(() => {
         process.env.BUCKET_NAME = "test-bucket";
         process.env.TABLE_NAME = "test-dynamodb";
     });
+
+    vi.mock("@baselime/lambda-logger", () => ({
+        logger: {
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+    }));
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
         putS3Object: vi.fn(),
@@ -48,11 +58,11 @@ describe("AVL-data-endpoint", () => {
         });
 
         const mockEvent = {
-            body: testSiri,
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayEvent;
+            body: testSiri,
+        } as unknown as APIGatewayProxyEvent;
 
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -65,7 +75,7 @@ describe("AVL-data-endpoint", () => {
             publisherId: "test-publisher-id",
         };
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Body: `${testSiri}`,
@@ -96,13 +106,13 @@ describe("AVL-data-endpoint", () => {
         getDynamoItemSpy.mockResolvedValue(subscription);
 
         const mockEvent = {
-            body: testSiriWithSingleVehicleActivity,
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayEvent;
+            body: testSiriWithSingleVehicleActivity,
+        } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Body: `${testSiriWithSingleVehicleActivity}`,
@@ -119,18 +129,73 @@ describe("AVL-data-endpoint", () => {
         );
     });
 
-    it("Should throw an error if the body is empty", async () => {
+    it("Throws an error when the required env vars are missing", async () => {
+        process.env.BUCKET_NAME = "";
+        process.env.TABLE_NAME = "";
+
         const mockEvent = {
-            body: null,
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayEvent;
-        await expect(handler(mockEvent)).rejects.toThrowError("No body sent with event");
+            body: testSiriWithSingleVehicleActivity,
+        } as unknown as APIGatewayProxyEvent;
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
+        expect(logger.error).toHaveBeenCalledWith("There was a problem with the Data endpoint", expect.any(Error));
         expect(s3.putS3Object).not.toBeCalled();
     });
 
-    it("Should throw an error if invalid XML is parsed", async () => {
+    it.each([
+        [undefined, "subscriptionId is required"],
+        [null, "subscriptionId must be a string"],
+        [1, "subscriptionId must be a string"],
+        [{}, "subscriptionId must be a string"],
+        ["", "subscriptionId must be 1-256 characters"],
+        ["1".repeat(257), "subscriptionId must be 1-256 characters"],
+    ])(
+        "Throws an error when the subscription ID fails validation (test: %o)",
+        async (subscriptionId, expectedErrorMessage) => {
+            const mockEvent = {
+                pathParameters: {
+                    subscriptionId,
+                },
+                body: null,
+            } as unknown as APIGatewayProxyEvent;
+
+            const response = await handler(mockEvent);
+            expect(response).toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            });
+            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(s3.putS3Object).not.toBeCalled();
+        },
+    );
+
+    it.each([
+        [undefined, "Body is required"],
+        [null, "Body must be a string"],
+        [1, "Body must be a string"],
+        [{}, "Body must be a string"],
+    ])("Throws an error when the body fails validation (test %#)", async (body, expectedErrorMessage) => {
+        const mockEvent = {
+            pathParameters: {
+                subscriptionId: mockSubscriptionId,
+            },
+            body,
+        } as unknown as APIGatewayProxyEvent;
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
+        expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
+        expect(s3.putS3Object).not.toBeCalled();
+    });
+
+    it("Throw an error when invalid SIRI-VM is provided", async () => {
         getDynamoItemSpy.mockResolvedValue({
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
@@ -143,14 +208,48 @@ describe("AVL-data-endpoint", () => {
         });
 
         const mockEvent = {
-            body: "abc",
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayEvent;
+            body: "abc",
+        } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 400 });
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({ errors: ["Body must be valid SIRI-VM XML"] }),
+        });
+        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM XML provided", expect.anything());
         expect(s3.putS3Object).not.toBeCalled();
+    });
+
+    it("Throws an error when the subscription is not live", async () => {
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "INACTIVE",
+            requestorRef: null,
+            publisherId: "test-publisher-id",
+        });
+
+        const mockEvent = {
+            pathParameters: {
+                subscriptionId: mockSubscriptionId,
+            },
+            body: testSiriWithSingleVehicleActivity,
+        } as unknown as APIGatewayProxyEvent;
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
+            statusCode: 404,
+            body: JSON.stringify({ errors: ["Subscription is not live"] }),
+        });
+        expect(logger.error).toHaveBeenCalledWith(
+            `Subscription: ${mockSubscriptionId} is not LIVE, data will not be processed...`,
+        );
+        expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 
     it("should process a valid heartbeat notification and update dynamodb with heartbeat details", async () => {
@@ -165,11 +264,11 @@ describe("AVL-data-endpoint", () => {
         });
 
         const mockEvent = {
-            body: mockHeartbeatNotification,
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayEvent;
+            body: mockHeartbeatNotification,
+        } as unknown as APIGatewayProxyEvent;
 
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -182,7 +281,7 @@ describe("AVL-data-endpoint", () => {
             publisherId: "test-publisher-id",
         };
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200 });
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
             "test-dynamodb",
             expectedSubscription.PK,
@@ -191,19 +290,23 @@ describe("AVL-data-endpoint", () => {
         );
     });
 
-    it("should throw an error if when processing a heartbeat notification the subscription does not exist in dynamodb", async () => {
+    it("Throws an error if when processing a heartbeat notification the subscription does not exist in dynamodb", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
         const mockEvent = {
-            body: mockHeartbeatNotification,
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayEvent;
+            body: mockHeartbeatNotification,
+        } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(mockEvent)).rejects.toThrowError(
-            `Subscription ID: ${mockSubscriptionId} not found in DynamoDB`,
-        );
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
+            statusCode: 404,
+            body: JSON.stringify({ errors: ["Subscription not found"] }),
+        });
+        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
         expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 });
+3;

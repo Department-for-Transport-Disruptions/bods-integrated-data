@@ -2,18 +2,16 @@ import { logger } from "@baselime/lambda-logger";
 
 export const handler = async () => {
     try {
-        if (process.env.STAGE === "local") {
-            const message: string = await new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve("Hello world");
-                }, 100);
-            });
+        const { EXAMPLE_VAR: exampleVar } = process.env;
 
-            logger.info(message);
+        if (!exampleVar) {
+            throw new Error("Missing env vars - EXAMPLE_VAR must be set");
         }
+
+        logger.info("Executed lambda-template", { exampleVar });
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Lambda has failed", e);
+            logger.error("There was a problem with the lambda-template function", e);
         }
 
         throw e;
