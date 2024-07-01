@@ -1,8 +1,14 @@
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Avl } from "../database";
+import { getDate } from "../dates";
 import * as s3 from "../s3";
-import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH, generateSiriVmAndUploadToS3 } from "./utils";
+import {
+    GENERATED_SIRI_VM_FILE_PATH,
+    GENERATED_SIRI_VM_TFL_FILE_PATH,
+    createSiriVm,
+    generateSiriVmAndUploadToS3,
+} from "./utils";
 
 const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
@@ -86,6 +92,77 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
       <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
       <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
       <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
+      <VehicleActivity>
+        <RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime>
+        <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
+        <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
+        <VehicleMonitoringRef>test</VehicleMonitoringRef>
+        <MonitoredVehicleJourney>
+          <LineRef>ra</LineRef>
+          <DirectionRef>outbound</DirectionRef>
+          <PublishedLineName>ra</PublishedLineName>
+          <OperatorRef>TFLO</OperatorRef>
+          <OriginRef>3390VB01</OriginRef>
+          <OriginName>test origin name</OriginName>
+          <DestinationRef>1090BSTN05</DestinationRef>
+          <DestinationName>test destination name</DestinationName>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
+          <DestinationAimedArrivalTime>2024-02-26T14:36:18+00:00</DestinationAimedArrivalTime>
+          <VehicleLocation>
+            <Longitude>-1.471941</Longitude>
+            <Latitude>52.92178</Latitude>
+          </VehicleLocation>
+          <Occupancy>full</Occupancy>
+          <BlockRef>DY04</BlockRef>
+          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
+        </MonitoredVehicleJourney>
+        <Extensions>
+          <VehicleJourney>
+            <Operational>
+              <TicketMachine>
+                <TicketMachineServiceCode>123</TicketMachineServiceCode>
+                <JourneyCode>VJ_123</JourneyCode>
+              </TicketMachine>
+            </Operational>
+            <VehicleUniqueId>Vehicle_123</VehicleUniqueId>
+          </VehicleJourney>
+        </Extensions>
+      </VehicleActivity>
+    </VehicleMonitoringDelivery>
+  </ServiceDelivery>
+</Siri>
+`;
+
+const mockSiriVmWithOmittedFieldsResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+  <ServiceDelivery>
+    <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
+    <ProducerRef>DepartmentForTransport</ProducerRef>
+    <VehicleMonitoringDelivery>
+      <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
+      <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
+      <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
+      <VehicleActivity>
+        <RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime>
+        <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea6</ItemIdentifier>
+        <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
+        <MonitoredVehicleJourney>
+          <LineRef>784</LineRef>
+          <DirectionRef>outbound</DirectionRef>
+          <PublishedLineName>784</PublishedLineName>
+          <OperatorRef>NATX</OperatorRef>
+          <OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime>
+          <VehicleLocation>
+            <Longitude>-6.238029</Longitude>
+            <Latitude>53.42605</Latitude>
+          </VehicleLocation>
+          <Bearing>119</Bearing>
+          <Occupancy>full</Occupancy>
+          <BlockRef>784105</BlockRef>
+          <VehicleRef>191D44717</VehicleRef>
+        </MonitoredVehicleJourney>
+      </VehicleActivity>
       <VehicleActivity>
         <RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime>
         <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
@@ -228,6 +305,10 @@ const mockAvl: Avl[] = [
 ];
 
 describe("utils", () => {
+    MockDate.set("2024-02-26T14:36:11+00:00");
+    const requestMessageRef = "acde070d-8c4c-4f0d-9d8a-162843c10333";
+    const responseTime = getDate();
+
     describe("generateSiriVmAndUploadToS3", () => {
         vi.mock("../s3", () => ({
             putS3Object: vi.fn(),
@@ -240,10 +321,6 @@ describe("utils", () => {
         afterEach(() => {
             vi.resetAllMocks();
         });
-
-        MockDate.set("2024-02-26T14:36:11+00:00");
-
-        const requestMessageRef = "acde070d-8c4c-4f0d-9d8a-162843c10333";
 
         it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
             await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", "local", false);
@@ -264,17 +341,18 @@ describe("utils", () => {
         });
     });
 
-    // describe("createSiriVm", () => {
-    //     // creates valid siri-vm
-    //     // removes empty objects, empty strings, null values, and undefined values
-    //     // throws an error when siri json fails schema validation
+    describe("createSiriVm", () => {
+        it("creates valid SIRI-VM XML", () => {
+            const siriVm = createSiriVm(mockAvl, requestMessageRef, responseTime);
+            expect(siriVm).toEqual(mockSiriVmResult);
+        });
 
-    //     it("creates valid SIRI-VM XML", () => {
-    //         const requestorRef = "mock-requestor-ref";
-    //         const responseTime = getDate();
-
-    //         const siriVm = createSiriVm(mockAvl, requestorRef, responseTime);
-    //         expect(siriVm).toEqual(mockSiriVmResult);
-    //     });
-    // });
+        it("omits fields with empty strings or null values from the SIRI-VM XML", () => {
+            const mockAvlWithMissingFields = structuredClone(mockAvl);
+            mockAvlWithMissingFields[0].origin_ref = "";
+            mockAvlWithMissingFields[0].destination_ref = null;
+            const siriVm = createSiriVm(mockAvlWithMissingFields, requestMessageRef, responseTime);
+            expect(siriVm).toEqual(mockSiriVmWithOmittedFieldsResult);
+        });
+    });
 });
