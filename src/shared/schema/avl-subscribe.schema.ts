@@ -16,7 +16,7 @@ export const avlSubscribeMessageSchema = z.object(
         shortDescription: createStringLengthValidation("shortDescription"),
         username: createStringLengthValidation("username"),
         password: createStringLengthValidation("password"),
-        requestorRef: createStringLengthValidation("requestorRef").optional(),
+        requestorRef: createStringLengthValidation("requestorRef").nullish(),
         subscriptionId: createStringLengthValidation("subscriptionId"),
         publisherId: createStringLengthValidation("publisherId"),
     },
