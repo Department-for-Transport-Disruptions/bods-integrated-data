@@ -14,7 +14,7 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
       <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
       <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <VehicleActivity>
-        <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime>
         <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea6</ItemIdentifier>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <MonitoredVehicleJourney>
@@ -36,7 +36,7 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
         </MonitoredVehicleJourney>
       </VehicleActivity>
       <VehicleActivity>
-        <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime>
         <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <VehicleMonitoringRef>test</VehicleMonitoringRef>
@@ -87,7 +87,7 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
       <RequestMessageRef>acde070d-8c4c-4f0d-9d8a-162843c10333</RequestMessageRef>
       <ValidUntil>2024-02-26T14:41:11.000Z</ValidUntil>
       <VehicleActivity>
-        <RecordedAtTime>2024-02-26T14:36:11.000Z</RecordedAtTime>
+        <RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime>
         <ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea7</ItemIdentifier>
         <ValidUntilTime>2024-02-26T14:41:11.000Z</ValidUntilTime>
         <VehicleMonitoringRef>test</VehicleMonitoringRef>
@@ -133,7 +133,7 @@ const mockAvl: Avl[] = [
         id: 24173,
         response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
         producer_ref: "DfT",
-        recorded_at_time: "2024-02-26T14:36:18+00:00",
+        recorded_at_time: "2024-02-26T14:36:11+00:00",
         item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea6",
         valid_until_time: "2024-02-26 14:42:12",
         line_ref: "784",
@@ -263,4 +263,18 @@ describe("utils", () => {
             });
         });
     });
+
+    // describe("createSiriVm", () => {
+    //     // creates valid siri-vm
+    //     // removes empty objects, empty strings, null values, and undefined values
+    //     // throws an error when siri json fails schema validation
+
+    //     it("creates valid SIRI-VM XML", () => {
+    //         const requestorRef = "mock-requestor-ref";
+    //         const responseTime = getDate();
+
+    //         const siriVm = createSiriVm(mockAvl, requestorRef, responseTime);
+    //         expect(siriVm).toEqual(mockSiriVmResult);
+    //     });
+    // });
 });
