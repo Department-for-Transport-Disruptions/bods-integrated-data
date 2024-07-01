@@ -219,10 +219,10 @@ export const getAvlDataForSiriVm = async (
     }
 };
 
-const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
+const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehicleActivity[] => {
     return avls.map<SiriVehicleActivity>((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
-            RecordedAtTime: currentTime,
+            RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
             VehicleMonitoringRef: avl.vehicle_monitoring_ref,
@@ -279,7 +279,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const currentTime = responseTime.toISOString();
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
-    const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
+    const vehicleActivity = createVehicleActivities(avls, validUntilTime);
 
     const siriVm: SiriVM = {
         ServiceDelivery: {
