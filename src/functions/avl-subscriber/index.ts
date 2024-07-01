@@ -10,8 +10,12 @@ import {
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
-import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import {
+    AvlSubscribeMessage,
+    AvlSubscription,
+    avlSubscribeMessageSchema,
+} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
@@ -22,30 +26,7 @@ const requestBodySchema = z
         invalid_type_error: "Body must be a string",
     })
     .transform((body) => JSON.parse(body))
-    .pipe(
-        z.object(
-            {
-                dataProducerEndpoint: z
-                    .string({
-                        required_error: "dataProducerEndpoint is required",
-                        invalid_type_error: "dataProducerEndpoint must be a string",
-                    })
-                    .url({
-                        message: "dataProducerEndpoint must be a URL",
-                    }),
-                description: createStringLengthValidation("description"),
-                shortDescription: createStringLengthValidation("shortDescription"),
-                username: createStringLengthValidation("username"),
-                password: createStringLengthValidation("password"),
-                requestorRef: createStringLengthValidation("requestorRef").optional(),
-                subscriptionId: createStringLengthValidation("subscriptionId"),
-                publisherId: createStringLengthValidation("publisherId"),
-            },
-            {
-                message: "Body must be an object with required properties",
-            },
-        ),
-    );
+    .pipe(avlSubscribeMessageSchema);
 
 const formatSubscriptionDetail = (
     avlSubscribeMessage: AvlSubscribeMessage,
