@@ -13,6 +13,7 @@ export const STAGE_OPTION_WITH_DEFAULT = new Option("-s, --stage <stage>", "Stag
     .default("local");
 
 export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandInputType) => {
+    logger.info(`${localStackHost}`);
     const lambdaClient = new LambdaClient({
         region: "eu-west-2",
         ...(stage === "local"

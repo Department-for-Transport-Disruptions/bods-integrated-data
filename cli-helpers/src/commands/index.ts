@@ -32,3 +32,4 @@ export * from "./invoke-tnds-txc-retriever";
 export * from "./invoke-tnds-txc-unzipper";
 export * from "./invoke-txc-retriever";
 export * from "./migrate-avl-subscriptions";
+export * from "./rollback-migrate-avl-subscriptions";

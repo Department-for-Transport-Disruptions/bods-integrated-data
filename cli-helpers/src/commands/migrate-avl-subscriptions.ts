@@ -5,6 +5,15 @@ import csvToJson from "convert-csv-to-json";
 import { writeFile } from "node:fs/promises";
 import { Uint8ArrayBlobAdapter } from "@smithy/util-stream";
 
+interface BodsSubscription {
+    dataset_id: string;
+    organisation_id: string;
+    url_link: string;
+    username: string;
+    password: string;
+    status: string;
+}
+
 interface Subscription {
     id: string;
     publisherId: string;
@@ -58,11 +67,26 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
 
         const subscriptionsJson = csvToJson
             .fieldDelimiter(",")
-            .getJsonFromCsv(`${fileName}.csv`) as unknown as Subscription[];
+            .getJsonFromCsv(`${fileName}.csv`) as unknown as BodsSubscription[];
 
-        const unsuccessfulSubscriptions = [];
+        const dataProducersToSubscribeTo: Subscription[] = [];
 
-        for (const subscription of subscriptionsJson) {
+        subscriptionsJson.map((subscription) => {
+            if (subscription.status === "live") {
+                dataProducersToSubscribeTo.push({
+                    id: subscription.dataset_id,
+                    publisherId: subscription.organisation_id,
+                    url: subscription.url_link,
+                    username: subscription.username,
+                    password: subscription.password,
+                });
+            }
+        });
+
+        const unsuccessfulSubscriptions: Subscription[] = [];
+        const successfulSubscriptions: Subscription[] = [];
+
+        for (const subscription of dataProducersToSubscribeTo) {
             const payload = generateLambdaPayload(
                 subscription.url,
                 subscription.username,
@@ -88,8 +112,11 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
 
             if (returnPayloadJson.statusCode !== 201) {
                 unsuccessfulSubscriptions.push(subscription);
+            } else {
+                successfulSubscriptions.push(subscription);
             }
         }
 
         await writeFile("unsuccessful-subscriptions.json", JSON.stringify(unsuccessfulSubscriptions));
+        await writeFile("successful-subscriptions.json", JSON.stringify(successfulSubscriptions));
     });
