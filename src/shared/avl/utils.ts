@@ -16,6 +16,7 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
+import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -278,8 +279,8 @@ const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehic
 export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = responseTime.toISOString();
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
-
-    const vehicleActivity = createVehicleActivities(avls, validUntilTime);
+    const vehicleActivities = createVehicleActivities(avls, validUntilTime);
+    const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
         ServiceDelivery: {
@@ -289,7 +290,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                 ResponseTimestamp: currentTime,
                 RequestMessageRef: requestMessageRef,
                 ValidUntil: validUntilTime,
-                VehicleActivity: vehicleActivity,
+                VehicleActivity: validVehicleActivities,
             },
         },
     };
