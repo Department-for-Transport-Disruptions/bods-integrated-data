@@ -126,7 +126,7 @@ describe("avl-update-endpoint", () => {
         );
     });
 
-    it("should throw a 404 status code if given subscription ID does not exist in dynamo", async () => {
+    it("should return a 404 if given subscription ID does not exist in dynamo", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
         await expect(handler(mockUpdateEvent)).resolves.toEqual({
@@ -221,7 +221,7 @@ describe("avl-update-endpoint", () => {
             ],
         ],
     ])(
-        "should throw a 500 status code if body does not match expected schema",
+        "should return a 400 if event body from the API gateway event does not match the avlUpdateBody schema (test: %o).",
         async (input, expectedErrorMessages) => {
             const invalidEvent = { ...mockUpdateEvent, body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
 
@@ -236,7 +236,7 @@ describe("avl-update-endpoint", () => {
         },
     );
 
-    it("should throw an error is env vars are missing", async () => {
+    it("should return a 500 if env vars are missing", async () => {
         process.env.TABLE_NAME = "";
         process.env.DATA_ENDPOINT = "";
 

@@ -30,7 +30,7 @@ describe("avl-subscriptions", () => {
         mockEvent = {} as APIGatewayProxyEvent;
     });
 
-    it("returns a 500 when not all the env vars are set", async () => {
+    it("should return a 500 when not all the env vars are set", async () => {
         process.env.TABLE_NAME = "";
 
         const response = await handler(mockEvent);
@@ -46,7 +46,7 @@ describe("avl-subscriptions", () => {
         expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
 
-    it("returns a 500 when an unexpected error occurs retrieving subscriptions data", async () => {
+    it("should return a 500 when an unexpected error occurs retrieving subscriptions data", async () => {
         recursiveScanSpy.mockRejectedValueOnce(new Error());
 
         const response = await handler(mockEvent);
@@ -67,7 +67,7 @@ describe("avl-subscriptions", () => {
         ["", "subscriptionId must be 1-256 characters"],
         ["1".repeat(257), "subscriptionId must be 1-256 characters"],
     ])(
-        "Throws an error when the subscription ID fails validation (test: %o)",
+        "should return a 400 when the subscription ID fails validation (test: %o)",
         async (subscriptionId, expectedErrorMessage) => {
             const mockEvent = {
                 pathParameters: {
@@ -87,7 +87,7 @@ describe("avl-subscriptions", () => {
         },
     );
 
-    it("returns a 404 when getting a subscription but the subscription does not exist in dynamodb", async () => {
+    it("should return a 404 when getting a subscription but the subscription does not exist in dynamodb", async () => {
         getDynamoItemSpy.mockResolvedValueOnce(null);
 
         mockEvent.pathParameters = {
@@ -103,7 +103,7 @@ describe("avl-subscriptions", () => {
         expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 
-    it("returns a 200 with all subscriptions data when passing no subscription ID param", async () => {
+    it("should return a 200 with all subscriptions data when passing no subscription ID param", async () => {
         recursiveScanSpy.mockResolvedValueOnce([
             {
                 PK: "subscription-one",
@@ -157,7 +157,7 @@ describe("avl-subscriptions", () => {
         expect(recursiveScanSpy).toHaveBeenCalled();
     });
 
-    it("returns a 200 with a single subscription when passing a subscription ID param", async () => {
+    it("should return a 200 with a single subscription when passing a subscription ID param", async () => {
         mockEvent.pathParameters = {
             subscriptionId: "subscription-one",
         };
