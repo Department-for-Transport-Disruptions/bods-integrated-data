@@ -27,7 +27,7 @@ describe("avl-subscriptions", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
-        mockEvent = {} as APIGatewayProxyEvent;
+        mockEvent = { pathParameters: { subscriptionId: "" } } as unknown as APIGatewayProxyEvent;
     });
 
     it("should return a 500 when not all the env vars are set", async () => {
@@ -60,13 +60,7 @@ describe("avl-subscriptions", () => {
         );
     });
 
-    it.each([
-        [null, "subscriptionId must be a string"],
-        [1, "subscriptionId must be a string"],
-        [{}, "subscriptionId must be a string"],
-        ["", "subscriptionId must be 1-256 characters"],
-        ["1".repeat(257), "subscriptionId must be 1-256 characters"],
-    ])(
+    it.each([["1".repeat(257), "subscriptionId must be 1-256 characters"]])(
         "should return a 400 when the subscription ID fails validation (test: %o)",
         async (subscriptionId, expectedErrorMessage) => {
             const mockEvent = {

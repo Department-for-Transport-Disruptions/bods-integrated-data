@@ -17,7 +17,7 @@ import { ZodError, z } from "zod";
 const requestParamsSchema = z.preprocess(
     Object,
     z.object({
-        subscriptionId: createStringLengthValidation("subscriptionId").optional(),
+        subscriptionId: z.union([createStringLengthValidation("subscriptionId"), z.literal("")]),
     }),
 );
 

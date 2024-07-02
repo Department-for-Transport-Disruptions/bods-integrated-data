@@ -1,7 +1,7 @@
 import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
-import { APIGatewayProxyEventV2, Context } from "aws-lambda";
+import { APIGatewayProxyEvent, Context } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -38,7 +38,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     const createSiriVmMock = vi.spyOn(utilFunctions, "createSiriVm");
 
     const mockBucketName = "mock-bucket";
-    let mockRequest: APIGatewayProxyEventV2;
+    let mockRequest: APIGatewayProxyEvent;
 
     vi.mock("@baselime/lambda-logger", () => ({
         logger: {
@@ -49,7 +49,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
-        mockRequest = {} as APIGatewayProxyEventV2;
+        mockRequest = {} as APIGatewayProxyEvent;
     });
 
     afterEach(() => {
