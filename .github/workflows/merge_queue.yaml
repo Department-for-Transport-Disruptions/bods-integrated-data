@@ -1,4 +1,5 @@
 on:
+    pull_request:
     merge_group:
   
 name: Merge Queue Test
@@ -12,7 +13,8 @@ env:
  HUSKY: 0
 
 jobs:
-    zip_function:
+    commitlint:
+        if: ${{ github.event_name == 'merge_group' }}
         runs-on: ubuntu-22.04
         name: Zip function
         steps:
