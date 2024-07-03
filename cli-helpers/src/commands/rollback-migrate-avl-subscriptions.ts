@@ -1,9 +1,9 @@
+import * as fs from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { Command } from "@commander-js/extra-typings";
+import { Uint8ArrayBlobAdapter } from "@smithy/util-stream";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
-import { Uint8ArrayBlobAdapter } from "@smithy/util-stream";
-import { writeFile } from "node:fs/promises";
-import * as fs from "node:fs";
 
 interface Subscription {
     id: string;
