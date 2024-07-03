@@ -1,3 +1,4 @@
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
@@ -79,6 +80,18 @@ export const handler = async () => {
                 try {
                     await resubscribeToDataProducer(subscription, subscribeEndpoint);
                 } catch (e) {
+                    await putMetricData(`custom/CAVLMetrics`, [
+                        {
+                            MetricName: "invalidSiriSchema",
+                            Value: 1,
+                            Dimensions: [ 
+                                { 
+                                  Name: "subscriptionId", 
+                                  Value: subscription.PK,
+                                },
+                              ],
+                        }
+                    ]);
                     if (e instanceof AxiosError) {
                         logger.error(
                             `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,

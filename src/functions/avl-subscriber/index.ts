@@ -1,3 +1,4 @@
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@baselime/lambda-logger";
 import {
     addSubscriptionAuthCredsToSsm,
@@ -81,6 +82,12 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             );
         } catch (e) {
             if (e instanceof AxiosError) {
+                await putMetricData(`custom/CAVLMetrics`, [
+                    {
+                        MetricName: "failedSubscription",
+                        Value: 1,
+                       }
+                ]);
                 const subscriptionDetails = formatSubscriptionDetail(avlSubscribeMessage);
 
                 await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");

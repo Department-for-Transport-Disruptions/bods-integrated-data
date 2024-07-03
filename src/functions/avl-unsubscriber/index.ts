@@ -1,3 +1,4 @@
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@baselime/lambda-logger";
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
@@ -42,6 +43,12 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         try {
             await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);
         } catch (e) {
+            await putMetricData(`custom/CAVLMetrics`, [
+                {
+                    MetricName: "failedUnsubscribeRequest",
+                    Value: 1,
+                   }
+            ]);
             if (e instanceof AxiosError) {
                 logger.error(
                     `There was an error when sending the unsubscribe request to the data producer for subscription ${subscriptionId} - code: ${e.code}, message: ${e.message}`,
@@ -59,6 +66,12 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             statusCode: 204,
         };
     } catch (e) {
+        await putMetricData(`custom/CAVLMetrics`, [
+            {
+                MetricName: "failedUnsubscribeRequest",
+                Value: 1,
+               }
+        ]);
         if (e instanceof SubscriptionIdNotFoundError) {
             return {
                 statusCode: 404,
