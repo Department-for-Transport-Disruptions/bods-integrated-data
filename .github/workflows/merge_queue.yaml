@@ -1,0 +1,25 @@
+on:
+    pull_request:
+    merge_group:
+  
+name: Merge Queue Test
+
+permissions:
+ id-token: write # This is required for aws oidc connection
+ contents: read # This is required for actions/checkout.
+
+env:
+ AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+ HUSKY: 0
+
+jobs:
+    zip_function:
+        runs-on: ubuntu-22.04
+        name: Zip function
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - uses: wagoid/commitlint-github-action@v6
+
+  
