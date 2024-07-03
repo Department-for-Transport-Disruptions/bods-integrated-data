@@ -1,5 +1,5 @@
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 
 export const mockAvlSubscribeMessage: AvlSubscribeMessage = {
     dataProducerEndpoint: "https://mock-data-producer.com",
@@ -21,4 +21,4 @@ export const mockAvlSubscriptionDetails: Omit<AvlSubscription, "PK" | "status"> 
 
 export const mockSubscribeEvent = {
     body: JSON.stringify(mockAvlSubscribeMessage),
-} as unknown as APIGatewayEvent;
+} as unknown as APIGatewayProxyEvent;
