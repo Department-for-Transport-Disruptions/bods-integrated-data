@@ -1,5 +1,4 @@
 on:
-    pull_request:
     merge_group:
   
 name: Merge Queue Test
@@ -19,7 +18,6 @@ jobs:
         steps:
         - name: Checkout
           uses: actions/checkout@v4
-
         - uses: wagoid/commitlint-github-action@v6
 
   
