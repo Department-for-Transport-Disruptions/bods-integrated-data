@@ -1,7 +1,7 @@
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@baselime/lambda-logger";
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
@@ -43,11 +43,11 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         try {
             await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);
         } catch (e) {
-            await putMetricData(`custom/CAVLMetrics`, [
+            await putMetricData("custom/CAVLMetrics", [
                 {
                     MetricName: "failedUnsubscribeRequest",
                     Value: 1,
-                   }
+                },
             ]);
             if (e instanceof AxiosError) {
                 logger.error(
@@ -66,11 +66,11 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             statusCode: 204,
         };
     } catch (e) {
-        await putMetricData(`custom/CAVLMetrics`, [
+        await putMetricData("custom/CAVLMetrics", [
             {
                 MetricName: "failedUnsubscribeRequest",
                 Value: 1,
-               }
+            },
         ]);
         if (e instanceof SubscriptionIdNotFoundError) {
             return {

@@ -1,12 +1,11 @@
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscription, insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { count } from "console";
 
 const arrayProperties = ["VehicleActivity", "OnwardCall"];
 
@@ -50,17 +49,17 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
         const avls = parseXml(await body.transformToString());
 
         if (!avls || avls.length === 0) {
-            await putMetricData(`custom/CAVLMetrics`, [
+            await putMetricData("custom/CAVLMetrics", [
                 {
                     MetricName: "invalidSiriSchema",
                     Value: 1,
-                    Dimensions: [ 
-                        { 
-                          Name: "subscriptionId", 
-                          Value: subscriptionId,
+                    Dimensions: [
+                        {
+                            Name: "subscriptionId",
+                            Value: subscriptionId,
                         },
-                      ],
-                }
+                    ],
+                },
             ]);
             throw new Error("Error parsing data");
         }
@@ -97,11 +96,11 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-        await putMetricData(`custom/CAVLMetrics`, [
+        await putMetricData("custom/CAVLMetrics", [
             {
                 MetricName: "totalAvlProcessed",
                 Value: 1,
-               }
+            },
         ]);
         logger.info("AVL uploaded to database successfully");
     } catch (e) {

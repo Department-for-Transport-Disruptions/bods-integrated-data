@@ -1,6 +1,6 @@
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -80,17 +80,17 @@ export const handler = async () => {
                 try {
                     await resubscribeToDataProducer(subscription, subscribeEndpoint);
                 } catch (e) {
-                    await putMetricData(`custom/CAVLMetrics`, [
+                    await putMetricData("custom/CAVLMetrics", [
                         {
-                            MetricName: "invalidSiriSchema",
+                            MetricName: "avlFeedOutage",
                             Value: 1,
-                            Dimensions: [ 
-                                { 
-                                  Name: "subscriptionId", 
-                                  Value: subscription.PK,
+                            Dimensions: [
+                                {
+                                    Name: "subscriptionId",
+                                    Value: subscription.PK,
                                 },
-                              ],
-                        }
+                            ],
+                        },
                     ]);
                     if (e instanceof AxiosError) {
                         logger.error(
