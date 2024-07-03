@@ -3,6 +3,7 @@ import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 import { Uint8ArrayBlobAdapter } from "@smithy/util-stream";
 import { writeFile } from "node:fs/promises";
+import * as fs from "node:fs";
 
 interface Subscription {
     id: string;
@@ -40,9 +41,8 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
             stage = responses.stage;
         }
 
-        const subscriptionsResponse = await fetch("./cli-helpers/successful-subscriptions.json");
-
-        const subscriptions: Subscription[] = JSON.parse(subscriptionsResponse.body as unknown as string);
+        const data = await fs.promises.readFile("./successful-subscriptions.json", "utf-8");
+        const subscriptions: Subscription[] = JSON.parse(data);
 
         const unsuccessfulSubscriptions: Subscription[] = [];
 

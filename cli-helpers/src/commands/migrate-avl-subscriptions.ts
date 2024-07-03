@@ -69,10 +69,30 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
             .fieldDelimiter(",")
             .getJsonFromCsv(`${fileName}.csv`) as unknown as BodsSubscription[];
 
+        const setOfSubscriptionUrlAndUsername = new Set();
         const dataProducersToSubscribeTo: Subscription[] = [];
 
         subscriptionsJson.map((subscription) => {
             if (subscription.status === "live") {
+                setOfSubscriptionUrlAndUsername.add(`${subscription.url_link}, ${subscription.username}`);
+
+                dataProducersToSubscribeTo.push({
+                    id: subscription.dataset_id,
+                    publisherId: subscription.organisation_id,
+                    url: subscription.url_link,
+                    username: subscription.username,
+                    password: subscription.password,
+                });
+            }
+        });
+
+        subscriptionsJson.map((subscription) => {
+            if (
+                !setOfSubscriptionUrlAndUsername.has(`${subscription.url_link}, ${subscription.username}`) &&
+                subscription.status === "error"
+            ) {
+                setOfSubscriptionUrlAndUsername.add(`${subscription.url_link}, ${subscription.username}`);
+
                 dataProducersToSubscribeTo.push({
                     id: subscription.dataset_id,
                     publisherId: subscription.organisation_id,
