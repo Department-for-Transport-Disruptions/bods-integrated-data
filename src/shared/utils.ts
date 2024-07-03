@@ -1,5 +1,6 @@
 import { logger } from "@baselime/lambda-logger";
 import { ZodSchema, z } from "zod";
+import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
 import { VehicleType } from "./schema";
@@ -78,6 +79,9 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
 
             if (!parsedItem.success) {
                 logger.warn("Error parsing item", parsedItem.error.format());
+                putMetricData(`custom/SharedUtils-${process.env.STAGE}`, [
+                    { MetricName: "makeFilteredArraySchemaParseError", Value: 1 },
+                ]);
             }
 
             return parsedItem.success;
