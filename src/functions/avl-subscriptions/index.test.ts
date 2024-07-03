@@ -27,7 +27,7 @@ describe("avl-subscriptions", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
-        mockEvent = { pathParameters: { subscriptionId: "" } } as unknown as APIGatewayProxyEvent;
+        mockEvent = {} as APIGatewayProxyEvent;
     });
 
     it("should return a 500 when not all the env vars are set", async () => {
@@ -97,59 +97,64 @@ describe("avl-subscriptions", () => {
         expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 
-    it("should return a 200 with all subscriptions data when passing no subscription ID param", async () => {
-        recursiveScanSpy.mockResolvedValueOnce([
-            {
-                PK: "subscription-one",
-                url: "https://www.mock-data-producer-one.com",
-                description: "test-description",
-                shortDescription: "test-short-description",
-                status: "LIVE",
-                requestorRef: "BODS_MOCK_PRODUCER",
-                lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
-                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                publisherId: "publisher-one",
-            },
-            {
-                PK: "subscription-two",
-                url: "https://www.mock-data-producer-two.com",
-                description: "test-description",
-                shortDescription: "test-short-description",
-                status: "INACTIVE",
-                requestorRef: "BODS_MOCK_PRODUCER",
-                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                publisherId: "publisher-one",
-            },
-        ]);
+    it.each([[null], [{}], [{ subscriptionId: "" }]])(
+        "should return a 200 with all subscriptions data when passing no subscription ID param (test: %o)",
+        async (input) => {
+            recursiveScanSpy.mockResolvedValueOnce([
+                {
+                    PK: "subscription-one",
+                    url: "https://www.mock-data-producer-one.com",
+                    description: "test-description",
+                    shortDescription: "test-short-description",
+                    status: "LIVE",
+                    requestorRef: "BODS_MOCK_PRODUCER",
+                    lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
+                    serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                    publisherId: "publisher-one",
+                },
+                {
+                    PK: "subscription-two",
+                    url: "https://www.mock-data-producer-two.com",
+                    description: "test-description",
+                    shortDescription: "test-short-description",
+                    status: "INACTIVE",
+                    requestorRef: "BODS_MOCK_PRODUCER",
+                    serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                    publisherId: "publisher-one",
+                },
+            ]);
 
-        const expectedResponse: ApiAvlSubscription[] = [
-            {
-                id: "subscription-one",
-                publisherId: "publisher-one",
-                status: "LIVE",
-                lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
-                heartbeatLastReceivedDateTime: null,
-                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                serviceEndDatetime: null,
-            },
-            {
-                id: "subscription-two",
-                publisherId: "publisher-one",
-                status: "INACTIVE",
-                lastAvlDataReceivedDateTime: null,
-                heartbeatLastReceivedDateTime: null,
-                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                serviceEndDatetime: null,
-            },
-        ];
+            const expectedResponse: ApiAvlSubscription[] = [
+                {
+                    id: "subscription-one",
+                    publisherId: "publisher-one",
+                    status: "LIVE",
+                    lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
+                    heartbeatLastReceivedDateTime: null,
+                    serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                    serviceEndDatetime: null,
+                },
+                {
+                    id: "subscription-two",
+                    publisherId: "publisher-one",
+                    status: "INACTIVE",
+                    lastAvlDataReceivedDateTime: null,
+                    heartbeatLastReceivedDateTime: null,
+                    serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                    serviceEndDatetime: null,
+                },
+            ];
 
-        await expect(handler(mockEvent)).resolves.toEqual({
-            statusCode: 200,
-            body: JSON.stringify(expectedResponse),
-        });
-        expect(getDynamoItemSpy).not.toHaveBeenCalled();
-        expect(recursiveScanSpy).toHaveBeenCalled();
-    });
+            mockEvent.pathParameters = input;
+
+            await expect(handler(mockEvent)).resolves.toEqual({
+                statusCode: 200,
+                body: JSON.stringify(expectedResponse),
+            });
+            expect(getDynamoItemSpy).not.toHaveBeenCalled();
+            expect(recursiveScanSpy).toHaveBeenCalled();
+        },
+    );
 
     it("should return a 200 with a single subscription when passing a subscription ID param", async () => {
         mockEvent.pathParameters = {
