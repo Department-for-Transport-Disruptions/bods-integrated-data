@@ -16,7 +16,7 @@ jobs:
     commitlint:
         if: ${{ github.event_name == 'merge_group' }}
         runs-on: ubuntu-22.04
-        name: Zip function
+        name: Lint commit
         steps:
         - name: Checkout
           uses: actions/checkout@v4
