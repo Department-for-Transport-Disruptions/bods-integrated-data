@@ -1,6 +1,6 @@
 on:
   pull_request_review:
-    types: [submitted]
+    types: [ submitted ]
   workflow_dispatch:
 
 name: Terraform Apply Dev
@@ -43,5 +43,16 @@ jobs:
       stage: "dev"
       terraform_version: 1.6.6
       use_artifacts: true
+    secrets:
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+
+  run_integration_test:
+    uses: ./.github/workflows/run_integration_tests.yaml
+    name: Run Integration Tests - Dev
+    needs:
+      - terraform_apply
+    if: ${{ always() && !cancelled() && needs.terraform_apply.result == 'success' }}
+    with:
+      stage: "dev"
     secrets:
       oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}

@@ -55,3 +55,7 @@ secrets.json
 # Testing
 .vite
 coverage
+integration-testing/test-results/
+integration-testing/playwright-report/
+integration-testing/blob-report/
+integration-testing/playwright/.cache/

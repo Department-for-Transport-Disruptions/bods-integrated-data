@@ -23,7 +23,7 @@ TFL_API_ARN=""
 
 # Dev
 
-setup: docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
+setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add awscli && \
@@ -81,7 +81,8 @@ create-local-env:
 install-deps:
 	pnpm i && \
 	(cd src && pnpm i) && \
-	(cd cli-helpers && pnpm i)
+	(cd cli-helpers && pnpm i) && \
+	(cd integration-testing && pnpm i)
 
 build-functions:
 	cd src && pnpm build-all
@@ -100,6 +101,9 @@ docker-build-%:
 
 check-types:
 	cd src && pnpm run check-types
+
+run-integration-tests-%:
+	cd integration-testing && pnpm run test:$*
 
 # CLI helpers
 

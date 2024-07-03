@@ -75,6 +75,7 @@ describe("avl-processor", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             requestorRef: null,
+            publisherId: "test-publisher-id",
         });
 
         uuidSpy.mockReturnValue(mockItemId);
@@ -141,6 +142,7 @@ describe("avl-processor", () => {
             shortDescription: "test-short-description",
             status,
             requestorRef: null,
+            publisherId: "test-publisher-id",
         });
 
         await expect(
