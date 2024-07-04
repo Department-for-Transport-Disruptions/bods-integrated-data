@@ -29,8 +29,8 @@ data "sops_file" "secrets" {
   source_file = "secrets.enc.json"
 }
 
-module "data_archive" {
-  source = "../modules/data-archive"
+module "external_data_archive" {
+  source = "../modules/external-data-archive"
 
   environment = local.env
 }
