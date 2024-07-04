@@ -3,22 +3,23 @@ name: ECR Push
 on:
   workflow_call:
     inputs:
-      environment:
-        type: string
       task_name:
         type: string
       tag:
         type: string
+    secrets:
+      oidc_role:
+        required: true
 
 jobs:
   ecr_push:
     runs-on: ubuntu-22.04
-    name: Push to ECR - ${{ inputs.environment }}
+    name: Push to ECR
     steps:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ secrets.AWS_OIDC_ROLE_SHARED_SERVICES }}
+        role-to-assume: ${{ secrets.oidc_role }}
         aws-region: "eu-west-2"
         role-session-name: GitHub-OIDC-Shared-Services
   
