@@ -5,7 +5,7 @@ on:
         options:
           - dev
           - test
-          - prod-temp
+          - prod
         type: choice
         description: Environment to deploy to
 
@@ -30,7 +30,7 @@ jobs:
       terraform_version: 1.6.6
       use_artifacts: false
     secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV}}
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
 
   terraform_apply_test:
     uses: ./.github/workflows/terraform_apply.yaml
@@ -41,15 +41,15 @@ jobs:
       terraform_version: 1.6.6
       use_artifacts: false
     secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST}}
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST }}
 
-  terraform_apply_prod_temp:
+  terraform_apply_prod:
     uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply Test
-    if: inputs.stage == 'prod-temp'
+    name: Terraform Apply Prod
+    if: inputs.stage == 'prod'
     with:
       stage: ${{ inputs.stage }}
       terraform_version: 1.6.6
       use_artifacts: false
     secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST}}
+      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_PROD }}
