@@ -4,9 +4,7 @@ set -e
 set -u
 set -o pipefail
 
-IS_TEMP=$1
-
-INSTANCE=$([[ $IS_TEMP == 'true' ]] && aws ec2 describe-instances --region=eu-west-2 --filters Name=tag:Bastion,Values=prod-temp Name=instance-state-name,Values=running | jq -r '.Reservations[0].Instances[0]' || aws ec2 describe-instances --region=eu-west-2 --filters Name=tag:Bastion,Values=true Name=instance-state-name,Values=running | jq -r '.Reservations[0].Instances[0]')
+INSTANCE=$(aws ec2 describe-instances --region=eu-west-2 --filters Name=tag:Bastion,Values=true Name=instance-state-name,Values=running | jq -r '.Reservations[0].Instances[0]')
 INSTANCE_ID=`echo ${INSTANCE} | jq -r '.InstanceId'`
 AZ=`echo ${INSTANCE} | jq -r '.Placement.AvailabilityZone'`
 LOCAL_PORT=15432

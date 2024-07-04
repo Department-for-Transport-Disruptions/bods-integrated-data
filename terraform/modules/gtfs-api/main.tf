@@ -78,7 +78,7 @@ resource "aws_apigatewayv2_deployment" "integrated_data_gtfs_api_deployment" {
 
 resource "aws_cloudwatch_log_group" "gtfs_log_group" {
   name              = "integrated-data-gtfs-api-log-group-${var.environment}"
-  retention_in_days = var.environment == "prod" || var.environment == "prod-temp" ? 90 : 30
+  retention_in_days = var.environment == "prod" ? 90 : 30
 }
 
 resource "aws_apigatewayv2_stage" "integrated_data_gtfs_api_stage" {
