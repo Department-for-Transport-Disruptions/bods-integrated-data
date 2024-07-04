@@ -1,0 +1,54 @@
+name: ECS Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+      task_name:
+        type: string
+      tag:
+        type: string
+
+jobs:
+  deploy_ecs:
+    runs-on: ubuntu-22.04
+    name: Deploy to ECS - ${{ inputs.environment }}
+    env:
+      stage: ${{ inputs.environment }}
+    environment: ${{ inputs.environment }}
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+        aws-region: "eu-west-2"
+        role-session-name: GitHub-OIDC
+
+    - name: Download task definition 
+      run: |
+        aws ecs describe-task-definition --task-definition integrated-data-${{ inputs.task_name }} --query taskDefinition > task-definition.json
+
+    - name: Get ECS Info
+      id: get_ecs_info
+      run: |
+        service="integrated-data-${{ inputs.task_name }}-service-${{ inputs.environment }}"
+        cluster=$(make command-get-ecs-cluster-for-service FLAGS="-s $service" | tail -1)
+        echo "cluster=$cluster" >> $GITHUB_OUTPUT
+        echo "service=$service" >> $GITHUB_OUTPUT
+  
+    - name: Update ECS task definition with new version
+      id: task_def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: ${{ inputs.task_name }}
+        image: ${{ steps.build_image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task_def.outputs.task-definition }}
+        service: ${{ steps.get_ecs_info.outputs.service }}
+        cluster: ${{ steps.get_ecs_info.outputs.cluster }}
+        wait-for-service-stability: true

@@ -1,9 +1,8 @@
 on:
-  pull_request_review:
-    types: [ submitted ]
-  workflow_dispatch:
+  pull_request:
+  merge_group:
 
-name: Terraform Apply Dev
+name: Deploy Dev
 
 permissions:
   id-token: write # This is required for aws oidc connection
@@ -14,17 +13,58 @@ env:
   HUSKY: 0
 
 jobs:
+  commitlint:
+    runs-on: ubuntu-22.04
+    name: Lint commit
+    if: github.event_name == 'merge_group'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+
+    - uses: pnpm/action-setup@v3
+      name: Install pnpm
+      with:
+        version: 8
+        run_install: false
+
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+    - uses: actions/cache@v4
+      name: Setup pnpm cache
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+        restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        pnpm i
+
+    - run: pnpm commitlint --last --verbose
+
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
-    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
+    needs:
+      - commitlint
+    if: github.event_name == 'merge_group'
     with:
       path: "./src/functions"
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
     name: Zip updated functions
-    if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
+    if: github.event_name == 'merge_group' && needs.check_for_function_changes.outputs.changed_directories
     strategy:
       matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
     needs:
@@ -32,27 +72,82 @@ jobs:
     with:
       function_dir: ${{ matrix.dir }}
 
-  terraform_apply:
-    uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply Dev
+  check_for_task_changes:
+    uses: ./.github/workflows/get_directories_with_changes.yaml
+    name: Get list of updated tasks
+    needs:
+      - commitlint
+    if: github.event_name == 'merge_group'
+    with:
+      path: "./src/tasks"
+
+  # terraform_apply:
+  #   uses: ./.github/workflows/terraform_apply.yaml
+  #   name: Terraform Apply Dev
+  #   needs:
+  #     - check_for_function_changes
+  #     - zip_functions
+  #   if: github.event_name == 'merge_group' && always() && !cancelled() && needs.check_for_function_changes.result == 'success'
+  #   with:
+  #     environment: "dev"
+  #     terraform_version: 1.6.6
+  #     use_artifacts: true
+
+  bump_tag:
     needs:
       - check_for_function_changes
       - zip_functions
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+      - check_for_task_changes
+    name: Bump tag
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'merge_group' && always() && !cancelled() && needs.check_for_function_changes.result == 'success' && needs.check_for_task_changes.result == 'success'
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag_version.outputs.new_tag }}
+    steps:
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  ecr_push:
+    uses: ./.github/workflows/ecr_push.yaml
+    needs:
+      - bump_tag
+      - check_for_task_changes
+    name: Push to ECR
+    if: github.event_name == 'merge_group' && needs.check_for_task_changes.outputs.changed_directories
+    strategy:
+      matrix: ${{fromJson(needs.check_for_task_changes.outputs.changed_directories)}}
     with:
-      stage: "dev"
-      terraform_version: 1.6.6
-      use_artifacts: true
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+      environment: "dev"
+      tag: ${{ needs.bump_tag.outputs.tag }}
+      task_name: ${{ matrix.dir }}
+
+  create_prerelease:
+    needs:
+      - bump_tag
+    name: Create pre-release
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'merge_group'
+    permissions:
+      contents: write
+    steps:
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          prerelease: true
 
   run_integration_test:
     uses: ./.github/workflows/run_integration_tests.yaml
     name: Run Integration Tests - Dev
     needs:
-      - terraform_apply
-    if: ${{ always() && !cancelled() && needs.terraform_apply.result == 'success' }}
+      - create_prerelease
+    if: github.event_name == 'merge_group'
     with:
-      stage: "dev"
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+      environment: "dev"

@@ -9,7 +9,7 @@ on:
         type: choice
         description: Environment to deploy to
 
-name: Terraform Apply (All Functions)
+name: Manual Deploy (All Functions)
 
 permissions:
   id-token: write # This is required for aws oidc connection

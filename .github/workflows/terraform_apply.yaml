@@ -3,26 +3,22 @@ name: Apply terraform
 on:
   workflow_call:
     inputs:
-      stage:
-        required: true
-        type: string
       terraform_version:
         required: true
         type: string
       use_artifacts:
         default: true
         type: boolean
-    secrets:
-      oidc_role_arn:
-        required: true
+      environment:
+        type: string
 
 jobs:
   terraform_apply:
     runs-on: ubuntu-22.04
     name: Terraform Apply
     env:
-      stage: ${{ inputs.stage }}
-
+      stage: ${{ inputs.environment }}
+    environment: ${{ inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,7 +67,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.oidc_role_arn }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 
@@ -82,17 +78,17 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform -chdir=terraform/${{ inputs.stage }} init
+        run: terraform -chdir=terraform/${{ inputs.environment }} init
 
       - name: Terraform Plan
         id: plan
-        run: terraform -chdir=terraform/${{ inputs.stage }} plan -input=false -no-color -out=tfplan
+        run: terraform -chdir=terraform/${{ inputs.environment }} plan -input=false -no-color -out=tfplan
 
       - name: Terraform Apply
         if: steps.plan.outcome == 'success'
         id: apply
-        run: terraform -chdir=terraform/${{ inputs.stage }} apply -input=false -no-color tfplan
+        run: terraform -chdir=terraform/${{ inputs.environment }} apply -input=false -no-color tfplan
 
       - name: Invoke dbmigrator Lambda
         run: |
-          aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ inputs.stage }} --cli-binary-format raw-in-base64-out response.json
+          aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ inputs.environment }} --cli-binary-format raw-in-base64-out response.json

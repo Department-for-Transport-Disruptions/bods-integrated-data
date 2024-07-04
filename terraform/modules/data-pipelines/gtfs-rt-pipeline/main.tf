@@ -88,16 +88,16 @@ resource "aws_lambda_function_url" "gtfs_rt_download_url" {
   authorization_type = "NONE"
 }
 
-resource "aws_ecs_cluster" "gtfs_rt_ecs_cluster" {
-  count = var.environment != "local" ? 1 : 0
+# resource "aws_ecs_cluster" "gtfs_rt_ecs_cluster" {
+#   count = var.environment != "local" ? 1 : 0
 
-  name = "integrated-data-gtfs-rt-ecs-cluster-${var.environment}"
+#   name = "integrated-data-gtfs-rt-ecs-cluster-${var.environment}"
 
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-}
+#   setting {
+#     name  = "containerInsights"
+#     value = "enabled"
+#   }
+# }
 
 resource "aws_iam_policy" "bods_avl_processor_ecs_execution_policy" {
   count = var.environment != "local" ? 1 : 0
@@ -312,7 +312,6 @@ resource "aws_ecs_service" "bods_avl_processor_service" {
   count = var.environment != "local" ? 1 : 0
 
   name            = "integrated-data-bods-avl-processor-service-${var.environment}"
-  cluster         = aws_ecs_cluster.gtfs_rt_ecs_cluster[0].id
   task_definition = aws_ecs_task_definition.bods_avl_processor_task_definition[0].arn
   desired_count   = 1
 
