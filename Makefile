@@ -23,7 +23,7 @@ TFL_API_ARN=""
 
 # Dev
 
-setup: docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
+setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add awscli && \

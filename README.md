@@ -2,10 +2,14 @@
 
 Code for the Bus Open Data Service (BODS) integrated data platform, which includes the following:
 
-- [AVL](<https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide#:~:text=of%20the%20UK.-,Automatic%20Vehicle%20Location%20(AVL),-%3A%20automatic%20vehicle%20location>) data subscriptions
-- [GTFS](https://gtfs.org/) feed generation via [TransXChange](https://www.gov.uk/government/collections/transxchange) data mapping
+- [AVL](<https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide#:~:text=of%20the%20UK.-,Automatic%20Vehicle%20Location%20(AVL),-%3A%20automatic%20vehicle%20location>)
+  data subscriptions
+- [GTFS](https://gtfs.org/) feed generation via [TransXChange](https://www.gov.uk/government/collections/transxchange)
+  data mapping
 
-Visit the [Bus open data implementation guide](https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide) for more information about BODS.
+Visit
+the [Bus open data implementation guide](https://www.gov.uk/government/publications/bus-open-data-implementation-guide/bus-open-data-implementation-guide)
+for more information about BODS.
 
 ## Table of Contents
 
@@ -44,21 +48,26 @@ Visit the [Bus open data implementation guide](https://www.gov.uk/government/pub
 The following dependencies are required. An AWS account is also required.
 
 | Dependency                                                                                                                                  | Description                                                                                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+|---------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 | [asdf](https://asdf-vm.com/guide/getting-started.html)                                                                                      | Runtime version manager                                                                                          |
-| [AWS CLI](https://aws.amazon.com/cli/)                                                                                                      | AWS command line tool                                                                                            |
 | [AWS Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) | Session management plugin for AWS CLI                                                                            |
 | [awslocal](https://github.com/localstack/awscli-local)                                                                                      | localstack wrapper for AWS CLI                                                                                   |
 | [Docker](https://rancherdesktop.io/)                                                                                                        | Platform for running containerised code                                                                          |
-| [pnpm](https://pnpm.io/installation)                                                                                                        | Package manager                                                                                                  |
 | [tflocal](https://github.com/localstack/terraform-local)                                                                                    | A small wrapper script to run [Terraform](https://terraform.io/) against [localstack](https://localstack.cloud/) |
+
+The following dependencies are installed via asdf:
+
+| Dependency                             | Description           |
+|----------------------------------------|-----------------------|
+| [AWS CLI](https://aws.amazon.com/cli/) | AWS command line tool |
+| [pnpm](https://pnpm.io/installation)   | Package manager       |
+| [terraform](https://www.terraform.io/) | Terraform             |
 
 The following dependencies are optional:
 
 | Dependency                                          | Description               |
-| --------------------------------------------------- | ------------------------- |
+|-----------------------------------------------------|---------------------------|
 | [localstack desktop](https://www.localstack.cloud/) | Desktop UI for localstack |
-
 
 ### Code Linting & Formatting
 
@@ -76,7 +85,8 @@ aws configure sso
 # SSO registration scopes [None]: sso:account:access
 ```
 
-Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a user-friendly name and set the region:
+Optionally set a default AWS profile for future use. In your AWS config at `~/.aws/config` change the profile to a
+user-friendly name and set the region:
 
 ```bash
 [profile bods-integrated-data-dev]
@@ -129,7 +139,8 @@ todo
 
 ### NOC data retrieval
 
-The National Operator Code (NOC) dataset contains unique codes for registered operators that are used to link data together during mapping.
+The National Operator Code (NOC) dataset contains unique codes for registered operators that are used to link data
+together during mapping.
 
 Download the NOC dataset into the localstack container:
 
@@ -145,7 +156,8 @@ make run-local-noc-processor
 
 ### NaPTAN data retrieval
 
-The National Public Transport Access Nodes (NaPTAN) dataset contains information for uniquely identifying all public transport access points.
+The National Public Transport Access Nodes (NaPTAN) dataset contains information for uniquely identifying all public
+transport access points.
 
 Download the NaPTAN dataset into the localstack container:
 
@@ -161,7 +173,8 @@ make run-local-naptan-uploader
 
 ### NPTG data retrieval
 
-The National Public Transport Gazetteer (NPTG) dataset contains geographical data for all cities, towns, villages and localities.
+The National Public Transport Gazetteer (NPTG) dataset contains geographical data for all cities, towns, villages and
+localities.
 
 Download the NPTG dataset into the localstack container:
 
@@ -283,14 +296,18 @@ trip_old -> <Deleted>
 
 #### GTFS Schedule
 
-> The GTFS is generated by exporting data directly from the Aurora database into an S3 bucket. This functionality can not currently be replicated locally
+> The GTFS is generated by exporting data directly from the Aurora database into an S3 bucket. This functionality can
+> not currently be replicated locally
 > and so needs to be tested when deployed into AWS.
 
-GTFS generation runs as part of the timetables step function, separate jobs will run to generate the national GTFS file along with a job for each individual regional file.
-These files will be stored in the `integrated-data-gtfs-timetables-{ENV}` bucket with the names `all_gtfs.zip` for the national file and `${REGION_CODE}_gtfs.zip` for the regions.
+GTFS generation runs as part of the timetables step function, separate jobs will run to generate the national GTFS file
+along with a job for each individual regional file.
+These files will be stored in the `integrated-data-gtfs-timetables-{ENV}` bucket with the names `all_gtfs.zip` for the
+national file and `${REGION_CODE}_gtfs.zip` for the regions.
 For example, the GTFS file for East Anglia will be named `ea_gtfs.zip`.
 
-These files are made available via an API with the endpoint being of the form `https://gtfs.integrated-data.${ROOT_DOMAIN}/gtfs`, without a query parameter this will download the
+These files are made available via an API with the endpoint being of the
+form `https://gtfs.integrated-data.${ROOT_DOMAIN}/gtfs`, without a query parameter this will download the
 national file, by passing `?region=${REGION_CODE}`, individual regional files can be downloaded.
 
 #### GTFS Realtime
@@ -318,7 +335,8 @@ To deploy lambdas after making changes:
 make create-local-env
 ```
 
-To invoke a lambda locally, use its corresponding CLI helper command as documented in the [CLI Helpers](#cli-helpers) section below.
+To invoke a lambda locally, use its corresponding CLI helper command as documented in the [CLI Helpers](#cli-helpers)
+section below.
 
 Alternatively, invoke the lambda directly (with any necessary env vars):
 
@@ -328,7 +346,8 @@ ENV_VAR_1="{A}" ENV_VAR_2="{B}" awslocal lambda invoke --function-name {FUNCTION
 
 ### CLI Helpers
 
-Inside `./cli-helpers` are a number of CLI commands to help with development, such as invoking lambdas and provisioning mock data.
+Inside `./cli-helpers` are a number of CLI commands to help with development, such as invoking lambdas and provisioning
+mock data.
 
 List available commands:
 
@@ -378,24 +397,28 @@ docker push {ECR_ACCOUNT_ID}.dkr.ecr.eu-west-2.amazonaws.com/{SERVICE_NAME}:late
 
 ### Adding and updating secrets
 
-[SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS key to encrypt a secrets file which can then be committed into version control.
+[SOPS](https://github.com/getsops/sops) is used to handle secrets and configuration for terraform. This uses an AWS KMS
+key to encrypt a secrets file which can then be committed into version control.
 
-In order to add or update a secret, first authenticate against the target AWS account (where the required KMS key resides) and then run the following from the root directory:
+In order to add or update a secret, first authenticate against the target AWS account (where the required KMS key
+resides) and then run the following from the root directory:
 
 ```bash
 make edit-secrets-{ENV}
 ```
 
-This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will automatically encrypt the new file which can then be pushed.
+This will open a text editor so you can edit the secrets file, when you save the changes to the file then SOPS will
+automatically encrypt the new file which can then be pushed.
 
 ### Using secrets in Terraform
 
-To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the secrets file in a data block. The secrets can then be extracted. An example of this would be:
+To use a secret from SOPS in terraform, you first need to reference SOPS as a required provider, then reference the
+secrets file in a data block. The secrets can then be extracted. An example of this would be:
 
 ```terraform
 sops = {
-    source  = "carlpett/sops"
-    version = "~> 1.0"
+  source  = "carlpett/sops"
+  version = "~> 1.0"
 }
 
 data "sops_file" "secrets" {
@@ -403,7 +426,7 @@ data "sops_file" "secrets" {
 }
 
 locals {
-    secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
+  secret_example = jsondecode(data.sops_file.secrets.raw)["secret_name"]
 }
 ```
 
@@ -443,7 +466,7 @@ On PR approval:
 ### Environments
 
 | Environment | Notes                                                    |
-| ----------- | -------------------------------------------------------- |
+|-------------|----------------------------------------------------------|
 | `local`     | Local environment used with localstack                   |
 | `dev`       | Deployed environment used for dev testing                |
 | `test`      | Deployed environment used for UAT and automation testing |

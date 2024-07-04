@@ -126,12 +126,12 @@ describe("avl-update-endpoint", () => {
         );
     });
 
-    it("should throw a 404 status code if given subscription ID does not exist in dynamo", async () => {
+    it("should return a 404 if given subscription ID does not exist in dynamo", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
         await expect(handler(mockUpdateEvent)).resolves.toEqual({
             statusCode: 404,
-            body: "Subscription with ID: mock-subscription-id not found in subscription table.",
+            body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
@@ -140,40 +140,109 @@ describe("avl-update-endpoint", () => {
     });
 
     it.each([
+        [null, ["Body must be an object with required properties"]],
+        ["", ["Body must be an object with required properties"]],
+        [{}, ["dataProducerEndpoint is required", "username is required", "password is required"]],
         [
             {
                 test: "invalid event",
             },
+            ["dataProducerEndpoint is required", "username is required", "password is required"],
         ],
         [
             {
-                dataProducerEndpoint: "test-invalid-endpoint",
-                description: "updated description",
-                shortDescription: "updated short description",
-                username: "updatedUsername",
-                password: "updatedPassword",
+                dataProducerEndpoint: null,
+                username: null,
+                password: null,
             },
+            ["dataProducerEndpoint must be a string", "username must be a string", "password must be a string"],
         ],
-    ])("should throw a 500 status code if body does not match expected schema", async (input) => {
-        const invalidEvent = { ...mockUpdateEvent, body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
+        [
+            {
+                dataProducerEndpoint: 1,
+                description: 1,
+                shortDescription: 1,
+                username: 1,
+                password: 1,
+            },
+            [
+                "dataProducerEndpoint must be a string",
+                "description must be a string",
+                "shortDescription must be a string",
+                "username must be a string",
+                "password must be a string",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: {},
+                description: {},
+                shortDescription: {},
+                username: {},
+                password: {},
+            },
+            [
+                "dataProducerEndpoint must be a string",
+                "description must be a string",
+                "shortDescription must be a string",
+                "username must be a string",
+                "password must be a string",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: "https://example.com",
+                description: "",
+                shortDescription: "",
+                username: "",
+                password: "",
+            },
+            [
+                "description must be 1-256 characters",
+                "shortDescription must be 1-256 characters",
+                "username must be 1-256 characters",
+                "password must be 1-256 characters",
+            ],
+        ],
+        [
+            {
+                dataProducerEndpoint: "asdf",
+                description: "1".repeat(257),
+                shortDescription: "1".repeat(257),
+                username: "1".repeat(257),
+                password: "1".repeat(257),
+            },
+            [
+                "dataProducerEndpoint must be a URL",
+                "description must be 1-256 characters",
+                "shortDescription must be 1-256 characters",
+                "username must be 1-256 characters",
+                "password must be 1-256 characters",
+            ],
+        ],
+    ])(
+        "should return a 400 if event body from the API gateway event does not match the avlUpdateBody schema (test: %o).",
+        async (input, expectedErrorMessages) => {
+            const invalidEvent = { ...mockUpdateEvent, body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidEvent)).resolves.toEqual({
-            body: "An unknown error occurred. Please try again.",
-            statusCode: 500,
-        });
+            await expect(handler(invalidEvent)).resolves.toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: expectedErrorMessages }),
+            });
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
-        expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
-        expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
-    });
+            expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+            expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
+            expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        },
+    );
 
-    it("should throw an error is env vars are missing", async () => {
+    it("should return a 500 if env vars are missing", async () => {
         process.env.TABLE_NAME = "";
         process.env.DATA_ENDPOINT = "";
 
         await expect(handler(mockUpdateEvent)).resolves.toEqual({
-            body: "An unknown error occurred. Please try again.",
             statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
 
         expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();

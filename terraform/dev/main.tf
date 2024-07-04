@@ -325,4 +325,7 @@ module "integrated_data_cloudfront" {
   environment                          = local.env
   avl_siri_vm_downloader_domain        = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_function_url
   avl_siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  domain                               = module.integrated_data_route53.public_hosted_zone_name
+  acm_certificate_arn                  = module.integrated_data_acm.cloudfront_acm_certificate_arn
+  hosted_zone_id                       = module.integrated_data_route53.public_hosted_zone_id
 }
