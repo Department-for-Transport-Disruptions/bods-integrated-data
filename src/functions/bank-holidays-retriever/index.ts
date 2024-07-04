@@ -7,7 +7,7 @@ export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: strin
     const response = await axios.get<object>(url, { responseType: "json" });
 
     if (!response.data || Object.keys(response.data).length === 0) {
-        throw new Error(`Did not recieve any data from bank holidays url: ${url}`);
+        throw new Error(`Did not receive any data from bank holidays url: ${url}`);
     }
 
     await putS3Object({

@@ -18,7 +18,7 @@ const bree = new Bree({
             name: "avl-cleardown",
             interval: `${cleardownFrequency}s`,
             timeout: 0,
-            closeWorkerAfterMs: 31000,
+            closeWorkerAfterMs: 30000,
         },
         {
             name: "siri-vm-generator",
