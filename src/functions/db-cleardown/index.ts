@@ -37,7 +37,7 @@ export const handler = async () => {
     const dbClient = await getDatabaseClient(stage === "local");
 
     try {
-        logger.info("Preparing database...");
+        logger.info("Preparing database..");
 
         await cleardownDatabase(dbClient, ONLY_GTFS === "true");
 
