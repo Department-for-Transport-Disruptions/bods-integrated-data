@@ -26,6 +26,10 @@ describe("avl-processor", () => {
         randomUUID: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     const uuidSpy = vi.spyOn(crypto, "randomUUID");
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
