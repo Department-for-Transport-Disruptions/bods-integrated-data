@@ -96,11 +96,10 @@ jobs:
   bump_tag:
     needs:
       - check_for_function_changes
-      - zip_functions
       - check_for_task_changes
     name: Bump tag
     runs-on: ubuntu-22.04
-    if: github.event_name == 'merge_group' && always() && !cancelled() && needs.check_for_function_changes.result == 'success' && needs.check_for_task_changes.result == 'success'
+    if: github.event_name == 'merge_group'
     permissions:
       contents: write
     outputs:
@@ -119,20 +118,23 @@ jobs:
       - bump_tag
       - check_for_task_changes
     name: Push to ECR
-    if: github.event_name == 'merge_group' && always() && !cancelled() && needs.check_for_task_changes.result == 'success' && needs.check_for_task_changes.outputs.changed_directories
+    if: github.event_name == 'merge_group' && needs.check_for_task_changes.outputs.changed_directories
     strategy:
       matrix: ${{fromJson(needs.check_for_task_changes.outputs.changed_directories)}}
     with:
-      environment: "dev"
       tag: ${{ needs.bump_tag.outputs.tag }}
       task_name: ${{ matrix.dir }}
+    secrets:
+      oidc_role: ${{ secrets.AWS_OIDC_ROLE_SHARED_SERVICES }}
+
 
   run_integration_test:
     uses: ./.github/workflows/run_integration_tests.yaml
     name: Run Integration Tests - Dev
     needs:
       - ecr_push
-    if: github.event_name == 'merge_group' && always() && !cancelled() && needs.ecr_push.result == 'success'
+      - bump_tag
+    if: github.event_name == 'merge_group' && always() && !cancelled() && needs.bump_tag.result == 'success'
     with:
       environment: "dev"
 
@@ -142,7 +144,7 @@ jobs:
       - bump_tag
     name: Create pre-release
     runs-on: ubuntu-22.04
-    if: github.event_name == 'merge_group' && always() && !cancelled() && needs.run_integration_test.result == 'success'
+    if: github.event_name == 'merge_group'
     permissions:
       contents: write
     steps:
