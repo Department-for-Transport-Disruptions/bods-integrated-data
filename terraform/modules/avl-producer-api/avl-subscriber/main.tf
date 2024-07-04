@@ -40,6 +40,15 @@ module "avl_subscriber" {
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
 
+    },
+    {
+      Action = [
+        "cloudwatch:PutMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+      ],
+      Effect   = "Allow",
+      Resource = "*"
     }
   ]
 

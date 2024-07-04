@@ -35,6 +35,15 @@ module "avl_feed_validator" {
         "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
       ]
     },
+    {
+      Action = [
+        "cloudwatch:PutMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+      ],
+      Effect   = "Allow",
+      Resource = "*"
+    }
   ]
 
   env_vars = {

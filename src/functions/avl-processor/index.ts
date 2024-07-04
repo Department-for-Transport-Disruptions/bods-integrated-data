@@ -102,7 +102,7 @@ export const handler = async (event: SQSEvent) => {
                 Value: 1,
             },
         ]);
-            logger.info("AVL uploaded to database successfully");
+        logger.info("AVL uploaded to database successfully");
     } catch (e) {
         if (e instanceof Error) {
             logger.error("AVL Processor has failed", e);
