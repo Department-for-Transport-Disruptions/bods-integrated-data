@@ -210,7 +210,9 @@ void (async () => {
             logger.error(e);
         }
 
-        logger.error("There was a problem with the AVL retriever");
+        await putMetricData(`custom/BODSAVLProcessor-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
+
+        logger.error("There was a problem with the BODS AVL Processor");
 
         throw e;
     } finally {
