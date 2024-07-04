@@ -194,7 +194,7 @@ resource "aws_iam_role" "bods_avl_processor_ecs_task_role" {
 resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
   count = var.environment != "local" ? 1 : 0
 
-  family                   = var.environment == "prod-temp" ? "integrated-data-bods-avl-processor-temp" : "integrated-data-bods-avl-processor"
+  family                   = "integrated-data-bods-avl-processor-temp"
   cpu                      = var.bods_avl_processor_cpu
   memory                   = var.bods_avl_processor_memory
   requires_compatibilities = ["FARGATE"]
