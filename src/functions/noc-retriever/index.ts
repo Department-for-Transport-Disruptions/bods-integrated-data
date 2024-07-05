@@ -1,5 +1,5 @@
 import { PassThrough, Stream } from "node:stream";
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 

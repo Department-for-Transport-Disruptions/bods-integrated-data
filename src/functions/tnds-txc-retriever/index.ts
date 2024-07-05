@@ -1,6 +1,6 @@
 import { Writable } from "node:stream";
-import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { Client } from "basic-ftp";

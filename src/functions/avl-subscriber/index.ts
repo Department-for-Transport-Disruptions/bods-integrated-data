@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     createConflictErrorResponse,
     createServerErrorResponse,
@@ -10,6 +9,7 @@ import {
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscribeMessage,
     AvlSubscription,

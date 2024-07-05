@@ -2,9 +2,7 @@ import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import Pino from "pino";
-
-const logger = Pino();
+import { logger } from "@bods-integrated-data/shared/logger";
 
 void (async () => {
     performance.mark("siri-vm-generator-start");

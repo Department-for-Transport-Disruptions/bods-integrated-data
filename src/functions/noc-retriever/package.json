@@ -12,7 +12,6 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "axios": "^1.7.2"
     },

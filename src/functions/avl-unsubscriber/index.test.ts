@@ -1,7 +1,7 @@
-import { logger } from "@baselime/lambda-logger";
 import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMockData";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { logger } from "@bods-integrated-data/shared/logger";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
@@ -15,7 +15,7 @@ describe("avl-unsubscriber", () => {
         },
     } as unknown as APIGatewayProxyEvent;
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
             warn: vi.fn(),

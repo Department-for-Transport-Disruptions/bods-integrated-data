@@ -1,8 +1,8 @@
 import path from "node:path";
 import { PassThrough } from "node:stream";
-import { logger } from "@baselime/lambda-logger";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import {
     createLazyDownloadStreamFrom,
     getS3Object,

@@ -1,6 +1,6 @@
-import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { APIGatewayProxyEvent, Context } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -40,7 +40,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
     let mockRequest: APIGatewayProxyEvent;
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             warn: vi.fn(),
             error: vi.fn(),

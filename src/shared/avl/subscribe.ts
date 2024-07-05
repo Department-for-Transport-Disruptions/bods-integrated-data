@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { logger } from "@baselime/lambda-logger";
 import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { getDate } from "../dates";
 import { putDynamoItem } from "../dynamo";
+import { logger } from "../logger";
 import {
     AvlSubscription,
     AvlSubscriptionStatuses,

@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -8,6 +7,7 @@ import {
     getAvlDataForGtfs,
     mapAvlToGtfsEntity,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     createBoundingBoxValidation,

@@ -1,6 +1,6 @@
-import { logger } from "@baselime/lambda-logger";
 import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     Operator,

@@ -8,9 +8,6 @@ dependencies:
   '@aws-sdk/client-secrets-manager':
     specifier: 3.362.0
     version: 3.362.0
-  '@baselime/lambda-logger':
-    specifier: ^0.2.2
-    version: 0.2.2
   '@bods-integrated-data/shared':
     specifier: workspace:^
     version: link:../../shared
@@ -802,10 +799,6 @@ packages:
     dependencies:
       '@aws-sdk/util-buffer-from': 3.310.0
       tslib: 2.6.2
-    dev: false
-
-  /@baselime/lambda-logger@0.2.2:
-    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
     dev: false
 
   /@smithy/protocol-http@1.2.0:

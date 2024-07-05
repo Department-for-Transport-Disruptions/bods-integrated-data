@@ -38,6 +38,7 @@ for more information about BODS.
   - [Adding and updating secrets](#adding-and-updating-secrets)
   - [Using secrets in Terraform](#using-secrets-in-terraform)
 - [Testing](#testing)
+- [Logging](#logging)
 - [CICD](#cicd)
   - [Workflow](#workflow)
   - [Environments](#environments)
@@ -48,7 +49,7 @@ for more information about BODS.
 The following dependencies are required. An AWS account is also required.
 
 | Dependency                                                                                                                                  | Description                                                                                                      |
-|---------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [asdf](https://asdf-vm.com/guide/getting-started.html)                                                                                      | Runtime version manager                                                                                          |
 | [AWS Session Manager Plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) | Session management plugin for AWS CLI                                                                            |
 | [awslocal](https://github.com/localstack/awscli-local)                                                                                      | localstack wrapper for AWS CLI                                                                                   |
@@ -58,7 +59,7 @@ The following dependencies are required. An AWS account is also required.
 The following dependencies are installed via asdf:
 
 | Dependency                             | Description           |
-|----------------------------------------|-----------------------|
+| -------------------------------------- | --------------------- |
 | [AWS CLI](https://aws.amazon.com/cli/) | AWS command line tool |
 | [pnpm](https://pnpm.io/installation)   | Package manager       |
 | [terraform](https://www.terraform.io/) | Terraform             |
@@ -66,7 +67,7 @@ The following dependencies are installed via asdf:
 The following dependencies are optional:
 
 | Dependency                                          | Description               |
-|-----------------------------------------------------|---------------------------|
+| --------------------------------------------------- | ------------------------- |
 | [localstack desktop](https://www.localstack.cloud/) | Desktop UI for localstack |
 
 ### Code Linting & Formatting
@@ -448,6 +449,10 @@ cd src/functions/{folder}
 pnpm test
 ```
 
+## Logging
+
+Logs are sent to AWS Cloudwatch. to do
+
 ## CICD
 
 ### Workflow
@@ -466,7 +471,7 @@ On PR approval:
 ### Environments
 
 | Environment | Notes                                                    |
-|-------------|----------------------------------------------------------|
+| ----------- | -------------------------------------------------------- |
 | `local`     | Local environment used with localstack                   |
 | `dev`       | Deployed environment used for dev testing                |
 | `test`      | Deployed environment used for UAT and automation testing |
