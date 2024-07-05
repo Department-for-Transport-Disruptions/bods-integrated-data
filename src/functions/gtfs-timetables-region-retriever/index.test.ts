@@ -11,6 +11,10 @@ describe("gtfs-timetables-region-retriever", () => {
         listS3Objects: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     afterEach(() => {
         vi.resetAllMocks();
     });
