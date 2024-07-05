@@ -451,7 +451,8 @@ pnpm test
 
 ## Logging
 
-Logs are sent to AWS Cloudwatch. to do
+Logs are sent to AWS Cloudwatch. The logger is instantiated in the shared library as either a lambda logger or pino logger,
+depending on whether the runtime environment is an AWS lambda.
 
 ## CICD
 
