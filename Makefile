@@ -5,7 +5,7 @@ BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_FTP_ARN=""
-AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
+AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-raw-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
@@ -127,16 +127,10 @@ rollback-last-local-db-migration:
 	STAGE=local ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
 bastion-tunnel:
-	./scripts/bastion-tunnel.sh false
-
-bastion-tunnel-temp:
-	./scripts/bastion-tunnel.sh true
+	./scripts/bastion-tunnel.sh
 
 get-db-credentials:
-	./scripts/get-db-credentials.sh false
-
-get-db-credentials-temp:
-	./scripts/get-db-credentials.sh true
+	./scripts/get-db-credentials.sh
 
 # Dates
 

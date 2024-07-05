@@ -79,7 +79,7 @@ const vehicleActivitySchema = z.object({
         VehicleRef: z.coerce.string().transform((ref) => ref.replace(/\s/g, "")),
         OnwardCalls: z
             .object({
-                OnwardCall: makeFilteredArraySchema(onwardCallSchema),
+                OnwardCall: makeFilteredArraySchema("SiriVmOnwardCallsSchema", onwardCallSchema),
             })
             .or(txcEmptyProperty)
             .optional(),
@@ -98,7 +98,7 @@ export const siriSchema = z.object({
             ResponseTimestamp: z.string(),
             RequestMessageRef: z.string().uuid().optional(),
             ValidUntil: z.string().optional(),
-            VehicleActivity: makeFilteredArraySchema(vehicleActivitySchema),
+            VehicleActivity: makeFilteredArraySchema("SiriVmVehicleActivitySchema", vehicleActivitySchema),
         }),
     }),
 });

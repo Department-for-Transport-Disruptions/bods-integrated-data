@@ -30,6 +30,8 @@ resource "aws_cloudfront_distribution" "avl_siri_vm_distribution" {
 
   enabled         = true
   is_ipv6_enabled = true
+  aliases         = ["avl.${var.domain}"]
+  price_class     = "PriceClass_100"
 
   default_cache_behavior {
     viewer_protocol_policy = "redirect-to-https"
@@ -53,7 +55,9 @@ resource "aws_cloudfront_distribution" "avl_siri_vm_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = var.acm_certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 }
 
@@ -71,4 +75,16 @@ resource "aws_lambda_permission" "avl_siri_vm_downloader_invoke" {
   function_name = var.avl_siri_vm_downloader_function_name
   principal     = "cloudfront.amazonaws.com"
   source_arn    = aws_cloudfront_distribution.avl_siri_vm_distribution.arn
+}
+
+resource "aws_route53_record" "integrated_data_avl_consumer_api_dns_record" {
+  name    = "avl.${var.domain}"
+  type    = "A"
+  zone_id = var.hosted_zone_id
+
+  alias {
+    name                   = aws_cloudfront_distribution.avl_siri_vm_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.avl_siri_vm_distribution.hosted_zone_id
+    evaluate_target_health = false
+  }
 }

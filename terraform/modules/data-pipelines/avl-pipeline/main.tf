@@ -349,7 +349,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
   count = var.environment != "local" ? 1 : 0
 
-  family                   = (var.environment == "prod-temp" ? "integrated-data-siri-vm-generator-temp" : "integrated-data-siri-vm-generator")
+  family                   = "integrated-data-siri-vm-generator"
   cpu                      = var.siri_vm_generator_cpu
   memory                   = var.siri_vm_generator_memory
   requires_compatibilities = ["FARGATE"]

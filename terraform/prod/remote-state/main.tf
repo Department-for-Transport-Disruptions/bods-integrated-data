@@ -36,7 +36,7 @@ import {
 }
 
 locals {
-  bucket_name         = "integrated-data-tfstate-prod-temp"
-  dynamodb_table_name = "integrated-data-state-lock-prod-temp"
-  env                 = "prod-temp"
+  bucket_name         = "integrated-data-tfstate-prod"
+  dynamodb_table_name = "integrated-data-state-lock-prod"
+  env                 = "prod"
 }

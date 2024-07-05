@@ -43,6 +43,8 @@ void (async () => {
             logger.error("Error generating SIRI-VM file", e);
         }
 
+        await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
+
         throw e;
     } finally {
         await dbClient.destroy();
