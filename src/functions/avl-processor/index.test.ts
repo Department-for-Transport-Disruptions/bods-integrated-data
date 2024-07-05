@@ -37,6 +37,10 @@ describe("avl-processor", () => {
         getDynamoItem: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
 
     const valuesMock = vi.fn().mockReturnValue({

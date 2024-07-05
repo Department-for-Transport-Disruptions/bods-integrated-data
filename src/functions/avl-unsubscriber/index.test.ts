@@ -36,6 +36,10 @@ describe("avl-unsubscriber", () => {
         sendTerminateSubscriptionRequestAndUpdateDynamo: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const deleteParametersSpy = vi.spyOn(ssm, "deleteParameters");
