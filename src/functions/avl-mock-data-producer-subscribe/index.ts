@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscriptionRequest,
     avlSubscriptionRequestSchema,

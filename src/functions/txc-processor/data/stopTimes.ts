@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import { KyselyDb, NewStopTime } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { VehicleJourneyMapping } from "../types";
 import { mapTimingLinksToStopTimes } from "../utils";

@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     KyselyDb,
     NewAgency,
@@ -11,6 +10,7 @@ import {
     NewStopTime,
     NewTrip,
 } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { BackoffOptions, backOff } from "exponential-backoff";
 

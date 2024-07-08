@@ -1,7 +1,6 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
-import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
 import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
@@ -12,6 +11,7 @@ import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
+import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";

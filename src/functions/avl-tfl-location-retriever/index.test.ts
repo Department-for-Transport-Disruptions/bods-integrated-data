@@ -1,4 +1,4 @@
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import axios from "axios";
 import MockDate from "mockdate";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,7 +8,7 @@ import { RealTimeVehicleLocationsApiResponse } from "./types";
 describe("avl-tfl-location-retriever", () => {
     const axiosGetMock = vi.spyOn(axios, "get");
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             error: vi.fn(),
         },

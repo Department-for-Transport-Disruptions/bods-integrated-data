@@ -27,7 +27,7 @@ describe("table renamer", () => {
         })),
     }));
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
             warn: vi.fn(),

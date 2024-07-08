@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { logger } from "@bods-integrated-data/shared/logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayProxyEvent } from "aws-lambda";
@@ -15,7 +15,7 @@ describe("AVL-data-endpoint", () => {
         process.env.TABLE_NAME = "test-dynamodb";
     });
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
             warn: vi.fn(),

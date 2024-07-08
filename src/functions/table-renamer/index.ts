@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { ReferenceExpression } from "kysely";
 
 export interface TableKey {

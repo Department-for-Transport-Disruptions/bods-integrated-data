@@ -12,8 +12,7 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "bree": "^9.2.3",
-        "pino": "^9.1.0"
+        "bree": "^9.2.3"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

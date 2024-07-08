@@ -1,4 +1,4 @@
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,7 +8,7 @@ describe("gtfs-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
     const getPresignedUrlMock = vi.spyOn(s3, "getPresignedUrl");
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             warn: vi.fn(),
             error: vi.fn(),
