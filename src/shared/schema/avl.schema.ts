@@ -43,10 +43,10 @@ const directionMap: Record<string, string> = {
     out: "outbound",
 };
 
-const vehicleActivitySchema = z.object({
-    RecordedAtTime: z.string(),
+export const vehicleActivitySchema = z.object({
+    RecordedAtTime: z.string().min(1),
     ItemIdentifier: z.string().nullish(),
-    ValidUntilTime: z.string(),
+    ValidUntilTime: z.string().min(1),
     VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
@@ -55,12 +55,12 @@ const vehicleActivitySchema = z.object({
             .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.coerce.string(),
-                DatedVehicleJourneyRef: z.coerce.string(),
+                DataFrameRef: z.coerce.string().min(1),
+                DatedVehicleJourneyRef: z.coerce.string().min(1),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        OperatorRef: z.coerce.string(),
+        OperatorRef: z.coerce.string().min(1),
         OriginRef: z.coerce.string().nullish(),
         OriginName: z.coerce.string().nullish(),
         DestinationRef: z.coerce.string().nullish(),
@@ -76,7 +76,10 @@ const vehicleActivitySchema = z.object({
         Occupancy: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
-        VehicleRef: z.coerce.string().transform((ref) => ref.replace(/\s/g, "")),
+        VehicleRef: z.coerce
+            .string()
+            .min(1)
+            .transform((ref) => ref.replace(/\s/g, "")),
         OnwardCalls: z
             .object({
                 OnwardCall: makeFilteredArraySchema("SiriVmOnwardCallsSchema", onwardCallSchema),
