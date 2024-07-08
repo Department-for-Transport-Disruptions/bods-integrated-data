@@ -3,10 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Avl } from "../database";
 import { getDate } from "../dates";
 import * as s3 from "../s3";
+import { SiriVehicleActivity } from "../schema";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
+    createVehicleActivities,
     generateSiriVmAndUploadToS3,
 } from "./utils";
 
@@ -63,7 +65,7 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
           </VehicleLocation>
           <Occupancy>full</Occupancy>
           <BlockRef>DY04</BlockRef>
-          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleJourneyRef>ref123</VehicleJourneyRef>
           <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
         <Extensions>
@@ -114,7 +116,7 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
           </VehicleLocation>
           <Occupancy>full</Occupancy>
           <BlockRef>DY04</BlockRef>
-          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleJourneyRef>ref123</VehicleJourneyRef>
           <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
         <Extensions>
@@ -185,7 +187,7 @@ const mockSiriVmWithOmittedPropertiesResult = `<?xml version=\"1.0\" encoding=\"
           </VehicleLocation>
           <Occupancy>full</Occupancy>
           <BlockRef>DY04</BlockRef>
-          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleJourneyRef>ref123</VehicleJourneyRef>
           <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
         <Extensions>
@@ -236,7 +238,7 @@ const mockSiriVmWithMissingRequiredPropertiesResult = `<?xml version=\"1.0\" enc
           </VehicleLocation>
           <Occupancy>full</Occupancy>
           <BlockRef>DY04</BlockRef>
-          <VehicleJourneyRef>ref 123</VehicleJourneyRef>
+          <VehicleJourneyRef>ref123</VehicleJourneyRef>
           <VehicleRef>0717_-_FJ58_KKL</VehicleRef>
         </MonitoredVehicleJourney>
         <Extensions>
@@ -342,7 +344,7 @@ const mockAvl: Avl[] = [
         previous_stop_point_name: null,
         origin_name: "test origin name",
         destination_name: "test destination name",
-        vehicle_journey_ref: "ref 123",
+        vehicle_journey_ref: "ref123",
         vehicle_monitoring_ref: "test",
         destination_aimed_arrival_time: "2024-02-26T14:36:18+00:00",
         ticket_machine_service_code: "123",
@@ -389,6 +391,299 @@ describe("utils", () => {
                 ContentType: "application/xml",
                 Body: mockSiriVmTflResult,
             });
+        });
+    });
+
+    describe("createVehicleActivites", () => {
+        it("maps required database AVL fields to SIRI-VM fields", () => {
+            const currentTime = getDate().toISOString();
+
+            const avl: Avl = {
+                id: 24173,
+                response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
+                producer_ref: "DfT",
+                recorded_at_time: "2024-02-26T14:36:11.000Z",
+                item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea6",
+                valid_until_time: "2024-02-26 14:42:12",
+                line_ref: null,
+                direction_ref: "OUT",
+                operator_ref: "NATX",
+                data_frame_ref: "",
+                dated_vehicle_journey_ref: "784105",
+                vehicle_ref: "191D44717",
+                longitude: -6.238029,
+                latitude: 53.42605,
+                bearing: "119",
+                published_line_name: null,
+                origin_ref: null,
+                destination_ref: null,
+                block_ref: null,
+                occupancy: null,
+                origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
+                geom: null,
+                vehicle_name: null,
+                monitored: "true",
+                load: null,
+                passenger_count: null,
+                odometer: null,
+                headway_deviation: null,
+                schedule_deviation: null,
+                vehicle_state: null,
+                next_stop_point_id: null,
+                next_stop_point_name: null,
+                previous_stop_point_id: null,
+                previous_stop_point_name: null,
+                origin_name: null,
+                destination_name: null,
+                vehicle_journey_ref: null,
+                route_id: null,
+                trip_id: null,
+                vehicle_monitoring_ref: null,
+                destination_aimed_arrival_time: null,
+                ticket_machine_service_code: null,
+                journey_code: null,
+                vehicle_unique_id: null,
+                has_onward_calls: false,
+                subscription_id: "",
+            };
+
+            const expectedVehicleActivities: SiriVehicleActivity[] = [
+                {
+                    RecordedAtTime: currentTime,
+                    ItemIdentifier: avl.item_id,
+                    ValidUntilTime: currentTime,
+                    VehicleMonitoringRef: undefined,
+                    MonitoredVehicleJourney: {
+                        LineRef: undefined,
+                        DirectionRef: avl.direction_ref,
+                        PublishedLineName: undefined,
+                        Occupancy: avl.occupancy,
+                        OperatorRef: avl.operator_ref,
+                        OriginRef: undefined,
+                        OriginName: undefined,
+                        OriginAimedDepartureTime: avl.origin_aimed_departure_time,
+                        DestinationRef: undefined,
+                        DestinationName: undefined,
+                        DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
+                        Monitored: avl.monitored,
+                        VehicleLocation: {
+                            Longitude: avl.longitude,
+                            Latitude: avl.latitude,
+                        },
+                        Bearing: avl.bearing,
+                        BlockRef: undefined,
+                        VehicleRef: avl.vehicle_ref,
+                        VehicleJourneyRef: undefined,
+                    },
+                },
+            ];
+
+            const vehicleActivities = createVehicleActivities([avl], currentTime);
+            expect(vehicleActivities).toEqual(expectedVehicleActivities);
+        });
+
+        it("maps optional fields", () => {
+            const currentTime = getDate().toISOString();
+
+            const avl: Avl = {
+                id: 24173,
+                response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
+                producer_ref: "DfT",
+                recorded_at_time: "2024-02-26T14:36:11.000Z",
+                item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea6",
+                valid_until_time: "2024-02-26 14:42:12",
+                line_ref: "784",
+                direction_ref: "OUT",
+                operator_ref: "NATX",
+                data_frame_ref: "data_frame_ref",
+                dated_vehicle_journey_ref: "dated_vehicle_journey_ref",
+                vehicle_ref: "191D44717",
+                longitude: -6.238029,
+                latitude: 53.42605,
+                bearing: "119",
+                published_line_name: "784",
+                origin_ref: "98010",
+                destination_ref: "98045",
+                block_ref: "784105",
+                occupancy: "full",
+                origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
+                geom: null,
+                vehicle_name: null,
+                monitored: "true",
+                load: null,
+                passenger_count: null,
+                odometer: null,
+                headway_deviation: null,
+                schedule_deviation: null,
+                vehicle_state: null,
+                next_stop_point_id: null,
+                next_stop_point_name: null,
+                previous_stop_point_id: null,
+                previous_stop_point_name: null,
+                origin_name: "origin_name",
+                destination_name: "destination_name",
+                vehicle_journey_ref: "vehicle_journey_ref",
+                route_id: null,
+                trip_id: null,
+                vehicle_monitoring_ref: "vehicle_monitoring_ref",
+                destination_aimed_arrival_time: "2024-02-26T14:36:18+00:00",
+                ticket_machine_service_code: "ticket_machine_service_code",
+                journey_code: "journey_code",
+                vehicle_unique_id: "vehicle_unique_id",
+                has_onward_calls: false,
+                subscription_id: "",
+            };
+
+            const expectedVehicleActivities: SiriVehicleActivity[] = [
+                {
+                    RecordedAtTime: currentTime,
+                    ItemIdentifier: avl.item_id,
+                    ValidUntilTime: currentTime,
+                    VehicleMonitoringRef: avl.vehicle_monitoring_ref,
+                    MonitoredVehicleJourney: {
+                        LineRef: avl.line_ref,
+                        DirectionRef: avl.direction_ref,
+                        PublishedLineName: avl.published_line_name,
+                        Occupancy: avl.occupancy,
+                        OperatorRef: avl.operator_ref,
+                        OriginRef: avl.origin_ref,
+                        OriginName: avl.origin_name,
+                        OriginAimedDepartureTime: avl.origin_aimed_departure_time,
+                        DestinationRef: avl.destination_ref,
+                        DestinationName: avl.destination_name,
+                        DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
+                        Monitored: avl.monitored,
+                        VehicleLocation: {
+                            Longitude: avl.longitude,
+                            Latitude: avl.latitude,
+                        },
+                        Bearing: avl.bearing,
+                        BlockRef: avl.block_ref,
+                        VehicleRef: avl.vehicle_ref,
+                        VehicleJourneyRef: avl.vehicle_journey_ref,
+                        FramedVehicleJourneyRef: {
+                            DataFrameRef: "data_frame_ref",
+                            DatedVehicleJourneyRef: "dated_vehicle_journey_ref",
+                        },
+                    },
+                    Extensions: {
+                        VehicleJourney: {
+                            Operational: {
+                                TicketMachine: {
+                                    TicketMachineServiceCode: avl.ticket_machine_service_code,
+                                    JourneyCode: avl.journey_code,
+                                },
+                            },
+                            VehicleUniqueId: avl.vehicle_unique_id,
+                        },
+                    },
+                },
+            ];
+
+            const vehicleActivities = createVehicleActivities([avl], currentTime);
+            expect(vehicleActivities).toEqual(expectedVehicleActivities);
+        });
+
+        it("strips invalid characters from fields", () => {
+            const currentTime = getDate().toISOString();
+
+            const avl: Avl = {
+                id: 24173,
+                response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
+                producer_ref: "DfT",
+                recorded_at_time: "2024-02-26T14:36:11.000Z",
+                item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea6",
+                valid_until_time: "2024-02-26 14:42:12",
+                line_ref: "784%",
+                direction_ref: "OUT%",
+                operator_ref: "NATX",
+                data_frame_ref: "data_frame_ref%",
+                dated_vehicle_journey_ref: "dated_vehicle_journey_ref%",
+                vehicle_ref: "191D44717%",
+                longitude: -6.238029,
+                latitude: 53.42605,
+                bearing: "119",
+                published_line_name: "784%",
+                origin_ref: "98010%",
+                destination_ref: "98045%",
+                block_ref: "784105%",
+                occupancy: "full",
+                origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
+                geom: null,
+                vehicle_name: null,
+                monitored: "true",
+                load: null,
+                passenger_count: null,
+                odometer: null,
+                headway_deviation: null,
+                schedule_deviation: null,
+                vehicle_state: null,
+                next_stop_point_id: null,
+                next_stop_point_name: null,
+                previous_stop_point_id: null,
+                previous_stop_point_name: null,
+                origin_name: "origin_name%",
+                destination_name: "destination_name%",
+                vehicle_journey_ref: "vehicle_journey_ref%",
+                route_id: null,
+                trip_id: null,
+                vehicle_monitoring_ref: "vehicle_monitoring_ref%",
+                destination_aimed_arrival_time: "2024-02-26T14:36:18+00:00",
+                ticket_machine_service_code: "ticket_machine_service_code",
+                journey_code: "journey_code",
+                vehicle_unique_id: "vehicle_unique_id",
+                has_onward_calls: false,
+                subscription_id: "",
+            };
+
+            const expectedVehicleActivities: SiriVehicleActivity[] = [
+                {
+                    RecordedAtTime: currentTime,
+                    ItemIdentifier: avl.item_id,
+                    ValidUntilTime: currentTime,
+                    VehicleMonitoringRef: "vehicle_monitoring_ref",
+                    MonitoredVehicleJourney: {
+                        LineRef: "784",
+                        DirectionRef: "OUT",
+                        PublishedLineName: "784",
+                        Occupancy: avl.occupancy,
+                        OperatorRef: avl.operator_ref,
+                        OriginRef: "98010",
+                        OriginName: "origin_name",
+                        OriginAimedDepartureTime: avl.origin_aimed_departure_time,
+                        DestinationRef: "98045",
+                        DestinationName: "destination_name",
+                        DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
+                        Monitored: avl.monitored,
+                        VehicleLocation: {
+                            Longitude: avl.longitude,
+                            Latitude: avl.latitude,
+                        },
+                        Bearing: avl.bearing,
+                        BlockRef: "784105",
+                        VehicleRef: "191D44717",
+                        VehicleJourneyRef: "vehicle_journey_ref",
+                        FramedVehicleJourneyRef: {
+                            DataFrameRef: "data_frame_ref",
+                            DatedVehicleJourneyRef: "dated_vehicle_journey_ref",
+                        },
+                    },
+                    Extensions: {
+                        VehicleJourney: {
+                            Operational: {
+                                TicketMachine: {
+                                    TicketMachineServiceCode: avl.ticket_machine_service_code,
+                                    JourneyCode: avl.journey_code,
+                                },
+                            },
+                            VehicleUniqueId: avl.vehicle_unique_id,
+                        },
+                    },
+                },
+            ];
+
+            const vehicleActivities = createVehicleActivities([avl], currentTime);
+            expect(vehicleActivities).toEqual(expectedVehicleActivities);
         });
     });
 
