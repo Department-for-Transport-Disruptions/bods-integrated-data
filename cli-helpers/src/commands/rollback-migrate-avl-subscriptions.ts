@@ -1,7 +1,6 @@
 import * as fs from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { Command } from "@commander-js/extra-typings";
-import { Uint8ArrayBlobAdapter } from "@smithy/util-stream";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
@@ -60,9 +59,7 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
                 return;
             }
 
-            const returnPayload: Uint8ArrayBlobAdapter = unsubscribeEvent.Payload;
-
-            const returnPayloadJson = JSON.parse(returnPayload?.transformToString() ?? "{}");
+            const returnPayloadJson = JSON.parse(unsubscribeEvent.Payload?.transformToString() ?? "{}");
 
             if (returnPayloadJson.statusCode !== 204) {
                 unsuccessfulSubscriptions.push(subscription);

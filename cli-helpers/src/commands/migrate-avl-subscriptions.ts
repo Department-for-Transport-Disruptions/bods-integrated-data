@@ -1,6 +1,5 @@
 import { writeFile } from "node:fs/promises";
 import { Command } from "@commander-js/extra-typings";
-import { Uint8ArrayBlobAdapter } from "@smithy/util-stream";
 import csvToJson from "convert-csv-to-json";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
@@ -72,8 +71,12 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
         const setOfSubscriptionUrlAndUsername = new Set();
         const dataProducersToSubscribeTo: Subscription[] = [];
 
-        subscriptionsJson.map((subscription) => {
-            if (subscription.status === "live") {
+        // Firstly, attempt to subscribe to live subscriptions from BODS
+        for (const subscription of subscriptionsJson) {
+            if (
+                !setOfSubscriptionUrlAndUsername.has(`${subscription.url_link}, ${subscription.username}`) &&
+                subscription.status === "live"
+            ) {
                 setOfSubscriptionUrlAndUsername.add(`${subscription.url_link}, ${subscription.username}`);
 
                 dataProducersToSubscribeTo.push({
@@ -84,9 +87,11 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                     password: subscription.password,
                 });
             }
-        });
+        }
 
-        subscriptionsJson.map((subscription) => {
+        // Secondly, attempt to subscribe the subscriptions in an error state from BODS. We do this for any
+        // subscriptions not picked up in the "live" loop as they still might be valid subscriptions.
+        for (const subscription of subscriptionsJson) {
             if (
                 !setOfSubscriptionUrlAndUsername.has(`${subscription.url_link}, ${subscription.username}`) &&
                 subscription.status === "error"
@@ -101,7 +106,7 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                     password: subscription.password,
                 });
             }
-        });
+        }
 
         const unsuccessfulSubscriptions: Subscription[] = [];
         const successfulSubscriptions: Subscription[] = [];
@@ -126,9 +131,7 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                 return;
             }
 
-            const returnPayload: Uint8ArrayBlobAdapter = subscribeEvent.Payload;
-
-            const returnPayloadJson = JSON.parse(returnPayload?.transformToString() ?? "{}");
+            const returnPayloadJson = JSON.parse(subscribeEvent.Payload?.transformToString() ?? "{}");
 
             if (returnPayloadJson.statusCode !== 201) {
                 unsuccessfulSubscriptions.push(subscription);
