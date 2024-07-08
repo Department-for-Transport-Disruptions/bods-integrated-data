@@ -1,6 +1,7 @@
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent, Context } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -34,8 +35,13 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
     }));
 
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
     const getAvlDataForSiriVmMock = vi.spyOn(utilFunctions, "getAvlDataForSiriVm");
     const createSiriVmMock = vi.spyOn(utilFunctions, "createSiriVm");
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     const mockBucketName = "mock-bucket";
     let mockRequest: APIGatewayProxyEvent;
@@ -49,7 +55,13 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
-        mockRequest = {} as APIGatewayProxyEvent;
+        process.env.AVL_CONSUMER_API_KEY_ARN = "avl-consumer-api-key-arn";
+        mockRequest = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+        } as unknown as APIGatewayProxyEvent;
+        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
     afterEach(() => {
@@ -70,6 +82,33 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             "There was a problem with the SIRI-VM downloader endpoint",
             expect.any(Error),
         );
+    });
+
+    it("returns a 500 when the AVL_CONSUMER_API_KEY_ARN environment variable is missing", async () => {
+        process.env.AVL_CONSUMER_API_KEY_ARN = "";
+
+        const response = await handler(mockRequest, {} as Context, () => undefined);
+        expect(response).toEqual({
+            statusCode: 500,
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+        });
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was a problem with the SIRI-VM downloader endpoint",
+            expect.any(Error),
+        );
+    });
+
+    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
+        mockRequest.headers["x-api-key"] = key;
+        mockRequest.queryStringParameters = {
+            operatorRef: "1",
+        };
+
+        const response = await handler(mockRequest, {} as Context, () => undefined);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
     });
 
     describe("fetching SIRI-VM in-place", () => {

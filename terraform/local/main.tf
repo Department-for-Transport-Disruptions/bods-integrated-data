@@ -166,13 +166,14 @@ module "integrated_data_avl_data_producer_api" {
 module "integrated_data_avl_siri_vm_downloader" {
   source = "../modules/avl-siri-vm-downloader"
 
-  environment        = local.env
-  bucket_name        = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
-  vpc_id             = null
-  private_subnet_ids = null
-  db_secret_arn      = "*"
-  db_sg_id           = null
-  db_host            = null
+  environment          = local.env
+  bucket_name          = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  vpc_id               = null
+  private_subnet_ids   = null
+  db_secret_arn        = "*"
+  db_sg_id             = null
+  db_host              = null
+  avl_consumer_api_key = local.secrets["avl_consumer_api_key"]
 }
 
 module "integrated_data_bank_holidays_pipeline" {
