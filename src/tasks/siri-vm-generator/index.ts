@@ -1,4 +1,3 @@
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import Bree from "bree";
 import Pino from "pino";
 
@@ -29,13 +28,6 @@ const bree = new Bree({
     ],
     errorHandler: async (error) => {
         logger.error(error);
-
-        await putMetricData("custom/SiriVmGenerator", [
-            {
-                MetricName: "Errors",
-                Value: 1,
-            },
-        ]);
     },
 });
 
