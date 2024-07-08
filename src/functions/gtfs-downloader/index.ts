@@ -1,6 +1,6 @@
-import { logger } from "@baselime/lambda-logger";
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { GTFS_FILE_SUFFIX, REGIONS, RegionCode } from "@bods-integrated-data/shared/constants";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema, regionNameSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";

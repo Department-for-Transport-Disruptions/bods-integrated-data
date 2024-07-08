@@ -1,10 +1,8 @@
+import { logger } from "@bods-integrated-data/shared/logger";
 import Bree from "bree";
-import Pino from "pino";
-
-const logger = Pino();
 
 const bree = new Bree({
-    logger: Pino(),
+    logger,
     jobs: [
         {
             name: "avl-processor",

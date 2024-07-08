@@ -1,9 +1,7 @@
 import { getQueryForLatestAvl } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import Pino from "pino";
-
-const logger = Pino();
+import { logger } from "@bods-integrated-data/shared/logger";
 
 void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");

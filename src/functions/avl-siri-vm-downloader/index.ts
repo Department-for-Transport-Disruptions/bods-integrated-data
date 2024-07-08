@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import {} from "node:stream";
-import { logger } from "@baselime/lambda-logger";
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
@@ -10,6 +9,7 @@ import {
 } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import {
     createBoundingBoxValidation,

@@ -1,6 +1,6 @@
-import { logger } from "@baselime/lambda-logger";
 import { getSiriVmValidUntilTimeOffset } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
 import { generateMockSiriVm } from "./mockSiriVm";

@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { nocSchema } from "@bods-integrated-data/shared/schema/noc.schema";
 import { S3Event } from "aws-lambda";

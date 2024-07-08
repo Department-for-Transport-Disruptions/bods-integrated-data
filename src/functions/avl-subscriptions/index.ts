@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
@@ -9,6 +8,7 @@ import {
     getAvlSubscription,
     getAvlSubscriptions,
 } from "@bods-integrated-data/shared/avl/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
