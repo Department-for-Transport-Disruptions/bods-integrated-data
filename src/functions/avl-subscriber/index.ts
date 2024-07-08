@@ -83,12 +83,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             );
         } catch (e) {
             if (e instanceof AxiosError) {
-                await putMetricData("custom/CAVLMetrics", [
-                    {
-                        MetricName: "failedSubscription",
-                        Value: 1,
-                    },
-                ]);
                 const subscriptionDetails = formatSubscriptionDetail(avlSubscribeMessage);
 
                 await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
@@ -97,7 +91,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                     `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
                 );
             }
-
+            await putMetricData("custom/CAVLMetrics", [
+                {
+                    MetricName: "failedSubscription",
+                    Value: 1,
+                },
+            ]);
             throw e;
         }
 
