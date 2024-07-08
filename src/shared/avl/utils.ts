@@ -16,6 +16,7 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
+import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -219,10 +220,10 @@ export const getAvlDataForSiriVm = async (
     }
 };
 
-const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
+const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehicleActivity[] => {
     return avls.map<SiriVehicleActivity>((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
-            RecordedAtTime: currentTime,
+            RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
             VehicleMonitoringRef: avl.vehicle_monitoring_ref,
@@ -278,8 +279,8 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
 export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = responseTime.toISOString();
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
-
-    const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
+    const vehicleActivities = createVehicleActivities(avls, validUntilTime);
+    const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
         ServiceDelivery: {
@@ -289,12 +290,12 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                 ResponseTimestamp: currentTime,
                 RequestMessageRef: requestMessageRef,
                 ValidUntil: validUntilTime,
-                VehicleActivity: vehicleActivity,
+                VehicleActivity: validVehicleActivities,
             },
         },
     };
 
-    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false, emptyStrings: false });
+    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
     const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
 
     const completeObject = {
