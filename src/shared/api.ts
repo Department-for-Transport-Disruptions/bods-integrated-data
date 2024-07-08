@@ -7,6 +7,13 @@ export const createValidationErrorResponse = (errors: string[]): APIGatewayProxy
     };
 };
 
+export const createUnauthorizedErrorResponse = (error?: string): APIGatewayProxyResult => {
+    return {
+        statusCode: 401,
+        body: JSON.stringify({ errors: [error || "Unauthorized"] }),
+    };
+};
+
 export const createNotFoundErrorResponse = (error: string): APIGatewayProxyResult => {
     return {
         statusCode: 404,

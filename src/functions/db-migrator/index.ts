@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { logger } from "@baselime/lambda-logger";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { FileMigrationProvider, Migrator } from "kysely";
 
 export const handler = async () => {

@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -36,7 +36,7 @@ describe("gtfs-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
     let mockRequest: APIGatewayProxyEvent;
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
             warn: vi.fn(),

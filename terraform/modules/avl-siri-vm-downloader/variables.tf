@@ -41,3 +41,8 @@ variable "bucket_name" {
   type        = string
   description = "Name of the bucket containing the SIRI-VM data"
 }
+
+variable "avl_consumer_api_key" {
+  type        = string
+  description = "AVL consumer API key"
+}

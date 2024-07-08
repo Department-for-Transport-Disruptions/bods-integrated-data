@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";

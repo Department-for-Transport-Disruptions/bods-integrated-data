@@ -111,7 +111,7 @@ resource "aws_launch_template" "integrated_data_bastion_launch_template" {
 
     tags = {
       Name    = "integrated-data-bastion-host-${var.environment}"
-      Bastion = var.environment == "prod-temp" ? "prod-temp" : true
+      Bastion = true
     }
   }
 }

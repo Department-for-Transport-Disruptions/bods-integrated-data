@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
@@ -7,6 +6,7 @@ import {
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";

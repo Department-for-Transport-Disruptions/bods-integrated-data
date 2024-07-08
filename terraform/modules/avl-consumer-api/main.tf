@@ -12,13 +12,14 @@ terraform {
 module "integrated_data_avl_siri_vm_downloader" {
   source = "../../modules/avl-siri-vm-downloader"
 
-  environment        = var.environment
-  bucket_name        = var.generated_siri_vm_bucket_name
-  vpc_id             = var.vpc_id
-  private_subnet_ids = var.private_subnet_ids
-  db_secret_arn      = var.db_secret_arn
-  db_sg_id           = var.db_sg_id
-  db_host            = var.db_host
+  environment          = var.environment
+  bucket_name          = var.generated_siri_vm_bucket_name
+  vpc_id               = var.vpc_id
+  private_subnet_ids   = var.private_subnet_ids
+  db_secret_arn        = var.db_secret_arn
+  db_sg_id             = var.db_sg_id
+  db_host              = var.db_host
+  avl_consumer_api_key = var.avl_consumer_api_key
 }
 
 resource "aws_apigatewayv2_api" "integrated_data_avl_consumer_api" {
@@ -59,18 +60,6 @@ resource "aws_apigatewayv2_domain_name" "integrated_data_avl_consumer_api_domain
     certificate_arn = var.acm_certificate_arn
     endpoint_type   = "REGIONAL"
     security_policy = "TLS_1_2"
-  }
-}
-
-resource "aws_route53_record" "integrated_data_avl_consumer_api_dns_record" {
-  name    = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.domain_name
-  type    = "A"
-  zone_id = var.hosted_zone_id
-
-  alias {
-    name                   = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.domain_name_configuration[0].target_domain_name
-    zone_id                = aws_apigatewayv2_domain_name.integrated_data_avl_consumer_api_domain.domain_name_configuration[0].hosted_zone_id
-    evaluate_target_health = false
   }
 }
 

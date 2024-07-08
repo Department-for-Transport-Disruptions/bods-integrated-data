@@ -5,7 +5,7 @@ BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_FTP_ARN=""
-AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
+AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-raw-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
@@ -20,6 +20,7 @@ BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
+AVL_CONSUMER_API_KEY_ARN=""
 
 # Dev
 
@@ -127,16 +128,10 @@ rollback-last-local-db-migration:
 	STAGE=local ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
 bastion-tunnel:
-	./scripts/bastion-tunnel.sh false
-
-bastion-tunnel-temp:
-	./scripts/bastion-tunnel.sh true
+	./scripts/bastion-tunnel.sh
 
 get-db-credentials:
-	./scripts/get-db-credentials.sh false
-
-get-db-credentials-temp:
-	./scripts/get-db-credentials.sh true
+	./scripts/get-db-credentials.sh
 
 # Dates
 
@@ -232,7 +227,7 @@ run-local-avl-tfl-location-retriever:
 # currently not supported locally due to awslambda global runtime only available in aws
 # example usage with query params: make run-local-avl-siri-vm-downloader AVL_SIRI_VM_DOWNLOADER_INPUT="{ queryStringParameters: { operatorRef: '1,2', vehicleRef: '123' } }"
 run-local-avl-siri-vm-downloader:
-	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
+	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} AVL_CONSUMER_API_KEY_ARN=${AVL_CONSUMER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
 
 run-local-avl-subscriptions:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({}).then(console.log).catch(console.error)"

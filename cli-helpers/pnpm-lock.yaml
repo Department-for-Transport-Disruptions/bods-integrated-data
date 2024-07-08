@@ -8,9 +8,9 @@ dependencies:
   '@aws-sdk/client-lambda':
     specifier: ^3.548.0
     version: 3.548.0
-  '@baselime/lambda-logger':
-    specifier: ^0.2.2
-    version: 0.2.2
+  '@bods-integrated-data/shared':
+    specifier: link:../src/shared
+    version: link:../src/shared
   '@commander-js/extra-typings':
     specifier: ^12.0.1
     version: 12.0.1(commander@12.0.0)
@@ -526,10 +526,6 @@ packages:
     resolution: {integrity: sha512-UvFa/vR+e19XookZF8RzFZBrw2EUkQWxiBW0yYQAhvk3C+QVGl0H3ouca8LDBlBfQKXwmW3huo/59H8rwb1wJw==}
     dependencies:
       tslib: 2.6.2
-    dev: false
-
-  /@baselime/lambda-logger@0.2.2:
-    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
     dev: false
 
   /@commander-js/extra-typings@12.0.1(commander@12.0.0):

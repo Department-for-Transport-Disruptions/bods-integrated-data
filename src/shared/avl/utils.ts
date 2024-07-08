@@ -1,7 +1,6 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
-import { logger } from "@baselime/lambda-logger";
 import cleanDeep from "clean-deep";
 import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
@@ -12,11 +11,14 @@ import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
+import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
+import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
+import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
@@ -219,24 +221,37 @@ export const getAvlDataForSiriVm = async (
     }
 };
 
-const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
+/**
+ * Map database AVLs to SIRI-VM AVLs, stripping any invalid characters as necessary. Characters are stripped here to
+ * preserve the original incoming data in the database, but to format for our generated SIRI-VM output.
+ * @param avls AVLs
+ * @param validUntilTime Valid until time
+ * @returns mapped SIRI-VM vehicle activities
+ */
+export const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehicleActivity[] => {
     return avls.map<SiriVehicleActivity>((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
-            RecordedAtTime: currentTime,
+            RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
-            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
+            VehicleMonitoringRef: avl.vehicle_monitoring_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
             MonitoredVehicleJourney: {
-                LineRef: avl.line_ref,
-                DirectionRef: avl.direction_ref,
-                PublishedLineName: avl.published_line_name,
+                LineRef: avl.line_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                DirectionRef: avl.direction_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                PublishedLineName: avl.published_line_name?.replaceAll(
+                    SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+                    "",
+                ),
                 Occupancy: avl.occupancy,
-                OperatorRef: avl.operator_ref,
-                OriginRef: avl.origin_ref,
-                OriginName: avl.origin_name,
+                OperatorRef: avl.operator_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                OriginRef: avl.origin_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                OriginName: avl.origin_name?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
                 OriginAimedDepartureTime: avl.origin_aimed_departure_time,
-                DestinationRef: avl.destination_ref,
-                DestinationName: avl.destination_name,
+                DestinationRef: avl.destination_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                DestinationName: avl.destination_name?.replaceAll(
+                    SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+                    "",
+                ),
                 DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
                 Monitored: avl.monitored,
                 VehicleLocation: {
@@ -244,16 +259,16 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
                     Latitude: avl.latitude,
                 },
                 Bearing: avl.bearing,
-                BlockRef: avl.block_ref,
-                VehicleRef: avl.vehicle_ref,
-                VehicleJourneyRef: avl.vehicle_journey_ref,
+                BlockRef: avl.block_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                VehicleRef: avl.vehicle_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                VehicleJourneyRef: avl.vehicle_journey_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
             },
         };
 
         if (avl.data_frame_ref && avl.dated_vehicle_journey_ref) {
             vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef = {
-                DataFrameRef: avl.data_frame_ref,
-                DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref,
+                DataFrameRef: avl.data_frame_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
             };
         }
 
@@ -278,8 +293,8 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
 export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = responseTime.toISOString();
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
-
-    const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
+    const vehicleActivities = createVehicleActivities(avls, validUntilTime);
+    const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
         ServiceDelivery: {
@@ -289,12 +304,12 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                 ResponseTimestamp: currentTime,
                 RequestMessageRef: requestMessageRef,
                 ValidUntil: validUntilTime,
-                VehicleActivity: vehicleActivity,
+                VehicleActivity: validVehicleActivities,
             },
         },
     };
 
-    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false, emptyStrings: false });
+    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
     const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
 
     const completeObject = {
