@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     createConflictErrorResponse,
     createServerErrorResponse,
@@ -11,6 +10,7 @@ import {
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscribeMessage,
     AvlSubscription,

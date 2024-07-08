@@ -1,12 +1,12 @@
-import { logger } from "@baselime/lambda-logger";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiAvlSubscription, handler, mapApiAvlSubscriptionResponse } from "./index";
 
 describe("avl-subscriptions", () => {
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             warn: vi.fn(),
             error: vi.fn(),

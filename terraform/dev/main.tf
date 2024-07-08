@@ -317,6 +317,7 @@ module "integrated_data_avl_consumer_api" {
   db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                       = module.integrated_data_aurora_db_dev.db_host
+  avl_consumer_api_key          = local.secrets["avl_consumer_api_key"]
 }
 
 module "integrated_data_cloudfront" {

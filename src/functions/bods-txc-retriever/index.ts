@@ -1,6 +1,6 @@
 import { Stream } from "node:stream";
-import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 import { Entry, Parse } from "unzipper";

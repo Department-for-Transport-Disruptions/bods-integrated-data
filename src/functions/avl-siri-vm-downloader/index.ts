@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
 import {} from "node:stream";
-import { logger } from "@baselime/lambda-logger";
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
+import {
+    createServerErrorResponse,
+    createUnauthorizedErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
@@ -10,14 +13,17 @@ import {
 } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
+import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import {
+    InvalidApiKeyError,
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
     createNmTokenValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyEventHeaders, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 import { createResponseStream, streamifyResponse } from "./utils";
 
@@ -35,6 +41,20 @@ const requestParamsSchema = z.preprocess(
         subscriptionId: createStringLengthValidation("subscriptionId").optional(),
     }),
 );
+
+const validateApiKey = async (secretArn: string, headers: APIGatewayProxyEventHeaders) => {
+    const requestApiKey = headers["x-api-key"];
+
+    if (!requestApiKey) {
+        throw new InvalidApiKeyError();
+    }
+
+    const storedApiKey = await getSecret<string>({ SecretId: secretArn });
+
+    if (requestApiKey !== storedApiKey) {
+        throw new InvalidApiKeyError();
+    }
+};
 
 const retrieveSiriVmData = async (
     dbClient: KyselyDb,
@@ -86,11 +106,13 @@ const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<APIG
 
 export const handler = streamifyResponse(async (event, responseStream) => {
     try {
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { BUCKET_NAME: bucketName, AVL_CONSUMER_API_KEY_ARN: avlConsumerApiKeyArn } = process.env;
 
-        if (!bucketName) {
-            throw new Error("Missing env vars - BUCKET_NAME must be set");
+        if (!bucketName || !avlConsumerApiKeyArn) {
+            throw new Error("Missing env vars - BUCKET_NAME and AVL_CONSUMER_API_KEY_ARN must be set");
         }
+
+        await validateApiKey(avlConsumerApiKeyArn, event.headers);
 
         const {
             downloadTfl,
@@ -147,6 +169,10 @@ export const handler = streamifyResponse(async (event, responseStream) => {
             logger.warn("Invalid request", e.errors);
             const response = createValidationErrorResponse(e.errors.map((error) => error.message));
             return createResponseStream(responseStream, response);
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            return createResponseStream(responseStream, createUnauthorizedErrorResponse());
         }
 
         if (e instanceof Error) {

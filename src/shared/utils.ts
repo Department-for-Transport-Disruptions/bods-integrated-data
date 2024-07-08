@@ -1,8 +1,8 @@
-import { logger } from "@baselime/lambda-logger";
 import { ZodSchema, z } from "zod";
 import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
+import { logger } from "./logger";
 import { VehicleType } from "./schema";
 import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";

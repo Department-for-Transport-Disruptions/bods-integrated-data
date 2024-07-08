@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     KyselyDb,
     NewNptgAdminArea,
@@ -6,6 +5,7 @@ import {
     NewNptgRegion,
     getDatabaseClient,
 } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { NptgSchema, nptgSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";

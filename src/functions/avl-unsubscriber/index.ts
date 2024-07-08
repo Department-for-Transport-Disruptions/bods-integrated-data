@@ -1,4 +1,3 @@
-import { logger } from "@baselime/lambda-logger";
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
@@ -7,6 +6,7 @@ import {
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
