@@ -27,6 +27,7 @@ AVL_CONSUMER_API_KEY_ARN=""
 setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
+	asdf plugin add pnpm && \
 	asdf plugin add awscli && \
 	asdf plugin add terraform https://github.com/asdf-community/asdf-hashicorp.git && \
 	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
