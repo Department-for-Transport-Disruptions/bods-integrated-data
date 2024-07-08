@@ -65,3 +65,11 @@ export class InvalidXmlError extends Error {
         Object.setPrototypeOf(this, InvalidXmlError.prototype);
     }
 }
+
+export class InvalidApiKeyError extends Error {
+    constructor(message = "Invalid API key") {
+        super(message);
+
+        Object.setPrototypeOf(this, InvalidApiKeyError.prototype);
+    }
+}

@@ -20,6 +20,7 @@ BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
+AVL_CONSUMER_API_KEY_ARN=""
 
 # Dev
 
@@ -227,7 +228,7 @@ run-local-avl-tfl-location-retriever:
 # currently not supported locally due to awslambda global runtime only available in aws
 # example usage with query params: make run-local-avl-siri-vm-downloader AVL_SIRI_VM_DOWNLOADER_INPUT="{ queryStringParameters: { operatorRef: '1,2', vehicleRef: '123' } }"
 run-local-avl-siri-vm-downloader:
-	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
+	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} AVL_CONSUMER_API_KEY_ARN=${AVL_CONSUMER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
 
 run-local-avl-subscriptions:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({}).then(console.log).catch(console.error)"
