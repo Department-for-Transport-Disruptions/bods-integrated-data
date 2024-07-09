@@ -1,7 +1,9 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
+    validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import {
     addSubscriptionAuthCredsToSsm,
@@ -11,7 +13,7 @@ import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrate
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 
@@ -37,21 +39,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             TABLE_NAME: tableName,
             MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
             DATA_ENDPOINT: dataEndpoint,
+            AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
         } = process.env;
 
-        if (!tableName || !dataEndpoint) {
-            throw new Error("Missing env vars: TABLE_NAME and DATA_ENDPOINT must be set.");
+        if (!tableName || !dataEndpoint || !avlProducerApiKeyArn) {
+            throw new Error("Missing env vars: TABLE_NAME, DATA_ENDPOINT and AVL_PRODUCER_API_KEY_ARN must be set.");
         }
 
         if (stage === "local" && !mockProducerSubscribeEndpoint) {
             throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
-        const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
+        await validateApiKey(avlProducerApiKeyArn, event.headers);
 
-        if (!event.body) {
-            throw new Error("No body sent with event");
-        }
+        const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
 
         const updateBody = requestBodySchema.parse(event.body);
         const { username, password } = updateBody;
@@ -102,6 +103,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
