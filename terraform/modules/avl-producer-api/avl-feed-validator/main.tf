@@ -37,9 +37,7 @@ module "avl_feed_validator" {
     },
     {
       Action = [
-        "cloudwatch:PutMetricData",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics",
+        "cloudwatch:PutMetricData"
       ],
       Effect   = "Allow",
       Resource = "*"

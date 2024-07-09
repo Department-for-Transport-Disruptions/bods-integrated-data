@@ -55,7 +55,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         } catch (e) {
             await putMetricData("custom/CAVLMetrics", [
                 {
-                    MetricName: "failedUnsubscribeRequest",
+                    MetricName: "FailedUnsubscribeRequest",
                     Value: 1,
                 },
             ]);

@@ -93,7 +93,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             }
             await putMetricData("custom/CAVLMetrics", [
                 {
-                    MetricName: "failedSubscription",
+                    MetricName: "FailedSubscription",
                     Value: 1,
                 },
             ]);

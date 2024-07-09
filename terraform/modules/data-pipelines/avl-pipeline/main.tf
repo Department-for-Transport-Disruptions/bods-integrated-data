@@ -75,9 +75,7 @@ module "integrated_data_avl_processor_function" {
 
     {
       Action = [
-        "cloudwatch:PutMetricData",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics",
+        "cloudwatch:PutMetricData"
       ],
       Effect   = "Allow",
       Resource = "*"

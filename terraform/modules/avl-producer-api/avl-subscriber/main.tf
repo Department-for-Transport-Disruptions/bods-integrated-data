@@ -43,9 +43,7 @@ module "avl_subscriber" {
     },
     {
       Action = [
-        "cloudwatch:PutMetricData",
-        "cloudwatch:GetMetricStatistics",
-        "cloudwatch:ListMetrics",
+        "cloudwatch:PutMetricData"
       ],
       Effect   = "Allow",
       Resource = "*"

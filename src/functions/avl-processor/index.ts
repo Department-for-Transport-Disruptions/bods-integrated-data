@@ -51,7 +51,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
         if (!avls || avls.length === 0) {
             await putMetricData("custom/CAVLMetrics", [
                 {
-                    MetricName: "invalidSiriSchema",
+                    MetricName: "InvalidSiriSchema",
                     Value: 1,
                     Dimensions: [
                         {

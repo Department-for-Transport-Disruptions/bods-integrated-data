@@ -82,7 +82,7 @@ export const handler = async () => {
                 } catch (e) {
                     await putMetricData("custom/CAVLMetrics", [
                         {
-                            MetricName: "avlFeedOutage",
+                            MetricName: "AvlFeedOutage",
                             Value: 1,
                             Dimensions: [
                                 {
