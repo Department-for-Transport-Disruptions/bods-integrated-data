@@ -161,14 +161,10 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         subscriptionDetails.requestorRef ?? null,
     );
 
-    logger.info("subscriptionDetailInFunction", subscriptionDetails);
-
     const url =
         mockProducerSubscribeEndpoint && subscriptionDetails.requestorRef === "BODS_MOCK_PRODUCER"
             ? mockProducerSubscribeEndpoint
             : subscriptionDetails.url;
-
-    logger.info(url);
 
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
