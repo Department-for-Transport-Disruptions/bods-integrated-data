@@ -67,10 +67,11 @@ module "avl_subscriber" {
   "${module.avl_mock_data_producer.endpoint}/subscriptions")
   avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/subscriptions" :
   "https://${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
-  aws_account_id = var.aws_account_id
-  aws_region     = var.aws_region
-  sg_id          = var.sg_id
-  subnet_ids     = var.subnet_ids
+  aws_account_id           = var.aws_account_id
+  aws_region               = var.aws_region
+  sg_id                    = var.sg_id
+  subnet_ids               = var.subnet_ids
+  avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
 }
 
 resource "aws_lambda_function_url" "avl_subscribe_endpoint_function_url" {

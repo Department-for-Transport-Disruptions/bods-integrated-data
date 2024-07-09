@@ -1,7 +1,9 @@
 import {
     createConflictErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
+    validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import {
     addSubscriptionAuthCredsToSsm,
@@ -15,7 +17,7 @@ import {
     AvlSubscription,
     avlSubscribeMessageSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
+import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
@@ -45,17 +47,18 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             STAGE: stage,
             MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
             DATA_ENDPOINT: dataEndpoint,
+            AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
         } = process.env;
 
-        if (!tableName || !dataEndpoint) {
-            throw new Error("Missing env vars: TABLE_NAME and DATA_ENDPOINT must be set.");
+        if (!tableName || !dataEndpoint || !avlProducerApiKeyArn) {
+            throw new Error("Missing env vars: TABLE_NAME, DATA_ENDPOINT and AVL_PRODUCER_API_KEY_ARN must be set.");
         }
 
         if (stage === "local" && !mockProducerSubscribeEndpoint) {
             throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
         }
 
-        logger.info("Starting AVL subscriber");
+        await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const avlSubscribeMessage = requestBodySchema.parse(event.body);
         const { subscriptionId, username, password } = avlSubscribeMessage;
@@ -104,6 +107,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
