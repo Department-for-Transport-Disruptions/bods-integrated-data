@@ -34,10 +34,20 @@ module "integrated_data_avl_subscriptions_function" {
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.table_name}"
 
     },
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.avl_producer_api_key_arn
+      ]
+    }
   ]
 
   env_vars = {
-    STAGE      = var.environment
-    TABLE_NAME = var.table_name
+    STAGE                    = var.environment
+    TABLE_NAME               = var.table_name
+    AVL_PRODUCER_API_KEY_ARN = var.avl_producer_api_key_arn
   }
 }

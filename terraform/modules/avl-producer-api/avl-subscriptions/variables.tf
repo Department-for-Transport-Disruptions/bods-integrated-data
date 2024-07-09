@@ -17,3 +17,8 @@ variable "table_name" {
   type        = string
   description = "Name of the dynamoDB table containing the subscriptions data"
 }
+
+variable "avl_producer_api_key_arn" {
+  type        = string
+  description = "AVL producer API key ARN"
+}

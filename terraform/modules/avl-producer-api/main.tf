@@ -21,10 +21,11 @@ resource "aws_secretsmanager_secret_version" "avl_producer_api_key_secret_versio
 module "avl_subscriptions" {
   source = "./avl-subscriptions"
 
-  environment    = var.environment
-  aws_account_id = var.aws_account_id
-  aws_region     = var.aws_region
-  table_name     = var.avl_subscription_table_name
+  environment              = var.environment
+  aws_account_id           = var.aws_account_id
+  aws_region               = var.aws_region
+  table_name               = var.avl_subscription_table_name
+  avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
 }
 
 module "avl_data_endpoint" {
