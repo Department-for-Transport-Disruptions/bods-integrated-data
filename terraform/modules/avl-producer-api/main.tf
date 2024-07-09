@@ -89,6 +89,7 @@ module "avl_unsubscriber" {
   environment                 = var.environment
   sg_id                       = var.sg_id
   subnet_ids                  = var.subnet_ids
+  avl_producer_api_key_arn    = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
 }
 
 module "avl_update_endpoint" {

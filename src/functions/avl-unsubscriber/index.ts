@@ -1,14 +1,20 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
+    validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
-import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import {
+    InvalidApiKeyError,
+    InvalidXmlError,
+    createStringLengthValidation,
+} from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
@@ -28,11 +34,13 @@ const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
-        const { TABLE_NAME: tableName } = process.env;
+        const { TABLE_NAME: tableName, AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;
 
-        if (!tableName) {
-            throw new Error("Missing env var: TABLE_NAME must be set.");
+        if (!tableName || !avlProducerApiKeyArn) {
+            throw new Error("Missing env vars: TABLE_NAME and AVL_PRODUCER_API_KEY_ARN must be set.");
         }
+
+        await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
 
@@ -73,6 +81,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
