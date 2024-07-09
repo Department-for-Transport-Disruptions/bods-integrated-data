@@ -43,6 +43,13 @@ module "avl_subscriber" {
     },
     {
       Action = [
+        "cloudwatch:PutMetricData"
+      ],
+      Effect   = "Allow",
+      Resource = "*"
+    },
+    {
+      Action = [
         "secretsmanager:GetSecretValue",
       ],
       Effect = "Allow",

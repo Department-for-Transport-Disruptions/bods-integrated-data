@@ -21,6 +21,10 @@ describe("avl-subscriber", () => {
         getSecret: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const sendSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(subscribe, "sendSubscriptionRequestAndUpdateDynamo");
     const addSubscriptionAuthCredsToSsmSpy = vi.spyOn(subscribe, "addSubscriptionAuthCredsToSsm");
