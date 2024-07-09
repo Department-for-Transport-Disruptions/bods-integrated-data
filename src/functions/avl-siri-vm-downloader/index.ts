@@ -4,6 +4,7 @@ import {
     createServerErrorResponse,
     createUnauthorizedErrorResponse,
     createValidationErrorResponse,
+    validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
@@ -15,7 +16,6 @@ import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/databa
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
-import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import {
     InvalidApiKeyError,
     createBoundingBoxValidation,
@@ -23,7 +23,7 @@ import {
     createNmTokenValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEventHeaders, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 import { createResponseStream, streamifyResponse } from "./utils";
 
@@ -41,20 +41,6 @@ const requestParamsSchema = z.preprocess(
         subscriptionId: createStringLengthValidation("subscriptionId").optional(),
     }),
 );
-
-const validateApiKey = async (secretArn: string, headers: APIGatewayProxyEventHeaders) => {
-    const requestApiKey = headers["x-api-key"];
-
-    if (!requestApiKey) {
-        throw new InvalidApiKeyError();
-    }
-
-    const storedApiKey = await getSecret<string>({ SecretId: secretArn });
-
-    if (requestApiKey !== storedApiKey) {
-        throw new InvalidApiKeyError();
-    }
-};
 
 const retrieveSiriVmData = async (
     dbClient: KyselyDb,

@@ -1,4 +1,6 @@
-import { APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyEventHeaders, APIGatewayProxyResult } from "aws-lambda";
+import { getSecret } from "./secretsManager";
+import { InvalidApiKeyError } from "./validation";
 
 export const createValidationErrorResponse = (errors: string[]): APIGatewayProxyResult => {
     return {
@@ -33,4 +35,18 @@ export const createServerErrorResponse = (error?: string): APIGatewayProxyResult
         statusCode: 500,
         body: JSON.stringify({ errors: [error || "An unexpected error occurred"] }),
     };
+};
+
+export const validateApiKey = async (secretArn: string, headers: APIGatewayProxyEventHeaders) => {
+    const requestApiKey = headers["x-api-key"];
+
+    if (!requestApiKey) {
+        throw new InvalidApiKeyError();
+    }
+
+    const storedApiKey = await getSecret<string>({ SecretId: secretArn });
+
+    if (requestApiKey !== storedApiKey) {
+        throw new InvalidApiKeyError();
+    }
 };
