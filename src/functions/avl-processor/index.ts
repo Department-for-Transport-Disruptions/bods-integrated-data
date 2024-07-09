@@ -98,7 +98,7 @@ export const handler = async (event: SQSEvent) => {
         );
         await putMetricData("custom/CAVLMetrics", [
             {
-                MetricName: "totalAvlProcessed",
+                MetricName: "TotalAvlProcessed",
                 Value: 1,
             },
         ]);
