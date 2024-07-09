@@ -9,6 +9,15 @@ terraform {
   }
 }
 
+resource "aws_secretsmanager_secret" "avl_producer_api_key_secret" {
+  description = "AVL producer API key - ${var.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "avl_producer_api_key_secret_version" {
+  secret_id     = aws_secretsmanager_secret.avl_producer_api_key_secret.id
+  secret_string = jsonencode(var.avl_producer_api_key)
+}
+
 module "avl_subscriptions" {
   source = "./avl-subscriptions"
 
