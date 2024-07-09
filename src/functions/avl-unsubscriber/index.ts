@@ -77,12 +77,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             body: "",
         };
     } catch (e) {
-        await putMetricData("custom/CAVLMetrics", [
-            {
-                MetricName: "omittedUnsubscribeRequest",
-                Value: 1,
-            },
-        ]);
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
