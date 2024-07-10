@@ -22,6 +22,10 @@ describe("avl-feed-validator", () => {
         getParameter: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const getParameterSpy = vi.spyOn(ssm, "getParameter");

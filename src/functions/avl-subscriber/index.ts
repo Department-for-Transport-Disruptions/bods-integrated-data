@@ -9,6 +9,7 @@ import {
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscribeMessage,
@@ -90,7 +91,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                     `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
                 );
             }
-
+            await putMetricData("custom/CAVLMetrics", [
+                {
+                    MetricName: "FailedSubscription",
+                    Value: 1,
+                },
+            ]);
             throw e;
         }
 
