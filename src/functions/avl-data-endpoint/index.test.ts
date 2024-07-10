@@ -5,7 +5,6 @@ import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscri
 import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {} from "zod";
 import { handler } from ".";
 import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
 
