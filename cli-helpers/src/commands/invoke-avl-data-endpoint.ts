@@ -6,6 +6,7 @@ import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
     .addOption(STAGE_OPTION_WITH_DEFAULT)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
+    .option("--apiKey <apiKey>", "Pass apiKey parameter to function")
     .addOption(
         new Option("-n, --notificationType <type>", "Notification type").choices([
             "Heartbeat Notification",
@@ -14,7 +15,7 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
     )
     .action(async (options) => {
         const { stage } = options;
-        let { subscriptionId, notificationType } = options;
+        let { subscriptionId, notificationType, apiKey } = options;
 
         if (!notificationType) {
             const response = await inquirer.prompt<{ notificationType: string }>([
@@ -121,6 +122,7 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
             },
             queryStringParameters: {
                 subscriptionId,
+                apiKey,
             },
         };
 
