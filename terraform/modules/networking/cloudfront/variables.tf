@@ -13,6 +13,16 @@ variable "avl_siri_vm_downloader_function_name" {
   description = "AVL siri-vm downloader function name"
 }
 
+variable "avl_siri_vm_data_producer_domain" {
+  type        = string
+  description = "AVL siri-vm data producer domain"
+}
+
+variable "avl_siri_vm_data_producer_allowed_ips" {
+  type        = list(string)
+  description = "AVL siri-vm data producer allowed IPs"
+}
+
 variable "domain" {
   type = string
 }

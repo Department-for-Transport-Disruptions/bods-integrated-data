@@ -33,6 +33,11 @@ data "sops_file" "secrets" {
 locals {
   env     = "test"
   secrets = jsondecode(data.sops_file.secrets.raw)
+  data_producer_allowed_ips = [
+    "13.42.115.90/32",
+    "13.42.253.17/32",
+    "3.9.142.7/32"
+  ]
 }
 
 module "integrated_data_monitoring" {
@@ -325,10 +330,12 @@ module "integrated_data_avl_consumer_api" {
 module "integrated_data_cloudfront" {
   source = "../modules/networking/cloudfront"
 
-  environment                          = local.env
-  avl_siri_vm_downloader_domain        = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_function_url
-  avl_siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
-  domain                               = module.integrated_data_route53.public_hosted_zone_name
-  acm_certificate_arn                  = module.integrated_data_acm.cloudfront_acm_certificate_arn
-  hosted_zone_id                       = module.integrated_data_route53.public_hosted_zone_id
+  environment                           = local.env
+  avl_siri_vm_downloader_domain         = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_function_url
+  avl_siri_vm_downloader_function_name  = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  domain                                = module.integrated_data_route53.public_hosted_zone_name
+  acm_certificate_arn                   = module.integrated_data_acm.cloudfront_acm_certificate_arn
+  hosted_zone_id                        = module.integrated_data_route53.public_hosted_zone_id
+  avl_siri_vm_data_producer_domain      = module.integrated_data_avl_data_producer_api.endpoint
+  avl_siri_vm_data_producer_allowed_ips = local.data_producer_allowed_ips
 }
