@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import { writeFile } from "node:fs/promises";
+import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
@@ -12,7 +13,10 @@ interface Subscription {
     password: string;
 }
 
-const getInvokePayload = (subscriptionId: string) => ({
+const getInvokePayload = (subscriptionId: string, apiKey: string) => ({
+    headers: {
+        "x-api-key": apiKey,
+    },
     pathParameters: {
         subscriptionId,
     },
@@ -26,6 +30,7 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .action(async (options) => {
         let { stage } = options;
+        const apiKey = await getSecretByKey("avl_producer_api_key");
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -46,7 +51,7 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
         const unsuccessfulSubscriptions: Subscription[] = [];
 
         for (const subscription of subscriptions) {
-            const invokePayload = getInvokePayload(subscription.id);
+            const invokePayload = getInvokePayload(subscription.id, apiKey);
 
             const unsubscribeEvent = await invokeLambda(stage, {
                 FunctionName: `integrated-data-avl-unsubscriber-${stage}`,

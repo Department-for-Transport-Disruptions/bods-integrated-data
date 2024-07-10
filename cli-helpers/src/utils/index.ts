@@ -2,8 +2,6 @@ import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/cl
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 
-const localStackHost = process.env.LOCALSTACK_HOSTNAME;
-
 export const STAGES = ["local", "dev", "test"];
 
 export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
@@ -17,7 +15,7 @@ export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandIn
         region: "eu-west-2",
         ...(stage === "local"
             ? {
-                  endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
+                  endpoint: "http://localhost:4566",
                   credentials: {
                       accessKeyId: "DUMMY",
                       secretAccessKey: "DUMMY",
