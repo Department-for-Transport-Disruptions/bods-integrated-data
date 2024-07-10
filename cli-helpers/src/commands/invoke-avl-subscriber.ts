@@ -10,8 +10,9 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .option("-p, --password <password>", "Data producer password")
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
     .option("--publisherId <publisherId>", "Data producer publisher ID")
+    .option("--apiKey <apiKey>", "Pass apiKey parameter to function")
     .action(async (options) => {
-        let { stage, producerEndpoint, username, password, subscriptionId, publisherId } = options;
+        let { stage, producerEndpoint, username, password, subscriptionId, publisherId, apiKey } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -87,6 +88,9 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
         }
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\"}`,
         };
 

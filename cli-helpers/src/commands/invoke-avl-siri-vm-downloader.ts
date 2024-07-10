@@ -13,10 +13,14 @@ export const invokeAvlSiriVmDownloader = new Command("invoke-avl-siri-vm-downloa
     .option("--originRef <originRef>", "Pass originRef parameter to function")
     .option("--destinationRef <destinationRef>", "Pass destinationRef parameter to function")
     .option("--subscriptionId <subscriptionId>", "Pass subscriptionId parameter to function")
+    .option("--apiKey <apiKey>", "Pass apiKey parameter to function")
     .action(async (options) => {
-        const { stage, ...params } = options;
+        const { stage, apiKey, ...params } = options;
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             queryStringParameters: params,
         };
 
