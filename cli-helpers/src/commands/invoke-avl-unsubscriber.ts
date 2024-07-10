@@ -6,8 +6,9 @@ import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
+    .option("--apiKey <apiKey>", "Pass apiKey parameter to function")
     .action(async (options) => {
-        let { stage, subscriptionId } = options;
+        let { stage, subscriptionId, apiKey } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -35,6 +36,9 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
         }
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             pathParameters: {
                 subscriptionId,
             },
