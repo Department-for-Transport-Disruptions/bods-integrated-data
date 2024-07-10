@@ -135,7 +135,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
 }
 
 resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
-  description = "TfL API keys - ${var.environment}"
+  name = "tfl_api_keys"
 }
 
 resource "aws_secretsmanager_secret_version" "tfl_api_keys_secret_version" {

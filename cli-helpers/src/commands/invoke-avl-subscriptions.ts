@@ -1,12 +1,12 @@
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
 
 export const invokeAvlSubscriptions = new Command("invoke-avl-subscriptions")
     .option("--subscriptionId <subscriptionId>", "Subscription ID")
-    .option("--apiKey <apiKey>", "Pass apiKey parameter to function")
     .addOption(STAGE_OPTION_WITH_DEFAULT)
     .action(async (options) => {
-        const { stage, subscriptionId, apiKey } = options;
+        const { stage, subscriptionId } = options;
+        const apiKey = await getSecretByKey("avl_producer_api_key");
 
         const invokePayload = {
             headers: {

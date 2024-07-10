@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "aws_secretsmanager_secret" "avl_producer_api_key_secret" {
-  description = "AVL producer API key - ${var.environment}"
+  name = "avl_producer_api_key"
 }
 
 resource "aws_secretsmanager_secret_version" "avl_producer_api_key_secret_version" {

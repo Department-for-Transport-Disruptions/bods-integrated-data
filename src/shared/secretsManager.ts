@@ -12,11 +12,12 @@ const client = new SecretsManagerClient({
 });
 
 export const getSecret = async <T>(input: GetSecretValueCommandInput): Promise<T> => {
-    const secret = await client.send(new GetSecretValueCommand(input));
+    const response = await client.send(new GetSecretValueCommand(input));
+    const secret = response.SecretString;
 
-    if (!secret.SecretString) {
+    if (!secret) {
         throw new Error(`Secret could not be retrieved: ${input.SecretId}`);
     }
 
-    return JSON.parse(secret.SecretString) as T;
+    return JSON.parse(secret) as T;
 };

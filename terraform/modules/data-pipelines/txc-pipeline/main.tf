@@ -82,7 +82,7 @@ resource "aws_s3_bucket_versioning" "integrated_data_gtfs_timetables_bucket_vers
 }
 
 resource "aws_secretsmanager_secret" "tnds_ftp_credentials_secret" {
-  description = "Integrated data tnds ftp credentials - ${var.environment}"
+  name = "tnds_ftp"
 }
 
 resource "aws_secretsmanager_secret_version" "tnds_ftp_credentials_secret_version" {
