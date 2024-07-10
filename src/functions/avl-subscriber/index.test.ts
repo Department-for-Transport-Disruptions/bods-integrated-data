@@ -25,6 +25,10 @@ describe("avl-subscriber", () => {
         putMetricData: vi.fn(),
     }));
 
+    vi.mock("node:crypto", () => ({
+        randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
+    }));
+
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const sendSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(subscribe, "sendSubscriptionRequestAndUpdateDynamo");
     const addSubscriptionAuthCredsToSsmSpy = vi.spyOn(subscribe, "addSubscriptionAuthCredsToSsm");
@@ -48,6 +52,7 @@ describe("avl-subscriber", () => {
         shortDescription: mockAvlSubscribeMessage.shortDescription,
         publisherId: mockAvlSubscribeMessage.publisherId,
         requestorRef: undefined,
+        apiKey: "5965q7gh-5428-43e2-a75c-1782a48637d5",
     };
 
     let mockSubscribeEvent: APIGatewayProxyEvent;

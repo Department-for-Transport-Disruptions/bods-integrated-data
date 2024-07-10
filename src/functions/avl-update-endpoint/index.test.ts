@@ -1,6 +1,7 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription, AvlUpdateBody } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
@@ -8,7 +9,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("avl-update-endpoint", () => {
-    const mockUpdateEventBody = {
+    const mockUpdateEventBody: AvlUpdateBody = {
         dataProducerEndpoint: "https://www.updated-endpoint.com",
         description: "updated description",
         shortDescription: "updated short description",
@@ -18,7 +19,7 @@ describe("avl-update-endpoint", () => {
 
     let mockUpdateEvent: APIGatewayProxyEvent;
 
-    const expectedSubscriptionDetails = {
+    const expectedSubscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
         description: "updated description",
         lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
         publisherId: "mock-publisher-id",
@@ -26,6 +27,7 @@ describe("avl-update-endpoint", () => {
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         shortDescription: "updated short description",
         url: "https://www.updated-endpoint.com",
+        apiKey: "5965q7gh-5428-43e2-a75c-1782a48637d5",
     };
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -39,6 +41,10 @@ describe("avl-update-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/avl/subscribe", () => ({
         sendSubscriptionRequestAndUpdateDynamo: vi.fn(),
         addSubscriptionAuthCredsToSsm: vi.fn(),
+    }));
+
+    vi.mock("node:crypto", () => ({
+        randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
     }));
 
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
@@ -58,7 +64,7 @@ describe("avl-update-endpoint", () => {
         process.env.DATA_ENDPOINT = "https://www.test.com/data";
         process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
 
-        getDynamoItemSpy.mockResolvedValue({
+        const avlSubscription: AvlSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
             publisherId: "mock-publisher-id",
@@ -68,7 +74,10 @@ describe("avl-update-endpoint", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
-        });
+            apiKey: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+        };
+
+        getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
         mockUpdateEvent = {
             headers: {

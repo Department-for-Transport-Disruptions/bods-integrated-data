@@ -54,6 +54,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
+            apiKey: "mock-api-key",
         };
 
         await sendSubscriptionRequestAndUpdateDynamo(
@@ -95,6 +96,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
+            apiKey: "mock-api-key",
         };
 
         await sendSubscriptionRequestAndUpdateDynamo(
@@ -143,6 +145,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
+            apiKey: "mock-api-key",
         };
 
         await sendSubscriptionRequestAndUpdateDynamo(
@@ -190,6 +193,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: null,
             publisherId: "mock-publisher-id",
             lastModifiedDateTime: null,
+            apiKey: "mock-api-key",
         };
 
         await expect(
@@ -227,6 +231,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: null,
             publisherId: "mock-publisher-id",
             lastModifiedDateTime: null,
+            apiKey: "mock-api-key",
         };
 
         await expect(
@@ -270,6 +275,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: null,
             publisherId: "mock-publisher-id",
             lastModifiedDateTime: null,
+            apiKey: "mock-api-key",
         };
 
         await expect(

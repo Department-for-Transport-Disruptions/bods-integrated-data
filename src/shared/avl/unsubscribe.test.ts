@@ -75,6 +75,7 @@ describe("sendTerminateSubscriptionRequestAndUpdateDynamo", () => {
             serviceEndDatetime: "2024-03-11T15:20:02.093Z",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
+            apiKey: "mock-api-key",
         });
     });
 

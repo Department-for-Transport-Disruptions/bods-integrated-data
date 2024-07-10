@@ -5,6 +5,7 @@ export const mockInput = {
         description: "description",
         shortDescription: "shortDescription",
         publisherId: "mock-publisher-id",
+        apiKey: "mock-api-key",
     },
     username: "test-user",
     password: "dummy-password",
