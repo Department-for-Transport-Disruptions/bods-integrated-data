@@ -57,6 +57,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             publisherId: subscription.publisherId,
             serviceStartDatetime: subscription.serviceStartDatetime,
             lastModifiedDateTime: subscription.lastModifiedDateTime,
+            apiKey: subscription.apiKey,
         };
         try {
             await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);

@@ -82,6 +82,7 @@ export const avlSubscriptionSchema = z.object({
     publisherId: z.string(),
     lastAvlDataReceivedDateTime: z.string().nullish(),
     lastModifiedDateTime: z.string().nullish(),
+    apiKey: z.string(),
 });
 
 export type AvlSubscription = z.infer<typeof avlSubscriptionSchema>;

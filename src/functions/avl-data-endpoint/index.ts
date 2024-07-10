@@ -1,6 +1,7 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
@@ -9,7 +10,11 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import {
+    InvalidApiKeyError,
+    InvalidXmlError,
+    createStringLengthValidation,
+} from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
@@ -107,6 +112,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
+        if (event.queryStringParameters?.apiKey !== subscription.apiKey) {
+            throw new InvalidApiKeyError();
+        }
+
         const xml = parseXml(body);
 
         if (Object.hasOwn(xml, "HeartbeatNotification")) {
@@ -127,6 +136,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {

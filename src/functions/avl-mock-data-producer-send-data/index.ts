@@ -28,8 +28,8 @@ export const handler = async () => {
             subscriptions.map(async (subscription) => {
                 const url =
                     stage === "local"
-                        ? `${dataEndpoint}?subscriptionId=${subscription.subscriptionId}`
-                        : `${dataEndpoint}/${subscription.subscriptionId}`;
+                        ? `${dataEndpoint}?subscriptionId=${subscription.subscriptionId}&apiKey=${subscription.apiKey}`
+                        : `${dataEndpoint}/${subscription.subscriptionId}?apiKey=${subscription.apiKey}`;
 
                 const siriVm = generateMockSiriVm(subscription.subscriptionId, currentTime, validUntilTime);
 
