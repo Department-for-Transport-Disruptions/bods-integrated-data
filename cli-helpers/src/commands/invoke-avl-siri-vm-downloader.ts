@@ -1,5 +1,6 @@
+import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 // currently not supported locally due to awslambda global runtime only available in aws
 export const invokeAvlSiriVmDownloader = new Command("invoke-avl-siri-vm-downloader")

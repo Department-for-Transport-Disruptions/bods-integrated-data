@@ -1,5 +1,6 @@
+import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 export const invokeAvlSubscriptions = new Command("invoke-avl-subscriptions")
     .option("--subscriptionId <subscriptionId>", "Subscription ID")

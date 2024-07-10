@@ -1,8 +1,9 @@
 import * as fs from "node:fs";
 import { writeFile } from "node:fs/promises";
+import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 interface Subscription {
     id: string;

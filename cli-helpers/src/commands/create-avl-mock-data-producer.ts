@@ -1,7 +1,8 @@
 import { logger } from "@bods-integrated-data/shared/logger";
+import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
 
 export const createAvlMockDataProducer = new Command("create-avl-mock-data-producer")
     .addOption(STAGE_OPTION_WITH_DEFAULT)

@@ -1,5 +1,4 @@
 import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/client-lambda";
-import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 
@@ -47,41 +46,4 @@ export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandIn
     } finally {
         lambdaClient.destroy();
     }
-};
-
-const secretsManagerClient = new SecretsManagerClient({
-    endpoint: "http://localhost:4566",
-    region: "eu-west-2",
-});
-
-export const getSecretByKey = async <T extends string>(key: string): Promise<T> => {
-    const listSecretsCommand = new ListSecretsCommand({
-        Filters: [
-            {
-                Key: "name",
-                Values: [key],
-            },
-        ],
-    });
-    const listSecretsResponse = await secretsManagerClient.send(listSecretsCommand);
-    const secretsList = listSecretsResponse.SecretList;
-
-    if (!secretsList) {
-        throw new Error("Secrets list could not be retrieved");
-    }
-
-    if (secretsList.length === 0 || !secretsList[0].ARN) {
-        throw new Error(`Secret with key does not exist: ${key}`);
-    }
-
-    const secretId = secretsList[0].ARN;
-    const getSecretCommand = new GetSecretValueCommand({ SecretId: secretId });
-    const response = await secretsManagerClient.send(getSecretCommand);
-    const secret = response.SecretString;
-
-    if (!secret) {
-        throw new Error(`Secret with ID could not be retrieved: ${secretId}`);
-    }
-
-    return JSON.parse(secret) as T;
 };

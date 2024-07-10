@@ -1,8 +1,9 @@
 import { writeFile } from "node:fs/promises";
+import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 interface BodsSubscription {
     dataset_id: string;
