@@ -1,12 +1,21 @@
+import { AvlSubscribeMessage } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { expect, test } from "@playwright/test";
 import { deleteDynamoItem } from "../data/dynamo";
+import { getSecretByKey } from "./utils";
 
 const { STAGE: stage } = process.env;
 
+if (!stage) {
+    throw new Error("Missing env vars - STAGE must be set");
+}
+
 const avlProducerApiUrl = `https://avl-producer.${stage}.integrated-data.dft-create-data.com`;
 const avlSubscriptionTableName = `integrated-data-avl-subscription-table-${stage}`;
+const headers = {
+    apiKey: "",
+};
 
-const testSubscription = {
+const testSubscription: AvlSubscribeMessage = {
     dataProducerEndpoint: "http://siri.ticketer.org.uk/api/vm",
     description: "Playwright test subscription",
     shortDescription: "Playwright test subscription",
@@ -26,6 +35,7 @@ const cleardownTestSubscription = async () => {
 
 test.beforeAll(async () => {
     await cleardownTestSubscription();
+    headers.apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 });
 
 test.afterAll(async () => {
@@ -35,6 +45,7 @@ test.afterAll(async () => {
 test.describe("avl-producer-api", () => {
     test("should allow a new data producer subscription to be created", async ({ request }) => {
         const newSubscription = await request.post(`${avlProducerApiUrl}/subscriptions`, {
+            headers,
             data: testSubscription,
         });
 
@@ -42,6 +53,7 @@ test.describe("avl-producer-api", () => {
 
         const getSubscriptionResponse = await request.get(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            { headers },
         );
 
         expect(getSubscriptionResponse.status()).toBe(200);
@@ -54,7 +66,7 @@ test.describe("avl-producer-api", () => {
             }),
         );
 
-        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
+        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`, { headers });
 
         expect(listSubscriptionsResponse.status()).toBe(200);
 
@@ -73,6 +85,7 @@ test.describe("avl-producer-api", () => {
         const updateSubscription = await request.put(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
             {
+                headers,
                 data: { ...testSubscription, username: "newUsername", password: "newPassword" },
             },
         );
@@ -81,6 +94,7 @@ test.describe("avl-producer-api", () => {
 
         const getSubscriptionResponse = await request.get(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            { headers },
         );
 
         expect(getSubscriptionResponse.status()).toBe(200);
@@ -93,7 +107,7 @@ test.describe("avl-producer-api", () => {
             }),
         );
 
-        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
+        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`, { headers });
 
         expect(listSubscriptionsResponse.status()).toBe(200);
 
@@ -111,12 +125,14 @@ test.describe("avl-producer-api", () => {
     test("should allow a data producer subscription to be deleted", async ({ request }) => {
         const deleteSubscription = await request.delete(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            { headers },
         );
 
         expect(deleteSubscription.status()).toBe(204);
 
         const getSubscriptionResponse = await request.get(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
+            { headers },
         );
 
         expect(getSubscriptionResponse.status()).toBe(200);
@@ -129,7 +145,7 @@ test.describe("avl-producer-api", () => {
             }),
         );
 
-        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`);
+        const listSubscriptionsResponse = await request.get(`${avlProducerApiUrl}/subscriptions/`, { headers });
 
         expect(listSubscriptionsResponse.status()).toBe(200);
 

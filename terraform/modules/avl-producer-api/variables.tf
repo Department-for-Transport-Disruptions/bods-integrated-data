@@ -28,6 +28,11 @@ variable "sg_id" {
   description = "Security group ID"
 }
 
+variable "avl_producer_api_key" {
+  type        = string
+  description = "AVL producer API key"
+}
+
 variable "subnet_ids" {
   type = list(string)
 }

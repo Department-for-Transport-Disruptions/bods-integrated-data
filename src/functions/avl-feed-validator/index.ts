@@ -38,10 +38,10 @@ export const handler = async () => {
 
         const currentTime = getDate();
 
-        const { STAGE: stage, TABLE_NAME: tableName, SUBSCRIBE_ENDPOINT: subscribeEndpoint } = process.env;
+        const { TABLE_NAME: tableName, SUBSCRIBE_ENDPOINT: subscribeEndpoint } = process.env;
 
-        if (!stage || !tableName || !subscribeEndpoint) {
-            throw new Error("Missing env vars: STAGE, TABLE_NAME and SUBSCRIBE_ENDPOINT must be set");
+        if (!tableName || !subscribeEndpoint) {
+            throw new Error("Missing env vars: TABLE_NAME and SUBSCRIBE_ENDPOINT must be set");
         }
 
         const subscriptions = await getAvlSubscriptions(tableName);

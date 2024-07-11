@@ -1,5 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
 
 // currently not supported locally due to awslambda global runtime only available in aws
 export const invokeAvlSiriVmDownloader = new Command("invoke-avl-siri-vm-downloader")
@@ -15,8 +15,12 @@ export const invokeAvlSiriVmDownloader = new Command("invoke-avl-siri-vm-downloa
     .option("--subscriptionId <subscriptionId>", "Pass subscriptionId parameter to function")
     .action(async (options) => {
         const { stage, ...params } = options;
+        const apiKey = await getSecretByKey(stage, "avl_consumer_api_key");
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             queryStringParameters: params,
         };
 

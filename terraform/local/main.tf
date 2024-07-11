@@ -161,6 +161,7 @@ module "integrated_data_avl_data_producer_api" {
   acm_certificate_arn         = ""
   hosted_zone_id              = ""
   domain                      = ""
+  avl_producer_api_key        = local.secrets["avl_producer_api_key"]
 }
 
 module "integrated_data_avl_siri_vm_downloader" {

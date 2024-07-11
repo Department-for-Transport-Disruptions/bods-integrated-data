@@ -1,7 +1,8 @@
 import { logger } from "@bods-integrated-data/shared/logger";
+
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
     .addOption(STAGE_OPTION)
@@ -25,6 +26,8 @@ export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
 
             stage = responses.stage;
         }
+
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         if (!subscriptionId) {
             const response = await inquirer.prompt<{ subscriptionId: string }>([
@@ -87,6 +90,9 @@ export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
         }
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"${description}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\"}`,
             pathParameters: {
                 subscriptionId: subscriptionId,

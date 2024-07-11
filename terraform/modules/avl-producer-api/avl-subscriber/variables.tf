@@ -37,3 +37,8 @@ variable "sg_id" {
 variable "subnet_ids" {
   type = list(string)
 }
+
+variable "avl_producer_api_key_arn" {
+  type        = string
+  description = "AVL producer API key ARN"
+}
