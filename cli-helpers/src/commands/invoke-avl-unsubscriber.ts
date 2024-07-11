@@ -1,4 +1,4 @@
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
@@ -36,10 +36,10 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
 
         const invokePayload = {
             pathParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
             queryStringParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
         };
 

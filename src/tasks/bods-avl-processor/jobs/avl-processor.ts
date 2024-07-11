@@ -7,16 +7,14 @@ import {
     mapAvlToGtfsEntity,
     matchAvlToTimetables,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { siriBodsSchemaTransformed } from "@bods-integrated-data/shared/schema/avl.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosResponse } from "axios";
 import { XMLParser } from "fast-xml-parser";
 import { transit_realtime } from "gtfs-realtime-bindings";
-import Pino from "pino";
 import { Entry, Parse } from "unzipper";
-
-const logger = Pino();
 
 const {
     PROCESSOR_FREQUENCY_IN_SECONDS: processorFrequency,
@@ -41,10 +39,8 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
         });
     } catch (error) {
         if (error instanceof Error) {
-            logger.error(error);
+            logger.error("There was a problem uploading GTFS-RT data to S3", error);
         }
-
-        logger.error("There was a problem uploading GTFS-RT data to S3");
 
         throw error;
     }
@@ -72,10 +68,8 @@ const generateGtfs = async (avl: NewBodsAvl[]) => {
         }
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e);
+            logger.error("There was an error running the GTFS-RT Generator", e);
         }
-
-        logger.error("There was an error running the GTFS-RT Generator");
 
         throw e;
     }
@@ -94,8 +88,7 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string, stage: string) 
     const parsedJson = siriBodsSchemaTransformed.safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
-        logger.error("There was an error parsing the AVL data");
-        logger.error(parsedJson.error.format());
+        logger.error("There was an error parsing the AVL data", parsedJson.error.format());
 
         throw new Error("Error parsing data");
     }
@@ -207,10 +200,10 @@ void (async () => {
         ]);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e);
+            logger.error("There was a problem with the BODS AVL Processor", e);
         }
 
-        logger.error("There was a problem with the AVL retriever");
+        await putMetricData(`custom/BODSAVLProcessor-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
 
         throw e;
     } finally {

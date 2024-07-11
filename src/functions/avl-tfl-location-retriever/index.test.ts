@@ -1,4 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
+import { NewAvl } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import axios from "axios";
 import MockDate from "mockdate";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,7 +9,7 @@ import { RealTimeVehicleLocationsApiResponse } from "./types";
 describe("avl-tfl-location-retriever", () => {
     const axiosGetMock = vi.spyOn(axios, "get");
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             error: vi.fn(),
         },
@@ -96,6 +97,85 @@ describe("avl-tfl-location-retriever", () => {
                 "Error fetching TFL vehicle locations with chunk URL https://api.tfl.gov.uk/RealTimeVehicleLocation/Lines/1,2",
                 expect.any(Error),
             );
+        });
+
+        it("strips invalid characters from certain fields", async () => {
+            const apiResponse: RealTimeVehicleLocationsApiResponse = {
+                lines: [
+                    {
+                        lineId: "1",
+                        vehicles: [
+                            {
+                                producerRef: "Transport_For_London",
+                                vehicleRef: "7534$",
+                                vehicleName: "BP15OMC",
+                                operatorRef: "Go-Ahead$",
+                                monitored: "true",
+                                longitude: 0.096946,
+                                latitude: 51.522804,
+                                recordedAtTime: "2024-05-21T12:53:24.000Z",
+                                bearing: 0,
+                                odometer: 659529,
+                                vehicleState: 4,
+                                nextStopPointId: "490011714E",
+                                nextStopPointName: "Rosslyn, Hill$",
+                                previousStopPointId: "490011760D",
+                                previousStopPointName: "Royal, Free Hospital$",
+                                lineRef: "251$",
+                                publishedLineName: "1$",
+                                directionRef: 1,
+                                originName: "Royal, Free Hospital$",
+                                originRef: "490011760D$",
+                                destinationName: "Canada Water, Bus Station$",
+                                destinationRef: "490004733D$",
+                                vehicleJourneyRef: "123$",
+                                originAimedDepartureTime: 0,
+                            },
+                        ],
+                    },
+                ],
+            };
+
+            const expectedVehicleActivities: NewAvl[] = [
+                {
+                    response_time_stamp: "2024-05-21T12:53:24.000Z",
+                    valid_until_time: "2024-05-21T12:58:24.000Z",
+                    producer_ref: "Transport_For_London",
+                    vehicle_ref: "7534",
+                    vehicle_name: "BP15OMC",
+                    operator_ref: "Go-Ahead",
+                    monitored: "true",
+                    longitude: 0.096946,
+                    latitude: 51.522804,
+                    recorded_at_time: "2024-05-21T12:53:24.000Z",
+                    bearing: "0",
+                    odometer: 659529,
+                    vehicle_state: 4,
+                    next_stop_point_id: "490011714E",
+                    next_stop_point_name: "Rosslyn Hill",
+                    previous_stop_point_id: "490011760D",
+                    previous_stop_point_name: "Royal Free Hospital",
+                    line_ref: "251",
+                    published_line_name: "1",
+                    direction_ref: "1",
+                    origin_name: "Royal Free Hospital",
+                    origin_ref: "490011760D",
+                    destination_name: "Canada Water Bus Station",
+                    destination_ref: "490004733D",
+                    vehicle_journey_ref: "123",
+                    origin_aimed_departure_time: "2024-05-21T00:00:00.000Z",
+                    headway_deviation: undefined,
+                    item_id: undefined,
+                    load: undefined,
+                    passenger_count: undefined,
+                    schedule_deviation: undefined,
+                },
+            ];
+
+            axiosGetMock.mockResolvedValue({ data: apiResponse });
+            const vehicleLocations = await retrieveTflVehicleLocations(["1"], "");
+
+            expect(vehicleLocations).toEqual(expectedVehicleActivities);
         });
     });
 });

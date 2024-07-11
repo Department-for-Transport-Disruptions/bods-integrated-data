@@ -1,6 +1,7 @@
-import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscription, insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
@@ -15,7 +16,6 @@ const parseXml = (xml: string) => {
         parseTagValue: false,
         isArray: (tagName) => arrayProperties.includes(tagName),
     });
-
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
     const parsedJson = siriSchemaTransformed.safeParse(parsedXml.Siri);
@@ -49,6 +49,18 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
         const avls = parseXml(await body.transformToString());
 
         if (!avls || avls.length === 0) {
+            await putMetricData("custom/CAVLMetrics", [
+                {
+                    MetricName: "InvalidSiriSchema",
+                    Value: 1,
+                    Dimensions: [
+                        {
+                            Name: "subscriptionId",
+                            Value: subscriptionId,
+                        },
+                    ],
+                },
+            ]);
             throw new Error("Error parsing data");
         }
 
@@ -84,7 +96,12 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-
+        await putMetricData("custom/CAVLMetrics", [
+            {
+                MetricName: "TotalAvlProcessed",
+                Value: 1,
+            },
+        ]);
         logger.info("AVL uploaded to database successfully");
     } catch (e) {
         if (e instanceof Error) {

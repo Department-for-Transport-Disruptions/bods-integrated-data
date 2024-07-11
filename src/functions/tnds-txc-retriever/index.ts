@@ -1,6 +1,6 @@
 import { Writable } from "node:stream";
-import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { Client } from "basic-ftp";
@@ -67,12 +67,8 @@ const getTndsDataAndUploadToS3 = async (
 export const handler = async () => {
     const { TXC_ZIPPED_BUCKET_NAME: txcZippedBucketName, TNDS_FTP_ARN: ftpArn } = process.env;
 
-    if (!txcZippedBucketName) {
-        throw new Error("Missing env vars - TXC_ZIPPED_BUCKET_NAME must be set");
-    }
-
-    if (!ftpArn) {
-        throw new Error("Missing env var - TNDS_FTP_ARN must be set");
+    if (!txcZippedBucketName || !ftpArn) {
+        throw new Error("Missing env vars - TXC_ZIPPED_BUCKET_NAME and TNDS_FTP_ARN must be set");
     }
 
     try {

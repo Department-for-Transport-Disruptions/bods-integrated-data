@@ -1,8 +1,9 @@
-import { logger } from "@baselime/lambda-logger";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { logger } from "@bods-integrated-data/shared/logger";
+import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosError } from "axios";
 
@@ -17,7 +18,7 @@ export const resubscribeToDataProducer = async (subscription: AvlSubscription, s
         );
     }
 
-    const subscriptionBody = {
+    const subscriptionBody: AvlSubscribeMessage = {
         dataProducerEndpoint: subscription.url,
         description: subscription.description,
         shortDescription: subscription.shortDescription,
@@ -25,6 +26,7 @@ export const resubscribeToDataProducer = async (subscription: AvlSubscription, s
         password: subscriptionPassword,
         requestorRef: subscription.requestorRef ?? null,
         subscriptionId: subscription.PK,
+        publisherId: subscription.publisherId,
     };
 
     await axios.post(subscribeEndpoint, subscriptionBody);
@@ -78,6 +80,18 @@ export const handler = async () => {
                 try {
                     await resubscribeToDataProducer(subscription, subscribeEndpoint);
                 } catch (e) {
+                    await putMetricData("custom/CAVLMetrics", [
+                        {
+                            MetricName: "AvlFeedOutage",
+                            Value: 1,
+                            Dimensions: [
+                                {
+                                    Name: "subscriptionId",
+                                    Value: subscription.PK,
+                                },
+                            ],
+                        },
+                    ]);
                     if (e instanceof AxiosError) {
                         logger.error(
                             `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,

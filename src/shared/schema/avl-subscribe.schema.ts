@@ -1,16 +1,29 @@
 import { z } from "zod";
 import { avlSubscriptionStatuses } from "../constants";
+import { createStringLengthValidation } from "../validation";
 
-export const avlSubscribeMessageSchema = z.object({
-    dataProducerEndpoint: z.string().url(),
-    description: z.string(),
-    shortDescription: z.string(),
-    username: z.string(),
-    password: z.string(),
-    requestorRef: z.string().nullish(),
-    subscriptionId: z.string(),
-    publisherId: z.string(),
-});
+export const avlSubscribeMessageSchema = z.object(
+    {
+        dataProducerEndpoint: z
+            .string({
+                required_error: "dataProducerEndpoint is required",
+                invalid_type_error: "dataProducerEndpoint must be a string",
+            })
+            .url({
+                message: "dataProducerEndpoint must be a URL",
+            }),
+        description: createStringLengthValidation("description"),
+        shortDescription: createStringLengthValidation("shortDescription"),
+        username: createStringLengthValidation("username"),
+        password: createStringLengthValidation("password"),
+        requestorRef: createStringLengthValidation("requestorRef").nullish(),
+        subscriptionId: createStringLengthValidation("subscriptionId"),
+        publisherId: createStringLengthValidation("publisherId"),
+    },
+    {
+        message: "Body must be an object with required properties",
+    },
+);
 
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
 
@@ -66,8 +79,9 @@ export const avlSubscriptionSchema = z.object({
     heartbeatLastReceivedDateTime: z.string().nullish(),
     serviceStartDatetime: z.string().nullish(),
     serviceEndDatetime: z.string().nullish(),
-    publisherId: z.string().nullish(),
+    publisherId: z.string(),
     lastAvlDataReceivedDateTime: z.string().nullish(),
+    lastModifiedDateTime: z.string().nullish(),
 });
 
 export type AvlSubscription = z.infer<typeof avlSubscriptionSchema>;
@@ -78,3 +92,25 @@ export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform(
 }));
 
 export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);
+
+export const avlUpdateBodySchema = z.object(
+    {
+        dataProducerEndpoint: z
+            .string({
+                required_error: "dataProducerEndpoint is required",
+                invalid_type_error: "dataProducerEndpoint must be a string",
+            })
+            .url({
+                message: "dataProducerEndpoint must be a URL",
+            }),
+        description: createStringLengthValidation("description").nullish(),
+        shortDescription: createStringLengthValidation("shortDescription").nullish(),
+        username: createStringLengthValidation("username"),
+        password: createStringLengthValidation("password"),
+    },
+    {
+        message: "Body must be an object with required properties",
+    },
+);
+
+export type AvlUpdateBody = z.infer<typeof avlUpdateBodySchema>;

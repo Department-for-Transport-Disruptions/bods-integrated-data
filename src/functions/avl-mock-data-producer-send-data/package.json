@@ -12,7 +12,6 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@baselime/lambda-logger": "^0.2.2",
         "@bods-integrated-data/shared": "workspace:^",
         "axios": "^1.7.2"
     },
@@ -21,6 +20,6 @@
         "@types/node": "^20.11.19",
         "@vitest/coverage-v8": "^1.4.0",
         "mockdate": "^3.0.5",
-        "zod": "^3.22.4"
+        "zod": "^3.23.8"
     }
 }

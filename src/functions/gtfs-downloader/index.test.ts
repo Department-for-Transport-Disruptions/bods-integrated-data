@@ -1,6 +1,6 @@
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -8,8 +8,9 @@ describe("gtfs-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
     const getPresignedUrlMock = vi.spyOn(s3, "getPresignedUrl");
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
+            warn: vi.fn(),
             error: vi.fn(),
         },
     }));
@@ -25,24 +26,39 @@ describe("gtfs-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        await expect(handler()).resolves.toEqual({
+        const mockEvent = {
+            queryStringParameters: {},
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
             statusCode: 500,
-            body: "An internal error occurred.",
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
 
-        expect(logger.error).toHaveBeenCalledWith("Missing env vars - BUCKET_NAME must be set");
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was a problem with the GTFS downloader endpoint",
+            expect.any(Error),
+        );
     });
 
     it("returns a 500 when a presigned URL could not be generated", async () => {
         getPresignedUrlMock.mockRejectedValueOnce(new Error());
 
-        await expect(handler()).resolves.toEqual({
+        const mockEvent = {
+            queryStringParameters: {},
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
             statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was an error generating a presigned URL for GTFS download",
+            "There was a problem with the GTFS downloader endpoint",
             expect.any(Error),
         );
     });
@@ -51,11 +67,17 @@ describe("gtfs-downloader-endpoint", () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        await expect(handler()).resolves.toEqual({
+        const mockEvent = {
+            queryStringParameters: {},
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
+
+        await expect(handler(mockEvent)).resolves.toEqual({
             statusCode: 302,
             headers: {
                 Location: mockPresignedUrl,
             },
+            body: "",
         });
 
         expect(logger.error).not.toHaveBeenCalled();
@@ -65,7 +87,12 @@ describe("gtfs-downloader-endpoint", () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        await handler();
+        const mockEvent = {
+            queryStringParameters: {},
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
+
+        await handler(mockEvent);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -80,7 +107,14 @@ describe("gtfs-downloader-endpoint", () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        await handler({ queryStringParameters: { regionCode: "EA" } } as unknown as APIGatewayProxyEventV2);
+        const mockEvent = {
+            queryStringParameters: {
+                regionCode: "EA",
+            },
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
+
+        await handler(mockEvent);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -95,13 +129,17 @@ describe("gtfs-downloader-endpoint", () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        const response = await handler({
-            queryStringParameters: { regionCode: "INVALID" },
-        } as unknown as APIGatewayProxyEventV2);
+        const mockEvent = {
+            queryStringParameters: {
+                regionCode: "INVALID",
+            },
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
 
+        const response = await handler(mockEvent);
         expect(response).toEqual({
-            body: "Invalid region code",
             statusCode: 400,
+            body: JSON.stringify({ errors: ["Invalid region code"] }),
         });
     });
 
@@ -109,7 +147,14 @@ describe("gtfs-downloader-endpoint", () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        await handler({ queryStringParameters: { regionName: "east_anglia" } } as unknown as APIGatewayProxyEventV2);
+        const mockEvent = {
+            queryStringParameters: {
+                regionName: "east_anglia",
+            },
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
+
+        await handler(mockEvent);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -124,13 +169,17 @@ describe("gtfs-downloader-endpoint", () => {
         const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs.zip?hello=world`;
         getPresignedUrlMock.mockResolvedValueOnce(mockPresignedUrl);
 
-        const response = await handler({
-            queryStringParameters: { regionName: "INVALID" },
-        } as unknown as APIGatewayProxyEventV2);
+        const mockEvent = {
+            queryStringParameters: {
+                regionName: "INVALID",
+            },
+            body: "",
+        } as unknown as APIGatewayProxyEvent;
 
+        const response = await handler(mockEvent);
         expect(response).toEqual({
-            body: "Invalid region name",
             statusCode: 400,
+            body: JSON.stringify({ errors: ["Invalid region name"] }),
         });
     });
 });

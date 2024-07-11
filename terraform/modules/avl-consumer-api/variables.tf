@@ -52,3 +52,8 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "avl_consumer_api_key" {
+  type        = string
+  description = "AVL consumer API key"
+}

@@ -1,4 +1,4 @@
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { Command, Option } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
@@ -117,10 +117,10 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
         const invokePayload = {
             body: notificationType === "Heartbeat Notification" ? heartbeatNotificationBody : avlDataBody,
             pathParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
             queryStringParameters: {
-                subscription_id: subscriptionId,
+                subscriptionId,
             },
         };
 

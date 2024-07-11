@@ -5,7 +5,7 @@ BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
 TNDS_TXC_ZIPPED_BUCKET_NAME="integrated-data-tnds-txc-zipped-local"
 TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_FTP_ARN=""
-AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-local"
+AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-raw-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
 AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
@@ -20,12 +20,14 @@ BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
+AVL_CONSUMER_API_KEY_ARN=""
 
 # Dev
 
-setup: docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up install-deps build-functions create-local-env migrate-local-db-to-latest
+setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
+	asdf plugin add pnpm && \
 	asdf plugin add awscli && \
 	asdf plugin add terraform https://github.com/asdf-community/asdf-hashicorp.git && \
 	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git && \
@@ -81,7 +83,8 @@ create-local-env:
 install-deps:
 	pnpm i && \
 	(cd src && pnpm i) && \
-	(cd cli-helpers && pnpm i)
+	(cd cli-helpers && pnpm i) && \
+	(cd integration-testing && pnpm i)
 
 build-functions:
 	cd src && pnpm build-all
@@ -100,6 +103,9 @@ docker-build-%:
 
 check-types:
 	cd src && pnpm run check-types
+
+run-integration-tests-%:
+	cd integration-testing && pnpm run test:$*
 
 # CLI helpers
 
@@ -123,16 +129,10 @@ rollback-last-local-db-migration:
 	STAGE=local ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
 bastion-tunnel:
-	./scripts/bastion-tunnel.sh false
-
-bastion-tunnel-temp:
-	./scripts/bastion-tunnel.sh true
+	./scripts/bastion-tunnel.sh
 
 get-db-credentials:
-	./scripts/get-db-credentials.sh false
-
-get-db-credentials-temp:
-	./scripts/get-db-credentials.sh true
+	./scripts/get-db-credentials.sh
 
 # Dates
 
@@ -202,7 +202,7 @@ run-local-avl-subscriber:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
 run-local-avl-data-endpoint:
-	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscription_id:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
 	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
@@ -217,7 +217,7 @@ run-local-avl-mock-data-producer-send-data:
 	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
 
 run-local-avl-unsubscriber:
-	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscription_id':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscriptionId':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
 run-local-avl-tfl-line-id-retriever:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-tfl-line-id-retriever'; handler().catch(e => console.error(e))"
@@ -228,10 +228,13 @@ run-local-avl-tfl-location-retriever:
 # currently not supported locally due to awslambda global runtime only available in aws
 # example usage with query params: make run-local-avl-siri-vm-downloader AVL_SIRI_VM_DOWNLOADER_INPUT="{ queryStringParameters: { operatorRef: '1,2', vehicleRef: '123' } }"
 run-local-avl-siri-vm-downloader:
-	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
+	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} AVL_CONSUMER_API_KEY_ARN=${AVL_CONSUMER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
 
 run-local-avl-subscriptions:
-	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler().then(console.log).catch(console.error)"
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({}).then(console.log).catch(console.error)"
+
+run-local-avl-subscription:
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({ pathParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }}).then(console.log).catch(console.error)"
 
 run-local-avl-validate:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-validate'; handler({ body: '\{\"url\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).then(console.log).catch(console.error)"

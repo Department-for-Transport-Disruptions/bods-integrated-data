@@ -10,7 +10,7 @@ describe("avl-feed-validator", () => {
     beforeAll(() => {
         process.env.TABLE_NAME = "test-dynamo-table";
         process.env.STAGE = "dev";
-        process.env.SUBSCRIBE_ENDPOINT = "www.avl-service.com/subscribe";
+        process.env.SUBSCRIBE_ENDPOINT = "www.avl-service.com/subscriptions";
     });
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -20,6 +20,10 @@ describe("avl-feed-validator", () => {
 
     vi.mock("@bods-integrated-data/shared/ssm", () => ({
         getParameter: vi.fn(),
+    }));
+
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
     }));
 
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
@@ -54,6 +58,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -63,6 +68,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -83,6 +89,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -99,6 +106,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "LIVE",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
 
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -114,6 +122,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -123,6 +132,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -137,7 +147,7 @@ describe("avl-feed-validator", () => {
 
         expect(getParameterSpy).toBeCalledTimes(2);
         expect(axiosSpy).toHaveBeenCalledTimes(1);
-        expect(axiosSpy).toBeCalledWith("www.avl-service.com/subscribe", {
+        expect(axiosSpy).toBeCalledWith("www.avl-service.com/subscriptions", {
             dataProducerEndpoint: "https://mock-data-producer.com/",
             description: "test-description",
             password: "test-password",
@@ -145,6 +155,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             subscriptionId: "mock-subscription-id-1",
             username: "test-password",
+            publisherId: "test-publisher-id",
         });
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
@@ -156,6 +167,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "ERROR",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
     });
     it("should throw an error if we resubscribe to a data producer and a username or password is not found for that subscription", async () => {
@@ -169,6 +181,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -178,6 +191,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -198,10 +212,11 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "ERROR",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
-    it("should throw an error if we do not receive a 200 response from the /subscribe endpoint", async () => {
+    it("should throw an error if we do not receive a 200 response from the /subscriptions endpoint", async () => {
         recursiveScanSpy.mockResolvedValue([
             {
                 PK: "mock-subscription-id-1",
@@ -212,6 +227,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -221,6 +237,7 @@ describe("avl-feed-validator", () => {
                 status: "LIVE",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id",
             },
         ]);
 
@@ -247,6 +264,7 @@ describe("avl-feed-validator", () => {
             shortDescription: "test-short-description",
             status: "ERROR",
             url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
         });
         expect(axiosSpy).toHaveBeenCalledOnce();
         expect(axiosSpy).toHaveBeenCalledOnce();

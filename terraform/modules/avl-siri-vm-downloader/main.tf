@@ -15,6 +15,15 @@ resource "aws_lambda_function_url" "avl_siri_vm_downloader_function_url" {
   invoke_mode        = "RESPONSE_STREAM"
 }
 
+resource "aws_secretsmanager_secret" "avl_consumer_api_key_secret" {
+  description = "AVL consumer API key - ${var.environment}"
+}
+
+resource "aws_secretsmanager_secret_version" "avl_consumer_api_key_secret_version" {
+  secret_id     = aws_secretsmanager_secret.avl_consumer_api_key_secret.id
+  secret_string = jsonencode(var.avl_consumer_api_key)
+}
+
 module "integrated_data_avl_siri_vm_downloader_function" {
   source = "../shared/lambda-function"
 
@@ -46,17 +55,19 @@ module "integrated_data_avl_siri_vm_downloader_function" {
       ],
       Effect = "Allow",
       Resource = [
-        var.db_secret_arn
+        var.db_secret_arn,
+        aws_secretsmanager_secret.avl_consumer_api_key_secret.arn
       ]
     }
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-    BUCKET_NAME   = var.bucket_name
+    STAGE                    = var.environment
+    DB_HOST                  = var.db_host
+    DB_PORT                  = var.db_port
+    DB_SECRET_ARN            = var.db_secret_arn
+    DB_NAME                  = var.db_name
+    BUCKET_NAME              = var.bucket_name
+    AVL_CONSUMER_API_KEY_ARN = aws_secretsmanager_secret.avl_consumer_api_key_secret.arn
   }
 }

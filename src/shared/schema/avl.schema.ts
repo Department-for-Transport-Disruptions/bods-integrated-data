@@ -2,6 +2,7 @@ import { z } from "zod";
 import { NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
 
 const onwardCallSchema = z
     .object({
@@ -43,9 +44,10 @@ const directionMap: Record<string, string> = {
     out: "outbound",
 };
 
-const vehicleActivitySchema = z.object({
-    RecordedAtTime: z.string(),
-    ValidUntilTime: z.string(),
+export const vehicleActivitySchema = z.object({
+    RecordedAtTime: z.string().min(1),
+    ItemIdentifier: z.string().nullish(),
+    ValidUntilTime: z.string().min(1),
     VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
@@ -54,18 +56,17 @@ const vehicleActivitySchema = z.object({
             .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.coerce.string(),
-                DatedVehicleJourneyRef: z.coerce.string(),
+                DataFrameRef: z.coerce.string().min(1),
+                DatedVehicleJourneyRef: z.coerce.string().min(1),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        Occupancy: z.coerce.string().nullish(),
-        OperatorRef: z.coerce.string(),
+        OperatorRef: z.coerce.string().min(1),
         OriginRef: z.coerce.string().nullish(),
         OriginName: z.coerce.string().nullish(),
-        OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationRef: z.coerce.string().nullish(),
         DestinationName: z.coerce.string().nullish(),
+        OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationAimedArrivalTime: z.coerce.string().nullish(),
         Monitored: z.coerce.string().nullish(),
         VehicleLocation: z.object({
@@ -73,12 +74,16 @@ const vehicleActivitySchema = z.object({
             Latitude: z.coerce.number(),
         }),
         Bearing: z.coerce.string().nullish(),
+        Occupancy: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
-        VehicleRef: z.coerce.string(),
         VehicleJourneyRef: z.coerce.string().nullish(),
+        VehicleRef: z.coerce
+            .string()
+            .min(1)
+            .transform((ref) => ref.replace(/\s/g, "")),
         OnwardCalls: z
             .object({
-                OnwardCall: makeFilteredArraySchema(onwardCallSchema),
+                OnwardCall: makeFilteredArraySchema("SiriVmOnwardCallsSchema", onwardCallSchema),
             })
             .or(txcEmptyProperty)
             .optional(),
@@ -91,12 +96,13 @@ export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
+        ItemIdentifier: z.string().optional(),
         ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
-            ValidUntil: z.string().optional(),
             RequestMessageRef: z.string().uuid().optional(),
-            VehicleActivity: makeFilteredArraySchema(vehicleActivitySchema),
+            ValidUntil: z.string().optional(),
+            VehicleActivity: makeFilteredArraySchema("SiriVmVehicleActivitySchema", vehicleActivitySchema),
         }),
     }),
 });
@@ -125,6 +131,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
             producer_ref: item.ServiceDelivery.ProducerRef,
             recorded_at_time: vehicleActivity.RecordedAtTime,
+            item_id: vehicleActivity.ItemIdentifier,
             valid_until_time: vehicleActivity.ValidUntilTime,
             vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
             line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
@@ -138,8 +145,8 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
             latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
             bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
             monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
+            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
             origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
             origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
             origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
@@ -163,6 +170,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
 export const siriBodsSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
     return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewAvl>((vehicleActivity) => ({
         response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+        item_id: item.ServiceDelivery.ItemIdentifier ?? null,
         producer_ref: item.ServiceDelivery.ProducerRef,
         recorded_at_time: vehicleActivity.RecordedAtTime,
         valid_until_time: vehicleActivity.ValidUntilTime,
@@ -196,6 +204,7 @@ export const tflVehicleLocationSchema = z.object({
     longitude: z.number(),
     latitude: z.number(),
     recordedAtTime: z.string(),
+    item_id: z.string().nullish(),
     bearing: z.number().nullish(),
     load: z.number().nullish(),
     passengerCount: z.number().nullish(),
@@ -230,16 +239,17 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
 
     const avl: NewAvl = {
         response_time_stamp: recordedAtTime,
+        item_id: item.item_id,
         valid_until_time: validUntilTime,
         producer_ref: item.producerRef,
-        vehicle_ref: item.vehicleRef,
+        vehicle_ref: item.vehicleRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         vehicle_name: item.vehicleName,
-        operator_ref: item.operatorRef,
+        operator_ref: item.operatorRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         monitored: item.monitored,
         longitude: item.longitude,
         latitude: item.latitude,
         recorded_at_time: recordedAtTime,
-        bearing: typeof item.bearing === "number" ? item.bearing.toString() : item.bearing,
+        bearing: item.bearing?.toString(),
         load: item.load,
         passenger_count: item.passengerCount,
         odometer: item.odometer,
@@ -247,18 +257,27 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         schedule_deviation: item.scheduleDeviation,
         vehicle_state: item.vehicleState,
         next_stop_point_id: item.nextStopPointId,
-        next_stop_point_name: item.nextStopPointName,
+        next_stop_point_name: item.nextStopPointName?.replaceAll(
+            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+            "",
+        ),
         previous_stop_point_id: item.previousStopPointId,
-        previous_stop_point_name: item.previousStopPointName,
-        line_ref: item.lineRef,
-        published_line_name: item.publishedLineName,
+        previous_stop_point_name: item.previousStopPointName?.replaceAll(
+            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+            "",
+        ),
+        line_ref: item.lineRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        published_line_name: item.publishedLineName?.replaceAll(
+            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+            "",
+        ),
         direction_ref: item.directionRef.toString(),
-        origin_name: item.originName,
-        origin_ref: item.originRef,
+        origin_name: item.originName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+        origin_ref: item.originRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         origin_aimed_departure_time: originAimedDepartureTime,
-        destination_name: item.destinationName,
-        destination_ref: item.destinationRef,
-        vehicle_journey_ref: item.vehicleJourneyRef,
+        destination_name: item.destinationName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+        destination_ref: item.destinationRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        vehicle_journey_ref: item.vehicleJourneyRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
     };
 
     return avl;

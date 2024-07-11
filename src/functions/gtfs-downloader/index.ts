@@ -1,61 +1,43 @@
-import { logger } from "@baselime/lambda-logger";
+import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { GTFS_FILE_SUFFIX, REGIONS, RegionCode } from "@bods-integrated-data/shared/constants";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema, regionNameSchema } from "@bods-integrated-data/shared/schema/misc.schema";
-import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { ZodError, z } from "zod";
 
-export const handler = async (event?: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-    const { BUCKET_NAME: bucketName } = process.env;
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        regionCode: regionCodeSchema.optional(),
+        regionName: regionNameSchema.optional(),
+    }),
+);
 
-    if (!bucketName) {
-        logger.error("Missing env vars - BUCKET_NAME must be set");
-
-        return {
-            statusCode: 500,
-            body: "An internal error occurred.",
-        };
-    }
-
-    let region: RegionCode = "ALL";
-
-    if (event?.queryStringParameters?.regionCode) {
-        const parsedRegionCode = regionCodeSchema.safeParse(event.queryStringParameters.regionCode);
-
-        if (!parsedRegionCode.success) {
-            return {
-                statusCode: 400,
-                body: "Invalid region code",
-            };
-        }
-
-        region = parsedRegionCode.data;
-    } else if (event?.queryStringParameters?.regionName) {
-        const parsedRegionName = regionNameSchema.safeParse(event.queryStringParameters.regionName);
-
-        if (!parsedRegionName.success) {
-            return {
-                statusCode: 400,
-                body: "Invalid region name",
-            };
-        }
-
-        const regionCodeFromName = Object.values(REGIONS).find(
-            (region) => region.regionName === parsedRegionName.data,
-        )?.regionCode;
-
-        if (!regionCodeFromName) {
-            return {
-                statusCode: 400,
-                body: "Invalid region name",
-            };
-        }
-
-        region = regionCodeFromName;
-    }
-
-    const fileName = `${region.toLowerCase()}${GTFS_FILE_SUFFIX}.zip`;
-
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
+        const { BUCKET_NAME: bucketName } = process.env;
+
+        if (!bucketName) {
+            throw new Error("Missing env vars - BUCKET_NAME must be set");
+        }
+
+        const { regionCode, regionName } = requestParamsSchema.parse(event.queryStringParameters);
+
+        let selectedRegionCode: RegionCode = "ALL";
+
+        if (regionCode) {
+            selectedRegionCode = regionCode;
+        } else if (regionName) {
+            const region = Object.values(REGIONS).find((region) => region.regionName === regionName);
+
+            if (region) {
+                selectedRegionCode = region.regionCode;
+            }
+        }
+
+        const fileName = `${selectedRegionCode.toLowerCase()}${GTFS_FILE_SUFFIX}.zip`;
+
         const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: fileName }, 3600);
 
         return {
@@ -63,15 +45,18 @@ export const handler = async (event?: APIGatewayProxyEventV2): Promise<APIGatewa
             headers: {
                 Location: presignedUrl,
             },
+            body: "",
         };
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was an error generating a presigned URL for GTFS download", error);
+    } catch (e) {
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
-        return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
-        };
+        if (e instanceof Error) {
+            logger.error("There was a problem with the GTFS downloader endpoint", e);
+        }
+
+        return createServerErrorResponse();
     }
 };

@@ -1,6 +1,6 @@
-import { logger } from "@baselime/lambda-logger";
 import * as utilFunctions from "@bods-integrated-data/shared/gtfs-rt/utils";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { logger } from "@bods-integrated-data/shared/logger";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -34,18 +34,19 @@ describe("gtfs-downloader-endpoint", () => {
     const base64EncodeMock = vi.spyOn(utilFunctions, "base64Encode");
 
     const mockBucketName = "mock-bucket";
-    let mockRequest: APIGatewayProxyEventV2;
+    let mockRequest: APIGatewayProxyEvent;
 
-    vi.mock("@baselime/lambda-logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
+            warn: vi.fn(),
             error: vi.fn(),
         },
     }));
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
-        mockRequest = {} as APIGatewayProxyEventV2;
+        mockRequest = {} as APIGatewayProxyEvent;
     });
 
     afterEach(() => {
@@ -56,12 +57,15 @@ describe("gtfs-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        await expect(handler(mockRequest)).resolves.toEqual({
+        const response = await handler(mockRequest);
+        expect(response).toEqual({
             statusCode: 500,
-            body: "An internal error occurred.",
+            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
-
-        expect(logger.error).toHaveBeenCalledWith("Missing env vars - BUCKET_NAME must be set");
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was a problem with the GTFS-RT downloader endpoint",
+            expect.any(Error),
+        );
     });
 
     describe("fetching GTFS-RT in-place", () => {
@@ -82,10 +86,15 @@ describe("gtfs-downloader-endpoint", () => {
         it("returns a 500 when no GTFS-RT data can be found", async () => {
             mocks.getS3Object.mockResolvedValueOnce({ Body: undefined });
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            const response = await handler(mockRequest);
+            expect(response).toEqual({
                 statusCode: 500,
-                body: "An unknown error occurred. Please try again.",
+                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
             });
+            expect(logger.error).toHaveBeenCalledWith(
+                "There was a problem with the GTFS-RT downloader endpoint",
+                expect.any(Error),
+            );
         });
     });
 
@@ -103,6 +112,7 @@ describe("gtfs-downloader-endpoint", () => {
                 headers: {
                     Location: mockPresignedUrl,
                 },
+                body: "",
             });
 
             expect(mocks.getPresignedUrl).toHaveBeenCalledWith({ Bucket: mockBucketName, Key: "gtfs-rt.bin" }, 3600);
@@ -134,19 +144,53 @@ describe("gtfs-downloader-endpoint", () => {
                 download: "true",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            const response = await handler(mockRequest);
+            expect(response).toEqual({
                 statusCode: 500,
-                body: "An unknown error occurred. Please try again.",
+                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
             });
-
             expect(logger.error).toHaveBeenCalledWith(
-                "There was an error generating a presigned URL for GTFS-RT download",
+                "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
             );
         });
     });
 
     describe("filter GTFS-RT", () => {
+        it.each([
+            [
+                { boundingBox: "asdf" },
+                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+            ],
+            [
+                { boundingBox: "34.5,56.7,-34.697" },
+                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+            ],
+            [
+                { boundingBox: "34.5,56.7,-34.697,-19.0,33.333" },
+                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+            ],
+            [
+                { routeId: "asdf123!@£" },
+                "routeId must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+            [
+                { routeId: "1," },
+                "routeId must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+            [{ startTimeBefore: "asdf123!@£" }, "startTimeBefore must be a number"],
+            [{ startTimeAfter: "asdf123!@£" }, "startTimeAfter must be a number"],
+        ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
+            mockRequest.queryStringParameters = params;
+            const response = await handler(mockRequest);
+            expect(response).toEqual({
+                statusCode: 400,
+                body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            });
+            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
+        });
+
         it("returns a 200 with filtered data when the routeId query param is a number", async () => {
             getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
@@ -197,22 +241,6 @@ describe("gtfs-downloader-endpoint", () => {
             expect(logger.error).not.toHaveBeenCalled();
         });
 
-        it("returns a 400 when the routeId query param is an unexpected format", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
-            base64EncodeMock.mockReturnValueOnce("test-base64");
-
-            mockRequest.queryStringParameters = {
-                routeId: "asdf123!@£",
-            };
-
-            await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 400,
-                body: 'Validation error: Invalid at "routeId"',
-            });
-
-            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
-        });
-
         it("returns a 200 with filtered data when the startTimeBefore query param is a number", async () => {
             getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
@@ -236,22 +264,6 @@ describe("gtfs-downloader-endpoint", () => {
                 undefined,
             );
             expect(logger.error).not.toHaveBeenCalled();
-        });
-
-        it("returns a 400 when the startTimeBefore query param is an unexpected format", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
-            base64EncodeMock.mockReturnValueOnce("test-base64");
-
-            mockRequest.queryStringParameters = {
-                startTimeBefore: "asdf",
-            };
-
-            await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 400,
-                body: 'Validation error: Expected number, received nan at "startTimeBefore"',
-            });
-
-            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
         });
 
         it("returns a 200 with filtered data when the startTimeAfter query param is a number", async () => {
@@ -279,22 +291,6 @@ describe("gtfs-downloader-endpoint", () => {
             expect(logger.error).not.toHaveBeenCalled();
         });
 
-        it("returns a 400 when the startTimeAfter query param is an unexpected format", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
-            base64EncodeMock.mockReturnValueOnce("test-base64");
-
-            mockRequest.queryStringParameters = {
-                startTimeAfter: "asdf",
-            };
-
-            await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 400,
-                body: 'Validation error: Expected number, received nan at "startTimeAfter"',
-            });
-
-            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
-        });
-
         it("returns a 200 with filtered data when the boundingBox query param is 4 numbers", async () => {
             getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
@@ -320,38 +316,6 @@ describe("gtfs-downloader-endpoint", () => {
             expect(logger.error).not.toHaveBeenCalled();
         });
 
-        it("returns a 400 when the boundingBox query param is an unexpected format", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
-            base64EncodeMock.mockReturnValueOnce("test-base64");
-
-            mockRequest.queryStringParameters = {
-                boundingBox: "asdf",
-            };
-
-            await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 400,
-                body: 'Validation error: Invalid at "boundingBox"',
-            });
-
-            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
-        });
-
-        it("returns a 400 when the boundingBox query param has less than 4 items", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
-            base64EncodeMock.mockReturnValueOnce("test-base64");
-
-            mockRequest.queryStringParameters = {
-                boundingBox: "1,2,3",
-            };
-
-            await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 400,
-                body: "Bounding box must contain 4 items; minLongitude, minLatitude, maxLongitude and maxLatitude",
-            });
-
-            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
-        });
-
         it("returns a 500 when an unexpected error occurs", async () => {
             getAvlDataForGtfsMock.mockRejectedValueOnce(new Error("Database fetch error"));
 
@@ -359,13 +323,13 @@ describe("gtfs-downloader-endpoint", () => {
                 routeId: "1",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            const response = await handler(mockRequest);
+            expect(response).toEqual({
                 statusCode: 500,
-                body: "An unknown error occurred. Please try again.",
+                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
             });
-
             expect(logger.error).toHaveBeenCalledWith(
-                "There was an error retrieving the route data",
+                "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
             );
         });

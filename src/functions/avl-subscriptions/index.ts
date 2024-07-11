@@ -1,7 +1,25 @@
-import { logger } from "@baselime/lambda-logger";
-import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import {
+    createNotFoundErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
+import {
+    SubscriptionIdNotFoundError,
+    getAvlSubscription,
+    getAvlSubscriptions,
+} from "@bods-integrated-data/shared/avl/utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayProxyResultV2 } from "aws-lambda";
+import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { ZodError, z } from "zod";
+
+const requestParamsSchema = z.preprocess(
+    Object,
+    z.object({
+        subscriptionId: z.union([createStringLengthValidation("subscriptionId"), z.literal("")]).optional(),
+    }),
+);
 
 export type ApiAvlSubscription = {
     id: string;
@@ -25,34 +43,45 @@ export const mapApiAvlSubscriptionResponse = (subscription: AvlSubscription): Ap
     };
 };
 
-export const handler = async (): Promise<APIGatewayProxyResultV2> => {
-    const { TABLE_NAME: tableName } = process.env;
-
-    if (!tableName) {
-        logger.error("Missing env vars - TABLE_NAME must be set");
-
-        return {
-            statusCode: 500,
-            body: "An internal error occurred.",
-        };
-    }
-
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
-        const subscriptions = await getAvlSubscriptions(tableName);
-        const apiAvlSubscriptionsResponse = subscriptions.map(mapApiAvlSubscriptionResponse);
+        const { TABLE_NAME: tableName } = process.env;
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(apiAvlSubscriptionsResponse),
-        };
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was an error retrieving AVL subscription data", error);
+        if (!tableName) {
+            throw new Error("Missing env vars - TABLE_NAME must be set");
+        }
+
+        const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
+
+        let response = null;
+
+        if (subscriptionId) {
+            const subscription = await getAvlSubscription(subscriptionId, tableName);
+            response = mapApiAvlSubscriptionResponse(subscription);
+        } else {
+            const subscriptions = await getAvlSubscriptions(tableName);
+            response = subscriptions.map(mapApiAvlSubscriptionResponse);
         }
 
         return {
-            statusCode: 500,
-            body: "An unknown error occurred. Please try again.",
+            statusCode: 200,
+            body: JSON.stringify(response),
         };
+    } catch (e) {
+        if (e instanceof ZodError) {
+            logger.warn("Invalid request", e.errors);
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof SubscriptionIdNotFoundError) {
+            logger.error("Subscription not found", e);
+            return createNotFoundErrorResponse("Subscription not found");
+        }
+
+        if (e instanceof Error) {
+            logger.error("There was a problem with the AVL subscriptions endpoint", e);
+        }
+
+        return createServerErrorResponse();
     }
 };

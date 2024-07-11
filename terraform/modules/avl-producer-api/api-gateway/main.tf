@@ -30,6 +30,15 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
   payload_format_version = "2.0"
 }
 
+
+resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integration_update" {
+  api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.update_lambda_invoke_arn
+  integration_method     = "POST"
+  payload_format_version = "2.0"
+}
+
 resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integration_data" {
   api_id                 = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
   integration_type       = "AWS_PROXY"
@@ -56,19 +65,19 @@ resource "aws_apigatewayv2_integration" "integrated_data_avl_producer_api_integr
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_data" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /data/{subscription_id}"
+  route_key = "POST /subscriptions/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data.id}"
 }
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_subscribe" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /subscribe"
+  route_key = "POST /subscriptions"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscribe.id}"
 }
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_unsubscribe" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /unsubscribe/{subscription_id}"
+  route_key = "DELETE /subscriptions/{subscriptionId}"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_unsubscribe.id}"
 }
 
@@ -78,9 +87,20 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscriptions_ap
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
 }
 
+resource "aws_apigatewayv2_route" "integrated_data_avl_producer_subscription_api_route" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  route_key = "GET /subscriptions/{subscriptionId}"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions.id}"
+}
+resource "aws_apigatewayv2_route" "integrated_data_avl_producer_api_route_update" {
+  api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
+  route_key = "PUT /subscriptions/{subscriptionId}"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_update.id}"
+}
+
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_validate_api_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "POST /validate"
+  route_key = "PUT /feed/verify"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_validate.id}"
 }
 
@@ -91,12 +111,17 @@ resource "aws_apigatewayv2_deployment" "integrated_data_avl_producer_api_deploym
   triggers = {
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_subscribe),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_unsubscribe),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_update),
       jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_api_route_data),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscription_api_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_validate_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_data),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscribe),
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_subscriptions_api_route),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_unsubscribe),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_update),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_subscriptions),
-      jsonencode(aws_apigatewayv2_route.integrated_data_avl_producer_validate_api_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_validate),
     ])))
   }
@@ -127,6 +152,14 @@ resource "aws_lambda_permission" "integrated_data_avl_producer_api_subscribe_per
 
 resource "aws_lambda_permission" "integrated_data_avl_producer_api_unsubscribe_permissions" {
   function_name = var.unsubscribe_lambda_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"
+}
+
+
+resource "aws_lambda_permission" "integrated_data_avl_producer_api_update_permissions" {
+  function_name = var.update_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_avl_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_avl_producer_api_stage.name}/*"

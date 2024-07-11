@@ -1,16 +1,22 @@
-import { logger } from "@baselime/lambda-logger";
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { writeFile } from "node:fs/promises";
 import cleanDeep from "clean-deep";
+import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { putMetricData } from "../cloudwatch";
 import { tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
+import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
+import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -66,6 +72,7 @@ const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl =>
     ...avl,
     geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
     subscription_id: subscriptionId,
+    item_id: avl.item_id ?? randomUUID(),
 });
 
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
@@ -218,10 +225,18 @@ export const getAvlDataForSiriVm = async (
     }
 };
 
-const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTime: string): SiriVehicleActivity[] => {
+/**
+ * Map database AVLs to SIRI-VM AVLs, stripping any invalid characters as necessary. Characters are stripped here to
+ * preserve the original incoming data in the database, but to format for our generated SIRI-VM output.
+ * @param avls AVLs
+ * @param validUntilTime Valid until time
+ * @returns mapped SIRI-VM vehicle activities
+ */
+export const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehicleActivity[] => {
     return avls.map<SiriVehicleActivity>((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
-            RecordedAtTime: currentTime,
+            RecordedAtTime: avl.recorded_at_time,
+            ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
             VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
@@ -276,8 +291,8 @@ const createVehicleActivities = (avls: Avl[], currentTime: string, validUntilTim
 export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = responseTime.toISOString();
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
-
-    const vehicleActivity = createVehicleActivities(avls, currentTime, validUntilTime);
+    const vehicleActivities = createVehicleActivities(avls, validUntilTime);
+    const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
         ServiceDelivery: {
@@ -287,12 +302,12 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                 ResponseTimestamp: currentTime,
                 RequestMessageRef: requestMessageRef,
                 ValidUntil: validUntilTime,
-                VehicleActivity: vehicleActivity,
+                VehicleActivity: validVehicleActivities,
             },
         },
     };
 
-    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false, emptyStrings: false });
+    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
     const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
 
     const completeObject = {
@@ -336,7 +351,53 @@ export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minut
  */
 export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
 
-export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef: string, bucketName: string) => {
+/**
+ * Spawns a child process to use the xmllint CLI command in order to validate
+ * the SIRI-VM files against the XSD. If the file fails validation then it will
+ * throw an error and log out the validation issues.
+ *
+ * @param xml
+ */
+const runXmlLint = async (xml: string) => {
+    const fileName = randomUUID();
+    await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
+
+    const command = spawn("xmllint", [
+        `/app/${fileName}.xml`,
+        "--noout",
+        "--nowarning",
+        "--schema",
+        "/app/xsd/www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+    ]);
+
+    let error = "";
+
+    for await (const chunk of command.stderr) {
+        error += chunk;
+    }
+
+    const exitCode = await new Promise((resolve) => {
+        command.on("close", resolve);
+    });
+
+    if (exitCode) {
+        logger.error(error.slice(0, 10000));
+
+        throw new Error();
+    }
+};
+
+export const generateSiriVmAndUploadToS3 = async (
+    avls: Avl[],
+    requestMessageRef: string,
+    bucketName: string,
+    stage: string,
+    lintSiri = true,
+) => {
+    if (lintSiri && !commandExists("xmllint")) {
+        throw new Error("xmllint not available");
+    }
+
     const responseTime = getDate();
     const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
     const siriVmTfl = createSiriVm(
@@ -344,6 +405,29 @@ export const generateSiriVmAndUploadToS3 = async (avls: Avl[], requestMessageRef
         requestMessageRef,
         responseTime,
     );
+
+    if (lintSiri) {
+        const [siriVmValidation, siriVmTflValidation] = await Promise.allSettled([
+            runXmlLint(siriVm),
+            runXmlLint(siriVmTfl),
+        ]);
+
+        if (siriVmValidation.status === "rejected") {
+            await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "ValidationError", Value: 1 }]);
+
+            throw new Error("SIRI-VM file failed validation", {
+                cause: siriVmValidation.reason,
+            });
+        }
+
+        if (siriVmTflValidation.status === "rejected") {
+            await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "TfLValidationError", Value: 1 }]);
+
+            throw new Error("SIRI-VM TfL file failed validation", {
+                cause: siriVmTflValidation.reason,
+            });
+        }
+    }
 
     await Promise.all([
         putS3Object({

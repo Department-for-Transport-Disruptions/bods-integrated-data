@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  '@baselime/lambda-logger':
-    specifier: ^0.2.2
-    version: 0.2.2
   '@bods-integrated-data/shared':
     specifier: workspace:^
     version: link:../../shared
@@ -17,9 +14,12 @@ dependencies:
   kysely:
     specifier: ^0.27.3
     version: 0.27.3
+  zod:
+    specifier: ^3.23.8
+    version: 3.23.8
   zod-validation-error:
-    specifier: ^3.0.3
-    version: 3.1.0(zod@3.22.4)
+    specifier: ^3.3.0
+    version: 3.3.0(zod@3.23.8)
 
 devDependencies:
   '@types/aws-lambda':
@@ -30,10 +30,6 @@ devDependencies:
     version: 20.11.25
 
 packages:
-
-  /@baselime/lambda-logger@0.2.2:
-    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
-    dev: false
 
   /@types/aws-lambda@8.10.136:
     resolution: {integrity: sha512-cmmgqxdVGhxYK9lZMYYXYRJk6twBo53ivtXjIUEFZxfxe4TkZTZBK3RRWrY2HjJcUIix0mdifn15yjOAat5lTA==}
@@ -65,15 +61,15 @@ packages:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
     dev: true
 
-  /zod-validation-error@3.1.0(zod@3.22.4):
-    resolution: {integrity: sha512-zujS6HqJjMZCsvjfbnRs7WI3PXN39ovTcY1n8a+KTm4kOH0ZXYsNiJkH1odZf4xZKMkBDL7M2rmQ913FCS1p9w==}
+  /zod-validation-error@3.3.0(zod@3.23.8):
+    resolution: {integrity: sha512-Syib9oumw1NTqEv4LT0e6U83Td9aVRk9iTXPUQr1otyV1PuXQKOvOwhMNqZIq5hluzHP2pMgnOmHEo7kPdI2mw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.18.0
     dependencies:
-      zod: 3.22.4
+      zod: 3.23.8
     dev: false
 
-  /zod@3.22.4:
-    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+  /zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: false

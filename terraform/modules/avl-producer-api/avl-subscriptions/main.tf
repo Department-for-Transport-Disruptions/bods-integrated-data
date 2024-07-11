@@ -29,7 +29,7 @@ module "integrated_data_avl_subscriptions_function" {
 
   permissions = [
     {
-      Action   = ["dynamodb:Scan"]
+      Action   = ["dynamodb:GetItem", "dynamodb:Scan"]
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.table_name}"
 

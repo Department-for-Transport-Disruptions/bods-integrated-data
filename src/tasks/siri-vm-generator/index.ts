@@ -1,6 +1,5 @@
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { logger } from "@bods-integrated-data/shared/logger";
 import Bree from "bree";
-import Pino from "pino";
 
 const { CLEARDOWN_FREQUENCY_IN_SECONDS: cleardownFrequency, PROCESSOR_FREQUENCY_IN_SECONDS: generatorFrequency } =
     process.env;
@@ -9,10 +8,8 @@ if (!cleardownFrequency || !generatorFrequency) {
     throw new Error("Missing env vars - CLEARDOWN_FREQUENCY_IN_SECONDS, PROCESSOR_FREQUENCY_IN_SECONDS must be set");
 }
 
-const logger = Pino();
-
 const bree = new Bree({
-    logger: Pino(),
+    logger,
     jobs: [
         {
             name: "avl-cleardown",
@@ -29,13 +26,6 @@ const bree = new Bree({
     ],
     errorHandler: async (error) => {
         logger.error(error);
-
-        await putMetricData("custom/SiriVmGenerator", [
-            {
-                MetricName: "Errors",
-                Value: 1,
-            },
-        ]);
     },
 });
 

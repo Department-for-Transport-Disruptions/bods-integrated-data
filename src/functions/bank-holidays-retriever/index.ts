@@ -1,4 +1,4 @@
-import { logger } from "@baselime/lambda-logger";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 

@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  '@baselime/lambda-logger':
-    specifier: ^0.2.2
-    version: 0.2.2
   '@bods-integrated-data/shared':
     specifier: workspace:^
     version: link:../../shared
@@ -29,8 +26,8 @@ devDependencies:
     specifier: ^3.0.5
     version: 3.0.5
   zod:
-    specifier: ^3.22.4
-    version: 3.22.4
+    specifier: ^3.23.8
+    version: 3.23.8
 
 packages:
 
@@ -68,10 +65,6 @@ packages:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
     dev: true
-
-  /@baselime/lambda-logger@0.2.2:
-    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
-    dev: false
 
   /@bcoe/v8-coverage@0.2.3:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
@@ -1290,6 +1283,6 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zod@3.22.4:
-    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+  /zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: true

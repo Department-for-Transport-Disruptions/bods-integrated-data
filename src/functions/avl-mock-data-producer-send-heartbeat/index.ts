@@ -1,5 +1,5 @@
-import { logger } from "@baselime/lambda-logger";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
 import axios from "axios";
 import { generateMockHeartbeat } from "./mockHeartbeatNotification";
@@ -25,7 +25,7 @@ export const handler = async () => {
             subscriptions.map(async (subscription) => {
                 const url =
                     stage === "local"
-                        ? `${dataEndpoint}?subscription_id=${subscription.subscriptionId}`
+                        ? `${dataEndpoint}?subscriptionId=${subscription.subscriptionId}`
                         : `${dataEndpoint}/${subscription.subscriptionId}`;
 
                 const HeartbeatNotification = generateMockHeartbeat(subscription.subscriptionId, currentTime);

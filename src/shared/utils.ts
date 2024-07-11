@@ -1,7 +1,8 @@
-import { logger } from "@baselime/lambda-logger";
 import { ZodSchema, z } from "zod";
+import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
+import { logger } from "./logger";
 import { VehicleType } from "./schema";
 import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
@@ -69,7 +70,7 @@ export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleT
 export const txcSelfClosingProperty = z.literal("");
 export const txcEmptyProperty = txcSelfClosingProperty.transform(() => undefined);
 
-export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
+export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, schema: T) =>
     z.preprocess((input): T[] => {
         const result = z.any().array().parse(input);
 
@@ -78,6 +79,9 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
 
             if (!parsedItem.success) {
                 logger.warn("Error parsing item", parsedItem.error.format());
+                putMetricData(`custom/${namespace}-${process.env.STAGE}`, [
+                    { MetricName: "MakeFilteredArraySchemaParseError", Value: 1 },
+                ]);
             }
 
             return parsedItem.success;

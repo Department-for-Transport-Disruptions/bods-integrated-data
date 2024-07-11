@@ -1,11 +1,11 @@
-import { logger } from "@baselime/lambda-logger";
 import { GTFS_FILE_SUFFIX, REGIONS } from "@bods-integrated-data/shared/constants";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
-import { APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 
-export const handler = async (): Promise<APIGatewayProxyResultV2> => {
+export const handler = async (): Promise<APIGatewayProxyResult> => {
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 
@@ -31,7 +31,9 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
             item.Key?.split(GTFS_FILE_SUFFIX)[0].toUpperCase(),
         ).filter(notEmpty);
 
-        const validRegions = makeFilteredArraySchema(regionCodeSchema).parse(regionFileNames);
+        const validRegions = makeFilteredArraySchema("GtfsTimetablesRegionRetriever", regionCodeSchema).parse(
+            regionFileNames,
+        );
 
         const regions = validRegions
             .map((region) => {
