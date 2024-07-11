@@ -1,8 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .addOption(STAGE_OPTION)
@@ -13,7 +12,6 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .option("--publisherId <publisherId>", "Data producer publisher ID")
     .action(async (options) => {
         let { stage, producerEndpoint, username, password, subscriptionId, publisherId } = options;
-        const apiKey = await getSecretByKey("avl_producer_api_key");
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -27,6 +25,8 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
 
             stage = responses.stage;
         }
+
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         if (!producerEndpoint) {
             const response = await inquirer.prompt<{ producerEndpoint: string }>([

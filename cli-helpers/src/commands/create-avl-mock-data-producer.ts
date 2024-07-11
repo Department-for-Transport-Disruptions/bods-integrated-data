@@ -1,8 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
 
 export const createAvlMockDataProducer = new Command("create-avl-mock-data-producer")
     .addOption(STAGE_OPTION_WITH_DEFAULT)
@@ -11,7 +10,7 @@ export const createAvlMockDataProducer = new Command("create-avl-mock-data-produ
     .action(async (options) => {
         const { stage } = options;
         let { name, subscriptionId } = options;
-        const apiKey = await getSecretByKey("avl_producer_api_key");
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         if (!name) {
             const response = await inquirer.prompt<{ name: string }>([

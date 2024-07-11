@@ -3,14 +3,13 @@
     "version": "1.0.0",
     "description": "Integration tests for the bods-integrated-data platform",
     "scripts": {
-        "test": "playwright test",
-        "test:dev": "STAGE=dev playwright test",
-        "test:test": "STAGE=test playwright test"
+        "test": "playwright test"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@aws-sdk/client-secrets-manager": "^3.614.0",
         "@bods-integrated-data/shared": "link:../src/shared"
     },
     "devDependencies": {

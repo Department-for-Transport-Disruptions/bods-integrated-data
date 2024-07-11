@@ -1,9 +1,13 @@
 import { AvlSubscribeMessage } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
 import { expect, test } from "@playwright/test";
 import { deleteDynamoItem } from "../data/dynamo";
+import { getSecretByKey } from "./utils";
 
 const { STAGE: stage } = process.env;
+
+if (!stage) {
+    throw new Error("Missing env vars - STAGE must be set");
+}
 
 const avlProducerApiUrl = `https://avl-producer.${stage}.integrated-data.dft-create-data.com`;
 const avlSubscriptionTableName = `integrated-data-avl-subscription-table-${stage}`;
@@ -31,7 +35,7 @@ const cleardownTestSubscription = async () => {
 
 test.beforeAll(async () => {
     await cleardownTestSubscription();
-    headers.apiKey = await getSecretByKey("avl_producer_api_key");
+    headers.apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 });
 
 test.afterAll(async () => {
