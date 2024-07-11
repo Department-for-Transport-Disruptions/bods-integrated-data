@@ -410,13 +410,13 @@ export const generateSiriVmAndUploadToS3 = async (
         if (siriVmValidation.status === "rejected") {
             await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "ValidationError", Value: 1 }]);
 
-            throw new Error("SIRI-VM file failed validation");
+            throw new Error("SIRI-VM file failed validation", siriVmValidation.reason);
         }
 
         if (siriVmTflValidation.status === "rejected") {
             await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "TfLValidationError", Value: 1 }]);
 
-            throw new Error("SIRI-VM TfL file failed validation");
+            throw new Error("SIRI-VM TfL file failed validation", siriVmTflValidation.reason);
         }
     }
 
