@@ -106,7 +106,8 @@ const parseXml = (xml: string, subscriptionId: string) => {
             `There was an error parsing the subscription response from the data producer with subscription ID: ${subscriptionId}`,
             parsedJson.error.format(),
         );
-        return null;
+
+        throw new InvalidXmlError(`Invalid XML from subscription ID: ${subscriptionId}`);
     }
 
     return parsedJson.data;
@@ -180,16 +181,19 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
     }
 
-    const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
+    try {
+        const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
-    if (!parsedResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
-        throw new InvalidXmlError(`Error parsing subscription response from: ${subscriptionDetails.url}`);
-    }
+        if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+            throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
+        }
+    } catch (error) {
+        if (error instanceof InvalidXmlError) {
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        }
 
-    if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
-        throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
+        throw error;
     }
 
     await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "LIVE", currentTime);
