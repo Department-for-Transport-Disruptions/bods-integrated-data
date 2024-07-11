@@ -1,9 +1,9 @@
 import { writeFile } from "node:fs/promises";
-import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
+
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 interface BodsSubscription {
     dataset_id: string;
@@ -43,7 +43,6 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
     .option("--fileName <fileName>", "Subscriptions CSV file name")
     .action(async (options) => {
         let { stage, fileName } = options;
-        const apiKey = await getSecretByKey("avl_producer_api_key");
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -57,6 +56,8 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
 
             stage = responses.stage;
         }
+
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         if (!fileName) {
             const responses = await inquirer.prompt<{ fileName: string }>([

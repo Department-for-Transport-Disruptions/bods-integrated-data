@@ -1,9 +1,9 @@
 import * as fs from "node:fs";
 import { writeFile } from "node:fs/promises";
-import { getSecretByKey } from "@bods-integrated-data/shared/secretsManager";
+
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 interface Subscription {
     id: string;
@@ -30,7 +30,6 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .action(async (options) => {
         let { stage } = options;
-        const apiKey = await getSecretByKey("avl_producer_api_key");
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -45,6 +44,7 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
             stage = responses.stage;
         }
 
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
         const data = await fs.promises.readFile("./successful-subscriptions.json", "utf-8");
         const subscriptions: Subscription[] = JSON.parse(data);
 
