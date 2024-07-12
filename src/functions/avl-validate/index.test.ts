@@ -1,6 +1,7 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import * as MockDate from "mockdate";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosResponse } from "axios";
+import * as MockDate from "mockdate";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 import {
     expectedServiceDeliveryRequestBody,
@@ -8,10 +9,8 @@ import {
     mockAvlValidateRequest,
     mockServiceDeliveryResponse,
     mockServiceDeliveryResponseFalse,
-    mockServiceDeliveryResponseWithoutVersion,
     mockValidateEvent,
 } from "./test/mockData";
-import { APIGatewayProxyEvent } from "aws-lambda";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
@@ -112,35 +111,14 @@ describe("avl-validate", () => {
         },
     );
 
-    it("should return a 401 if invalid auth creds are provided from data producer", async () => {
-        // mockedAxios.post.mockRejectedValue({
-        //     status: 403,
-        // } as AxiosError);
-
-        mockedAxios.post.mockImplementation(() => {
-            throw new AxiosError("", "403");
-        });
-
-        await expect(handler(mockValidateEvent)).resolves.toEqual({
-            statusCode: 401,
-            body: JSON.stringify({ errors: ["Invalid auth credentials provided for data producer"] }),
-        });
-
-        expect(axiosSpy).toHaveBeenCalledWith(
-            mockAvlValidateRequest.url,
-            expectedServiceDeliveryRequestBody,
-            expectedServiceDeliveryRequestConfig,
-        );
-    });
-
     it("should return a 400 if there is an error when sending the request to the data producer", async () => {
-        mockedAxios.post.mockRejectedValue({
-            status: 400,
-        } as AxiosError);
+        mockedAxios.post.mockImplementation(() => {
+            throw new AxiosError();
+        });
 
         await expect(handler(mockValidateEvent)).resolves.toEqual({
             statusCode: 400,
-            body: JSON.stringify({ errors: ["Invalid request"] }),
+            body: JSON.stringify({ errors: ["Invalid request: "] }),
         });
 
         expect(axiosSpy).toHaveBeenCalledWith(

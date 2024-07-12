@@ -1,5 +1,5 @@
-import { createStringLengthValidation } from "../validation";
 import { z } from "zod";
+import { createStringLengthValidation } from "../validation";
 
 export const avlValidateRequestSchema = z.object(
     {

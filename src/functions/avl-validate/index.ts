@@ -1,21 +1,17 @@
+import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/avl/utils";
-import { logger } from "@bods-integrated-data/shared/logger";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
-import axios, { AxiosError } from "axios";
-import { ZodError, z } from "zod";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger } from "@bods-integrated-data/shared/logger";
 import {
     avlServiceDeliverySchema,
     avlServiceRequestSchema,
     avlValidateRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
-import {
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
-} from "@bods-integrated-data/shared/api";
+import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import axios, { AxiosError } from "axios";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { ZodError, z } from "zod";
 
 const requestBodySchema = z
     .string({
