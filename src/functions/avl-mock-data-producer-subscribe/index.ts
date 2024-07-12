@@ -42,7 +42,6 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
             RequestMessageRef: requestMessageRef,
             ResponseStatus: {
                 ResponseTimestamp: currentTime,
-                RequestMessageRef: subscriptionRequest.SubscriptionRequest.RequestorRef,
                 SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
