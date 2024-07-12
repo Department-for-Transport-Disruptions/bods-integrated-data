@@ -1,52 +1,161 @@
-import { logger } from "@baselime/lambda-logger";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/avl/utils";
-import { APIGatewayEvent, APIGatewayProxyResultV2 } from "aws-lambda";
+import { logger } from "@bods-integrated-data/shared/logger";
+import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { ZodError, z } from "zod";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import {
+    avlServiceDeliverySchema,
+    avlServiceRequestSchema,
+    avlValidateRequestSchema,
+} from "@bods-integrated-data/shared/schema/avl-validate.schema";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
+import {
+    createServerErrorResponse,
+    createUnauthorizedErrorResponse,
+    createValidationErrorResponse,
+} from "@bods-integrated-data/shared/api";
 
-export type SubscriptionValidationStatus = "FEED_VALID" | "FEED_INVALID";
+const requestBodySchema = z
+    .string({
+        required_error: "Body is required",
+        invalid_type_error: "Body must be a string",
+    })
+    .transform((body) => JSON.parse(body))
+    .pipe(avlValidateRequestSchema);
 
-export const avlValidateRequestSchema = z.object({
-    url: z.string().url(),
-    username: z.string(),
-    password: z.string(),
-});
-
-export const createApiResponse = (
-    statusCode: number,
-    status: SubscriptionValidationStatus,
-): APIGatewayProxyResultV2 => {
-    return {
-        statusCode,
-        body: JSON.stringify({ status }),
+const generateServiceRequestMessage = (currentTimestamp: string) => {
+    const serviceRequestJson = {
+        ServiceRequest: {
+            RequestTimestamp: currentTimestamp,
+            RequestorRef: "BODS",
+            VehicleMonitoringRequest: {
+                VehicleMonitoringRequest: {
+                    RequestTimestamp: currentTimestamp,
+                },
+            },
+        },
     };
+
+    const verifiedServiceRequest = avlServiceRequestSchema.parse(serviceRequestJson);
+
+    const completeObject = {
+        "?xml": {
+            "#text": "",
+            "@_version": "1.0",
+            "@_encoding": "UTF-8",
+            "@_standalone": "yes",
+        },
+        Siri: {
+            "@_version": "2.0",
+            "@_xmlns": "http://www.siri.org.uk/siri",
+            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
+            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
+            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+            ServiceRequest: {
+                ...verifiedServiceRequest.ServiceRequest,
+                VehicleMonitoringRequest: {
+                    ...verifiedServiceRequest.ServiceRequest.VehicleMonitoringRequest,
+                    VehicleMonitoringRequest: {
+                        "@_version": "2.0",
+                        ...verifiedServiceRequest.ServiceRequest.VehicleMonitoringRequest.VehicleMonitoringRequest,
+                    },
+                },
+            },
+        },
+    };
+
+    const builder = new XMLBuilder({
+        ignoreAttributes: false,
+        format: true,
+        attributeNamePrefix: "@_",
+    });
+
+    const request = builder.build(completeObject) as string;
+
+    return request;
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: false,
+        parseTagValue: true,
+    });
+
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
+
+    const parsedJson = avlServiceDeliverySchema.safeParse(parsedXml.Siri);
+
+    if (!parsedJson.success) {
+        logger.error(
+            "There was an error parsing the service delivery response from the data producer.",
+            parsedJson.error.format(),
+        );
+        throw new InvalidXmlError();
+    }
+
+    return parsedJson.data;
+};
+
+export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     try {
-        const { url, username, password } = avlValidateRequestSchema.parse(event.body);
+        logger.info("Starting AVL feed validator");
 
-        const validateMessage = ""; // todo: determine validation mechanism
+        const { url, username, password } = requestBodySchema.parse(event.body);
 
-        await axios.post<string>(url, validateMessage, {
+        const requestTime = getDate();
+        const currentTime = requestTime.toISOString();
+
+        const serviceRequest = generateServiceRequestMessage(currentTime);
+
+        const serviceDeliveryResponse = await axios.post<string>(url, serviceRequest, {
             headers: {
                 "Content-Type": "text/xml",
                 Authorization: createAuthorizationHeader(username, password),
             },
         });
 
-        return createApiResponse(200, "FEED_VALID");
-    } catch (error) {
-        if (error instanceof AxiosError || error instanceof ZodError) {
-            logger.error("Invalid request", error);
+        const serviceDeliveryBody = serviceDeliveryResponse.data;
 
-            return createApiResponse(400, "FEED_INVALID");
+        if (!serviceDeliveryBody) {
+            logger.warn("No body was returned from data producer");
+            return createValidationErrorResponse(["No body was returned from the data producer"]);
+        }
+
+        const parsedServiceDeliveryBody = parseXml(serviceDeliveryBody);
+
+        const status = parsedServiceDeliveryBody?.ServiceDelivery.Status ?? null;
+
+        const siriVersion = parsedServiceDeliveryBody?.["@_version"] ?? null;
+
+        if (!status || status !== "true") {
+            logger.warn("Data producer did not return a status of true");
+            return createValidationErrorResponse(["Data producer did not return a status of true"]);
+        }
+
+        return { statusCode: 200, body: JSON.stringify({ siriVersion }) };
+    } catch (error) {
+        if (error instanceof ZodError) {
+            logger.warn("Invalid request", error);
+            return createValidationErrorResponse(error.errors.map((error) => error.message));
+        }
+
+        if (error instanceof AxiosError) {
+            logger.warn("Invalid request", error);
+            return createValidationErrorResponse([`Invalid request: ${error.message}`]);
+        }
+
+        if (error instanceof InvalidXmlError) {
+            logger.warn("Invalid SIRI-VM XML received from the data producer", error);
+            return createValidationErrorResponse(["Invalid SIRI-VM XML received from the data producer"]);
         }
 
         if (error instanceof Error) {
             logger.error("There was a problem subscribing to the AVL feed.", error);
         }
 
-        return createApiResponse(500, "FEED_INVALID");
+        return createServerErrorResponse();
     }
 };

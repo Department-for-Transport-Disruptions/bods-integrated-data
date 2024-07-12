@@ -64,7 +64,7 @@ export const invokeAvlValidate = new Command("invoke-avl-validate")
         };
 
         await invokeLambda(stage, {
-            FunctionName: `integrated-data-avl-subscriber-${stage}`,
+            FunctionName: `integrated-data-avl-validate-${stage}`,
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
