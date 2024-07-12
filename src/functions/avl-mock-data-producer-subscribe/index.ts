@@ -3,6 +3,7 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscriptionRequest,
+    AvlSubscriptionResponse,
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -34,7 +35,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
     const currentTime = getDate().toISOString();
     const requestMessageRef = randomUUID();
 
-    const subscriptionResponseJson = {
+    const subscriptionResponseJson: AvlSubscriptionResponse = {
         SubscriptionResponse: {
             ResponseTimestamp: currentTime,
             ResponderRef: "Mock AVL Producer",
@@ -45,7 +46,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
                 SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
-                Status: "LIVE",
+                Status: "true",
             },
             ServiceStartedTime: currentTime,
         },

@@ -184,7 +184,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     try {
         const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
-        if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
+        if (parsedResponseBody.SubscriptionResponse.ResponseStatus.Status !== "true") {
             await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
             throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
         }
