@@ -33,11 +33,6 @@ data "sops_file" "secrets" {
 locals {
   env     = "dev"
   secrets = jsondecode(data.sops_file.secrets.raw)
-  data_producer_allowed_ips = [
-    "18.132.131.211/32",
-    "18.132.4.79/32",
-    "18.168.222.144/32"
-  ]
 }
 
 module "integrated_data_monitoring_dev" {
@@ -335,5 +330,5 @@ module "integrated_data_cloudfront" {
   acm_certificate_arn                   = module.integrated_data_acm.cloudfront_acm_certificate_arn
   hosted_zone_id                        = module.integrated_data_route53.public_hosted_zone_id
   avl_siri_vm_data_producer_domain      = module.integrated_data_avl_data_producer_api.endpoint
-  avl_siri_vm_data_producer_allowed_ips = local.data_producer_allowed_ips
+  avl_siri_vm_data_producer_allowed_ips = local.secrets["data_producer_allowed_ips"]
 }
