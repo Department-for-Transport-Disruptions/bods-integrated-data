@@ -144,9 +144,10 @@ module "integrated_data_avl_pipeline" {
 }
 
 module "integrated_data_avl_subscription_table" {
-  source = "../modules/database/dynamo"
+  source = "../modules/shared/dynamo-table"
 
   environment = local.env
+  table_name  = "integrated-data-avl-subscription-table"
 }
 
 module "integrated_data_avl_data_producer_api" {

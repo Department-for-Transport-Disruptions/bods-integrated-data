@@ -9,8 +9,8 @@ terraform {
   }
 }
 
-resource "aws_dynamodb_table" "integrated_data_avl_subscription_table" {
-  name                        = "integrated-data-avl-subscription-table-${var.environment}"
+resource "aws_dynamodb_table" "table" {
+  name                        = "${var.table_name}-${var.environment}"
   billing_mode                = "PAY_PER_REQUEST"
   deletion_protection_enabled = var.environment == "prod" ? true : false
   hash_key                    = "PK"
@@ -29,9 +29,4 @@ resource "aws_dynamodb_table" "integrated_data_avl_subscription_table" {
   point_in_time_recovery {
     enabled = var.environment == "prod" ? true : false
   }
-}
-
-output "table_name" {
-  description = "AVL Subscriptions Dynamo Table name"
-  value       = aws_dynamodb_table.integrated_data_avl_subscription_table.name
 }
