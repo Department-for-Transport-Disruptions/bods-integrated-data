@@ -35,7 +35,7 @@ const cleardownTestSubscription = async () => {
 
 test.beforeAll(async () => {
     await cleardownTestSubscription();
-    headers.apiKey = await getSecretByKey(stage, "avl_producer_api_key");
+    headers["x-api-key"] = await getSecretByKey(stage, "avl_producer_api_key");
 });
 
 test.afterAll(async () => {
