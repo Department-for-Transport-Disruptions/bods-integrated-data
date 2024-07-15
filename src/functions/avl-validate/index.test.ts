@@ -1,3 +1,4 @@
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
@@ -10,7 +11,6 @@ import {
     mockServiceDeliveryResponse,
     mockServiceDeliveryResponseFalse,
 } from "./test/mockData";
-import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
