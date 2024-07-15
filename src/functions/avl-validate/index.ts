@@ -1,13 +1,18 @@
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
-import { createAuthorizationHeader } from "@bods-integrated-data/shared/avl/utils";
+import {
+    createServerErrorResponse,
+    createUnauthorizedErrorResponse,
+    createValidationErrorResponse,
+    validateApiKey,
+} from "@bods-integrated-data/shared/api";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import {
+    AvlServiceRequest,
     avlServiceDeliverySchema,
-    avlServiceRequestSchema,
     avlValidateRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
-import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
+import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
+import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
@@ -22,7 +27,7 @@ const requestBodySchema = z
     .pipe(avlValidateRequestSchema);
 
 const generateServiceRequestMessage = (currentTimestamp: string) => {
-    const serviceRequestJson = {
+    const serviceRequestJson: AvlServiceRequest = {
         ServiceRequest: {
             RequestTimestamp: currentTimestamp,
             RequestorRef: "BODS",
@@ -33,8 +38,6 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
             },
         },
     };
-
-    const verifiedServiceRequest = avlServiceRequestSchema.parse(serviceRequestJson);
 
     const completeObject = {
         "?xml": {
@@ -49,18 +52,12 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
             "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
             "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
             "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
-            ServiceRequest: {
-                ...verifiedServiceRequest.ServiceRequest,
-                VehicleMonitoringRequest: {
-                    ...verifiedServiceRequest.ServiceRequest.VehicleMonitoringRequest,
-                    VehicleMonitoringRequest: {
-                        "@_version": "2.0",
-                        ...verifiedServiceRequest.ServiceRequest.VehicleMonitoringRequest.VehicleMonitoringRequest,
-                    },
-                },
-            },
+            ...serviceRequestJson,
         },
     };
+
+    // @ts-ignore
+    completeObject.Siri.ServiceRequest.VehicleMonitoringRequest.VehicleMonitoringRequest["@_version"] = "2.0";
 
     const builder = new XMLBuilder({
         ignoreAttributes: false,
@@ -97,7 +94,13 @@ const parseXml = (xml: string) => {
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     try {
-        logger.info("Starting AVL feed validator");
+        const { AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;
+
+        if (!avlProducerApiKeyArn) {
+            throw new Error("Missing env var: AVL_PRODUCER_API_KEY_ARN must be set.");
+        }
+
+        await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { url, username, password } = requestBodySchema.parse(event.body);
 
@@ -122,25 +125,25 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         const parsedServiceDeliveryBody = parseXml(serviceDeliveryBody);
 
-        const status = parsedServiceDeliveryBody?.ServiceDelivery.Status ?? null;
-
-        const siriVersion = parsedServiceDeliveryBody?.["@_version"] ?? null;
-
-        if (!status || status !== "true") {
+        if (parsedServiceDeliveryBody?.ServiceDelivery.Status !== "true") {
             logger.warn("Data producer did not return a status of true");
             return createValidationErrorResponse(["Data producer did not return a status of true"]);
         }
 
-        return { statusCode: 200, body: JSON.stringify({ siriVersion }) };
+        return { statusCode: 200, body: JSON.stringify({ siriVersion: parsedServiceDeliveryBody["@_version"] }) };
     } catch (error) {
         if (error instanceof ZodError) {
             logger.warn("Invalid request", error);
             return createValidationErrorResponse(error.errors.map((error) => error.message));
         }
 
+        if (error instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
+        }
+
         if (error instanceof AxiosError) {
             logger.warn("Invalid request", error);
-            return createValidationErrorResponse([`Invalid request: ${error.message}`]);
+            return createValidationErrorResponse(["Invalid request to data producer"]);
         }
 
         if (error instanceof InvalidXmlError) {

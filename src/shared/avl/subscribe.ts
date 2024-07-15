@@ -6,11 +6,12 @@ import { putDynamoItem } from "../dynamo";
 import { logger } from "../logger";
 import {
     AvlSubscription,
+    AvlSubscriptionRequest,
     AvlSubscriptionStatuses,
-    avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
 } from "../schema/avl-subscribe.schema";
 import { putParameter } from "../ssm";
+import { createAuthorizationHeader } from "../utils";
 import { InvalidXmlError } from "../validation";
 import { getSiriVmTerminationTimeOffset } from "./utils";
 
@@ -31,7 +32,7 @@ export const generateSubscriptionRequestXml = (
     dataEndpoint: string,
     requestorRef: string | null,
 ) => {
-    const subscriptionRequestJson = {
+    const subscriptionRequestJson: AvlSubscriptionRequest = {
         SubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
             ConsumerAddress: `${dataEndpoint}/${subscriptionId}`,
@@ -50,8 +51,6 @@ export const generateSubscriptionRequestXml = (
         },
     };
 
-    const verifiedSubscriptionRequest = avlSubscriptionRequestSchema.parse(subscriptionRequestJson);
-
     const completeObject = {
         "?xml": {
             "#text": "",
@@ -66,12 +65,12 @@ export const generateSubscriptionRequestXml = (
             "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
             "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
             SubscriptionRequest: {
-                ...verifiedSubscriptionRequest.SubscriptionRequest,
+                ...subscriptionRequestJson.SubscriptionRequest,
                 VehicleMonitoringSubscriptionRequest: {
-                    ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest,
+                    ...subscriptionRequestJson.SubscriptionRequest.VehicleMonitoringSubscriptionRequest,
                     VehicleMonitoringRequest: {
                         "@_version": "2.0",
-                        ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
+                        ...subscriptionRequestJson.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
                             .VehicleMonitoringRequest,
                     },
                 },
@@ -169,7 +168,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
+            Authorization: createAuthorizationHeader(username, password),
         },
     });
 

@@ -1,15 +1,10 @@
 import { AvlValidateRequestSchema } from "@bods-integrated-data/shared/schema/avl-validate.schema";
-import { APIGatewayProxyEvent } from "aws-lambda";
 
 export const mockAvlValidateRequest: AvlValidateRequestSchema = {
     url: "https://mock-data-producer.com",
     username: "test-user",
     password: "dummy-password",
 };
-
-export const mockValidateEvent = {
-    body: JSON.stringify(mockAvlValidateRequest),
-} as unknown as APIGatewayProxyEvent;
 
 export const expectedServiceDeliveryRequestConfig = {
     headers: {

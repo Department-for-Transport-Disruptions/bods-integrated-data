@@ -30,10 +30,6 @@ export class SubscriptionIdNotFoundError extends Error {
     }
 }
 
-export const createAuthorizationHeader = (username: string, password: string) => {
-    return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
-};
-
 export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem<AvlSubscription>(tableName, {
         PK: subscriptionId,

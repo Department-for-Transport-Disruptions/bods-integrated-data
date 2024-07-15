@@ -20,7 +20,20 @@ module "avl_validate" {
   runtime       = "nodejs20.x"
   timeout       = 30
 
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect   = "Allow",
+      Resource = [
+        var.avl_producer_api_key_arn
+      ]
+    }
+  ]
+
   env_vars = {
-    STAGE = var.environment
+    STAGE                    = var.environment
+    AVL_PRODUCER_API_KEY_ARN = var.avl_producer_api_key_arn
   }
 }

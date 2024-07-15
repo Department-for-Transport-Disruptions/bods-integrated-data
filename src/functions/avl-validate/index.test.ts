@@ -9,16 +9,25 @@ import {
     mockAvlValidateRequest,
     mockServiceDeliveryResponse,
     mockServiceDeliveryResponseFalse,
-    mockValidateEvent,
 } from "./test/mockData";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-validate", () => {
+    let mockValidateEvent: APIGatewayProxyEvent;
+
     MockDate.set("2024-03-11T15:20:02.093Z");
 
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
     const axiosSpy = vi.spyOn(mockedAxios, "post");
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
+
+    process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
 
     afterAll(() => {
         MockDate.reset();
@@ -26,6 +35,15 @@ describe("avl-validate", () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+
+        mockValidateEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+            body: JSON.stringify(mockAvlValidateRequest),
+        } as unknown as APIGatewayProxyEvent;
+
+        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
     it("should return a status code of 200 and the data producers SIRI version if a producer's feed can be successfully validated", async () => {
@@ -97,11 +115,11 @@ describe("avl-validate", () => {
             ["url must be a valid URL", "username must be 1-256 characters", "password must be 1-256 characters"],
         ],
     ])(
-        "should throw an error if the event body from the API gateway event does not match the avlValidateMessage schema",
+        "should throw an error if the event body from the API gateway event does not match the avlValidateMessage schema (test: %o)",
         async (input, expectedErrorMessages) => {
-            const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
+            mockValidateEvent.body = JSON.stringify(input);
 
-            const response = await handler(invalidEvent);
+            const response = await handler(mockValidateEvent);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrorMessages }),
@@ -118,7 +136,7 @@ describe("avl-validate", () => {
 
         await expect(handler(mockValidateEvent)).resolves.toEqual({
             statusCode: 400,
-            body: JSON.stringify({ errors: ["Invalid request: "] }),
+            body: JSON.stringify({ errors: ["Invalid request to data producer"] }),
         });
 
         expect(axiosSpy).toHaveBeenCalledWith(
@@ -162,5 +180,17 @@ describe("avl-validate", () => {
             expectedServiceDeliveryRequestBody,
             expectedServiceDeliveryRequestConfig,
         );
+    });
+
+    it.each([[undefined], ["invalid-key"]])("should return a 401 when an invalid api key is supplied", async (key) => {
+        mockValidateEvent.headers = {
+            "x-api-key": key,
+        };
+
+        const response = await handler(mockValidateEvent);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
     });
 });

@@ -5,11 +5,8 @@ import { getDate } from "../dates";
 import { putDynamoItem } from "../dynamo";
 import { logger } from "../logger";
 import { AvlSubscription } from "../schema/avl-subscribe.schema";
-import {
-    terminateSubscriptionRequestSchema,
-    terminateSubscriptionResponseSchema,
-} from "../schema/avl-unsubscribe.schema";
-import { getSubscriptionUsernameAndPassword } from "../utils";
+import { TerminateSubscriptionRequest, terminateSubscriptionResponseSchema } from "../schema/avl-unsubscribe.schema";
+import { createAuthorizationHeader, getSubscriptionUsernameAndPassword } from "../utils";
 import { InvalidXmlError } from "../validation";
 
 export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -29,7 +26,7 @@ export const generateTerminationSubscriptionRequest = (
     messageIdentifier: string,
     requestorRef: string | null,
 ) => {
-    const terminateSubscriptionRequestJson = {
+    const terminateSubscriptionRequestJson: TerminateSubscriptionRequest = {
         TerminateSubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
             RequestorRef: requestorRef ?? "BODS",
@@ -37,10 +34,6 @@ export const generateTerminationSubscriptionRequest = (
             SubscriptionRef: subscriptionId,
         },
     };
-
-    const verifiedTerminateSubscriptionRequest = terminateSubscriptionRequestSchema.parse(
-        terminateSubscriptionRequestJson,
-    );
 
     const completeObject = {
         "?xml": {
@@ -55,7 +48,7 @@ export const generateTerminationSubscriptionRequest = (
             "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
             "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
             "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
-            ...verifiedTerminateSubscriptionRequest,
+            ...terminateSubscriptionRequestJson,
         },
     };
 
@@ -126,9 +119,7 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
             : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
                       "Content-Type": "text/xml",
-                      Authorization: `Basic ${Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString(
-                          "base64",
-                      )}`,
+                      Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword),
                   },
               });
 

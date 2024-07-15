@@ -33,6 +33,8 @@ export const avlServiceRequestSchema = z.object({
     }),
 });
 
+export type AvlServiceRequest = z.infer<typeof avlServiceRequestSchema>;
+
 export const avlServiceDeliverySchema = z.object({
     ServiceDelivery: z.object({
         Status: z.coerce.string(),

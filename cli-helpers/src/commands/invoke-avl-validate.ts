@@ -1,6 +1,6 @@
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 export const invokeAvlValidate = new Command("invoke-avl-validate")
     .addOption(STAGE_OPTION)
@@ -22,6 +22,8 @@ export const invokeAvlValidate = new Command("invoke-avl-validate")
 
             stage = responses.stage;
         }
+
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         if (!url) {
             const response = await inquirer.prompt<{ url: string }>([
@@ -60,6 +62,9 @@ export const invokeAvlValidate = new Command("invoke-avl-validate")
         }
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             body: `{\"url\": \"${url}\",\"username\": \"${username}\",\"password\": \"${password}\"}`,
         };
 

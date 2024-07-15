@@ -237,9 +237,6 @@ run-local-avl-subscriptions:
 run-local-avl-subscription:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({ pathParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }}).then(console.log).catch(console.error)"
 
-run-local-avl-validate:
-	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-validate'; handler({ body: '\{\"url\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).then(console.log).catch(console.error)"
-
 # NOC
 
 run-local-noc-retriever:
