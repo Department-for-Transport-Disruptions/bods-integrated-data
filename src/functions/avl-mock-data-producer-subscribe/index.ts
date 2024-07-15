@@ -3,9 +3,11 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscriptionRequest,
+    AvlSubscriptionResponse,
     avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
@@ -23,7 +25,7 @@ const parseXml = (xml: string) => {
     if (!parsedJson.success) {
         logger.error("There was an error parsing the subscription request.", parsedJson.error.format());
 
-        throw new Error("Error parsing subscription request");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
@@ -33,18 +35,17 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
     const currentTime = getDate().toISOString();
     const requestMessageRef = randomUUID();
 
-    const subscriptionResponseJson = {
+    const subscriptionResponseJson: AvlSubscriptionResponse = {
         SubscriptionResponse: {
             ResponseTimestamp: currentTime,
             ResponderRef: "Mock AVL Producer",
             RequestMessageRef: requestMessageRef,
             ResponseStatus: {
                 ResponseTimestamp: currentTime,
-                RequestMessageRef: subscriptionRequest.SubscriptionRequest.RequestorRef,
                 SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
-                Status: "LIVE",
+                Status: "true",
             },
             ServiceStartedTime: currentTime,
         },

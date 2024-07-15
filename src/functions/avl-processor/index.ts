@@ -4,6 +4,7 @@ import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/share
 import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
@@ -23,7 +24,7 @@ const parseXml = (xml: string) => {
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
 
-        throw new Error("Error parsing data");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
