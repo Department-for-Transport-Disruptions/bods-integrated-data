@@ -29,4 +29,9 @@ resource "aws_dynamodb_table" "table" {
   point_in_time_recovery {
     enabled = var.environment == "prod" ? true : false
   }
+
+  ttl {
+    enabled        = var.ttl_attribute ? true : false
+    attribute_name = var.ttl_attribute
+  }
 }
