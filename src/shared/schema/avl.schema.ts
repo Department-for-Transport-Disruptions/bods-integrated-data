@@ -97,7 +97,7 @@ export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
         ItemIdentifier: z.string().optional(),
-        ProducerRef: z.coerce.string(),
+        ProducerRef: z.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
             RequestMessageRef: z.string().uuid().optional(),

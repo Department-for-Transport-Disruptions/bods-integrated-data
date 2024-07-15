@@ -57,7 +57,7 @@ export const avlSubscriptionResponseSchema = z.object({
             ResponseTimestamp: z.string(),
             SubscriberRef: z.coerce.string().optional(),
             SubscriptionRef: z.coerce.string().optional(),
-            Status: z.coerce.boolean(),
+            Status: z.coerce.string(),
         }),
         ServiceStartedTime: z.string().optional(),
     }),

@@ -1,3 +1,4 @@
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,7 +21,7 @@ describe("avl-mock-data-producer-subscribe", () => {
             body: "invalid xml",
         } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidXmlRequest)).rejects.toThrowError("Error parsing subscription request");
+        await expect(handler(invalidXmlRequest)).rejects.toThrowError(InvalidXmlError);
     });
 
     it("should throw an error if invalid SIRI subscription request from data consumer is received", async () => {
@@ -33,7 +34,7 @@ describe("avl-mock-data-producer-subscribe", () => {
                     </Siri>`,
         } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidSubscriptionRequest)).rejects.toThrowError("Error parsing subscription request");
+        await expect(handler(invalidSubscriptionRequest)).rejects.toThrowError(InvalidXmlError);
     });
 
     it("should send a subscription response if valid subscription request is received", async () => {
