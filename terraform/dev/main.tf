@@ -230,6 +230,7 @@ module "integrated_data_avl_data_producer_api" {
   hosted_zone_id              = module.integrated_data_route53.public_hosted_zone_id
   domain                      = module.integrated_data_route53.public_hosted_zone_name
   subnet_ids                  = module.integrated_data_vpc_dev.private_subnet_ids
+  avl_producer_api_key        = local.secrets["avl_producer_api_key"]
 }
 
 module "integrated_data_bank_holidays_pipeline" {

@@ -1,8 +1,9 @@
 import { writeFile } from "node:fs/promises";
+
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 interface BodsSubscription {
     dataset_id: string;
@@ -27,8 +28,12 @@ const generateLambdaPayload = (
     password: string,
     subscriptionId: string,
     publisherId: string,
+    apiKey: string,
 ) => {
     return {
+        headers: {
+            "x-api-key": apiKey,
+        },
         body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\"}`,
     };
 };
@@ -51,6 +56,8 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
 
             stage = responses.stage;
         }
+
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         if (!fileName) {
             const responses = await inquirer.prompt<{ fileName: string }>([
@@ -118,6 +125,7 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                 subscription.password,
                 subscription.id,
                 subscription.publisherId,
+                apiKey,
             );
 
             const subscribeEvent = await invokeLambda(stage, {

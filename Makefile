@@ -21,6 +21,7 @@ BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-loc
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 AVL_CONSUMER_API_KEY_ARN=""
+AVL_PRODUCER_API_KEY_ARN=""
 
 # Dev
 
@@ -199,7 +200,7 @@ run-local-gtfs-rt-downloader:
 # AVL
 
 run-local-avl-subscriber:
-	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-subscriber'; handler({body: '\{\"dataProducerEndpoint\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"description\":\"description\",\"shortDescription\":\"shortDescription\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).catch(e => console.error(e))"
 
 run-local-avl-data-endpoint:
 	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
@@ -217,7 +218,7 @@ run-local-avl-mock-data-producer-send-data:
 	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
 
 run-local-avl-unsubscriber:
-	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscriptionId':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
+	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscriptionId':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 
 run-local-avl-tfl-line-id-retriever:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-tfl-line-id-retriever'; handler().catch(e => console.error(e))"
@@ -231,10 +232,10 @@ run-local-avl-siri-vm-downloader:
 	STAGE=local BUCKET_NAME=${AVL_GENERATED_SIRI_VM_BUCKET_NAME} AVL_CONSUMER_API_KEY_ARN=${AVL_CONSUMER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-siri-vm-downloader'; handler(${AVL_SIRI_VM_DOWNLOADER_INPUT}).then(console.log).catch(console.error)"
 
 run-local-avl-subscriptions:
-	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({}).then(console.log).catch(console.error)"
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({}).then(console.log).catch(console.error)"
 
 run-local-avl-subscription:
-	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({ pathParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }}).then(console.log).catch(console.error)"
+	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({ pathParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }}).then(console.log).catch(console.error)"
 
 run-local-avl-validate:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-validate'; handler({ body: '\{\"url\":\"http://ee7swjlq51jq0ri51nl3hlexwdleoc8n.lambda-url.eu-west-2.localhost.localstack.cloud:4566\",\"username\":\"test-user\",\"password\":\"dummy-password\"\}' }).then(console.log).catch(console.error)"

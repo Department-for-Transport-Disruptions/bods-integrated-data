@@ -1,7 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
 
 export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
     .addOption(STAGE_OPTION)
@@ -22,6 +22,8 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
             stage = responses.stage;
         }
 
+        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
+
         if (!subscriptionId) {
             const responses = await inquirer.prompt<{ subscriptionId: string }>([
                 {
@@ -35,6 +37,9 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
         }
 
         const invokePayload = {
+            headers: {
+                "x-api-key": apiKey,
+            },
             pathParameters: {
                 subscriptionId,
             },
