@@ -1,6 +1,7 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiAvlSubscription, handler, mapApiAvlSubscriptionResponse } from "./index";
@@ -19,29 +20,51 @@ describe("avl-subscriptions", () => {
         recursiveScan: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
-        mockEvent = {} as APIGatewayProxyEvent;
+        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
+        mockEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+        } as unknown as APIGatewayProxyEvent;
+        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
-    it("should return a 500 when not all the env vars are set", async () => {
-        process.env.TABLE_NAME = "";
+    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
+        mockEvent.headers = {
+            "x-api-key": key,
+        };
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
+    });
+
+    it.each([
+        [{ TABLE_NAME: "", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", AVL_PRODUCER_API_KEY_ARN: "" }],
+    ])("throws an error when the required env vars are missing", async (env) => {
+        process.env = env;
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the AVL subscriptions endpoint",
-            expect.any(Error),
-        );
         expect(getDynamoItemSpy).not.toHaveBeenCalled();
         expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
@@ -63,12 +86,9 @@ describe("avl-subscriptions", () => {
     it.each([["1".repeat(257), "subscriptionId must be 1-256 characters"]])(
         "should return a 400 when the subscription ID fails validation (test: %o)",
         async (subscriptionId, expectedErrorMessage) => {
-            const mockEvent = {
-                pathParameters: {
-                    subscriptionId,
-                },
-                body: null,
-            } as unknown as APIGatewayProxyEvent;
+            mockEvent.pathParameters = {
+                subscriptionId,
+            };
 
             const response = await handler(mockEvent);
             expect(response).toEqual({

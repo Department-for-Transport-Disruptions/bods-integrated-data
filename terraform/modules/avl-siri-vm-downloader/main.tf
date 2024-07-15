@@ -16,7 +16,7 @@ resource "aws_lambda_function_url" "avl_siri_vm_downloader_function_url" {
 }
 
 resource "aws_secretsmanager_secret" "avl_consumer_api_key_secret" {
-  description = "AVL consumer API key - ${var.environment}"
+  name = "avl_consumer_api_key"
 }
 
 resource "aws_secretsmanager_secret_version" "avl_consumer_api_key_secret_version" {

@@ -1,37 +1,33 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
-const mockUpdateEventBody = {
-    dataProducerEndpoint: "https://www.updated-endpoint.com",
-    description: "updated description",
-    shortDescription: "updated short description",
-    username: "updatedUsername",
-    password: "updatedPassword",
-};
-
-const mockUpdateEvent = {
-    pathParameters: {
-        subscriptionId: "mock-subscription-id",
-    },
-    body: JSON.stringify(mockUpdateEventBody),
-} as unknown as APIGatewayProxyEvent;
-
-const expectedSubscriptionDetails = {
-    description: "updated description",
-    lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
-    publisherId: "mock-publisher-id",
-    requestorRef: null,
-    serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-    shortDescription: "updated short description",
-    url: "https://www.updated-endpoint.com",
-};
-
 describe("avl-update-endpoint", () => {
+    const mockUpdateEventBody = {
+        dataProducerEndpoint: "https://www.updated-endpoint.com",
+        description: "updated description",
+        shortDescription: "updated short description",
+        username: "updatedUsername",
+        password: "updatedPassword",
+    };
+
+    let mockUpdateEvent: APIGatewayProxyEvent;
+
+    const expectedSubscriptionDetails = {
+        description: "updated description",
+        lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
+        publisherId: "mock-publisher-id",
+        requestorRef: null,
+        serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+        shortDescription: "updated short description",
+        url: "https://www.updated-endpoint.com",
+    };
+
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
     }));
@@ -52,6 +48,7 @@ describe("avl-update-endpoint", () => {
     );
     const sendSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(subscribe, "sendSubscriptionRequestAndUpdateDynamo");
     const addSubscriptionAuthCredsToSsmSpy = vi.spyOn(subscribe, "addSubscriptionAuthCredsToSsm");
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
@@ -59,6 +56,8 @@ describe("avl-update-endpoint", () => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
         process.env.DATA_ENDPOINT = "https://www.test.com/data";
+        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
+
         getDynamoItemSpy.mockResolvedValue({
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
@@ -70,6 +69,18 @@ describe("avl-update-endpoint", () => {
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
         });
+
+        mockUpdateEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+            pathParameters: {
+                subscriptionId: "mock-subscription-id",
+            },
+            body: JSON.stringify(mockUpdateEventBody),
+        } as unknown as APIGatewayProxyEvent;
+
+        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
     afterAll(() => {
@@ -223,9 +234,9 @@ describe("avl-update-endpoint", () => {
     ])(
         "should return a 400 if event body from the API gateway event does not match the avlUpdateBody schema (test: %o).",
         async (input, expectedErrorMessages) => {
-            const invalidEvent = { ...mockUpdateEvent, body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
+            mockUpdateEvent.body = JSON.stringify(input);
 
-            await expect(handler(invalidEvent)).resolves.toEqual({
+            await expect(handler(mockUpdateEvent)).resolves.toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrorMessages }),
             });
@@ -236,11 +247,27 @@ describe("avl-update-endpoint", () => {
         },
     );
 
-    it("should return a 500 if env vars are missing", async () => {
-        process.env.TABLE_NAME = "";
-        process.env.DATA_ENDPOINT = "";
+    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
+        mockUpdateEvent.headers = {
+            "x-api-key": key,
+        };
 
-        await expect(handler(mockUpdateEvent)).resolves.toEqual({
+        const response = await handler(mockUpdateEvent);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
+    });
+
+    it.each([
+        [{ TABLE_NAME: "", DATA_ENDPOINT: "https://www.test.com/data", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", DATA_ENDPOINT: "", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", DATA_ENDPOINT: "https://www.test.com/data", AVL_PRODUCER_API_KEY_ARN: "" }],
+    ])("throws an error when the required env vars are missing", async (env) => {
+        process.env = env;
+
+        const response = await handler(mockUpdateEvent);
+        expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });

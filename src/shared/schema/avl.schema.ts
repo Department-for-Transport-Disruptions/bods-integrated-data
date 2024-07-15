@@ -2,6 +2,7 @@ import { z } from "zod";
 import { NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
 
 const onwardCallSchema = z
     .object({
@@ -241,14 +242,14 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         item_id: item.item_id,
         valid_until_time: validUntilTime,
         producer_ref: item.producerRef,
-        vehicle_ref: item.vehicleRef,
+        vehicle_ref: item.vehicleRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         vehicle_name: item.vehicleName,
-        operator_ref: item.operatorRef,
+        operator_ref: item.operatorRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         monitored: item.monitored,
         longitude: item.longitude,
         latitude: item.latitude,
         recorded_at_time: recordedAtTime,
-        bearing: typeof item.bearing === "number" ? item.bearing.toString() : item.bearing,
+        bearing: item.bearing?.toString(),
         load: item.load,
         passenger_count: item.passengerCount,
         odometer: item.odometer,
@@ -256,18 +257,27 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         schedule_deviation: item.scheduleDeviation,
         vehicle_state: item.vehicleState,
         next_stop_point_id: item.nextStopPointId,
-        next_stop_point_name: item.nextStopPointName,
+        next_stop_point_name: item.nextStopPointName?.replaceAll(
+            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+            "",
+        ),
         previous_stop_point_id: item.previousStopPointId,
-        previous_stop_point_name: item.previousStopPointName,
-        line_ref: item.lineRef,
-        published_line_name: item.publishedLineName,
+        previous_stop_point_name: item.previousStopPointName?.replaceAll(
+            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+            "",
+        ),
+        line_ref: item.lineRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        published_line_name: item.publishedLineName?.replaceAll(
+            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+            "",
+        ),
         direction_ref: item.directionRef.toString(),
-        origin_name: item.originName,
-        origin_ref: item.originRef,
+        origin_name: item.originName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+        origin_ref: item.originRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         origin_aimed_departure_time: originAimedDepartureTime,
-        destination_name: item.destinationName,
-        destination_ref: item.destinationRef,
-        vehicle_journey_ref: item.vehicleJourneyRef,
+        destination_name: item.destinationName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+        destination_ref: item.destinationRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        vehicle_journey_ref: item.vehicleJourneyRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
     };
 
     return avl;

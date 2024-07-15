@@ -1,10 +1,11 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
-import { mockAvlSubscribeMessage, mockAvlSubscriptionDetails, mockSubscribeEvent } from "./test/mockData";
 
 describe("avl-subscriber", () => {
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -16,6 +17,10 @@ describe("avl-subscriber", () => {
         addSubscriptionAuthCredsToSsm: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
     vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
         putMetricData: vi.fn(),
     }));
@@ -23,16 +28,45 @@ describe("avl-subscriber", () => {
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const sendSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(subscribe, "sendSubscriptionRequestAndUpdateDynamo");
     const addSubscriptionAuthCredsToSsmSpy = vi.spyOn(subscribe, "addSubscriptionAuthCredsToSsm");
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
+
+    const mockAvlSubscribeMessage: AvlSubscribeMessage = {
+        dataProducerEndpoint: "https://mock-data-producer.com",
+        description: "description",
+        shortDescription: "shortDescription",
+        username: "test-user",
+        password: "dummy-password",
+        subscriptionId: "mock-subscription-id",
+        publisherId: "mock-publisher-id",
+    };
+
+    const mockAvlSubscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
+        url: mockAvlSubscribeMessage.dataProducerEndpoint,
+        description: mockAvlSubscribeMessage.description,
+        shortDescription: mockAvlSubscribeMessage.shortDescription,
+        publisherId: mockAvlSubscribeMessage.publisherId,
+        requestorRef: undefined,
+    };
+
+    let mockSubscribeEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
         vi.resetAllMocks();
         getDynamoItemSpy.mockResolvedValue(null);
         process.env.TABLE_NAME = "test-dynamo-table";
         process.env.DATA_ENDPOINT = "https://www.test.com/data";
+        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
         process.env.STAGE = "";
         process.env.MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = "";
+        mockSubscribeEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+            body: JSON.stringify(mockAvlSubscribeMessage),
+        } as unknown as APIGatewayProxyEvent;
+        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
     afterAll(() => {
@@ -199,9 +233,9 @@ describe("avl-subscriber", () => {
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
         async (input, expectedErrorMessages) => {
-            const invalidEvent = { body: JSON.stringify(input) } as unknown as APIGatewayProxyEvent;
+            mockSubscribeEvent.body = JSON.stringify(input);
 
-            const response = await handler(invalidEvent);
+            const response = await handler(mockSubscribeEvent);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrorMessages }),
@@ -239,6 +273,18 @@ describe("avl-subscriber", () => {
         );
     });
 
+    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
+        mockSubscribeEvent.headers = {
+            "x-api-key": key,
+        };
+
+        const response = await handler(mockSubscribeEvent);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
+    });
+
     it("returns a 409 when attempting to subscribe with a subscription ID that is already active", async () => {
         getDynamoItemSpy.mockResolvedValue({
             status: "LIVE",
@@ -254,9 +300,12 @@ describe("avl-subscriber", () => {
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("throws an error when the required env vars are missing", async () => {
-        process.env.DATA_ENDPOINT = "";
-        process.env.TABLE_NAME = "";
+    it.each([
+        [{ TABLE_NAME: "", DATA_ENDPOINT: "https://www.test.com/data", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", DATA_ENDPOINT: "", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", DATA_ENDPOINT: "https://www.test.com/data", AVL_PRODUCER_API_KEY_ARN: "" }],
+    ])("throws an error when the required env vars are missing", async (env) => {
+        process.env = env;
 
         const response = await handler(mockSubscribeEvent);
         expect(response).toEqual({

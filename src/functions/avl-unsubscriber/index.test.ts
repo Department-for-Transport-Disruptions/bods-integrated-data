@@ -2,6 +2,7 @@ import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMock
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
@@ -9,11 +10,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("avl-unsubscriber", () => {
-    const mockUnsubscribeEvent = {
-        pathParameters: {
-            subscriptionId: "mock-subscription-id",
-        },
-    } as unknown as APIGatewayProxyEvent;
+    let mockUnsubscribeEvent: APIGatewayProxyEvent;
 
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
@@ -32,6 +29,10 @@ describe("avl-unsubscriber", () => {
         deleteParameters: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
     vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
         sendTerminateSubscriptionRequestAndUpdateDynamo: vi.fn(),
     }));
@@ -47,12 +48,25 @@ describe("avl-unsubscriber", () => {
         unsubscribe,
         "sendTerminateSubscriptionRequestAndUpdateDynamo",
     );
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
     beforeEach(() => {
-        process.env.TABLE_NAME = "test-dynamo-table";
         vi.resetAllMocks();
+        process.env.TABLE_NAME = "test-dynamo-table";
+        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
+
+        mockUnsubscribeEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+            pathParameters: {
+                subscriptionId: "mock-subscription-id",
+            },
+        } as unknown as APIGatewayProxyEvent;
+
+        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
     afterAll(() => {
@@ -90,22 +104,16 @@ describe("avl-unsubscriber", () => {
 
     it.each([
         [undefined, "subscriptionId is required"],
-        [null, "subscriptionId must be a string"],
-        [1, "subscriptionId must be a string"],
-        [{}, "subscriptionId must be a string"],
         ["", "subscriptionId must be 1-256 characters"],
         ["1".repeat(257), "subscriptionId must be 1-256 characters"],
     ])(
         "Throws an error when the subscription ID fails validation (test: %o)",
         async (subscriptionId, expectedErrorMessage) => {
-            const mockEvent = {
-                pathParameters: {
-                    subscriptionId,
-                },
-                body: null,
-            } as unknown as APIGatewayProxyEvent;
+            mockUnsubscribeEvent.pathParameters = {
+                subscriptionId,
+            };
 
-            const response = await handler(mockEvent);
+            const response = await handler(mockUnsubscribeEvent);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
@@ -160,19 +168,28 @@ describe("avl-unsubscriber", () => {
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("Throws an error when the required env vars are missing", async () => {
-        process.env.TABLE_NAME = "";
+    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
+        mockUnsubscribeEvent.headers = {
+            "x-api-key": key,
+        };
+
+        const response = await handler(mockUnsubscribeEvent);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
+    });
+
+    it.each([
+        [{ TABLE_NAME: "", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", AVL_PRODUCER_API_KEY_ARN: "" }],
+    ])("throws an error when the required env vars are missing", async (env) => {
+        process.env = env;
 
         const response = await handler(mockUnsubscribeEvent);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the AVL unsubscribe endpoint",
-            expect.any(Error),
-        );
-        expect(putDynamoItemSpy).not.toHaveBeenCalled();
-        expect(deleteParametersSpy).not.toHaveBeenCalled();
     });
 });

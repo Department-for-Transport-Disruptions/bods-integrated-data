@@ -18,7 +18,6 @@ import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
-import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
@@ -234,24 +233,18 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
             RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
-            VehicleMonitoringRef: avl.vehicle_monitoring_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
-                LineRef: avl.line_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                DirectionRef: avl.direction_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                PublishedLineName: avl.published_line_name?.replaceAll(
-                    SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
-                    "",
-                ),
+                LineRef: avl.line_ref,
+                DirectionRef: avl.direction_ref,
+                PublishedLineName: avl.published_line_name,
                 Occupancy: avl.occupancy,
-                OperatorRef: avl.operator_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                OriginRef: avl.origin_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                OriginName: avl.origin_name?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+                OperatorRef: avl.operator_ref,
+                OriginRef: avl.origin_ref,
+                OriginName: avl.origin_name,
                 OriginAimedDepartureTime: avl.origin_aimed_departure_time,
-                DestinationRef: avl.destination_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                DestinationName: avl.destination_name?.replaceAll(
-                    SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
-                    "",
-                ),
+                DestinationRef: avl.destination_ref,
+                DestinationName: avl.destination_name,
                 DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
                 Monitored: avl.monitored,
                 VehicleLocation: {
@@ -259,16 +252,16 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                     Latitude: avl.latitude,
                 },
                 Bearing: avl.bearing,
-                BlockRef: avl.block_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                VehicleRef: avl.vehicle_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                VehicleJourneyRef: avl.vehicle_journey_ref?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                BlockRef: avl.block_ref,
+                VehicleRef: avl.vehicle_ref,
+                VehicleJourneyRef: avl.vehicle_journey_ref,
             },
         };
 
         if (avl.data_frame_ref && avl.dated_vehicle_journey_ref) {
             vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef = {
-                DataFrameRef: avl.data_frame_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-                DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+                DataFrameRef: avl.data_frame_ref,
+                DatedVehicleJourneyRef: avl.dated_vehicle_journey_ref,
             };
         }
 
@@ -417,13 +410,17 @@ export const generateSiriVmAndUploadToS3 = async (
         if (siriVmValidation.status === "rejected") {
             await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "ValidationError", Value: 1 }]);
 
-            throw new Error("SIRI-VM file failed validation");
+            throw new Error("SIRI-VM file failed validation", {
+                cause: siriVmValidation.reason,
+            });
         }
 
         if (siriVmTflValidation.status === "rejected") {
             await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "TfLValidationError", Value: 1 }]);
 
-            throw new Error("SIRI-VM TfL file failed validation");
+            throw new Error("SIRI-VM TfL file failed validation", {
+                cause: siriVmTflValidation.reason,
+            });
         }
     }
 
