@@ -199,7 +199,6 @@ export const testInvalidSiri = `
     xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
     version="2.0">
     <ServiceDelivery>
-        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
         <ProducerRef>ATB</ProducerRef>
         <VehicleMonitoringDelivery version="2.0">
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>

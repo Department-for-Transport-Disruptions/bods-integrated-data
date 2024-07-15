@@ -1,6 +1,9 @@
 import { DynamoDBClient, ScanCommandInput } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { BatchWriteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
+import { chunkArray } from "./utils";
+
+const DYNAMO_DB_MAX_BATCH_SIZE = 25; // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/BatchWriteItemCommand/
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
@@ -34,6 +37,37 @@ export const putDynamoItem = async <T extends Record<string, unknown>>(
                 ...tableItems,
             },
         }),
+    );
+};
+
+export const putDynamoItems = async <T extends Record<string, unknown>>(
+    tableName: string,
+    records: {
+        pk: string;
+        sk: string;
+        tableItems: T;
+    }[],
+) => {
+    const recordChunks = chunkArray(records, DYNAMO_DB_MAX_BATCH_SIZE);
+
+    await Promise.all(
+        recordChunks.map((chunk) =>
+            dynamoDbDocClient.send(
+                new BatchWriteCommand({
+                    RequestItems: {
+                        [tableName]: chunk.map((record) => ({
+                            PutRequest: {
+                                Item: {
+                                    PK: record.pk,
+                                    SK: record.sk,
+                                    ...record.tableItems,
+                                },
+                            },
+                        })),
+                    },
+                }),
+            ),
+        ),
     );
 };
 

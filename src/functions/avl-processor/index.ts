@@ -49,30 +49,25 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
     if (body) {
         const avls = parseXml(await body.transformToString());
 
-        if (!avls || avls.length === 0) {
-            await putMetricData("custom/CAVLMetrics", [
-                {
-                    MetricName: "InvalidSiriSchema",
-                    Value: 1,
-                    Dimensions: [
-                        {
-                            Name: "subscriptionId",
-                            Value: subscriptionId,
-                        },
-                    ],
-                },
-            ]);
-            throw new Error("Error parsing data");
-        }
-
         const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
         const avlsWithoutOnwardCalls = avls
             .filter((avl) => !avl.onward_calls)
             .map<NewAvl>(({ onward_calls, ...rest }) => rest);
 
-        await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
+        if (avlsWithoutOnwardCalls.length > 0) {
+            await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
+        }
 
-        await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
+        if (avlsWithOnwardCalls.length > 0) {
+            await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
+        }
+
+        await putMetricData("custom/CAVLMetrics", [
+            {
+                MetricName: "TotalAvlProcessed",
+                Value: avls.length,
+            },
+        ]);
     }
 };
 
@@ -97,12 +92,14 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
+
         await putMetricData("custom/CAVLMetrics", [
             {
-                MetricName: "TotalAvlProcessed",
-                Value: 1,
+                MetricName: "TotalFilesProcessed",
+                Value: event.Records.length,
             },
         ]);
+
         logger.info("AVL uploaded to database successfully");
     } catch (e) {
         if (e instanceof Error) {
