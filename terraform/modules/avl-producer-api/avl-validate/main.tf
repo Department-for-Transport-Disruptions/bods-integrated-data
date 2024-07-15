@@ -25,7 +25,7 @@ module "avl_validate" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.avl_producer_api_key_arn
       ]
