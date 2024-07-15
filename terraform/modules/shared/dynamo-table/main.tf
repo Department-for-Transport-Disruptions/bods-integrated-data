@@ -30,8 +30,12 @@ resource "aws_dynamodb_table" "table" {
     enabled = var.environment == "prod" ? true : false
   }
 
-  ttl {
-    enabled        = var.ttl_attribute != null ? true : false
-    attribute_name = var.ttl_attribute
+  dynamic "ttl" {
+    for_each = var.ttl_attribute != null ? [1] : []
+
+    content {
+      enabled        = true
+      attribute_name = var.ttl_attribute
+    }
   }
 }
