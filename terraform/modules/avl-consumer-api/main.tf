@@ -19,6 +19,8 @@ module "integrated_data_avl_siri_vm_downloader" {
   db_secret_arn        = var.db_secret_arn
   db_sg_id             = var.db_sg_id
   db_host              = var.db_host
+  db_name              = var.db_name
+  db_port              = var.db_port
   avl_consumer_api_key = var.avl_consumer_api_key
 }
 

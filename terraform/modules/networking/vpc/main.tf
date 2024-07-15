@@ -12,7 +12,7 @@ terraform {
 # VPC
 
 resource "aws_vpc" "integrated_data_vpc" {
-  cidr_block       = local.vpc_cidr
+  cidr_block       = var.vpc_cidr
   instance_tenancy = "default"
 
   enable_dns_hostnames = true
@@ -29,7 +29,7 @@ data "aws_availability_zones" "available" {}
 
 resource "aws_subnet" "integrated_data_db_subnet" {
   for_each = {
-    for idx, subnet in local.db_subnet_cidr_blocks :
+    for idx, subnet in var.db_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-db-subnet-${idx + 1}-${var.environment}"
       cidr_block = subnet
@@ -47,7 +47,7 @@ resource "aws_subnet" "integrated_data_db_subnet" {
 
 resource "aws_subnet" "integrated_data_private_subnet" {
   for_each = {
-    for idx, subnet in local.private_subnet_cidr_blocks :
+    for idx, subnet in var.private_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-private-subnet-${idx + 1}-${var.environment}"
       cidr_block = subnet
@@ -65,7 +65,7 @@ resource "aws_subnet" "integrated_data_private_subnet" {
 
 resource "aws_subnet" "integrated_data_public_subnet" {
   for_each = {
-    for idx, subnet in local.public_subnet_cidr_blocks :
+    for idx, subnet in var.public_subnet_cidr_blocks :
     idx => {
       name       = "integrated-data-public-subnet-${idx + 1}-${var.environment}"
       cidr_block = subnet
@@ -94,19 +94,36 @@ resource "aws_internet_gateway" "integrated_data_igw" {
 # NAT Gateway
 
 resource "aws_eip" "integrated_data_nat_gateway_eip" {
+  for_each = {
+    for idx, nat_gateway in local.nat_gateways :
+    idx => {
+      name = "integrated-data-nat-gateway-eip-${idx + 1}-${var.environment}"
+    }
+  }
+
   tags = {
-    Name = "integrated-data-nat-gateway-eip-${var.environment}"
+    Name = each.value.name
   }
 }
 
 resource "aws_nat_gateway" "integrated_data_nat_gateway" {
-  subnet_id     = aws_subnet.integrated_data_public_subnet[0].id
-  allocation_id = aws_eip.integrated_data_nat_gateway_eip.id
+  for_each = {
+    for idx, eip in aws_eip.integrated_data_nat_gateway_eip :
+    idx => {
+      name   = "integrated-data-nat-gateway-${idx + 1}-${var.environment}"
+      idx    = idx
+      eip_id = eip.id
+    }
+  }
+
+  subnet_id     = aws_subnet.integrated_data_public_subnet[each.value.idx].id
+  allocation_id = each.value.eip_id
 
   tags = {
-    Name = "integrated-data-nat-gateway-${var.environment}"
+    Name = each.value.name
   }
 }
+
 
 # Route Tables
 
@@ -119,15 +136,23 @@ resource "aws_route_table" "integrated_data_db_subnet_route_table" {
 }
 
 resource "aws_route_table" "integrated_data_private_subnet_route_table" {
+  for_each = {
+    for idx, nat_gateway in aws_nat_gateway.integrated_data_nat_gateway :
+    idx => {
+      name           = "integrated-data-private-subnet-rt-${idx + 1}-${var.environment}"
+      nat_gateway_id = nat_gateway.id
+    }
+  }
+
   vpc_id = aws_vpc.integrated_data_vpc.id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.integrated_data_nat_gateway.id
+    nat_gateway_id = each.value.nat_gateway_id
   }
 
   tags = {
-    Name = "integrated-data-private-subnet-rt-${var.environment}"
+    Name = each.value.name
   }
 }
 
@@ -153,10 +178,16 @@ resource "aws_route_table_association" "integrated_data_db_subnet_route_table_as
 }
 
 resource "aws_route_table_association" "integrated_data_private_subnet_route_table_assoc" {
-  for_each = aws_subnet.integrated_data_private_subnet
+  for_each = {
+    for idx, private_route_table in aws_route_table.integrated_data_private_subnet_route_table :
+    idx => {
+      idx            = idx
+      route_table_id = private_route_table.id
+    }
+  }
 
-  route_table_id = aws_route_table.integrated_data_private_subnet_route_table.id
-  subnet_id      = each.value.id
+  route_table_id = each.value.route_table_id
+  subnet_id      = aws_subnet.integrated_data_private_subnet[each.value.idx].id
 }
 
 resource "aws_route_table_association" "integrated_data_public_subnet_route_table_assoc" {
@@ -168,56 +199,38 @@ resource "aws_route_table_association" "integrated_data_public_subnet_route_tabl
 
 # VPC Endpoints
 
-resource "aws_security_group" "integrated_data_vpc_interface_endpoint_sg" {
-  name   = "integrated-data-vpc-interface-endpoint-sg-${var.environment}"
-  vpc_id = aws_vpc.integrated_data_vpc.id
-}
-
-resource "aws_vpc_security_group_egress_rule" "integrated_data_vpc_interface_endpoint_sg_allow_all_egress_ipv4" {
-  security_group_id = aws_security_group.integrated_data_vpc_interface_endpoint_sg.id
-
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = "-1"
-}
-
-resource "aws_vpc_security_group_egress_rule" "integrated_data_vpc_interface_endpoint_sg_allow_all_egress_ipv6" {
-  security_group_id = aws_security_group.integrated_data_vpc_interface_endpoint_sg.id
-
-  cidr_ipv6   = "::/0"
-  ip_protocol = "-1"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "integrated_data_vpc_interface_endpoint_sg_allow_ingress_from_vpc" {
-  security_group_id = aws_security_group.integrated_data_vpc_interface_endpoint_sg.id
-
-  cidr_ipv4   = aws_vpc.integrated_data_vpc.cidr_block
-  ip_protocol = "tcp"
-  from_port   = 443
-  to_port     = 443
-}
-
-resource "aws_vpc_endpoint" "integrated_data_vpc_gateway_endpoint" {
-  for_each     = toset(local.vpc_gateway_endpoint_services)
+resource "aws_vpc_endpoint" "integrated_data_s3_vpc_gateway_endpoint" {
   vpc_id       = aws_vpc.integrated_data_vpc.id
-  service_name = "com.amazonaws.${var.region}.${each.value}"
+  service_name = "com.amazonaws.${var.region}.s3"
 }
 
-resource "aws_vpc_endpoint_route_table_association" "integrated_data_vpc_gateway_endpoint_route_table_association" {
-  for_each        = aws_vpc_endpoint.integrated_data_vpc_gateway_endpoint
-  route_table_id  = aws_route_table.integrated_data_private_subnet_route_table.id
-  vpc_endpoint_id = each.value.id
+resource "aws_vpc_endpoint" "integrated_data_dynamodb_vpc_gateway_endpoint" {
+  vpc_id       = aws_vpc.integrated_data_vpc.id
+  service_name = "com.amazonaws.${var.region}.dynamodb"
 }
 
-resource "aws_vpc_endpoint_route_table_association" "integrated_data_vpc_gateway_endpoint_db_route_table_association" {
-  for_each        = aws_vpc_endpoint.integrated_data_vpc_gateway_endpoint
+resource "aws_vpc_endpoint_route_table_association" "integrated_data_s3_vpc_gateway_endpoint_private_route_table_association" {
+  for_each        = aws_route_table.integrated_data_private_subnet_route_table
+  route_table_id  = each.value.id
+  vpc_endpoint_id = aws_vpc_endpoint.integrated_data_s3_vpc_gateway_endpoint.id
+}
+
+resource "aws_vpc_endpoint_route_table_association" "integrated_data_dynamodb_vpc_gateway_endpoint_private_route_table_association" {
+  for_each        = aws_route_table.integrated_data_private_subnet_route_table
+  route_table_id  = each.value.id
+  vpc_endpoint_id = aws_vpc_endpoint.integrated_data_dynamodb_vpc_gateway_endpoint.id
+}
+
+resource "aws_vpc_endpoint_route_table_association" "integrated_data_s3_vpc_gateway_endpoint_db_route_table_association" {
   route_table_id  = aws_route_table.integrated_data_db_subnet_route_table.id
-  vpc_endpoint_id = each.value.id
+  vpc_endpoint_id = aws_vpc_endpoint.integrated_data_s3_vpc_gateway_endpoint.id
+}
+
+resource "aws_vpc_endpoint_route_table_association" "integrated_data_dynamodb_vpc_gateway_endpoint_db_route_table_association" {
+  route_table_id  = aws_route_table.integrated_data_db_subnet_route_table.id
+  vpc_endpoint_id = aws_vpc_endpoint.integrated_data_dynamodb_vpc_gateway_endpoint.id
 }
 
 locals {
-  vpc_cidr                      = "10.0.0.0/16"
-  db_subnet_cidr_blocks         = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
-  private_subnet_cidr_blocks    = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
-  public_subnet_cidr_blocks     = ["10.0.20.0/24", "10.0.21.0/24", "10.0.22.0/24"]
-  vpc_gateway_endpoint_services = ["s3", "dynamodb"]
+  nat_gateways = var.environment == "prod" ? var.private_subnet_cidr_blocks : [var.private_subnet_cidr_blocks[0]]
 }

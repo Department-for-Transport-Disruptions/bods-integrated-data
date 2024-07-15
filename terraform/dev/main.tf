@@ -87,12 +87,11 @@ module "integrated_data_db_monitoring" {
 module "integrated_data_bastion_host" {
   source = "../modules/database/bastion-host"
 
-  environment              = local.env
-  db_sg_id                 = module.integrated_data_aurora_db_dev.db_sg_id
-  private_subnet_ids       = module.integrated_data_vpc_dev.private_subnet_ids
-  vpc_id                   = module.integrated_data_vpc_dev.vpc_id
-  vpc_cidr                 = module.integrated_data_vpc_dev.vpc_cidr
-  interface_endpoint_sg_id = module.integrated_data_vpc_dev.interface_endpoint_sg_id
+  environment        = local.env
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  vpc_cidr           = module.integrated_data_vpc_dev.vpc_cidr
 }
 
 module "integrated_data_db_migrator" {
@@ -310,7 +309,6 @@ module "integrated_data_avl_consumer_api" {
 
   environment                   = local.env
   acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
-  hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
   domain                        = module.integrated_data_route53.public_hosted_zone_name
   generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   vpc_id                        = module.integrated_data_vpc_dev.vpc_id

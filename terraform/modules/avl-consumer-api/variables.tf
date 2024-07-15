@@ -15,10 +15,6 @@ variable "acm_certificate_arn" {
   type = string
 }
 
-variable "hosted_zone_id" {
-  type = string
-}
-
 variable "vpc_id" {
   type        = string
   description = "VPC ID"
