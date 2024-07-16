@@ -41,7 +41,7 @@ export const avlSubscriptionRequestSchema = z.object({
             InitialTerminationTime: z.string(),
             VehicleMonitoringRequest: z.object({
                 RequestTimestamp: z.string(),
-                "@_version": z.string().optional(),
+                "@_version": z.string(),
             }),
         }),
     }),

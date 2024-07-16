@@ -13,7 +13,7 @@ import { XMLBuilder, XMLParser } from "fast-xml-parser";
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
-        ignoreAttributes: true,
+        ignoreAttributes: false,
         parseTagValue: false,
     });
 

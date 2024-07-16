@@ -81,7 +81,7 @@ export const generateSubscriptionRequestXml = (
 
 const parseXml = (xml: string, subscriptionId: string) => {
     const parser = new XMLParser({
-        allowBooleanAttributes: false,
+        allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: true,
     });
