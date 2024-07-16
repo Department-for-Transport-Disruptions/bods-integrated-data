@@ -79,7 +79,7 @@ const parseXml = (xml: string) => {
             parsedJson.error.format(),
         );
 
-        throw new InvalidXmlError("Error parsing the terminate subscription response from the data producer");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;

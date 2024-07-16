@@ -7,6 +7,7 @@ import {
     AvlSubscriptionResponse,
     avlSubscriptionRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
@@ -24,7 +25,7 @@ const parseXml = (xml: string) => {
     if (!parsedJson.success) {
         logger.error("There was an error parsing the subscription request.", parsedJson.error.format());
 
-        throw new Error("Error parsing subscription request");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
