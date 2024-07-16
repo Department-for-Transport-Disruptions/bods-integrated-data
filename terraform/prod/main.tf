@@ -112,9 +112,18 @@ module "integrated_data_db_migrator" {
 }
 
 module "integrated_data_avl_subscription_table" {
-  source = "../modules/database/dynamo"
+  source = "../modules/shared/dynamo-table"
 
   environment = local.env
+  table_name  = "integrated-data-avl-subscription-table"
+}
+
+module "integrated_data_avl_validation_error_table" {
+  source = "../modules/shared/dynamo-table"
+
+  environment   = local.env
+  table_name    = "integrated-data-avl-validation-error-table"
+  ttl_attribute = "timeToExist"
 }
 
 module "integrated_data_avl_pipeline" {
@@ -161,13 +170,13 @@ module "integrated_data_avl_data_producer_api" {
 module "stagecoach_vpn" {
   source = "../modules/networking/site-to-site-vpn"
 
-  environment            = local.env
-  vpn_name               = "stagecoach"
-  vpc_id                 = module.integrated_data_vpc.vpc_id
-  subnet_cidr_blocks     = ["10.100.100.0/24", "10.100.101.0/24", "10.100.102.0/24"]
-  nat_gateway_id         = module.integrated_data_vpc.nat_gateway_id
-  customer_gateway_ip    = local.secrets["stagecoach_customer_gateway_ip"]
-  destination_cidr_block = local.secrets["stagecoach_destination_cidr_block"]
+  environment             = local.env
+  vpn_name                = "stagecoach"
+  vpc_id                  = module.integrated_data_vpc.vpc_id
+  nat_gateway_id          = module.integrated_data_vpc.nat_gateway_id
+  customer_gateway_ip     = local.secrets["stagecoach_customer_gateway_ip"]
+  destination_cidr_block  = local.secrets["stagecoach_destination_cidr_block"]
+  private_route_table_ids = module.integrated_data_vpc.private_route_table_ids
 }
 
 # Internal AVL Ingestion
@@ -177,7 +186,7 @@ module "internal_avl_ingestion" {
 
   environment                 = local.env
   vpc_id                      = module.integrated_data_vpc.vpc_id
-  lb_subnet_ids               = module.stagecoach_vpn.subnet_ids
+  lb_subnet_ids               = module.integrated_data_vpc.private_subnet_ids
   external_ip_range           = local.secrets["stagecoach_destination_cidr_block"]
   data_endpoint_function_name = module.integrated_data_avl_data_producer_api.avl_data_endpoint_function_name
 }

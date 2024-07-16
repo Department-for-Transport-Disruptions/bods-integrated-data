@@ -23,9 +23,8 @@ variable "destination_cidr_block" {
   description = "Static IP ranges to advertise to the VPC"
 }
 
-variable "subnet_cidr_blocks" {
-  type        = list(string)
-  description = "CIDR blocks for the VPN subnets"
+variable "private_route_table_ids" {
+  type = set(string)
 }
 
 variable "nat_gateway_id" {
