@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { writeFile } from "node:fs/promises";
+import { unlink, writeFile } from "node:fs/promises";
 import cleanDeep from "clean-deep";
 import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
@@ -375,6 +375,8 @@ const runXmlLint = async (xml: string) => {
     const exitCode = await new Promise((resolve) => {
         command.on("close", resolve);
     });
+
+    await unlink(`/app/${fileName}.xml`);
 
     if (exitCode) {
         logger.error(error.slice(0, 10000));
