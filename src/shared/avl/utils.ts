@@ -29,6 +29,7 @@ export class SubscriptionIdNotFoundError extends Error {
         Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
     }
 }
+
 export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
     const subscription = await getDynamoItem<AvlSubscription>(tableName, {
         PK: subscriptionId,
@@ -305,7 +306,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
     const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
 
-    const completeObject = {
+    const completeObject: Partial<CompleteSiriObject<SiriVM>> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -441,3 +442,18 @@ export const generateSiriVmAndUploadToS3 = async (
         }),
     ]);
 };
+
+export interface CompleteSiriObject<T> {
+    "?xml": {
+        "#text": "";
+        "@_version": "1.0";
+        "@_encoding": "UTF-8";
+        "@_standalone": "yes";
+    };
+    Siri: {
+        "@_version": "2.0";
+        "@_xmlns": "http://www.siri.org.uk/siri";
+        "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
+        "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
+    } & T;
+}

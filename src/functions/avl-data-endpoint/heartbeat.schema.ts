@@ -5,7 +5,7 @@ export const heartbeatNotificationSchema = z.object({
     HeartbeatNotification: z.object({
         RequestTimestamp: z.string(),
         ProducerRef: z.string().optional(),
-        Status: z.string(),
+        Status: z.coerce.string(),
         ServiceStartedTime: z.string().optional(),
     }),
 });

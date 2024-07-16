@@ -1,0 +1,25 @@
+{
+    "name": "@bods-integrated-data/avl-validate",
+    "version": "0.1.0",
+    "description": "Validate an AVL subscription request",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-validate.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-validate.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "axios": "^1.7.2",
+        "fast-xml-parser": "^4.3.5",
+        "mockdate": "^3.0.5",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}
