@@ -28,6 +28,7 @@ export const avlServiceRequestSchema = z.object({
         VehicleMonitoringRequest: z.object({
             VehicleMonitoringRequest: z.object({
                 RequestTimestamp: z.string(),
+                "@_version": z.string(),
             }),
         }),
     }),

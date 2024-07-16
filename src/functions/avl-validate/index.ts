@@ -4,6 +4,7 @@ import {
     createValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
+import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import {
@@ -34,12 +35,13 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
             VehicleMonitoringRequest: {
                 VehicleMonitoringRequest: {
                     RequestTimestamp: currentTimestamp,
+                    "@_version": "2.0",
                 },
             },
         },
     };
 
-    const completeObject = {
+    const completeObject: CompleteSiriObject<AvlServiceRequest> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -49,15 +51,11 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
-            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
             ...serviceRequestJson,
         },
     };
-
-    // @ts-ignore
-    completeObject.Siri.ServiceRequest.VehicleMonitoringRequest.VehicleMonitoringRequest["@_version"] = "2.0";
 
     const builder = new XMLBuilder({
         ignoreAttributes: false,

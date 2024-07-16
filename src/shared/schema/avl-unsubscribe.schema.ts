@@ -16,7 +16,7 @@ export const terminateSubscriptionResponseSchema = z.object({
         TerminationResponseStatus: z.object({
             ResponseTimestamp: z.string(),
             SubscriptionRef: z.string(),
-            Status: z.string(),
+            Status: z.coerce.string(),
         }),
     }),
 });

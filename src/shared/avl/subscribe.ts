@@ -13,7 +13,7 @@ import {
 import { putParameter } from "../ssm";
 import { createAuthorizationHeader } from "../utils";
 import { InvalidXmlError } from "../validation";
-import { getSiriVmTerminationTimeOffset } from "./utils";
+import { CompleteSiriObject, getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
     logger.info(`Uploading subscription auth credentials to parameter store for subscription ID: ${subscriptionId}`);
@@ -46,12 +46,13 @@ export const generateSubscriptionRequestXml = (
                 InitialTerminationTime: initialTerminationTime,
                 VehicleMonitoringRequest: {
                     RequestTimestamp: currentTimestamp,
+                    "@_version": "2.0",
                 },
             },
         },
     };
 
-    const completeObject = {
+    const completeObject: CompleteSiriObject<AvlSubscriptionRequest> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -61,20 +62,9 @@ export const generateSubscriptionRequestXml = (
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
-            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
-            SubscriptionRequest: {
-                ...subscriptionRequestJson.SubscriptionRequest,
-                VehicleMonitoringSubscriptionRequest: {
-                    ...subscriptionRequestJson.SubscriptionRequest.VehicleMonitoringSubscriptionRequest,
-                    VehicleMonitoringRequest: {
-                        "@_version": "2.0",
-                        ...subscriptionRequestJson.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
-                            .VehicleMonitoringRequest,
-                    },
-                },
-            },
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            ...subscriptionRequestJson,
         },
     };
 
@@ -91,7 +81,7 @@ export const generateSubscriptionRequestXml = (
 
 const parseXml = (xml: string, subscriptionId: string) => {
     const parser = new XMLParser({
-        allowBooleanAttributes: true,
+        allowBooleanAttributes: false,
         ignoreAttributes: true,
         parseTagValue: true,
     });
@@ -186,7 +176,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         throw new InvalidXmlError(`Error parsing subscription response from: ${subscriptionDetails.url}`);
     }
 
-    if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
+    if (parsedResponseBody.SubscriptionResponse.ResponseStatus.Status !== "true") {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
         throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
     }

@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscriptionRequest,
+    AvlSubscriptionResponse,
     avlSubscriptionRequestSchema,
-    avlSubscriptionResponseSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
@@ -33,26 +34,23 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
     const currentTime = getDate().toISOString();
     const requestMessageRef = randomUUID();
 
-    const subscriptionResponseJson = {
+    const subscriptionResponseJson: AvlSubscriptionResponse = {
         SubscriptionResponse: {
             ResponseTimestamp: currentTime,
             ResponderRef: "Mock AVL Producer",
             RequestMessageRef: requestMessageRef,
             ResponseStatus: {
                 ResponseTimestamp: currentTime,
-                RequestMessageRef: subscriptionRequest.SubscriptionRequest.RequestorRef,
                 SubscriberRef: "Mock subscriber",
                 SubscriptionRef:
                     subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
-                Status: "LIVE",
+                Status: "true",
             },
             ServiceStartedTime: currentTime,
         },
     };
 
-    const verifiedSubscriptionResponse = avlSubscriptionResponseSchema.parse(subscriptionResponseJson);
-
-    const completeObject = {
+    const completeObject: CompleteSiriObject<AvlSubscriptionResponse> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -62,10 +60,9 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
-            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
-            ...verifiedSubscriptionResponse,
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            ...subscriptionResponseJson,
         },
     };
 
