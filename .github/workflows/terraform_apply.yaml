@@ -12,6 +12,9 @@ on:
       use_artifacts:
         default: true
         type: boolean
+    secrets:
+      AWS_OIDC_ROLE:
+        required: true
 
 jobs:
   terraform_apply:

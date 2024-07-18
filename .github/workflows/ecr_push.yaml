@@ -9,6 +9,9 @@ on:
       branch:
         type: string
         required: true
+    secrets:
+      AWS_OIDC_ROLE:
+        required: true
     outputs:
       image:
         value: ${{ jobs.ecr_push.outputs.image }}
@@ -28,7 +31,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.oidc_role }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-Shared-Services
 

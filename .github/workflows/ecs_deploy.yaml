@@ -12,6 +12,12 @@ on:
       image_uri:
         type: string
         required: true
+      branch:
+        type: string
+        required: true
+    secrets:
+      AWS_OIDC_ROLE:
+        required: true
 
 jobs:
   deploy_ecs:
@@ -21,6 +27,38 @@ jobs:
       stage: ${{ inputs.stage }}
     environment: ${{ inputs.stage }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Deps
+        run: make install-deps
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -48,10 +86,10 @@ jobs:
           container-name: ${{ inputs.task_name }}
           image: ${{ inputs.image_uri }}
 
-      # - name: Deploy Amazon ECS task definition
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.task_def.outputs.task-definition }}
-      #     service: ${{ steps.get_ecs_info.outputs.service }}
-      #     cluster: ${{ steps.get_ecs_info.outputs.cluster }}
-      #     wait-for-service-stability: true
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task_def.outputs.task-definition }}
+          service: ${{ steps.get_ecs_info.outputs.service }}
+          cluster: ${{ steps.get_ecs_info.outputs.cluster }}
+          wait-for-service-stability: true

@@ -1,6 +1,6 @@
 on:
   pull_request_review:
-    types: [ submitted ]
+    types: [submitted]
   workflow_dispatch:
 
 name: Terraform Apply Dev
@@ -43,6 +43,7 @@ jobs:
       stage: "dev"
       terraform_version: 1.6.6
       use_artifacts: true
+    secrets: inherit
 
   run_integration_test:
     uses: ./.github/workflows/run_integration_tests.yaml
@@ -52,3 +53,4 @@ jobs:
     if: ${{ always() && !cancelled() && needs.terraform_apply.result == 'success' }}
     with:
       stage: "dev"
+    secrets: inherit

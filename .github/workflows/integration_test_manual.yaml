@@ -20,3 +20,4 @@ jobs:
     name: Run Integration Tests - ${{ inputs.stage }}
     with:
       stage: ${{ inputs.stage }}
+    secrets: inherit

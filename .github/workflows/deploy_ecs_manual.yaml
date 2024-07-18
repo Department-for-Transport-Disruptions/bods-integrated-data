@@ -1,21 +1,22 @@
 on:
-  workflow_dispatch:
-    inputs:
-      stage:
-        type: environment
-        description: Environment to deploy to
-        required: true
-      branch:
-        type: string
-        description: Name of branch to deploy
-        default: main
-      task:
-        type: choice
-        required: true
-        description: Task to deploy to the target environment
-        options:
-          - bods-avl-processor
-          - siri-vm-generator
+  #   workflow_dispatch:
+  #     inputs:
+  #       stage:
+  #         type: environment
+  #         description: Environment to deploy to
+  #         required: true
+  #       branch:
+  #         type: string
+  #         description: Name of branch to deploy
+  #         default: main
+  #       task:
+  #         type: choice
+  #         required: true
+  #         description: Task to deploy to the target environment
+  #         options:
+  #           - bods-avl-processor
+  #           - siri-vm-generator
+  pull_request:
 
 name: Deploy ECS Task
 
@@ -30,17 +31,39 @@ env:
 jobs:
   ecr_push:
     uses: ./.github/workflows/ecr_push.yaml
-    name: ECR Push - ${{ inputs.task }} - ${{ inputs.stage }}
+    name: ECR Push - siri-vm-generator - dev
     with:
-      branch: ${{ inputs.branch }}
-      task_name: ${{ inputs.task }}
+      branch: ecs-pipeline
+      task_name: siri-vm-generator
+    secrets:
+      AWS_OIDC_ROLE: ${{ secrets.AWS_OIDC_ROLE_SHARED_SERVICES }}
 
   ecs_deploy:
     uses: ./.github/workflows/ecs_deploy.yaml
-    name: ECS Deploy - ${{ inputs.task }} - ${{ inputs.stage }}
+    name: ECS Deploy - siri-vm-generator - dev
     needs:
       - ecr_push
+    secrets: inherit
     with:
-      stage: ${{ inputs.stage }}
+      stage: dev
       image_uri: ${{ needs.ecr_push.outputs.image }}
-      task_name: ${{ inputs.task }}
+      task_name: siri-vm-generator
+      branch: ecs-pipeline
+#   ecr_push:
+#     uses: ./.github/workflows/ecr_push.yaml
+#     name: ECR Push - ${{ inputs.task }} - ${{ inputs.stage }}
+#     with:
+#       branch: ${{ inputs.branch }}
+#       task_name: ${{ inputs.task }}
+#     secrets:
+#       oidc_role: ${{ secrets.AWS_OIDC_ROLE_SHARED_SERVICES }}
+
+#   ecs_deploy:
+#     uses: ./.github/workflows/ecs_deploy.yaml
+#     name: ECS Deploy - ${{ inputs.task }} - ${{ inputs.stage }}
+#     needs:
+#       - ecr_push
+#     with:
+#       stage: ${{ inputs.stage }}
+#       image_uri: ${{ needs.ecr_push.outputs.image }}
+#       task_name: ${{ inputs.task }}
