@@ -6,13 +6,14 @@ import { putDynamoItem } from "../dynamo";
 import { logger } from "../logger";
 import {
     AvlSubscription,
+    AvlSubscriptionRequest,
     AvlSubscriptionStatuses,
-    avlSubscriptionRequestSchema,
     avlSubscriptionResponseSchema,
 } from "../schema/avl-subscribe.schema";
 import { putParameter } from "../ssm";
+import { createAuthorizationHeader } from "../utils";
 import { InvalidXmlError } from "../validation";
-import { getSiriVmTerminationTimeOffset } from "./utils";
+import { CompleteSiriObject, getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
     logger.info(`Uploading subscription auth credentials to parameter store for subscription ID: ${subscriptionId}`);
@@ -31,7 +32,7 @@ export const generateSubscriptionRequestXml = (
     dataEndpoint: string,
     requestorRef: string | null,
 ) => {
-    const subscriptionRequestJson = {
+    const subscriptionRequestJson: AvlSubscriptionRequest = {
         SubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
             ConsumerAddress: `${dataEndpoint}/${subscriptionId}`,
@@ -45,14 +46,13 @@ export const generateSubscriptionRequestXml = (
                 InitialTerminationTime: initialTerminationTime,
                 VehicleMonitoringRequest: {
                     RequestTimestamp: currentTimestamp,
+                    "@_version": "2.0",
                 },
             },
         },
     };
 
-    const verifiedSubscriptionRequest = avlSubscriptionRequestSchema.parse(subscriptionRequestJson);
-
-    const completeObject = {
+    const completeObject: CompleteSiriObject<AvlSubscriptionRequest> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -62,20 +62,9 @@ export const generateSubscriptionRequestXml = (
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
-            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
-            SubscriptionRequest: {
-                ...verifiedSubscriptionRequest.SubscriptionRequest,
-                VehicleMonitoringSubscriptionRequest: {
-                    ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest,
-                    VehicleMonitoringRequest: {
-                        "@_version": "2.0",
-                        ...verifiedSubscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
-                            .VehicleMonitoringRequest,
-                    },
-                },
-            },
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            ...subscriptionRequestJson,
         },
     };
 
@@ -106,7 +95,8 @@ const parseXml = (xml: string, subscriptionId: string) => {
             `There was an error parsing the subscription response from the data producer with subscription ID: ${subscriptionId}`,
             parsedJson.error.format(),
         );
-        return null;
+
+        throw new InvalidXmlError(`Invalid XML from subscription ID: ${subscriptionId}`);
     }
 
     return parsedJson.data;
@@ -170,7 +160,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
+            Authorization: createAuthorizationHeader(username, password),
         },
     });
 
@@ -181,16 +171,19 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
     }
 
-    const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
+    try {
+        const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
-    if (!parsedResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
-        throw new InvalidXmlError(`Error parsing subscription response from: ${subscriptionDetails.url}`);
-    }
+        if (parsedResponseBody.SubscriptionResponse.ResponseStatus.Status !== "true") {
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+            throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
+        }
+    } catch (error) {
+        if (error instanceof InvalidXmlError) {
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        }
 
-    if (!parsedResponseBody.SubscriptionResponse.ResponseStatus.Status) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
-        throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
+        throw error;
     }
 
     await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "LIVE", currentTime);

@@ -5,12 +5,10 @@ import { getDate } from "../dates";
 import { putDynamoItem } from "../dynamo";
 import { logger } from "../logger";
 import { AvlSubscription } from "../schema/avl-subscribe.schema";
-import {
-    terminateSubscriptionRequestSchema,
-    terminateSubscriptionResponseSchema,
-} from "../schema/avl-unsubscribe.schema";
-import { getSubscriptionUsernameAndPassword } from "../utils";
+import { TerminateSubscriptionRequest, terminateSubscriptionResponseSchema } from "../schema/avl-unsubscribe.schema";
+import { createAuthorizationHeader, getSubscriptionUsernameAndPassword } from "../utils";
 import { InvalidXmlError } from "../validation";
+import { CompleteSiriObject } from "./utils";
 
 export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <Siri version='2.0' xmlns='http://www.siri.org.uk/siri' xmlns:ns2='http://www.ifopt.org.uk/acsb' xmlns:ns3='http://www.ifopt.org.uk/ifopt' xmlns:ns4='http://datex2.eu/schema/2_0RC1/2_0'>
@@ -29,7 +27,7 @@ export const generateTerminationSubscriptionRequest = (
     messageIdentifier: string,
     requestorRef: string | null,
 ) => {
-    const terminateSubscriptionRequestJson = {
+    const terminateSubscriptionRequestJson: TerminateSubscriptionRequest = {
         TerminateSubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
             RequestorRef: requestorRef ?? "BODS",
@@ -38,11 +36,7 @@ export const generateTerminationSubscriptionRequest = (
         },
     };
 
-    const verifiedTerminateSubscriptionRequest = terminateSubscriptionRequestSchema.parse(
-        terminateSubscriptionRequestJson,
-    );
-
-    const completeObject = {
+    const completeObject: CompleteSiriObject<TerminateSubscriptionRequest> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -52,10 +46,9 @@ export const generateTerminationSubscriptionRequest = (
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
-            "@_xmlns:ns2": "http://www.ifopt.org.uk/acsb",
-            "@_xmlns:ns3": "http://www.ifopt.org.uk/ifopt",
-            "@_xmlns:ns4": "http://datex2.eu/schema/2_0RC1/2_0",
-            ...verifiedTerminateSubscriptionRequest,
+            "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            ...terminateSubscriptionRequestJson,
         },
     };
 
@@ -86,7 +79,7 @@ const parseXml = (xml: string) => {
             parsedJson.error.format(),
         );
 
-        throw new InvalidXmlError("Error parsing the terminate subscription response from the data producer");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
@@ -126,9 +119,7 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
             : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
                       "Content-Type": "text/xml",
-                      Authorization: `Basic ${Buffer.from(`${subscriptionUsername}:${subscriptionPassword}`).toString(
-                          "base64",
-                      )}`,
+                      Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword),
                   },
               });
 

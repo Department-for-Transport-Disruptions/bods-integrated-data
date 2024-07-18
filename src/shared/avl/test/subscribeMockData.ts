@@ -14,7 +14,7 @@ export const mockInput = {
 };
 
 export const mockSubscriptionResponseBody = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:ns2="http://www.ifopt.org.uk/acsb" xmlns:ns3="http://www.ifopt.org.uk/ifopt" xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
     <SubscriptionResponse>
         <ResponseTimestamp>2024-03-04T08:42:05.072928+01:00</ResponseTimestamp>
         <ResponderRef>TEST</ResponderRef>
@@ -29,7 +29,7 @@ export const mockSubscriptionResponseBody = `<?xml version="1.0" encoding="UTF-8
 </Siri>`;
 
 export const expectedRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:ns2=\"http://www.ifopt.org.uk/acsb\" xmlns:ns3=\"http://www.ifopt.org.uk/ifopt\" xmlns:ns4=\"http://datex2.eu/schema/2_0RC1/2_0\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionRequest>
     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
     <ConsumerAddress>https://www.test.com/data/mock-subscription-id</ConsumerAddress>
@@ -57,7 +57,7 @@ export const expectedSubscriptionRequestConfig = {
 };
 
 export const mockSubscriptionResponseBodyFalseStatus = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:ns2=\"http://www.ifopt.org.uk/acsb\" xmlns:ns3=\"http://www.ifopt.org.uk/ifopt\" xmlns:ns4=\"http://datex2.eu/schema/2_0RC1/2_0\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionResponse>
     <ResponseTimestamp>2024-03-04T08:42:05.072928+01:00</ResponseTimestamp>
     <ResponderRef>TEST</ResponderRef>
@@ -72,7 +72,7 @@ export const mockSubscriptionResponseBodyFalseStatus = `<?xml version=\"1.0\" en
 </Siri>`;
 
 export const expectedRequestBodyForMockProducer = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:ns2=\"http://www.ifopt.org.uk/acsb\" xmlns:ns3=\"http://www.ifopt.org.uk/ifopt\" xmlns:ns4=\"http://datex2.eu/schema/2_0RC1/2_0\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionRequest>
     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
     <ConsumerAddress>https://www.test.com/data/mock-subscription-id</ConsumerAddress>

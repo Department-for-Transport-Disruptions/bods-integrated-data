@@ -9,12 +9,14 @@ export const terminateSubscriptionRequestSchema = z.object({
     }),
 });
 
+export type TerminateSubscriptionRequest = z.infer<typeof terminateSubscriptionRequestSchema>;
+
 export const terminateSubscriptionResponseSchema = z.object({
     TerminateSubscriptionResponse: z.object({
         TerminationResponseStatus: z.object({
             ResponseTimestamp: z.string(),
             SubscriptionRef: z.string(),
-            Status: z.string(),
+            Status: z.coerce.string(),
         }),
     }),
 });

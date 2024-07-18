@@ -3,6 +3,7 @@ import MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as dynamo from "../dynamo";
 import { AvlSubscription } from "../schema/avl-subscribe.schema";
+import { InvalidXmlError } from "../validation";
 import { sendSubscriptionRequestAndUpdateDynamo } from "./subscribe";
 import {
     expectedRequestBody,
@@ -243,7 +244,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
                 mockInput.tableName,
                 mockInput.dataEndpoint,
             ),
-        ).rejects.toThrowError("Error parsing subscription response from: https://mock-data-producer.com");
+        ).rejects.toThrowError(new InvalidXmlError("Invalid XML from subscription ID: mock-subscription-id"));
 
         expect(axiosSpy).toBeCalledWith(
             "https://mock-data-producer.com",
