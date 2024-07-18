@@ -1,0 +1,39 @@
+name: ECR Push
+
+on:
+  workflow_call:
+    inputs:
+      task_name:
+        type: string
+      tag:
+        type: string
+      environment:
+        type: string
+
+jobs:
+  ecr_push:
+    runs-on: ubuntu-22.04
+    name: Push to ECR
+    environment: ${{ inputs.environment }}
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.oidc_role }}
+        aws-region: "eu-west-2"
+        role-session-name: GitHub-OIDC-Shared-Services
+  
+    - name: Login to Amazon ECR
+      id: login_ecr
+      uses: aws-actions/amazon-ecr-login@v2
+  
+    - name: Build, tag, and push image to Amazon ECR
+      id: build_image
+      env:
+        ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.task_name }}
+        IMAGE_TAG: ${{ inputs.tag }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG src --build-arg servicePath=${{ inputs.task_name }}
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
