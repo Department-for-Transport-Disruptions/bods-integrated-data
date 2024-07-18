@@ -1,7 +1,7 @@
 import { performance } from "node:perf_hooks";
 import { Stream } from "node:stream";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { KyselyDb, NewBodsAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewAvl, NewBodsAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     generateGtfsRtFeed,
     mapAvlToGtfsEntity,
@@ -9,12 +9,11 @@ import {
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { siriBodsSchemaTransformed } from "@bods-integrated-data/shared/schema/avl.schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosResponse } from "axios";
-import { XMLParser } from "fast-xml-parser";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { Entry, Parse } from "unzipper";
+import { parseXml } from "../utils";
 
 const {
     PROCESSOR_FREQUENCY_IN_SECONDS: processorFrequency,
@@ -75,26 +74,9 @@ const generateGtfs = async (avl: NewBodsAvl[]) => {
     }
 };
 
-const uploadToDatabase = async (dbClient: KyselyDb, xml: string, stage: string) => {
-    const xmlParser = new XMLParser({
-        numberParseOptions: {
-            hex: false,
-            leadingZeros: false,
-        },
-    });
-
-    const parsedXml = xmlParser.parse(xml) as Record<string, unknown>;
-
-    const parsedJson = siriBodsSchemaTransformed.safeParse(parsedXml.Siri);
-
-    if (!parsedJson.success) {
-        logger.error("There was an error parsing the AVL data", parsedJson.error.format());
-
-        throw new Error("Error parsing data");
-    }
-
+const uploadToDatabase = async (dbClient: KyselyDb, stage: string, avls: NewAvl[]) => {
     logger.info("Matching AVL to timetable data...");
-    const { avls: enrichedAvl, matchedAvlCount, totalAvlCount } = await matchAvlToTimetables(dbClient, parsedJson.data);
+    const { avls: enrichedAvls, matchedAvlCount, totalAvlCount } = await matchAvlToTimetables(dbClient, avls);
 
     await putMetricData(`custom/BODSAVLProcessor-${stage}`, [
         {
@@ -107,13 +89,13 @@ const uploadToDatabase = async (dbClient: KyselyDb, xml: string, stage: string) 
         },
     ]);
 
-    const chunkedAvl = chunkArray(enrichedAvl, 2000);
+    const chunks = chunkArray(enrichedAvls, 2000);
 
     logger.info("Writing AVL data to database...");
 
     await Promise.all([
-        generateGtfs(enrichedAvl),
-        ...chunkedAvl.map((chunk) =>
+        generateGtfs(enrichedAvls),
+        ...chunks.map((chunk) =>
             dbClient
                 .insertInto("avl_bods")
                 .onConflict((oc) =>
@@ -163,7 +145,9 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
         const fileName = entry.path;
 
         if (fileName === "siri.xml") {
-            await uploadToDatabase(dbClient, (await entry.buffer()).toString(), stage);
+            const xml = (await entry.buffer()).toString();
+            const avls = parseXml(xml);
+            await uploadToDatabase(dbClient, stage, avls);
         }
 
         entry.autodrain();

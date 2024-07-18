@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NewAvl, NewAvlOnwardCall } from "../database";
+import { NewAvl, NewAvlOnwardCall, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
@@ -167,30 +167,33 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
     });
 });
 
-export const siriBodsSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
-    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewAvl>((vehicleActivity) => ({
-        response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-        item_id: item.ServiceDelivery.ItemIdentifier ?? null,
-        producer_ref: item.ServiceDelivery.ProducerRef,
-        recorded_at_time: vehicleActivity.RecordedAtTime,
-        valid_until_time: vehicleActivity.ValidUntilTime,
-        line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
-        occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
-        operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-        data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
-        dated_vehicle_journey_ref:
-            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
-        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
-        longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-        latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
-        bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-        published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-        origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-        origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
-        destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-        block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-    }));
+export const siriBodsSchemaTransformed = siriSchema.transform((item) => {
+    const bodsAvl: NewBodsAvl[] = item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map(
+        (vehicleActivity) => ({
+            response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+            producer_ref: item.ServiceDelivery.ProducerRef,
+            recorded_at_time: vehicleActivity.RecordedAtTime,
+            valid_until_time: vehicleActivity.ValidUntilTime,
+            line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
+            occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
+            operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
+            data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
+            dated_vehicle_journey_ref:
+                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
+            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+            longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+            latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+            bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+            origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+            origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
+            destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+            block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+        }),
+    );
+
+    return bodsAvl;
 });
 
 export type SiriSchemaTransformed = z.infer<typeof siriSchemaTransformed>;
