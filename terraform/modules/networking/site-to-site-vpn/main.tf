@@ -73,11 +73,63 @@ resource "aws_vpn_gateway" "vgw" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "tunnel_1_log_group" {
+  name              = "integrated-data-${var.vpn_name}-tunnel-1"
+  retention_in_days = var.environment == "prod" ? 90 : 30
+}
+
+resource "aws_cloudwatch_log_group" "tunnel_2_log_group" {
+  name              = "integrated-data-${var.vpn_name}-tunnel-2"
+  retention_in_days = var.environment == "prod" ? 90 : 30
+}
+
 resource "aws_vpn_connection" "vpn_connection" {
   type                = "ipsec.1"
   customer_gateway_id = aws_customer_gateway.customer_gateway.id
   vpn_gateway_id      = aws_vpn_gateway.vgw.id
   static_routes_only  = true
+
+  tunnel1_log_options {
+    cloudwatch_log_options {
+      log_enabled       = true
+      log_group_arn     = aws_cloudwatch_log_group.tunnel_1_log_group.arn
+      log_output_format = "json"
+    }
+  }
+
+  tunnel2_log_options {
+    cloudwatch_log_options {
+      log_enabled       = true
+      log_group_arn     = aws_cloudwatch_log_group.tunnel_2_log_group.arn
+      log_output_format = "json"
+    }
+  }
+
+  tunnel1_ike_versions = ["ikev2"]
+  tunnel2_ike_versions = ["ikev2"]
+
+  tunnel1_phase1_dh_group_numbers = [14]
+  tunnel1_phase2_dh_group_numbers = [14]
+  tunnel2_phase1_dh_group_numbers = [14]
+  tunnel2_phase2_dh_group_numbers = [14]
+
+  tunnel1_phase1_encryption_algorithms = ["AES256"]
+  tunnel1_phase2_encryption_algorithms = ["AES256"]
+  tunnel2_phase1_encryption_algorithms = ["AES256"]
+  tunnel2_phase2_encryption_algorithms = ["AES256"]
+
+  tunnel1_phase1_integrity_algorithms = ["SHA2-256"]
+  tunnel1_phase2_integrity_algorithms = ["SHA2-256"]
+  tunnel2_phase1_integrity_algorithms = ["SHA2-256"]
+  tunnel2_phase2_integrity_algorithms = ["SHA2-256"]
+
+  tunnel1_phase1_lifetime_seconds = 28800
+  tunnel1_phase2_lifetime_seconds = 3600
+  tunnel2_phase1_lifetime_seconds = 28800
+  tunnel2_phase2_lifetime_seconds = 3600
+
+  tunnel1_dpd_timeout_action = "none"
+  tunnel2_dpd_timeout_action = "none"
 
 
   tags = {

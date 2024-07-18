@@ -105,7 +105,7 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         const pathParams = isApiGatewayEvent(event)
             ? event.pathParameters
             : {
-                  subscriptionId: event.path.split("/")[0],
+                  subscriptionId: event.path.split("/")[1],
               };
 
         const parameters = stage === "local" ? event.queryStringParameters : pathParams;
