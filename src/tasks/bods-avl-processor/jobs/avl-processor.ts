@@ -36,6 +36,17 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
             ContentType: "application/octet-stream",
             Body: data,
         });
+
+        if (saveJson === "true") {
+            const decodedJson = transit_realtime.FeedMessage.decode(data);
+
+            await putS3Object({
+                Bucket: bucketName,
+                Key: "gtfs-rt.json",
+                ContentType: "application/json",
+                Body: JSON.stringify(decodedJson),
+            });
+        }
     } catch (error) {
         if (error instanceof Error) {
             logger.error("There was a problem uploading GTFS-RT data to S3", error);
@@ -54,17 +65,6 @@ const generateGtfs = async (avl: NewBodsAvl[]) => {
         await uploadGtfsRtToS3(bucketName, gtfsRtFeed);
 
         logger.info("GTFS-RT saved to S3 successfully");
-
-        if (saveJson === "true") {
-            const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
-
-            await putS3Object({
-                Bucket: bucketName,
-                Key: "gtfs-rt.json",
-                ContentType: "application/json",
-                Body: JSON.stringify(decodedJson),
-            });
-        }
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error running the GTFS-RT Generator", e);
