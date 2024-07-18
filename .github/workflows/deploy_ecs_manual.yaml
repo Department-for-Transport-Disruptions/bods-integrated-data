@@ -1,0 +1,46 @@
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        type: environment
+        description: Environment to deploy to
+        required: true
+      branch:
+        type: string
+        description: Name of branch to deploy
+        default: main
+      task:
+        type: choice
+        required: true
+        description: Task to deploy to the target environment
+        options:
+          - bods-avl-processor
+          - siri-vm-generator
+
+name: Deploy ECS Task
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+env:
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  HUSKY: 0
+
+jobs:
+  ecr_push:
+    uses: ./.github/workflows/ecr_push.yaml
+    name: ECR Push - ${{ inputs.task }} - ${{ inputs.stage }}
+    with:
+      branch: ${{ inputs.branch }}
+      task_name: ${{ inputs.task }}
+
+  ecs_deploy:
+    uses: ./.github/workflows/ecs_deploy.yaml
+    name: ECS Deploy - ${{ inputs.task }} - ${{ inputs.stage }}
+    needs:
+      - ecr_push
+    with:
+      stage: ${{ inputs.stage }}
+      image_uri: ${{ needs.ecr_push.outputs.image }}
+      task_name: ${{ inputs.task }}

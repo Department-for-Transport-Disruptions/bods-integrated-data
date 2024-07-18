@@ -6,14 +6,12 @@ on:
       stage:
         required: true
         type: string
-    secrets:
-      oidc_role_arn:
-        required: true
 
 jobs:
   integration_test:
     runs-on: ubuntu-22.04
     name: Run integration tests
+    environment: ${{ inputs.stage }}
     env:
       STAGE: ${{ inputs.stage }}
 
@@ -48,7 +46,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.oidc_role_arn }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 

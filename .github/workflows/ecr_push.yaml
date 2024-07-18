@@ -5,35 +5,49 @@ on:
     inputs:
       task_name:
         type: string
-      tag:
+        required: true
+      branch:
         type: string
-      environment:
-        type: string
+        required: true
+    outputs:
+      image:
+        value: ${{ jobs.ecr_push.outputs.image }}
 
 jobs:
   ecr_push:
     runs-on: ubuntu-22.04
     name: Push to ECR
-    environment: ${{ inputs.environment }}
+    outputs:
+      image: ${{ steps.build_image.outputs.image }}
     steps:
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ secrets.oidc_role }}
-        aws-region: "eu-west-2"
-        role-session-name: GitHub-OIDC-Shared-Services
-  
-    - name: Login to Amazon ECR
-      id: login_ecr
-      uses: aws-actions/amazon-ecr-login@v2
-  
-    - name: Build, tag, and push image to Amazon ECR
-      id: build_image
-      env:
-        ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.task_name }}
-        IMAGE_TAG: ${{ inputs.tag }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG src --build-arg servicePath=${{ inputs.task_name }}
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.oidc_role }}
+          aws-region: "eu-west-2"
+          role-session-name: GitHub-OIDC-Shared-Services
+
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get commit sha
+        id: commit_sha
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build_image
+        env:
+          ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.task_name }}
+          IMAGE_TAG: ${{ steps.commit_sha.outputs.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG src --build-arg servicePath=${{ inputs.task_name }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
