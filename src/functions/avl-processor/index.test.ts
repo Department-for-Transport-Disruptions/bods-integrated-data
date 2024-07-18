@@ -1,6 +1,7 @@
 import * as crypto from "node:crypto";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { S3EventRecord } from "aws-lambda";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { processSqsRecord } from ".";
@@ -76,7 +77,7 @@ describe("avl-processor", () => {
     beforeEach(() => {
         vi.resetAllMocks();
 
-        getDynamoItemSpy.mockResolvedValue({
+        const avlSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
             description: "test-description",
@@ -84,8 +85,10 @@ describe("avl-processor", () => {
             status: "LIVE",
             requestorRef: null,
             publisherId: "test-publisher-id",
-        });
+            apiKey: "mock-api-key",
+        };
 
+        getDynamoItemSpy.mockResolvedValue(avlSubscription);
         uuidSpy.mockReturnValue(mockItemId);
     });
 
@@ -142,8 +145,8 @@ describe("avl-processor", () => {
         expect(valuesMock).not.toBeCalled();
     });
 
-    it.each(["ERROR", "INACTIVE"])("throws an error when the subscription is not active", async (status) => {
-        getDynamoItemSpy.mockResolvedValue({
+    it.each(["ERROR", "INACTIVE"] as const)("throws an error when the subscription is not active", async (status) => {
+        const avlSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
             description: "test-description",
@@ -151,7 +154,10 @@ describe("avl-processor", () => {
             status,
             requestorRef: null,
             publisherId: "test-publisher-id",
-        });
+            apiKey: "mock-api-key",
+        };
+
+        getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
         await expect(
             processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name"),

@@ -9,7 +9,8 @@ export const mockSubscriptionsFromDynamo: AvlSubscription[] = [
         status: "LIVE",
         requestorRef: "BODS_MOCK_PRODUCER",
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-        publisherId: "test-publisher-id",
+        publisherId: "test-publisher-id-1",
+        apiKey: "mock-api-key-1",
     },
     {
         PK: "subscription-two",
@@ -19,7 +20,8 @@ export const mockSubscriptionsFromDynamo: AvlSubscription[] = [
         status: "LIVE",
         requestorRef: "BODS_MOCK_PRODUCER",
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-        publisherId: "test-publisher-id",
+        publisherId: "test-publisher-id-2",
+        apiKey: "mock-api-key-2",
     },
 ];
 

@@ -1,5 +1,7 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/client-lambda";
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-sdk/lib-dynamodb";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 
@@ -89,4 +91,26 @@ export const getSecretByKey = async <T extends string>(stage: string, key: strin
     }
 
     return JSON.parse(secret) as T;
+};
+
+export const getDynamoDbItem = async <T extends Record<string, unknown>>(
+    stage: string,
+    tableName: string,
+    key: Record<string, NativeAttributeValue>,
+) => {
+    const dynamoDbDocClient = DynamoDBDocumentClient.from(
+        new DynamoDBClient({
+            endpoint: stage === "local" ? "http://localhost:4566" : undefined,
+            region: "eu-west-2",
+        }),
+    );
+
+    const data = await dynamoDbDocClient.send(
+        new GetCommand({
+            TableName: tableName,
+            Key: key,
+        }),
+    );
+
+    return data.Item ? (data.Item as T) : null;
 };

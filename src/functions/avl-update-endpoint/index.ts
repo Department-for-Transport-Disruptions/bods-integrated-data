@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
@@ -69,6 +70,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             publisherId: subscription.publisherId,
             serviceStartDatetime: subscription.serviceStartDatetime,
             lastModifiedDateTime: subscription.lastModifiedDateTime ?? null,
+            apiKey: randomUUID(),
         };
 
         try {

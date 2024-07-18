@@ -7,6 +7,7 @@ export const mockInput = {
         publisherId: "mock-publisher-id",
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
+        apiKey: "mock-api-key",
     },
     tableName: "test-dynamo-table",
 };

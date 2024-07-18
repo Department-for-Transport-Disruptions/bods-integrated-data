@@ -1,7 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command, Option } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGE_OPTION_WITH_DEFAULT, getDynamoDbItem, invokeLambda } from "../utils";
 
 export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
     .addOption(STAGE_OPTION_WITH_DEFAULT)
@@ -39,6 +39,16 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
             ]);
 
             subscriptionId = response.subscriptionId;
+        }
+
+        const subscription = await getDynamoDbItem(stage, `integrated-data-avl-subscription-table-${stage}`, {
+            PK: subscriptionId,
+            SK: "SUBSCRIPTION",
+        });
+
+        if (!subscription) {
+            logger.error(`Subscription with ID not found: ${subscriptionId}`);
+            return;
         }
 
         const currentTime = new Date().toISOString();
@@ -121,6 +131,7 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
             },
             queryStringParameters: {
                 subscriptionId,
+                apiKey: subscription.apiKey,
             },
         };
 
