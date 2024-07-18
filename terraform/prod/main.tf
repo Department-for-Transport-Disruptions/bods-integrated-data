@@ -173,7 +173,6 @@ module "stagecoach_vpn" {
   environment             = local.env
   vpn_name                = "stagecoach"
   vpc_id                  = module.integrated_data_vpc.vpc_id
-  nat_gateway_id          = module.integrated_data_vpc.nat_gateway_id
   customer_gateway_ip     = local.secrets["stagecoach_customer_gateway_ip"]
   destination_cidr_block  = local.secrets["stagecoach_destination_cidr_block"]
   private_route_table_ids = module.integrated_data_vpc.private_route_table_ids

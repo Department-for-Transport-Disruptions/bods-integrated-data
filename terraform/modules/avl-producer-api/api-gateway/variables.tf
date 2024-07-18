@@ -53,6 +53,16 @@ variable "subscriptions_lambda_invoke_arn" {
   description = "Subscriptions Lambda Invoke ARN"
 }
 
+variable "validate_lambda_name" {
+  type        = string
+  description = "Validate Lambda Name"
+}
+
+variable "validate_lambda_invoke_arn" {
+  type        = string
+  description = "Validate Lambda Invoke ARN"
+}
+
 variable "domain" {
   type = string
 }

@@ -51,17 +51,17 @@ export const vehicleActivitySchema = z.object({
     VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
-        DirectionRef: z.coerce
+        DirectionRef: z
             .string()
             .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.coerce.string().min(1),
-                DatedVehicleJourneyRef: z.coerce.string().min(1),
+                DataFrameRef: z.string().min(1),
+                DatedVehicleJourneyRef: z.string().min(1),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        OperatorRef: z.coerce.string().min(1),
+        OperatorRef: z.string().min(1),
         OriginRef: z.coerce.string().nullish(),
         OriginName: z.coerce.string().nullish(),
         DestinationRef: z.coerce.string().nullish(),
@@ -77,7 +77,7 @@ export const vehicleActivitySchema = z.object({
         Occupancy: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
-        VehicleRef: z.coerce
+        VehicleRef: z
             .string()
             .min(1)
             .transform((ref) => ref.replace(/\s/g, "")),
@@ -97,7 +97,7 @@ export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
         ItemIdentifier: z.string().optional(),
-        ProducerRef: z.string(),
+        ProducerRef: z.coerce.string(),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
             RequestMessageRef: z.string().uuid().optional(),

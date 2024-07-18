@@ -26,7 +26,3 @@ variable "destination_cidr_block" {
 variable "private_route_table_ids" {
   type = set(string)
 }
-
-variable "nat_gateway_id" {
-  type = string
-}
