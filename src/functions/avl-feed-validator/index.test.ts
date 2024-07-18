@@ -1,5 +1,6 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import * as secretsManager from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
@@ -11,6 +12,7 @@ describe("avl-feed-validator", () => {
     beforeAll(() => {
         process.env.TABLE_NAME = "test-dynamo-table";
         process.env.SUBSCRIBE_ENDPOINT = "www.avl-service.com/subscriptions";
+        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
     });
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -26,9 +28,14 @@ describe("avl-feed-validator", () => {
         putMetricData: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const getParameterSpy = vi.spyOn(ssm, "getParameter");
+    const getSecretSpy = vi.spyOn(secretsManager, "getSecret");
 
     const axiosSpy = vi.spyOn(mockedAxios, "post");
 
@@ -36,6 +43,7 @@ describe("avl-feed-validator", () => {
 
     beforeEach(() => {
         vi.resetAllMocks();
+        getSecretSpy.mockResolvedValue("mock-api-key");
     });
 
     it("should do nothing if no subscriptions are found to validate", async () => {
@@ -161,16 +169,24 @@ describe("avl-feed-validator", () => {
         await handler();
 
         expect(getParameterSpy).toHaveBeenCalledTimes(2);
-        expect(axiosSpy).toHaveBeenCalledWith("www.avl-service.com/subscriptions", {
-            dataProducerEndpoint: "https://mock-data-producer.com/",
-            description: "test-description",
-            password: "test-password",
-            requestorRef: null,
-            shortDescription: "test-short-description",
-            subscriptionId: "mock-subscription-id-1",
-            username: "test-password",
-            publisherId: "test-publisher-id-1",
-        });
+        expect(axiosSpy).toHaveBeenCalledWith(
+            "www.avl-service.com/subscriptions",
+            {
+                dataProducerEndpoint: "https://mock-data-producer.com/",
+                description: "test-description",
+                password: "test-password",
+                requestorRef: null,
+                shortDescription: "test-short-description",
+                subscriptionId: "mock-subscription-id-1",
+                username: "test-password",
+                publisherId: "test-publisher-id-1",
+            },
+            {
+                headers: {
+                    "x-api-key": "mock-api-key",
+                },
+            },
+        );
         expect(putDynamoItemSpy).toHaveBeenCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
             PK: "mock-subscription-id-1",
             description: "test-description",
@@ -218,7 +234,7 @@ describe("avl-feed-validator", () => {
         getParameterSpy.mockResolvedValue({ Parameter: undefined });
 
         await expect(handler()).rejects.toThrowError(
-            "Cannot resubscribe to data produce as username or password is missing for subscription ID: mock-subscription-id-1.",
+            "Cannot resubscribe to data producer as username or password is missing for subscription ID: mock-subscription-id-1.",
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();

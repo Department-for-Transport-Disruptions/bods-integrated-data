@@ -22,3 +22,8 @@ variable "avl_consumer_subscribe_endpoint" {
   type        = string
   description = "URL for the AVL consumer subscribe endpoint."
 }
+
+variable "avl_producer_api_key_arn" {
+  type        = string
+  description = "AVL producer API key ARN"
+}

@@ -138,6 +138,7 @@ module "avl_feed_validator" {
   avl_consumer_subscribe_endpoint = (var.environment == "local" ?
     aws_lambda_function_url.avl_subscribe_endpoint_function_url[0].function_url :
   "https://${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
+  avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
 }
 
 module "avl_feed_validator_sfn" {
