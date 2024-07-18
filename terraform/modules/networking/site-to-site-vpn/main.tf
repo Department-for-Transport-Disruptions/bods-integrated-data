@@ -9,50 +9,6 @@ terraform {
   }
 }
 
-# Subnets and routes
-
-# data "aws_availability_zones" "available" {}
-
-# resource "aws_subnet" "integrated_data_vpn_subnet" {
-#   for_each = {
-#     for idx, cidr_block in var.subnet_cidr_blocks :
-#     idx => {
-#       idx        = idx
-#       cidr_block = cidr_block
-#     }
-#   }
-
-#   vpc_id            = var.vpc_id
-#   cidr_block        = each.value.cidr_block
-#   availability_zone = element(data.aws_availability_zones.available.names, each.key)
-
-#   tags = {
-#     Name = "integrated-data-${var.vpn_name}-vpn-subnet-${each.value.idx + 1}-${var.environment}"
-#   }
-# }
-
-# resource "aws_route_table" "integrated_data_vpn_subnet_route_table" {
-#   vpc_id = var.vpc_id
-
-#   route {
-#     cidr_block     = "0.0.0.0/0"
-#     nat_gateway_id = var.nat_gateway_id
-#   }
-
-#   propagating_vgws = []
-
-#   tags = {
-#     Name = "integrated-data-${var.vpn_name}-vpn-rt-${var.environment}"
-#   }
-# }
-
-# resource "aws_route_table_association" "integrated_data_vpn_subnet_route_table_assoc" {
-#   for_each = aws_subnet.integrated_data_vpn_subnet
-
-#   route_table_id = aws_route_table.integrated_data_vpn_subnet_route_table.id
-#   subnet_id      = each.value.id
-# }
-
 # VPN
 
 resource "aws_customer_gateway" "customer_gateway" {
