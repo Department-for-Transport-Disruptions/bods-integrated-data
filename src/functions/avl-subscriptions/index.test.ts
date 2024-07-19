@@ -120,7 +120,7 @@ describe("avl-subscriptions", () => {
     it.each([[null], [{}], [{ subscriptionId: "" }]])(
         "should return a 200 with all subscriptions data when passing no subscription ID param (test: %o)",
         async (input) => {
-            recursiveScanSpy.mockResolvedValueOnce([
+            const avlSubscriptions: AvlSubscription[] = [
                 {
                     PK: "subscription-one",
                     url: "https://www.mock-data-producer-one.com",
@@ -131,6 +131,7 @@ describe("avl-subscriptions", () => {
                     lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
                     serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                     publisherId: "publisher-one",
+                    apiKey: "api-key-one",
                 },
                 {
                     PK: "subscription-two",
@@ -141,8 +142,11 @@ describe("avl-subscriptions", () => {
                     requestorRef: "BODS_MOCK_PRODUCER",
                     serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                     publisherId: "publisher-one",
+                    apiKey: "api-key-two",
                 },
-            ]);
+            ];
+
+            recursiveScanSpy.mockResolvedValueOnce(avlSubscriptions);
 
             const expectedResponse: ApiAvlSubscription[] = [
                 {
@@ -153,6 +157,7 @@ describe("avl-subscriptions", () => {
                     heartbeatLastReceivedDateTime: null,
                     serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                     serviceEndDatetime: null,
+                    apiKey: "api-key-one",
                 },
                 {
                     id: "subscription-two",
@@ -162,6 +167,7 @@ describe("avl-subscriptions", () => {
                     heartbeatLastReceivedDateTime: null,
                     serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                     serviceEndDatetime: null,
+                    apiKey: "api-key-two",
                 },
             ];
 
@@ -180,8 +186,7 @@ describe("avl-subscriptions", () => {
         mockEvent.pathParameters = {
             subscriptionId: "subscription-one",
         };
-
-        getDynamoItemSpy.mockResolvedValueOnce({
+        const avlSubscription: AvlSubscription = {
             PK: "subscription-one",
             url: "https://www.mock-data-producer-one.com",
             description: "test-description",
@@ -191,7 +196,10 @@ describe("avl-subscriptions", () => {
             lastAvlDataReceivedDateTime: "2024-01-01T15:20:02.093Z",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             publisherId: "publisher-one",
-        });
+            apiKey: "api-key-one",
+        };
+
+        getDynamoItemSpy.mockResolvedValueOnce(avlSubscription);
 
         const expectedResponse: ApiAvlSubscription = {
             id: "subscription-one",
@@ -201,6 +209,7 @@ describe("avl-subscriptions", () => {
             heartbeatLastReceivedDateTime: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             serviceEndDatetime: null,
+            apiKey: "api-key-one",
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({
@@ -225,6 +234,7 @@ describe("avl-subscriptions", () => {
                 serviceEndDatetime: "mock-serviceEndDatetime",
                 publisherId: "mock-publisherId",
                 lastAvlDataReceivedDateTime: "mock-lastAvlDataReceivedDateTime",
+                apiKey: "mock-api-key",
             };
 
             const expectedApiResponse: ApiAvlSubscription = {
@@ -235,6 +245,7 @@ describe("avl-subscriptions", () => {
                 heartbeatLastReceivedDateTime: "mock-heartbeatLastReceivedDateTime",
                 serviceStartDatetime: "mock-serviceStartDatetime",
                 serviceEndDatetime: "mock-serviceEndDatetime",
+                apiKey: "mock-api-key",
             };
 
             expect(mapApiAvlSubscriptionResponse(subscription)).toEqual(expectedApiResponse);
@@ -248,6 +259,7 @@ describe("avl-subscriptions", () => {
                 description: "mock-description",
                 shortDescription: "mock-shortDescription",
                 status: "LIVE",
+                apiKey: "mock-api-key",
             };
 
             const expectedApiResponse: ApiAvlSubscription = {
@@ -258,6 +270,7 @@ describe("avl-subscriptions", () => {
                 heartbeatLastReceivedDateTime: null,
                 serviceStartDatetime: null,
                 serviceEndDatetime: null,
+                apiKey: "mock-api-key",
             };
 
             expect(mapApiAvlSubscriptionResponse(subscription)).toEqual(expectedApiResponse);

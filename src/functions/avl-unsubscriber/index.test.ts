@@ -2,6 +2,7 @@ import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMock
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import { APIGatewayProxyEvent } from "aws-lambda";
@@ -74,7 +75,7 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should process an unsubscribe request if sendTerminateSubscriptionRequestAndUpdateDynamo is called successfully, including deleting auth creds from parameter store", async () => {
-        getDynamoItemSpy.mockResolvedValue({
+        const avlSubscription: AvlSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
             publisherId: "mock-publisher-id",
@@ -84,7 +85,9 @@ describe("avl-unsubscriber", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
-        });
+            apiKey: "mock-api-key",
+        };
+        getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
         await handler(mockUnsubscribeEvent);
 
@@ -139,7 +142,7 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
-        getDynamoItemSpy.mockResolvedValue({
+        const avlSubscription: AvlSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
             publisherId: "mock-publisher-id",
@@ -149,7 +152,10 @@ describe("avl-unsubscriber", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
-        });
+            apiKey: "mock-api-key",
+        };
+
+        getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
         sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
 

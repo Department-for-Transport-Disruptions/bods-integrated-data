@@ -1,4 +1,5 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import axios, { AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -38,7 +39,7 @@ describe("avl-mock-data-producer-send-data", () => {
         process.env.STAGE = "dev";
         process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
 
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([
+        const avlSubscriptions: AvlSubscription[] = [
             {
                 PK: "subscription-one",
                 url: "https://www.mock-data-producer-one.com",
@@ -47,18 +48,22 @@ describe("avl-mock-data-producer-send-data", () => {
                 status: "LIVE",
                 requestorRef: "REAL_DATA_PRODUCER",
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                publisherId: "test-publisher-id",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
             },
             {
-                PK: "subscription-one",
-                url: "https://www.mock-data-producer-one.com",
+                PK: "subscription-two",
+                url: "https://www.mock-data-producer-two.com",
                 description: "test-description",
                 shortDescription: "test-short-description",
                 status: "ERROR",
                 requestorRef: "BODS_MOCK_PRODUCER",
-                publisherId: "test-publisher-id",
+                publisherId: "test-publisher-id-2",
+                apiKey: "mock-api-key-2",
             },
-        ]);
+        ];
+
+        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(avlSubscriptions);
         await handler();
         expect(axiosSpy).not.toBeCalled();
     });
@@ -74,9 +79,10 @@ describe("avl-mock-data-producer-send-data", () => {
         } as AxiosResponse);
 
         await handler();
-        expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-one",
+        expect(axiosSpy).toHaveBeenCalledTimes(2);
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            1,
+            "https://www.test-data-endpoint.com?subscriptionId=subscription-one&apiKey=mock-api-key-1",
             expectedAVLDataForSubscription("subscription-one"),
             {
                 headers: {
@@ -85,8 +91,9 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         );
 
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-two",
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            2,
+            "https://www.test-data-endpoint.com?subscriptionId=subscription-two&apiKey=mock-api-key-2",
             expectedAVLDataForSubscription("subscription-two"),
             {
                 headers: {
@@ -106,9 +113,10 @@ describe("avl-mock-data-producer-send-data", () => {
         } as AxiosResponse);
 
         await handler();
-        expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-one",
+        expect(axiosSpy).toHaveBeenCalledTimes(2);
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            1,
+            "https://www.test-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
             expectedAVLDataForSubscription("subscription-one"),
             {
                 headers: {
@@ -117,8 +125,9 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         );
 
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-two",
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            2,
+            "https://www.test-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
             expectedAVLDataForSubscription("subscription-two"),
             {
                 headers: {
@@ -138,9 +147,10 @@ describe("avl-mock-data-producer-send-data", () => {
 
         await expect(handler()).rejects.toThrowError("There was an error when sending AVL data.");
 
-        expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-one",
+        expect(axiosSpy).toHaveBeenCalledTimes(2);
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            1,
+            "https://www.test-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
             expectedAVLDataForSubscription("subscription-one"),
             {
                 headers: {
@@ -149,8 +159,9 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         );
 
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-two",
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            2,
+            "https://www.test-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
             expectedAVLDataForSubscription("subscription-two"),
             {
                 headers: {

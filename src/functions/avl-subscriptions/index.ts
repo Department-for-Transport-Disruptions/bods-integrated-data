@@ -31,6 +31,7 @@ export type ApiAvlSubscription = {
     heartbeatLastReceivedDateTime: string | null;
     serviceStartDatetime: string | null;
     serviceEndDatetime: string | null;
+    apiKey: string;
 };
 
 export const mapApiAvlSubscriptionResponse = (subscription: AvlSubscription): ApiAvlSubscription => {
@@ -42,6 +43,7 @@ export const mapApiAvlSubscriptionResponse = (subscription: AvlSubscription): Ap
         heartbeatLastReceivedDateTime: subscription.heartbeatLastReceivedDateTime || null,
         serviceStartDatetime: subscription.serviceStartDatetime || null,
         serviceEndDatetime: subscription.serviceEndDatetime || null,
+        apiKey: subscription.apiKey,
     };
 };
 

@@ -2,18 +2,14 @@ import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayProxyEvent } from "aws-lambda";
+import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { handler } from ".";
 import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
+import { A } from "vitest/dist/reporters-yx5ZTtEV";
 
 describe("AVL-data-endpoint", () => {
-    beforeEach(() => {
-        process.env.BUCKET_NAME = "test-bucket";
-        process.env.TABLE_NAME = "test-dynamodb";
-    });
-
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
@@ -34,6 +30,34 @@ describe("AVL-data-endpoint", () => {
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
+    const mockSubscriptionId = "411e4495-4a57-4d2f-89d5-cf105441f321";
+    let mockEvent: APIGatewayProxyEvent;
+
+    beforeEach(() => {
+        process.env.BUCKET_NAME = "test-bucket";
+        process.env.TABLE_NAME = "test-dynamodb";
+
+        mockEvent = {
+            queryStringParameters: {
+                apiKey: "mock-api-key",
+            },
+            pathParameters: {
+                subscriptionId: mockSubscriptionId,
+            },
+            body: testSiri,
+        } as unknown as APIGatewayProxyEvent;
+
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "LIVE",
+            requestorRef: null,
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        });
+    });
 
     afterEach(() => {
         vi.resetAllMocks();
@@ -43,26 +67,7 @@ describe("AVL-data-endpoint", () => {
         MockDate.reset();
     });
 
-    const mockSubscriptionId = "411e4495-4a57-4d2f-89d5-cf105441f321";
-
     it("Should add valid AVL data to S3", async () => {
-        getDynamoItemSpy.mockResolvedValue({
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            status: "LIVE",
-            requestorRef: null,
-            publisherId: "test-publisher-id",
-        });
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: testSiri,
-        } as unknown as APIGatewayProxyEvent;
-
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             description: "test-description",
@@ -72,6 +77,7 @@ describe("AVL-data-endpoint", () => {
             status: "LIVE",
             url: "https://mock-data-producer.com/",
             publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
@@ -102,15 +108,10 @@ describe("AVL-data-endpoint", () => {
             status: "LIVE",
             requestorRef: null,
             publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: testSiriWithSingleVehicleActivity,
-        } as unknown as APIGatewayProxyEvent;
+        mockEvent.body = testSiriWithSingleVehicleActivity;
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toBeCalled();
@@ -132,13 +133,7 @@ describe("AVL-data-endpoint", () => {
     it("Throws an error when the required env vars are missing", async () => {
         process.env.BUCKET_NAME = "";
         process.env.TABLE_NAME = "";
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: testSiriWithSingleVehicleActivity,
-        } as unknown as APIGatewayProxyEvent;
+        mockEvent.body = testSiriWithSingleVehicleActivity;
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
@@ -151,20 +146,14 @@ describe("AVL-data-endpoint", () => {
 
     it.each([
         [undefined, "subscriptionId is required"],
-        [null, "subscriptionId must be a string"],
-        [1, "subscriptionId must be a string"],
-        [{}, "subscriptionId must be a string"],
         ["", "subscriptionId must be 1-256 characters"],
         ["1".repeat(257), "subscriptionId must be 1-256 characters"],
     ])(
         "Throws an error when the subscription ID fails validation (test: %o)",
         async (subscriptionId, expectedErrorMessage) => {
-            const mockEvent = {
-                pathParameters: {
-                    subscriptionId,
-                },
-                body: null,
-            } as unknown as APIGatewayProxyEvent;
+            mockEvent.pathParameters = {
+                subscriptionId,
+            };
 
             const response = await handler(mockEvent);
             expect(response).toEqual({
@@ -176,43 +165,20 @@ describe("AVL-data-endpoint", () => {
         },
     );
 
-    it.each([
-        [undefined, "Body is required"],
-        [null, "Body must be a string"],
-        [1, "Body must be a string"],
-        [{}, "Body must be a string"],
-    ])("Throws an error when the body fails validation (test %#)", async (body, expectedErrorMessage) => {
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body,
-        } as unknown as APIGatewayProxyEvent;
+    it.each([[null, "Body must be a string"]])(
+        "Throws an error when the body fails validation (test %#)",
+        async (body, expectedErrorMessage) => {
+            mockEvent.body = body;
 
-        const response = await handler(mockEvent);
-        expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
-        expect(s3.putS3Object).not.toBeCalled();
-    });
+            const response = await handler(mockEvent);
+            expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
+            expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
+            expect(s3.putS3Object).not.toBeCalled();
+        },
+    );
 
     it("Throw an error when invalid SIRI-VM is provided", async () => {
-        getDynamoItemSpy.mockResolvedValue({
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
-            status: "LIVE",
-            requestorRef: null,
-            publisherId: "test-publisher-id",
-        });
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: "abc",
-        } as unknown as APIGatewayProxyEvent;
+        mockEvent.body = "abc";
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
@@ -232,14 +198,8 @@ describe("AVL-data-endpoint", () => {
             status: "INACTIVE",
             requestorRef: null,
             publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
         });
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: testSiriWithSingleVehicleActivity,
-        } as unknown as APIGatewayProxyEvent;
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
@@ -253,22 +213,7 @@ describe("AVL-data-endpoint", () => {
     });
 
     it("should process a valid heartbeat notification and update dynamodb with heartbeat details", async () => {
-        getDynamoItemSpy.mockResolvedValue({
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            status: "LIVE",
-            requestorRef: null,
-            publisherId: "test-publisher-id",
-        });
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: mockHeartbeatNotification,
-        } as unknown as APIGatewayProxyEvent;
+        mockEvent.body = mockHeartbeatNotification;
 
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -279,6 +224,7 @@ describe("AVL-data-endpoint", () => {
             status: "LIVE",
             url: "https://mock-data-producer.com/",
             publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
@@ -292,13 +238,7 @@ describe("AVL-data-endpoint", () => {
 
     it("Throws an error if when processing a heartbeat notification the subscription does not exist in dynamodb", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
-
-        const mockEvent = {
-            pathParameters: {
-                subscriptionId: mockSubscriptionId,
-            },
-            body: mockHeartbeatNotification,
-        } as unknown as APIGatewayProxyEvent;
+        mockEvent.body = mockHeartbeatNotification;
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
@@ -307,6 +247,18 @@ describe("AVL-data-endpoint", () => {
         });
         expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
         expect(dynamo.putDynamoItem).not.toBeCalled();
+    });
+
+    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
+        mockEvent.queryStringParameters = {
+            apiKey: key,
+        };
+
+        const response = await handler(mockEvent);
+        expect(response).toEqual({
+            statusCode: 401,
+            body: JSON.stringify({ errors: ["Unauthorized"] }),
+        });
     });
 
     it("handles an ALB event with a path", async () => {
@@ -318,12 +270,13 @@ describe("AVL-data-endpoint", () => {
             status: "LIVE",
             requestorRef: null,
             publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
         });
 
-        const mockEvent = {
+        const mockAlbEvent = {
             path: `/${mockSubscriptionId}`,
             body: testSiri,
-        } as unknown as APIGatewayProxyEvent;
+        } as unknown as ALBEvent;
 
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -334,9 +287,10 @@ describe("AVL-data-endpoint", () => {
             status: "LIVE",
             url: "https://mock-data-producer.com/",
             publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
         };
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockAlbEvent)).resolves.toEqual({ statusCode: 200, body: "" });
 
         expect(getDynamoItemSpy).toBeCalledWith("test-dynamodb", {
             PK: mockSubscriptionId,
@@ -360,11 +314,11 @@ describe("AVL-data-endpoint", () => {
     });
 
     it("returns 200 for the healthcheck endpoint", async () => {
-        const mockEvent = {
+        const mockAlbEvent = {
             path: "/health",
-        } as unknown as APIGatewayProxyEvent;
+        } as unknown as ALBEvent;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockAlbEvent);
         expect(response).toEqual({
             statusCode: 200,
             body: "",

@@ -1,6 +1,7 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
@@ -9,8 +10,12 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { ALBEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+    InvalidApiKeyError,
+    InvalidXmlError,
+    createStringLengthValidation,
+} from "@bods-integrated-data/shared/validation";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
@@ -109,6 +114,7 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
               };
 
         const parameters = stage === "local" ? event.queryStringParameters : pathParams;
+
         const { subscriptionId } = requestParamsSchema.parse(parameters);
 
         if (subscriptionId === "health") {
@@ -123,6 +129,10 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
+
+        if (isApiGatewayEvent(event) && event.queryStringParameters?.apiKey !== subscription.apiKey) {
+            throw new InvalidApiKeyError();
+        }
 
         const xml = parseXml(body);
 
@@ -144,6 +154,10 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
