@@ -1,5 +1,7 @@
 on:
   pull_request:
+    branches:
+      - testing
 
 name: Terraform Plan
 
@@ -84,8 +86,7 @@ jobs:
       - check_for_function_changes
       - zip_functions
     if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
-    env:
-      stage: "dev"
+    environment: "dev"
     defaults:
       run:
         working-directory: ./terraform
@@ -101,7 +102,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_DEV }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: "eu-west-2"
           role-session-name: GitHub-OIDC-TERRAFORM
 
@@ -109,7 +110,7 @@ jobs:
         name: Cache plugin dir
         with:
           path: ~/.tflint.d/plugins
-          key: $stage-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+          key: dev-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -139,15 +140,15 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform -chdir=$stage init
+        run: terraform -chdir=dev init
 
       - name: Terraform Validate
         id: validate
-        run: terraform -chdir=$stage validate -no-color
+        run: terraform -chdir=dev validate -no-color
 
       - name: Terraform Plan
         id: plan
-        run: terraform -chdir=$stage plan -input=false -no-color
+        run: terraform -chdir=dev plan -input=false -no-color
         continue-on-error: true
 
       - name: Add plan to PR comment

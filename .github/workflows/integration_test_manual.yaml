@@ -2,10 +2,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        options:
-          - dev
-          - test
-        type: choice
+        type: environment
         description: Environment to run integration tests against
 
 name: Run integration tests (manual)
@@ -20,18 +17,7 @@ env:
 jobs:
   run_tests_on_dev:
     uses: ./.github/workflows/run_integration_tests.yaml
-    name: Run Integration Tests - Dev
-    if: inputs.stage == 'dev'
+    name: Run Integration Tests - ${{ inputs.stage }}
     with:
       stage: ${{ inputs.stage }}
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV}}
-
-  run_tests_on_test:
-    uses: ./.github/workflows/run_integration_tests.yaml
-    name: Run Integration Tests - Test
-    if: inputs.stage == 'test'
-    with:
-      stage: ${{ inputs.stage }}
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST}}
+    secrets: inherit
