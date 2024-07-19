@@ -4,10 +4,9 @@ import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
-import { afterAll, afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
-import { A } from "vitest/dist/reporters-yx5ZTtEV";
 
 describe("AVL-data-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
