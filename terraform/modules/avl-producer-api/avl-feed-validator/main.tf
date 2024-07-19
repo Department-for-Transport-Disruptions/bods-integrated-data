@@ -45,9 +45,10 @@ module "avl_feed_validator" {
   ]
 
   env_vars = {
-    STAGE              = var.environment
-    TABLE_NAME         = var.avl_subscription_table_name
-    SUBSCRIBE_ENDPOINT = var.avl_consumer_subscribe_endpoint
+    STAGE                    = var.environment
+    TABLE_NAME               = var.avl_subscription_table_name
+    SUBSCRIBE_ENDPOINT       = var.avl_consumer_subscribe_endpoint
+    AVL_PRODUCER_API_KEY_ARN = var.avl_producer_api_key_arn
   }
 }
 

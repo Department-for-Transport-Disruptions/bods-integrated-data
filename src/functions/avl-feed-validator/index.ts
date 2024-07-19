@@ -4,17 +4,22 @@ import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosError } from "axios";
 
-export const resubscribeToDataProducer = async (subscription: AvlSubscription, subscribeEndpoint: string) => {
+export const resubscribeToDataProducer = async (
+    subscription: AvlSubscription,
+    subscribeEndpoint: string,
+    avlProducerApiKeyArn: string,
+) => {
     logger.info(`Attempting to resubscribe to subscription ID: ${subscription.PK}`);
 
     const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscription.PK);
 
     if (!subscriptionUsername || !subscriptionPassword) {
         throw new Error(
-            `Cannot resubscribe to data produce as username or password is missing for subscription ID: ${subscription.PK}.`,
+            `Cannot resubscribe to data producer as username or password is missing for subscription ID: ${subscription.PK}.`,
         );
     }
 
@@ -29,7 +34,9 @@ export const resubscribeToDataProducer = async (subscription: AvlSubscription, s
         publisherId: subscription.publisherId,
     };
 
-    await axios.post(subscribeEndpoint, subscriptionBody);
+    const avlProducerApiKey = await getSecret<string>({ SecretId: avlProducerApiKeyArn });
+
+    await axios.post(subscribeEndpoint, subscriptionBody, { headers: { "x-api-key": avlProducerApiKey } });
 };
 
 export const handler = async () => {
@@ -38,10 +45,16 @@ export const handler = async () => {
 
         const currentTime = getDate();
 
-        const { TABLE_NAME: tableName, SUBSCRIBE_ENDPOINT: subscribeEndpoint } = process.env;
+        const {
+            TABLE_NAME: tableName,
+            SUBSCRIBE_ENDPOINT: subscribeEndpoint,
+            AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
+        } = process.env;
 
-        if (!tableName || !subscribeEndpoint) {
-            throw new Error("Missing env vars: TABLE_NAME and SUBSCRIBE_ENDPOINT must be set");
+        if (!tableName || !subscribeEndpoint || !avlProducerApiKeyArn) {
+            throw new Error(
+                "Missing env vars: TABLE_NAME, SUBSCRIBE_ENDPOINT and AVL_PRODUCER_API_KEY_ARN must be set",
+            );
         }
 
         const subscriptions = await getAvlSubscriptions(tableName);
@@ -78,7 +91,7 @@ export const handler = async () => {
                 });
 
                 try {
-                    await resubscribeToDataProducer(subscription, subscribeEndpoint);
+                    await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
                 } catch (e) {
                     await putMetricData("custom/CAVLMetrics", [
                         {
