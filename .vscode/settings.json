@@ -9,8 +9,5 @@
     },
     "[terraform]": {
         "editor.defaultFormatter": "hashicorp.terraform"
-    },
-    "[github-actions-workflow]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }

@@ -42,7 +42,7 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
-                    <OperatorRef>Test Operator</OperatorRef>
+                    <OperatorRef>TestOperator</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DataFrameRef>2024-04-04</DataFrameRef>
                         <DatedVehicleJourneyRef>${subscriptionId}:ServiceJourney:00600039</DatedVehicleJourneyRef>
@@ -65,7 +65,7 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:11</LineRef>
                     <DirectionRef>2</DirectionRef>
-                    <OperatorRef>Dummy operator</OperatorRef>
+                    <OperatorRef>DummyOperator</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DataFrameRef>2024-04-04</DataFrameRef>
                         <DatedVehicleJourneyRef>ATB:ServiceJourney:00600039</DatedVehicleJourneyRef>
