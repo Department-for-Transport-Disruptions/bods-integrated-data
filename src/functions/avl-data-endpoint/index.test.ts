@@ -2,7 +2,7 @@ import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { APIGatewayProxyEvent } from "aws-lambda";
+import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -80,6 +80,7 @@ describe("AVL-data-endpoint", () => {
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+
         expect(s3.putS3Object).toBeCalled();
         expect(s3.putS3Object).toBeCalledWith({
             Body: `${testSiri}`,
@@ -258,5 +259,68 @@ describe("AVL-data-endpoint", () => {
             body: JSON.stringify({ errors: ["Unauthorized"] }),
         });
     });
+
+    it("handles an ALB event with a path", async () => {
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "LIVE",
+            requestorRef: null,
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        });
+
+        const mockAlbEvent = {
+            path: `/${mockSubscriptionId}`,
+            body: testSiri,
+        } as unknown as ALBEvent;
+
+        const expectedSubscription: AvlSubscription = {
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            description: "test-description",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "LIVE",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        };
+
+        await expect(handler(mockAlbEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+
+        expect(getDynamoItemSpy).toBeCalledWith("test-dynamodb", {
+            PK: mockSubscriptionId,
+            SK: "SUBSCRIPTION",
+        });
+
+        expect(s3.putS3Object).toBeCalled();
+        expect(s3.putS3Object).toBeCalledWith({
+            Body: `${testSiri}`,
+            Bucket: "test-bucket",
+            ContentType: "application/xml",
+            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
+        });
+
+        expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+            "test-dynamodb",
+            expectedSubscription.PK,
+            "SUBSCRIPTION",
+            expectedSubscription,
+        );
+    });
+
+    it("returns 200 for the healthcheck endpoint", async () => {
+        const mockAlbEvent = {
+            path: "/health",
+        } as unknown as ALBEvent;
+
+        const response = await handler(mockAlbEvent);
+        expect(response).toEqual({
+            statusCode: 200,
+            body: "",
+        });
+    });
 });
-3;

@@ -18,10 +18,12 @@ output "private_subnet_ids" {
   ]
 }
 
-output "interface_endpoint_sg_id" {
-  value = aws_security_group.integrated_data_vpc_interface_endpoint_sg.id
-}
-
 output "default_sg_id" {
   value = aws_vpc.integrated_data_vpc.default_security_group_id
+}
+
+output "private_route_table_ids" {
+  value = [
+    for rt in aws_route_table.integrated_data_private_subnet_route_table : rt.id
+  ]
 }
