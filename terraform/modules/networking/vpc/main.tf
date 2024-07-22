@@ -179,15 +179,15 @@ resource "aws_route_table_association" "integrated_data_db_subnet_route_table_as
 
 resource "aws_route_table_association" "integrated_data_private_subnet_route_table_assoc" {
   for_each = {
-    for idx, private_route_table in aws_route_table.integrated_data_private_subnet_route_table :
+    for idx, private_subnet in aws_subnet.integrated_data_private_subnet :
     idx => {
-      idx            = idx
-      route_table_id = private_route_table.id
+      idx       = idx
+      subnet_id = private_subnet.id
     }
   }
 
-  route_table_id = each.value.route_table_id
-  subnet_id      = aws_subnet.integrated_data_private_subnet[each.value.idx].id
+  route_table_id = length(local.nat_gateways) > 1 ? aws_route_table.integrated_data_private_subnet_route_table[each.value.idx].id : aws_route_table.integrated_data_private_subnet_route_table[0].id
+  subnet_id      = each.value.subnet_id
 }
 
 resource "aws_route_table_association" "integrated_data_public_subnet_route_table_assoc" {
