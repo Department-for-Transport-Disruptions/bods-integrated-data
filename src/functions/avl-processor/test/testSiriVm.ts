@@ -393,3 +393,35 @@ export const onwardCallInsertQuery = [
         stop_point_ref: "STOP456",
     },
 ];
+
+export const expectedPutMetricDataCall = {
+    namespace: "custom/CAVLMetrics",
+    metricData: [
+        {
+            MetricName: "TotalAvlProcessed",
+            Value: 2,
+        },
+    ],
+    metricDimensions: [
+        {
+            Name: "SubscriptionId",
+            Value: "123",
+        },
+    ],
+};
+
+export const expectedPutMetricDataCallForFilteredArrayParseError = {
+    namespace: "custom/SiriVmVehicleActivitySchema-dev",
+    metricData: [
+        {
+            MetricName: "MakeFilteredArraySchemaParseError",
+            Value: 1,
+        },
+    ],
+    metricDimensions: [
+        {
+            Name: "SubscriptionId",
+            Value: "123",
+        },
+    ],
+};
