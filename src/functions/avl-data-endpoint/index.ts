@@ -129,9 +129,10 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
+        const requestApiKey = event.queryStringParameters?.apiKey;
 
-        if (isApiGatewayEvent(event) && event.queryStringParameters?.apiKey !== subscription.apiKey) {
-            throw new InvalidApiKeyError();
+        if (isApiGatewayEvent(event) && requestApiKey !== subscription.apiKey) {
+            throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID '${subscriptionId}'`);
         }
 
         const xml = parseXml(body);
@@ -157,6 +158,7 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         }
 
         if (e instanceof InvalidApiKeyError) {
+            logger.warn(`Unauthorized request: ${e.message}`);
             return createUnauthorizedErrorResponse();
         }
 
