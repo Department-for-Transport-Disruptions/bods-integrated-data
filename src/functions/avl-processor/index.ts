@@ -62,12 +62,21 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
             await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
         }
 
-        await putMetricData("custom/CAVLMetrics", [
-            {
-                MetricName: "TotalAvlProcessed",
-                Value: avls.length,
-            },
-        ]);
+        await putMetricData(
+            "custom/CAVLMetrics",
+            [
+                {
+                    MetricName: "TotalAvlProcessed",
+                    Value: avls.length,
+                },
+            ],
+            [
+                {
+                    Name: "SubscriptionId",
+                    Value: subscriptionId,
+                },
+            ],
+        );
     }
 };
 

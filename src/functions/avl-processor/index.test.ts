@@ -1,11 +1,14 @@
 import * as crypto from "node:crypto";
+import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { S3EventRecord } from "aws-lambda";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { processSqsRecord } from ".";
 import {
+    expectedPutMetricDataCall,
+    expectedPutMetricDataCallForFilteredArrayParseError,
     mockItemId,
     mockSubscriptionId,
     onwardCallInsertQuery,
@@ -42,11 +45,8 @@ describe("avl-processor", () => {
         getDynamoItem: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
-        putMetricData: vi.fn(),
-    }));
-
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    const putMetricDataSpy = vi.spyOn(cloudwatch, "putMetricData");
 
     const valuesMock = vi.fn().mockReturnValue({
         execute: vi.fn().mockResolvedValue(""),
@@ -73,6 +73,10 @@ describe("avl-processor", () => {
             },
         },
     };
+
+    beforeAll(() => {
+        process.env.STAGE = "dev";
+    });
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -109,6 +113,12 @@ describe("avl-processor", () => {
         expect(uuidSpy).toHaveBeenCalledOnce();
 
         expect(valuesMock).toBeCalledWith(parsedSiri);
+        expect(putMetricDataSpy).toHaveBeenCalledOnce();
+        expect(putMetricDataSpy).toHaveBeenCalledWith(
+            expectedPutMetricDataCall.namespace,
+            expectedPutMetricDataCall.metricData,
+            expectedPutMetricDataCall.metricDimensions,
+        );
     });
 
     it("correctly processes a siri-vm file with OnwardCalls data", async () => {
@@ -133,6 +143,13 @@ describe("avl-processor", () => {
         expect(valuesMock).toHaveBeenNthCalledWith(1, [parsedSiriWithOnwardCalls[0]]);
         expect(valuesMock).toHaveBeenNthCalledWith(2, parsedSiriWithOnwardCalls[1]);
         expect(valuesMock).toHaveBeenNthCalledWith(3, onwardCallInsertQuery);
+
+        expect(putMetricDataSpy).toHaveBeenCalledOnce();
+        expect(putMetricDataSpy).toHaveBeenCalledWith(
+            expectedPutMetricDataCall.namespace,
+            expectedPutMetricDataCall.metricData,
+            expectedPutMetricDataCall.metricDimensions,
+        );
     });
 
     it("does not insert to database if invalid", async () => {
@@ -143,6 +160,12 @@ describe("avl-processor", () => {
         ).rejects.toThrowError();
 
         expect(valuesMock).not.toBeCalled();
+
+        expect(putMetricDataSpy).toHaveBeenCalledOnce();
+        expect(putMetricDataSpy).toHaveBeenCalledWith(
+            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
+            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
+        );
     });
 
     it.each(["ERROR", "INACTIVE"] as const)("throws an error when the subscription is not active", async (status) => {
@@ -164,5 +187,7 @@ describe("avl-processor", () => {
         ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} with status ${status}`);
 
         expect(valuesMock).not.toBeCalled();
+
+        expect(putMetricDataSpy).not.toHaveBeenCalledOnce();
     });
 });
