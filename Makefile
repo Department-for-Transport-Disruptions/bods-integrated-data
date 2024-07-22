@@ -100,7 +100,7 @@ test-functions:
 	cd src && pnpm test:ci
 
 docker-build-%:
-	docker build src --build-arg servicePath=$* -t $*:latest
+	docker build --platform=linux/arm64 src --build-arg servicePath=$* -t $*:latest
 
 check-types:
 	cd src && pnpm run check-types
