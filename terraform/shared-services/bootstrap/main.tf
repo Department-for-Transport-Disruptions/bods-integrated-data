@@ -22,8 +22,7 @@ terraform {
 module "oidc" {
   source = "../../modules/bootstrap/oidc"
 
-  environment      = local.env
-  sops_kms_key_arn = module.sops.kms_key_arn
+  environment = local.env
 }
 
 locals {
