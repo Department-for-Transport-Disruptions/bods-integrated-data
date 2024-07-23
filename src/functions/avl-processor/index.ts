@@ -69,6 +69,10 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
                     MetricName: "TotalAvlProcessed",
                     Value: avls.length,
                 },
+                {
+                    MetricName: "TotalFilesProcessed",
+                    Value: 1,
+                },
             ],
             [
                 {
@@ -101,13 +105,6 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-
-        await putMetricData("custom/CAVLMetrics", [
-            {
-                MetricName: "TotalFilesProcessed",
-                Value: event.Records.length,
-            },
-        ]);
 
         logger.info("AVL uploaded to database successfully");
     } catch (e) {
