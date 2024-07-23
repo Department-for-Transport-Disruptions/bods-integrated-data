@@ -1,5 +1,4 @@
-import { ZodIssue, ZodSchema, z } from "zod";
-import { fromZodIssue } from "zod-validation-error";
+import { ZodSchema, z } from "zod";
 import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
@@ -122,13 +121,4 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
 
 export const createAuthorizationHeader = (username: string, password: string) => {
     return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
-};
-
-export const getErrorDetails = (error: ZodIssue) => {
-    const validationError = fromZodIssue(error, { prefix: null, includePath: false });
-
-    return {
-        name: validationError.details[0].path.join("."),
-        message: validationError.message,
-    };
 };

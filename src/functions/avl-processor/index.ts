@@ -1,4 +1,10 @@
-import { getAvlSubscription, insertAvls, insertAvlsWithOnwardCalls } from "@bods-integrated-data/shared/avl/utils";
+import { randomUUID } from "node:crypto";
+import {
+    getAvlSubscription,
+    getErrorDetails,
+    insertAvls,
+    insertAvlsWithOnwardCalls,
+} from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -7,7 +13,6 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchema, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
-import { getErrorDetails } from "@bods-integrated-data/shared/utils";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -30,13 +35,14 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
         errors.push(
             ...parsedJson.error.errors.map<AvlValidationError>((error) => {
-                const { name, message } = getErrorDetails(error);
+                const { name, message, level } = getErrorDetails(error);
 
                 return {
                     PK: "",
+                    SK: randomUUID(),
                     details: message,
                     filename: "",
-                    level: "CRITICAL",
+                    level,
                     name,
                     timeToExist: 0,
                 };

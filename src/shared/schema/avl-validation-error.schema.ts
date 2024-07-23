@@ -1,11 +1,13 @@
 import { z } from "zod";
+import { avlValidationErrorLevels } from "../constants";
 
 export const avlValidationErrorSchema = z.object({
     PK: z.string(),
+    SK: z.string(),
     details: z.string(),
     filename: z.string(),
     itemIdentifier: z.string().nullish(),
-    level: z.enum(["CRITICAL", "NON-CRITICAL"]),
+    level: z.enum(avlValidationErrorLevels),
     lineRef: z.string().nullish(),
     name: z.string(),
     operatorRef: z.string().nullish(),

@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { getErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
 import { NewAvl, NewAvlOnwardCall, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
-import { getErrorDetails, makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
 import { AvlValidationError } from "./avl-validation-error.schema";
 
@@ -115,14 +117,15 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
 
                 errors?.push(
                     ...parsedItem.error.errors.map<AvlValidationError>((error) => {
-                        const { name, message } = getErrorDetails(error);
+                        const { name, message, level } = getErrorDetails(error);
 
                         return {
                             PK: "",
+                            SK: randomUUID(),
                             details: message,
                             filename: "",
                             itemIdentifier: partiallyParsedItem.ItemIdentifier,
-                            level: "NON-CRITICAL",
+                            level,
                             lineRef: partiallyParsedItem.MonitoredVehicleJourney?.LineRef,
                             name,
                             operatorRef: partiallyParsedItem.MonitoredVehicleJourney?.OperatorRef,

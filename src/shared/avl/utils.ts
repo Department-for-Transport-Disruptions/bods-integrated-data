@@ -6,8 +6,10 @@ import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { ZodIssue } from "zod";
+import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
-import { tflOperatorRef } from "../constants";
+import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
@@ -457,3 +459,16 @@ export interface CompleteSiriObject<T> {
         "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
     } & T;
 }
+
+export const getErrorDetails = (error: ZodIssue) => {
+    const validationError = fromZodIssue(error, { prefix: null, includePath: false });
+    const { path } = validationError.details[0];
+    const name = path.join(".");
+    const propertyName = path[path.length - 1];
+
+    return {
+        name,
+        message: validationError.message,
+        level: avlValidationErrorLevelMappings[propertyName] || "CRITICAL",
+    };
+};
