@@ -32,7 +32,7 @@ export const expectedRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" sta
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionRequest>
     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
-    <ConsumerAddress>https://www.test.com/data/mock-subscription-id</ConsumerAddress>
+    <ConsumerAddress>https://www.test.com/data/mock-subscription-id?apiKey=mock-api-key</ConsumerAddress>
     <RequestorRef>BODS</RequestorRef>
     <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
     <SubscriptionContext>
@@ -75,7 +75,7 @@ export const expectedRequestBodyForMockProducer = `<?xml version=\"1.0\" encodin
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionRequest>
     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
-    <ConsumerAddress>https://www.test.com/data/mock-subscription-id</ConsumerAddress>
+    <ConsumerAddress>https://www.test.com/data/mock-subscription-id?apiKey=mock-api-key</ConsumerAddress>
     <RequestorRef>BODS_MOCK_PRODUCER</RequestorRef>
     <MessageIdentifier>5965q7gh-5428-43e2-a75c-1782a48637d5</MessageIdentifier>
     <SubscriptionContext>
