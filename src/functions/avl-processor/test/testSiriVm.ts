@@ -199,7 +199,7 @@ export const testInvalidSiri = `
     xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
     version="2.0">
     <ServiceDelivery>
-        <ProducerRef>ATB</ProducerRef>
+        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
         <VehicleMonitoringDelivery version="2.0">
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
             <VehicleActivity>
@@ -208,9 +208,8 @@ export const testInvalidSiri = `
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
-                    <OperatorRef>placeholder</OperatorRef>
+                    <OperatorRef>123</OperatorRef>
                     <FramedVehicleJourneyRef>
-                        <DataFrameRef>2018-08-17</DataFrameRef>
                         <DatedVehicleJourneyRef>ATB:ServiceJourney:00600027</DatedVehicleJourneyRef>
                     </FramedVehicleJourneyRef>
                     <VehicleRef>200141</VehicleRef>
@@ -221,7 +220,6 @@ export const testInvalidSiri = `
                     </VehicleLocation>
                     <Delay>PT0S</Delay>
                     <IsCompleteStopSequence>false</IsCompleteStopSequence>
-                    <BlockRef>blockRef</BlockRef>
                     <OriginRef>originRef</OriginRef>
                     <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>

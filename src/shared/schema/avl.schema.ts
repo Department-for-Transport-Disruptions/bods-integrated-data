@@ -1,8 +1,11 @@
 import { z } from "zod";
+import { putMetricData } from "../cloudwatch";
 import { NewAvl, NewAvlOnwardCall, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
-import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import { logger } from "../logger";
+import { getErrorDetails, makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
+import { AvlValidationError } from "./avl-validation-error.schema";
 
 const onwardCallSchema = z
     .object({
@@ -97,83 +100,130 @@ export const vehicleActivitySchema = z.object({
 
 export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 
-export const siriSchema = z.object({
-    ServiceDelivery: z.object({
-        ResponseTimestamp: z.string(),
-        ItemIdentifier: z.string().optional(),
-        ProducerRef: z.union([z.string(), z.number()]),
-        VehicleMonitoringDelivery: z.object({
+const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlValidationError[]) =>
+    z.preprocess((input) => {
+        const result = z.any().array().parse(input);
+
+        return result.filter((item) => {
+            const parsedItem = vehicleActivitySchema.safeParse(item);
+
+            if (!parsedItem.success) {
+                logger.warn("Error parsing item", parsedItem.error.format());
+
+                // optimistically parse the items for error logging purposes
+                const partiallyParsedItem = vehicleActivitySchema.deepPartial().parse(item);
+
+                errors?.push(
+                    ...parsedItem.error.errors.map<AvlValidationError>((error) => {
+                        const { name, message } = getErrorDetails(error);
+
+                        return {
+                            PK: "",
+                            details: message,
+                            filename: "",
+                            itemIdentifier: partiallyParsedItem.ItemIdentifier,
+                            level: "NON-CRITICAL",
+                            lineRef: partiallyParsedItem.MonitoredVehicleJourney?.LineRef,
+                            name,
+                            operatorRef: partiallyParsedItem.MonitoredVehicleJourney?.OperatorRef,
+                            recordedAtTime: partiallyParsedItem.RecordedAtTime,
+                            timeToExist: 0,
+                            vehicleJourneyRef: partiallyParsedItem.MonitoredVehicleJourney?.VehicleJourneyRef,
+                            vehicleRef: partiallyParsedItem.MonitoredVehicleJourney?.VehicleRef?.toString(),
+                        };
+                    }),
+                );
+
+                putMetricData(`custom/${namespace}-${process.env.STAGE}`, [
+                    { MetricName: "MakeFilteredArraySchemaParseError", Value: 1 },
+                ]);
+            }
+
+            return parsedItem.success;
+        });
+    }, z.array(vehicleActivitySchema));
+
+export const siriSchema = (errors?: AvlValidationError[]) =>
+    z.object({
+        ServiceDelivery: z.object({
             ResponseTimestamp: z.string(),
-            RequestMessageRef: z.string().uuid().optional(),
-            ValidUntil: z.string().optional(),
-            VehicleActivity: makeFilteredArraySchema("SiriVmVehicleActivitySchema", vehicleActivitySchema),
+            ItemIdentifier: z.string().optional(),
+            ProducerRef: z.union([z.string(), z.number()]),
+            VehicleMonitoringDelivery: z.object({
+                ResponseTimestamp: z.string(),
+                RequestMessageRef: z.string().uuid().optional(),
+                ValidUntil: z.string().optional(),
+                VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
+            }),
         }),
-    }),
-});
-
-export type SiriVM = z.infer<typeof siriSchema>;
-
-export const siriSchemaTransformed = siriSchema.transform((item) => {
-    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
-        let onwardCalls: Omit<NewAvlOnwardCall, "avl_id">[] = [];
-
-        if (vehicleActivity.MonitoredVehicleJourney.OnwardCalls) {
-            onwardCalls = vehicleActivity.MonitoredVehicleJourney.OnwardCalls.OnwardCall.map((onwardCall) => {
-                if (onwardCall) {
-                    return {
-                        stop_point_ref: onwardCall.StopPointRef ?? null,
-                        aimed_arrival_time: onwardCall.AimedArrivalTime ?? null,
-                        expected_arrival_time: onwardCall.ExpectedArrivalTime ?? null,
-                        aimed_departure_time: onwardCall.AimedDepartureTime ?? null,
-                        expected_departure_time: onwardCall.ExpectedDepartureTime ?? null,
-                    };
-                }
-            }).filter(notEmpty);
-        }
-
-        return {
-            response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-            producer_ref: item.ServiceDelivery.ProducerRef.toString(),
-            recorded_at_time: vehicleActivity.RecordedAtTime,
-            item_id: vehicleActivity.ItemIdentifier,
-            valid_until_time: vehicleActivity.ValidUntilTime,
-            vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
-            line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
-            occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
-            operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-            data_frame_ref:
-                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
-            dated_vehicle_journey_ref:
-                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
-                null,
-
-            longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-            latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
-            bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-            monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
-            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-            origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-            origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
-            origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
-            destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-            destination_name: vehicleActivity.MonitoredVehicleJourney.DestinationName ?? null,
-            destination_aimed_arrival_time: vehicleActivity.MonitoredVehicleJourney.DestinationAimedArrivalTime ?? null,
-            block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
-            vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
-            ticket_machine_service_code:
-                vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ??
-                null,
-            journey_code: vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
-            vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
-            has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
-            onward_calls: onwardCalls && onwardCalls.length > 0 ? onwardCalls : null,
-        };
     });
-});
 
-export const siriBodsSchemaTransformed = siriSchema.transform((item) => {
+export type SiriVM = z.infer<ReturnType<typeof siriSchema>>;
+
+export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
+    siriSchema(errors).transform((item) => {
+        return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
+            let onwardCalls: Omit<NewAvlOnwardCall, "avl_id">[] = [];
+
+            if (vehicleActivity.MonitoredVehicleJourney.OnwardCalls) {
+                onwardCalls = vehicleActivity.MonitoredVehicleJourney.OnwardCalls.OnwardCall.map((onwardCall) => {
+                    if (onwardCall) {
+                        return {
+                            stop_point_ref: onwardCall.StopPointRef ?? null,
+                            aimed_arrival_time: onwardCall.AimedArrivalTime ?? null,
+                            expected_arrival_time: onwardCall.ExpectedArrivalTime ?? null,
+                            aimed_departure_time: onwardCall.AimedDepartureTime ?? null,
+                            expected_departure_time: onwardCall.ExpectedDepartureTime ?? null,
+                        };
+                    }
+                }).filter(notEmpty);
+            }
+
+            return {
+                response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+                producer_ref: item.ServiceDelivery.ProducerRef.toString(),
+                recorded_at_time: vehicleActivity.RecordedAtTime,
+                item_id: vehicleActivity.ItemIdentifier,
+                valid_until_time: vehicleActivity.ValidUntilTime,
+                vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
+                line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+                direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
+                occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
+                operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
+                data_frame_ref:
+                    vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
+                dated_vehicle_journey_ref:
+                    vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
+                    null,
+
+                longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+                latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+                bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+                monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
+                published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+                origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+                origin_name: vehicleActivity.MonitoredVehicleJourney.OriginName ?? null,
+                origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
+                destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+                destination_name: vehicleActivity.MonitoredVehicleJourney.DestinationName ?? null,
+                destination_aimed_arrival_time:
+                    vehicleActivity.MonitoredVehicleJourney.DestinationAimedArrivalTime ?? null,
+                block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+                vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
+                vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
+                ticket_machine_service_code:
+                    vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ??
+                    null,
+                journey_code:
+                    vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
+                vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
+                has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
+                onward_calls: onwardCalls && onwardCalls.length > 0 ? onwardCalls : null,
+            };
+        });
+    });
+
+export const siriBodsSchemaTransformed = siriSchema().transform((item) => {
     const avls: NewBodsAvl[] = item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewBodsAvl>(
         (vehicleActivity) => ({
             response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
@@ -204,7 +254,7 @@ export const siriBodsSchemaTransformed = siriSchema.transform((item) => {
     return avls;
 });
 
-export type SiriSchemaTransformed = z.infer<typeof siriSchemaTransformed>;
+export type SiriSchemaTransformed = z.infer<ReturnType<typeof siriSchemaTransformed>>;
 
 export const tflVehicleLocationSchema = z.object({
     producerRef: z.string(),

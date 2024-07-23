@@ -304,7 +304,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     };
 
     const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
-    const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
+    const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM>> = {
         "?xml": {
