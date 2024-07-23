@@ -40,28 +40,17 @@ export const putDynamoItem = async <T extends Record<string, unknown>>(
     );
 };
 
-export const putDynamoItems = async <T extends Record<string, unknown>>(
-    tableName: string,
-    records: {
-        pk: string;
-        sk: string;
-        tableItems: T;
-    }[],
-) => {
-    const recordChunks = chunkArray(records, DYNAMO_DB_MAX_BATCH_SIZE);
+export const putDynamoItems = async <T extends Record<string, unknown>>(tableName: string, items: T[]) => {
+    const itemChunks = chunkArray(items, DYNAMO_DB_MAX_BATCH_SIZE);
 
     await Promise.all(
-        recordChunks.map((chunk) =>
+        itemChunks.map((chunk) =>
             dynamoDbDocClient.send(
                 new BatchWriteCommand({
                     RequestItems: {
-                        [tableName]: chunk.map((record) => ({
+                        [tableName]: chunk.map((item) => ({
                             PutRequest: {
-                                Item: {
-                                    PK: record.pk,
-                                    SK: record.sk,
-                                    ...record.tableItems,
-                                },
+                                Item: item,
                             },
                         })),
                     },
