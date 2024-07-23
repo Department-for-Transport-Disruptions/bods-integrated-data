@@ -54,7 +54,8 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "ecr:CompleteLayerUpload",
           "ecr:InitiateLayerUpload",
           "ecr:PutImage",
-          "ecr:UploadLayerPart"
+          "ecr:UploadLayerPart",
+          "ecr:BatchGetImage"
         ],
         Effect   = "Allow",
         Resource = "*",

@@ -399,6 +399,10 @@ export const expectedPutMetricDataCall = {
             MetricName: "TotalAvlProcessed",
             Value: 2,
         },
+        {
+            MetricName: "TotalFilesProcessed",
+            Value: 1,
+        },
     ],
     metricDimensions: [
         {
