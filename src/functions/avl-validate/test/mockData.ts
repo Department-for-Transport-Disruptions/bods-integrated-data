@@ -14,7 +14,7 @@ export const expectedServiceDeliveryRequestConfig = {
 };
 
 export const expectedServiceDeliveryRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <ServiceRequest>
     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
     <RequestorRef>BODS</RequestorRef>
@@ -28,7 +28,7 @@ export const expectedServiceDeliveryRequestBody = `<?xml version=\"1.0\" encodin
 `;
 
 export const mockServiceDeliveryResponse = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
     <ServiceDelivery>
         <ResponseTimestamp>2024-07-11T14:10:14+00:00</ResponseTimestamp>
         <ProducerRef>TKTR01L</ProducerRef>
@@ -78,7 +78,7 @@ export const mockServiceDeliveryResponse = `<?xml version="1.0" encoding="UTF-8"
 </Siri>`;
 
 export const mockServiceDeliveryResponseFalse = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
         <ServiceDelivery>
         <ResponseTimestamp>2024-07-11T14:10:14+00:00</ResponseTimestamp>
         <ProducerRef>TKTR01L</ProducerRef>
