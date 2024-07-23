@@ -210,6 +210,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 30
   avl_cleardown_frequency                     = 60
+  avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 
 module "integrated_data_avl_subscription_table" {

@@ -100,3 +100,8 @@ variable "siri_vm_generator_memory" {
   type        = number
   description = "Memory in MB to assign to the BODS AVL Processor task"
 }
+
+variable "avl_validation_error_table_name" {
+  type        = string
+  description = "AVL validation error table name"
+}
