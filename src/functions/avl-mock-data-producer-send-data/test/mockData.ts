@@ -9,7 +9,8 @@ export const mockSubscriptionsFromDynamo: AvlSubscription[] = [
         status: "LIVE",
         requestorRef: "BODS_MOCK_PRODUCER",
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-        publisherId: "test-publisher-id",
+        publisherId: "test-publisher-id-1",
+        apiKey: "mock-api-key-1",
     },
     {
         PK: "subscription-two",
@@ -19,7 +20,8 @@ export const mockSubscriptionsFromDynamo: AvlSubscription[] = [
         status: "LIVE",
         requestorRef: "BODS_MOCK_PRODUCER",
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-        publisherId: "test-publisher-id",
+        publisherId: "test-publisher-id-2",
+        apiKey: "mock-api-key-2",
     },
 ];
 
@@ -40,7 +42,7 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
-                    <OperatorRef>Test Operator</OperatorRef>
+                    <OperatorRef>TestOperator</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DataFrameRef>2024-04-04</DataFrameRef>
                         <DatedVehicleJourneyRef>${subscriptionId}:ServiceJourney:00600039</DatedVehicleJourneyRef>
@@ -63,7 +65,7 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:11</LineRef>
                     <DirectionRef>2</DirectionRef>
-                    <OperatorRef>Dummy operator</OperatorRef>
+                    <OperatorRef>DummyOperator</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DataFrameRef>2024-04-04</DataFrameRef>
                         <DatedVehicleJourneyRef>ATB:ServiceJourney:00600039</DatedVehicleJourneyRef>

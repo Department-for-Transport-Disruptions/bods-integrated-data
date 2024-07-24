@@ -2,11 +2,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        options:
-          - dev
-          - test
-          - prod
-        type: choice
+        type: environment
         description: Environment to deploy to
 
 name: Terraform Apply (All Functions)
@@ -21,35 +17,11 @@ env:
   HUSKY: 0
 
 jobs:
-  terraform_apply_dev:
+  terraform_apply:
     uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply Dev
-    if: inputs.stage == 'dev'
+    name: Terraform Apply - ${{ inputs.stage }}
     with:
       stage: ${{ inputs.stage }}
       terraform_version: 1.6.6
       use_artifacts: false
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_DEV }}
-
-  terraform_apply_test:
-    uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply Test
-    if: inputs.stage == 'test'
-    with:
-      stage: ${{ inputs.stage }}
-      terraform_version: 1.6.6
-      use_artifacts: false
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_TEST }}
-
-  terraform_apply_prod:
-    uses: ./.github/workflows/terraform_apply.yaml
-    name: Terraform Apply Prod
-    if: inputs.stage == 'prod'
-    with:
-      stage: ${{ inputs.stage }}
-      terraform_version: 1.6.6
-      use_artifacts: false
-    secrets:
-      oidc_role_arn: ${{ secrets.AWS_OIDC_ROLE_PROD }}
+    secrets: inherit

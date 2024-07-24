@@ -54,16 +54,6 @@ resource "aws_security_group" "integrated_data_bastion_sg" {
   vpc_id = var.vpc_id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "integrated_data_vpc_interface_endpoint_sg_allow_bastion_ingress" {
-  security_group_id            = var.interface_endpoint_sg_id
-  referenced_security_group_id = aws_security_group.integrated_data_bastion_sg.id
-
-  from_port = 443
-  to_port   = 443
-
-  ip_protocol = "tcp"
-}
-
 resource "aws_vpc_security_group_ingress_rule" "integrated_data_bastion_sg_allow_ingress_from_vpc" {
   security_group_id = aws_security_group.integrated_data_bastion_sg.id
 

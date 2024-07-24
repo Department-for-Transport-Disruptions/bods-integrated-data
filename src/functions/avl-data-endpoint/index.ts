@@ -1,6 +1,7 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
@@ -9,8 +10,12 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+    InvalidApiKeyError,
+    InvalidXmlError,
+    createStringLengthValidation,
+} from "@bods-integrated-data/shared/validation";
+import { ALBEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
@@ -91,7 +96,10 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+const isApiGatewayEvent = (event: APIGatewayProxyEvent | ALBEvent): event is APIGatewayProxyEvent =>
+    !!(event as APIGatewayProxyEvent).pathParameters;
+
+export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<APIGatewayProxyResult> => {
     try {
         const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;
 
@@ -99,13 +107,33 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
-        const parameters = stage === "local" ? event.queryStringParameters : event.pathParameters;
+        const pathParams = isApiGatewayEvent(event)
+            ? event.pathParameters
+            : {
+                  subscriptionId: event.path.split("/")[1],
+              };
+
+        const parameters = stage === "local" ? event.queryStringParameters : pathParams;
+
         const { subscriptionId } = requestParamsSchema.parse(parameters);
+
+        if (subscriptionId === "health") {
+            return {
+                statusCode: 200,
+                body: "",
+            };
+        }
+
         const body = requestBodySchema.parse(event.body);
 
         logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
+        const requestApiKey = event.queryStringParameters?.apiKey;
+
+        if (isApiGatewayEvent(event) && requestApiKey !== subscription.apiKey) {
+            throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID '${subscriptionId}'`);
+        }
 
         const xml = parseXml(body);
 
@@ -127,6 +155,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
+        }
+
+        if (e instanceof InvalidApiKeyError) {
+            logger.warn(`Unauthorized request: ${e.message}`);
+            return createUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {

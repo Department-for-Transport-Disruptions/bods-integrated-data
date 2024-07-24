@@ -1,5 +1,6 @@
 export * from "./convert-agency-csv-to-json";
 export * from "./create-avl-mock-data-producer";
+export * from "./get-ecs-cluster-for-service";
 export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-feed-validator";
 export * from "./invoke-avl-siri-vm-downloader";
@@ -9,6 +10,7 @@ export * from "./invoke-avl-tfl-line-id-retriever";
 export * from "./invoke-avl-tfl-location-retriever";
 export * from "./invoke-avl-unsubscriber";
 export * from "./invoke-avl-update-endpoint";
+export * from "./invoke-avl-validate";
 export * from "./invoke-bank-holidays-retriever";
 export * from "./invoke-bods-fares-retriever";
 export * from "./invoke-bods-txc-processor";

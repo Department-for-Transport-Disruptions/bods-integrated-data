@@ -199,7 +199,6 @@ export const testInvalidSiri = `
     xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
     version="2.0">
     <ServiceDelivery>
-        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
         <ProducerRef>ATB</ProducerRef>
         <VehicleMonitoringDelivery version="2.0">
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
@@ -394,3 +393,39 @@ export const onwardCallInsertQuery = [
         stop_point_ref: "STOP456",
     },
 ];
+
+export const expectedPutMetricDataCall = {
+    namespace: "custom/CAVLMetrics",
+    metricData: [
+        {
+            MetricName: "TotalAvlProcessed",
+            Value: 2,
+        },
+        {
+            MetricName: "TotalFilesProcessed",
+            Value: 1,
+        },
+    ],
+    metricDimensions: [
+        {
+            Name: "SubscriptionId",
+            Value: "123",
+        },
+    ],
+};
+
+export const expectedPutMetricDataCallForFilteredArrayParseError = {
+    namespace: "custom/SiriVmVehicleActivitySchema-dev",
+    metricData: [
+        {
+            MetricName: "MakeFilteredArraySchemaParseError",
+            Value: 1,
+        },
+    ],
+    metricDimensions: [
+        {
+            Name: "SubscriptionId",
+            Value: "123",
+        },
+    ],
+};

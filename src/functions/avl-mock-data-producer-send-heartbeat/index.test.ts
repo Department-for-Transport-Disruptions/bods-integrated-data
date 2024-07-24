@@ -1,4 +1,5 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import axios from "axios";
 import * as MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -36,8 +37,7 @@ describe("avl-mock-data-producer-send-data", () => {
     it("should return and send no data if no mock data producers are active", async () => {
         process.env.STAGE = "dev";
         process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([
+        const avlSubscriptions: AvlSubscription[] = [
             {
                 PK: "subscription-one",
                 url: "https://www.mock-data-producer-one.com",
@@ -46,7 +46,8 @@ describe("avl-mock-data-producer-send-data", () => {
                 status: "LIVE",
                 requestorRef: "REAL_DATA_PRODUCER",
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                publisherId: "test-publisher-id",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
             },
             {
                 PK: "subscription-one",
@@ -55,9 +56,12 @@ describe("avl-mock-data-producer-send-data", () => {
                 shortDescription: "test-short-description",
                 status: "ERROR",
                 requestorRef: "BODS_MOCK_PRODUCER",
-                publisherId: "test-publisher-id",
+                publisherId: "test-publisher-id-2",
+                apiKey: "mock-api-key-2",
             },
-        ]);
+        ];
+
+        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(avlSubscriptions);
         await handler();
         expect(axiosSpy).not.toBeCalled();
     });
@@ -73,9 +77,10 @@ describe("avl-mock-data-producer-send-data", () => {
         } as unknown as Response);
 
         await handler();
-        expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-one",
+        expect(axiosSpy).toHaveBeenCalledTimes(2);
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            1,
+            "https://www.test-data-endpoint.com?subscriptionId=subscription-one&apiKey=mock-api-key-1",
             expectedHeartbeatNotification("subscription-one"),
             {
                 headers: {
@@ -84,8 +89,9 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         );
 
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-two",
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            2,
+            "https://www.test-data-endpoint.com?subscriptionId=subscription-two&apiKey=mock-api-key-2",
             expectedHeartbeatNotification("subscription-two"),
             {
                 headers: {
@@ -105,9 +111,10 @@ describe("avl-mock-data-producer-send-data", () => {
         } as unknown as Response);
 
         await handler();
-        expect(axiosSpy).toBeCalledTimes(2);
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-one",
+        expect(axiosSpy).toHaveBeenCalledTimes(2);
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            1,
+            "https://www.test-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
             expectedHeartbeatNotification("subscription-one"),
             {
                 headers: {
@@ -116,8 +123,9 @@ describe("avl-mock-data-producer-send-data", () => {
             },
         );
 
-        expect(axiosSpy).toBeCalledWith(
-            "https://www.test-data-endpoint.com/subscription-two",
+        expect(axiosSpy).toHaveBeenNthCalledWith(
+            2,
+            "https://www.test-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
             expectedHeartbeatNotification("subscription-two"),
             {
                 headers: {

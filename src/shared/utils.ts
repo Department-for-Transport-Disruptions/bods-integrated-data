@@ -118,3 +118,7 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
         (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "LIVE",
     );
 };
+
+export const createAuthorizationHeader = (username: string, password: string) => {
+    return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+};

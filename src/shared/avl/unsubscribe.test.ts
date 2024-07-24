@@ -3,6 +3,7 @@ import MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as dynamo from "../dynamo";
 import * as ssm from "../ssm";
+import { InvalidXmlError } from "../validation";
 import {
     expectedRequestBody,
     expectedSubscriptionRequestConfig,
@@ -75,6 +76,7 @@ describe("sendTerminateSubscriptionRequestAndUpdateDynamo", () => {
             serviceEndDatetime: "2024-03-11T15:20:02.093Z",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
+            apiKey: "mock-api-key",
         });
     });
 
@@ -140,7 +142,7 @@ describe("sendTerminateSubscriptionRequestAndUpdateDynamo", () => {
                 mockInput.subscription,
                 mockInput.tableName,
             ),
-        ).rejects.toThrowError("Error parsing the terminate subscription response from the data producer");
+        ).rejects.toThrowError(InvalidXmlError);
 
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();

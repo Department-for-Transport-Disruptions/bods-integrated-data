@@ -88,12 +88,11 @@ module "integrated_data_db_monitoring" {
 module "integrated_data_bastion_host" {
   source = "../modules/database/bastion-host"
 
-  environment              = local.env
-  db_sg_id                 = module.integrated_data_aurora_db.db_sg_id
-  private_subnet_ids       = module.integrated_data_vpc.private_subnet_ids
-  vpc_id                   = module.integrated_data_vpc.vpc_id
-  vpc_cidr                 = module.integrated_data_vpc.vpc_cidr
-  interface_endpoint_sg_id = module.integrated_data_vpc.interface_endpoint_sg_id
+  environment        = local.env
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  vpc_cidr           = module.integrated_data_vpc.vpc_cidr
 }
 
 module "integrated_data_db_migrator" {
@@ -214,9 +213,18 @@ module "integrated_data_avl_pipeline" {
 }
 
 module "integrated_data_avl_subscription_table" {
-  source = "../modules/database/dynamo"
+  source = "../modules/shared/dynamo-table"
 
   environment = local.env
+  table_name  = "integrated-data-avl-subscription-table"
+}
+
+module "integrated_data_avl_validation_error_table" {
+  source = "../modules/shared/dynamo-table"
+
+  environment   = local.env
+  table_name    = "integrated-data-avl-validation-error-table"
+  ttl_attribute = "timeToExist"
 }
 
 module "integrated_data_avl_data_producer_api" {
@@ -312,7 +320,6 @@ module "integrated_data_avl_consumer_api" {
 
   environment                   = local.env
   acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
-  hosted_zone_id                = module.integrated_data_route53.public_hosted_zone_id
   domain                        = module.integrated_data_route53.public_hosted_zone_name
   generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   vpc_id                        = module.integrated_data_vpc.vpc_id

@@ -4,6 +4,7 @@ import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/share
 import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
@@ -23,7 +24,7 @@ const parseXml = (xml: string) => {
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
 
-        throw new Error("Error parsing data");
+        throw new InvalidXmlError();
     }
 
     return parsedJson.data;
@@ -48,30 +49,38 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
     if (body) {
         const avls = parseXml(await body.transformToString());
 
-        if (!avls || avls.length === 0) {
-            await putMetricData("custom/CAVLMetrics", [
-                {
-                    MetricName: "InvalidSiriSchema",
-                    Value: 1,
-                    Dimensions: [
-                        {
-                            Name: "subscriptionId",
-                            Value: subscriptionId,
-                        },
-                    ],
-                },
-            ]);
-            throw new Error("Error parsing data");
-        }
-
         const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
         const avlsWithoutOnwardCalls = avls
             .filter((avl) => !avl.onward_calls)
             .map<NewAvl>(({ onward_calls, ...rest }) => rest);
 
-        await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
+        if (avlsWithoutOnwardCalls.length > 0) {
+            await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
+        }
 
-        await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
+        if (avlsWithOnwardCalls.length > 0) {
+            await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
+        }
+
+        await putMetricData(
+            "custom/CAVLMetrics",
+            [
+                {
+                    MetricName: "TotalAvlProcessed",
+                    Value: avls.length,
+                },
+                {
+                    MetricName: "TotalFilesProcessed",
+                    Value: 1,
+                },
+            ],
+            [
+                {
+                    Name: "SubscriptionId",
+                    Value: subscriptionId,
+                },
+            ],
+        );
     }
 };
 
@@ -96,12 +105,7 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-        await putMetricData("custom/CAVLMetrics", [
-            {
-                MetricName: "TotalAvlProcessed",
-                Value: 1,
-            },
-        ]);
+
         logger.info("AVL uploaded to database successfully");
     } catch (e) {
         if (e instanceof Error) {

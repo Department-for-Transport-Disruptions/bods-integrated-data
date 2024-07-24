@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
     createConflictErrorResponse,
     createServerErrorResponse,
@@ -13,11 +14,7 @@ import {
 import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@bods-integrated-data/shared/logger";
-import {
-    AvlSubscribeMessage,
-    AvlSubscription,
-    avlSubscribeMessageSchema,
-} from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { AxiosError } from "axios";
@@ -30,16 +27,6 @@ const requestBodySchema = z
     })
     .transform((body) => JSON.parse(body))
     .pipe(avlSubscribeMessageSchema);
-
-const formatSubscriptionDetail = (
-    avlSubscribeMessage: AvlSubscribeMessage,
-): Omit<AvlSubscription, "PK" | "status"> => ({
-    url: avlSubscribeMessage.dataProducerEndpoint,
-    description: avlSubscribeMessage.description,
-    shortDescription: avlSubscribeMessage.shortDescription,
-    requestorRef: avlSubscribeMessage.requestorRef,
-    publisherId: avlSubscribeMessage.publisherId,
-});
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
@@ -72,9 +59,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
-        try {
-            const subscriptionDetails = formatSubscriptionDetail(avlSubscribeMessage);
+        const subscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
+            url: avlSubscribeMessage.dataProducerEndpoint,
+            description: avlSubscribeMessage.description,
+            shortDescription: avlSubscribeMessage.shortDescription,
+            requestorRef: avlSubscribeMessage.requestorRef,
+            publisherId: avlSubscribeMessage.publisherId,
+            apiKey: randomUUID(),
+        };
 
+        try {
             await sendSubscriptionRequestAndUpdateDynamo(
                 subscriptionId,
                 subscriptionDetails,
@@ -86,8 +80,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             );
         } catch (e) {
             if (e instanceof AxiosError) {
-                const subscriptionDetails = formatSubscriptionDetail(avlSubscribeMessage);
-
                 await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
 
                 logger.error(

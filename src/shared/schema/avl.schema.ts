@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NewAvl, NewAvlOnwardCall } from "../database";
+import { NewAvl, NewAvlOnwardCall, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
@@ -51,17 +51,18 @@ export const vehicleActivitySchema = z.object({
     VehicleMonitoringRef: z.coerce.string().nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().nullish(),
-        DirectionRef: z.coerce
-            .string()
-            .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
+        DirectionRef: z.union([
+            z.string().transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
+            z.number(),
+        ]),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.coerce.string().min(1),
-                DatedVehicleJourneyRef: z.coerce.string().min(1),
+                DataFrameRef: z.union([z.string().min(1), z.number()]),
+                DatedVehicleJourneyRef: z.union([z.string().min(1), z.number()]),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        OperatorRef: z.coerce.string().min(1),
+        OperatorRef: z.string().min(1),
         OriginRef: z.coerce.string().nullish(),
         OriginName: z.coerce.string().nullish(),
         DestinationRef: z.coerce.string().nullish(),
@@ -77,10 +78,13 @@ export const vehicleActivitySchema = z.object({
         Occupancy: z.coerce.string().nullish(),
         BlockRef: z.coerce.string().nullish(),
         VehicleJourneyRef: z.coerce.string().nullish(),
-        VehicleRef: z.coerce
-            .string()
-            .min(1)
-            .transform((ref) => ref.replace(/\s/g, "")),
+        VehicleRef: z.union([
+            z
+                .string()
+                .min(1)
+                .transform((ref) => ref.replace(/\s/g, "")),
+            z.number(),
+        ]),
         OnwardCalls: z
             .object({
                 OnwardCall: makeFilteredArraySchema("SiriVmOnwardCallsSchema", onwardCallSchema),
@@ -97,7 +101,7 @@ export const siriSchema = z.object({
     ServiceDelivery: z.object({
         ResponseTimestamp: z.string(),
         ItemIdentifier: z.string().optional(),
-        ProducerRef: z.coerce.string(),
+        ProducerRef: z.union([z.string(), z.number()]),
         VehicleMonitoringDelivery: z.object({
             ResponseTimestamp: z.string(),
             RequestMessageRef: z.string().uuid().optional(),
@@ -129,18 +133,20 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
 
         return {
             response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-            producer_ref: item.ServiceDelivery.ProducerRef,
+            producer_ref: item.ServiceDelivery.ProducerRef.toString(),
             recorded_at_time: vehicleActivity.RecordedAtTime,
             item_id: vehicleActivity.ItemIdentifier,
             valid_until_time: vehicleActivity.ValidUntilTime,
             vehicle_monitoring_ref: vehicleActivity.VehicleMonitoringRef ?? null,
             line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
+            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
             occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
             operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-            data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
+            data_frame_ref:
+                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
             dated_vehicle_journey_ref:
-                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
+                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
+                null,
 
             longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
             latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
@@ -154,7 +160,7 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
             destination_name: vehicleActivity.MonitoredVehicleJourney.DestinationName ?? null,
             destination_aimed_arrival_time: vehicleActivity.MonitoredVehicleJourney.DestinationAimedArrivalTime ?? null,
             block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
+            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
             vehicle_journey_ref: vehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef ?? null,
             ticket_machine_service_code:
                 vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.TicketMachineServiceCode ??
@@ -167,30 +173,35 @@ export const siriSchemaTransformed = siriSchema.transform((item) => {
     });
 });
 
-export const siriBodsSchemaTransformed = siriSchema.transform<NewAvl[]>((item) => {
-    return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewAvl>((vehicleActivity) => ({
-        response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-        item_id: item.ServiceDelivery.ItemIdentifier ?? null,
-        producer_ref: item.ServiceDelivery.ProducerRef,
-        recorded_at_time: vehicleActivity.RecordedAtTime,
-        valid_until_time: vehicleActivity.ValidUntilTime,
-        line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef ?? null,
-        occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
-        operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-        data_frame_ref: vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef ?? null,
-        dated_vehicle_journey_ref:
-            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? null,
-        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef,
-        longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-        latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
-        bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-        published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-        origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-        origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
-        destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-        block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-    }));
+export const siriBodsSchemaTransformed = siriSchema.transform((item) => {
+    const avls: NewBodsAvl[] = item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewBodsAvl>(
+        (vehicleActivity) => ({
+            response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
+            producer_ref: item.ServiceDelivery.ProducerRef.toString(),
+            recorded_at_time: vehicleActivity.RecordedAtTime,
+            valid_until_time: vehicleActivity.ValidUntilTime,
+            line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
+            occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
+            operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
+            data_frame_ref:
+                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
+            dated_vehicle_journey_ref:
+                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
+                null,
+            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
+            longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+            latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+            bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+            origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+            origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
+            destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+            block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+        }),
+    );
+
+    return avls;
 });
 
 export type SiriSchemaTransformed = z.infer<typeof siriSchemaTransformed>;
