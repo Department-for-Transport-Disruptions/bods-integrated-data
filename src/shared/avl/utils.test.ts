@@ -13,7 +13,7 @@ import {
 } from "./utils";
 
 const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <ServiceDelivery>
     <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
     <ProducerRef>DepartmentForTransport</ProducerRef>
@@ -86,7 +86,7 @@ const mockSiriVmResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"
 `;
 
 const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <ServiceDelivery>
     <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
     <ProducerRef>DepartmentForTransport</ProducerRef>
@@ -137,7 +137,7 @@ const mockSiriVmTflResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
 `;
 
 const mockSiriVmWithOmittedPropertiesResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <ServiceDelivery>
     <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
     <ProducerRef>DepartmentForTransport</ProducerRef>
@@ -208,7 +208,7 @@ const mockSiriVmWithOmittedPropertiesResult = `<?xml version=\"1.0\" encoding=\"
 `;
 
 const mockSiriVmWithMissingRequiredPropertiesResult = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <ServiceDelivery>
     <ResponseTimestamp>2024-02-26T14:36:11.000Z</ResponseTimestamp>
     <ProducerRef>DepartmentForTransport</ProducerRef>
