@@ -59,11 +59,7 @@ resource "aws_lb_target_group" "internal_avl_ingestion_alb_tg" {
   port        = 80
 
   health_check {
-    path                = "/health"
-    interval            = 60
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    timeout             = 5
+    enabled = false
   }
 }
 
@@ -111,9 +107,9 @@ resource "aws_lb_target_group" "internal_avl_ingestion_nlb_tg" {
 
   health_check {
     path                = "/health"
-    interval            = 60
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
+    interval            = 120
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
     timeout             = 5
   }
 }

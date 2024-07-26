@@ -190,6 +190,17 @@ module "internal_avl_ingestion" {
   data_endpoint_function_name = module.integrated_data_avl_data_producer_api.avl_data_endpoint_function_name
 }
 
+module "integrated_data_internal_api" {
+  source = "../modules/networking/internal-api"
+
+  environment                      = local.env
+  siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  vpc_id                           = module.integrated_data_vpc.vpc_id
+  lb_subnet_ids                    = module.integrated_data_vpc.private_subnet_ids
+  external_ip_range                = local.secrets["bods_ip_range"]
+  external_account_id              = local.secrets["bods_account_id"]
+}
+
 locals {
   env     = "prod"
   secrets = jsondecode(data.sops_file.secrets.raw)
