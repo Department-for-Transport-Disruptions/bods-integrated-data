@@ -99,6 +99,16 @@ resource "aws_lb_listener" "internal_api_alb_listener" {
   }
 }
 
+resource "aws_lb" "internal_api_nlb" {
+  name               = "api-internal-nlb-${var.environment}"
+  internal           = true
+  load_balancer_type = "network"
+  security_groups    = [aws_security_group.internal_api_nlb_sg.id]
+  subnets            = var.lb_subnet_ids
+
+  enable_deletion_protection = var.environment == "prod"
+}
+
 resource "aws_lb_target_group" "internal_api_nlb_tg" {
   name        = "internal-api-nlb-tg-${var.environment}"
   target_type = "alb"
@@ -113,23 +123,13 @@ resource "aws_lb_target_group" "internal_api_nlb_tg" {
     unhealthy_threshold = 2
     timeout             = 5
   }
+
+  depends_on = [aws_lb.internal_api_nlb, aws_lb_listener.internal_api_alb_listener]
 }
 
 resource "aws_lb_target_group_attachment" "internal_api_nlb_tg_attachment" {
   target_group_arn = aws_lb_target_group.internal_api_nlb_tg.arn
   target_id        = aws_lb.internal_api_alb.id
-
-  depends_on = [aws_lb_listener.internal_api_alb_listener]
-}
-
-resource "aws_lb" "internal_api_nlb" {
-  name               = "api-internal-nlb-${var.environment}"
-  internal           = true
-  load_balancer_type = "network"
-  security_groups    = [aws_security_group.internal_api_nlb_sg.id]
-  subnets            = var.lb_subnet_ids
-
-  enable_deletion_protection = var.environment == "prod"
 }
 
 resource "aws_lb_listener" "internal_api_nlb_listener" {

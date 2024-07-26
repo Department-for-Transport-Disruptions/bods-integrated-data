@@ -50,6 +50,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         logger: {
             warn: vi.fn(),
             error: vi.fn(),
+            info: vi.fn(),
         },
     }));
 
@@ -60,6 +61,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             headers: {
                 "x-api-key": "mock-api-key",
             },
+            pathParameters: {},
         } as unknown as APIGatewayProxyEvent;
         getSecretMock.mockResolvedValue("mock-api-key");
     });
@@ -502,6 +504,30 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     expect.any(Error),
                 );
             });
+        });
+    });
+
+    describe("ALB Event", () => {
+        it("does not check api key if ALB event", async () => {
+            mockRequest.pathParameters = null;
+            mockRequest.path = "/";
+
+            await handler(mockRequest, {} as Context, () => undefined);
+
+            expect(getSecretMock).not.toBeCalled();
+        });
+
+        it("returns 200 for healthcheck", async () => {
+            mockRequest.pathParameters = null;
+            mockRequest.path = "/health";
+
+            const response = await handler(mockRequest, {} as Context, () => undefined);
+
+            expect(response).toEqual({
+                statusCode: 200,
+            });
+
+            expect(logger.info).toHaveBeenCalledWith("Load balancer healthcheck...");
         });
     });
 });
