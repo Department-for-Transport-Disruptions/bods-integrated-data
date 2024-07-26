@@ -146,15 +146,15 @@ describe("avl-validate", () => {
         );
     });
 
-    it("should return a 400 if invalid XML is received from the data producer", async () => {
+    it("should return a 200 and siri version of unknown if invalid XML is received from the data producer", async () => {
         mockedAxios.post.mockResolvedValue({
             data: "<Siri>invalid</Siri>",
             status: 200,
         } as AxiosResponse);
 
         await expect(handler(mockValidateEvent)).resolves.toEqual({
-            statusCode: 400,
-            body: JSON.stringify({ errors: ["Invalid SIRI-VM XML received from the data producer"] }),
+            statusCode: 200,
+            body: JSON.stringify({ siriVersion: "Unknown" }),
         });
 
         expect(axiosSpy).toHaveBeenCalledWith(
@@ -163,6 +163,27 @@ describe("avl-validate", () => {
             expectedServiceDeliveryRequestConfig,
         );
     });
+
+    it.each([null, undefined, ""])(
+        "should return a 200 and siri version of unknown if an empty body is received from the data producer (test: %o)",
+        async (response) => {
+            mockedAxios.post.mockResolvedValue({
+                data: response,
+                status: 200,
+            } as AxiosResponse);
+
+            await expect(handler(mockValidateEvent)).resolves.toEqual({
+                statusCode: 200,
+                body: JSON.stringify({ siriVersion: "Unknown" }),
+            });
+
+            expect(axiosSpy).toHaveBeenCalledWith(
+                mockAvlValidateRequest.url,
+                expectedServiceDeliveryRequestBody,
+                expectedServiceDeliveryRequestConfig,
+            );
+        },
+    );
 
     it("should return a 400 if a data producer does not return a status of true", async () => {
         mockedAxios.post.mockResolvedValue({
