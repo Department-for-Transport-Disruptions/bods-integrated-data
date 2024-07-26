@@ -95,3 +95,26 @@ export const REGIONS: Record<
 
 export const tflOperatorRef = "TFLO";
 export const avlSubscriptionStatuses = ["LIVE", "ERROR", "INACTIVE"] as const;
+export const avlValidationErrorLevels = ["CRITICAL", "NON-CRITICAL"] as const;
+
+export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidationErrorLevels)[number]> = {
+    Bearing: "CRITICAL",
+    BlockRef: "NON-CRITICAL",
+    DestinationRef: "CRITICAL",
+    DirectionRef: "NON-CRITICAL",
+    LineRef: "CRITICAL",
+    MonitoredVehicleJourney: "CRITICAL",
+    OperatorRef: "CRITICAL",
+    OriginName: "NON-CRITICAL",
+    OriginRef: "CRITICAL",
+    ProducerRef: "CRITICAL",
+    PublishedLineName: "NON-CRITICAL",
+    RecordedAtTime: "CRITICAL",
+    ResponseTimestamp: "CRITICAL",
+    ValidUntilTime: "CRITICAL",
+    VehicleJourneyRef: "CRITICAL",
+    VehicleLocation: "CRITICAL",
+    Longitude: "CRITICAL",
+    Latitude: "CRITICAL",
+    VehicleMonitoringDelivery: "CRITICAL",
+};
