@@ -77,8 +77,8 @@ module "integrated_data_aurora_db" {
   vpc_id                   = module.integrated_data_vpc.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  multi_az                 = false
-  instance_class           = "db.r6g.large"
+  multi_az                 = true
+  instance_class           = "db.r6g.xlarge"
 }
 
 module "integrated_data_db_monitoring" {
@@ -111,6 +111,88 @@ module "integrated_data_db_migrator" {
   db_host            = module.integrated_data_aurora_db.db_host
 }
 
+module "integrated_data_noc_pipeline" {
+  source = "../modules/data-pipelines/noc-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+}
+
+module "integrated_data_table_renamer" {
+  source = "../modules/table-renamer"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+}
+
+module "integrated_data_naptan_pipeline" {
+  source = "../modules/data-pipelines/naptan-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+}
+
+module "integrated_data_nptg_pipeline" {
+  source = "../modules/data-pipelines/nptg-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+}
+
+module "integrated_data_txc_pipeline" {
+  source = "../modules/data-pipelines/txc-pipeline"
+
+  environment               = local.env
+  vpc_id                    = module.integrated_data_vpc.vpc_id
+  private_subnet_ids        = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn             = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                  = module.integrated_data_aurora_db.db_sg_id
+  db_host                   = module.integrated_data_aurora_db.db_host
+  tnds_ftp_credentials      = local.secrets["tnds_ftp"]
+  rds_output_bucket_name    = module.integrated_data_aurora_db.s3_output_bucket_name
+  bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
+}
+
+module "integrated_data_gtfs_downloader" {
+  source = "../modules/gtfs-downloader"
+
+  environment      = local.env
+  gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
+}
+
+module "integrated_data_gtfs_rt_pipeline" {
+  source = "../modules/data-pipelines/gtfs-rt-pipeline"
+
+  environment                  = local.env
+  vpc_id                       = module.integrated_data_vpc.vpc_id
+  private_subnet_ids           = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                     = module.integrated_data_aurora_db.db_sg_id
+  db_host                      = module.integrated_data_aurora_db.db_host
+  db_reader_host               = module.integrated_data_aurora_db.db_reader_host
+  bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
+  bods_avl_processor_frequency = 30
+  bods_avl_cleardown_frequency = 30
+  bods_avl_processor_cpu       = 2048
+  bods_avl_processor_memory    = 4096
+}
+
 module "integrated_data_avl_subscription_table" {
   source = "../modules/shared/dynamo-table"
 
@@ -139,15 +221,17 @@ module "integrated_data_avl_pipeline" {
   alarm_topic_arn                             = module.integrated_data_monitoring.alarm_topic_arn
   ok_topic_arn                                = module.integrated_data_monitoring.ok_topic_arn
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
-  tfl_location_retriever_invoke_every_seconds = 60
+  tfl_location_retriever_invoke_every_seconds = 10
   avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
   aws_account_id                              = data.aws_caller_identity.current.account_id
   aws_region                                  = data.aws_region.current.name
   siri_vm_generator_image_url                 = local.secrets["siri_vm_generator_image_url"]
-  siri_vm_generator_cpu                       = 1024
-  siri_vm_generator_memory                    = 2048
-  siri_vm_generator_frequency                 = 30
-  avl_cleardown_frequency                     = 60
+  siri_vm_generator_cpu                       = 2048
+  siri_vm_generator_memory                    = 4096
+  siri_vm_generator_frequency                 = 10
+  avl_cleardown_frequency                     = 30
+  generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
 }
 
 module "integrated_data_avl_data_producer_api" {
@@ -163,6 +247,90 @@ module "integrated_data_avl_data_producer_api" {
   domain                      = module.integrated_data_route53.public_hosted_zone_name
   subnet_ids                  = module.integrated_data_vpc.private_subnet_ids
   avl_producer_api_key        = local.secrets["avl_producer_api_key"]
+}
+
+module "integrated_data_bank_holidays_pipeline" {
+  source = "../modules/data-pipelines/bank-holidays-pipeline"
+
+  environment = local.env
+}
+
+module "integrated_data_fares_pipeline" {
+  source = "../modules/data-pipelines/fares-pipeline"
+
+  environment = local.env
+}
+
+module "integrated_data_disruptions_pipeline" {
+  source = "../modules/data-pipelines/disruptions-pipeline"
+
+  environment = local.env
+}
+
+
+module "integrated_data_db_cleardown_function" {
+  source = "../modules/db-cleardown"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+}
+
+module "integrated_data_timetables_sfn" {
+  source = "../modules/timetables-sfn"
+
+  environment                            = local.env
+  bods_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
+  tnds_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
+  txc_processor_function_arn             = module.integrated_data_txc_pipeline.txc_processor_function_arn
+  unzipper_function_arn                  = module.integrated_data_txc_pipeline.unzipper_function_arn
+  gtfs_timetables_generator_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
+  naptan_retriever_function_arn          = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
+  naptan_uploader_function_arn           = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
+  noc_retriever_function_arn             = module.integrated_data_noc_pipeline.noc_retriever_function_arn
+  noc_processor_function_arn             = module.integrated_data_noc_pipeline.noc_processor_function_arn
+  nptg_retriever_function_arn            = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
+  nptg_uploader_function_arn             = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
+  bank_holidays_retriever_function_arn   = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
+  db_cleardown_function_arn              = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
+  table_renamer_function_arn             = module.integrated_data_table_renamer.table_renamer_function_arn
+  tnds_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
+  bods_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
+  bods_txc_bucket_name                   = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tnds_txc_bucket_name                   = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
+  noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
+  naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name
+  schedule                               = "cron(0 2 * * ? *)"
+}
+
+module "integrated_data_gtfs_api" {
+  source = "../modules/gtfs-api"
+
+  environment                       = local.env
+  gtfs_downloader_lambda_name       = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
+  gtfs_downloader_invoke_arn        = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
+  gtfs_region_retriever_invoke_arn  = module.integrated_data_gtfs_downloader.gtfs_region_retriever_invoke_arn
+  gtfs_region_retriever_lambda_name = module.integrated_data_gtfs_downloader.gtfs_region_retriever_lambda_name
+  gtfs_rt_downloader_lambda_name    = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
+  gtfs_rt_downloader_invoke_arn     = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
+  acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
+  domain                            = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_cloudfront" {
+  source = "../modules/networking/cloudfront"
+
+  environment                          = local.env
+  avl_siri_vm_downloader_domain        = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_function_url
+  avl_siri_vm_downloader_function_name = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_lambda_name
+  domain                               = module.integrated_data_route53.public_hosted_zone_name
+  acm_certificate_arn                  = module.integrated_data_acm.cloudfront_acm_certificate_arn
+  hosted_zone_id                       = module.integrated_data_route53.public_hosted_zone_id
 }
 
 # VPN
@@ -194,7 +362,7 @@ module "integrated_data_internal_api" {
   source = "../modules/networking/internal-api"
 
   environment                      = local.env
-  siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  siri_vm_downloader_function_name = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_lambda_name
   vpc_id                           = module.integrated_data_vpc.vpc_id
   lb_subnet_ids                    = module.integrated_data_vpc.private_subnet_ids
   external_ip_range                = local.secrets["bods_ip_range"]

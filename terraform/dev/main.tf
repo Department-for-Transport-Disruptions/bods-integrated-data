@@ -209,6 +209,8 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 120
   avl_cleardown_frequency                     = 60
+  generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -313,27 +315,12 @@ module "integrated_data_gtfs_api" {
   domain                            = module.integrated_data_route53.public_hosted_zone_name
 }
 
-module "integrated_data_avl_consumer_api" {
-  source = "../modules/avl-consumer-api"
-
-  environment                   = local.env
-  acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
-  domain                        = module.integrated_data_route53.public_hosted_zone_name
-  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
-  vpc_id                        = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids            = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host                       = module.integrated_data_aurora_db_dev.db_host
-  avl_consumer_api_key          = local.secrets["avl_consumer_api_key"]
-}
-
 module "integrated_data_cloudfront" {
   source = "../modules/networking/cloudfront"
 
   environment                          = local.env
-  avl_siri_vm_downloader_domain        = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_function_url
-  avl_siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  avl_siri_vm_downloader_domain        = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_function_url
+  avl_siri_vm_downloader_function_name = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_lambda_name
   domain                               = module.integrated_data_route53.public_hosted_zone_name
   acm_certificate_arn                  = module.integrated_data_acm.cloudfront_acm_certificate_arn
   hosted_zone_id                       = module.integrated_data_route53.public_hosted_zone_id
@@ -343,7 +330,7 @@ module "integrated_data_internal_api" {
   source = "../modules/networking/internal-api"
 
   environment                      = local.env
-  siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  siri_vm_downloader_function_name = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_lambda_name
   vpc_id                           = module.integrated_data_vpc_dev.vpc_id
   lb_subnet_ids                    = module.integrated_data_vpc_dev.private_subnet_ids
   external_ip_range                = local.secrets["bods_ip_range"]

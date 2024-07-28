@@ -100,3 +100,12 @@ variable "siri_vm_generator_memory" {
   type        = number
   description = "Memory in MB to assign to the BODS AVL Processor task"
 }
+
+variable "avl_consumer_api_key" {
+  type        = string
+  description = "AVL consumer API key"
+}
+
+variable "generated_siri_vm_bucket_name" {
+  type = string
+}
