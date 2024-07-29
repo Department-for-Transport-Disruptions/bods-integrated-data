@@ -239,6 +239,8 @@ module "integrated_data_avl_data_producer_api" {
   domain                      = module.integrated_data_route53.public_hosted_zone_name
   subnet_ids                  = module.integrated_data_vpc_dev.private_subnet_ids
   avl_producer_api_key        = local.secrets["avl_producer_api_key"]
+  avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
+  avl_cloudwatch_namespace    = "custom/CAVLMetrics"
 }
 
 module "integrated_data_bank_holidays_pipeline" {
