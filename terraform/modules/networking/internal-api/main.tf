@@ -55,27 +55,18 @@ resource "aws_vpc_security_group_egress_rule" "internal_api_alb_sg_all_egress_ip
 
 resource "aws_lb_target_group" "internal_api_alb_tg" {
   name        = "internal-api-alb-tg-${var.environment}"
-  target_type = "lambda"
-  port        = 80
+  target_type = "ip"
+  protocol    = "HTTP"
+  port        = 8080
+  vpc_id      = var.vpc_id
 
   health_check {
-    enabled  = false
-    interval = 60
+    path                = "/health"
+    interval            = 60
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
   }
-}
-
-resource "aws_lambda_permission" "internal_api_siri_vm_downloader_alb_tg_permissions" {
-  statement_id  = "AllowExecutionFromLb"
-  action        = "lambda:InvokeFunction"
-  function_name = var.siri_vm_downloader_function_name
-  principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_lb_target_group.internal_api_alb_tg.arn
-}
-
-resource "aws_lb_target_group_attachment" "internal_api_alb_tg_attachment" {
-  target_group_arn = aws_lb_target_group.internal_api_alb_tg.arn
-  target_id        = "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.siri_vm_downloader_function_name}"
-  depends_on       = [aws_lambda_permission.internal_api_siri_vm_downloader_alb_tg_permissions]
 }
 
 resource "aws_lb" "internal_api_alb" {
@@ -96,6 +87,7 @@ resource "aws_lb_listener" "internal_api_alb_listener" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.internal_api_alb_tg.arn
+
   }
 }
 
@@ -118,7 +110,7 @@ resource "aws_lb_target_group" "internal_api_nlb_tg" {
 
   health_check {
     path                = "/health"
-    interval            = 120
+    interval            = 60
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 5

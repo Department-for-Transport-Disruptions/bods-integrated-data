@@ -41,6 +41,10 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
+variable "cluster_id" {
+  type = string
+}
+
 variable "bods_avl_processor_image_url" {
   type        = string
   description = "URL for the BODS AVL Processor image in ECR"

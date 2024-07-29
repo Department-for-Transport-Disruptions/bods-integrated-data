@@ -61,6 +61,20 @@ services:
     networks:
       - bods_integrated_data_network
 
+  siri-vm-downloader:
+    container_name: bods_integrated_data_siri_vm_downloader
+    image: siri-vm-downloader:latest
+    environment:
+      - IS_DOCKER=true
+      - STAGE=local
+      - BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
+    volumes:
+      - ./:/app/data
+    networks:
+      - bods_integrated_data_network
+    ports:
+      - 8080:8080
+
 networks:
   bods_integrated_data_network:
     driver: bridge

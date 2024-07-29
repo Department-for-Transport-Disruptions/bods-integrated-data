@@ -41,6 +41,10 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
+variable "cluster_id" {
+  type = string
+}
+
 variable "ok_topic_arn" {
   type        = string
   description = "ARN of the SNS topic to use for ok notifications"
@@ -78,27 +82,53 @@ variable "aws_region" {
 
 variable "siri_vm_generator_image_url" {
   type        = string
-  description = "URL for the BODS AVL Processor image in ECR"
+  description = "URL for the SIRI-VM Generator image in ECR"
 }
 
 variable "siri_vm_generator_frequency" {
   type        = number
-  description = "Frequency in seconds at which to run the BODS AVL Processor"
+  description = "Frequency in seconds at which to run the SIRI-VM Generator"
 }
 
 variable "avl_cleardown_frequency" {
   type        = number
-  description = "Frequency in seconds at which to run the BODS AVL Cleardown process"
+  description = "Frequency in seconds at which to run the AVL Cleardown process"
 }
 
 variable "siri_vm_generator_cpu" {
   type        = number
-  description = "CPU in MB to assign to the BODS AVL Processor task"
+  description = "CPU in MB to assign to the SIRI-VM Generator task"
 }
 
 variable "siri_vm_generator_memory" {
   type        = number
-  description = "Memory in MB to assign to the BODS AVL Processor task"
+  description = "Memory in MB to assign to the SIRI-VM Generator task"
+}
+
+variable "siri_vm_downloader_image_url" {
+  type        = string
+  description = "URL for the SIRI-VM Downloader image in ECR"
+}
+
+variable "siri_vm_downloader_cpu" {
+  type        = number
+  description = "CPU in MB to assign to the SIRI-VM Downloader task"
+}
+
+variable "siri_vm_downloader_memory" {
+  type        = number
+  description = "Memory in MB to assign to the SIRI-VM Downloader task"
+}
+
+variable "siri_vm_downloader_desired_task_count" {
+  type        = number
+  description = "Desired base number of SIRI-VM Downloader tasks"
+  default     = 1
+}
+
+variable "siri_vm_downloader_alb_target_group_arn" {
+  type        = string
+  description = "ARN of the target group which should be associated with the SIRI-VM Downloader tasks"
 }
 
 variable "avl_consumer_api_key" {

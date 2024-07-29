@@ -25,4 +25,6 @@ COPY --from=build /app/tasks/${servicePath}/dist .
 
 RUN if [[ ${servicePath} == "siri-vm-generator" ]] ; then apk add bash libxml2-utils ; else : ; fi
 
+EXPOSE 8080
+
 ENTRYPOINT ["node", "index.js"]
