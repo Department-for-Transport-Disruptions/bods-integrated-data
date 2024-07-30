@@ -12,4 +12,4 @@ export const heartbeatNotificationSchema = z.object({
 
 export type HeartbeatNotification = z.infer<typeof heartbeatNotificationSchema>;
 
-export const dataEndpointInputSchema = z.union([heartbeatNotificationSchema, siriSchema]);
+export const dataEndpointInputSchema = z.union([heartbeatNotificationSchema, siriSchema()]);

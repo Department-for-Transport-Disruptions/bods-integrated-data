@@ -144,3 +144,8 @@ variable "alb_sg_id" {
   type        = string
   description = "ID of the Security Group used by the ALB infront of the SIRI-VM downloader"
 }
+
+variable "avl_validation_error_table_name" {
+  type        = string
+  description = "AVL validation error table name"
+}

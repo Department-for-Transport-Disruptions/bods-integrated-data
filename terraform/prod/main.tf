@@ -257,6 +257,7 @@ module "integrated_data_avl_pipeline" {
   generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
   alb_sg_id                                   = module.integrated_data_internal_api.alb_sg_id
+  avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 
 module "integrated_data_avl_data_producer_api" {
