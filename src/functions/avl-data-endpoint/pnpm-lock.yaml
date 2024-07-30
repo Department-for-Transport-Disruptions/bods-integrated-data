@@ -12,8 +12,8 @@ dependencies:
     specifier: ^0.4.14
     version: 0.4.14
   fast-xml-parser:
-    specifier: ^4.1.2
-    version: 4.1.2
+    specifier: ^4.4.1
+    version: 4.4.1
   js2xmlparser:
     specifier: ^5.0.0
     version: 5.0.0
@@ -52,8 +52,8 @@ packages:
       '@types/node': 20.11.25
     dev: false
 
-  /fast-xml-parser@4.1.2:
-    resolution: {integrity: sha512-CDYeykkle1LiA/uqQyNwYpFbyF6Axec6YapmpUP+/RHWIoR1zKjocdvNaTsxCxZzQ6v9MLXaSYm9Qq0thv0DHg==}
+  /fast-xml-parser@4.4.1:
+    resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
