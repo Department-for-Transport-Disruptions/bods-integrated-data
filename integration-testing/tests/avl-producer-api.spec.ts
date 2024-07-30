@@ -62,7 +62,7 @@ test.describe("avl-producer-api", () => {
             expect.objectContaining({
                 id: testSubscription.subscriptionId,
                 publisherId: testSubscription.publisherId,
-                status: "LIVE",
+                status: "live",
             }),
         );
 
@@ -75,7 +75,7 @@ test.describe("avl-producer-api", () => {
                 expect.objectContaining({
                     id: testSubscription.subscriptionId,
                     publisherId: testSubscription.publisherId,
-                    status: "LIVE",
+                    status: "live",
                 }),
             ]),
         );
@@ -103,7 +103,7 @@ test.describe("avl-producer-api", () => {
             expect.objectContaining({
                 id: testSubscription.subscriptionId,
                 publisherId: testSubscription.publisherId,
-                status: "LIVE",
+                status: "live",
             }),
         );
 
@@ -116,7 +116,7 @@ test.describe("avl-producer-api", () => {
                 expect.objectContaining({
                     id: testSubscription.subscriptionId,
                     publisherId: testSubscription.publisherId,
-                    status: "LIVE",
+                    status: "live",
                 }),
             ]),
         );
@@ -141,7 +141,7 @@ test.describe("avl-producer-api", () => {
             expect.objectContaining({
                 id: testSubscription.subscriptionId,
                 publisherId: testSubscription.publisherId,
-                status: "INACTIVE",
+                status: "inactive",
             }),
         );
 
@@ -154,7 +154,7 @@ test.describe("avl-producer-api", () => {
                 expect.objectContaining({
                     id: testSubscription.subscriptionId,
                     publisherId: testSubscription.publisherId,
-                    status: "INACTIVE",
+                    status: "inactive",
                 }),
             ]),
         );

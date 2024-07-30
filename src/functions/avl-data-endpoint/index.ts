@@ -140,8 +140,8 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         if (Object.hasOwn(xml, "HeartbeatNotification")) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
         } else {
-            if (subscription.status !== "LIVE") {
-                logger.error(`Subscription: ${subscriptionId} is not LIVE, data will not be processed...`);
+            if (subscription.status !== "live") {
+                logger.error(`Subscription: ${subscriptionId} is not live, data will not be processed...`);
                 return createNotFoundErrorResponse("Subscription is not live");
             }
             await uploadSiriVmToS3(body, bucketName, subscription, tableName);

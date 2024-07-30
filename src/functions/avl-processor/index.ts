@@ -85,7 +85,7 @@ export const processSqsRecord = async (
 
     const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
-    if (subscription.status !== "LIVE") {
+    if (subscription.status !== "live") {
         throw new Error(`Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`);
     }
 

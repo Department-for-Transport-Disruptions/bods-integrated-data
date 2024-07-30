@@ -169,7 +169,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponseBody = subscriptionResponse.data;
 
     if (!subscriptionResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
         throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
     }
 
@@ -177,16 +177,16 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
         if (parsedResponseBody.SubscriptionResponse.ResponseStatus.Status !== "true") {
-            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
             throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
         }
     } catch (error) {
         if (error instanceof InvalidXmlError) {
-            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
         }
 
         throw error;
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "LIVE", currentTime);
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "live", currentTime);
 };

@@ -1,3 +1,4 @@
+import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
@@ -58,7 +59,7 @@ export const handler = async () => {
         }
 
         const subscriptions = await getAvlSubscriptions(tableName);
-        const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "INACTIVE");
+        const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "inactive");
 
         if (!nonTerminatedSubscriptions) {
             logger.info("No subscriptions found in DynamoDb to validate");
@@ -75,10 +76,10 @@ export const handler = async () => {
                 );
 
                 if (isHeartbeatValid) {
-                    if (subscription.status !== "LIVE") {
+                    if (subscription.status !== "live") {
                         await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                             ...subscription,
-                            status: "LIVE",
+                            status: "live",
                         });
                     }
 
@@ -87,8 +88,16 @@ export const handler = async () => {
 
                 await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                     ...subscription,
-                    status: "ERROR",
+                    status: "error",
                 });
+
+                try {
+                    await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription.PK, subscription, tableName);
+                } catch (e) {
+                    logger.warn(
+                        `An error occurred when trying to unsubscribe from subscription with ID: ${subscription.PK}. Error ${e}`,
+                    );
+                }
 
                 try {
                     await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
