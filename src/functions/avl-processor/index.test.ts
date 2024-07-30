@@ -210,6 +210,11 @@ describe("avl-processor", () => {
             ),
         ).rejects.toThrowError();
 
+        /**
+         * This variable represents a time to live (TTL) in the dynamoDB table
+         * in order for dynamoDB to automatically clear entries older than the TTL:
+         * https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
+         */
         const timeToExist = getDate().add(3, "days").unix();
 
         const expectedValidationErrors: AvlValidationError[] = [
