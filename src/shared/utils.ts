@@ -115,7 +115,7 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
     const parsedSubscriptions = z.array(avlSubscriptionSchemaTransformed).parse(subscriptions);
 
     return parsedSubscriptions.filter(
-        (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "LIVE",
+        (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
     );
 };
 

@@ -86,7 +86,7 @@ describe("avl-processor", () => {
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            status: "LIVE",
+            status: "live",
             requestorRef: null,
             publisherId: "test-publisher-id",
             apiKey: "mock-api-key",
@@ -168,7 +168,7 @@ describe("avl-processor", () => {
         );
     });
 
-    it.each(["ERROR", "INACTIVE"] as const)("throws an error when the subscription is not active", async (status) => {
+    it.each(["error", "inactive"] as const)("throws an error when the subscription is not active", async (status) => {
         const avlSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",

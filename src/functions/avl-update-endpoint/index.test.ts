@@ -70,7 +70,7 @@ describe("avl-update-endpoint", () => {
             publisherId: "mock-publisher-id",
             description: "description",
             shortDescription: "shortDescription",
-            status: "LIVE",
+            status: "live",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
