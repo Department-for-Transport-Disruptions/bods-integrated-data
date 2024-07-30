@@ -30,7 +30,7 @@ describe("AVL-data-endpoint", () => {
     const getMetricStatisticsSpy = vi.spyOn(cloudwatch, "getMetricStatistics");
 
     MockDate.set("2024-03-11T00:00:00.000Z");
-    const mockFeedId = "411e4495-4a57-4d2f-89d5-cf105441f321";
+    const mockSubscriptionId = "411e4495-4a57-4d2f-89d5-cf105441f321";
     let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
@@ -39,13 +39,13 @@ describe("AVL-data-endpoint", () => {
 
         mockEvent = {
             pathParameters: {
-                feedId: mockFeedId,
+                subscriptionId: mockSubscriptionId,
             },
         } as unknown as APIGatewayProxyEvent;
 
         recursiveScanSpy.mockResolvedValue([
             {
-                PK: mockFeedId,
+                PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details: "Required",
                 filename: "test",
@@ -61,7 +61,7 @@ describe("AVL-data-endpoint", () => {
                 vehicleRef: "200141",
             },
             {
-                PK: mockFeedId,
+                PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details: "Required",
                 filename: "test",
@@ -105,29 +105,6 @@ describe("AVL-data-endpoint", () => {
         MockDate.reset();
     });
 
-    it("Should log a warning when an unknown error category is passed", async () => {
-        const mockValue = {
-            PK: mockFeedId,
-            SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
-            details: "Required",
-            filename: "test",
-            itemIdentifier: undefined,
-            level: "CRITICAL",
-            lineRef: "ATB:Line:60",
-            name: "Test",
-            operatorRef: "123",
-            recordedAtTime: "2024-03-11T00:05:00.000Z",
-            responseTimestamp: "2024-03-11T00:00:00.000Z",
-            timeToExist: 1710374400,
-            vehicleJourneyRef: undefined,
-            vehicleRef: "200141",
-        };
-        recursiveScanSpy.mockResolvedValue([mockValue]);
-
-        await handler(mockEvent);
-        expect(logger.warn).toHaveBeenCalledWith("Unknown error category: ", mockValue);
-    });
-
     it("Should get total avl processed from cloudwatch with correct date", async () => {
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: mockResponseString });
 
@@ -139,7 +116,7 @@ describe("AVL-data-endpoint", () => {
             new Date("2024-03-10T00:00:00.000Z"),
             new Date("2024-03-11T00:00:00.000Z"),
             300,
-            [{ Name: "SubscriptionId", Value: mockFeedId }],
+            [{ Name: "SubscriptionId", Value: mockSubscriptionId }],
         );
     });
 
@@ -161,37 +138,19 @@ describe("AVL-data-endpoint", () => {
     it("Throws a validation error when invalid data passed", async () => {
         const mockInvalidEvent = {
             pathParameters: {
-                feedId: 123,
+                subscriptionId: 123,
             },
         } as unknown as APIGatewayProxyEvent;
         const response = await handler(mockInvalidEvent);
         expect(response).toEqual({
             statusCode: 400,
-            body: JSON.stringify({ errors: ["feedId must be a string"] }),
+            body: JSON.stringify({ errors: ["subscriptionId must be a string"] }),
         });
         expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
     });
 
     it("Should add total number of avl items processed", async () => {
-        const response = await getTotalAvlsProcessed(mockFeedId, "test-namespace");
+        const response = await getTotalAvlsProcessed(mockSubscriptionId, "test-namespace");
         expect(response).toEqual(2);
-    });
-
-    it("Should throw an error if no datapoints retrieved", async () => {
-        getMetricStatisticsSpy.mockResolvedValue({
-            $metadata: {},
-            Label: "TotalAvlProcessed",
-            Datapoints: undefined,
-        });
-
-        const response = await handler(mockEvent);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the avl data feed validator endpoint",
-            expect.anything(),
-        );
     });
 });

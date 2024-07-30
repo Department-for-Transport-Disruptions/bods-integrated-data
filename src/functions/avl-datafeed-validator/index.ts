@@ -1,92 +1,49 @@
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
 import { getMetricStatistics } from "@bods-integrated-data/shared/cloudwatch";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
-import { getErrorDetail } from "./errorDetails";
-
-type AvlValidationErrorWithDetails = AvlValidationError & {
-    details: string;
-    critical: boolean;
-};
-
-type CategorisedErrors = {
-    criticalErrors: AvlValidationErrorWithDetails[];
-    nonCriticalErrors: AvlValidationErrorWithDetails[];
-};
-
-const criticalErrorFields = [
-    "Bearing",
-    "DestinationRef",
-    "LineRef",
-    "Monitored-VehicleJourney",
-    "OperatorRef",
-    "OriginRef",
-    "ProducerRef",
-    "RecordedAtTime",
-    "ResponseTimestamp",
-    "ValidUntilTime",
-    "VehicleJourneyRef",
-    "VehicleLocation",
-    "VehicleMonitoringDelivery",
-];
-
-const nonCriticalErrorFields = ["BlockRef", "DirectionRef", "OriginName", "PublishedLineName"];
 
 const requestParamsSchema = z.preprocess(
     Object,
     z.object({
-        sample_size: createStringLengthValidation("sample_size").optional(),
+        sampleSize: createStringLengthValidation("sampleSize").optional(),
     }),
 );
 
 const pathParamsSchema = z.preprocess(
     Object,
     z.object({
-        feedId: createStringLengthValidation("feedId"),
+        subscriptionId: createStringLengthValidation("subscriptionId"),
     }),
 );
 
-export const getTotalAvlsProcessed = async (feedId: string, namespace: string) => {
-    const dayAgo = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
-    const now = new Date();
+export const getTotalAvlsProcessed = async (subscriptionId: string, namespace: string) => {
+    const now = getDate();
+    const dayAgo = now.subtract(24, "hours");
 
-    const data = await getMetricStatistics(namespace, "TotalAvlProcessed", ["Sum"], dayAgo, now, 300, [
-        { Name: "SubscriptionId", Value: feedId },
-    ]);
-
-    if (!data.Datapoints) {
-        throw new Error("No datapoints found when getting TotalAvlProcessed metric");
-    }
-
-    const totalSum = data.Datapoints.reduce((acc, datapoint) => acc + (datapoint.Sum || 0), 0);
-
-    return totalSum;
-};
-
-const categoriseErrors = (errors: AvlValidationError[]) =>
-    errors.reduce<CategorisedErrors>(
-        (categorisedErrors, error) => {
-            const errorWithDetails = { ...error, details: getErrorDetail(error.name) };
-            if (criticalErrorFields.includes(error.name)) {
-                categorisedErrors.criticalErrors.push({ ...errorWithDetails, critical: true });
-            } else if (nonCriticalErrorFields.includes(error.name)) {
-                categorisedErrors.nonCriticalErrors.push({ ...errorWithDetails, critical: false });
-            } else {
-                logger.warn("Unknown error category: ", error);
-            }
-
-            return categorisedErrors;
-        },
-        { criticalErrors: [], nonCriticalErrors: [] },
+    const data = await getMetricStatistics(
+        namespace,
+        "TotalAvlProcessed",
+        ["Sum"],
+        dayAgo.toDate(),
+        now.toDate(),
+        300,
+        [{ Name: "SubscriptionId", Value: subscriptionId }],
     );
 
-const generateValidationSummary = (categorisedErrors: CategorisedErrors, totalProcessed: number) => {
-    const criticalCount = categorisedErrors.criticalErrors.length;
-    const nonCriticalCount = categorisedErrors.nonCriticalErrors.length;
+    const totalSum = data.Datapoints?.reduce((acc, datapoint) => acc + (datapoint.Sum || 0), 0);
+
+    return totalSum ?? 0;
+};
+
+const generateValidationSummary = (errors: AvlValidationError[], totalProcessed: number) => {
+    const criticalCount = errors.filter((e) => e.level === "CRITICAL").length;
+    const nonCriticalCount = errors.filter((e) => e.level === "NON-CRITICAL").length;
 
     return {
         total_error_count: criticalCount + nonCriticalCount,
@@ -98,9 +55,8 @@ const generateValidationSummary = (categorisedErrors: CategorisedErrors, totalPr
     };
 };
 
-const generateResults = (categorisedErrors: CategorisedErrors, feedId: string) => {
-    const allErrors = categorisedErrors.criticalErrors.concat(categorisedErrors.nonCriticalErrors);
-    const errors = allErrors.map((error) => ({
+const generateResults = (errors: AvlValidationError[], subscriptionId: string) => {
+    const errorsFormatted = errors.map((error) => ({
         level: error.level,
         details: error.details,
         identifier: {
@@ -117,24 +73,23 @@ const generateResults = (categorisedErrors: CategorisedErrors, feedId: string) =
     return [
         {
             header: {
-                packet_name: allErrors[0].filename,
-                timeStamp: allErrors[0].responseTimestamp,
-                feed_id: feedId,
+                packet_name: errors[0].filename,
+                timeStamp: errors[0].responseTimestamp,
+                feed_id: subscriptionId,
             },
-            errors,
+            errors: errorsFormatted,
         },
     ];
 };
 
-const generateReportBody = async (errorData: AvlValidationError[], feedId: string, namespace: string) => {
-    const categorisedErrors = categoriseErrors(errorData);
-    const totalProcessed = await getTotalAvlsProcessed(feedId, namespace);
+const generateReportBody = async (errorData: AvlValidationError[], subscriptionId: string, namespace: string) => {
+    const totalProcessed = await getTotalAvlsProcessed(subscriptionId, namespace);
 
     return {
-        feed_id: feedId,
+        feed_id: subscriptionId,
         packet_count: totalProcessed,
-        validation_summary: generateValidationSummary(categorisedErrors, totalProcessed),
-        errors: generateResults(categorisedErrors, feedId),
+        validation_summary: generateValidationSummary(errorData, totalProcessed),
+        errors: generateResults(errorData, subscriptionId),
     };
 };
 
@@ -146,21 +101,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             throw new Error("Missing env vars - AVL_VALIDATION_ERROR_TABLE and CLOUDWATCH_NAMESPACE must be set");
         }
 
-        const { sample_size: sampleSize } = requestParamsSchema.parse(event.queryStringParameters);
-        const { feedId } = pathParamsSchema.parse(event.pathParameters);
+        const { sampleSize } = requestParamsSchema.parse(event.queryStringParameters);
+        const { subscriptionId } = pathParamsSchema.parse(event.pathParameters);
 
-        const errorData = await getAvlSubscriptionErrorData(tableName, feedId);
+        const errorData = await getAvlSubscriptionErrorData(tableName, subscriptionId);
 
-        const reportBody = await generateReportBody(errorData, feedId, cloudwatchNamespace);
+        const reportBody = await generateReportBody(errorData, subscriptionId, cloudwatchNamespace);
 
-        logger.info("Executed avl data feed validator", { tableName, feedId, sampleSize });
+        logger.info("Executed avl data feed validator", { tableName, subscriptionId, sampleSize });
 
         return {
             statusCode: 200,
             body: JSON.stringify(reportBody),
         };
     } catch (e) {
-        console.error(e);
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));

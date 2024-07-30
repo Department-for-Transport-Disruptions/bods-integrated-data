@@ -1,9 +1,9 @@
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlDataFeedValidator = new Command("invoke-avl-data-feed-validator")
-    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .addOption(STAGE_OPTION)
     .action(async (options) => {
         let { stage } = options;
 

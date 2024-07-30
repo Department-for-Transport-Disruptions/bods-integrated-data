@@ -52,20 +52,23 @@ export const getAvlSubscriptions = async (tableName: string) => {
     return avlSubscriptionsSchema.parse(subscriptions);
 };
 
-export const getAvlSubscriptionErrorData = async (tableName: string, feedId: string): Promise<AvlValidationError[]> => {
-    const now = new Date();
-    const past24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+export const getAvlSubscriptionErrorData = async (
+    tableName: string,
+    subscriptionId: string,
+): Promise<AvlValidationError[]> => {
+    const now = getDate();
+    const past24Hours = now.subtract(24, "hours");
 
     const subscriptionErrors = await recursiveScan({
         TableName: tableName,
-        FilterExpression: "#PK = :feedId AND #timestamp > :past24Hours",
+        FilterExpression: "#PK = :subscriptionId AND #timestamp > :past24Hours",
         ExpressionAttributeNames: {
             "#PK": "PK",
             "#timestamp": "timestamp",
         },
         ExpressionAttributeValues: {
-            ":feedId": { S: feedId },
-            ":past24Hours": { N: past24Hours.toString() },
+            ":subscriptionId": { S: subscriptionId },
+            ":past24Hours": { N: past24Hours.toISOString() },
         },
     });
 

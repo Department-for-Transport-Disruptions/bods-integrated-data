@@ -114,7 +114,7 @@ resource "aws_apigatewayv2_route" "integrated_data_avl_producer_validate_api_rou
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_producer_datafeed_validator_api_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_avl_producer_api.id
-  route_key = "GET /subscriptions/{feedId}/validate-profile"
+  route_key = "GET /subscriptions/{subscriptionId}/validate-profile"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_producer_api_integration_datafeed_validator.id}"
 }
 

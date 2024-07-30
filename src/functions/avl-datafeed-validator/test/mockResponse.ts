@@ -19,8 +19,7 @@ export const mockResponse = {
             errors: [
                 {
                     level: "CRITICAL",
-                    details:
-                        "Mandatory elements missing in 'DestinationRef' field. DestinationRef is mandatory to provide. This shall be a valid ATCOCode from the NaPTAN database. Please make sure the value provided here matches the corresponding DestinationRef element in your timetables data.",
+                    details: "Required",
                     identifier: {
                         line_ref: "ATB:Line:60",
                         name: "DestinationRef",
@@ -31,8 +30,7 @@ export const mockResponse = {
                 },
                 {
                     level: "NON-CRITICAL",
-                    details:
-                        "Mandatory elements missing in 'BlockRef' field. BlockRef is mandatory to provide. Please make sure that the value provided here matches the corresponding Block element in your timetables data.",
+                    details: "Required",
                     identifier: {
                         line_ref: "ATB:Line:60",
                         name: "BlockRef",
