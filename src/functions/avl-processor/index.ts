@@ -78,12 +78,12 @@ const uploadValidationErrorsToDatabase = async (
 export const processSqsRecord = async (
     record: S3EventRecord,
     dbClient: KyselyDb,
-    tableName: string,
+    avlSubscriptionTableName: string,
     avlValidationErrorTableName: string,
 ) => {
     const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
 
-    const subscription = await getAvlSubscription(subscriptionId, tableName);
+    const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
     if (subscription.status !== "LIVE") {
         throw new Error(`Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`);
@@ -149,10 +149,15 @@ export const processSqsRecord = async (
 };
 
 export const handler = async (event: SQSEvent) => {
-    const { TABLE_NAME: tableName, AVL_VALIDATION_ERROR_TABLE_NAME: avlValidationErrorTableName } = process.env;
+    const {
+        AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName,
+        AVL_VALIDATION_ERROR_TABLE_NAME: avlValidationErrorTableName,
+    } = process.env;
 
-    if (!tableName || !avlValidationErrorTableName) {
-        throw new Error("Missing env vars: TABLE_NAME and AVL_VALIDATION_ERROR_TABLE_NAME must be set.");
+    if (!avlSubscriptionTableName || !avlValidationErrorTableName) {
+        throw new Error(
+            "Missing env vars: AVL_SUBSCRIPTION_TABLE_NAME and AVL_VALIDATION_ERROR_TABLE_NAME must be set.",
+        );
     }
 
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
@@ -164,7 +169,7 @@ export const handler = async (event: SQSEvent) => {
             event.Records.map((record) =>
                 Promise.all(
                     (JSON.parse(record.body) as S3Event).Records.map((s3Record) =>
-                        processSqsRecord(s3Record, dbClient, tableName, avlValidationErrorTableName),
+                        processSqsRecord(s3Record, dbClient, avlSubscriptionTableName, avlValidationErrorTableName),
                     ),
                 ),
             ),

@@ -89,7 +89,7 @@ module "integrated_data_avl_processor_function" {
     DB_PORT                         = var.db_port
     DB_SECRET_ARN                   = var.db_secret_arn
     DB_NAME                         = var.db_name
-    TABLE_NAME                      = var.avl_subscription_table_name
+    AVL_SUBSCRIPTION_TABLE_NAME     = var.avl_subscription_table_name
     AVL_VALIDATION_ERROR_TABLE_NAME = var.avl_validation_error_table_name
   }
 }
