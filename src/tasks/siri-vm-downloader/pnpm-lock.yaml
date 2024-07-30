@@ -23,9 +23,6 @@ dependencies:
   zod:
     specifier: ^3.23.8
     version: 3.23.8
-  zod-validation-error:
-    specifier: ^3.3.0
-    version: 3.3.0(zod@3.23.8)
 
 devDependencies:
   '@types/aws-lambda':
@@ -513,15 +510,6 @@ packages:
   /vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
-    dev: false
-
-  /zod-validation-error@3.3.0(zod@3.23.8):
-    resolution: {integrity: sha512-Syib9oumw1NTqEv4LT0e6U83Td9aVRk9iTXPUQr1otyV1PuXQKOvOwhMNqZIq5hluzHP2pMgnOmHEo7kPdI2mw==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      zod: ^3.18.0
-    dependencies:
-      zod: 3.23.8
     dev: false
 
   /zod@3.23.8:

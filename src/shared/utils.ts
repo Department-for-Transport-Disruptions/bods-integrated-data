@@ -80,8 +80,7 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, 
             const parsedItem = schema.safeParse(item);
 
             if (!parsedItem.success) {
-                logger.warn("Error parsing item");
-                logger.warn(fromZodError(parsedItem.error).toString());
+                logger.warn(`Error parsing item: ${fromZodError(parsedItem.error).toString()}`);
                 putMetricData(`custom/${namespace}-${process.env.STAGE}`, [
                     { MetricName: "MakeFilteredArraySchemaParseError", Value: 1 },
                 ]);

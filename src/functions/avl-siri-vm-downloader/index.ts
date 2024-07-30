@@ -15,7 +15,6 @@ import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/databa
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
-import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     createBoundingBoxValidation,
@@ -23,7 +22,7 @@ import {
     createNmTokenValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
-import { ALBEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 import { createResponseStream, streamifyResponse } from "./utils";
 
@@ -90,7 +89,7 @@ const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<APIG
     };
 };
 
-export const handler = streamifyResponse(async (event: APIGatewayProxyEvent | ALBEvent, responseStream) => {
+export const handler = streamifyResponse(async (event, responseStream) => {
     try {
         const { BUCKET_NAME: bucketName, AVL_CONSUMER_API_KEY_ARN: avlConsumerApiKeyArn } = process.env;
 
@@ -98,17 +97,7 @@ export const handler = streamifyResponse(async (event: APIGatewayProxyEvent | AL
             throw new Error("Missing env vars - BUCKET_NAME and AVL_CONSUMER_API_KEY_ARN must be set");
         }
 
-        if (isApiGatewayEvent(event)) {
-            await validateApiKey(avlConsumerApiKeyArn, event.headers);
-        } else {
-            if (event.path.split("/")[1] === "health") {
-                logger.info("Load balancer healthcheck...");
-
-                return createResponseStream(responseStream, {
-                    statusCode: 200,
-                });
-            }
-        }
+        await validateApiKey(avlConsumerApiKeyArn, event.headers);
 
         const {
             downloadTfl,

@@ -256,6 +256,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_downloader_alb_target_group_arn     = module.integrated_data_internal_api.alb_target_group_arn
   generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
+  alb_sg_id                                   = module.integrated_data_internal_api.alb_sg_id
 }
 
 module "integrated_data_avl_data_producer_api" {

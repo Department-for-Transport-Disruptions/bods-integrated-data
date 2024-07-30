@@ -16,6 +16,7 @@ on:
         options:
           - bods-avl-processor
           - siri-vm-generator
+          - siri-vm-downloader
 
 name: Deploy ECS Task
 

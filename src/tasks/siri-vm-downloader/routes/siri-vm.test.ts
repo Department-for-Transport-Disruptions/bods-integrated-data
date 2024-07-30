@@ -1,10 +1,10 @@
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { KyselyDb } from "@bods-integrated-data/shared/database";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
-import { APIGatewayProxyEvent, Context } from "aws-lambda";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { handler } from ".";
+import { downloadSiriVm } from "./siri-vm";
 
 describe("avl-siri-vm-downloader-endpoint", () => {
     const mocks = vi.hoisted(() => {
@@ -14,25 +14,29 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             destroy: vi.fn(),
             mockDbClient: {
                 destroy: vi.fn(),
-            },
-            createResponseStream: vi.fn((_responseStream, response) => response),
-            streamifyResponse: vi.fn((handler) => handler),
+            } as unknown as KyselyDb,
+            fastify: {
+                log: {
+                    warn: vi.fn(),
+                    error: vi.fn(),
+                },
+            } as unknown as FastifyInstance,
+            request: {
+                query: {},
+            } as unknown as FastifyRequest,
+            reply: {
+                headers: vi.fn(),
+                send: vi.fn(),
+                redirect: vi.fn(),
+                badRequest: vi.fn(),
+                internalServerError: vi.fn(),
+            } as unknown as FastifyReply,
         };
     });
-
-    vi.mock("./utils", async () => ({
-        createResponseStream: mocks.createResponseStream,
-        streamifyResponse: mocks.streamifyResponse,
-    }));
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getPresignedUrl: mocks.getPresignedUrl,
-    }));
-
-    vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
-        ...(await importOriginal<typeof import("@bods-integrated-data/shared/database")>()),
-        getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
     }));
 
     vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
@@ -44,23 +48,10 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     const mockBucketName = "mock-bucket";
-    let mockRequest: APIGatewayProxyEvent;
-
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
-        logger: {
-            warn: vi.fn(),
-            error: vi.fn(),
-        },
-    }));
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
         process.env.AVL_CONSUMER_API_KEY_ARN = "avl-consumer-api-key-arn";
-        mockRequest = {
-            headers: {
-                "x-api-key": "mock-api-key",
-            },
-        } as unknown as APIGatewayProxyEvent;
         getSecretMock.mockResolvedValue("mock-api-key");
     });
 
@@ -73,42 +64,12 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler(mockRequest, {} as Context, () => undefined);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
-        expect(logger.error).toHaveBeenCalledWith(
+        await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+        expect(mocks.reply.internalServerError).toHaveBeenCalledOnce();
+        expect(mocks.fastify.log.error).toHaveBeenCalledWith(
             "There was a problem with the SIRI-VM downloader endpoint",
             expect.any(Error),
         );
-    });
-
-    it("returns a 500 when the AVL_CONSUMER_API_KEY_ARN environment variable is missing", async () => {
-        process.env.AVL_CONSUMER_API_KEY_ARN = "";
-
-        const response = await handler(mockRequest, {} as Context, () => undefined);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the SIRI-VM downloader endpoint",
-            expect.any(Error),
-        );
-    });
-
-    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
-        mockRequest.headers["x-api-key"] = key;
-        mockRequest.queryStringParameters = {
-            operatorRef: "1",
-        };
-
-        const response = await handler(mockRequest, {} as Context, () => undefined);
-        expect(response).toEqual({
-            statusCode: 401,
-            body: JSON.stringify({ errors: ["Unauthorized"] }),
-        });
     });
 
     describe("fetching SIRI-VM in-place", () => {
@@ -116,13 +77,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
-            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                statusCode: 302,
-                headers: {
-                    Location: mockPresignedUrl,
-                },
-                body: "",
-            });
+            await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
 
             expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
                 {
@@ -133,24 +88,20 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 },
                 3600,
             );
-            expect(logger.error).not.toHaveBeenCalled();
+            expect(mocks.reply.redirect).toBeCalledWith(mockPresignedUrl, 302);
+
+            expect(mocks.fastify.log.error).not.toHaveBeenCalled();
         });
 
         it("returns a 200 with SIRI-VM TfL in-place when the downloadTfl param is true", async () => {
             const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_TFL_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
-            mockRequest.queryStringParameters = {
+            mocks.request.query = {
                 downloadTfl: "true",
             };
 
-            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                statusCode: 302,
-                headers: {
-                    Location: mockPresignedUrl,
-                },
-                body: "",
-            });
+            await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
 
             expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
                 {
@@ -161,17 +112,17 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 },
                 3600,
             );
-            expect(logger.error).not.toHaveBeenCalled();
+            expect(mocks.reply.redirect).toBeCalledWith(mockPresignedUrl, 302);
+
+            expect(mocks.fastify.log.error).not.toHaveBeenCalled();
         });
 
         it("returns a 500 when an unexpected error occurs", async () => {
             mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
 
-            const response = await handler(mockRequest, {} as Context, () => undefined);
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+            expect(mocks.reply.internalServerError).toHaveBeenCalledOnce();
         });
     });
 
@@ -182,15 +133,16 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     boundingBox: "1,2,3,4",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -203,22 +155,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the operatorRef query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     operatorRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -231,22 +184,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
-            it("returns a 200 with filtered data when the operatorRef query param is used", async () => {
+            it("returns a 200 with filtered data when the operatorRef query param is used with multiple refs", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     operatorRef: "1,2,3",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -259,22 +213,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the vehicleRef query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     vehicleRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -287,22 +242,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the lineRef query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     lineRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -315,22 +271,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the producerRef query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     producerRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -343,22 +300,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the originRef query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     originRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -371,22 +329,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the destinationRef query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     destinationRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -399,22 +358,23 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     "1",
                     undefined,
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
 
             it("returns a 200 with filtered data when the subscriptionId query param is used", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     subscriptionId: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.headers).toBeCalledWith({
+                    "Content-Type": "application/xml",
                 });
+                expect(mocks.reply.send).toBeCalledWith("siri-output");
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
@@ -427,7 +387,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     "1",
                 );
-                expect(logger.error).not.toHaveBeenCalled();
+                expect(mocks.fastify.log.error).not.toHaveBeenCalled();
             });
         });
 
@@ -474,30 +434,28 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     "destinationRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
                 ],
             ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
-                mockRequest.queryStringParameters = params;
-                const response = await handler(mockRequest, {} as Context, () => undefined);
-                expect(response).toEqual({
-                    statusCode: 400,
-                    body: JSON.stringify({ errors: [expectedErrorMessage] }),
-                });
-                expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+                mocks.request.query = params;
+
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
+
+                expect(mocks.reply.badRequest).toHaveBeenCalledWith(expectedErrorMessage);
+
+                expect(mocks.fastify.log.warn).toHaveBeenCalledWith(expect.stringContaining("Invalid request"));
                 expect(getAvlDataForSiriVmMock).not.toHaveBeenCalled();
             });
 
             it("returns a 500 when an unexpected error occurs", async () => {
                 getAvlDataForSiriVmMock.mockRejectedValueOnce(new Error("Database fetch error"));
 
-                mockRequest.queryStringParameters = {
+                mocks.request.query = {
                     operatorRef: "1",
                 };
 
-                const response = await handler(mockRequest, {} as Context, () => undefined);
-                expect(response).toEqual({
-                    statusCode: 500,
-                    body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-                });
+                await downloadSiriVm(mocks.fastify, mocks.mockDbClient, mocks.request, mocks.reply);
 
-                expect(logger.error).toHaveBeenCalledWith(
+                expect(mocks.reply.internalServerError).toHaveBeenCalledWith("An unexpected error occurred");
+
+                expect(mocks.fastify.log.error).toHaveBeenCalledWith(
                     "There was a problem with the SIRI-VM downloader endpoint",
                     expect.any(Error),
                 );

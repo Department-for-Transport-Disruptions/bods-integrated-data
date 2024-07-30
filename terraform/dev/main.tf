@@ -235,6 +235,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_downloader_desired_task_count       = 1
   siri_vm_downloader_alb_target_group_arn     = module.integrated_data_internal_api.alb_target_group_arn
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
+  alb_sg_id                                   = module.integrated_data_internal_api.alb_sg_id
 }
 
 module "integrated_data_avl_subscription_table" {

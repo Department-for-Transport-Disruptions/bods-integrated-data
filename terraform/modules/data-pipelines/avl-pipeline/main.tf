@@ -558,6 +558,18 @@ resource "aws_security_group" "siri_vm_downloader_sg" {
   vpc_id = var.vpc_id
 }
 
+resource "aws_vpc_security_group_ingress_rule" "siri_vm_downloader_sg_allow_alb_ingress" {
+  count = var.environment != "local" ? 1 : 0
+
+  security_group_id            = aws_security_group.siri_vm_downloader_sg[0].id
+  referenced_security_group_id = var.alb_sg_id
+
+  from_port = 8080
+  to_port   = 8080
+
+  ip_protocol = "tcp"
+}
+
 resource "aws_vpc_security_group_egress_rule" "siri_vm_downloader_sg_allow_all_egress_ipv4" {
   count = var.environment != "local" ? 1 : 0
 
