@@ -28,7 +28,7 @@
         "clean-deep": "^3.4.0",
         "command-exists": "^1.2.9",
         "dayjs": "^1.11.10",
-        "fast-xml-parser": "^4.4.0",
+        "fast-xml-parser": "^4.4.1",
         "gtfs-realtime-bindings": "^1.1.1",
         "kysely": "^0.27.3",
         "pg": "^8.11.3",

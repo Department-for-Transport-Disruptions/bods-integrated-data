@@ -14,7 +14,7 @@
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
         "axios": "^1.7.2",
-        "fast-xml-parser": "^4.3.5",
+        "fast-xml-parser": "^4.4.1",
         "mockdate": "^3.0.5",
         "zod": "^3.23.8"
     },
