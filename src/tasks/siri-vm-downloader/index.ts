@@ -1,12 +1,11 @@
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { fastifySensible } from "@fastify/sensible";
 import Fastify from "fastify";
-import Pino from "pino";
 import healthCheck from "./routes/health";
 import downloadSiriVm from "./routes/siri-vm";
 
 const fastify = Fastify({
-    logger: Pino(),
+    logger: true,
 });
 
 const { PORT: port = "8080", STAGE: stage } = process.env;
