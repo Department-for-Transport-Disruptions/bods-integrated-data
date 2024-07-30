@@ -94,4 +94,4 @@ export const REGIONS: Record<
 };
 
 export const tflOperatorRef = "TFLO";
-export const avlSubscriptionStatuses = ["LIVE", "ERROR", "INACTIVE"] as const;
+export const avlSubscriptionStatuses = ["live", "error", "inactive"] as const;

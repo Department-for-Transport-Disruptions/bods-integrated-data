@@ -71,7 +71,7 @@ describe("sendTerminateSubscriptionRequestAndUpdateDynamo", () => {
             description: "description",
             publisherId: "mock-publisher-id",
             shortDescription: "shortDescription",
-            status: "INACTIVE",
+            status: "inactive",
             url: "https://mock-data-producer.com",
             serviceEndDatetime: "2024-03-11T15:20:02.093Z",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",

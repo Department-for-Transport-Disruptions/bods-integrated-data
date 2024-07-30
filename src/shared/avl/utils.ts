@@ -36,7 +36,7 @@ export const isActiveAvlSubscription = async (subscriptionId: string, tableName:
         SK: "SUBSCRIPTION",
     });
 
-    return subscription?.status === "LIVE";
+    return subscription?.status === "live";
 };
 
 export const getAvlSubscriptions = async (tableName: string) => {

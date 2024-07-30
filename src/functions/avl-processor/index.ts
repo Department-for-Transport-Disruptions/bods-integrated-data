@@ -35,7 +35,7 @@ export const processSqsRecord = async (record: S3EventRecord, dbClient: KyselyDb
 
     const subscription = await getAvlSubscription(subscriptionId, tableName);
 
-    if (subscription.status !== "LIVE") {
+    if (subscription.status !== "live") {
         throw new Error(`Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`);
     }
 

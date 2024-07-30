@@ -80,7 +80,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             );
         } catch (e) {
             if (e instanceof AxiosError) {
-                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
 
                 logger.error(
                     `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
