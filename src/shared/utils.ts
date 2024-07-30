@@ -1,4 +1,6 @@
+import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import { ZodSchema, z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { recursiveScan } from "./dynamo";
@@ -78,7 +80,7 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, 
             const parsedItem = schema.safeParse(item);
 
             if (!parsedItem.success) {
-                logger.warn("Error parsing item", parsedItem.error.format());
+                logger.warn(`Error parsing item: ${fromZodError(parsedItem.error).toString()}`);
                 putMetricData(`custom/${namespace}-${process.env.STAGE}`, [
                     { MetricName: "MakeFilteredArraySchemaParseError", Value: 1 },
                 ]);
@@ -122,3 +124,6 @@ export const getMockDataProducerSubscriptions = async (tableName: string) => {
 export const createAuthorizationHeader = (username: string, password: string) => {
     return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
 };
+
+export const isApiGatewayEvent = (event: APIGatewayProxyEvent | ALBEvent): event is APIGatewayProxyEvent =>
+    !!(event as APIGatewayProxyEvent).pathParameters;

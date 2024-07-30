@@ -59,11 +59,7 @@ resource "aws_lb_target_group" "internal_avl_ingestion_alb_tg" {
   port        = 80
 
   health_check {
-    path                = "/health"
-    interval            = 60
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    timeout             = 5
+    enabled = false
   }
 }
 
@@ -102,29 +98,6 @@ resource "aws_lb_listener" "internal_avl_ingestion_alb_listener" {
   }
 }
 
-resource "aws_lb_target_group" "internal_avl_ingestion_nlb_tg" {
-  name        = "avl-data-nlb-tg-${var.environment}"
-  target_type = "alb"
-  port        = 80
-  protocol    = "TCP"
-  vpc_id      = var.vpc_id
-
-  health_check {
-    path                = "/health"
-    interval            = 60
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    timeout             = 5
-  }
-}
-
-resource "aws_lb_target_group_attachment" "internal_avl_ingestion_nlb_tg_attachment" {
-  target_group_arn = aws_lb_target_group.internal_avl_ingestion_nlb_tg.arn
-  target_id        = aws_lb.internal_avl_ingestion_alb.id
-
-  depends_on = [aws_lb_listener.internal_avl_ingestion_alb_listener]
-}
-
 resource "aws_lb" "internal_avl_ingestion_nlb" {
   name               = "avl-data-nlb-${var.environment}"
   internal           = true
@@ -134,6 +107,29 @@ resource "aws_lb" "internal_avl_ingestion_nlb" {
 
 
   enable_deletion_protection = var.environment == "prod"
+}
+
+resource "aws_lb_target_group" "internal_avl_ingestion_nlb_tg" {
+  name        = "avl-data-nlb-tg-${var.environment}"
+  target_type = "alb"
+  port        = 80
+  protocol    = "TCP"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/health"
+    interval            = 120
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+  }
+
+  depends_on = [aws_lb.internal_avl_ingestion_nlb, aws_lb_listener.internal_avl_ingestion_alb_listener]
+}
+
+resource "aws_lb_target_group_attachment" "internal_avl_ingestion_nlb_tg_attachment" {
+  target_group_arn = aws_lb_target_group.internal_avl_ingestion_nlb_tg.arn
+  target_id        = aws_lb.internal_avl_ingestion_alb.id
 }
 
 resource "aws_lb_listener" "internal_avl_ingestion_nlb_listener" {

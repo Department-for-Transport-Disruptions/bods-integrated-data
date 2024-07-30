@@ -1,0 +1,25 @@
+{
+    "name": "@bods-integrated-data/siri-vm-downloader-task",
+    "version": "0.1.0",
+    "description": "ECS task for downloading SIRI-VM data",
+    "scripts": {
+        "build": "rm -rf ./dist && tsc && node ./esbuild.mjs && cp -R ../../shared/xsd dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "@fastify/sensible": "^5.6.0",
+        "fastify": "^4.28.1",
+        "kysely": "0.27.3",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19",
+        "typescript": "^5.3.3"
+    }
+}
