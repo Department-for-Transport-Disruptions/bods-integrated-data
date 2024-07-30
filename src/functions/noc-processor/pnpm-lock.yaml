@@ -9,8 +9,8 @@ dependencies:
     specifier: workspace:^
     version: link:../../shared
   fast-xml-parser:
-    specifier: ^4.3.5
-    version: 4.3.6
+    specifier: ^4.4.1
+    version: 4.4.1
   kysely:
     specifier: ^0.27.3
     version: 0.27.3
@@ -41,8 +41,8 @@ packages:
       undici-types: 5.26.5
     dev: true
 
-  /fast-xml-parser@4.3.6:
-    resolution: {integrity: sha512-M2SovcRxD4+vC493Uc2GZVcZaj66CCJhWurC4viynVSTvrpErCShNcDz1lAho6n9REQKvL/ll4A4/fw6Y9z8nw==}
+  /fast-xml-parser@4.4.1:
+    resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
