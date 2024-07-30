@@ -59,7 +59,7 @@ export const handler = async () => {
         }
 
         const subscriptions = await getAvlSubscriptions(tableName);
-        const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "INACTIVE");
+        const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "inactive");
 
         if (!nonTerminatedSubscriptions) {
             logger.info("No subscriptions found in DynamoDb to validate");
@@ -76,10 +76,10 @@ export const handler = async () => {
                 );
 
                 if (isHeartbeatValid) {
-                    if (subscription.status !== "LIVE") {
+                    if (subscription.status !== "live") {
                         await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                             ...subscription,
-                            status: "LIVE",
+                            status: "live",
                         });
                     }
 
@@ -88,7 +88,7 @@ export const handler = async () => {
 
                 await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                     ...subscription,
-                    status: "ERROR",
+                    status: "error",
                 });
 
                 try {

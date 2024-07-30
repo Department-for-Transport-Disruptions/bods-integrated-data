@@ -146,7 +146,7 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
 
         {
             ...subscription,
-            status: "INACTIVE",
+            status: "inactive",
             serviceEndDatetime: currentTime,
             lastModifiedDateTime: currentTime,
         },
