@@ -1,3 +1,4 @@
+import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManager from "@bods-integrated-data/shared/secretsManager";
@@ -32,10 +33,18 @@ describe("avl-feed-validator", () => {
         getSecret: vi.fn(),
     }));
 
+    vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
+        sendTerminateSubscriptionRequestAndUpdateDynamo: vi.fn(),
+    }));
+
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const getParameterSpy = vi.spyOn(ssm, "getParameter");
     const getSecretSpy = vi.spyOn(secretsManager, "getSecret");
+    const sendTerminateSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(
+        unsubscribe,
+        "sendTerminateSubscriptionRequestAndUpdateDynamo",
+    );
 
     const axiosSpy = vi.spyOn(mockedAxios, "post");
 
@@ -51,6 +60,7 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toBeCalledTimes(2);
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -87,12 +97,13 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toBeCalledTimes(2);
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("should do update subscriptions table if subscription has valid heartbeat notification associated with it but the status is not LIVE", async () => {
+    it("should update subscriptions table if subscription has valid heartbeat notification associated with it but the status is not LIVE", async () => {
         const avlSubscriptions: AvlSubscription[] = [
             {
                 PK: "mock-subscription-id-1",
@@ -112,6 +123,7 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toHaveBeenCalledTimes(2);
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toHaveBeenCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
@@ -167,6 +179,24 @@ describe("avl-feed-validator", () => {
         } as AxiosResponse);
 
         await handler();
+
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+            "mock-subscription-id-1",
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "LIVE",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+            "test-dynamo-table",
+        );
 
         expect(getParameterSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenCalledWith(
@@ -235,6 +265,24 @@ describe("avl-feed-validator", () => {
 
         await expect(handler()).rejects.toThrowError(
             "Cannot resubscribe to data producer as username or password is missing for subscription ID: mock-subscription-id-1.",
+        );
+
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+            "mock-subscription-id-1",
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "LIVE",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+            "test-dynamo-table",
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
@@ -310,5 +358,78 @@ describe("avl-feed-validator", () => {
         });
         expect(axiosSpy).toHaveBeenCalledOnce();
         expect(axiosSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should resubscribe to the data producer even if the attempt to unsubscribe has failed", async () => {
+        const avlSubscriptions: AvlSubscription[] = [
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "LIVE",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+            {
+                PK: "mock-subscription-id-2",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "LIVE",
+                requestorRef: null,
+                serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                publisherId: "test-publisher-id-2",
+                apiKey: "mock-api-key-2",
+            },
+        ];
+
+        recursiveScanSpy.mockResolvedValue(avlSubscriptions);
+
+        sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({});
+
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
+        getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
+
+        axiosSpy.mockResolvedValue({
+            status: 200,
+        } as AxiosResponse);
+
+        await handler();
+
+        expect(getParameterSpy).toHaveBeenCalledTimes(2);
+        expect(axiosSpy).toHaveBeenCalledWith(
+            "www.avl-service.com/subscriptions",
+            {
+                dataProducerEndpoint: "https://mock-data-producer.com/",
+                description: "test-description",
+                password: "test-password",
+                requestorRef: null,
+                shortDescription: "test-short-description",
+                subscriptionId: "mock-subscription-id-1",
+                username: "test-password",
+                publisherId: "test-publisher-id-1",
+            },
+            {
+                headers: {
+                    "x-api-key": "mock-api-key",
+                },
+            },
+        );
+        expect(putDynamoItemSpy).toHaveBeenCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
+            PK: "mock-subscription-id-1",
+            description: "test-description",
+            heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+            requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            shortDescription: "test-short-description",
+            status: "ERROR",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id-1",
+            apiKey: "mock-api-key-1",
+        });
     });
 });
