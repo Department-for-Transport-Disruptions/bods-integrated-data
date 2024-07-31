@@ -68,8 +68,10 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
 
             if (returnPayloadJson.statusCode !== 204) {
                 unsuccessfulSubscriptions.push(subscription);
-                return;
             }
+
+            // Enforce a wait time to avoid throttling errors from data producers
+            await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
         await writeFile("unsubscribe-unsuccessful-subscriptions.json", JSON.stringify(unsuccessfulSubscriptions));

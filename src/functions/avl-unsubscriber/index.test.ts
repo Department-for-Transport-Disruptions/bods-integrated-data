@@ -35,7 +35,7 @@ describe("avl-unsubscriber", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
-        sendTerminateSubscriptionRequestAndUpdateDynamo: vi.fn(),
+        sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
@@ -45,10 +45,7 @@ describe("avl-unsubscriber", () => {
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const deleteParametersSpy = vi.spyOn(ssm, "deleteParameters");
-    const sendTerminateSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(
-        unsubscribe,
-        "sendTerminateSubscriptionRequestAndUpdateDynamo",
-    );
+    const sendTerminateSubscriptionRequestSpy = vi.spyOn(unsubscribe, "sendTerminateSubscriptionRequest");
     const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     MockDate.set("2024-03-11T15:20:02.093Z");
@@ -91,11 +88,10 @@ describe("avl-unsubscriber", () => {
 
         await handler(mockUnsubscribeEvent);
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
             mockUnsubscribeEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
-            "test-dynamo-table",
         );
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
@@ -137,7 +133,7 @@ describe("avl-unsubscriber", () => {
         });
         expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
@@ -157,7 +153,7 @@ describe("avl-unsubscriber", () => {
 
         getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
-        sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
+        sendTerminateSubscriptionRequestSpy.mockRejectedValue({ statusCode: 500 });
 
         const response = await handler(mockUnsubscribeEvent);
         expect(response).toEqual({
@@ -165,11 +161,10 @@ describe("avl-unsubscriber", () => {
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
             mockUnsubscribeEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
-            "test-dynamo-table",
         );
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
