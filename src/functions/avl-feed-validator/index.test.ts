@@ -34,17 +34,14 @@ describe("avl-feed-validator", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
-        sendTerminateSubscriptionRequestAndUpdateDynamo: vi.fn(),
+        sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const getParameterSpy = vi.spyOn(ssm, "getParameter");
     const getSecretSpy = vi.spyOn(secretsManager, "getSecret");
-    const sendTerminateSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(
-        unsubscribe,
-        "sendTerminateSubscriptionRequestAndUpdateDynamo",
-    );
+    const sendTerminateSubscriptionRequestSpy = vi.spyOn(unsubscribe, "sendTerminateSubscriptionRequest");
 
     const axiosSpy = vi.spyOn(mockedAxios, "post");
 
@@ -60,7 +57,7 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toBeCalledTimes(2);
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -97,7 +94,7 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toBeCalledTimes(2);
         expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
         expect(axiosSpy).not.toHaveBeenCalledOnce();
@@ -123,7 +120,7 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toHaveBeenCalledTimes(2);
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toHaveBeenCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
@@ -180,23 +177,19 @@ describe("avl-feed-validator", () => {
 
         await handler();
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
-            "mock-subscription-id-1",
-            {
-                PK: "mock-subscription-id-1",
-                url: "https://mock-data-producer.com/",
-                description: "test-description",
-                shortDescription: "test-short-description",
-                status: "live",
-                requestorRef: null,
-                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
-                publisherId: "test-publisher-id-1",
-                apiKey: "mock-api-key-1",
-            },
-            "test-dynamo-table",
-        );
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith("mock-subscription-id-1", {
+            PK: "mock-subscription-id-1",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "live",
+            requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+            publisherId: "test-publisher-id-1",
+            apiKey: "mock-api-key-1",
+        });
 
         expect(getParameterSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenCalledWith(
@@ -267,23 +260,19 @@ describe("avl-feed-validator", () => {
             "Cannot resubscribe to data producer as username or password is missing for subscription ID: mock-subscription-id-1.",
         );
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
-            "mock-subscription-id-1",
-            {
-                PK: "mock-subscription-id-1",
-                url: "https://mock-data-producer.com/",
-                description: "test-description",
-                shortDescription: "test-short-description",
-                status: "live",
-                requestorRef: null,
-                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
-                publisherId: "test-publisher-id-1",
-                apiKey: "mock-api-key-1",
-            },
-            "test-dynamo-table",
-        );
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith("mock-subscription-id-1", {
+            PK: "mock-subscription-id-1",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "live",
+            requestorRef: null,
+            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+            heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+            publisherId: "test-publisher-id-1",
+            apiKey: "mock-api-key-1",
+        });
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
@@ -389,7 +378,7 @@ describe("avl-feed-validator", () => {
 
         recursiveScanSpy.mockResolvedValue(avlSubscriptions);
 
-        sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({});
+        sendTerminateSubscriptionRequestSpy.mockRejectedValue({});
 
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });

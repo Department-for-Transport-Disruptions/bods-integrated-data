@@ -5,9 +5,11 @@ import {
     createValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
@@ -60,7 +62,21 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             apiKey: subscription.apiKey,
         };
         try {
-            await sendTerminateSubscriptionRequestAndUpdateDynamo(subscriptionId, subscriptionDetail, tableName);
+            await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail);
+
+            const currentTime = getDate().toISOString();
+            await putDynamoItem(
+                tableName,
+                subscriptionId,
+                "SUBSCRIPTION",
+
+                {
+                    ...subscription,
+                    status: "inactive",
+                    serviceEndDatetime: currentTime,
+                    lastModifiedDateTime: currentTime,
+                },
+            );
         } catch (e) {
             await putMetricData("custom/CAVLMetrics", [
                 {

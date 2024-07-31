@@ -1,4 +1,4 @@
-import { sendTerminateSubscriptionRequestAndUpdateDynamo } from "@bods-integrated-data/shared/avl/unsubscribe";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
@@ -92,7 +92,7 @@ export const handler = async () => {
                 });
 
                 try {
-                    await sendTerminateSubscriptionRequestAndUpdateDynamo(subscription.PK, subscription, tableName);
+                    await sendTerminateSubscriptionRequest(subscription.PK, subscription);
                 } catch (e) {
                     logger.warn(
                         `An error occurred when trying to unsubscribe from subscription with ID: ${subscription.PK}. Error ${e}`,
