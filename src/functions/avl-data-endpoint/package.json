@@ -13,7 +13,7 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "fast-xml-parser": "^4.1.2",
+        "fast-xml-parser": "^4.4.1",
         "mockdate": "^3.0.5",
         "@types/xml2js": "^0.4.14",
         "js2xmlparser": "^5.0.0",

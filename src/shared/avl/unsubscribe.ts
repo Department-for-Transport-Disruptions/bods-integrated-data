@@ -47,7 +47,7 @@ export const generateTerminationSubscriptionRequest = (
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
             ...terminateSubscriptionRequestJson,
         },
     };
@@ -146,7 +146,7 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
 
         {
             ...subscription,
-            status: "INACTIVE",
+            status: "inactive",
             serviceEndDatetime: currentTime,
             lastModifiedDateTime: currentTime,
         },

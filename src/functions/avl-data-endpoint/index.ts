@@ -10,6 +10,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
@@ -96,9 +97,6 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-const isApiGatewayEvent = (event: APIGatewayProxyEvent | ALBEvent): event is APIGatewayProxyEvent =>
-    !!(event as APIGatewayProxyEvent).pathParameters;
-
 export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<APIGatewayProxyResult> => {
     try {
         const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;
@@ -140,8 +138,8 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         if (Object.hasOwn(xml, "HeartbeatNotification")) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
         } else {
-            if (subscription.status !== "LIVE") {
-                logger.error(`Subscription: ${subscriptionId} is not LIVE, data will not be processed...`);
+            if (subscription.status !== "live") {
+                logger.error(`Subscription: ${subscriptionId} is not live, data will not be processed...`);
                 return createNotFoundErrorResponse("Subscription is not live");
             }
             await uploadSiriVmToS3(body, bucketName, subscription, tableName);

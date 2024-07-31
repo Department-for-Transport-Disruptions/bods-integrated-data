@@ -49,6 +49,16 @@ module "integrated_data_vpc_dev" {
   region      = data.aws_region.current.name
 }
 
+module "integrated_data_internal_api" {
+  source = "../modules/networking/internal-api"
+
+  environment         = local.env
+  vpc_id              = module.integrated_data_vpc_dev.vpc_id
+  lb_subnet_ids       = module.integrated_data_vpc_dev.private_subnet_ids
+  external_ip_range   = local.secrets["bods_ip_range"]
+  external_account_id = local.secrets["bods_account_id"]
+}
+
 module "integrated_data_route53" {
   source = "../modules/networking/route-53"
 
@@ -170,6 +180,13 @@ module "integrated_data_gtfs_downloader" {
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
+module "integrated_data_ecs_cluster" {
+  source = "../modules/shared/ecs-cluster"
+
+  environment  = local.env
+  cluster_name = "integrated-data-ecs-cluster"
+}
+
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
@@ -180,6 +197,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_sg_id                     = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                      = module.integrated_data_aurora_db_dev.db_host
   db_reader_host               = module.integrated_data_aurora_db_dev.db_reader_host
+  cluster_id                   = module.integrated_data_ecs_cluster.cluster_id
   bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
   bods_avl_processor_frequency = 120
   bods_avl_cleardown_frequency = 60
@@ -197,6 +215,7 @@ module "integrated_data_avl_pipeline" {
   db_sg_id                                    = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                                     = module.integrated_data_aurora_db_dev.db_host
   db_reader_host                              = module.integrated_data_aurora_db_dev.db_reader_host
+  cluster_id                                  = module.integrated_data_ecs_cluster.cluster_id
   alarm_topic_arn                             = module.integrated_data_monitoring_dev.alarm_topic_arn
   ok_topic_arn                                = module.integrated_data_monitoring_dev.ok_topic_arn
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
@@ -209,6 +228,15 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 120
   avl_cleardown_frequency                     = 60
+  generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  siri_vm_downloader_image_url                = local.secrets["siri_vm_downloader_image_url"]
+  siri_vm_downloader_cpu                      = 512
+  siri_vm_downloader_memory                   = 1024
+  siri_vm_downloader_desired_task_count       = 1
+  siri_vm_downloader_alb_target_group_arn     = module.integrated_data_internal_api.alb_target_group_arn
+  avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
+  alb_sg_id                                   = module.integrated_data_internal_api.alb_sg_id
+  avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -315,27 +343,12 @@ module "integrated_data_gtfs_api" {
   domain                            = module.integrated_data_route53.public_hosted_zone_name
 }
 
-module "integrated_data_avl_consumer_api" {
-  source = "../modules/avl-consumer-api"
-
-  environment                   = local.env
-  acm_certificate_arn           = module.integrated_data_acm.acm_certificate_arn
-  domain                        = module.integrated_data_route53.public_hosted_zone_name
-  generated_siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
-  vpc_id                        = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids            = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn                 = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id                      = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host                       = module.integrated_data_aurora_db_dev.db_host
-  avl_consumer_api_key          = local.secrets["avl_consumer_api_key"]
-}
-
 module "integrated_data_cloudfront" {
   source = "../modules/networking/cloudfront"
 
   environment                          = local.env
-  avl_siri_vm_downloader_domain        = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_function_url
-  avl_siri_vm_downloader_function_name = module.integrated_data_avl_consumer_api.avl_siri_vm_downloader_lambda_name
+  avl_siri_vm_downloader_domain        = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_function_url
+  avl_siri_vm_downloader_function_name = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_lambda_name
   domain                               = module.integrated_data_route53.public_hosted_zone_name
   acm_certificate_arn                  = module.integrated_data_acm.cloudfront_acm_certificate_arn
   hosted_zone_id                       = module.integrated_data_route53.public_hosted_zone_id

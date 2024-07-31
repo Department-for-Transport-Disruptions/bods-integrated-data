@@ -52,7 +52,7 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
             ...serviceRequestJson,
         },
     };
@@ -118,7 +118,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         if (!serviceDeliveryBody) {
             logger.warn("No body was returned from data producer");
-            return createValidationErrorResponse(["No body was returned from the data producer"]);
+            return { statusCode: 200, body: JSON.stringify({ siriVersion: "Unknown" }) };
         }
 
         const parsedServiceDeliveryBody = parseXml(serviceDeliveryBody);
@@ -146,7 +146,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         if (error instanceof InvalidXmlError) {
             logger.warn("Invalid SIRI-VM XML received from the data producer", error);
-            return createValidationErrorResponse(["Invalid SIRI-VM XML received from the data producer"]);
+            return { statusCode: 200, body: JSON.stringify({ siriVersion: "Unknown" }) };
         }
 
         if (error instanceof Error) {

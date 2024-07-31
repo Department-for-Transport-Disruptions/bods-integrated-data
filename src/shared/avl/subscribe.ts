@@ -31,11 +31,12 @@ export const generateSubscriptionRequestXml = (
     messageIdentifier: string,
     dataEndpoint: string,
     requestorRef: string | null,
+    apiKey: string,
 ) => {
     const subscriptionRequestJson: AvlSubscriptionRequest = {
         SubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
-            ConsumerAddress: `${dataEndpoint}/${subscriptionId}`,
+            ConsumerAddress: `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`,
             RequestorRef: requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionContext: {
@@ -63,7 +64,7 @@ export const generateSubscriptionRequestXml = (
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
             ...subscriptionRequestJson,
         },
     };
@@ -150,6 +151,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         messageIdentifier,
         dataEndpoint,
         subscriptionDetails.requestorRef ?? null,
+        subscriptionDetails.apiKey,
     );
 
     const url =
@@ -167,7 +169,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponseBody = subscriptionResponse.data;
 
     if (!subscriptionResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
         throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
     }
 
@@ -175,16 +177,16 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
         if (parsedResponseBody.SubscriptionResponse.ResponseStatus.Status !== "true") {
-            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
             throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
         }
     } catch (error) {
         if (error instanceof InvalidXmlError) {
-            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "ERROR");
+            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
         }
 
         throw error;
     }
 
-    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "LIVE", currentTime);
+    await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "live", currentTime);
 };

@@ -136,6 +136,7 @@ resource "aws_iam_policy" "integrated_data_oidc_github_actions_policy" {
           "acm:*",
           "scheduler:*",
           "ecs:*",
+          "elasticloadbalancing:*"
         ],
         Effect   = "Allow",
         Resource = "*",

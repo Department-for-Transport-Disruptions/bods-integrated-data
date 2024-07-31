@@ -45,8 +45,8 @@ dependencies:
     specifier: ^1.11.10
     version: 1.11.10
   fast-xml-parser:
-    specifier: ^4.4.0
-    version: 4.4.0
+    specifier: ^4.4.1
+    version: 4.4.1
   gtfs-realtime-bindings:
     specifier: ^1.1.1
     version: 1.1.1
@@ -65,6 +65,9 @@ dependencies:
   zod:
     specifier: ^3.23.8
     version: 3.23.8
+  zod-validation-error:
+    specifier: ^3.3.0
+    version: 3.3.0(zod@3.23.8)
 
 devDependencies:
   '@types/aws-lambda':
@@ -4693,8 +4696,8 @@ packages:
       strnum: 1.0.5
     dev: false
 
-  /fast-xml-parser@4.4.0:
-    resolution: {integrity: sha512-kLY3jFlwIYwBNDojclKsNAC12sfD6NwW74QB2CoNGPvtVxjliYehVunB3HYyNi+n4Tt1dAcgwYvmKF/Z18flqg==}
+  /fast-xml-parser@4.4.1:
+    resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
     hasBin: true
     dependencies:
       strnum: 1.0.5
@@ -5458,6 +5461,15 @@ packages:
 
   /yallist@4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
+    dev: false
+
+  /zod-validation-error@3.3.0(zod@3.23.8):
+    resolution: {integrity: sha512-Syib9oumw1NTqEv4LT0e6U83Td9aVRk9iTXPUQr1otyV1PuXQKOvOwhMNqZIq5hluzHP2pMgnOmHEo7kPdI2mw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      zod: ^3.18.0
+    dependencies:
+      zod: 3.23.8
     dev: false
 
   /zod@3.23.8:

@@ -292,7 +292,7 @@ describe("avl-subscriber", () => {
 
     it("returns a 409 when attempting to subscribe with a subscription ID that is already active", async () => {
         getDynamoItemSpy.mockResolvedValue({
-            status: "LIVE",
+            status: "live",
         });
 
         const response = await handler(mockSubscribeEvent);

@@ -6,8 +6,10 @@ import commandExists from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { ZodIssue } from "zod";
+import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
-import { tflOperatorRef } from "../constants";
+import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
@@ -37,7 +39,7 @@ export const isActiveAvlSubscription = async (subscriptionId: string, tableName:
         SK: "SUBSCRIPTION",
     });
 
-    return subscription?.status === "LIVE";
+    return subscription?.status === "live";
 };
 
 export const getAvlSubscriptions = async (tableName: string) => {
@@ -334,7 +336,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     };
 
     const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
-    const verifiedObject = siriSchema.parse(siriVmWithoutEmptyFields);
+    const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM>> = {
         "?xml": {
@@ -347,7 +349,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-            "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+            "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
             ...verifiedObject,
         },
     };
@@ -484,6 +486,19 @@ export interface CompleteSiriObject<T> {
         "@_version": "2.0";
         "@_xmlns": "http://www.siri.org.uk/siri";
         "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
-        "@_xmlns:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
+        "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
     } & T;
 }
+
+export const getErrorDetails = (error: ZodIssue) => {
+    const validationError = fromZodIssue(error, { prefix: null, includePath: false });
+    const { path } = validationError.details[0];
+    const name = path.join(".");
+    const propertyName = path[path.length - 1];
+
+    return {
+        name,
+        message: validationError.message,
+        level: avlValidationErrorLevelMappings[propertyName] || "CRITICAL",
+    };
+};

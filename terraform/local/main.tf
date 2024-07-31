@@ -141,6 +141,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_image_url                 = "siri-vm-generator:latest"
   siri_vm_generator_frequency                 = 240
   avl_cleardown_frequency                     = 120
+  avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 
 module "integrated_data_avl_subscription_table" {
