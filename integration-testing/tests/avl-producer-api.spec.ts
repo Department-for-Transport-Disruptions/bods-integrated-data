@@ -17,9 +17,6 @@ const headers = {
     apiKey: "",
 };
 
-const mockTimestamp = "2024-01-01T00:00:00.000";
-const mockEndTimestamp = "2024-04-01T00:00:00.000";
-
 const testSubscription: AvlSubscribeMessage = {
     dataProducerEndpoint: "http://siri.ticketer.org.uk/api/vm",
     description: "Playwright test subscription",
@@ -141,6 +138,12 @@ test.describe("avl-producer-api", () => {
     });
 
     test("should post data to data endpoint", async ({ request }) => {
+        const now = new Date();
+        const endDate = new Date(now);
+        endDate.setMonth(now.getMonth() + 3);
+        const mockTimestamp = now.toISOString();
+        const mockEndTimestamp = endDate.toISOString();
+
         const subscription = await getTestSubscription();
         const mockHeartbeat = generateMockHeartbeat(testSubscription.subscriptionId, mockTimestamp);
         const mockSiri = generateMockSiriVm(testSubscription.subscriptionId, mockTimestamp, mockEndTimestamp);
