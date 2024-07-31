@@ -18,6 +18,12 @@ output "private_subnet_ids" {
   ]
 }
 
+output "public_subnet_ids" {
+  value = [
+    for subnet in aws_subnet.integrated_data_public_subnet : subnet.id
+  ]
+}
+
 output "default_sg_id" {
   value = aws_vpc.integrated_data_vpc.default_security_group_id
 }
