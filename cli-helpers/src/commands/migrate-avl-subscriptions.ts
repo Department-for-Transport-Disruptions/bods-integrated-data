@@ -146,6 +146,9 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
             } else {
                 successfulSubscriptions.push(subscription);
             }
+
+            // Enforce a wait time to avoid throttling errors from data producers
+            await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
         await writeFile("unsuccessful-subscriptions.json", JSON.stringify(unsuccessfulSubscriptions));

@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { getDate } from "../dates";
-import { putDynamoItem } from "../dynamo";
 import { logger } from "../logger";
 import { AvlSubscription } from "../schema/avl-subscribe.schema";
 import { TerminateSubscriptionRequest, terminateSubscriptionResponseSchema } from "../schema/avl-unsubscribe.schema";
@@ -85,10 +84,9 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
+export const sendTerminateSubscriptionRequest = async (
     subscriptionId: string,
     subscription: Omit<AvlSubscription, "PK" | "status">,
-    tableName: string,
 ) => {
     const currentTime = getDate().toISOString();
     const messageIdentifier = randomUUID();
@@ -137,18 +135,5 @@ export const sendTerminateSubscriptionRequestAndUpdateDynamo = async (
 
     logger.info(
         `Successfully unsubscribed from subscription ID: ${subscriptionId} - updating subscription status in DynamoDB`,
-    );
-
-    await putDynamoItem(
-        tableName,
-        subscriptionId,
-        "SUBSCRIPTION",
-
-        {
-            ...subscription,
-            status: "inactive",
-            serviceEndDatetime: currentTime,
-            lastModifiedDateTime: currentTime,
-        },
     );
 };
