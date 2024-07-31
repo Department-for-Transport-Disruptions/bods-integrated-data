@@ -35,7 +35,7 @@ describe("avl-update-endpoint", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
-        sendTerminateSubscriptionRequestAndUpdateDynamo: vi.fn(),
+        sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/avl/subscribe", () => ({
@@ -48,10 +48,7 @@ describe("avl-update-endpoint", () => {
     }));
 
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
-    const sendTerminateSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(
-        unsubscribe,
-        "sendTerminateSubscriptionRequestAndUpdateDynamo",
-    );
+    const sendTerminateSubscriptionRequestSpy = vi.spyOn(unsubscribe, "sendTerminateSubscriptionRequest");
     const sendSubscriptionRequestAndUpdateDynamoSpy = vi.spyOn(subscribe, "sendSubscriptionRequestAndUpdateDynamo");
     const addSubscriptionAuthCredsToSsmSpy = vi.spyOn(subscribe, "addSubscriptionAuthCredsToSsm");
     const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
@@ -99,11 +96,10 @@ describe("avl-update-endpoint", () => {
     it("should unsubscribe from data producer and resubscribe with new details", async () => {
         await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204, body: "" });
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
             mockUpdateEvent.pathParameters?.subscriptionId,
             expectedSubscriptionDetails,
-            "test-dynamo-table",
         );
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
@@ -124,7 +120,7 @@ describe("avl-update-endpoint", () => {
     });
 
     it("should resubscribe with new details from data producer even if unsubscribe step is unsuccessful", async () => {
-        sendTerminateSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
+        sendTerminateSubscriptionRequestSpy.mockRejectedValue({ statusCode: 500 });
 
         await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204, body: "" });
 
@@ -154,7 +150,7 @@ describe("avl-update-endpoint", () => {
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
     });
@@ -250,7 +246,7 @@ describe("avl-update-endpoint", () => {
                 body: JSON.stringify({ errors: expectedErrorMessages }),
             });
 
-            expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+            expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
             expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
             expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
         },
@@ -281,7 +277,7 @@ describe("avl-update-endpoint", () => {
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
 
-        expect(sendTerminateSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
     });
