@@ -11,15 +11,11 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
-import {
-    InvalidApiKeyError,
-    InvalidXmlError,
-    createStringLengthValidation,
-} from "@bods-integrated-data/shared/validation";
+import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { ALBEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
-import { HeartbeatNotification, dataEndpointInputSchema, heartbeatNotificationSchema } from "./heartbeat.schema";
+import { HeartbeatNotification, heartbeatNotificationSchema } from "./heartbeat.schema";
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -83,18 +79,7 @@ const parseXml = (xml: string) => {
         isArray: (tagName) => arrayProperties.includes(tagName),
     });
 
-    const parsedXml = parser.parse(xml) as Record<string, unknown>;
-
-    // Check if Siri received is either SIRI-VM Vehicle Journey data or a Heartbeat Notification
-    const parsedJson = dataEndpointInputSchema.safeParse(parsedXml.Siri);
-
-    if (!parsedJson.success) {
-        logger.error("There was an error parsing the xml from the data producer.", parsedJson.error.format());
-
-        throw new InvalidXmlError();
-    }
-
-    return parsedJson.data;
+    return parser.parse(xml);
 };
 
 export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<APIGatewayProxyResult> => {
@@ -134,9 +119,10 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         }
 
         const xml = parseXml(body);
+        const siri = xml?.Siri;
 
-        if (Object.hasOwn(xml, "HeartbeatNotification")) {
-            await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
+        if (siri?.HeartbeatNotification) {
+            await processHeartbeatNotification(heartbeatNotificationSchema.parse(siri), subscription, tableName);
         } else {
             if (subscription.status !== "live") {
                 logger.error(`Subscription: ${subscriptionId} is not live, data will not be processed...`);
@@ -158,11 +144,6 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         if (e instanceof InvalidApiKeyError) {
             logger.warn(`Unauthorized request: ${e.message}`);
             return createUnauthorizedErrorResponse();
-        }
-
-        if (e instanceof InvalidXmlError) {
-            logger.warn("Invalid SIRI-VM XML provided", e);
-            return createValidationErrorResponse(["Body must be valid SIRI-VM XML"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
