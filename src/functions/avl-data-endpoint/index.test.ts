@@ -6,7 +6,7 @@ import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
-import { mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
+import { mockEmptySiri, mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
 
 describe("AVL-data-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
@@ -81,15 +81,15 @@ describe("AVL-data-endpoint", () => {
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
 
-        expect(s3.putS3Object).toBeCalled();
-        expect(s3.putS3Object).toBeCalledWith({
+        expect(s3.putS3Object).toHaveBeenCalled();
+        expect(s3.putS3Object).toHaveBeenCalledWith({
             Body: `${testSiri}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
         });
 
-        expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+        expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
             "test-dynamodb",
             expectedSubscription.PK,
             "SUBSCRIPTION",
@@ -113,15 +113,15 @@ describe("AVL-data-endpoint", () => {
         mockEvent.body = testSiriWithSingleVehicleActivity;
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
-        expect(s3.putS3Object).toBeCalled();
-        expect(s3.putS3Object).toBeCalledWith({
+        expect(s3.putS3Object).toHaveBeenCalled();
+        expect(s3.putS3Object).toHaveBeenCalledWith({
             Body: `${testSiriWithSingleVehicleActivity}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
         });
 
-        expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+        expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
             "test-dynamodb",
             subscription.PK,
             "SUBSCRIPTION",
@@ -140,7 +140,7 @@ describe("AVL-data-endpoint", () => {
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
         });
         expect(logger.error).toHaveBeenCalledWith("There was a problem with the Data endpoint", expect.any(Error));
-        expect(s3.putS3Object).not.toBeCalled();
+        expect(s3.putS3Object).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -160,7 +160,7 @@ describe("AVL-data-endpoint", () => {
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
             });
             expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
-            expect(s3.putS3Object).not.toBeCalled();
+            expect(s3.putS3Object).not.toHaveBeenCalled();
         },
     );
 
@@ -172,20 +172,20 @@ describe("AVL-data-endpoint", () => {
             const response = await handler(mockEvent);
             expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
             expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
-            expect(s3.putS3Object).not.toBeCalled();
+            expect(s3.putS3Object).not.toHaveBeenCalled();
         },
     );
 
-    it("Throw an error when invalid SIRI-VM is provided", async () => {
-        mockEvent.body = "abc";
+    it.each(["abc", mockEmptySiri])("Does not throw an error when invalid XML is provided", async (input) => {
+        mockEvent.body = input;
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
-            statusCode: 400,
-            body: JSON.stringify({ errors: ["Body must be valid SIRI-VM XML"] }),
+            statusCode: 200,
+            body: "",
         });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM XML provided", expect.anything());
-        expect(s3.putS3Object).not.toBeCalled();
+        expect(logger.warn).not.toHaveBeenCalledWith("Invalid XML provided", expect.anything());
+        expect(s3.putS3Object).toHaveBeenCalled();
     });
 
     it("Throws an error when the subscription is not live", async () => {
@@ -208,7 +208,7 @@ describe("AVL-data-endpoint", () => {
         expect(logger.error).toHaveBeenCalledWith(
             `Subscription: ${mockSubscriptionId} is not live, data will not be processed...`,
         );
-        expect(dynamo.putDynamoItem).not.toBeCalled();
+        expect(dynamo.putDynamoItem).not.toHaveBeenCalled();
     });
 
     it("should process a valid heartbeat notification and update dynamodb with heartbeat details", async () => {
@@ -227,7 +227,7 @@ describe("AVL-data-endpoint", () => {
         };
 
         await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
-        expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+        expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
             "test-dynamodb",
             expectedSubscription.PK,
             "SUBSCRIPTION",
@@ -245,7 +245,7 @@ describe("AVL-data-endpoint", () => {
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
         expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
-        expect(dynamo.putDynamoItem).not.toBeCalled();
+        expect(dynamo.putDynamoItem).not.toHaveBeenCalled();
     });
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
@@ -291,20 +291,20 @@ describe("AVL-data-endpoint", () => {
 
         await expect(handler(mockAlbEvent)).resolves.toEqual({ statusCode: 200, body: "" });
 
-        expect(getDynamoItemSpy).toBeCalledWith("test-dynamodb", {
+        expect(getDynamoItemSpy).toHaveBeenCalledWith("test-dynamodb", {
             PK: mockSubscriptionId,
             SK: "SUBSCRIPTION",
         });
 
-        expect(s3.putS3Object).toBeCalled();
-        expect(s3.putS3Object).toBeCalledWith({
+        expect(s3.putS3Object).toHaveBeenCalled();
+        expect(s3.putS3Object).toHaveBeenCalledWith({
             Body: `${testSiri}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
         });
 
-        expect(dynamo.putDynamoItem).toBeCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+        expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
             "test-dynamodb",
             expectedSubscription.PK,
             "SUBSCRIPTION",
