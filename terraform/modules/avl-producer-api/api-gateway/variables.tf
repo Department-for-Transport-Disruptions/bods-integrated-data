@@ -63,6 +63,16 @@ variable "validate_lambda_invoke_arn" {
   description = "Validate Lambda Invoke ARN"
 }
 
+variable "datafeed_validator_lambda_name" {
+  type        = string
+  description = "Datafeed Validator Lambda Name"
+}
+
+variable "datafeed_validator_lambda_invoke_arn" {
+  type        = string
+  description = "Datafeed Validator Lambda Invoke ARN"
+}
+
 variable "domain" {
   type = string
 }

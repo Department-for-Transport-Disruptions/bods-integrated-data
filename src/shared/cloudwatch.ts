@@ -1,4 +1,11 @@
-import { CloudWatchClient, Dimension, MetricDatum, PutMetricDataCommand } from "@aws-sdk/client-cloudwatch";
+import {
+    CloudWatchClient,
+    Dimension,
+    GetMetricStatisticsCommand,
+    MetricDatum,
+    PutMetricDataCommand,
+    Statistic,
+} from "@aws-sdk/client-cloudwatch";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -26,4 +33,28 @@ export const putMetricData = async (namespace: string, metricData: MetricDatum[]
             ...(metricDimensions ? { Dimensions: metricDimensions } : {}),
         }),
     );
+};
+
+export const getMetricStatistics = async (
+    namespace: string,
+    metricName: string,
+    metricStatistics: Statistic[],
+    startTime?: Date,
+    endTime?: Date,
+    period?: number,
+    metricDimensions?: Dimension[],
+) => {
+    const data = await cloudwatchClient.send(
+        new GetMetricStatisticsCommand({
+            Namespace: namespace,
+            MetricName: metricName,
+            Dimensions: metricDimensions,
+            StartTime: startTime,
+            EndTime: endTime,
+            Period: period,
+            Statistics: metricStatistics,
+        }),
+    );
+
+    return data;
 };

@@ -117,25 +117,37 @@ module "avl_validate" {
   avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
 }
 
+module "avl_datafeed_validator" {
+  source                   = "./avl-datafeed-validator"
+  avl_cloudwatch_namespace = var.avl_cloudwatch_namespace
+  avl_error_table_name     = var.avl_error_table_name
+  avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
+  aws_account_id           = var.aws_account_id
+  aws_region               = var.aws_region
+  environment              = var.environment
+}
+
 module "avl_producer_api_gateway" {
-  count                           = var.environment == "local" ? 0 : 1
-  source                          = "./api-gateway"
-  data_endpoint_lambda_invoke_arn = module.avl_data_endpoint.invoke_arn
-  data_endpoint_lambda_name       = module.avl_data_endpoint.function_name
-  environment                     = var.environment
-  subscribe_lambda_invoke_arn     = module.avl_subscriber.invoke_arn
-  subscribe_lambda_name           = module.avl_subscriber.lambda_name
-  unsubscribe_lambda_invoke_arn   = module.avl_unsubscriber.invoke_arn
-  unsubscribe_lambda_name         = module.avl_unsubscriber.lambda_name
-  update_lambda_invoke_arn        = module.avl_update_endpoint.invoke_arn
-  update_lambda_name              = module.avl_update_endpoint.lambda_name
-  subscriptions_lambda_invoke_arn = module.avl_subscriptions.invoke_arn
-  subscriptions_lambda_name       = module.avl_subscriptions.lambda_name
-  validate_lambda_invoke_arn      = module.avl_validate.invoke_arn
-  validate_lambda_name            = module.avl_validate.lambda_name
-  domain                          = var.domain
-  acm_certificate_arn             = var.acm_certificate_arn
-  hosted_zone_id                  = var.hosted_zone_id
+  count                                = var.environment == "local" ? 0 : 1
+  source                               = "./api-gateway"
+  data_endpoint_lambda_invoke_arn      = module.avl_data_endpoint.invoke_arn
+  data_endpoint_lambda_name            = module.avl_data_endpoint.function_name
+  datafeed_validator_lambda_invoke_arn = module.avl_datafeed_validator.invoke_arn
+  datafeed_validator_lambda_name       = module.avl_datafeed_validator.lambda_name
+  environment                          = var.environment
+  subscribe_lambda_invoke_arn          = module.avl_subscriber.invoke_arn
+  subscribe_lambda_name                = module.avl_subscriber.lambda_name
+  unsubscribe_lambda_invoke_arn        = module.avl_unsubscriber.invoke_arn
+  unsubscribe_lambda_name              = module.avl_unsubscriber.lambda_name
+  update_lambda_invoke_arn             = module.avl_update_endpoint.invoke_arn
+  update_lambda_name                   = module.avl_update_endpoint.lambda_name
+  subscriptions_lambda_invoke_arn      = module.avl_subscriptions.invoke_arn
+  subscriptions_lambda_name            = module.avl_subscriptions.lambda_name
+  validate_lambda_invoke_arn           = module.avl_validate.invoke_arn
+  validate_lambda_name                 = module.avl_validate.lambda_name
+  domain                               = var.domain
+  acm_certificate_arn                  = var.acm_certificate_arn
+  hosted_zone_id                       = var.hosted_zone_id
 }
 
 module "avl_feed_validator" {
