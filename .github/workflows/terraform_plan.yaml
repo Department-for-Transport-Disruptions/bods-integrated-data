@@ -88,6 +88,8 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -118,7 +120,6 @@ jobs:
       - name: Terraform fmt
         id: fmt
         run: terraform fmt -check -recursive
-        continue-on-error: true
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
@@ -127,14 +128,10 @@ jobs:
 
       - name: Init TFLint
         run: tflint --init
-        env:
-          # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
-          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Run TFLint
         id: tflint
         run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact --minimum-failure-severity=warning
-        continue-on-error: true
 
       - name: Terraform Init
         id: init
@@ -146,73 +143,11 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform -chdir=dev plan -input=false -no-color
-        continue-on-error: true
+        run: terraform -chdir=dev plan -input=false -no-color -out .planfile
 
-      - name: Add plan to PR comment
-        uses: actions/github-script@v7
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      - name: Post PR comment
+        uses: borchero/terraform-plan-comment@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // 1. Retrieve existing bot comments for the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            })
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
-            })
-
-            // 2. Prepare format of the comment
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            <details><summary>Validation Output</summary>
-
-            \`\`\`\n
-            ${{ steps.validate.outputs.stdout }}
-            \`\`\`
-
-            </details>
-
-            #### TFLint 🖌\`${{ steps.tflint.outcome }}\`
-
-            <details><summary>TFLint Output</summary>
-
-            \`\`\`\n
-            ${{ steps.tflint.outputs.stdout }}
-            \`\`\`
-
-            </details>
-
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-
-            <details><summary>Show Plan</summary>
-
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-
-            // 3. If we have a comment, update it, otherwise create a new one
-            if (botComment) {
-              github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: output
-              })
-            } else {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: output
-              })
-            }
+          token: ${{ github.token }}
+          working-directory: ./terraform/dev
+          planfile: .planfile

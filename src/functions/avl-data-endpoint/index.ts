@@ -47,7 +47,7 @@ const processHeartbeatNotification = async (
 
     await putDynamoItem(tableName, subscription.PK, "SUBSCRIPTION", {
         ...subscription,
-        heartbeatLastReceivedDateTime: data.HeartbeatNotification.RequestTimestamp,
+        heartbeatLastReceivedDateTime: getDate(data.HeartbeatNotification.RequestTimestamp).toISOString(),
     });
 };
 
