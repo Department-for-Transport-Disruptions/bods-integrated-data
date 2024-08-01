@@ -106,3 +106,5 @@ export const mockHeartbeatNotification = `<?xml version="1.0" encoding="UTF-8" s
         <ServiceStartedTime>2019-11-23T13:25:00+01:00</ServiceStartedTime>
     </HeartbeatNotification>
 </Siri>`;
+
+export const mockEmptySiri = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`;
