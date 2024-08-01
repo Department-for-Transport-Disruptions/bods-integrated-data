@@ -68,7 +68,7 @@ module "integrated_data_avl_processor_function" {
       ]
     },
     {
-      Action   = ["dynamodb:GetItem"],
+      Action   = ["dynamodb:GetItem", "dynamodb:BatchWriteItem"],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
     },
