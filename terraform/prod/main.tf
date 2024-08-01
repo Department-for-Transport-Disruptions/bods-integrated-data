@@ -59,7 +59,7 @@ module "integrated_data_internal_api" {
 
   environment         = local.env
   vpc_id              = module.integrated_data_vpc.vpc_id
-  lb_subnet_ids       = module.integrated_data_vpc.private_subnet_ids
+  nlb_subnet_ids      = module.integrated_data_vpc.private_subnet_ids
   external_ip_range   = local.secrets["bods_ip_range"]
   external_account_id = local.secrets["bods_account_id"]
 }
@@ -253,10 +253,10 @@ module "integrated_data_avl_pipeline" {
   siri_vm_downloader_cpu                      = 1024
   siri_vm_downloader_memory                   = 2048
   siri_vm_downloader_desired_task_count       = 3
-  siri_vm_downloader_alb_target_group_arn     = module.integrated_data_internal_api.alb_target_group_arn
+  siri_vm_downloader_nlb_target_group_arn     = module.integrated_data_internal_api.nlb_target_group_arn
   generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
-  alb_sg_id                                   = module.integrated_data_internal_api.alb_sg_id
+  nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 

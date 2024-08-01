@@ -126,7 +126,7 @@ variable "siri_vm_downloader_desired_task_count" {
   default     = 1
 }
 
-variable "siri_vm_downloader_alb_target_group_arn" {
+variable "siri_vm_downloader_nlb_target_group_arn" {
   type        = string
   description = "ARN of the target group which should be associated with the SIRI-VM Downloader tasks"
 }
@@ -140,9 +140,9 @@ variable "generated_siri_vm_bucket_name" {
   type = string
 }
 
-variable "alb_sg_id" {
+variable "nlb_sg_id" {
   type        = string
-  description = "ID of the Security Group used by the ALB infront of the SIRI-VM downloader"
+  description = "ID of the Security Group used by the NLB infront of the SIRI-VM downloader"
 }
 
 variable "avl_validation_error_table_name" {
