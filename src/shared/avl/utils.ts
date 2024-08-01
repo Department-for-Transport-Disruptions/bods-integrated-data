@@ -18,6 +18,7 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
+import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
 import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
 
@@ -51,6 +52,35 @@ export const getAvlSubscriptions = async (tableName: string) => {
     }
 
     return avlSubscriptionsSchema.parse(subscriptions);
+};
+
+export const getAvlSubscriptionErrorData = async (
+    tableName: string,
+    subscriptionId: string,
+): Promise<AvlValidationError[]> => {
+    const now = getDate();
+    const past24Hours = now.subtract(24, "hours");
+
+    const subscriptionErrors = await recursiveScan({
+        TableName: tableName,
+        FilterExpression: "#PK = :subscriptionId AND #timestamp > :past24Hours",
+        ExpressionAttributeNames: {
+            "#PK": "PK",
+            "#timestamp": "timestamp",
+        },
+        ExpressionAttributeValues: {
+            ":subscriptionId": { S: subscriptionId },
+            ":past24Hours": { N: past24Hours.toISOString() },
+        },
+    });
+
+    if (!subscriptionErrors) {
+        return [];
+    }
+
+    const data = subscriptionErrors.map((e) => avlValidationErrorSchema.parse(e));
+
+    return data;
 };
 
 export const getAvlSubscription = async (subscriptionId: string, tableName: string) => {
