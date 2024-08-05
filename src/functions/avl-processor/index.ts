@@ -81,35 +81,12 @@ export const processSqsRecord = async (
     avlSubscriptionTableName: string,
     avlValidationErrorTableName: string,
 ) => {
-    const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
+    try {
+        const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
 
-    const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
+        const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
-    if (subscription.status !== "live") {
-        throw new Error(`Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`);
-    }
-
-    const data = await getS3Object({
-        Bucket: record.s3.bucket.name,
-        Key: record.s3.object.key,
-    });
-
-    const body = data.Body;
-
-    if (body) {
-        const xml = await body.transformToString();
-        const errors: AvlValidationError[] = [];
-        const { responseTimestamp, avls } = parseXml(xml, errors);
-
-        if (errors.length > 0) {
-            await uploadValidationErrorsToDatabase(
-                subscriptionId,
-                record.s3.object.key,
-                avlValidationErrorTableName,
-                errors,
-                responseTimestamp,
-            );
-
+        if (subscription.status !== "live") {
             await putMetricData("custom/AVLMetrics", [
                 {
                     MetricName: "AVLProcessorFailedValidation",
@@ -117,25 +94,56 @@ export const processSqsRecord = async (
                 },
             ]);
 
-            throw new InvalidXmlError();
+            throw new Error(
+                `Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`,
+            );
         }
 
-        const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
-        const avlsWithoutOnwardCalls = avls
-            .filter((avl) => !avl.onward_calls)
-            .map<NewAvl>(({ onward_calls, ...rest }) => rest);
-
-        if (avlsWithoutOnwardCalls.length > 0) {
-            await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
-        }
-
-        if (avlsWithOnwardCalls.length > 0) {
-            await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
-        }
-
-        logger.info("AVL processed successfully", {
-            subscriptionId,
+        const data = await getS3Object({
+            Bucket: record.s3.bucket.name,
+            Key: record.s3.object.key,
         });
+
+        const body = data.Body;
+
+        if (body) {
+            const xml = await body.transformToString();
+            const errors: AvlValidationError[] = [];
+            const { responseTimestamp, avls } = parseXml(xml, errors);
+
+            if (errors.length > 0) {
+                await uploadValidationErrorsToDatabase(
+                    subscriptionId,
+                    record.s3.object.key,
+                    avlValidationErrorTableName,
+                    errors,
+                    responseTimestamp,
+                );
+
+                throw new InvalidXmlError();
+            }
+
+            const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
+            const avlsWithoutOnwardCalls = avls
+                .filter((avl) => !avl.onward_calls)
+                .map<NewAvl>(({ onward_calls, ...rest }) => rest);
+
+            if (avlsWithoutOnwardCalls.length > 0) {
+                await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
+            }
+
+            if (avlsWithOnwardCalls.length > 0) {
+                await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
+            }
+
+            logger.info("AVL processed successfully", {
+                subscriptionId,
+            });
+        }
+    } catch (e) {
+        logger.error(`AVL processing failed for file ${record.s3.object.key}`);
+
+        throw e;
     }
 };
 

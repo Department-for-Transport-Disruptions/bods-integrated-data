@@ -92,6 +92,7 @@ describe("avl-unsubscriber", () => {
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
             mockUnsubscribeEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
+            false,
         );
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
@@ -165,6 +166,7 @@ describe("avl-unsubscriber", () => {
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
             mockUnsubscribeEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
+            false,
         );
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });

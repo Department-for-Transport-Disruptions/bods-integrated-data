@@ -99,14 +99,16 @@ resource "aws_lb_listener" "internal_avl_ingestion_alb_listener" {
 }
 
 resource "aws_lb" "internal_avl_ingestion_nlb" {
-  name               = "avl-data-nlb-${var.environment}"
-  internal           = true
-  load_balancer_type = "network"
-  security_groups    = [aws_security_group.internal_avl_ingestion_nlb_sg.id]
-  subnets            = [var.lb_subnet_ids[0]]
-
-
+  name                       = "avl-data-nlb-${var.environment}"
+  internal                   = true
+  load_balancer_type         = "network"
+  security_groups            = [aws_security_group.internal_avl_ingestion_nlb_sg.id]
   enable_deletion_protection = var.environment == "prod"
+
+  subnet_mapping {
+    subnet_id            = var.lb_subnet_ids[0]
+    private_ipv4_address = var.nlb_ip_address
+  }
 }
 
 resource "aws_lb_target_group" "internal_avl_ingestion_nlb_tg" {

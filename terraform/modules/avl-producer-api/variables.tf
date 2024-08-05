@@ -52,3 +52,9 @@ variable "hosted_zone_id" {
 variable "avl_error_table_name" {
   type = string
 }
+
+variable "internal_data_endpoint" {
+  type     = string
+  nullable = true
+  default  = null
+}

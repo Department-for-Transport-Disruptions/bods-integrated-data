@@ -10,8 +10,9 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
     .option("-p, --password <password>", "Data producer password")
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
     .option("--publisherId <publisherId>", "Data producer publisher ID")
+    .option("--requestorRef <requestorRef>", "Requestor Ref")
     .action(async (options) => {
-        let { stage, producerEndpoint, username, password, subscriptionId, publisherId } = options;
+        let { stage, producerEndpoint, username, password, subscriptionId, publisherId, requestorRef } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -88,11 +89,24 @@ export const invokeAvlSubscriber = new Command("invoke-avl-subscriber")
             publisherId = response.publisherId;
         }
 
+        if (!requestorRef) {
+            const response = await inquirer.prompt<{ requestorRef: string }>([
+                {
+                    name: "requestorRef",
+                    message: "Enter the requestorRef",
+                    type: "input",
+                    default: "BODS",
+                },
+            ]);
+
+            requestorRef = response.requestorRef;
+        }
+
         const invokePayload = {
             headers: {
                 "x-api-key": apiKey,
             },
-            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\"}`,
+            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\",\"requestorRef\": \"${requestorRef}\"}`,
         };
 
         await invokeLambda(stage, {

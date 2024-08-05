@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { VehicleType } from "./schema";
-import { chunkArray, getRouteTypeFromServiceMode, getWheelchairAccessibilityFromVehicleType, notEmpty } from "./utils";
+import {
+    chunkArray,
+    getRouteTypeFromServiceMode,
+    getWheelchairAccessibilityFromVehicleType,
+    isPrivateAddress,
+    notEmpty,
+} from "./utils";
 
 describe("shared utils", () => {
     describe("chunkArray", () => {
@@ -109,6 +115,18 @@ describe("shared utils", () => {
 
         it.each([[""], [undefined]])("maps missing service mode to GTFS route type bus", (mode) => {
             expect(getRouteTypeFromServiceMode(mode)).toEqual(RouteType.Bus);
+        });
+    });
+
+    describe("isPrivateAddress", () => {
+        it.each([
+            ["192.168.0.1", true],
+            ["172.19.4.56:8080", true],
+            ["http://10.0.1.4/hello", true],
+            ["http://34.0.7.43/123", false],
+            ["https://test.example.com", false],
+        ])("returns true if address is private", (address: string, isPrivate: boolean) => {
+            expect(isPrivateAddress(address)).toBe(isPrivate);
         });
     });
 });

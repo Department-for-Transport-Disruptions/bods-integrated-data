@@ -100,6 +100,7 @@ describe("avl-update-endpoint", () => {
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
             mockUpdateEvent.pathParameters?.subscriptionId,
             expectedSubscriptionDetails,
+            false,
         );
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
@@ -115,6 +116,7 @@ describe("avl-update-endpoint", () => {
             mockUpdateEventBody.password,
             "test-dynamo-table",
             process.env.DATA_ENDPOINT,
+            false,
             undefined,
         );
     });
@@ -138,6 +140,7 @@ describe("avl-update-endpoint", () => {
             mockUpdateEventBody.password,
             "test-dynamo-table",
             process.env.DATA_ENDPOINT,
+            false,
             undefined,
         );
     });

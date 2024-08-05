@@ -125,3 +125,10 @@ export const createAuthorizationHeader = (username: string, password: string) =>
 
 export const isApiGatewayEvent = (event: APIGatewayProxyEvent | ALBEvent): event is APIGatewayProxyEvent =>
     !!(event as APIGatewayProxyEvent).pathParameters;
+
+export const isPrivateAddress = (url: string) => {
+    const privateIpRegex =
+        /^(https?:\/\/)?(10(\.\d{1,3}){3}|172\.(1[6-9]|2[0-9]|3[0-1])(\.\d{1,3}){2}|192\.168(\.\d{1,3}){2})(:\d+)?(\/.*)?$/;
+
+    return privateIpRegex.test(url);
+};

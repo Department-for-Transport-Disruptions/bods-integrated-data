@@ -58,6 +58,7 @@ module "avl_subscriber" {
     TABLE_NAME                       = var.avl_subscription_table_name
     MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = var.avl_mock_data_producer_subscribe_endpoint
     DATA_ENDPOINT                    = var.avl_data_endpoint
+    INTERNAL_DATA_ENDPOINT           = var.avl_internal_data_endpoint
     AVL_PRODUCER_API_KEY_ARN         = var.avl_producer_api_key_arn
   }
 }

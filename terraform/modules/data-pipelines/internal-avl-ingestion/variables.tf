@@ -20,3 +20,8 @@ variable "external_ip_range" {
   type      = string
   sensitive = true
 }
+
+
+variable "nlb_ip_address" {
+  type = string
+}

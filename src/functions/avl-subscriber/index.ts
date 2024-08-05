@@ -15,6 +15,7 @@ import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils"
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { AxiosError } from "axios";
@@ -35,6 +36,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             STAGE: stage,
             MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
             DATA_ENDPOINT: dataEndpoint,
+            INTERNAL_DATA_ENDPOINT: internalDataEndpoint,
             AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
         } = process.env;
 
@@ -59,6 +61,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
+        const isInternal = isPrivateAddress(avlSubscribeMessage.dataProducerEndpoint);
+
+        if (isInternal && !internalDataEndpoint) {
+            throw new Error("No internal data endpoint set for internal data producer endpoint");
+        }
+
         const subscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
             url: avlSubscribeMessage.dataProducerEndpoint,
             description: avlSubscribeMessage.description,
@@ -75,7 +83,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                 avlSubscribeMessage.username,
                 avlSubscribeMessage.password,
                 tableName,
-                dataEndpoint,
+                isInternal && internalDataEndpoint ? internalDataEndpoint : dataEndpoint,
+                isInternal,
                 mockProducerSubscribeEndpoint,
             );
         } catch (e) {

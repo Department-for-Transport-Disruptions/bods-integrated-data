@@ -151,3 +151,4 @@ jobs:
           token: ${{ github.token }}
           working-directory: ./terraform/dev
           planfile: .planfile
+        continue-on-error: true

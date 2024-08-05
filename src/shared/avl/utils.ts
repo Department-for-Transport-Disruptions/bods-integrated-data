@@ -63,14 +63,14 @@ export const getAvlSubscriptionErrorData = async (
 
     const subscriptionErrors = await recursiveScan({
         TableName: tableName,
-        FilterExpression: "#PK = :subscriptionId AND #timestamp > :past24Hours",
+        FilterExpression: "#PK = :subscriptionId AND #recordedAtTime > :past24Hours",
         ExpressionAttributeNames: {
             "#PK": "PK",
-            "#timestamp": "timestamp",
+            "#recordedAtTime": "recordedAtTime",
         },
         ExpressionAttributeValues: {
-            ":subscriptionId": { S: subscriptionId },
-            ":past24Hours": { N: past24Hours.toISOString() },
+            ":subscriptionId": subscriptionId,
+            ":past24Hours": past24Hours.toISOString(),
         },
     });
 
