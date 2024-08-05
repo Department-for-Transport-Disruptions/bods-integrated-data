@@ -154,7 +154,7 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
             ProducerRef: z.union([z.string(), z.number()]),
             VehicleMonitoringDelivery: z.object({
                 ResponseTimestamp: z.string(),
-                RequestMessageRef: z.string().uuid().optional(),
+                RequestMessageRef: z.string().uuid().or(txcEmptyProperty).optional(),
                 ValidUntil: z.string().optional(),
                 VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
             }),

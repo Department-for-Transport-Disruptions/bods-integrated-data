@@ -73,7 +73,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             shortDescription: avlSubscribeMessage.shortDescription,
             requestorRef: avlSubscribeMessage.requestorRef,
             publisherId: avlSubscribeMessage.publisherId,
-            apiKey: randomUUID(),
+            apiKey: randomUUID().replaceAll("-", ""),
         };
 
         try {

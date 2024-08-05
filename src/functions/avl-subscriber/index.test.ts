@@ -52,7 +52,7 @@ describe("avl-subscriber", () => {
         shortDescription: mockAvlSubscribeMessage.shortDescription,
         publisherId: mockAvlSubscribeMessage.publisherId,
         requestorRef: undefined,
-        apiKey: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+        apiKey: "5965q7gh542843e2a75c1782a48637d5",
     };
 
     let mockSubscribeEvent: APIGatewayProxyEvent;
