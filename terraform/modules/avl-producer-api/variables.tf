@@ -56,3 +56,9 @@ variable "avl_cloudwatch_namespace" {
 variable "avl_error_table_name" {
   type = string
 }
+
+variable "internal_data_endpoint" {
+  type     = string
+  nullable = true
+  default  = null
+}

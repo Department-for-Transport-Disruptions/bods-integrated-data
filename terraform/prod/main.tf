@@ -275,6 +275,7 @@ module "integrated_data_avl_data_producer_api" {
   avl_producer_api_key        = local.secrets["avl_producer_api_key"]
   avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
   avl_cloudwatch_namespace    = "custom/CAVLMetrics"
+  internal_data_endpoint      = local.secrets["internal_avl_ingestion_nlb_ip"]
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -384,6 +385,7 @@ module "internal_avl_ingestion" {
   lb_subnet_ids               = module.integrated_data_vpc.private_subnet_ids
   external_ip_range           = local.secrets["stagecoach_destination_cidr_block"]
   data_endpoint_function_name = module.integrated_data_avl_data_producer_api.avl_data_endpoint_function_name
+  nlb_ip_address              = local.secrets["internal_avl_ingestion_nlb_ip"]
 }
 
 locals {

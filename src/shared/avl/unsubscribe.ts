@@ -87,6 +87,7 @@ const parseXml = (xml: string) => {
 export const sendTerminateSubscriptionRequest = async (
     subscriptionId: string,
     subscription: Omit<AvlSubscription, "PK" | "status">,
+    isInternal = false,
 ) => {
     const currentTime = getDate().toISOString();
     const messageIdentifier = randomUUID();
@@ -117,7 +118,9 @@ export const sendTerminateSubscriptionRequest = async (
             : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
                   headers: {
                       "Content-Type": "text/xml",
-                      Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword),
+                      ...(!isInternal
+                          ? { Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword) }
+                          : {}),
                   },
               });
 

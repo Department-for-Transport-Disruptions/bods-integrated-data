@@ -13,6 +13,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
+import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
@@ -62,7 +63,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             apiKey: subscription.apiKey,
         };
         try {
-            await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail);
+            await sendTerminateSubscriptionRequest(
+                subscriptionId,
+                subscriptionDetail,
+                isPrivateAddress(subscription.url),
+            );
 
             const currentTime = getDate().toISOString();
             await putDynamoItem(

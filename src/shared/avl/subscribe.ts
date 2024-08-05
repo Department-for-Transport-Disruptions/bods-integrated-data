@@ -31,12 +31,14 @@ export const generateSubscriptionRequestXml = (
     messageIdentifier: string,
     dataEndpoint: string,
     requestorRef: string | null,
-    apiKey: string,
+    apiKey?: string,
 ) => {
     const subscriptionRequestJson: AvlSubscriptionRequest = {
         SubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
-            ConsumerAddress: `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`,
+            ConsumerAddress: apiKey
+                ? `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`
+                : `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: requestorRef ?? "BODS",
             MessageIdentifier: messageIdentifier,
             SubscriptionContext: {
@@ -136,6 +138,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     password: string,
     tableName: string,
     dataEndpoint: string,
+    isInternal = false,
     mockProducerSubscribeEndpoint?: string,
 ) => {
     const requestTime = getDate();
@@ -162,7 +165,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            Authorization: createAuthorizationHeader(username, password),
+            ...(!isInternal ? { Authorization: createAuthorizationHeader(username, password) } : {}),
         },
     });
 

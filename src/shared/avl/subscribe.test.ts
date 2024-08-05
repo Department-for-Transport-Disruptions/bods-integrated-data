@@ -161,6 +161,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             mockInput.password,
             mockInput.tableName,
             mockInput.dataEndpoint,
+            false,
             "www.local.com",
         );
 

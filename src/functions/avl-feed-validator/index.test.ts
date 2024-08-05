@@ -178,18 +178,22 @@ describe("avl-feed-validator", () => {
         await handler();
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith("mock-subscription-id-1", {
-            PK: "mock-subscription-id-1",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            status: "live",
-            requestorRef: null,
-            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-            heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
-            publisherId: "test-publisher-id-1",
-            apiKey: "mock-api-key-1",
-        });
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "mock-subscription-id-1",
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "live",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+            false,
+        );
 
         expect(getParameterSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenCalledWith(
@@ -261,18 +265,22 @@ describe("avl-feed-validator", () => {
         );
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith("mock-subscription-id-1", {
-            PK: "mock-subscription-id-1",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            status: "live",
-            requestorRef: null,
-            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-            heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
-            publisherId: "test-publisher-id-1",
-            apiKey: "mock-api-key-1",
-        });
+        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "mock-subscription-id-1",
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "live",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+            false,
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {

@@ -14,6 +14,7 @@ import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/a
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
@@ -40,6 +41,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             TABLE_NAME: tableName,
             MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
             DATA_ENDPOINT: dataEndpoint,
+            INTERNAL_DATA_ENDPOINT: internalDataEndpoint,
             AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
         } = process.env;
 
@@ -62,6 +64,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         logger.info(`Starting lambda to update subscription with ID: ${subscriptionId}`);
 
+        const isInternal = isPrivateAddress(updateBody.dataProducerEndpoint);
+
+        if (isInternal && !internalDataEndpoint) {
+            throw new Error("No internal data endpoint set for internal data producer endpoint");
+        }
+
         const subscriptionDetail: Omit<AvlSubscription, "PK" | "status"> = {
             url: updateBody.dataProducerEndpoint,
             description: updateBody.description ?? subscription.description,
@@ -75,7 +83,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         try {
             logger.info(`Unsubscribing from subscription ID: ${subscriptionId} using existing credentials `);
-            await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail);
+            await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail, isInternal);
         } catch (e) {
             logger.warn(
                 `An error occurred when trying to unsubscribe from subscription with ID: ${subscriptionId}. Error ${e}`,
@@ -92,7 +100,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             username,
             password,
             tableName,
-            dataEndpoint,
+            isInternal && internalDataEndpoint ? internalDataEndpoint : dataEndpoint,
+            isInternal,
             mockProducerSubscribeEndpoint,
         );
 

@@ -5,7 +5,7 @@ import { DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-s
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 
-export const STAGES = ["local", "dev", "test"];
+export const STAGES = ["local", "dev", "test", "prod"];
 
 export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
 
