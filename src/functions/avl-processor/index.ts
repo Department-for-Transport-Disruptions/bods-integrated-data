@@ -112,13 +112,6 @@ export const processSqsRecord = async (
                     responseTimestamp,
                 );
 
-                // await putMetricData("custom/AVLMetrics", [
-                //     {
-                //         MetricName: "AVLProcessorFailedValidation",
-                //         Value: 1,
-                //     },
-                // ]);
-
                 throw new InvalidXmlError();
             }
 
