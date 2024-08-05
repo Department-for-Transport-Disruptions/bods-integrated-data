@@ -5,7 +5,6 @@ import {
     insertAvls,
     insertAvlsWithOnwardCalls,
 } from "@bods-integrated-data/shared/avl/utils";
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
@@ -87,13 +86,6 @@ export const processSqsRecord = async (
         const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
         if (subscription.status !== "live") {
-            await putMetricData("custom/AVLMetrics", [
-                {
-                    MetricName: "AVLProcessorFailedValidation",
-                    Value: 1,
-                },
-            ]);
-
             throw new Error(
                 `Unable to process AVL for subscription ${subscriptionId} with status ${subscription.status}`,
             );
@@ -119,6 +111,13 @@ export const processSqsRecord = async (
                     errors,
                     responseTimestamp,
                 );
+
+                // await putMetricData("custom/AVLMetrics", [
+                //     {
+                //         MetricName: "AVLProcessorFailedValidation",
+                //         Value: 1,
+                //     },
+                // ]);
 
                 throw new InvalidXmlError();
             }

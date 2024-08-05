@@ -109,7 +109,7 @@ describe("AVL-data-endpoint", () => {
 
         expect(cloudwatch.getMetricStatistics).toBeCalled();
         expect(cloudwatch.getMetricStatistics).toBeCalledWith<Parameters<typeof cloudwatch.getMetricStatistics>>(
-            "test-namespace",
+            "custom/AVLMetrics",
             "TotalAvlProcessed",
             ["Sum"],
             new Date("2024-03-10T00:00:00.000Z"),

@@ -454,7 +454,7 @@ export const expectedPutMetricDataCall = {
 };
 
 export const expectedPutMetricDataCallForFilteredArrayParseError = {
-    namespace: "custom/SiriVmVehicleActivitySchema-dev",
+    namespace: "custom/SiriVmVehicleActivitySchema",
     metricData: [
         {
             MetricName: "MakeFilteredArraySchemaParseError",
