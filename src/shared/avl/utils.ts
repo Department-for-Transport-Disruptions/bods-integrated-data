@@ -502,3 +502,5 @@ export const getErrorDetails = (error: ZodIssue) => {
         level: avlValidationErrorLevelMappings[propertyName] || "CRITICAL",
     };
 };
+
+export const generateApiKey = () => randomUUID().replaceAll("-", "");

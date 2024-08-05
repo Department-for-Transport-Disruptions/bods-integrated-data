@@ -11,7 +11,7 @@ import {
     sendSubscriptionRequestAndUpdateDynamo,
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
-import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { generateApiKey, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -73,7 +73,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             shortDescription: avlSubscribeMessage.shortDescription,
             requestorRef: avlSubscribeMessage.requestorRef,
             publisherId: avlSubscribeMessage.publisherId,
-            apiKey: randomUUID().replaceAll("-", ""),
+            apiKey: generateApiKey(),
         };
 
         try {
