@@ -1,5 +1,12 @@
-import { DynamoDBClient, ScanCommandInput } from "@aws-sdk/client-dynamodb";
-import { BatchWriteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+    BatchWriteCommand,
+    DynamoDBDocumentClient,
+    GetCommand,
+    PutCommand,
+    ScanCommand,
+    ScanCommandInput,
+} from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 import { chunkArray } from "./utils";
 
