@@ -12,8 +12,8 @@ import {
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import {
     SubscriptionIdNotFoundError,
-    getAvlSubscription,
     generateApiKey,
+    getAvlSubscription,
 } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
