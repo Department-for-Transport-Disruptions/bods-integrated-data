@@ -102,13 +102,13 @@ export const handler = async () => {
                 try {
                     await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
                 } catch (e) {
-                    await putMetricData("custom/CAVLMetrics", [
+                    await putMetricData("custom/AVLMetrics", [
                         {
                             MetricName: "AvlFeedOutage",
                             Value: 1,
                             Dimensions: [
                                 {
-                                    Name: "subscriptionId",
+                                    Name: "SubscriptionId",
                                     Value: subscription.PK,
                                 },
                             ],

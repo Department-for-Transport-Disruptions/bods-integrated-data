@@ -434,7 +434,7 @@ export const onwardCallInsertQuery = [
 ];
 
 export const expectedPutMetricDataCall = {
-    namespace: "custom/CAVLMetrics",
+    namespace: "custom/AVLMetrics",
     metricData: [
         {
             MetricName: "TotalAvlProcessed",

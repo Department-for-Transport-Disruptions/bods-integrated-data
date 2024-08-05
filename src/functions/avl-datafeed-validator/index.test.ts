@@ -35,7 +35,6 @@ describe("AVL-data-endpoint", () => {
 
     beforeEach(() => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "test-dynamodb";
-        process.env.CLOUDWATCH_NAMESPACE = "test-namespace";
 
         mockEvent = {
             pathParameters: {
@@ -122,7 +121,6 @@ describe("AVL-data-endpoint", () => {
 
     it("Throws an error when the required env vars are missing", async () => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "";
-        process.env.CLOUDWATCH_NAMESPACE = "";
 
         const response = await handler(mockEvent);
         expect(response).toEqual({
@@ -150,7 +148,7 @@ describe("AVL-data-endpoint", () => {
     });
 
     it("Should add total number of avl items processed", async () => {
-        const response = await getTotalAvlsProcessed(mockSubscriptionId, "test-namespace");
+        const response = await getTotalAvlsProcessed(mockSubscriptionId);
         expect(response).toEqual(2);
     });
 });

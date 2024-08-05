@@ -6,8 +6,6 @@ import { logger } from "@bods-integrated-data/shared/logger";
 void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
-    const stage = process.env.STAGE || "";
-
     try {
         const latestAvlQuery = getQueryForLatestAvl(dbClient).as("avl_latest");
 
@@ -25,7 +23,7 @@ void (async () => {
             logger.error("There was a problem with the AVL cleardown", e);
         }
 
-        await putMetricData(`custom/SiriVmGeneratorAvlCleardown-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
+        await putMetricData("custom/SiriVmGeneratorAvlCleardown", [{ MetricName: "Errors", Value: 1 }]);
 
         throw e;
     } finally {

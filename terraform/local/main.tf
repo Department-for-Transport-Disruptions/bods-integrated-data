@@ -173,7 +173,6 @@ module "integrated_data_avl_data_producer_api" {
   domain                      = ""
   avl_producer_api_key        = local.secrets["avl_producer_api_key"]
   avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
-  avl_cloudwatch_namespace    = "custom/CAVLMetrics"
 }
 
 module "integrated_data_avl_siri_vm_downloader" {

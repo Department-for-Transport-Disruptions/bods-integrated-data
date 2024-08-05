@@ -110,6 +110,13 @@ export const processSqsRecord = async (
                 responseTimestamp,
             );
 
+            await putMetricData("custom/AVLMetrics", [
+                {
+                    MetricName: "AVLProcessorFailedValidation",
+                    Value: 1,
+                },
+            ]);
+
             throw new InvalidXmlError();
         }
 
@@ -126,25 +133,9 @@ export const processSqsRecord = async (
             await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
         }
 
-        await putMetricData(
-            "custom/CAVLMetrics",
-            [
-                {
-                    MetricName: "TotalAvlProcessed",
-                    Value: avls.length,
-                },
-                {
-                    MetricName: "TotalFilesProcessed",
-                    Value: 1,
-                },
-            ],
-            [
-                {
-                    Name: "SubscriptionId",
-                    Value: subscriptionId,
-                },
-            ],
-        );
+        logger.info("AVL processed successfully", {
+            subscriptionId,
+        });
     }
 };
 
@@ -174,8 +165,6 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-
-        logger.info("AVL uploaded to database successfully");
     } catch (e) {
         if (e instanceof Error) {
             logger.error("AVL Processor has failed", e);

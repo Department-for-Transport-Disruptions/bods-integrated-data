@@ -47,13 +47,6 @@ module "integrated_data_bods_avl_data_endpoint_function" {
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
       ]
-    },
-    {
-      Action = [
-        "cloudwatch:PutMetricData"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
     }
   ]
 

@@ -74,11 +74,11 @@ const generateGtfs = async (avl: NewBodsAvl[]) => {
     }
 };
 
-const uploadToDatabase = async (dbClient: KyselyDb, stage: string, avls: NewAvl[]) => {
+const uploadToDatabase = async (dbClient: KyselyDb, avls: NewAvl[]) => {
     logger.info("Matching AVL to timetable data...");
     const { avls: enrichedAvls, matchedAvlCount, totalAvlCount } = await matchAvlToTimetables(dbClient, avls);
 
-    await putMetricData(`custom/BODSAVLProcessor-${stage}`, [
+    await putMetricData("custom/BODSAVLProcessor", [
         {
             MetricName: "MatchedAVL",
             Value: matchedAvlCount,
@@ -132,7 +132,7 @@ const uploadToDatabase = async (dbClient: KyselyDb, stage: string, avls: NewAvl[
     logger.info("AVL data written to database successfully...");
 };
 
-const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosResponse<Stream>, stage: string) => {
+const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosResponse<Stream>) => {
     const zip = avlResponse.data.pipe(
         Parse({
             forceStream: true,
@@ -147,7 +147,7 @@ const unzipAndUploadToDatabase = async (dbClient: KyselyDb, avlResponse: AxiosRe
         if (fileName === "siri.xml") {
             const xml = (await entry.buffer()).toString();
             const avls = parseXml(xml);
-            await uploadToDatabase(dbClient, stage, avls);
+            await uploadToDatabase(dbClient, avls);
         }
 
         entry.autodrain();
@@ -172,14 +172,14 @@ void (async () => {
             throw new Error("No AVL data found");
         }
 
-        await unzipAndUploadToDatabase(dbClient, avlResponse, stage);
+        await unzipAndUploadToDatabase(dbClient, avlResponse);
 
         logger.info("BODS AVL processor successful");
         performance.mark("avl-processor-end");
 
         const time = performance.measure("avl-processor", "avl-processor-start", "avl-processor-end");
 
-        await putMetricData(`custom/BODSAVLProcessor-${stage}`, [
+        await putMetricData("custom/BODSAVLProcessor", [
             { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
         ]);
     } catch (e) {
@@ -187,7 +187,7 @@ void (async () => {
             logger.error("There was a problem with the BODS AVL Processor", e);
         }
 
-        await putMetricData(`custom/BODSAVLProcessor-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
+        await putMetricData("custom/BODSAVLProcessor", [{ MetricName: "Errors", Value: 1 }]);
 
         throw e;
     } finally {

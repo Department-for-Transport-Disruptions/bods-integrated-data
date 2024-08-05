@@ -18,11 +18,6 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-variable "avl_cloudwatch_namespace" {
-  type        = string
-  description = "Namespace for AVL cloudwatch metrics."
-}
-
 variable "avl_producer_api_key_arn" {
   type        = string
   description = "AVL producer API key ARN"

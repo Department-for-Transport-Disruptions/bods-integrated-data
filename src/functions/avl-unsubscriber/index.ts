@@ -78,7 +78,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                 },
             );
         } catch (e) {
-            await putMetricData("custom/CAVLMetrics", [
+            await putMetricData("custom/AVLMetrics", [
                 {
                     MetricName: "FailedUnsubscribeRequest",
                     Value: 1,

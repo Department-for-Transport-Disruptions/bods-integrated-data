@@ -83,10 +83,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                 await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
 
                 logger.error(
-                    `There was an error when sending the subscription request to the data producer - code: ${e.code}, message: ${e.message}`,
+                    `There was an error when sending the subscription request to the data producer - subscriptionId: ${subscriptionId}, code: ${e.code}, message: ${e.message}`,
                 );
             }
-            await putMetricData("custom/CAVLMetrics", [
+            await putMetricData("custom/AVLMetrics", [
                 {
                     MetricName: "FailedSubscription",
                     Value: 1,

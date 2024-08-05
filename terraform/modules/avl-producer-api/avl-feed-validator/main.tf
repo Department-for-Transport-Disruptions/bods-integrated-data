@@ -37,13 +37,6 @@ module "avl_feed_validator" {
     },
     {
       Action = [
-        "cloudwatch:PutMetricData"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
-    },
-    {
-      Action = [
         "secretsmanager:GetSecretValue",
       ],
       Effect = "Allow",

@@ -58,13 +58,6 @@ module "integrated_data_avl_siri_vm_downloader_function" {
         var.db_secret_arn,
         aws_secretsmanager_secret.avl_consumer_api_key_secret.arn
       ]
-    },
-    {
-      Action = [
-        "cloudwatch:PutMetricData"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
     }
   ]
 

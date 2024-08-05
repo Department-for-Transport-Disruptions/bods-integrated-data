@@ -39,13 +39,6 @@ module "avl_unsubscriber" {
     },
     {
       Action = [
-        "cloudwatch:PutMetricData"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
-    },
-    {
-      Action = [
         "secretsmanager:GetSecretValue",
       ],
       Effect = "Allow",
