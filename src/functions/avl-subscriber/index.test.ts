@@ -95,6 +95,7 @@ describe("avl-subscriber", () => {
             mockAvlSubscribeMessage.password,
             "test-dynamo-table",
             "https://www.test.com/data",
+            false,
             "",
         );
     });
@@ -274,6 +275,7 @@ describe("avl-subscriber", () => {
             mockAvlSubscribeMessage.password,
             "test-dynamo-table",
             "https://www.test.com/data",
+            false,
             "",
         );
     });

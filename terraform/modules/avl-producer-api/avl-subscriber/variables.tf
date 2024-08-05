@@ -20,6 +20,13 @@ variable "avl_data_endpoint" {
   description = "HTTP API endpoint URL for the AVL Producer /data endpoint"
 }
 
+variable "avl_internal_data_endpoint" {
+  type        = string
+  description = "Internal endpoint URL for the AVL Producer /data endpoint"
+  nullable    = true
+  default     = null
+}
+
 variable "aws_account_id" {
   type        = string
   description = "AWS account id"
