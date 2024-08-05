@@ -11,6 +11,11 @@ terraform {
 
 resource "aws_s3_bucket" "integrated_data_external_avl_archive_bucket" {
   bucket = "integrated-data-external-avl-archive-${var.environment}"
+
+  tags = {
+    Application = "external-data-migration"
+    BucketName  = "integrated-data-external-avl-archive-${var.environment}"
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_external_avl_archive_block_public" {
@@ -31,6 +36,11 @@ resource "aws_s3_bucket_versioning" "integrated_data_external_avl_archive_bucket
 
 resource "aws_s3_bucket" "integrated_data_external_txc_archive_bucket" {
   bucket = "integrated-data-external-txc-archive-${var.environment}"
+
+  tags = {
+    Application = "external-data-migration"
+    BucketName  = "integrated-data-external-txc-archive-${var.environment}"
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_external_txc_archive_block_public" {

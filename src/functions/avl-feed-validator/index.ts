@@ -6,7 +6,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
-import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
+import { getSubscriptionUsernameAndPassword, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import axios, { AxiosError } from "axios";
 
 export const resubscribeToDataProducer = async (
@@ -92,7 +92,11 @@ export const handler = async () => {
                 });
 
                 try {
-                    await sendTerminateSubscriptionRequest(subscription.PK, subscription);
+                    await sendTerminateSubscriptionRequest(
+                        subscription.PK,
+                        subscription,
+                        isPrivateAddress(subscription.url),
+                    );
                 } catch (e) {
                     logger.warn(
                         `An error occurred when trying to unsubscribe from subscription with ID: ${subscription.PK}. Error ${e}`,
