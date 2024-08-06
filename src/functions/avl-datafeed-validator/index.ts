@@ -105,12 +105,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const { sampleSize } = requestParamsSchema.parse(event.queryStringParameters);
         const { subscriptionId } = pathParamsSchema.parse(event.pathParameters);
+        logger.subscriptionId = subscriptionId;
 
         const errorData = await getAvlSubscriptionErrorData(tableName, subscriptionId);
 
         const reportBody = await generateReportBody(errorData, subscriptionId, cloudwatchNamespace);
 
-        logger.info("Executed avl data feed validator", { tableName, subscriptionId, sampleSize });
+        logger.info("Executed avl data feed validator", { sampleSize });
 
         return {
             statusCode: 200,

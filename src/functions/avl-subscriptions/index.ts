@@ -65,6 +65,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         if (subscriptionId) {
             const subscription = await getAvlSubscription(subscriptionId, tableName);
+            logger.subscriptionId = subscription.PK;
             response = mapApiAvlSubscriptionResponse(subscription);
         } else {
             const subscriptions = await getAvlSubscriptions(tableName);

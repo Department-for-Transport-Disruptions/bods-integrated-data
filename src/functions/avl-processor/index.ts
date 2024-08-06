@@ -84,6 +84,7 @@ export const processSqsRecord = async (
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
 
+        logger.subscriptionId = subscriptionId;
         const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
         if (subscription.status !== "live") {

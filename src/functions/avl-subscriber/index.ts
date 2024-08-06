@@ -54,6 +54,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const avlSubscribeMessage = requestBodySchema.parse(event.body);
         const { subscriptionId, username, password } = avlSubscribeMessage;
+        logger.subscriptionId = subscriptionId;
 
         const isActiveSubscription = await isActiveAvlSubscription(subscriptionId, tableName);
 

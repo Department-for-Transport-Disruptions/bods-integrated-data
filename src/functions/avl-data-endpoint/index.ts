@@ -112,15 +112,14 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             };
         }
 
+        logger.subscriptionId = subscriptionId;
         const body = requestBodySchema.parse(event.body);
-
-        logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
         const requestApiKey = event.queryStringParameters?.apiKey;
 
         if (isApiGatewayEvent(event) && requestApiKey !== subscription.apiKey) {
-            throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID '${subscriptionId}'`);
+            throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID: ${subscriptionId}`);
         }
 
         const xml = parseXml(body);
@@ -130,7 +129,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(siri), subscription, tableName);
         } else {
             if (subscription.status !== "live") {
-                logger.error(`Subscription: ${subscriptionId} is not live, data will not be processed...`);
+                logger.error("Subscription is not live, data will not be processed...");
                 return createNotFoundErrorResponse("Subscription is not live");
             }
             await uploadSiriVmToS3(body, bucketName, subscription, tableName);

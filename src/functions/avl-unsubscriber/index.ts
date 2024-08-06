@@ -49,8 +49,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
-
-        logger.info(`Starting AVL unsubscriber to unsubscribe from subscription: ${subscriptionId}`);
+        logger.subscriptionId = subscriptionId;
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
@@ -101,8 +100,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
-
-        logger.info(`Successfully unsubscribed to data producer with subscription ID: ${subscriptionId}.`);
 
         return {
             statusCode: 204,

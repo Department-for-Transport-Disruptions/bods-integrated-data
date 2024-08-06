@@ -207,9 +207,7 @@ describe("AVL-data-endpoint", () => {
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription is not live"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith(
-            `Subscription: ${mockSubscriptionId} is not live, data will not be processed...`,
-        );
+        expect(logger.error).toHaveBeenCalledWith("Subscription is not live, data will not be processed...");
         expect(dynamo.putDynamoItem).not.toHaveBeenCalled();
     });
 

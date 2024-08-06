@@ -113,6 +113,8 @@ export const handler = streamifyResponse(async (event, responseStream, context) 
             subscriptionId,
         } = requestParamsSchema.parse(event.queryStringParameters);
 
+        logger.subscriptionId = subscriptionId;
+
         if (
             boundingBox ||
             operatorRef ||
