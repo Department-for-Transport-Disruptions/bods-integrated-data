@@ -9,12 +9,12 @@ import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchema, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
-import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
+import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
 const arrayProperties = ["VehicleActivity", "OnwardCall"];
@@ -156,7 +156,9 @@ export const processSqsRecord = async (
     }
 };
 
-export const handler = async (event: SQSEvent) => {
+export const handler: SQSHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const {
         AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName,
         AVL_VALIDATION_ERROR_TABLE_NAME: avlValidationErrorTableName,

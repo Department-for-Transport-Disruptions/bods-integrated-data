@@ -1,4 +1,5 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import axios, { AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
@@ -31,7 +32,7 @@ describe("avl-mock-data-producer-send-data", () => {
         process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([]);
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).not.toBeCalled();
     });
 
@@ -64,7 +65,7 @@ describe("avl-mock-data-producer-send-data", () => {
         ];
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(avlSubscriptions);
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).not.toBeCalled();
     });
 
@@ -78,7 +79,7 @@ describe("avl-mock-data-producer-send-data", () => {
             status: 200,
         } as AxiosResponse);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
@@ -112,7 +113,7 @@ describe("avl-mock-data-producer-send-data", () => {
             status: 200,
         } as AxiosResponse);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
@@ -145,7 +146,9 @@ describe("avl-mock-data-producer-send-data", () => {
 
         axiosSpy.mockRejectedValueOnce(new Error("There was an error when sending AVL data."));
 
-        await expect(handler()).rejects.toThrowError("There was an error when sending AVL data.");
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(
+            "There was an error when sending AVL data.",
+        );
 
         expect(axiosSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenNthCalledWith(

@@ -1,6 +1,7 @@
 import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +15,7 @@ describe("AVL-data-endpoint", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
@@ -106,7 +108,10 @@ describe("AVL-data-endpoint", () => {
     });
 
     it("Should get total avl processed from cloudwatch with correct date", async () => {
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: mockResponseString });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
+            statusCode: 200,
+            body: mockResponseString,
+        });
 
         expect(cloudwatch.getMetricStatistics).toBeCalled();
         expect(cloudwatch.getMetricStatistics).toBeCalledWith<Parameters<typeof cloudwatch.getMetricStatistics>>(
@@ -124,7 +129,7 @@ describe("AVL-data-endpoint", () => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "";
         process.env.CLOUDWATCH_NAMESPACE = "";
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -141,7 +146,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId: 123,
             },
         } as unknown as APIGatewayProxyEvent;
-        const response = await handler(mockInvalidEvent);
+        const response = await handler(mockInvalidEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
             body: JSON.stringify({ errors: ["subscriptionId must be a string"] }),

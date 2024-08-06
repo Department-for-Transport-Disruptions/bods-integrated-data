@@ -1,6 +1,7 @@
 import { PassThrough, Stream } from "node:stream";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 
 const getFaresDataAndUploadToS3 = async (faresZippedBucketName: string) => {
@@ -19,7 +20,9 @@ const getFaresDataAndUploadToS3 = async (faresZippedBucketName: string) => {
     await upload.done();
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { FARES_ZIPPED_BUCKET_NAME: faresZippedBucketName } = process.env;
 
     if (!faresZippedBucketName) {

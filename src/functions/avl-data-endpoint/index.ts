@@ -7,12 +7,12 @@ import {
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { ALBEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { ALBEvent, ALBHandler, APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 import { HeartbeatNotification, heartbeatNotificationSchema } from "./heartbeat.schema";
@@ -82,7 +82,12 @@ const parseXml = (xml: string) => {
     return parser.parse(xml);
 };
 
-export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler & ALBHandler = async (
+    event: APIGatewayProxyEvent | ALBEvent,
+    context: Context,
+) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;
 

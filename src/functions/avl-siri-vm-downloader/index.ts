@@ -13,7 +13,7 @@ import {
 } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import {
     InvalidApiKeyError,
@@ -89,7 +89,9 @@ const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<APIG
     };
 };
 
-export const handler = streamifyResponse(async (event, responseStream) => {
+export const handler = streamifyResponse(async (event, responseStream, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { BUCKET_NAME: bucketName, AVL_CONSUMER_API_KEY_ARN: avlConsumerApiKeyArn } = process.env;
 

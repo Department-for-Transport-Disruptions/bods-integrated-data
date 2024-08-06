@@ -1,8 +1,18 @@
-import { logger as lambdaLogger } from "@baselime/lambda-logger";
-import Pino from "pino";
+import Pino, { Logger } from "pino";
+import { lambdaRequestTracker, pinoLambdaDestination } from "pino-lambda";
 
-/**
- * The logger will instantiate as either a lambda logger or pino logger, based on the runtime environment by checking the AWS_EXECUTION_ENV reserved variable:
- * https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#:~:text=Reference%20Guide.-,AWS_EXECUTION_ENV,-%E2%80%93%20The%20runtime%20identifier
- */
-export const logger = process.env.AWS_EXECUTION_ENV?.startsWith("AWS_Lambda") ? lambdaLogger : Pino();
+// Define a custom logger type to allow extra props to be included in logs
+type CustomLogger = Logger & {
+    subscriptionId?: string;
+};
+
+export const logger = Pino(
+    {
+        mixin: (_mergeObject, _level, customLogger: CustomLogger) => ({
+            subscriptionId: customLogger.subscriptionId,
+        }),
+    },
+    pinoLambdaDestination(),
+) as CustomLogger;
+
+export const withLambdaRequestTracker = lambdaRequestTracker();

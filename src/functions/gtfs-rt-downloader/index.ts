@@ -7,14 +7,14 @@ import {
     getAvlDataForGtfs,
     mapAvlToGtfsEntity,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -51,7 +51,9 @@ const putMetrics = async (
     );
 };
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { BUCKET_NAME: bucketName, STAGE: stage } = process.env;
         const key = "gtfs-rt.bin";

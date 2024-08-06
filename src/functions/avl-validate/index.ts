@@ -6,7 +6,7 @@ import {
 } from "@bods-integrated-data/shared/api";
 import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     AvlServiceRequest,
     avlServiceDeliverySchema,
@@ -14,7 +14,7 @@ import {
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
@@ -90,7 +90,9 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;
 

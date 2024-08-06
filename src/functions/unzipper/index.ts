@@ -1,10 +1,12 @@
 import { Readable } from "node:stream";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { unzip } from "@bods-integrated-data/shared/unzip";
-import { S3Event } from "aws-lambda";
+import { S3Handler } from "aws-lambda";
 
-export const handler = async (event: S3Event) => {
+export const handler: S3Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const {
         bucket: { name: bucketName },
         object: { key },

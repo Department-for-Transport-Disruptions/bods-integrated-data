@@ -1,8 +1,9 @@
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
-import { APIGatewayProxyEvent, Context } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -44,19 +45,20 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
 
     const mockBucketName = "mock-bucket";
-    let mockRequest: APIGatewayProxyEvent;
+    let mockEvent: APIGatewayProxyEvent;
 
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
         process.env.AVL_CONSUMER_API_KEY_ARN = "avl-consumer-api-key-arn";
-        mockRequest = {
+        mockEvent = {
             headers: {
                 "x-api-key": "mock-api-key",
             },
@@ -73,7 +75,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler(mockRequest, {} as Context, () => undefined);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -87,7 +89,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the AVL_CONSUMER_API_KEY_ARN environment variable is missing", async () => {
         process.env.AVL_CONSUMER_API_KEY_ARN = "";
 
-        const response = await handler(mockRequest, {} as Context, () => undefined);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -99,12 +101,12 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     });
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
-        mockRequest.headers["x-api-key"] = key;
-        mockRequest.queryStringParameters = {
+        mockEvent.headers["x-api-key"] = key;
+        mockEvent.queryStringParameters = {
             operatorRef: "1",
         };
 
-        const response = await handler(mockRequest, {} as Context, () => undefined);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),
@@ -116,7 +118,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
-            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 302,
                 headers: {
                     Location: mockPresignedUrl,
@@ -140,11 +142,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_TFL_FILE_PATH}`;
             mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
 
-            mockRequest.queryStringParameters = {
+            mockEvent.queryStringParameters = {
                 downloadTfl: "true",
             };
 
-            await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 302,
                 headers: {
                     Location: mockPresignedUrl,
@@ -167,7 +169,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         it("returns a 500 when an unexpected error occurs", async () => {
             mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
 
-            const response = await handler(mockRequest, {} as Context, () => undefined);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 500,
                 body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -182,11 +184,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     boundingBox: "1,2,3,4",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -210,11 +212,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     operatorRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -238,11 +240,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     operatorRef: "1,2,3",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -266,11 +268,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     vehicleRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -294,11 +296,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     lineRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -322,11 +324,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     producerRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -350,11 +352,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     originRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -378,11 +380,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     destinationRef: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -406,11 +408,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     subscriptionId: "1",
                 };
 
-                await expect(handler(mockRequest, {} as Context, () => undefined)).resolves.toEqual({
+                await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml" },
                     body: "siri-output",
@@ -474,8 +476,8 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     "destinationRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
                 ],
             ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
-                mockRequest.queryStringParameters = params;
-                const response = await handler(mockRequest, {} as Context, () => undefined);
+                mockEvent.queryStringParameters = params;
+                const response = await handler(mockEvent, mockContext, mockCallback);
                 expect(response).toEqual({
                     statusCode: 400,
                     body: JSON.stringify({ errors: [expectedErrorMessage] }),
@@ -487,11 +489,11 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             it("returns a 500 when an unexpected error occurs", async () => {
                 getAvlDataForSiriVmMock.mockRejectedValueOnce(new Error("Database fetch error"));
 
-                mockRequest.queryStringParameters = {
+                mockEvent.queryStringParameters = {
                     operatorRef: "1",
                 };
 
-                const response = await handler(mockRequest, {} as Context, () => undefined);
+                const response = await handler(mockEvent, mockContext, mockCallback);
                 expect(response).toEqual({
                     statusCode: 500,
                     body: JSON.stringify({ errors: ["An unexpected error occurred"] }),

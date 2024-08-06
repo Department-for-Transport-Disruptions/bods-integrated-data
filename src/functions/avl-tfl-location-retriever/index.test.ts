@@ -13,6 +13,7 @@ describe("avl-tfl-location-retriever", () => {
         logger: {
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     beforeEach(() => {
