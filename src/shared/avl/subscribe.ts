@@ -50,6 +50,7 @@ export const generateSubscriptionRequestXml = (
                 InitialTerminationTime: initialTerminationTime,
                 VehicleMonitoringRequest: {
                     RequestTimestamp: currentTimestamp,
+                    VehicleMonitoringDetailLevel: "normal",
                     "@_version": "2.0",
                 },
             },
