@@ -82,7 +82,7 @@ module "integrated_data_aurora_db" {
   vpc_id                   = module.integrated_data_vpc.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  multi_az                 = true
+  multi_az                 = false
   instance_class           = "db.r6g.xlarge"
 }
 
