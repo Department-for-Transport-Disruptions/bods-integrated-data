@@ -1,7 +1,7 @@
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -28,7 +28,9 @@ const requestBodySchema = z
         ),
     );
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { EXAMPLE_VAR: exampleVar } = process.env;
 

@@ -1,6 +1,7 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription, AvlUpdateBody } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
@@ -17,7 +18,7 @@ describe("avl-update-endpoint", () => {
         password: "updatedPassword",
     };
 
-    let mockUpdateEvent: APIGatewayProxyEvent;
+    let mockEvent: APIGatewayProxyEvent;
 
     const expectedSubscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
         description: "updated description",
@@ -76,7 +77,7 @@ describe("avl-update-endpoint", () => {
 
         getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
-        mockUpdateEvent = {
+        mockEvent = {
             headers: {
                 "x-api-key": "mock-api-key",
             },
@@ -94,23 +95,26 @@ describe("avl-update-endpoint", () => {
     });
 
     it("should unsubscribe from data producer and resubscribe with new details", async () => {
-        await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toStrictEqual({
+            statusCode: 204,
+            body: "",
+        });
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
-            mockUpdateEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             expectedSubscriptionDetails,
             false,
         );
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
-            mockUpdateEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             mockUpdateEventBody.username,
             mockUpdateEventBody.password,
         );
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
-            mockUpdateEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             expectedSubscriptionDetails,
             mockUpdateEventBody.username,
             mockUpdateEventBody.password,
@@ -124,17 +128,20 @@ describe("avl-update-endpoint", () => {
     it("should resubscribe with new details from data producer even if unsubscribe step is unsuccessful", async () => {
         sendTerminateSubscriptionRequestSpy.mockRejectedValue({ statusCode: 500 });
 
-        await expect(handler(mockUpdateEvent)).resolves.toStrictEqual({ statusCode: 204, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toStrictEqual({
+            statusCode: 204,
+            body: "",
+        });
 
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
-            mockUpdateEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             mockUpdateEventBody.username,
             mockUpdateEventBody.password,
         );
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
-            mockUpdateEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             expectedSubscriptionDetails,
             mockUpdateEventBody.username,
             mockUpdateEventBody.password,
@@ -148,7 +155,7 @@ describe("avl-update-endpoint", () => {
     it("should return a 404 if given subscription ID does not exist in dynamo", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
-        await expect(handler(mockUpdateEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
@@ -242,9 +249,9 @@ describe("avl-update-endpoint", () => {
     ])(
         "should return a 400 if event body from the API gateway event does not match the avlUpdateBody schema (test: %o).",
         async (input, expectedErrorMessages) => {
-            mockUpdateEvent.body = JSON.stringify(input);
+            mockEvent.body = JSON.stringify(input);
 
-            await expect(handler(mockUpdateEvent)).resolves.toEqual({
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrorMessages }),
             });
@@ -256,11 +263,11 @@ describe("avl-update-endpoint", () => {
     );
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
-        mockUpdateEvent.headers = {
+        mockEvent.headers = {
             "x-api-key": key,
         };
 
-        const response = await handler(mockUpdateEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),
@@ -274,7 +281,7 @@ describe("avl-update-endpoint", () => {
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
-        const response = await handler(mockUpdateEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),

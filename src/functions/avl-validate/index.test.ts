@@ -1,3 +1,4 @@
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import axios, { AxiosError, AxiosResponse } from "axios";
@@ -16,7 +17,7 @@ vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
 
 describe("avl-validate", () => {
-    let mockValidateEvent: APIGatewayProxyEvent;
+    let mockEvent: APIGatewayProxyEvent;
 
     MockDate.set("2024-03-11T15:20:02.093Z");
 
@@ -36,7 +37,7 @@ describe("avl-validate", () => {
     beforeEach(() => {
         vi.resetAllMocks();
 
-        mockValidateEvent = {
+        mockEvent = {
             headers: {
                 "x-api-key": "mock-api-key",
             },
@@ -52,7 +53,7 @@ describe("avl-validate", () => {
             status: 200,
         } as AxiosResponse);
 
-        await expect(handler(mockValidateEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             body: JSON.stringify({ siriVersion: "2.0" }),
         });
@@ -117,9 +118,9 @@ describe("avl-validate", () => {
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlValidateMessage schema (test: %o)",
         async (input, expectedErrorMessages) => {
-            mockValidateEvent.body = JSON.stringify(input);
+            mockEvent.body = JSON.stringify(input);
 
-            const response = await handler(mockValidateEvent);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrorMessages }),
@@ -134,7 +135,7 @@ describe("avl-validate", () => {
             throw new AxiosError();
         });
 
-        await expect(handler(mockValidateEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 400,
             body: JSON.stringify({ errors: ["Invalid request to data producer"] }),
         });
@@ -152,7 +153,7 @@ describe("avl-validate", () => {
             status: 200,
         } as AxiosResponse);
 
-        await expect(handler(mockValidateEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             body: JSON.stringify({ siriVersion: "Unknown" }),
         });
@@ -172,7 +173,7 @@ describe("avl-validate", () => {
                 status: 200,
             } as AxiosResponse);
 
-            await expect(handler(mockValidateEvent)).resolves.toEqual({
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 200,
                 body: JSON.stringify({ siriVersion: "Unknown" }),
             });
@@ -191,7 +192,7 @@ describe("avl-validate", () => {
             status: 200,
         } as AxiosResponse);
 
-        await expect(handler(mockValidateEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 400,
             body: JSON.stringify({ errors: ["Data producer did not return a status of true"] }),
         });
@@ -204,11 +205,11 @@ describe("avl-validate", () => {
     });
 
     it.each([[undefined], ["invalid-key"]])("should return a 401 when an invalid api key is supplied", async (key) => {
-        mockValidateEvent.headers = {
+        mockEvent.headers = {
             "x-api-key": key,
         };
 
-        const response = await handler(mockValidateEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),

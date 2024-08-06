@@ -2,10 +2,10 @@ import { createServerErrorResponse, createValidationErrorResponse } from "@bods-
 import { getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
 import { getMetricStatistics } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -93,7 +93,9 @@ const generateReportBody = async (errorData: AvlValidationError[], subscriptionI
     };
 };
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { AVL_VALIDATION_ERROR_TABLE: tableName, CLOUDWATCH_NAMESPACE: cloudwatchNamespace } = process.env;
 
@@ -103,12 +105,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         const { sampleSize } = requestParamsSchema.parse(event.queryStringParameters);
         const { subscriptionId } = pathParamsSchema.parse(event.pathParameters);
+        logger.subscriptionId = subscriptionId;
 
         const errorData = await getAvlSubscriptionErrorData(tableName, subscriptionId);
 
         const reportBody = await generateReportBody(errorData, subscriptionId, cloudwatchNamespace);
 
-        logger.info("Executed avl data feed validator", { tableName, subscriptionId, sampleSize });
+        logger.info("Executed avl data feed validator", { sampleSize });
 
         return {
             statusCode: 200,

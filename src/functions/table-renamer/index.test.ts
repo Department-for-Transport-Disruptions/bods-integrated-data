@@ -33,6 +33,7 @@ describe("table renamer", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     const tables: TableKey[] = [{ table: "trip", newTable: "trip_new", key: "id" }];

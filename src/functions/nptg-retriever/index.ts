@@ -1,8 +1,11 @@
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 

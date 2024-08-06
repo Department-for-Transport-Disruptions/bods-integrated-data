@@ -1,7 +1,8 @@
 import { Stream } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 import { Entry, Parse } from "unzipper";
 
@@ -45,7 +46,9 @@ const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketNa
     await Promise.all(promises);
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { TXC_ZIPPED_BUCKET_NAME: txcZippedBucketName, TXC_BUCKET_NAME: txcBucketName } = process.env;
 
     if (!txcZippedBucketName || !txcBucketName) {

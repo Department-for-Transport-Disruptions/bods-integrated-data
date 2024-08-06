@@ -1,10 +1,13 @@
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { Handler } from "aws-lambda";
 import { FileMigrationProvider, Migrator } from "kysely";
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { ROLLBACK: rollback } = process.env;
 
     const isRollback = rollback === "true";

@@ -1,5 +1,6 @@
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManager from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
@@ -55,7 +56,7 @@ describe("avl-feed-validator", () => {
     it("should do nothing if no subscriptions are found to validate", async () => {
         recursiveScanSpy.mockResolvedValue([]);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toBeCalledTimes(2);
@@ -92,7 +93,7 @@ describe("avl-feed-validator", () => {
 
         recursiveScanSpy.mockResolvedValue(avlSubscriptions);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toBeCalledTimes(2);
@@ -118,7 +119,7 @@ describe("avl-feed-validator", () => {
 
         recursiveScanSpy.mockResolvedValue(avlSubscriptions);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(getParameterSpy).not.toHaveBeenCalledTimes(2);
@@ -175,7 +176,7 @@ describe("avl-feed-validator", () => {
             status: 200,
         } as AxiosResponse);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
@@ -260,7 +261,7 @@ describe("avl-feed-validator", () => {
         getParameterSpy.mockResolvedValue({ Parameter: undefined });
         getParameterSpy.mockResolvedValue({ Parameter: undefined });
 
-        await expect(handler()).rejects.toThrowError(
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(
             "Cannot resubscribe to data producer as username or password is missing for subscription ID: mock-subscription-id-1.",
         );
 
@@ -338,7 +339,9 @@ describe("avl-feed-validator", () => {
             name: "AxiosError",
         } as AxiosError);
 
-        await expect(handler()).rejects.toThrowError("Request failed with status code 500");
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(
+            "Request failed with status code 500",
+        );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
         expect(putDynamoItemSpy).toBeCalledWith("test-dynamo-table", "mock-subscription-id-1", "SUBSCRIPTION", {
@@ -395,7 +398,7 @@ describe("avl-feed-validator", () => {
             status: 200,
         } as AxiosResponse);
 
-        await handler();
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(getParameterSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenCalledWith(

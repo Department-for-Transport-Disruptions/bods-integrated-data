@@ -29,9 +29,6 @@ dependencies:
   '@aws-sdk/s3-request-presigner':
     specifier: ^3.540.0
     version: 3.540.0
-  '@baselime/lambda-logger':
-    specifier: ^0.2.2
-    version: 0.2.2
   axios:
     specifier: ^1.7.2
     version: 1.7.2
@@ -59,6 +56,9 @@ dependencies:
   pino:
     specifier: ^9.1.0
     version: 9.2.0
+  pino-lambda:
+    specifier: ^4.4.0
+    version: 4.4.0(pino@9.2.0)
   unzipper:
     specifier: ^0.10.14
     version: 0.10.14
@@ -2788,10 +2788,6 @@ packages:
       to-fast-properties: 2.0.0
     dev: false
 
-  /@baselime/lambda-logger@0.2.2:
-    resolution: {integrity: sha512-32jmqKYZgVskg4aA/bLwmrO3HsklR/mutqd4U1qtCtvAWauBZ5yre/WMinJxPkdicrYS1djr1e8g9x2hQRvBDg==}
-    dev: false
-
   /@jsdoc/salty@0.2.8:
     resolution: {integrity: sha512-5e+SFVavj1ORKlKaKr2BmTOekmXbelU7dC0cDkQLqag7xfuTPuGMUFx7KWJuv4bYZrTsoL2Z18VVCOKYxzoHcg==}
     engines: {node: '>=v12.0.0'}
@@ -5091,6 +5087,14 @@ packages:
     dependencies:
       readable-stream: 4.5.2
       split2: 4.2.0
+    dev: false
+
+  /pino-lambda@4.4.0(pino@9.2.0):
+    resolution: {integrity: sha512-pJ2NFMi0GQkug89LvEUBPFxoNoKE/oXgL+N5mw15Nwqo0J58G/HBPfIsZ3IGk2Dgt/lko/b6Q73u6bWQ7i9YEw==}
+    peerDependencies:
+      pino: '>=6.0.0'
+    dependencies:
+      pino: 9.2.0
     dev: false
 
   /pino-std-serializers@7.0.0:

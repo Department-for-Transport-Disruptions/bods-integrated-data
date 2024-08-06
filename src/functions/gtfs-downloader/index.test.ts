@@ -1,4 +1,5 @@
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,6 +14,7 @@ describe("gtfs-downloader-endpoint", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     beforeEach(() => {
@@ -31,7 +33,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -51,7 +53,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -72,7 +74,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(mockEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 302,
             headers: {
                 Location: mockPresignedUrl,
@@ -92,7 +94,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        await handler(mockEvent);
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -114,7 +116,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        await handler(mockEvent);
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -136,7 +138,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
             body: JSON.stringify({ errors: ["Invalid region code"] }),
@@ -154,7 +156,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        await handler(mockEvent);
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(getPresignedUrlMock).toBeCalledWith(
             {
@@ -176,7 +178,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
             body: JSON.stringify({ errors: ["Invalid region name"] }),

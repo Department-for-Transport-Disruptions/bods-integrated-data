@@ -1,3 +1,4 @@
+import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
@@ -32,7 +33,7 @@ describe("gtfs-timetables-region-retriever", () => {
             },
         });
 
-        await expect(handler()).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: "[]",
@@ -67,7 +68,7 @@ describe("gtfs-timetables-region-retriever", () => {
             },
         });
 
-        await expect(handler()).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify([
@@ -113,7 +114,7 @@ describe("gtfs-timetables-region-retriever", () => {
             },
         });
 
-        await expect(handler()).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify([

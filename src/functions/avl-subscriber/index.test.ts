@@ -1,5 +1,6 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
@@ -55,7 +56,7 @@ describe("avl-subscriber", () => {
         apiKey: "5965q7gh542843e2a75c1782a48637d5",
     };
 
-    let mockSubscribeEvent: APIGatewayProxyEvent;
+    let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -65,7 +66,7 @@ describe("avl-subscriber", () => {
         process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
         process.env.STAGE = "";
         process.env.MOCK_PRODUCER_SUBSCRIBE_ENDPOINT = "";
-        mockSubscribeEvent = {
+        mockEvent = {
             headers: {
                 "x-api-key": "mock-api-key",
             },
@@ -79,7 +80,7 @@ describe("avl-subscriber", () => {
     });
 
     it("should process a subscription request if a valid input is passed, including adding auth creds to parameter store and subscription details to DynamoDB", async () => {
-        await handler(mockSubscribeEvent);
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
         expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
@@ -239,9 +240,9 @@ describe("avl-subscriber", () => {
     ])(
         "should throw an error if the event body from the API gateway event does not match the avlSubscribeMessage schema.",
         async (input, expectedErrorMessages) => {
-            mockSubscribeEvent.body = JSON.stringify(input);
+            mockEvent.body = JSON.stringify(input);
 
-            const response = await handler(mockSubscribeEvent);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrorMessages }),
@@ -255,7 +256,7 @@ describe("avl-subscriber", () => {
     it("should throw an error if a sendSubscriptionRequestAndUpdateDynamo was not successful", async () => {
         sendSubscriptionRequestAndUpdateDynamoSpy.mockRejectedValue({ statusCode: 500 });
 
-        const response = await handler(mockSubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -281,11 +282,11 @@ describe("avl-subscriber", () => {
     });
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
-        mockSubscribeEvent.headers = {
+        mockEvent.headers = {
             "x-api-key": key,
         };
 
-        const response = await handler(mockSubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),
@@ -297,7 +298,7 @@ describe("avl-subscriber", () => {
             status: "live",
         });
 
-        const response = await handler(mockSubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 409,
             body: JSON.stringify({ errors: ["Subscription ID already active"] }),
@@ -314,7 +315,7 @@ describe("avl-subscriber", () => {
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
-        const response = await handler(mockSubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -324,7 +325,7 @@ describe("avl-subscriber", () => {
     it("throws an error when the stage is local and the mock data producer env var is missing", async () => {
         process.env.STAGE = "local";
 
-        const response = await handler(mockSubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),

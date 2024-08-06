@@ -1,11 +1,13 @@
 import { GTFS_FILE_SUFFIX, REGIONS } from "@bods-integrated-data/shared/constants";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
-import { APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 
-export const handler = async (): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 

@@ -1,3 +1,4 @@
+import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import axios from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -71,6 +72,8 @@ describe("getBankHolidaysAndUploadToS3", () => {
 
 describe("handler", () => {
     it("should throw an error if bucket name is not set", async () => {
-        await expect(() => handler()).rejects.toThrow("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
+        await expect(() => handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
+            "Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set",
+        );
     });
 });

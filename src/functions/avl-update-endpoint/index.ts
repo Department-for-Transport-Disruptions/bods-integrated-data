@@ -15,11 +15,11 @@ import {
     generateApiKey,
     getAvlSubscription,
 } from "@bods-integrated-data/shared/avl/utils";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -37,7 +37,9 @@ const requestBodySchema = z
     .transform((body) => JSON.parse(body))
     .pipe(avlUpdateBodySchema);
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const {
             STAGE: stage,
@@ -59,13 +61,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
+        logger.subscriptionId = subscriptionId;
 
         const updateBody = requestBodySchema.parse(event.body);
         const { username, password } = updateBody;
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
-
-        logger.info(`Starting lambda to update subscription with ID: ${subscriptionId}`);
 
         const isInternal = isPrivateAddress(updateBody.dataProducerEndpoint);
 
@@ -85,7 +86,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         };
 
         try {
-            logger.info(`Unsubscribing from subscription ID: ${subscriptionId} using existing credentials `);
+            logger.info("Unsubscribing using existing credentials ");
             await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail, isInternal);
         } catch (e) {
             logger.warn(
@@ -95,7 +96,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, updateBody.username, updateBody.password);
 
-        logger.info(`Subscribing to subscription ID: ${subscriptionId} using new details`);
+        logger.info("Subscribing using new details");
 
         await sendSubscriptionRequestAndUpdateDynamo(
             subscriptionId,
@@ -108,7 +109,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             mockProducerSubscribeEndpoint,
         );
 
-        logger.info(`Successfully updated subscription ID: ${subscriptionId}`);
         return {
             statusCode: 204,
             body: "",

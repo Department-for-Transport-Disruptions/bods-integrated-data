@@ -1,8 +1,8 @@
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { nocSchema } from "@bods-integrated-data/shared/schema/noc.schema";
-import { S3Event } from "aws-lambda";
+import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
 import { insertNocOperator } from "./data/database";
@@ -42,7 +42,9 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
     return nocJson.data;
 };
 
-export const handler = async (event: S3Event) => {
+export const handler: S3Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { bucket, object } = event.Records[0].s3;
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 

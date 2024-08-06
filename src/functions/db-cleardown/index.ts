@@ -1,5 +1,6 @@
 import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { Handler } from "aws-lambda";
 import { sql } from "kysely";
 
 const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
@@ -29,7 +30,9 @@ const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
     }
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     logger.info("Starting DB Cleardown");
 
     const { STAGE: stage, ONLY_GTFS = "false" } = process.env;

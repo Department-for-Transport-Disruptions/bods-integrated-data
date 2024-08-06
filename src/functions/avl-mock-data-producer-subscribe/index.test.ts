@@ -1,3 +1,4 @@
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
@@ -21,7 +22,7 @@ describe("avl-mock-data-producer-subscribe", () => {
             body: "invalid xml",
         } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidXmlRequest)).rejects.toThrowError(InvalidXmlError);
+        await expect(handler(invalidXmlRequest, mockContext, mockCallback)).rejects.toThrowError(InvalidXmlError);
     });
 
     it("should throw an error if invalid SIRI subscription request from data consumer is received", async () => {
@@ -34,11 +35,13 @@ describe("avl-mock-data-producer-subscribe", () => {
                     </Siri>`,
         } as unknown as APIGatewayProxyEvent;
 
-        await expect(handler(invalidSubscriptionRequest)).rejects.toThrowError(InvalidXmlError);
+        await expect(handler(invalidSubscriptionRequest, mockContext, mockCallback)).rejects.toThrowError(
+            InvalidXmlError,
+        );
     });
 
     it("should send a subscription response if valid subscription request is received", async () => {
-        await expect(handler(mockSubscriptionRequest)).resolves.toEqual({
+        await expect(handler(mockSubscriptionRequest, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             body: expectedSubscriptionResponse,
         });

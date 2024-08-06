@@ -1,4 +1,3 @@
-import { logger } from "@bods-integrated-data/shared/logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
@@ -53,6 +52,4 @@ export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-
-        logger.info(`Unsubscribe request sent for subscription ID: ${subscriptionId}.`);
     });

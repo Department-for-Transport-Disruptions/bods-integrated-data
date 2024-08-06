@@ -1,10 +1,11 @@
 import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
 import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 import { RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
 
@@ -52,7 +53,9 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
     });
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
