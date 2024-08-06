@@ -16,6 +16,7 @@ export const mockSubscriptionRequest = {
                                 <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
                                 <VehicleMonitoringRequest version='2.0'>
                                     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+                                    <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
                                 </VehicleMonitoringRequest>
                             </VehicleMonitoringSubscriptionRequest>
                         </SubscriptionRequest>
