@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
@@ -11,7 +10,11 @@ import {
     sendSubscriptionRequestAndUpdateDynamo,
 } from "@bods-integrated-data/shared/avl/subscribe";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
-import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import {
+    SubscriptionIdNotFoundError,
+    generateApiKey,
+    getAvlSubscription,
+} from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -78,7 +81,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
             publisherId: subscription.publisherId,
             serviceStartDatetime: subscription.serviceStartDatetime,
             lastModifiedDateTime: subscription.lastModifiedDateTime ?? null,
-            apiKey: randomUUID(),
+            apiKey: generateApiKey(),
         };
 
         try {
