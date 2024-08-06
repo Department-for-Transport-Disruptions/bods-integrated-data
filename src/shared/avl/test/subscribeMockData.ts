@@ -43,6 +43,7 @@ export const expectedRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" sta
       <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
       <VehicleMonitoringRequest version=\"2.0\">
         <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+        <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
       </VehicleMonitoringRequest>
     </VehicleMonitoringSubscriptionRequest>
   </SubscriptionRequest>
@@ -86,6 +87,7 @@ export const expectedRequestBodyForMockProducer = `<?xml version=\"1.0\" encodin
       <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
       <VehicleMonitoringRequest version=\"2.0\">
         <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+        <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
       </VehicleMonitoringRequest>
     </VehicleMonitoringSubscriptionRequest>
   </SubscriptionRequest>

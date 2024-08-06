@@ -19,6 +19,7 @@ export const testSiri = `
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
             <VehicleActivity>
                 <RecordedAtTime>2018-08-17T15:13:20</RecordedAtTime>
+                <RequestMessageRef/>
                 <ValidUntilTime>2018-08-17T16:13:29</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>

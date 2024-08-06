@@ -28,7 +28,7 @@ describe("avl-update-endpoint", () => {
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
         shortDescription: "updated short description",
         url: "https://www.updated-endpoint.com",
-        apiKey: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+        apiKey: "5965q7gh542843e2a75c1782a48637d5",
     };
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({

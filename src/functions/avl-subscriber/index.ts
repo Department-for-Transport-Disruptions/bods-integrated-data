@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
     createConflictErrorResponse,
     createServerErrorResponse,
@@ -11,7 +10,7 @@ import {
     sendSubscriptionRequestAndUpdateDynamo,
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
-import { isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { generateApiKey, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -76,7 +75,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             shortDescription: avlSubscribeMessage.shortDescription,
             requestorRef: avlSubscribeMessage.requestorRef,
             publisherId: avlSubscribeMessage.publisherId,
-            apiKey: randomUUID(),
+            apiKey: generateApiKey(),
         };
 
         try {
