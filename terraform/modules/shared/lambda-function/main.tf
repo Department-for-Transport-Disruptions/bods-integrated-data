@@ -63,21 +63,6 @@ resource "aws_iam_policy" "lambda_policy" {
   })
 }
 
-resource "aws_iam_policy" "lambda_metrics_policy" {
-  name = "${var.function_name}-metrics-policy-${var.environment}"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = {
-      Action = [
-        "cloudwatch:PutMetricData"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
-    }
-  })
-}
-
 resource "aws_iam_role" "lambda_role" {
   name = "${var.function_name}-role-${var.environment}"
 
@@ -93,17 +78,26 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
+
+  inline_policy {
+    name = "put-metrics-policy"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [{
+        Action = [
+          "cloudwatch:PutMetricData"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }]
+    })
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {
   role = aws_iam_role.lambda_role.id
   policy_arn = (var.subnet_ids != null ? "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" :
   "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_role_lambda_metrics_policy_attachment" {
-  role       = aws_iam_role.lambda_role.id
-  policy_arn = aws_iam_policy.lambda_metrics_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_custom_policy_attachment" {
