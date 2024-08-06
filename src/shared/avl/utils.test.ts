@@ -376,7 +376,7 @@ describe("utils", () => {
         });
 
         it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
-            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", "local", false);
+            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", false);
 
             expect(s3.putS3Object).toHaveBeenCalledTimes(2);
             expect(s3.putS3Object).toHaveBeenNthCalledWith(1, {

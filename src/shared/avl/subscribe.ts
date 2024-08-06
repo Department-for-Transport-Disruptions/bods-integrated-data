@@ -31,12 +31,13 @@ export const generateSubscriptionRequestXml = (
     messageIdentifier: string,
     dataEndpoint: string,
     requestorRef: string | null,
-    apiKey?: string,
+    apiKey: string,
+    isInternal = false,
 ) => {
     const subscriptionRequestJson: AvlSubscriptionRequest = {
         SubscriptionRequest: {
             RequestTimestamp: currentTimestamp,
-            ConsumerAddress: apiKey
+            ConsumerAddress: !isInternal
                 ? `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`
                 : `${dataEndpoint}/${subscriptionId}`,
             RequestorRef: requestorRef ?? "BODS",
@@ -156,6 +157,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         dataEndpoint,
         subscriptionDetails.requestorRef ?? null,
         subscriptionDetails.apiKey,
+        isInternal,
     );
 
     const url =

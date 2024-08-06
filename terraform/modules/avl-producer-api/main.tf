@@ -121,7 +121,6 @@ module "avl_validate" {
 
 module "avl_datafeed_validator" {
   source                   = "./avl-datafeed-validator"
-  avl_cloudwatch_namespace = var.avl_cloudwatch_namespace
   avl_error_table_name     = var.avl_error_table_name
   avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
   aws_account_id           = var.aws_account_id

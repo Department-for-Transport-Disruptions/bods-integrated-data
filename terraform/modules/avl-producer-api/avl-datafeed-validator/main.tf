@@ -48,7 +48,6 @@ module "avl_datafeed_validator" {
   env_vars = {
     STAGE                      = var.environment
     AVL_VALIDATION_ERROR_TABLE = var.avl_error_table_name
-    CLOUDWATCH_NAMESPACE       = var.avl_cloudwatch_namespace
     AVL_PRODUCER_API_KEY_ARN   = var.avl_producer_api_key_arn
   }
 }

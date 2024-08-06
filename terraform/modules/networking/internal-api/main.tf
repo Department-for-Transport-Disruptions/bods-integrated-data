@@ -9,9 +9,6 @@ terraform {
   }
 }
 
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 resource "aws_security_group" "internal_api_nlb_sg" {
   name   = "integrated-data-internal-api-nlb-sg-${var.environment}"
   vpc_id = var.vpc_id

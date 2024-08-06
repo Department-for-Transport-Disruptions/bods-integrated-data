@@ -434,28 +434,8 @@ export const onwardCallInsertQuery = [
     },
 ];
 
-export const expectedPutMetricDataCall = {
-    namespace: "custom/CAVLMetrics",
-    metricData: [
-        {
-            MetricName: "TotalAvlProcessed",
-            Value: 2,
-        },
-        {
-            MetricName: "TotalFilesProcessed",
-            Value: 1,
-        },
-    ],
-    metricDimensions: [
-        {
-            Name: "SubscriptionId",
-            Value: "123",
-        },
-    ],
-};
-
 export const expectedPutMetricDataCallForFilteredArrayParseError = {
-    namespace: "custom/SiriVmVehicleActivitySchema-dev",
+    namespace: "custom/SiriVmVehicleActivitySchema",
     metricData: [
         {
             MetricName: "MakeFilteredArraySchemaParseError",

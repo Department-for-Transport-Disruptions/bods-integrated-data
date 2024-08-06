@@ -78,6 +78,20 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
+
+  inline_policy {
+    name = "put-metrics-policy"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [{
+        Action = [
+          "cloudwatch:PutMetricData"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }]
+    })
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {

@@ -10,7 +10,6 @@ import MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { processSqsRecord } from ".";
 import {
-    expectedPutMetricDataCall,
     expectedPutMetricDataCallForFilteredArrayParseError,
     mockItemId,
     mockSubscriptionId,
@@ -127,12 +126,6 @@ describe("avl-processor", () => {
         expect(uuidSpy).toHaveBeenCalledOnce();
 
         expect(valuesMock).toBeCalledWith(parsedSiri);
-        expect(putMetricDataSpy).toHaveBeenCalledOnce();
-        expect(putMetricDataSpy).toHaveBeenCalledWith(
-            expectedPutMetricDataCall.namespace,
-            expectedPutMetricDataCall.metricData,
-            expectedPutMetricDataCall.metricDimensions,
-        );
     });
 
     it("correctly processes a siri-vm file with OnwardCalls data", async () => {
@@ -162,13 +155,6 @@ describe("avl-processor", () => {
         expect(valuesMock).toHaveBeenNthCalledWith(1, [parsedSiriWithOnwardCalls[0]]);
         expect(valuesMock).toHaveBeenNthCalledWith(2, parsedSiriWithOnwardCalls[1]);
         expect(valuesMock).toHaveBeenNthCalledWith(3, onwardCallInsertQuery);
-
-        expect(putMetricDataSpy).toHaveBeenCalledOnce();
-        expect(putMetricDataSpy).toHaveBeenCalledWith(
-            expectedPutMetricDataCall.namespace,
-            expectedPutMetricDataCall.metricData,
-            expectedPutMetricDataCall.metricDimensions,
-        );
     });
 
     it("does not insert to database if invalid", async () => {

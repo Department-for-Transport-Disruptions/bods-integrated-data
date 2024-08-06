@@ -274,7 +274,6 @@ module "integrated_data_avl_data_producer_api" {
   subnet_ids                  = module.integrated_data_vpc.private_subnet_ids
   avl_producer_api_key        = local.secrets["avl_producer_api_key"]
   avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
-  avl_cloudwatch_namespace    = "custom/CAVLMetrics"
   internal_data_endpoint      = local.secrets["internal_avl_ingestion_nlb_ip"]
 }
 

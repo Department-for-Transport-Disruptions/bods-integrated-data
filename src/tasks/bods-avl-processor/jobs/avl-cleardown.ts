@@ -6,8 +6,6 @@ import { sql } from "kysely";
 void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
-    const stage = process.env.STAGE || "";
-
     try {
         const result = await dbClient
             .deleteFrom("avl_bods")
@@ -20,7 +18,7 @@ void (async () => {
             logger.error("There was a problem with the AVL BODS cleardown", e);
         }
 
-        await putMetricData(`custom/BODSAVLCleardown-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
+        await putMetricData("custom/BODSAVLCleardown", [{ MetricName: "Errors", Value: 1 }]);
 
         throw e;
     } finally {

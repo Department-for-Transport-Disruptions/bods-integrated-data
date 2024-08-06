@@ -5,7 +5,6 @@ import {
     insertAvls,
     insertAvlsWithOnwardCalls,
 } from "@bods-integrated-data/shared/avl/utils";
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
@@ -129,25 +128,9 @@ export const processSqsRecord = async (
                 await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
             }
 
-            await putMetricData(
-                "custom/CAVLMetrics",
-                [
-                    {
-                        MetricName: "TotalAvlProcessed",
-                        Value: avls.length,
-                    },
-                    {
-                        MetricName: "TotalFilesProcessed",
-                        Value: 1,
-                    },
-                ],
-                [
-                    {
-                        Name: "SubscriptionId",
-                        Value: subscriptionId,
-                    },
-                ],
-            );
+            logger.info("AVL processed successfully", {
+                subscriptionId,
+            });
         }
     } catch (e) {
         logger.error(`AVL processing failed for file ${record.s3.object.key}`);
@@ -182,8 +165,6 @@ export const handler = async (event: SQSEvent) => {
                 ),
             ),
         );
-
-        logger.info("AVL uploaded to database successfully");
     } catch (e) {
         if (e instanceof Error) {
             logger.error("AVL Processor has failed", e);
