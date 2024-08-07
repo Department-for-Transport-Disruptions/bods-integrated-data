@@ -86,12 +86,19 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
 const generateReportBody = async (errorData: AvlValidationError[], subscriptionId: string) => {
     const totalProcessed = await getTotalAvlsProcessed(subscriptionId);
 
-    return {
+    const reportBody = {
         feed_id: subscriptionId,
         packet_count: totalProcessed,
-        validation_summary: generateValidationSummary(errorData, totalProcessed),
-        errors: generateResults(errorData, subscriptionId),
+        validation_summary: {},
+        errors: {},
     };
+
+    if (errorData.length > 0) {
+        reportBody.validation_summary = generateValidationSummary(errorData, totalProcessed);
+        reportBody.errors = generateResults(errorData, subscriptionId);
+    }
+
+    return reportBody;
 };
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
