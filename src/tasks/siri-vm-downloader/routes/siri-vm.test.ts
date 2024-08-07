@@ -39,6 +39,10 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         getPresignedUrl: mocks.getPresignedUrl,
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
         getSecret: vi.fn(),
     }));

@@ -108,7 +108,7 @@ export const handler = async () => {
 
                     await putMetricData("custom/AVLMetrics", [
                         {
-                            MetricName: "AvlFeedOutage",
+                            MetricName: "Resubscriptions",
                             Value: 1,
                         },
                     ]);
@@ -118,6 +118,13 @@ export const handler = async () => {
                             `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,
                         );
                     }
+
+                    await putMetricData("custom/AVLMetrics", [
+                        {
+                            MetricName: "AvlFeedOutage",
+                            Value: 1,
+                        },
+                    ]);
 
                     throw e;
                 }
