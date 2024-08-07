@@ -31,6 +31,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 badRequest: vi.fn(),
                 internalServerError: vi.fn(),
             } as unknown as FastifyReply,
+            putMetricMock: vi.fn(),
         };
     });
 
@@ -40,7 +41,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
-        putMetricData: vi.fn(),
+        putMetricData: mocks.putMetricMock,
     }));
 
     vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
@@ -446,6 +447,12 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(mocks.fastify.log.warn).toHaveBeenCalledWith(expect.stringContaining("Invalid request"));
                 expect(getAvlDataForSiriVmMock).not.toHaveBeenCalled();
+                expect(mocks.putMetricMock).toHaveBeenCalledWith("custom/SIRIVMDownloader", [
+                    {
+                        MetricName: "4xx",
+                        Value: 1,
+                    },
+                ]);
             });
 
             it("returns a 500 when an unexpected error occurs", async () => {
@@ -463,6 +470,13 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     "There was a problem with the SIRI-VM downloader endpoint",
                     expect.any(Error),
                 );
+
+                expect(mocks.putMetricMock).toHaveBeenCalledWith("custom/SIRIVMDownloader", [
+                    {
+                        MetricName: "5xx",
+                        Value: 1,
+                    },
+                ]);
             });
         });
     });
