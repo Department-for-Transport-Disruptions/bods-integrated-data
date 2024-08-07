@@ -356,7 +356,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
 
     const builder = new XMLBuilder({
         ignoreAttributes: false,
-        format: true,
+        format: false,
         attributeNamePrefix: "@_",
     });
 

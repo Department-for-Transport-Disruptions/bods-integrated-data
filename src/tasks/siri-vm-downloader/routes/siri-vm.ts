@@ -5,6 +5,7 @@ import {
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
@@ -137,12 +138,26 @@ export const downloadSiriVm = async (
             const zodErrors = e.errors.map((error) => error.message).join(", ");
             fastify.log.warn(`Invalid request: ${zodErrors}`);
 
+            await putMetricData("custom/SIRIVMDownloader", [
+                {
+                    MetricName: "4xx",
+                    Value: 1,
+                },
+            ]);
+
             return reply.badRequest(zodErrors);
         }
 
         if (e instanceof Error) {
             fastify.log.error("There was a problem with the SIRI-VM downloader endpoint", e);
         }
+
+        await putMetricData("custom/SIRIVMDownloader", [
+            {
+                MetricName: "5xx",
+                Value: 1,
+            },
+        ]);
 
         return reply.internalServerError("An unexpected error occurred");
     }

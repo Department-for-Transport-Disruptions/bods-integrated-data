@@ -7,7 +7,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 void (async () => {
     performance.mark("siri-vm-generator-start");
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
 
     try {
         logger.info("Starting SIRI-VM file generator");

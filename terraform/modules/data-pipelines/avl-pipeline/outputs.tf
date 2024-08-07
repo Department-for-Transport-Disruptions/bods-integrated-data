@@ -5,11 +5,3 @@ output "avl_generated_siri_bucket_name" {
 output "avl_raw_siri_bucket_name" {
   value = module.integrated_data_avl_s3_sqs.bucket_id
 }
-
-output "avl_siri_vm_downloader_function_url" {
-  value = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_function_url
-}
-
-output "avl_siri_vm_downloader_lambda_name" {
-  value = module.integrated_data_avl_siri_vm_downloader.avl_siri_vm_downloader_lambda_name
-}
