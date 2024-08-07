@@ -4,6 +4,7 @@ import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { logger } from "@bods-integrated-data/shared/logger";
 
 interface BodsSubscription {
     dataset_id: string;
@@ -12,6 +13,7 @@ interface BodsSubscription {
     username: string;
     password: string;
     status: string;
+    requestor_ref: string | null;
 }
 
 interface Subscription {
@@ -20,6 +22,7 @@ interface Subscription {
     url: string;
     username: string;
     password: string;
+    requestorRef: string | null;
 }
 
 const generateLambdaPayload = (
@@ -29,12 +32,13 @@ const generateLambdaPayload = (
     subscriptionId: string,
     publisherId: string,
     apiKey: string,
+    requestorRef: string | null,
 ) => {
     return {
         headers: {
             "x-api-key": apiKey,
         },
-        body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\"}`,
+        body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\",\"requestorRef\": \"${requestorRef}\"}`,
     };
 };
 
@@ -92,6 +96,7 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                     url: subscription.url_link,
                     username: subscription.username,
                     password: subscription.password,
+                    requestorRef: subscription.requestor_ref === "" ? null : subscription.requestor_ref,
                 });
             }
         }
@@ -111,6 +116,7 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                     url: subscription.url_link,
                     username: subscription.username,
                     password: subscription.password,
+                    requestorRef: subscription.requestor_ref === "" ? null : subscription.requestor_ref,
                 });
             }
         }
@@ -126,6 +132,7 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
                 subscription.id,
                 subscription.publisherId,
                 apiKey,
+                subscription.requestorRef,
             );
 
             const subscribeEvent = await invokeLambda(stage, {
