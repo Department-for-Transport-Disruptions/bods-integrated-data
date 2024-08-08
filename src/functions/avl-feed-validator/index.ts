@@ -105,24 +105,26 @@ export const handler = async () => {
 
                 try {
                     await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
-                } catch (e) {
+
                     await putMetricData("custom/AVLMetrics", [
                         {
-                            MetricName: "AvlFeedOutage",
+                            MetricName: "Resubscriptions",
                             Value: 1,
-                            Dimensions: [
-                                {
-                                    Name: "SubscriptionId",
-                                    Value: subscription.PK,
-                                },
-                            ],
                         },
                     ]);
+                } catch (e) {
                     if (e instanceof AxiosError) {
                         logger.error(
                             `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,
                         );
                     }
+
+                    await putMetricData("custom/AVLMetrics", [
+                        {
+                            MetricName: "AvlFeedOutage",
+                            Value: 1,
+                        },
+                    ]);
 
                     throw e;
                 }
