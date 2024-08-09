@@ -12,7 +12,6 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchema, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
-import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Event, S3EventRecord, SQSEvent } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
@@ -27,7 +26,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
-    const partiallyParsedSiri = siriSchema().deepPartial().parse(parsedXml.Siri);
+    const partiallyParsedSiri = siriSchema().deepPartial().safeParse(parsedXml.Siri).data;
     const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml.Siri);
 
     if (!parsedJson.success) {
@@ -50,7 +49,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     }
 
     return {
-        responseTimestamp: partiallyParsedSiri.ServiceDelivery?.ResponseTimestamp,
+        responseTimestamp: partiallyParsedSiri?.ServiceDelivery?.ResponseTimestamp,
         avls: parsedJson.success ? parsedJson.data : [],
     };
 };
@@ -111,8 +110,6 @@ export const processSqsRecord = async (
                     errors,
                     responseTimestamp,
                 );
-
-                throw new InvalidXmlError();
             }
 
             const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);

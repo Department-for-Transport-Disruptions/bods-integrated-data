@@ -113,7 +113,7 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                 logger.warn("Error parsing item", parsedItem.error.format());
 
                 // optimistically parse the items for error logging purposes
-                const partiallyParsedItem = vehicleActivitySchema.deepPartial().parse(item);
+                const partiallyParsedItem = vehicleActivitySchema.deepPartial().safeParse(item).data;
 
                 errors?.push(
                     ...parsedItem.error.errors.map<AvlValidationError>((error) => {
@@ -124,15 +124,15 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                             SK: randomUUID(),
                             details: message,
                             filename: "",
-                            itemIdentifier: partiallyParsedItem.ItemIdentifier,
+                            itemIdentifier: partiallyParsedItem?.ItemIdentifier,
                             level,
-                            lineRef: partiallyParsedItem.MonitoredVehicleJourney?.LineRef,
+                            lineRef: partiallyParsedItem?.MonitoredVehicleJourney?.LineRef,
                             name,
-                            operatorRef: partiallyParsedItem.MonitoredVehicleJourney?.OperatorRef,
-                            recordedAtTime: partiallyParsedItem.RecordedAtTime,
+                            operatorRef: partiallyParsedItem?.MonitoredVehicleJourney?.OperatorRef,
+                            recordedAtTime: partiallyParsedItem?.RecordedAtTime,
                             timeToExist: 0,
-                            vehicleJourneyRef: partiallyParsedItem.MonitoredVehicleJourney?.VehicleJourneyRef,
-                            vehicleRef: partiallyParsedItem.MonitoredVehicleJourney?.VehicleRef?.toString(),
+                            vehicleJourneyRef: partiallyParsedItem?.MonitoredVehicleJourney?.VehicleJourneyRef,
+                            vehicleRef: partiallyParsedItem?.MonitoredVehicleJourney?.VehicleRef?.toString(),
                         };
                     }),
                 );

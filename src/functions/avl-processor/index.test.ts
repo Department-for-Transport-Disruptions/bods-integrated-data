@@ -18,6 +18,7 @@ import {
     parsedSiriWithOnwardCalls,
     testInvalidSiri,
     testSiri,
+    testSiriWithInvalidVehicleActivities,
     testSiriWithOnwardCalls,
 } from "./test/testSiriVm";
 
@@ -157,17 +158,32 @@ describe("avl-processor", () => {
         expect(valuesMock).toHaveBeenNthCalledWith(3, onwardCallInsertQuery);
     });
 
-    it("does not insert to database if invalid", async () => {
-        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testInvalidSiri } });
+    it("does not insert to database if invalid siri", async () => {
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testInvalidSiri },
+        });
 
-        await expect(
-            processSqsRecord(
-                record as S3EventRecord,
-                dbClient as unknown as KyselyDb,
-                "table-name",
-                "avl-validation-errors-table",
-            ),
-        ).rejects.toThrowError();
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
+
+        expect(valuesMock).not.toHaveBeenCalled();
+    });
+
+    it("does insert to database if only invalid vehicle activities", async () => {
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
+        });
+
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
 
         expect(valuesMock).not.toHaveBeenCalled();
 
@@ -185,16 +201,16 @@ describe("avl-processor", () => {
     });
 
     it("uploads validation errors to dynamoDB when processing invalid data", async () => {
-        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testInvalidSiri } });
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
+        });
 
-        await expect(
-            processSqsRecord(
-                record as S3EventRecord,
-                dbClient as unknown as KyselyDb,
-                "table-name",
-                "avl-validation-errors-table",
-            ),
-        ).rejects.toThrowError();
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
 
         /**
          * This variable represents a time to live (TTL) in the dynamoDB table
