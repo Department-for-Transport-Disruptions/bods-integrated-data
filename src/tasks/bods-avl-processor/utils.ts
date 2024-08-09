@@ -16,7 +16,7 @@ export const parseXml = (xml: string): NewBodsAvl[] => {
     });
 
     const parsedXml = xmlParser.parse(xml) as Record<string, unknown>;
-    const parsedJson = siriBodsSchemaTransformed.safeParse(parsedXml.Siri);
+    const parsedJson = siriBodsSchemaTransformed.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());

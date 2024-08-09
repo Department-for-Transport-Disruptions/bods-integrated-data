@@ -146,15 +146,17 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
 
 export const siriSchema = (errors?: AvlValidationError[]) =>
     z.object({
-        ServiceDelivery: z.object({
-            ResponseTimestamp: z.string(),
-            ItemIdentifier: z.string().optional(),
-            ProducerRef: z.union([z.string(), z.number()]),
-            VehicleMonitoringDelivery: z.object({
+        Siri: z.object({
+            ServiceDelivery: z.object({
                 ResponseTimestamp: z.string(),
-                RequestMessageRef: z.string().uuid().or(txcEmptyProperty).optional(),
-                ValidUntil: z.string().optional(),
-                VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
+                ItemIdentifier: z.string().optional(),
+                ProducerRef: z.union([z.string(), z.number()]),
+                VehicleMonitoringDelivery: z.object({
+                    ResponseTimestamp: z.string(),
+                    RequestMessageRef: z.string().uuid().or(txcEmptyProperty).optional(),
+                    ValidUntil: z.string().optional(),
+                    VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
+                }),
             }),
         }),
     });
@@ -163,7 +165,7 @@ export type SiriVM = z.infer<ReturnType<typeof siriSchema>>;
 
 export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
     siriSchema(errors).transform((item) => {
-        return item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
+        return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
             let onwardCalls: Omit<NewAvlOnwardCall, "avl_id">[] = [];
 
             if (vehicleActivity.MonitoredVehicleJourney.OnwardCalls) {
@@ -181,8 +183,8 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
             }
 
             return {
-                response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-                producer_ref: item.ServiceDelivery.ProducerRef.toString(),
+                response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
+                producer_ref: item.Siri.ServiceDelivery.ProducerRef.toString(),
                 recorded_at_time: vehicleActivity.RecordedAtTime,
                 item_id: vehicleActivity.ItemIdentifier,
                 valid_until_time: vehicleActivity.ValidUntilTime,
@@ -225,10 +227,10 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
     });
 
 export const siriBodsSchemaTransformed = siriSchema().transform((item) => {
-    const avls: NewBodsAvl[] = item.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewBodsAvl>(
+    const avls: NewBodsAvl[] = item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewBodsAvl>(
         (vehicleActivity) => ({
-            response_time_stamp: item.ServiceDelivery.ResponseTimestamp,
-            producer_ref: item.ServiceDelivery.ProducerRef.toString(),
+            response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
+            producer_ref: item.Siri.ServiceDelivery.ProducerRef.toString(),
             recorded_at_time: vehicleActivity.RecordedAtTime,
             valid_until_time: vehicleActivity.ValidUntilTime,
             line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,

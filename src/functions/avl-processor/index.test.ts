@@ -274,7 +274,7 @@ describe("avl-processor", () => {
                 details: "Required",
                 filename: record.s3.object.key,
                 level: "CRITICAL",
-                name: "ServiceDelivery.ProducerRef",
+                name: "Siri.ServiceDelivery.ProducerRef",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
             },

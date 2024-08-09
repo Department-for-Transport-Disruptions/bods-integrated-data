@@ -26,8 +26,8 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
-    const partiallyParsedSiri = siriSchema().deepPartial().safeParse(parsedXml.Siri).data;
-    const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml.Siri);
+    const partiallyParsedSiri = siriSchema().deepPartial().safeParse(parsedXml).data;
+    const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
@@ -49,7 +49,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     }
 
     return {
-        responseTimestamp: partiallyParsedSiri?.ServiceDelivery?.ResponseTimestamp,
+        responseTimestamp: partiallyParsedSiri?.Siri?.ServiceDelivery?.ResponseTimestamp,
         avls: parsedJson.success ? parsedJson.data : [],
     };
 };
