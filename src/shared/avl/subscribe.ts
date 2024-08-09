@@ -35,29 +35,31 @@ export const generateSubscriptionRequestXml = (
     isInternal = false,
 ) => {
     const subscriptionRequestJson: AvlSubscriptionRequest = {
-        SubscriptionRequest: {
-            RequestTimestamp: currentTimestamp,
-            ConsumerAddress: !isInternal
-                ? `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`
-                : `${dataEndpoint}/${subscriptionId}`,
-            RequestorRef: requestorRef ?? "BODS",
-            MessageIdentifier: messageIdentifier,
-            SubscriptionContext: {
-                HeartbeatInterval: "PT30S",
-            },
-            VehicleMonitoringSubscriptionRequest: {
-                SubscriptionIdentifier: subscriptionId,
-                InitialTerminationTime: initialTerminationTime,
-                VehicleMonitoringRequest: {
-                    RequestTimestamp: currentTimestamp,
-                    VehicleMonitoringDetailLevel: "normal",
-                    "@_version": "2.0",
+        Siri: {
+            SubscriptionRequest: {
+                RequestTimestamp: currentTimestamp,
+                ConsumerAddress: !isInternal
+                    ? `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`
+                    : `${dataEndpoint}/${subscriptionId}`,
+                RequestorRef: requestorRef ?? "BODS",
+                MessageIdentifier: messageIdentifier,
+                SubscriptionContext: {
+                    HeartbeatInterval: "PT30S",
+                },
+                VehicleMonitoringSubscriptionRequest: {
+                    SubscriptionIdentifier: subscriptionId,
+                    InitialTerminationTime: initialTerminationTime,
+                    VehicleMonitoringRequest: {
+                        RequestTimestamp: currentTimestamp,
+                        VehicleMonitoringDetailLevel: "normal",
+                        "@_version": "2.0",
+                    },
                 },
             },
         },
     };
 
-    const completeObject: CompleteSiriObject<AvlSubscriptionRequest> = {
+    const completeObject: CompleteSiriObject<AvlSubscriptionRequest["Siri"]> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -69,7 +71,7 @@ export const generateSubscriptionRequestXml = (
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...subscriptionRequestJson,
+            ...subscriptionRequestJson.Siri,
         },
     };
 
@@ -93,7 +95,7 @@ const parseXml = (xml: string, subscriptionId: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = avlSubscriptionResponseSchema.safeParse(parsedXml.Siri);
+    const parsedJson = avlSubscriptionResponseSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(
@@ -182,7 +184,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     try {
         const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
-        if (parsedResponseBody.SubscriptionResponse.ResponseStatus.Status !== "true") {
+        if (parsedResponseBody.Siri.SubscriptionResponse.ResponseStatus.Status !== "true") {
             await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
             throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
         }

@@ -20,7 +20,7 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = avlSubscriptionRequestSchema.safeParse(parsedXml.Siri);
+    const parsedJson = avlSubscriptionRequestSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the subscription request.", parsedJson.error.format());
@@ -36,22 +36,25 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
     const requestMessageRef = randomUUID();
 
     const subscriptionResponseJson: AvlSubscriptionResponse = {
-        SubscriptionResponse: {
-            ResponseTimestamp: currentTime,
-            ResponderRef: "Mock AVL Producer",
-            RequestMessageRef: requestMessageRef,
-            ResponseStatus: {
+        Siri: {
+            SubscriptionResponse: {
                 ResponseTimestamp: currentTime,
-                SubscriberRef: "Mock subscriber",
-                SubscriptionRef:
-                    subscriptionRequest.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
-                Status: "true",
+                ResponderRef: "Mock AVL Producer",
+                RequestMessageRef: requestMessageRef,
+                ResponseStatus: {
+                    ResponseTimestamp: currentTime,
+                    SubscriberRef: "Mock subscriber",
+                    SubscriptionRef:
+                        subscriptionRequest.Siri.SubscriptionRequest.VehicleMonitoringSubscriptionRequest
+                            .SubscriptionIdentifier,
+                    Status: "true",
+                },
+                ServiceStartedTime: currentTime,
             },
-            ServiceStartedTime: currentTime,
         },
     };
 
-    const completeObject: CompleteSiriObject<AvlSubscriptionResponse> = {
+    const completeObject: CompleteSiriObject<AvlSubscriptionResponse["Siri"]> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -63,7 +66,7 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...subscriptionResponseJson,
+            ...subscriptionResponseJson.Siri,
         },
     };
 

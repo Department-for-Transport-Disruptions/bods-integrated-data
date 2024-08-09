@@ -28,21 +28,23 @@ export const avlSubscribeMessageSchema = z.object(
 export type AvlSubscribeMessage = z.infer<typeof avlSubscribeMessageSchema>;
 
 export const avlSubscriptionRequestSchema = z.object({
-    SubscriptionRequest: z.object({
-        RequestTimestamp: z.string(),
-        ConsumerAddress: z.string().url(),
-        RequestorRef: z.string(),
-        MessageIdentifier: z.string(),
-        SubscriptionContext: z.object({
-            HeartbeatInterval: z.string(),
-        }),
-        VehicleMonitoringSubscriptionRequest: z.object({
-            SubscriptionIdentifier: z.string(),
-            InitialTerminationTime: z.string(),
-            VehicleMonitoringRequest: z.object({
-                RequestTimestamp: z.string(),
-                VehicleMonitoringDetailLevel: z.literal("normal"),
-                "@_version": z.string(),
+    Siri: z.object({
+        SubscriptionRequest: z.object({
+            RequestTimestamp: z.string(),
+            ConsumerAddress: z.string().url(),
+            RequestorRef: z.string(),
+            MessageIdentifier: z.string(),
+            SubscriptionContext: z.object({
+                HeartbeatInterval: z.string(),
+            }),
+            VehicleMonitoringSubscriptionRequest: z.object({
+                SubscriptionIdentifier: z.string(),
+                InitialTerminationTime: z.string(),
+                VehicleMonitoringRequest: z.object({
+                    RequestTimestamp: z.string(),
+                    VehicleMonitoringDetailLevel: z.literal("normal"),
+                    "@_version": z.string(),
+                }),
             }),
         }),
     }),
@@ -51,17 +53,19 @@ export const avlSubscriptionRequestSchema = z.object({
 export type AvlSubscriptionRequest = z.infer<typeof avlSubscriptionRequestSchema>;
 
 export const avlSubscriptionResponseSchema = z.object({
-    SubscriptionResponse: z.object({
-        ResponseTimestamp: z.string(),
-        ResponderRef: z.coerce.string().optional(),
-        RequestMessageRef: z.coerce.string().optional(),
-        ResponseStatus: z.object({
+    Siri: z.object({
+        SubscriptionResponse: z.object({
             ResponseTimestamp: z.string(),
-            SubscriberRef: z.coerce.string().optional(),
-            SubscriptionRef: z.coerce.string().optional(),
-            Status: z.coerce.string(),
+            ResponderRef: z.coerce.string().optional(),
+            RequestMessageRef: z.coerce.string().optional(),
+            ResponseStatus: z.object({
+                ResponseTimestamp: z.string(),
+                SubscriberRef: z.coerce.string().optional(),
+                SubscriptionRef: z.coerce.string().optional(),
+                Status: z.coerce.string(),
+            }),
+            ServiceStartedTime: z.string().optional(),
         }),
-        ServiceStartedTime: z.string().optional(),
     }),
 });
 
