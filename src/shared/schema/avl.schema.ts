@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { getErrorDetails } from "../avl/utils";
+import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
 import { NewAvl, NewAvlOnwardCall, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
@@ -106,7 +106,7 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
     z.preprocess((input) => {
         const result = z.any().array().parse(input);
 
-        return result.filter((item) => {
+        return result.filter((item, index) => {
             const parsedItem = vehicleActivitySchema.safeParse(item);
 
             if (!parsedItem.success) {
@@ -117,7 +117,8 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
 
                 errors?.push(
                     ...parsedItem.error.errors.map<AvlValidationError>((error) => {
-                        const { name, message, level } = getErrorDetails(error);
+                        const { name, message, level } = getAvlErrorDetails(error);
+                        const nameWithPrefix = `Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[${index}].${name}`;
 
                         return {
                             PK: "",
@@ -127,7 +128,7 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                             itemIdentifier: partiallyParsedItem?.ItemIdentifier,
                             level,
                             lineRef: partiallyParsedItem?.MonitoredVehicleJourney?.LineRef,
-                            name,
+                            name: nameWithPrefix,
                             operatorRef: partiallyParsedItem?.MonitoredVehicleJourney?.OperatorRef,
                             recordedAtTime: partiallyParsedItem?.RecordedAtTime,
                             timeToExist: 0,

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
+    getAvlErrorDetails,
     getAvlSubscription,
-    getErrorDetails,
     insertAvls,
     insertAvlsWithOnwardCalls,
 } from "@bods-integrated-data/shared/avl/utils";
@@ -33,7 +33,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
         errors.push(
             ...parsedJson.error.errors.map<AvlValidationError>((error) => {
-                const { name, message, level } = getErrorDetails(error);
+                const { name, message, level } = getAvlErrorDetails(error);
 
                 return {
                     PK: "",

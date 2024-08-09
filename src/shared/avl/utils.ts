@@ -491,7 +491,7 @@ export interface CompleteSiriObject<T> {
     } & T;
 }
 
-export const getErrorDetails = (error: ZodIssue) => {
+export const getAvlErrorDetails = (error: ZodIssue) => {
     const validationError = fromZodIssue(error, { prefix: null, includePath: false });
     const { path } = validationError.details[0];
     const name = path.join(".");
