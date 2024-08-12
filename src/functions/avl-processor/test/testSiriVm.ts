@@ -192,7 +192,7 @@ export const testSiriWithOnwardCalls = `
 </Siri>
 `;
 
-export const testInvalidSiri = `
+export const testSiriWithInvalidVehicleActivities = `
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns="http://www.siri.org.uk/siri"
     xmlns:ns2="http://www.ifopt.org.uk/acsb"
@@ -229,6 +229,10 @@ export const testInvalidSiri = `
         </VehicleMonitoringDelivery>
     </ServiceDelivery>
 </Siri>
+`;
+
+export const testInvalidSiri = `
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 `;
 
 export const testSiriWithSingleVehicleActivity = `
