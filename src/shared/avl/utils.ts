@@ -428,9 +428,10 @@ export const generateSiriVmAndUploadToS3 = async (
     }
 
     const responseTime = getDate();
+    const dayAgo = responseTime.subtract(1, "day");
     const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
     const siriVmTfl = createSiriVm(
-        avls.filter((avl) => avl.operator_ref === tflOperatorRef),
+        avls.filter((avl) => avl.operator_ref === tflOperatorRef && avl.recorded_at_time > dayAgo.toISOString()),
         requestMessageRef,
         responseTime,
     );
