@@ -15,7 +15,7 @@ export const resubscribeToDataProducer = async (
     subscribeEndpoint: string,
     avlProducerApiKeyArn: string,
 ) => {
-    logger.info("Attempting to resubscribe");
+    logger.info(`Attempting to resubscribe to subscription ID: ${subscription.PK}`);
 
     const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscription.PK);
 
@@ -44,90 +44,102 @@ export const resubscribeToDataProducer = async (
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const currentTime = getDate();
+    try {
+        logger.info("Starting AVL feed validator.");
 
-    const {
-        TABLE_NAME: tableName,
-        SUBSCRIBE_ENDPOINT: subscribeEndpoint,
-        AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
-    } = process.env;
+        const currentTime = getDate();
 
-    if (!tableName || !subscribeEndpoint || !avlProducerApiKeyArn) {
-        throw new Error("Missing env vars: TABLE_NAME, SUBSCRIBE_ENDPOINT and AVL_PRODUCER_API_KEY_ARN must be set");
-    }
+        const {
+            TABLE_NAME: tableName,
+            SUBSCRIBE_ENDPOINT: subscribeEndpoint,
+            AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
+        } = process.env;
 
-    const subscriptions = await getAvlSubscriptions(tableName);
-    const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "inactive");
-
-    if (!nonTerminatedSubscriptions) {
-        logger.info("No subscriptions found in DynamoDb to validate");
-        return;
-    }
-
-    for await (const subscription of nonTerminatedSubscriptions) {
-        try {
-            logger.subscriptionId = subscription.PK;
-
-            // We expect to receive a heartbeat notification from a data producer every 30 seconds.
-            // If we do not receive a heartbeat notification after 90 seconds we will attempt to resubscribe to the data producer.
-            const isHeartbeatValid = isDateAfter(
-                getDate(subscription.heartbeatLastReceivedDateTime ?? subscription.serviceStartDatetime),
-                currentTime.subtract(90, "seconds"),
+        if (!tableName || !subscribeEndpoint || !avlProducerApiKeyArn) {
+            throw new Error(
+                "Missing env vars: TABLE_NAME, SUBSCRIBE_ENDPOINT and AVL_PRODUCER_API_KEY_ARN must be set",
             );
+        }
 
-            if (isHeartbeatValid) {
-                if (subscription.status !== "live") {
-                    await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
-                        ...subscription,
-                        status: "live",
-                    });
+        const subscriptions = await getAvlSubscriptions(tableName);
+        const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "inactive");
+
+        if (!nonTerminatedSubscriptions) {
+            logger.info("No subscriptions found in DynamoDb to validate");
+            return;
+        }
+
+        await Promise.all(
+            nonTerminatedSubscriptions.map(async (subscription) => {
+                // We expect to receive a heartbeat notification from a data producer every 30 seconds.
+                // If we do not receive a heartbeat notification after 90 seconds we will attempt to resubscribe to the data producer.
+                const isHeartbeatValid = isDateAfter(
+                    getDate(subscription.heartbeatLastReceivedDateTime ?? subscription.serviceStartDatetime),
+                    currentTime.subtract(90, "seconds"),
+                );
+
+                if (isHeartbeatValid) {
+                    if (subscription.status !== "live") {
+                        await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
+                            ...subscription,
+                            status: "live",
+                        });
+                    }
+
+                    return;
                 }
 
-                continue;
-            }
+                await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
+                    ...subscription,
+                    status: "error",
+                });
 
-            await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
-                ...subscription,
-                status: "error",
-            });
-
-            try {
-                await sendTerminateSubscriptionRequest(
-                    subscription.PK,
-                    subscription,
-                    isPrivateAddress(subscription.url),
-                );
-            } catch (e) {
-                logger.warn(
-                    `An error occurred when trying to unsubscribe from subscription with ID: ${subscription.PK}. Error ${e}`,
-                );
-            }
-
-            try {
-                await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
-
-                logger.info("Successfully resubscribed to data producer");
-
-                await putMetricData("custom/AVLMetrics", [
-                    {
-                        MetricName: "Resubscriptions",
-                        Value: 1,
-                    },
-                ]);
-            } catch (e) {
-                if (e instanceof AxiosError) {
-                    logger.error(
-                        `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,
+                try {
+                    await sendTerminateSubscriptionRequest(
+                        subscription.PK,
+                        subscription,
+                        isPrivateAddress(subscription.url),
+                    );
+                } catch (e) {
+                    logger.warn(
+                        `An error occurred when trying to unsubscribe from subscription with ID: ${subscription.PK}. Error ${e}`,
                     );
                 }
 
-                await putMetricData("custom/AVLMetrics", [
-                    {
-                        MetricName: "AvlFeedOutage",
-                        Value: 1,
-                    },
-                ]);
-            }
-        } catch {}
+                try {
+                    await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
+
+                    await putMetricData("custom/AVLMetrics", [
+                        {
+                            MetricName: "Resubscriptions",
+                            Value: 1,
+                        },
+                    ]);
+                } catch (e) {
+                    if (e instanceof AxiosError) {
+                        logger.error(
+                            `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,
+                        );
+                    }
+
+                    await putMetricData("custom/AVLMetrics", [
+                        {
+                            MetricName: "AvlFeedOutage",
+                            Value: 1,
+                        },
+                    ]);
+
+                    throw e;
+                }
+
+                logger.info(`Successfully resubscribed to data producer with subscription ID: ${subscription.PK}`);
+            }),
+        );
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error("There was an error when running the AVL feed validator", e);
+        }
+
+        throw e;
     }
 };

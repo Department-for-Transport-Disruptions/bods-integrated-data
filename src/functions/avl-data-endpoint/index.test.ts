@@ -335,7 +335,7 @@ describe("AVL-data-endpoint", () => {
 
     it("should return a 200 but not add data to S3 if cancellations data is received", async () => {
         mockEvent.body = testCancellationsSiri;
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
         expect(s3.putS3Object).not.toHaveBeenCalledOnce();
         expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
