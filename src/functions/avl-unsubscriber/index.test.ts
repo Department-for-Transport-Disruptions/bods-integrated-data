@@ -140,7 +140,7 @@ describe("avl-unsubscriber", () => {
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("should throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
+    it("should not throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
         const avlSubscription: AvlSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
@@ -160,8 +160,8 @@ describe("avl-unsubscriber", () => {
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+            statusCode: 204,
+            body: "",
         });
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
@@ -170,7 +170,8 @@ describe("avl-unsubscriber", () => {
             { ...mockInput.subscription, requestorRef: null },
             false,
         );
-        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
+        expect(getDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).toHaveBeenCalledOnce();
     });
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
