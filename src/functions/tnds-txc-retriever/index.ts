@@ -1,8 +1,9 @@
 import { Writable } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
+import { Handler } from "aws-lambda";
 import { Client } from "basic-ftp";
 
 interface FtpCredentials {
@@ -64,7 +65,9 @@ const getTndsDataAndUploadToS3 = async (
     }
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { TXC_ZIPPED_BUCKET_NAME: txcZippedBucketName, TNDS_FTP_ARN: ftpArn } = process.env;
 
     if (!txcZippedBucketName || !ftpArn) {

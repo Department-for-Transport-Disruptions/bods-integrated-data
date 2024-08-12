@@ -10,7 +10,7 @@ import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrate
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -19,7 +19,7 @@ import {
     InvalidXmlError,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
 
@@ -36,7 +36,9 @@ const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     await deleteParameters([`/subscription/${subscriptionId}/username`, `/subscription/${subscriptionId}/password`]);
 };
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { TABLE_NAME: tableName, AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;
 
@@ -47,8 +49,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
-
-        logger.info(`Starting AVL unsubscriber to unsubscribe from subscription: ${subscriptionId}`);
+        logger.subscriptionId = subscriptionId;
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
 
@@ -98,8 +99,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         );
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
-
-        logger.info(`Successfully unsubscribed to data producer with subscription ID: ${subscriptionId}.`);
 
         return {
             statusCode: 204,

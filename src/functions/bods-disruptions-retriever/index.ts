@@ -1,6 +1,7 @@
 import { PassThrough, Stream } from "node:stream";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 
 const getDisruptionsDataAndUploadToS3 = async (disruptionsZippedBucketName: string) => {
@@ -19,7 +20,9 @@ const getDisruptionsDataAndUploadToS3 = async (disruptionsZippedBucketName: stri
     await upload.done();
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { DISRUPTIONS_ZIPPED_BUCKET_NAME: disruptionsZippedBucketName } = process.env;
 
     if (!disruptionsZippedBucketName) {

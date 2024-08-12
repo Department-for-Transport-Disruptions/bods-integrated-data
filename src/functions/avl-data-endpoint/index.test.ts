@@ -1,5 +1,6 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as s3 from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
@@ -21,6 +22,7 @@ describe("AVL-data-endpoint", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
@@ -85,7 +87,7 @@ describe("AVL-data-endpoint", () => {
             apiKey: "mock-api-key",
         };
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
@@ -118,7 +120,7 @@ describe("AVL-data-endpoint", () => {
         getDynamoItemSpy.mockResolvedValue(subscription);
         mockEvent.body = testSiriWithSingleVehicleActivity;
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
             Body: `${testSiriWithSingleVehicleActivity}`,
@@ -140,7 +142,7 @@ describe("AVL-data-endpoint", () => {
         process.env.TABLE_NAME = "";
         mockEvent.body = testSiriWithSingleVehicleActivity;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -160,7 +162,7 @@ describe("AVL-data-endpoint", () => {
                 subscriptionId,
             };
 
-            const response = await handler(mockEvent);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
@@ -175,7 +177,7 @@ describe("AVL-data-endpoint", () => {
         async (body, expectedErrorMessage) => {
             mockEvent.body = body;
 
-            const response = await handler(mockEvent);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
             expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
             expect(s3.putS3Object).not.toHaveBeenCalled();
@@ -185,7 +187,7 @@ describe("AVL-data-endpoint", () => {
     it.each(["abc", mockEmptySiri])("Does not throw an error when invalid XML is provided", async (input) => {
         mockEvent.body = input;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 200,
             body: "",
@@ -206,14 +208,12 @@ describe("AVL-data-endpoint", () => {
             apiKey: "mock-api-key",
         });
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription is not live"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith(
-            `Subscription: ${mockSubscriptionId} is not live, data will not be processed...`,
-        );
+        expect(logger.error).toHaveBeenCalledWith("Subscription is not live, data will not be processed...");
         expect(dynamo.putDynamoItem).not.toHaveBeenCalled();
     });
 
@@ -232,7 +232,7 @@ describe("AVL-data-endpoint", () => {
             apiKey: "mock-api-key",
         };
 
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
             "test-dynamodb",
             expectedSubscription.PK,
@@ -245,7 +245,7 @@ describe("AVL-data-endpoint", () => {
         getDynamoItemSpy.mockResolvedValue(null);
         mockEvent.body = mockHeartbeatNotification;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
@@ -259,7 +259,7 @@ describe("AVL-data-endpoint", () => {
             apiKey: key,
         };
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),
@@ -295,7 +295,7 @@ describe("AVL-data-endpoint", () => {
             apiKey: "mock-api-key",
         };
 
-        await expect(handler(mockAlbEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockAlbEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
         expect(getDynamoItemSpy).toHaveBeenCalledWith("test-dynamodb", {
             PK: mockSubscriptionId,
@@ -323,7 +323,7 @@ describe("AVL-data-endpoint", () => {
             path: "/health",
         } as unknown as ALBEvent;
 
-        const response = await handler(mockAlbEvent);
+        const response = await handler(mockAlbEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 200,
             body: "",
@@ -335,7 +335,7 @@ describe("AVL-data-endpoint", () => {
 
     it("should return a 200 but not add data to S3 if cancellations data is received", async () => {
         mockEvent.body = testCancellationsSiri;
-        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
         expect(s3.putS3Object).not.toHaveBeenCalledOnce();
         expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();

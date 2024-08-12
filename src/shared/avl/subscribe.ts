@@ -16,7 +16,7 @@ import { InvalidXmlError } from "../validation";
 import { CompleteSiriObject, getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
-    logger.info(`Uploading subscription auth credentials to parameter store for subscription ID: ${subscriptionId}`);
+    logger.info("Uploading subscription auth credentials to parameter store");
 
     await Promise.all([
         putParameter(`/subscription/${subscriptionId}/username`, username, "SecureString", true),
@@ -99,7 +99,7 @@ const parseXml = (xml: string, subscriptionId: string) => {
 
     if (!parsedJson.success) {
         logger.error(
-            `There was an error parsing the subscription response from the data producer with subscription ID: ${subscriptionId}`,
+            "There was an error parsing the subscription response from the data producer",
             parsedJson.error.format(),
         );
 

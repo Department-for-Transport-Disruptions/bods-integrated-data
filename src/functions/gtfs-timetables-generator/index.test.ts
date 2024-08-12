@@ -1,3 +1,4 @@
+import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createGtfsZip, handler, ignoreEmptyFiles } from ".";
 import { Query } from "./data";
@@ -224,7 +225,7 @@ describe("gtfs-timetables-generator", () => {
 
         describe("national GTFS", () => {
             it("exports national data to s3 when no region code passed", async () => {
-                await handler();
+                await handler(mockEvent, mockContext, mockCallback);
 
                 expect(handlerMocks.exportDataToS3).toBeCalledTimes(1);
                 expect(handlerMocks.exportDataToS3).toBeCalledWith(
@@ -236,7 +237,7 @@ describe("gtfs-timetables-generator", () => {
             });
 
             it("creates GTFS zip", async () => {
-                await handler();
+                await handler(mockEvent, mockContext, mockCallback);
 
                 expect(mocks.startS3Upload).toBeCalledTimes(1);
                 expect(mocks.startS3Upload).toBeCalledWith(
@@ -250,7 +251,7 @@ describe("gtfs-timetables-generator", () => {
 
         describe("regional GTFS", () => {
             it("exports regional data to s3 when region code passed", async () => {
-                await handler({ regionCode: "Y" });
+                await handler({ regionCode: "Y" }, mockContext, mockCallback);
 
                 expect(handlerMocks.exportDataToS3).toBeCalledTimes(1);
                 expect(handlerMocks.exportDataToS3).toBeCalledWith(
@@ -262,7 +263,7 @@ describe("gtfs-timetables-generator", () => {
             });
 
             it("creates GTFS zip", async () => {
-                await handler({ regionCode: "Y" });
+                await handler({ regionCode: "Y" }, mockContext, mockCallback);
 
                 expect(mocks.startS3Upload).toBeCalledTimes(1);
                 expect(mocks.startS3Upload).toBeCalledWith(

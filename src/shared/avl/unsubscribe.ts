@@ -137,8 +137,4 @@ export const sendTerminateSubscriptionRequest = async (
     if (parsedResponseBody.Siri.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
         throw new Error(`The data producer did not return a status of true - subscription ID: ${subscriptionId}`);
     }
-
-    logger.info(
-        `Successfully unsubscribed from subscription ID: ${subscriptionId} - updating subscription status in DynamoDB`,
-    );
 };

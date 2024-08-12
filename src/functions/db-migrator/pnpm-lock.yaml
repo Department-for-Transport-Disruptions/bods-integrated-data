@@ -13,11 +13,18 @@ dependencies:
     version: 0.27.3
 
 devDependencies:
+  '@types/aws-lambda':
+    specifier: ^8.10.110
+    version: 8.10.142
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.19
 
 packages:
+
+  /@types/aws-lambda@8.10.142:
+    resolution: {integrity: sha512-wy2y/2hQKrS6myOS++koXg3N1Hg+LLyPjaggCFajczSHZPqBnOMuT2sdH3kiASrmdBYyM3pmjyz5SoWraRllCQ==}
+    dev: true
 
   /@types/node@20.11.19:
     resolution: {integrity: sha512-7xMnVEcZFu0DikYjWOlRq7NTPETrm7teqUT2WkQjrTIkEgUyyGdWsj/Zg8bEJt5TNklzbPD1X3fqfsHw3SpapQ==}

@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscriptionRequest,
     AvlSubscriptionResponse,
     avlSubscriptionRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
 const parseXml = (xml: string) => {
@@ -80,7 +80,9 @@ export const generateSubscriptionResponse = (subscriptionRequest: AvlSubscriptio
     return response;
 };
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     logger.info("Handling subscription request");
 
     const parsedBody = parseXml(event.body ?? "");
