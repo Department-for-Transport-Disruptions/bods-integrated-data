@@ -1,18 +1,19 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createSuccessResponse,
     createUnauthorizedErrorResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { ALBEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { ALBEvent, ALBHandler, APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 import { HeartbeatNotification, heartbeatNotificationSchema } from "./heartbeat.schema";
@@ -29,7 +30,7 @@ const requestBodySchema = z.string({
     invalid_type_error: "Body must be a string",
 });
 
-const arrayProperties = ["VehicleActivity", "OnwardCall"];
+const arrayProperties = ["VehicleActivity", "OnwardCall", "VehicleActivityCancellation"];
 
 const processHeartbeatNotification = async (
     data: HeartbeatNotification,
@@ -82,7 +83,12 @@ const parseXml = (xml: string) => {
     return parser.parse(xml);
 };
 
-export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler & ALBHandler = async (
+    event: APIGatewayProxyEvent | ALBEvent,
+    context: Context,
+) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;
 
@@ -101,21 +107,17 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
         const { subscriptionId } = requestParamsSchema.parse(parameters);
 
         if (subscriptionId === "health") {
-            return {
-                statusCode: 200,
-                body: "",
-            };
+            return createSuccessResponse();
         }
 
+        logger.subscriptionId = subscriptionId;
         const body = requestBodySchema.parse(event.body);
-
-        logger.info(`Starting data endpoint for subscription ID: ${subscriptionId}`);
 
         const subscription = await getAvlSubscription(subscriptionId, tableName);
         const requestApiKey = event.queryStringParameters?.apiKey;
 
         if (isApiGatewayEvent(event) && requestApiKey !== subscription.apiKey) {
-            throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID '${subscriptionId}'`);
+            throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID: ${subscriptionId}`);
         }
 
         const xml = parseXml(body);
@@ -123,18 +125,21 @@ export const handler = async (event: APIGatewayProxyEvent | ALBEvent): Promise<A
 
         if (siri?.HeartbeatNotification) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(siri), subscription, tableName);
-        } else {
-            if (subscription.status !== "live") {
-                logger.error(`Subscription: ${subscriptionId} is not live, data will not be processed...`);
-                return createNotFoundErrorResponse("Subscription is not live");
-            }
-            await uploadSiriVmToS3(body, bucketName, subscription, tableName);
+            return createSuccessResponse();
         }
 
-        return {
-            statusCode: 200,
-            body: "",
-        };
+        if (subscription.status !== "live") {
+            logger.error("Subscription is not live, data will not be processed...");
+            return createNotFoundErrorResponse("Subscription is not live");
+        }
+
+        if (siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
+            logger.warn("Subscription received cancellation data, data will be ignored...");
+            return createSuccessResponse();
+        }
+
+        await uploadSiriVmToS3(body, bucketName, subscription, tableName);
+        return createSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);

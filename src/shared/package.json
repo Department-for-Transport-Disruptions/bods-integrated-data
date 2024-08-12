@@ -24,7 +24,6 @@
         "@aws-sdk/lib-dynamodb": "^3.623.0",
         "@aws-sdk/lib-storage": "^3.623.0",
         "@aws-sdk/s3-request-presigner": "^3.623.0",
-        "@baselime/lambda-logger": "^0.2.2",
         "axios": "^1.7.2",
         "clean-deep": "^3.4.0",
         "command-exists": "^1.2.9",
@@ -34,6 +33,7 @@
         "kysely": "^0.27.3",
         "pg": "^8.11.3",
         "pino": "^9.1.0",
+        "pino-lambda": "^4.4.0",
         "unzipper": "^0.10.14",
         "zod": "^3.23.8",
         "zod-validation-error": "^3.3.0"

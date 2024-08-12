@@ -1,9 +1,9 @@
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { GTFS_FILE_SUFFIX, REGIONS, RegionCode } from "@bods-integrated-data/shared/constants";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema, regionNameSchema } from "@bods-integrated-data/shared/schema/misc.schema";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -14,7 +14,9 @@ const requestParamsSchema = z.preprocess(
     }),
 );
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { BUCKET_NAME: bucketName } = process.env;
 

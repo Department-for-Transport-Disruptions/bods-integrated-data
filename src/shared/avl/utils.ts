@@ -177,6 +177,7 @@ export const getQueryForLatestAvl = (
     originRef?: string,
     destinationRef?: string,
     subscriptionId?: string,
+    recordedAtTimeAfter?: string,
 ) => {
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
 
@@ -214,6 +215,10 @@ export const getQueryForLatestAvl = (
         query = query.where("subscription_id", "=", subscriptionId);
     }
 
+    if (recordedAtTimeAfter) {
+        query = query.where("recorded_at_time", ">", recordedAtTimeAfter);
+    }
+
     return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
 };
 
@@ -229,6 +234,8 @@ export const getAvlDataForSiriVm = async (
     subscriptionId?: string,
 ) => {
     try {
+        const dayAgo = getDate().subtract(1, "day").toISOString();
+
         const query = getQueryForLatestAvl(
             dbClient,
             boundingBox,
@@ -239,6 +246,7 @@ export const getAvlDataForSiriVm = async (
             originRef,
             destinationRef,
             subscriptionId,
+            dayAgo,
         );
 
         const avls = await query.execute();
@@ -323,14 +331,16 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
-        ServiceDelivery: {
-            ResponseTimestamp: currentTime,
-            ProducerRef: "DepartmentForTransport",
-            VehicleMonitoringDelivery: {
+        Siri: {
+            ServiceDelivery: {
                 ResponseTimestamp: currentTime,
-                RequestMessageRef: requestMessageRef,
-                ValidUntil: validUntilTime,
-                VehicleActivity: validVehicleActivities,
+                ProducerRef: "DepartmentForTransport",
+                VehicleMonitoringDelivery: {
+                    ResponseTimestamp: currentTime,
+                    RequestMessageRef: requestMessageRef,
+                    ValidUntil: validUntilTime,
+                    VehicleActivity: validVehicleActivities,
+                },
             },
         },
     };
@@ -338,7 +348,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
     const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
 
-    const completeObject: Partial<CompleteSiriObject<SiriVM>> = {
+    const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -350,7 +360,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...verifiedObject,
+            ...verifiedObject.Siri,
         },
     };
 
@@ -489,7 +499,7 @@ export interface CompleteSiriObject<T> {
     } & T;
 }
 
-export const getErrorDetails = (error: ZodIssue) => {
+export const getAvlErrorDetails = (error: ZodIssue) => {
     const validationError = fromZodIssue(error, { prefix: null, includePath: false });
     const { path } = validationError.details[0];
     const name = path.join(".");

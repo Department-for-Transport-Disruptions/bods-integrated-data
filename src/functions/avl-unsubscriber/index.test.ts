@@ -2,6 +2,7 @@ import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMock
 import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
@@ -11,7 +12,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("avl-unsubscriber", () => {
-    let mockUnsubscribeEvent: APIGatewayProxyEvent;
+    let mockEvent: APIGatewayProxyEvent;
 
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
@@ -19,6 +20,7 @@ describe("avl-unsubscriber", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -55,7 +57,7 @@ describe("avl-unsubscriber", () => {
         process.env.TABLE_NAME = "test-dynamo-table";
         process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
 
-        mockUnsubscribeEvent = {
+        mockEvent = {
             headers: {
                 "x-api-key": "mock-api-key",
             },
@@ -86,11 +88,11 @@ describe("avl-unsubscriber", () => {
         };
         getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
-        await handler(mockUnsubscribeEvent);
+        await handler(mockEvent, mockContext, mockCallback);
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
-            mockUnsubscribeEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             false,
         );
@@ -109,11 +111,11 @@ describe("avl-unsubscriber", () => {
     ])(
         "Throws an error when the subscription ID fails validation (test: %o)",
         async (subscriptionId, expectedErrorMessage) => {
-            mockUnsubscribeEvent.pathParameters = {
+            mockEvent.pathParameters = {
                 subscriptionId,
             };
 
-            const response = await handler(mockUnsubscribeEvent);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
@@ -127,7 +129,7 @@ describe("avl-unsubscriber", () => {
     it("should throw an error if subscription id not found in dynamo.", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
 
-        const response = await handler(mockUnsubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
@@ -138,7 +140,7 @@ describe("avl-unsubscriber", () => {
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("should throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
+    it("should not throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
         const avlSubscription: AvlSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
@@ -156,27 +158,28 @@ describe("avl-unsubscriber", () => {
 
         sendTerminateSubscriptionRequestSpy.mockRejectedValue({ statusCode: 500 });
 
-        const response = await handler(mockUnsubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
+            statusCode: 204,
+            body: "",
         });
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
-            mockUnsubscribeEvent.pathParameters?.subscriptionId,
+            mockEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             false,
         );
-        expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
+        expect(getDynamoItemSpy).toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).toHaveBeenCalledOnce();
     });
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
-        mockUnsubscribeEvent.headers = {
+        mockEvent.headers = {
             "x-api-key": key,
         };
 
-        const response = await handler(mockUnsubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),
@@ -189,7 +192,7 @@ describe("avl-unsubscriber", () => {
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
-        const response = await handler(mockUnsubscribeEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),

@@ -19,6 +19,9 @@ devDependencies:
   '@types/archiver':
     specifier: ^6.0.2
     version: 6.0.2
+  '@types/aws-lambda':
+    specifier: ^8.10.110
+    version: 8.10.142
   '@types/node':
     specifier: ^20.11.19
     version: 20.11.19
@@ -48,6 +51,10 @@ packages:
     resolution: {integrity: sha512-KmROQqbQzKGuaAbmK+ZcytkJ51+YqDa7NmbXjmtC5YBLSyQYo21YaUnQ3HbaPFKL1ooo6RQ6OPYPIDyxfpDDXw==}
     dependencies:
       '@types/readdir-glob': 1.1.5
+    dev: true
+
+  /@types/aws-lambda@8.10.142:
+    resolution: {integrity: sha512-wy2y/2hQKrS6myOS++koXg3N1Hg+LLyPjaggCFajczSHZPqBnOMuT2sdH3kiASrmdBYyM3pmjyz5SoWraRllCQ==}
     dev: true
 
   /@types/node@20.11.19:

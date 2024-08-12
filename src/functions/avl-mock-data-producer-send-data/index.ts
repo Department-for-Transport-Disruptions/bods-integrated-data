@@ -1,11 +1,14 @@
 import { getSiriVmValidUntilTimeOffset } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 import { generateMockSiriVm } from "./mockSiriVm";
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
 

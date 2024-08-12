@@ -1,6 +1,6 @@
 import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     Operator,
@@ -12,7 +12,7 @@ import {
     VehicleJourney,
     txcSchema,
 } from "@bods-integrated-data/shared/schema";
-import { S3Event, S3EventRecord } from "aws-lambda";
+import { S3EventRecord, S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
 import { processAgencies } from "./data/agencies";
@@ -280,7 +280,9 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     );
 };
 
-export const handler = async (event: S3Event) => {
+export const handler: S3Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
 
     if (!bankHolidaysBucketName) {

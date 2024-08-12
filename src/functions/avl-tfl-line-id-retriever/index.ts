@@ -1,5 +1,6 @@
 import { KyselyDb, NewTflLine, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 import { TflLinesSchema } from "./tfl-line.schema";
 
@@ -29,7 +30,9 @@ const insertLineIds = async (dbClient: KyselyDb, lineIds: NewTflLine[]) => {
     });
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {

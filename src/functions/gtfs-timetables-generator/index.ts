@@ -2,7 +2,7 @@ import path from "node:path";
 import { PassThrough } from "node:stream";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     createLazyDownloadStreamFrom,
     getS3Object,
@@ -11,6 +11,7 @@ import {
 } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import archiver from "archiver";
+import { Handler } from "aws-lambda";
 import {
     Query,
     createRegionalTripTable,
@@ -95,7 +96,9 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
     }
 };
 
-export const handler = async (payload?: { regionCode?: string }) => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, STAGE: stage } = process.env;
 
     if (!outputBucket || !gtfsBucket) {
@@ -104,7 +107,7 @@ export const handler = async (payload?: { regionCode?: string }) => {
 
     const dbClient = await getDatabaseClient(stage === "local");
 
-    const regionCode = regionCodeSchema.parse(payload?.regionCode ?? "ALL");
+    const regionCode = regionCodeSchema.parse(event?.regionCode ?? "ALL");
 
     try {
         logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);

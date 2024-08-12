@@ -1,5 +1,6 @@
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
+import { Handler } from "aws-lambda";
 import axios from "axios";
 
 export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: string) => {
@@ -18,7 +19,9 @@ export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: strin
     });
 };
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName } = process.env;
 
     if (!bankHolidaysBucketName) {

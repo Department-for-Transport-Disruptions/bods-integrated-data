@@ -1,6 +1,9 @@
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { Handler } from "aws-lambda";
 
-export const handler = async () => {
+export const handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { EXAMPLE_VAR: exampleVar } = process.env;
 

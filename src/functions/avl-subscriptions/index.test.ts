@@ -1,5 +1,6 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayProxyEvent } from "aws-lambda";
@@ -12,6 +13,7 @@ describe("avl-subscriptions", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -47,7 +49,7 @@ describe("avl-subscriptions", () => {
             "x-api-key": key,
         };
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 401,
             body: JSON.stringify({ errors: ["Unauthorized"] }),
@@ -60,7 +62,7 @@ describe("avl-subscriptions", () => {
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -72,7 +74,7 @@ describe("avl-subscriptions", () => {
     it("should return a 500 when an unexpected error occurs retrieving subscriptions data", async () => {
         recursiveScanSpy.mockRejectedValueOnce(new Error());
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -90,7 +92,7 @@ describe("avl-subscriptions", () => {
                 subscriptionId,
             };
 
-            const response = await handler(mockEvent);
+            const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
@@ -108,7 +110,7 @@ describe("avl-subscriptions", () => {
             subscriptionId: "subscription-one",
         };
 
-        const response = await handler(mockEvent);
+        const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
@@ -173,7 +175,7 @@ describe("avl-subscriptions", () => {
 
             mockEvent.pathParameters = input;
 
-            await expect(handler(mockEvent)).resolves.toEqual({
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 200,
                 body: JSON.stringify(expectedResponse),
             });
@@ -212,7 +214,7 @@ describe("avl-subscriptions", () => {
             apiKey: "api-key-one",
         };
 
-        await expect(handler(mockEvent)).resolves.toEqual({
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             body: JSON.stringify(expectedResponse),
         });

@@ -1,7 +1,7 @@
 import { KyselyDb, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { S3Event } from "aws-lambda";
+import { S3Event, S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
 import OsPoint from "ospoint";
 import { parse } from "papaparse";
@@ -128,7 +128,9 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanData: unknown[]) => {
     );
 };
 
-export const handler = async (event: S3Event) => {
+export const handler: S3Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {

@@ -6,7 +6,7 @@ import {
 } from "@bods-integrated-data/shared/api";
 import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     AvlServiceRequest,
     avlServiceDeliverySchema,
@@ -14,7 +14,7 @@ import {
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
@@ -29,19 +29,21 @@ const requestBodySchema = z
 
 const generateServiceRequestMessage = (currentTimestamp: string) => {
     const serviceRequestJson: AvlServiceRequest = {
-        ServiceRequest: {
-            RequestTimestamp: currentTimestamp,
-            RequestorRef: "BODS",
-            VehicleMonitoringRequest: {
+        Siri: {
+            ServiceRequest: {
+                RequestTimestamp: currentTimestamp,
+                RequestorRef: "BODS",
                 VehicleMonitoringRequest: {
-                    RequestTimestamp: currentTimestamp,
-                    "@_version": "2.0",
+                    VehicleMonitoringRequest: {
+                        RequestTimestamp: currentTimestamp,
+                        "@_version": "2.0",
+                    },
                 },
             },
         },
     };
 
-    const completeObject: CompleteSiriObject<AvlServiceRequest> = {
+    const completeObject: CompleteSiriObject<AvlServiceRequest["Siri"]> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -53,7 +55,7 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...serviceRequestJson,
+            ...serviceRequestJson.Siri,
         },
     };
 
@@ -77,7 +79,7 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = avlServiceDeliverySchema.safeParse(parsedXml.Siri);
+    const parsedJson = avlServiceDeliverySchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(
@@ -90,7 +92,9 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         const { AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;
 
@@ -123,12 +127,12 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         const parsedServiceDeliveryBody = parseXml(serviceDeliveryBody);
 
-        if (parsedServiceDeliveryBody?.ServiceDelivery.Status !== "true") {
+        if (parsedServiceDeliveryBody.Siri.ServiceDelivery.Status !== "true") {
             logger.warn("Data producer did not return a status of true");
             return createValidationErrorResponse(["Data producer did not return a status of true"]);
         }
 
-        return { statusCode: 200, body: JSON.stringify({ siriVersion: parsedServiceDeliveryBody["@_version"] }) };
+        return { statusCode: 200, body: JSON.stringify({ siriVersion: parsedServiceDeliveryBody.Siri["@_version"] }) };
     } catch (error) {
         if (error instanceof ZodError) {
             logger.warn("Invalid request", error);
