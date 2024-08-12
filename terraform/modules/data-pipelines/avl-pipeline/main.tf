@@ -727,3 +727,57 @@ resource "aws_ecs_service" "siri_vm_downloader_service" {
     ignore_changes = [task_definition]
   }
 }
+
+module "siri_vm_downloader" {
+  source = "../../shared/lambda-function"
+
+  environment     = var.environment
+  function_name   = "avl-siri-vm-downloader"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-downloader.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 300
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
+    }
+  ]
+
+  env_vars = {
+    STAGE         = var.environment
+    BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+}
+
+resource "aws_api_gateway_rest_api" "siri_vm_api" {
+  name = "integrated-data-siri-vm-api-${var.environment}"
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}

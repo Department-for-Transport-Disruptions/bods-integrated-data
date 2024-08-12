@@ -228,7 +228,6 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 120
   avl_cleardown_frequency                     = 60
-  generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   siri_vm_downloader_image_url                = local.secrets["siri_vm_downloader_image_url"]
   siri_vm_downloader_cpu                      = 512
   siri_vm_downloader_memory                   = 1024
