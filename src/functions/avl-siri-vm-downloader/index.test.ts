@@ -2,14 +2,14 @@ import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
-import { APIGatewayEvent } from "aws-lambda";
+import { APIGatewayEvent, APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
 describe("avl-siri-vm-downloader-endpoint", () => {
     const mocks = vi.hoisted(() => {
         return {
-            getPresignedUrl: vi.fn(),
+            getS3Object: vi.fn(),
             execute: vi.fn(),
             destroy: vi.fn(),
             mockDbClient: {
@@ -27,24 +27,24 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
-        getPresignedUrl: mocks.getPresignedUrl,
+        getS3Object: mocks.getS3Object,
     }));
+
+    vi.mock("@bods-integrated-data/shared/cloudwatch");
 
     vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/database")>()),
         getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
     }));
 
-    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
-        getSecret: vi.fn(),
-    }));
+    vi.mock("@bods-integrated-data/shared/avl/utils");
 
     const getAvlDataForSiriVmMock = vi.spyOn(utilFunctions, "getAvlDataForSiriVm");
     const createSiriVmMock = vi.spyOn(utilFunctions, "createSiriVm");
-    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
+    vi.spyOn(secretsManagerFunctions, "getSecret");
 
     const mockBucketName = "mock-bucket";
-    let mockRequest: APIGatewayEvent;
+    const mockRequest: APIGatewayEvent = {} as APIGatewayProxyEvent;
 
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
@@ -55,8 +55,6 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
-        process.env.AVL_CONSUMER_API_KEY_ARN = "avl-consumer-api-key-arn";
-        getSecretMock.mockResolvedValue("mock-api-key");
     });
 
     afterEach(() => {
@@ -79,87 +77,55 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         );
     });
 
-    it("returns a 500 when the AVL_CONSUMER_API_KEY_ARN environment variable is missing", async () => {
-        process.env.AVL_CONSUMER_API_KEY_ARN = "";
-
-        const response = await handler(mockRequest);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the SIRI-VM downloader endpoint",
-            expect.any(Error),
-        );
-    });
-
-    it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async () => {
-        mockRequest.queryStringParameters = {
-            operatorRef: "1",
-        };
-
-        const response = await handler(mockRequest);
-        expect(response).toEqual({
-            statusCode: 401,
-            body: JSON.stringify({ errors: ["Unauthorized"] }),
-        });
-    });
-
     describe("fetching SIRI-VM in-place", () => {
         it("returns a 200 with SIRI-VM in-place", async () => {
-            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_FILE_PATH}`;
-            mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
+            mocks.getS3Object.mockResolvedValueOnce("siri");
 
             await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 302,
+                statusCode: 200,
                 headers: {
-                    Location: mockPresignedUrl,
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "application/xml",
                 },
-                body: "",
+                isBase64Encoded: true,
+                body: expect.any(String),
             });
 
-            expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
-                {
-                    Bucket: mockBucketName,
-                    Key: GENERATED_SIRI_VM_FILE_PATH,
-                    ResponseContentDisposition: "inline",
-                    ResponseContentType: "application/xml",
-                },
-                3600,
-            );
+            expect(mocks.getS3Object).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: GENERATED_SIRI_VM_FILE_PATH,
+                ResponseContentType: "application/xml",
+            });
             expect(logger.error).not.toHaveBeenCalled();
         });
 
         it("returns a 200 with SIRI-VM TfL in-place when the downloadTfl param is true", async () => {
-            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/${GENERATED_SIRI_VM_TFL_FILE_PATH}`;
-            mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
+            mocks.getS3Object.mockResolvedValueOnce("siri");
 
             mockRequest.queryStringParameters = {
                 downloadTfl: "true",
             };
 
             await expect(handler(mockRequest)).resolves.toEqual({
-                statusCode: 302,
+                statusCode: 200,
                 headers: {
-                    Location: mockPresignedUrl,
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "application/xml",
                 },
-                body: "",
+                isBase64Encoded: true,
+                body: expect.any(String),
             });
 
-            expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
-                {
-                    Bucket: mockBucketName,
-                    Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
-                    ResponseContentDisposition: "inline",
-                    ResponseContentType: "application/xml",
-                },
-                3600,
-            );
+            expect(mocks.getS3Object).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
+                ResponseContentType: "application/xml",
+            });
             expect(logger.error).not.toHaveBeenCalled();
         });
 
         it("returns a 500 when an unexpected error occurs", async () => {
-            mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
+            mocks.getS3Object.mockRejectedValueOnce(new Error());
 
             const response = await handler(mockRequest);
             expect(response).toEqual({
@@ -182,8 +148,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -210,8 +177,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -238,8 +206,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -266,8 +235,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -294,8 +264,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -322,8 +293,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -350,8 +322,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -378,8 +351,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
@@ -406,8 +380,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest)).resolves.toEqual({
                     statusCode: 200,
-                    headers: { "Content-Type": "application/xml" },
-                    body: "siri-output",
+                    headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
+                    isBase64Encoded: true,
+                    body: expect.any(String),
                 });
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
