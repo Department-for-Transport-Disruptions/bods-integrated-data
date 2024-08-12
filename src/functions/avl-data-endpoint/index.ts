@@ -1,6 +1,7 @@
 import {
     createNotFoundErrorResponse,
     createServerErrorResponse,
+    createSuccessResponse,
     createUnauthorizedErrorResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
@@ -29,7 +30,7 @@ const requestBodySchema = z.string({
     invalid_type_error: "Body must be a string",
 });
 
-const arrayProperties = ["VehicleActivity", "OnwardCall"];
+const arrayProperties = ["VehicleActivity", "OnwardCall", "VehicleActivityCancellation"];
 
 const processHeartbeatNotification = async (
     data: HeartbeatNotification,
@@ -106,10 +107,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         const { subscriptionId } = requestParamsSchema.parse(parameters);
 
         if (subscriptionId === "health") {
-            return {
-                statusCode: 200,
-                body: "",
-            };
+            return createSuccessResponse();
         }
 
         logger.subscriptionId = subscriptionId;
@@ -127,18 +125,21 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
 
         if (siri?.HeartbeatNotification) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(siri), subscription, tableName);
-        } else {
-            if (subscription.status !== "live") {
-                logger.error("Subscription is not live, data will not be processed...");
-                return createNotFoundErrorResponse("Subscription is not live");
-            }
-            await uploadSiriVmToS3(body, bucketName, subscription, tableName);
+            return createSuccessResponse();
         }
 
-        return {
-            statusCode: 200,
-            body: "",
-        };
+        if (subscription.status !== "live") {
+            logger.error("Subscription is not live, data will not be processed...");
+            return createNotFoundErrorResponse("Subscription is not live");
+        }
+
+        if (siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
+            logger.warn("Subscription received cancellation data, data will be ignored...");
+            return createSuccessResponse();
+        }
+
+        await uploadSiriVmToS3(body, bucketName, subscription, tableName);
+        return createSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);

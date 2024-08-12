@@ -27,15 +27,17 @@ export const generateTerminationSubscriptionRequest = (
     requestorRef: string | null,
 ) => {
     const terminateSubscriptionRequestJson: TerminateSubscriptionRequest = {
-        TerminateSubscriptionRequest: {
-            RequestTimestamp: currentTimestamp,
-            RequestorRef: requestorRef ?? "BODS",
-            MessageIdentifier: messageIdentifier,
-            SubscriptionRef: subscriptionId,
+        Siri: {
+            TerminateSubscriptionRequest: {
+                RequestTimestamp: currentTimestamp,
+                RequestorRef: requestorRef ?? "BODS",
+                MessageIdentifier: messageIdentifier,
+                SubscriptionRef: subscriptionId,
+            },
         },
     };
 
-    const completeObject: CompleteSiriObject<TerminateSubscriptionRequest> = {
+    const completeObject: CompleteSiriObject<TerminateSubscriptionRequest["Siri"]> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -47,7 +49,7 @@ export const generateTerminationSubscriptionRequest = (
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...terminateSubscriptionRequestJson,
+            ...terminateSubscriptionRequestJson.Siri,
         },
     };
 
@@ -70,7 +72,7 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = terminateSubscriptionResponseSchema.safeParse(parsedXml.Siri);
+    const parsedJson = terminateSubscriptionResponseSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(
@@ -132,7 +134,7 @@ export const sendTerminateSubscriptionRequest = async (
 
     const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
 
-    if (parsedResponseBody.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
+    if (parsedResponseBody.Siri.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
         throw new Error(`The data producer did not return a status of true - subscription ID: ${subscriptionId}`);
     }
 };

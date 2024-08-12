@@ -7,7 +7,13 @@ import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
-import { mockEmptySiri, mockHeartbeatNotification, testSiri, testSiriWithSingleVehicleActivity } from "./testSiriVm";
+import {
+    mockEmptySiri,
+    mockHeartbeatNotification,
+    testCancellationsSiri,
+    testSiri,
+    testSiriWithSingleVehicleActivity,
+} from "./testSiriVm";
 
 describe("AVL-data-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
@@ -322,5 +328,16 @@ describe("AVL-data-endpoint", () => {
             statusCode: 200,
             body: "",
         });
+
+        expect(s3.putS3Object).not.toHaveBeenCalledOnce();
+        expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
+    });
+
+    it("should return a 200 but not add data to S3 if cancellations data is received", async () => {
+        mockEvent.body = testCancellationsSiri;
+        await expect(handler(mockEvent)).resolves.toEqual({ statusCode: 200, body: "" });
+
+        expect(s3.putS3Object).not.toHaveBeenCalledOnce();
+        expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
     });
 });

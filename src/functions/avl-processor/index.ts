@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
+    getAvlErrorDetails,
     getAvlSubscription,
-    getErrorDetails,
     insertAvls,
     insertAvlsWithOnwardCalls,
 } from "@bods-integrated-data/shared/avl/utils";
@@ -12,7 +12,6 @@ import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/l
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchema, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
-import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
@@ -27,14 +26,14 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     });
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
-    const partiallyParsedSiri = siriSchema().deepPartial().parse(parsedXml.Siri);
-    const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml.Siri);
+    const partiallyParsedSiri = siriSchema().deepPartial().safeParse(parsedXml).data;
+    const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error("There was an error parsing the AVL data", parsedJson.error.format());
         errors.push(
             ...parsedJson.error.errors.map<AvlValidationError>((error) => {
-                const { name, message, level } = getErrorDetails(error);
+                const { name, message, level } = getAvlErrorDetails(error);
 
                 return {
                     PK: "",
@@ -50,7 +49,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     }
 
     return {
-        responseTimestamp: partiallyParsedSiri.ServiceDelivery?.ResponseTimestamp,
+        responseTimestamp: partiallyParsedSiri?.Siri?.ServiceDelivery?.ResponseTimestamp,
         avls: parsedJson.success ? parsedJson.data : [],
     };
 };
@@ -112,8 +111,6 @@ export const processSqsRecord = async (
                     errors,
                     responseTimestamp,
                 );
-
-                throw new InvalidXmlError();
             }
 
             const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
