@@ -68,20 +68,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                 subscriptionDetail,
                 isPrivateAddress(subscription.url),
             );
-
-            const currentTime = getDate().toISOString();
-            await putDynamoItem(
-                tableName,
-                subscriptionId,
-                "SUBSCRIPTION",
-
-                {
-                    ...subscription,
-                    status: "inactive",
-                    serviceEndDatetime: currentTime,
-                    lastModifiedDateTime: currentTime,
-                },
-            );
         } catch (e) {
             await putMetricData("custom/AVLMetrics", [
                 {
@@ -94,9 +80,22 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
                     `There was an error when sending the unsubscribe request to the data producer for subscription ${subscriptionId} - code: ${e.code}, message: ${e.message}`,
                 );
             }
-
-            throw e;
         }
+
+        const currentTime = getDate().toISOString();
+
+        await putDynamoItem(
+            tableName,
+            subscriptionId,
+            "SUBSCRIPTION",
+
+            {
+                ...subscription,
+                status: "inactive",
+                serviceEndDatetime: currentTime,
+                lastModifiedDateTime: currentTime,
+            },
+        );
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 
