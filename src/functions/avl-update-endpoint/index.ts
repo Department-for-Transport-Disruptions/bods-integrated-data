@@ -104,7 +104,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             username,
             password,
             tableName,
-            isInternal && internalDataEndpoint ? internalDataEndpoint : dataEndpoint,
+            isInternal && internalDataEndpoint ? `http://${internalDataEndpoint}` : dataEndpoint,
             isInternal,
             mockProducerSubscribeEndpoint,
         );

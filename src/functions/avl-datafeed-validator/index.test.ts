@@ -37,7 +37,6 @@ describe("AVL-data-endpoint", () => {
 
     beforeEach(() => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "test-dynamodb";
-        process.env.CLOUDWATCH_NAMESPACE = "test-namespace";
 
         mockEvent = {
             pathParameters: {
@@ -115,7 +114,7 @@ describe("AVL-data-endpoint", () => {
 
         expect(cloudwatch.getMetricStatistics).toBeCalled();
         expect(cloudwatch.getMetricStatistics).toBeCalledWith<Parameters<typeof cloudwatch.getMetricStatistics>>(
-            "test-namespace",
+            "custom/AVLMetrics",
             "TotalAvlProcessed",
             ["Sum"],
             new Date("2024-03-10T00:00:00.000Z"),
@@ -127,7 +126,6 @@ describe("AVL-data-endpoint", () => {
 
     it("Throws an error when the required env vars are missing", async () => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "";
-        process.env.CLOUDWATCH_NAMESPACE = "";
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
@@ -155,7 +153,7 @@ describe("AVL-data-endpoint", () => {
     });
 
     it("Should add total number of avl items processed", async () => {
-        const response = await getTotalAvlsProcessed(mockSubscriptionId, "test-namespace");
+        const response = await getTotalAvlsProcessed(mockSubscriptionId);
         expect(response).toEqual(2);
     });
 });

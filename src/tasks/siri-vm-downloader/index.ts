@@ -11,7 +11,7 @@ const fastify = Fastify({
 const { PORT: port = "8080", STAGE: stage } = process.env;
 
 void (async () => {
-    const dbClient = await getDatabaseClient(stage === "local");
+    const dbClient = await getDatabaseClient(stage === "local", true);
 
     await fastify.register(fastifySensible);
     await fastify.register((fastify) => healthCheck(fastify, dbClient));

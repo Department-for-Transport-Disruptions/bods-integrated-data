@@ -7,9 +7,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 void (async () => {
     performance.mark("siri-vm-generator-start");
 
-    const stage = process.env.STAGE || "";
-
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
 
     try {
         logger.info("Starting SIRI-VM file generator");
@@ -23,13 +21,13 @@ void (async () => {
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
 
-        await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName, stage);
+        await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName);
 
         performance.mark("siri-vm-generator-end");
 
         const time = performance.measure("siri-vm-generator", "siri-vm-generator-start", "siri-vm-generator-end");
 
-        await putMetricData(`custom/SiriVmGenerator-${stage}`, [
+        await putMetricData("custom/SiriVmGenerator", [
             { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
         ]);
 
@@ -39,7 +37,7 @@ void (async () => {
             logger.error("Error generating SIRI-VM file", e);
         }
 
-        await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "Errors", Value: 1 }]);
+        await putMetricData("custom/SiriVmGenerator", [{ MetricName: "Errors", Value: 1 }]);
 
         throw e;
     } finally {

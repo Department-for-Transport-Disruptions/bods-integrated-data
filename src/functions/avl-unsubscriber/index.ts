@@ -84,7 +84,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 },
             );
         } catch (e) {
-            await putMetricData("custom/CAVLMetrics", [
+            await putMetricData("custom/AVLMetrics", [
                 {
                     MetricName: "FailedUnsubscribeRequest",
                     Value: 1,

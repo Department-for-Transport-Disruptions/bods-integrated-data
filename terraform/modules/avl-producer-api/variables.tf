@@ -49,10 +49,6 @@ variable "hosted_zone_id" {
   type = string
 }
 
-variable "avl_cloudwatch_namespace" {
-  type = string
-}
-
 variable "avl_error_table_name" {
   type = string
 }

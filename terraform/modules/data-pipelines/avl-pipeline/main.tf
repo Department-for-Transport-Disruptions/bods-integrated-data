@@ -76,13 +76,6 @@ module "integrated_data_avl_processor_function" {
       Action   = ["dynamodb:BatchWriteItem"],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_validation_error_table_name}"
-    },
-    {
-      Action = [
-        "cloudwatch:PutMetricData"
-      ],
-      Effect   = "Allow",
-      Resource = "*"
     }
   ]
 
@@ -733,19 +726,4 @@ resource "aws_ecs_service" "siri_vm_downloader_service" {
   lifecycle {
     ignore_changes = [task_definition]
   }
-}
-
-module "integrated_data_avl_siri_vm_downloader" {
-  source = "../../avl-siri-vm-downloader"
-
-  environment          = var.environment
-  bucket_name          = var.generated_siri_vm_bucket_name
-  vpc_id               = var.vpc_id
-  private_subnet_ids   = var.private_subnet_ids
-  db_secret_arn        = var.db_secret_arn
-  db_sg_id             = var.db_sg_id
-  db_host              = var.db_host
-  db_name              = var.db_name
-  db_port              = var.db_port
-  avl_consumer_api_key = var.avl_consumer_api_key
 }

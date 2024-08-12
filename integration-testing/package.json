@@ -11,12 +11,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@aws-sdk/client-secrets-manager": "^3.614.0",
+        "@aws-sdk/client-secrets-manager": "^3.623.0",
         "@bods-integrated-data/shared": "link:../src/shared"
     },
     "devDependencies": {
-        "@aws-sdk/client-dynamodb": "^3.529.1",
-        "@aws-sdk/lib-dynamodb": "^3.529.1",
+        "@aws-sdk/client-dynamodb": "^3.623.0",
+        "@aws-sdk/lib-dynamodb": "^3.623.0",
         "@playwright/test": "^1.45.0",
         "@types/node": "^20.14.8"
     }

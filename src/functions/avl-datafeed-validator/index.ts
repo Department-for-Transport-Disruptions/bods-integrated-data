@@ -22,12 +22,13 @@ const pathParamsSchema = z.preprocess(
     }),
 );
 
-export const getTotalAvlsProcessed = async (subscriptionId: string, namespace: string) => {
+export const getTotalAvlsProcessed = async (subscriptionId: string) => {
     const now = getDate();
     const dayAgo = now.subtract(24, "hours");
 
+    // TODO: Swap to using log insights query
     const data = await getMetricStatistics(
-        namespace,
+        "custom/AVLMetrics",
         "TotalAvlProcessed",
         ["Sum"],
         dayAgo.toDate(),
@@ -82,25 +83,32 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
     ];
 };
 
-const generateReportBody = async (errorData: AvlValidationError[], subscriptionId: string, namespace: string) => {
-    const totalProcessed = await getTotalAvlsProcessed(subscriptionId, namespace);
+const generateReportBody = async (errorData: AvlValidationError[], subscriptionId: string) => {
+    const totalProcessed = await getTotalAvlsProcessed(subscriptionId);
 
-    return {
+    const reportBody = {
         feed_id: subscriptionId,
         packet_count: totalProcessed,
-        validation_summary: generateValidationSummary(errorData, totalProcessed),
-        errors: generateResults(errorData, subscriptionId),
+        validation_summary: {},
+        errors: {},
     };
+
+    if (errorData.length > 0) {
+        reportBody.validation_summary = generateValidationSummary(errorData, totalProcessed);
+        reportBody.errors = generateResults(errorData, subscriptionId);
+    }
+
+    return reportBody;
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { AVL_VALIDATION_ERROR_TABLE: tableName, CLOUDWATCH_NAMESPACE: cloudwatchNamespace } = process.env;
+        const { AVL_VALIDATION_ERROR_TABLE: tableName } = process.env;
 
-        if (!tableName || !cloudwatchNamespace) {
-            throw new Error("Missing env vars - AVL_VALIDATION_ERROR_TABLE and CLOUDWATCH_NAMESPACE must be set");
+        if (!tableName) {
+            throw new Error("Missing env vars - AVL_VALIDATION_ERROR_TABLE must be set");
         }
 
         const { sampleSize } = requestParamsSchema.parse(event.queryStringParameters);
@@ -109,7 +117,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const errorData = await getAvlSubscriptionErrorData(tableName, subscriptionId);
 
-        const reportBody = await generateReportBody(errorData, subscriptionId, cloudwatchNamespace);
+        const reportBody = await generateReportBody(errorData, subscriptionId);
 
         logger.info("Executed avl data feed validator", { sampleSize });
 

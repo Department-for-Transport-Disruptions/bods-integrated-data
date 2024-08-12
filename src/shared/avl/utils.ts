@@ -356,7 +356,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
 
     const builder = new XMLBuilder({
         ignoreAttributes: false,
-        format: true,
+        format: false,
         attributeNamePrefix: "@_",
     });
 
@@ -421,7 +421,6 @@ export const generateSiriVmAndUploadToS3 = async (
     avls: Avl[],
     requestMessageRef: string,
     bucketName: string,
-    stage: string,
     lintSiri = true,
 ) => {
     if (lintSiri && !commandExists("xmllint")) {
@@ -443,7 +442,7 @@ export const generateSiriVmAndUploadToS3 = async (
         ]);
 
         if (siriVmValidation.status === "rejected") {
-            await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "ValidationError", Value: 1 }]);
+            await putMetricData("custom/SiriVmGenerator", [{ MetricName: "ValidationError", Value: 1 }]);
 
             throw new Error("SIRI-VM file failed validation", {
                 cause: siriVmValidation.reason,
@@ -451,7 +450,7 @@ export const generateSiriVmAndUploadToS3 = async (
         }
 
         if (siriVmTflValidation.status === "rejected") {
-            await putMetricData(`custom/SiriVmGenerator-${stage}`, [{ MetricName: "TfLValidationError", Value: 1 }]);
+            await putMetricData("custom/SiriVmGenerator", [{ MetricName: "TfLValidationError", Value: 1 }]);
 
             throw new Error("SIRI-VM TfL file failed validation", {
                 cause: siriVmTflValidation.reason,

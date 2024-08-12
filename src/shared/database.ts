@@ -49,7 +49,7 @@ export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
     return new Kysely<Database>({
         dialect: new PostgresDialect({
             pool: new Pool({
-                host: dbHost,
+                host: readOnly ? dbReaderHost : dbHost,
                 port: Number(dbPort),
                 database: dbName,
                 user: parsedSecret.username,

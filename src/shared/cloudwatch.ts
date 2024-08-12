@@ -6,11 +6,27 @@ import {
     PutMetricDataCommand,
     Statistic,
 } from "@aws-sdk/client-cloudwatch";
+import { CloudWatchLogsClient, GetQueryResultsCommand, StartQueryCommand } from "@aws-sdk/client-cloudwatch-logs";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
 
 const cloudwatchClient = new CloudWatchClient({
+    region: "eu-west-2",
+    ...(process.env.STAGE === "local"
+        ? {
+              endpoint:
+                  localStackHost || isDocker ? "http://bods_integrated_data_localstack:4566" : "http://localhost:4566",
+              forcePathStyle: true,
+              credentials: {
+                  accessKeyId: "DUMMY",
+                  secretAccessKey: "DUMMY",
+              },
+          }
+        : {}),
+});
+
+const cloudwatchLogsClient = new CloudWatchLogsClient({
     region: "eu-west-2",
     ...(process.env.STAGE === "local"
         ? {
@@ -57,4 +73,20 @@ export const getMetricStatistics = async (
     );
 
     return data;
+};
+
+export const runLogInsightsQuery = async (startTime: number, endTime: number, queryString: string) => {
+    const logQuery = await cloudwatchLogsClient.send(
+        new StartQueryCommand({
+            startTime,
+            endTime,
+            queryString,
+        }),
+    );
+
+    return await cloudwatchLogsClient.send(
+        new GetQueryResultsCommand({
+            queryId: logQuery.queryId,
+        }),
+    );
 };

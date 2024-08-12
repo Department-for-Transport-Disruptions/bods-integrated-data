@@ -13,8 +13,9 @@ export type TerminateSubscriptionRequest = z.infer<typeof terminateSubscriptionR
 
 export const terminateSubscriptionResponseSchema = z.object({
     TerminateSubscriptionResponse: z.object({
+        ResponseTimestamp: z.string().optional(),
         TerminationResponseStatus: z.object({
-            ResponseTimestamp: z.string(),
+            ResponseTimestamp: z.string().optional(),
             SubscriptionRef: z.string(),
             Status: z.coerce.string(),
         }),

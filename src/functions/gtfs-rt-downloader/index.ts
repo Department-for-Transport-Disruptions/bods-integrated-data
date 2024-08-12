@@ -9,6 +9,7 @@ import {
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 import {
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
@@ -29,7 +30,6 @@ const requestParamsSchema = z.preprocess(
 );
 
 const putMetrics = async (
-    stage: string,
     download: string | undefined,
     routeId: string | undefined,
     startTimeAfter: number | undefined,
@@ -37,17 +37,29 @@ const putMetrics = async (
     boundingBox: string | undefined,
 ) => {
     await putMetricData(
-        `custom/GTFSRTDownloader-${stage}`,
+        "custom/GTFSRTDownloader",
+        [
+            {
+                MetricName: "Invocations",
+                Value: 1,
+            },
+        ],
         [
             { name: "download", set: !!download },
             { name: "routeId", set: !!routeId },
             { name: "startTimeAfter", set: !!startTimeAfter },
             { name: "startTimeBefore", set: !!startTimeBefore },
             { name: "boundingBox", set: !!boundingBox },
-        ].map((item) => ({
-            MetricName: item.name,
-            Value: item.set ? 1 : 0,
-        })),
+        ]
+            .map((item) =>
+                item.set
+                    ? {
+                          Name: "QueryParam",
+                          Value: item.name,
+                      }
+                    : undefined,
+            )
+            .filter(notEmpty),
     );
 };
 
@@ -55,7 +67,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { BUCKET_NAME: bucketName, STAGE: stage } = process.env;
+        const { BUCKET_NAME: bucketName } = process.env;
         const key = "gtfs-rt.bin";
 
         if (!bucketName) {
@@ -66,7 +78,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             event.queryStringParameters,
         );
 
-        await putMetrics(stage || "", download, routeId, startTimeAfter, startTimeBefore, boundingBox);
+        await putMetrics(download, routeId, startTimeAfter, startTimeBefore, boundingBox);
 
         if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
             const dbClient = await getDatabaseClient(process.env.STAGE === "local");

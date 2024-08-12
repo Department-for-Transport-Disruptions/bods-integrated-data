@@ -82,7 +82,7 @@ module "integrated_data_aurora_db" {
   vpc_id                   = module.integrated_data_vpc.vpc_id
   private_hosted_zone_id   = module.integrated_data_route53.private_hosted_zone_id
   private_hosted_zone_name = module.integrated_data_route53.private_hosted_zone_name
-  multi_az                 = true
+  multi_az                 = false
   instance_class           = "db.r6g.xlarge"
 }
 
@@ -269,7 +269,6 @@ module "integrated_data_avl_data_producer_api" {
   subnet_ids                  = module.integrated_data_vpc.private_subnet_ids
   avl_producer_api_key        = local.secrets["avl_producer_api_key"]
   avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
-  avl_cloudwatch_namespace    = "custom/CAVLMetrics"
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -343,15 +342,4 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
   domain                            = module.integrated_data_route53.public_hosted_zone_name
-}
-
-module "integrated_data_cloudfront" {
-  source = "../modules/networking/cloudfront"
-
-  environment                          = local.env
-  avl_siri_vm_downloader_domain        = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_function_url
-  avl_siri_vm_downloader_function_name = module.integrated_data_avl_pipeline.avl_siri_vm_downloader_lambda_name
-  domain                               = module.integrated_data_route53.public_hosted_zone_name
-  acm_certificate_arn                  = module.integrated_data_acm.cloudfront_acm_certificate_arn
-  hosted_zone_id                       = module.integrated_data_route53.public_hosted_zone_id
 }

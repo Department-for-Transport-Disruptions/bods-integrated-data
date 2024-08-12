@@ -137,9 +137,7 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                     }),
                 );
 
-                putMetricData(`custom/${namespace}-${process.env.STAGE}`, [
-                    { MetricName: "MakeFilteredArraySchemaParseError", Value: 1 },
-                ]);
+                putMetricData(`custom/${namespace}`, [{ MetricName: "MakeFilteredArraySchemaParseError", Value: 1 }]);
             }
 
             return parsedItem.success;
