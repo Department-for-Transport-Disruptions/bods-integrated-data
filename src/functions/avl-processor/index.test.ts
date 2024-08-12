@@ -18,6 +18,7 @@ import {
     parsedSiriWithOnwardCalls,
     testInvalidSiri,
     testSiri,
+    testSiriWithInvalidVehicleActivities,
     testSiriWithOnwardCalls,
 } from "./test/testSiriVm";
 
@@ -157,17 +158,32 @@ describe("avl-processor", () => {
         expect(valuesMock).toHaveBeenNthCalledWith(3, onwardCallInsertQuery);
     });
 
-    it("does not insert to database if invalid", async () => {
-        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testInvalidSiri } });
+    it("does not insert to database if invalid siri", async () => {
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testInvalidSiri },
+        });
 
-        await expect(
-            processSqsRecord(
-                record as S3EventRecord,
-                dbClient as unknown as KyselyDb,
-                "table-name",
-                "avl-validation-errors-table",
-            ),
-        ).rejects.toThrowError();
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
+
+        expect(valuesMock).not.toHaveBeenCalled();
+    });
+
+    it("does insert to database if only invalid vehicle activities", async () => {
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
+        });
+
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
 
         expect(valuesMock).not.toHaveBeenCalled();
 
@@ -185,16 +201,16 @@ describe("avl-processor", () => {
     });
 
     it("uploads validation errors to dynamoDB when processing invalid data", async () => {
-        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testInvalidSiri } });
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
+        });
 
-        await expect(
-            processSqsRecord(
-                record as S3EventRecord,
-                dbClient as unknown as KyselyDb,
-                "table-name",
-                "avl-validation-errors-table",
-            ),
-        ).rejects.toThrowError();
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
 
         /**
          * This variable represents a time to live (TTL) in the dynamoDB table
@@ -212,7 +228,7 @@ describe("avl-processor", () => {
                 itemIdentifier: undefined,
                 level: "NON-CRITICAL",
                 lineRef: "ATB:Line:60",
-                name: "MonitoredVehicleJourney.DirectionRef",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.DirectionRef",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
@@ -228,7 +244,7 @@ describe("avl-processor", () => {
                 itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "ATB:Line:60",
-                name: "MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
@@ -244,7 +260,7 @@ describe("avl-processor", () => {
                 itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "ATB:Line:60",
-                name: "MonitoredVehicleJourney.VehicleLocation.Longitude",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.VehicleLocation.Longitude",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
@@ -258,7 +274,7 @@ describe("avl-processor", () => {
                 details: "Required",
                 filename: record.s3.object.key,
                 level: "CRITICAL",
-                name: "ServiceDelivery.ProducerRef",
+                name: "Siri.ServiceDelivery.ProducerRef",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
             },

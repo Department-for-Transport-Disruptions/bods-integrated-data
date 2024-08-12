@@ -2,6 +2,13 @@ import { APIGatewayProxyEventHeaders, APIGatewayProxyResult } from "aws-lambda";
 import { getSecret } from "./secretsManager";
 import { InvalidApiKeyError } from "./validation";
 
+export const createSuccessResponse = (body?: string): APIGatewayProxyResult => {
+    return {
+        statusCode: 200,
+        body: body ?? "",
+    };
+};
+
 export const createValidationErrorResponse = (errors: string[]): APIGatewayProxyResult => {
     return {
         statusCode: 400,
