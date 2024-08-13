@@ -147,9 +147,9 @@ module "integrated_data_avl_pipeline" {
   siri_vm_downloader_cpu                      = 1024
   siri_vm_downloader_memory                   = 2048
   siri_vm_downloader_desired_task_count       = 3
-  siri_vm_downloader_nlb_target_group_arn     = module.integrated_data_internal_api.nlb_target_group_arn
+  siri_vm_downloader_nlb_target_group_arn     = ""
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
-  nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
+  nlb_sg_id                                   = ""
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 

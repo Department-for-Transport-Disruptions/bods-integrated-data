@@ -26,6 +26,6 @@ resource "aws_iam_role" "cloudwatch" {
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"]
 }
 
-resource "aws_api_gateway_account" "demo" {
+resource "aws_api_gateway_account" "api_gateway_account_settings" {
   cloudwatch_role_arn = aws_iam_role.cloudwatch.arn
 }

@@ -93,22 +93,27 @@ resource "aws_api_gateway_stage" "siri_vm_api_stage" {
   cache_cluster_enabled = true
   cache_cluster_size    = var.environment == "prod" ? 1.6 : 0.5
 
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.siri_vm_api_log_group.arn
-    format = jsonencode({
-      requestId         = "$context.requestId"
-      extendedRequestId = "$context.extendedRequestId"
-      ip                = "$context.identity.sourceIp"
-      caller            = "$context.identity.caller"
-      user              = "$context.identity.user"
-      requestTime       = "$context.requestTime"
-      requestTimeEpoch  = "$context.requestTimeEpoch"
-      resourcePath      = "$context.resourcePath"
-      httpMethod        = "$context.httpMethod"
-      status            = "$context.status"
-      protocol          = "$context.protocol"
-      responseLength    = "$context.responseLength"
-    })
+  dynamic "access_log_settings" {
+    for_each = var.environment != "local" ? ["apply"] : []
+
+    content {
+      destination_arn = aws_cloudwatch_log_group.siri_vm_api_log_group.arn
+      format = jsonencode({
+        requestId         = "$context.requestId"
+        extendedRequestId = "$context.extendedRequestId"
+        ip                = "$context.identity.sourceIp"
+        caller            = "$context.identity.caller"
+        user              = "$context.identity.user"
+        requestTime       = "$context.requestTime"
+        requestTimeEpoch  = "$context.requestTimeEpoch"
+        resourcePath      = "$context.resourcePath"
+        httpMethod        = "$context.httpMethod"
+        status            = "$context.status"
+        protocol          = "$context.protocol"
+        responseLength    = "$context.responseLength"
+      })
+    }
+
   }
 }
 
