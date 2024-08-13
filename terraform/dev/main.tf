@@ -42,6 +42,10 @@ module "integrated_data_monitoring_dev" {
   email_addresses = local.secrets["email_addresses_for_alarms"]
 }
 
+module "integrated_data_api_gateway_account" {
+  source = "../modules/api-gateway-account"
+}
+
 module "integrated_data_vpc_dev" {
   source = "../modules/networking/vpc"
 
@@ -236,6 +240,7 @@ module "integrated_data_avl_pipeline" {
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
   nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
+  external_vpce_for_sirivm_downloader         = local.secrets["external_vpce_for_sirivm_downloader"]
 }
 
 module "integrated_data_avl_subscription_table" {
