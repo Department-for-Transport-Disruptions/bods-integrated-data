@@ -147,5 +147,7 @@ variable "avl_validation_error_table_name" {
 }
 
 variable "external_vpce_for_sirivm_downloader" {
-  type = string
+  type     = string
+  nullable = true
+  default  = null
 }

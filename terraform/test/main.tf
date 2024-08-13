@@ -42,6 +42,10 @@ module "integrated_data_monitoring" {
   email_addresses = local.secrets["email_addresses_for_alarms"]
 }
 
+module "integrated_data_api_gateway_account" {
+  source = "../modules/api-gateway-account"
+}
+
 module "integrated_data_vpc" {
   source = "../modules/networking/vpc"
 

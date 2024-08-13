@@ -29,7 +29,6 @@ variable "siri_vm_downloader_function_name" {
 }
 
 variable "external_vpce_for_sirivm_downloader" {
-  type     = string
-  nullable = true
-  default  = null
+  type    = string
+  default = ""
 }
