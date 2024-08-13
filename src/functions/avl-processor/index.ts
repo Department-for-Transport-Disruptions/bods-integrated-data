@@ -48,6 +48,10 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
         );
     }
 
+    if(!parsedJson.data){
+        logger.info("")
+    }
+
     return {
         responseTimestamp: partiallyParsedSiri?.Siri?.ServiceDelivery?.ResponseTimestamp,
         avls: parsedJson.success ? parsedJson.data : [],
