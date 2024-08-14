@@ -12,6 +12,9 @@ import {
     mockHeartbeatNotification,
     testCancellationsSiri,
     testSiri,
+    testSiriWithEmptyVehicleActivity,
+    testSiriWithNoVehicleActivity,
+    testSiriWithSelfClosingVehicleActivity,
     testSiriWithSingleVehicleActivity,
 } from "./testSiriVm";
 
@@ -340,4 +343,15 @@ describe("AVL-data-endpoint", () => {
         expect(s3.putS3Object).not.toHaveBeenCalledOnce();
         expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
     });
+
+    it.each([testSiriWithNoVehicleActivity, testSiriWithSelfClosingVehicleActivity, testSiriWithEmptyVehicleActivity])(
+        "should return a 200 but not add data to S3 if location data with no vehicle activities is received",
+        async (input) => {
+            mockEvent.body = input;
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
+
+            expect(s3.putS3Object).not.toHaveBeenCalledOnce();
+            expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
+        },
+    );
 });
