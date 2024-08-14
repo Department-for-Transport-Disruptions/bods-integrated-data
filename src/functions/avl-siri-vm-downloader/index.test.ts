@@ -1,6 +1,7 @@
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { GENERATED_SIRI_VM_FILE_PATH, GENERATED_SIRI_VM_TFL_FILE_PATH } from "@bods-integrated-data/shared/avl/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import { APIGatewayEvent, APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -46,8 +47,10 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
     const mockRequest: APIGatewayEvent = {} as APIGatewayProxyEvent;
 
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
         logger: {
+            info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
         },
@@ -66,7 +69,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler(mockRequest);
+        const response = await handler(mockRequest, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 500,
             body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -81,7 +84,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         it("returns a 200 with SIRI-VM in-place", async () => {
             mocks.getS3Object.mockResolvedValueOnce("siri");
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 200,
                 headers: {
                     "Content-Encoding": "gzip",
@@ -106,7 +109,33 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 downloadTfl: "true",
             };
 
-            await expect(handler(mockRequest)).resolves.toEqual({
+            await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
+                statusCode: 200,
+                headers: {
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "application/xml",
+                },
+                isBase64Encoded: true,
+                body: expect.any(String),
+            });
+
+            expect(mocks.getS3Object).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: GENERATED_SIRI_VM_TFL_FILE_PATH,
+                ResponseContentType: "application/xml",
+            });
+            expect(logger.error).not.toHaveBeenCalled();
+        });
+
+        it("returns a 200 with SIRI-VM TfL in-place when the downloadTfl param is true and operatorRef is TFLO", async () => {
+            mocks.getS3Object.mockResolvedValueOnce("siri");
+
+            mockRequest.queryStringParameters = {
+                downloadTfl: "true",
+                operatorRef: "TFLO",
+            };
+
+            await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                 statusCode: 200,
                 headers: {
                     "Content-Encoding": "gzip",
@@ -127,7 +156,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         it("returns a 500 when an unexpected error occurs", async () => {
             mocks.getS3Object.mockRejectedValueOnce(new Error());
 
-            const response = await handler(mockRequest);
+            const response = await handler(mockRequest, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 500,
                 body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
@@ -146,7 +175,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     boundingBox: "1,2,3,4",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -175,7 +204,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     operatorRef: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -204,7 +233,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     operatorRef: "1,2,3",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -233,7 +262,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     vehicleRef: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -262,7 +291,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     lineRef: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -291,7 +320,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     producerRef: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -320,7 +349,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     originRef: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -349,7 +378,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     destinationRef: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -378,7 +407,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     subscriptionId: "1",
                 };
 
-                await expect(handler(mockRequest)).resolves.toEqual({
+                await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
                     statusCode: 200,
                     headers: { "Content-Type": "application/xml", "Content-Encoding": "gzip" },
                     isBase64Encoded: true,
@@ -444,7 +473,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 ],
             ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
                 mockRequest.queryStringParameters = params;
-                const response = await handler(mockRequest);
+                const response = await handler(mockRequest, mockContext, mockCallback);
                 expect(response).toEqual({
                     statusCode: 400,
                     body: JSON.stringify({ errors: [expectedErrorMessage] }),
@@ -460,7 +489,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     operatorRef: "1",
                 };
 
-                const response = await handler(mockRequest);
+                const response = await handler(mockRequest, mockContext, mockCallback);
                 expect(response).toEqual({
                     statusCode: 500,
                     body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
