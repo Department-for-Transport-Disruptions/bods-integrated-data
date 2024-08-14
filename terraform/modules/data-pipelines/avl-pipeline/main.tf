@@ -727,3 +727,76 @@ resource "aws_ecs_service" "siri_vm_downloader_service" {
     ignore_changes = [task_definition]
   }
 }
+
+module "siri_vm_downloader" {
+  source = "../../shared/lambda-function"
+
+  environment     = var.environment
+  function_name   = "avl-siri-vm-downloader"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-downloader.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 300
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
+    }
+  ]
+
+  env_vars = {
+    STAGE         = var.environment
+    BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+    DB_HOST       = var.db_reader_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+}
+
+module "siri_vm_api_private" {
+  source = "../../siri-vm-api"
+
+  environment                          = var.environment
+  aws_region                           = var.aws_region
+  account_id                           = data.aws_caller_identity.current.account_id
+  api_name                             = "integrated-data-siri-vm-api-private"
+  private                              = true
+  siri_vm_downloader_invoke_arn        = module.siri_vm_downloader.invoke_arn
+  siri_vm_downloader_function_name     = module.siri_vm_downloader.function_name
+  external_vpces_for_sirivm_downloader = var.external_vpces_for_sirivm_downloader
+}
+
+module "siri_vm_api_public" {
+  count = var.environment != "prod" ? 1 : 0
+
+  source = "../../siri-vm-api"
+
+  environment                      = var.environment
+  aws_region                       = var.aws_region
+  account_id                       = data.aws_caller_identity.current.account_id
+  api_name                         = "integrated-data-siri-vm-api-public"
+  private                          = false
+  siri_vm_downloader_invoke_arn    = module.siri_vm_downloader.invoke_arn
+  siri_vm_downloader_function_name = module.siri_vm_downloader.function_name
+}

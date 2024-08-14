@@ -43,6 +43,10 @@ module "integrated_data_monitoring" {
   email_addresses = local.secrets["email_addresses_for_alarms"]
 }
 
+module "integrated_data_api_gateway_account" {
+  source = "../modules/api-gateway-account"
+}
+
 module "integrated_data_vpc" {
   source = "../modules/networking/vpc"
 
@@ -254,10 +258,10 @@ module "integrated_data_avl_pipeline" {
   siri_vm_downloader_memory                   = 2048
   siri_vm_downloader_desired_task_count       = 3
   siri_vm_downloader_nlb_target_group_arn     = module.integrated_data_internal_api.nlb_target_group_arn
-  generated_siri_vm_bucket_name               = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
   nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
+  external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_downloader"]
 }
 
 module "integrated_data_avl_data_producer_api" {

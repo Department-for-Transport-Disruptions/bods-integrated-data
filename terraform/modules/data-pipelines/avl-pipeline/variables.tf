@@ -136,10 +136,6 @@ variable "avl_consumer_api_key" {
   description = "AVL consumer API key"
 }
 
-variable "generated_siri_vm_bucket_name" {
-  type = string
-}
-
 variable "nlb_sg_id" {
   type        = string
   description = "ID of the Security Group used by the NLB infront of the SIRI-VM downloader"
@@ -148,4 +144,10 @@ variable "nlb_sg_id" {
 variable "avl_validation_error_table_name" {
   type        = string
   description = "AVL validation error table name"
+}
+
+variable "external_vpces_for_sirivm_downloader" {
+  type     = list(string)
+  nullable = true
+  default  = null
 }
