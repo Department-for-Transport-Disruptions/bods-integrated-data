@@ -14,7 +14,7 @@ import {
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     InvalidApiKeyError,
@@ -23,7 +23,7 @@ import {
     createNmTokenValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
-import { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyHandler, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -79,7 +79,9 @@ const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<stri
     return object.Body?.transformToString() || "";
 };
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event, context): Promise<APIGatewayProxyResult> => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
     try {
         if (event.path === "health") {
             return {
@@ -96,6 +98,8 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
         let siriVm: string;
 
+        logger.info(`Invoking SIRI-VM Downloader, query params: ${JSON.stringify(event.queryStringParameters)}`);
+
         const {
             downloadTfl,
             boundingBox,
@@ -109,15 +113,22 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
         } = requestParamsSchema.parse(event.queryStringParameters);
 
         if (
-            boundingBox ||
-            operatorRef ||
-            vehicleRef ||
-            lineRef ||
-            producerRef ||
-            originRef ||
-            destinationRef ||
-            subscriptionId
+            !boundingBox &&
+            (!operatorRef || operatorRef === "TFLO") &&
+            !vehicleRef &&
+            !lineRef &&
+            !producerRef &&
+            !originRef &&
+            !destinationRef &&
+            !subscriptionId
         ) {
+            siriVm = await retrieveSiriVmFile(
+                bucketName,
+                downloadTfl === "true" || operatorRef === "TFLO"
+                    ? GENERATED_SIRI_VM_TFL_FILE_PATH
+                    : GENERATED_SIRI_VM_FILE_PATH,
+            );
+        } else {
             const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
             siriVm = await retrieveSiriVmData(
@@ -130,11 +141,6 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
                 originRef,
                 destinationRef,
                 subscriptionId,
-            );
-        } else {
-            siriVm = await retrieveSiriVmFile(
-                bucketName,
-                downloadTfl === "true" ? GENERATED_SIRI_VM_TFL_FILE_PATH : GENERATED_SIRI_VM_FILE_PATH,
             );
         }
 
