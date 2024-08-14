@@ -1,3 +1,4 @@
+import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { Consequence, PtSituation } from "@bods-integrated-data/shared/schema";
 import { transit_realtime } from "gtfs-realtime-bindings";
 
@@ -180,4 +181,12 @@ export const getGtfsSeverityLevel = (severity: string): transit_realtime.Alert.S
     }
 
     return SeverityLevel.UNKNOWN_SEVERITY;
+};
+
+export const getAgency = (dbClient: KyselyDb, nationalOperatorCode: string) => {
+    return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
+};
+
+export const getRoute = (dbClient: KyselyDb, lineId: string) => {
+    return dbClient.selectFrom("route").selectAll().where("line_id", "=", lineId).executeTakeFirst();
 };

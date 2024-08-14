@@ -1,23 +1,31 @@
 import { z } from "zod";
 
+const affectedLineSchema = z.object({
+    AffectedOperator: z
+        .object({
+            OperatorRef: z.string().optional(),
+        })
+        .optional(),
+    LineRef: z.string(),
+});
+
+const affectedStopPointSchema = z.object({
+    StopPointRef: z.string().optional(),
+});
+
 const affectsSchema = z.object({
     Networks: z
         .object({
             AffectedNetwork: z
                 .object({
-                    AffectedLine: z.object({}).array().optional(),
+                    AffectedLine: z.array(affectedLineSchema).optional(),
                 })
                 .array(),
         })
         .optional(),
     StopPoints: z
         .object({
-            AffectedStopPoint: z.object({}).array().optional(),
-        })
-        .optional(),
-    VehicleJourneys: z
-        .object({
-            AffectedVehicleJourney: z.object({}).array().optional(),
+            AffectedStopPoint: z.array(affectedStopPointSchema).optional(),
         })
         .optional(),
 });
