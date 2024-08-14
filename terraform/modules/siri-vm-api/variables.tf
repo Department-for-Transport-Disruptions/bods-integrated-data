@@ -28,7 +28,7 @@ variable "siri_vm_downloader_function_name" {
   type = string
 }
 
-variable "external_vpce_for_sirivm_downloader" {
-  type    = string
-  default = ""
+variable "external_vpces_for_sirivm_downloader" {
+  type    = list(string)
+  default = []
 }
