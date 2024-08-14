@@ -265,4 +265,4 @@ run-local-bods-disruptions-retriever:
 	STAGE=local DISRUPTIONS_UNZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(console.error)"
 
 run-local-bods-disruptions-processor:
-	STAGE=local BUCKET_NAME=${BODS_DISRUPTIONS_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/bods-disruptions-processor'; handler({Records:[{s3:{bucket:{name:'${BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME}'},object:{key:'sirisx.xml'}}}]}).catch(console.error)"
+	STAGE=local BUCKET_NAME=${BODS_DISRUPTIONS_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/bods-disruptions-processor'; handler({Records:[{s3:{bucket:{name:'${BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME}'},object:{key:'disruptions/sirisx.xml'}}}]}).catch(console.error)"

@@ -14,7 +14,7 @@ export const invokeBodsDisruptionsProcessor = new Command("invoke-bods-disruptio
                             name: `integrated-data-bods-disruptions-unzipped-${stage}`,
                         },
                         object: {
-                            key: "sirisx.xml",
+                            key: "disruptions/sirisx.xml",
                         },
                     },
                 },

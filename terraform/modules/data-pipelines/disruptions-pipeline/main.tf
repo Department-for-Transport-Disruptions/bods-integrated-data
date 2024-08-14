@@ -106,7 +106,7 @@ module "integrated_data_bods_disruptions_processor_function" {
     ],
     Effect = "Allow",
     Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_zipped_bucket.arn}/*"
+      "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
     ]
     }, {
     Action = [
