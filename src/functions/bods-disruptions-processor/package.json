@@ -1,0 +1,24 @@
+{
+    "name": "@bods-integrated-data/bods-disruptions-processor",
+    "version": "0.1.0",
+    "description": "Lambda for processing bods disruptions data",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-disruptions-processor.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-disruptions-processor.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.4.1",
+        "gtfs-realtime-bindings": "^1.1.1",
+        "zod-validation-error": "^3.3.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

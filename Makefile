@@ -18,6 +18,7 @@ BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-zipped-local"
 BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
+BODS_DISRUPTIONS_BUCKET_NAME="integrated-data-bods-disruptions-gtfs-rt-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 AVL_CONSUMER_API_KEY_ARN=""
@@ -258,7 +259,10 @@ run-local-bods-fares-retriever:
 run-local-bods-fares-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_FARES_BUCKET_NAME=${BODS_FARES_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-fares-unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_FARES_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
-# Disruptions retriever
+# Disruptions
 
 run-local-bods-disruptions-retriever:
-	STAGE=local DISRUPTIONS_ZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local DISRUPTIONS_ZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(console.error)"
+
+run-local-bods-disruptions-processor:
+	STAGE=local BUCKET_NAME=${BODS_DISRUPTIONS_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/bods-disruptions-processor'; handler({Records:[{s3:{bucket:{name:'${BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME}'},object:{key:'sirisx.xml'}}}]}).catch(console.error)"

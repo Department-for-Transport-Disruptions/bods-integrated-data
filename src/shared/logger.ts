@@ -3,6 +3,7 @@ import { lambdaRequestTracker, pinoLambdaDestination } from "pino-lambda";
 
 // Define a custom logger type to allow extra props to be included in logs
 type CustomLogger = Logger & {
+    filepath?: string;
     subscriptionId?: string;
 };
 
