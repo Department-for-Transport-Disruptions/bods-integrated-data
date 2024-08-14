@@ -62,7 +62,8 @@ resource "aws_api_gateway_deployment" "siri_vm_api_deployment" {
   triggers = {
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_api_gateway_integration.siri_vm_api_downloader_integration),
-      jsonencode(aws_api_gateway_rest_api.siri_vm_api.body)
+      jsonencode(aws_api_gateway_rest_api.siri_vm_api.body),
+      var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_vm_api_resource_policy[0].policy) : ""
     ])))
   }
 
@@ -113,7 +114,6 @@ resource "aws_api_gateway_stage" "siri_vm_api_stage" {
         responseLength    = "$context.responseLength"
       })
     }
-
   }
 }
 
@@ -131,7 +131,7 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
         "Resource" : "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}",
         "Condition" : {
           "StringNotEquals" : {
-            "aws:sourceVpce" : var.external_vpce_for_sirivm_downloader
+            "aws:sourceVpce" : var.external_vpces_for_sirivm_downloader
           }
         }
       },
