@@ -9,13 +9,13 @@ terraform {
   }
 }
 
-resource "aws_s3_bucket" "integrated_data_bods_disruptions_zipped_bucket" {
-  bucket = "integrated-data-bods-disruptions-zipped-${var.environment}"
+resource "aws_s3_bucket" "integrated_data_bods_disruptions_unzipped_bucket" {
+  bucket = "integrated-data-bods-disruptions-unzipped-${var.environment}"
 }
 
 
-resource "aws_s3_bucket_public_access_block" "integrated_data_bods_disruptions_zipped_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_bods_disruptions_zipped_bucket.id
+resource "aws_s3_bucket_public_access_block" "integrated_data_bods_disruptions_unzipped_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -23,8 +23,8 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_bods_disruptions_z
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_versioning" "integrated_data_bods_disruptions_zipped_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_bods_disruptions_zipped_bucket.id
+resource "aws_s3_bucket_versioning" "integrated_data_bods_disruptions_unzipped_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -47,12 +47,12 @@ module "integrated_data_bods_disruptions_retriever_function" {
     ],
     Effect = "Allow",
     Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_zipped_bucket.arn}/*"
+      "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
     ]
   }]
 
   env_vars = {
-    STAGE                          = var.environment
-    DISRUPTIONS_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_disruptions_zipped_bucket.bucket
+    STAGE                            = var.environment
+    DISRUPTIONS_UNZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.bucket
   }
 }
