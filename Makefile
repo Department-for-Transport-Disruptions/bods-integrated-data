@@ -17,7 +17,7 @@ AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
 BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-zipped-local"
 BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
-BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-zipped-local"
+BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-unzipped-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 AVL_CONSUMER_API_KEY_ARN=""
@@ -261,4 +261,4 @@ run-local-bods-fares-unzipper:
 # Disruptions retriever
 
 run-local-bods-disruptions-retriever:
-	STAGE=local DISRUPTIONS_ZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(e => console.error(e))"
+	STAGE=local DISRUPTIONS_UNZIPPED_BUCKET_NAME=${BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-disruptions-retriever'; handler().catch(e => console.error(e))"
