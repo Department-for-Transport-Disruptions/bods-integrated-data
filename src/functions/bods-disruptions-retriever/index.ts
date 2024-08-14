@@ -11,7 +11,7 @@ const getDisruptionsDataAndUploadToS3 = async (disruptionsUnzippedBucketName: st
         responseType: "stream",
     });
 
-    await unzip(response.data, "disruptions.zip", disruptionsUnzippedBucketName);
+    await unzip(response.data, disruptionsUnzippedBucketName, "disruptions.zip");
 };
 
 export const handler: Handler = async (event, context) => {
@@ -24,15 +24,7 @@ export const handler: Handler = async (event, context) => {
     }
 
     try {
-        logger.info("Starting retrieval of disruptions data");
-
         await getDisruptionsDataAndUploadToS3(disruptionsUnzippedBucketName);
-
-        logger.info("Disruptions retrieval complete");
-
-        return {
-            disruptionsUnzippedBucketName,
-        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error("There was an error retrieving disruptions data", e);
