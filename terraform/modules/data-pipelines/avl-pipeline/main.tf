@@ -767,7 +767,7 @@ module "siri_vm_downloader" {
   env_vars = {
     STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
-    DB_HOST       = var.db_host
+    DB_HOST       = var.db_reader_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
@@ -788,7 +788,7 @@ module "siri_vm_api_private" {
 }
 
 module "siri_vm_api_public" {
-  count = var.environment != "prod" ? 1 : 0
+  # count = var.environment != "prod" ? 1 : 0
 
   source = "../../siri-vm-api"
 
