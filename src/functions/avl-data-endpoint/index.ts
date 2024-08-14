@@ -134,7 +134,16 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         }
 
         if (siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
-            logger.warn("Subscription received cancellation data, data will be ignored...");
+            logger.warn("Received cancellation data from data producer, data will be ignored...");
+            return createSuccessResponse();
+        }
+
+        if (
+            siri?.ServiceDelivery?.VehicleMonitoringDelivery &&
+            (!siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity ||
+                siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "")
+        ) {
+            logger.warn("Received location data with no Vehicle Activity from data producer, data will be ignored...");
             return createSuccessResponse();
         }
 

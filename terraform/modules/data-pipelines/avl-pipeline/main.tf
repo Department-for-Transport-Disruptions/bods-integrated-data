@@ -788,7 +788,7 @@ module "siri_vm_api_private" {
 }
 
 module "siri_vm_api_public" {
-  # count = var.environment != "prod" ? 1 : 0
+  count = var.environment != "prod" ? 1 : 0
 
   source = "../../siri-vm-api"
 

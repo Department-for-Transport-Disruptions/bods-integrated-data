@@ -146,3 +146,50 @@ export const testCancellationsSiri = `<?xml version="1.0" encoding="UTF-8" stand
 </VehicleMonitoringDelivery>
 </ServiceDelivery>
 </Siri>`;
+
+export const testSiriWithNoVehicleActivity = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+    xmlns:ns2="http://www.ifopt.org.uk/acsb"
+    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+    version="2.0">
+    <ServiceDelivery>
+        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+        <ProducerRef>ATB</ProducerRef>
+        <VehicleMonitoringDelivery version="2.0">
+            <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+        </VehicleMonitoringDelivery>
+    </ServiceDelivery>
+</Siri>`;
+
+export const testSiriWithEmptyVehicleActivity = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+    xmlns:ns2="http://www.ifopt.org.uk/acsb"
+    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+    version="2.0">
+    <ServiceDelivery>
+        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+        <ProducerRef>ATB</ProducerRef>
+        <VehicleMonitoringDelivery version="2.0">
+            <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+            <VehicleActivity></VehicleActivity>
+        </VehicleMonitoringDelivery>
+    </ServiceDelivery>
+</Siri>`;
+
+export const testSiriWithSelfClosingVehicleActivity = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+    xmlns:ns2="http://www.ifopt.org.uk/acsb"
+    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+    version="2.0">
+    <ServiceDelivery>
+        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+        <ProducerRef>ATB</ProducerRef>
+        <VehicleMonitoringDelivery version="2.0">
+            <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+            <VehicleActivity/>
+        </VehicleMonitoringDelivery>
+    </ServiceDelivery>
+</Siri>`;
