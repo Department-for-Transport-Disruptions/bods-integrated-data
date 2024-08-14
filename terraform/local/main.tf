@@ -211,5 +211,11 @@ module "integrated_data_fares_pipeline" {
 module "integrated_data_disruptions_pipeline" {
   source = "../modules/data-pipelines/disruptions-pipeline"
 
-  environment = local.env
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+  saveJson           = true
 }
