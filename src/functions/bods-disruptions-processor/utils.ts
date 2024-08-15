@@ -46,7 +46,7 @@ const personnelReasonAliases = {
 } as const;
 
 const isReason = <T extends Record<string, string>>(reasonAliases: T, reasonToCheck: keyof T, reason?: string) => {
-    return reason && (reason in reasonAliases || reasonAliases[reasonToCheck] === reason);
+    return reason && (reason === reasonToCheck || reason === reasonAliases[reasonToCheck]);
 };
 
 export const getGtfsCause = (ptSituation: PtSituation): transit_realtime.Alert.Cause => {
@@ -119,8 +119,8 @@ export const getGtfsCause = (ptSituation: PtSituation): transit_realtime.Alert.C
 };
 
 export const getGtfsEffect = (consequence: Consequence): transit_realtime.Alert.Effect => {
-    if (consequence.Blocking?.JourneyPlanner === "true" && consequence.Advice?.Details) {
-        const details = consequence.Advice.Details.toLowerCase();
+    if (consequence.Blocking?.JourneyPlanner === "true") {
+        const details = consequence.Advice?.Details.toLowerCase() || "";
 
         if (details.includes("reduced service")) {
             return Effect.REDUCED_SERVICE;
