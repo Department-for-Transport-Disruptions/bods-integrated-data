@@ -1,4 +1,5 @@
 import { KyselyDb } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { Consequence, PtSituation } from "@bods-integrated-data/shared/schema";
 import { transit_realtime } from "gtfs-realtime-bindings";
 
@@ -181,6 +182,13 @@ export const getGtfsSeverityLevel = (severity: string): transit_realtime.Alert.S
     }
 
     return SeverityLevel.UNKNOWN_SEVERITY;
+};
+
+export const getGtfsActivePeriods = (ptSituation: PtSituation): transit_realtime.ITimeRange[] => {
+    return ptSituation.ValidityPeriod.map((period) => ({
+        start: getDate(period.StartTime).unix(),
+        end: period.EndTime ? getDate(period.EndTime).unix() : undefined,
+    }));
 };
 
 export const getAgency = (dbClient: KyselyDb, nationalOperatorCode: string) => {

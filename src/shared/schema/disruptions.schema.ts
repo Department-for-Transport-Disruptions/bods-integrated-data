@@ -55,10 +55,12 @@ export type Consequence = z.infer<typeof consequenceSchema>;
 
 const ptSituationSchema = z.object({
     Description: z.string().optional(),
-    ValidityPeriod: z.object({
-        StartTime: z.string(),
-        EndTime: z.string(),
-    }),
+    ValidityPeriod: z
+        .object({
+            StartTime: z.string(),
+            EndTime: z.string().optional(),
+        })
+        .array(),
     EnvironmentReason: z.string().optional(),
     EquipmentReason: z.string().optional(),
     PersonnelReason: z.string().optional(),
@@ -80,9 +82,11 @@ export type PtSituation = z.infer<typeof ptSituationSchema>;
 
 export const situationSchema = z.object({
     Siri: z.object({
-        SituationExchangeDelivery: z.object({
-            Situations: z.object({
-                PtSituationElement: z.array(ptSituationSchema),
+        ServiceDelivery: z.object({
+            SituationExchangeDelivery: z.object({
+                Situations: z.object({
+                    PtSituationElement: z.array(ptSituationSchema),
+                }),
             }),
         }),
     }),
