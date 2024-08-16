@@ -19,7 +19,6 @@ export * from "./invoke-bods-siri-vm-analyser";
 export * from "./invoke-bods-txc-processor";
 export * from "./invoke-bods-txc-retriever";
 export * from "./invoke-bods-txc-unzipper";
-export * from "./invoke-bods-disruptions-retriever";
 export * from "./invoke-db-cleardown";
 export * from "./invoke-db-migrator";
 export * from "./invoke-gtfs-downloader";
