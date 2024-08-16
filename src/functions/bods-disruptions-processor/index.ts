@@ -11,7 +11,13 @@ import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { fromZodError } from "zod-validation-error";
-import { getAgency, getGtfsActivePeriods, getGtfsCause, getGtfsEffect, getGtfsSeverityLevel, getRoute } from "./utils";
+import {
+    getGtfsActivePeriods,
+    getGtfsCause,
+    getGtfsEffect,
+    getGtfsInformedIdentities,
+    getGtfsSeverityLevel,
+} from "./utils";
 
 const arrayProperties = [
     "PtSituationElement",
@@ -62,61 +68,11 @@ const mapPtSituationsToGtfsAlertEntities = async (
 ): Promise<transit_realtime.IFeedEntity[]> => {
     const promises = ptSituations.flatMap((ptSituation) => {
         return ptSituation.Consequences.Consequence.map(async (consequence) => {
-            let operatorRef = undefined;
-            let lineRef = undefined;
-            let agencyId = undefined;
-            let routeId = undefined;
-            let routeType = undefined;
-            let stopId = undefined;
-
-            if (consequence.Affects?.Networks?.AffectedNetwork) {
-                for (const affectedNetwork of consequence.Affects.Networks.AffectedNetwork) {
-                    if (affectedNetwork.AffectedLine) {
-                        for (const affectedLine of affectedNetwork.AffectedLine) {
-                            if (!operatorRef && affectedLine.AffectedOperator?.OperatorRef) {
-                                operatorRef = affectedLine.AffectedOperator.OperatorRef;
-                            }
-
-                            if (!lineRef) {
-                                lineRef = affectedLine.LineRef;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (consequence.Affects?.StopPoints?.AffectedStopPoint) {
-                for (const affectedStopPoint of consequence.Affects.StopPoints.AffectedStopPoint) {
-                    if (affectedStopPoint.StopPointRef) {
-                        stopId = affectedStopPoint.StopPointRef;
-                        break;
-                    }
-                }
-            }
-
-            if (operatorRef) {
-                const agency = await getAgency(dbClient, operatorRef);
-                agencyId = agency?.id;
-            }
-
-            if (lineRef) {
-                const route = await getRoute(dbClient, lineRef);
-                routeId = route?.id;
-                routeType = route?.route_type;
-            }
-
             const entity: transit_realtime.IFeedEntity = {
                 id: randomUUID(),
                 alert: {
                     activePeriod: getGtfsActivePeriods(ptSituation),
-                    informedEntity: [
-                        {
-                            agencyId: agencyId?.toString(),
-                            routeId: routeId?.toString(),
-                            routeType,
-                            stopId,
-                        },
-                    ],
+                    informedEntity: await getGtfsInformedIdentities(dbClient, consequence),
                     cause: getGtfsCause(ptSituation),
                     // @ts-ignore allow experimental property (not available in the gtfs-realtime-bindings library yet)
                     cause_detail: {

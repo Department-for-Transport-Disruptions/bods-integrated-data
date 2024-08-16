@@ -26,7 +26,7 @@ AVL_PRODUCER_API_KEY_ARN=""
 
 # Dev
 
-setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator dev-containers-up create-local-env migrate-local-db-to-latest
+setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator docker-build-siri-vm-downloader dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add pnpm && \

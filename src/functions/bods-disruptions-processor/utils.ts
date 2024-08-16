@@ -198,3 +198,66 @@ export const getAgency = (dbClient: KyselyDb, nationalOperatorCode: string) => {
 export const getRoute = (dbClient: KyselyDb, lineId: string) => {
     return dbClient.selectFrom("route").selectAll().where("line_id", "=", lineId).executeTakeFirst();
 };
+
+export const getGtfsInformedIdentities = async (
+    dbClient: KyselyDb,
+    consequence: Consequence,
+): Promise<transit_realtime.IEntitySelector[]> => {
+    /**
+     * at the moment, all agencies/routes/stops are added as individual identities.
+     * This will soon change so that:
+     * 1. each stop is linked to its associated route and agency
+     * 2. if a route lists no affected stops, then each route is linked to its associated agency
+     * 3. if an agency has no affected routes, then it is listed on its own
+     */
+    const identities: transit_realtime.IEntitySelector[] = [];
+    const operatorRefs = [];
+    const lineRefs = [];
+
+    if (consequence.Affects?.Networks?.AffectedNetwork) {
+        for (const affectedNetwork of consequence.Affects.Networks.AffectedNetwork) {
+            if (affectedNetwork.AffectedLine) {
+                for (const affectedLine of affectedNetwork.AffectedLine) {
+                    if (affectedLine.AffectedOperator?.OperatorRef) {
+                        operatorRefs.push(affectedLine.AffectedOperator.OperatorRef);
+                    }
+
+                    lineRefs.push(affectedLine.LineRef);
+                }
+            }
+        }
+    }
+
+    const agencies = await Promise.all(operatorRefs.map((operatorRef) => getAgency(dbClient, operatorRef)));
+    const routes = await Promise.all(operatorRefs.map((lineRef) => getRoute(dbClient, lineRef)));
+
+    for (const agency of agencies) {
+        if (agency) {
+            identities.push({
+                agencyId: agency.id.toString(),
+            });
+        }
+    }
+
+    for (const route of routes) {
+        if (route) {
+            identities.push({
+                agencyId: route.agency_id.toString(),
+                routeId: route.id.toString(),
+                routeType: route.route_type,
+            });
+        }
+    }
+
+    if (consequence.Affects?.StopPoints?.AffectedStopPoint) {
+        for (const affectedStopPoint of consequence.Affects.StopPoints.AffectedStopPoint) {
+            if (affectedStopPoint.StopPointRef) {
+                identities.push({
+                    stopId: affectedStopPoint.StopPointRef,
+                });
+            }
+        }
+    }
+
+    return identities;
+};
