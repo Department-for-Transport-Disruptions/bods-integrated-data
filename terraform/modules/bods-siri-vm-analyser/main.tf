@@ -26,7 +26,7 @@ module "integrated_data_bods_siri_vm_analyser_function" {
   source = "../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "integrated_data_bods_siri_vm_analyser_function"
+  function_name = "integrated-data-bods-siri-vm-analyser-function"
   zip_path      = "${path.module}/../../../src/functions/dist/bods-siri-vm-analyser.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"

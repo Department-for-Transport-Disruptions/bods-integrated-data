@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/bods-siri-vm-anaylser",
+    "name": "@bods-integrated-data/bods-siri-vm-analyser",
     "version": "0.1.0",
     "description": "This function is to process SIRI-VM AVL data and upload it to the database",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-siri-vm-anaylser.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-siri-vm-anaylser.zip ../dist/bods-siri-vm-anaylser.zip",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-siri-vm-analyser.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-siri-vm-analyser.zip ../dist/bods-siri-vm-analyser.zip",
         "test": "vitest run"
     },
     "keywords": [],
