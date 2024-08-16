@@ -69,3 +69,13 @@ variable "bods_avl_processor_memory" {
   type        = number
   description = "Memory in MB to assign to the BODS AVL Processor task"
 }
+
+variable "gtfs_rt_service_alerts_bucket_name" {
+  type        = string
+  description = "Name of bucket containing service alerts file"
+}
+
+variable "gtfs_rt_service_alerts_bucket_arn" {
+  type        = string
+  description = "Arn of bucket containing service alerts file"
+}

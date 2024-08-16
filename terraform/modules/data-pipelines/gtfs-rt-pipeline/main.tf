@@ -31,26 +31,6 @@ resource "aws_s3_bucket_versioning" "integrated_data_gtfs_rt_bucket_versioning" 
   }
 }
 
-resource "aws_s3_bucket" "integrated_data_gtfs_rt_service_alerts_bucket" {
-  bucket = "integrated-data-gtfs-rt-service-alerts-${var.environment}"
-}
-
-resource "aws_s3_bucket_public_access_block" "integrated_data_gtfs_rt_service_alerts_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_gtfs_rt_service_alerts_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_versioning" "integrated_data_gtfs_rt_service_alerts_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_gtfs_rt_service_alerts_bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 module "integrated_data_gtfs_rt_downloader_function" {
   source = "../../shared/lambda-function"
 
@@ -123,13 +103,13 @@ module "integrated_data_gtfs_rt_service_alerts_downloader_function" {
       ],
       Effect = "Allow",
       Resource = [
-        "${aws_s3_bucket.integrated_data_gtfs_rt_service_alerts_bucket.arn}/*"
+        "${var.gtfs_rt_service_alerts_bucket_arn}/*"
       ]
   }, ]
 
   env_vars = {
     STAGE       = var.environment
-    BUCKET_NAME = aws_s3_bucket.integrated_data_gtfs_rt_service_alerts_bucket.bucket
+    BUCKET_NAME = var.gtfs_rt_service_alerts_bucket_name
   }
 }
 

@@ -64,7 +64,7 @@ resource "aws_apigatewayv2_integration" "integrated_data_gtfs_rt_service_alerts_
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "integrated_data_gtfs_rt_api_route" {
+resource "aws_apigatewayv2_route" "integrated_data_gtfs_rt_service_alerts_route" {
   api_id    = aws_apigatewayv2_api.integrated_data_gtfs_api.id
   route_key = "GET /gtfs-rt/service-alerts"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_gtfs_rt_service_alerts_downloader_integration.id}"
