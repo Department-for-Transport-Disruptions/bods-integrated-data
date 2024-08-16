@@ -12,6 +12,8 @@ export * from "./invoke-avl-unsubscriber";
 export * from "./invoke-avl-update-endpoint";
 export * from "./invoke-avl-validate";
 export * from "./invoke-bank-holidays-retriever";
+export * from "./invoke-bods-disruptions-retriever";
+export * from "./invoke-bods-disruptions-processor";
 export * from "./invoke-bods-fares-retriever";
 export * from "./invoke-bods-txc-processor";
 export * from "./invoke-bods-txc-retriever";
