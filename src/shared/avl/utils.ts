@@ -16,7 +16,6 @@ import { getDynamoItem, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
-import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
 import { vehicleActivitySchema } from "../schema/avl.schema";
@@ -103,7 +102,7 @@ const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl =>
     item_id: avl.item_id ?? randomUUID(),
 });
 
-const removeDuplicates = <T extends NewAvl | SiriSchemaTransformed[0]>(avl: T[]): T[] => {
+export const removeDuplicates = <T extends NewAvl | Avl>(avl: T[]): T[] => {
     const uniqueRecordsMap: Map<string, T> = new Map();
 
     for (const item of avl) {

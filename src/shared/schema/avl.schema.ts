@@ -258,8 +258,6 @@ export const siriBodsSchemaTransformed = siriSchema().transform((item) => {
     return avls;
 });
 
-export type SiriSchemaTransformed = z.infer<ReturnType<typeof siriSchemaTransformed>>;
-
 export const tflVehicleLocationSchema = z.object({
     producerRef: z.string(),
     vehicleRef: z.string(),
