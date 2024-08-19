@@ -1,20 +1,15 @@
-import { getQueryForLatestAvl } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { sql } from "kysely";
 
 void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
     try {
-        const latestAvlQuery = getQueryForLatestAvl(dbClient).as("avl_latest");
-
         const result = await dbClient
             .deleteFrom("avl")
-            .using("avl as avl_all")
-            .leftJoin(latestAvlQuery, "avl_latest.id", "avl_all.id")
-            .whereRef("avl.id", "=", "avl_all.id")
-            .where("avl_latest.id", "is", null)
+            .where("avl.recorded_at_time", "<", sql<string>`NOW() - INTERVAL '1 day'`)
             .executeTakeFirst();
 
         logger.info(`AVL cleardown successful: deleted ${result.numDeletedRows} rows`);
