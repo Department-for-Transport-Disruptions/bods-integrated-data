@@ -24,7 +24,7 @@
         "@aws-sdk/lib-dynamodb": "^3.623.0",
         "@aws-sdk/lib-storage": "^3.623.0",
         "@aws-sdk/s3-request-presigner": "^3.623.0",
-        "axios": "^1.7.2",
+        "axios": "^1.7.4",
         "clean-deep": "^3.4.0",
         "command-exists": "^1.2.9",
         "dayjs": "^1.11.10",

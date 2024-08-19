@@ -13,11 +13,11 @@ import {
     expectedPutMetricDataCallForFilteredArrayParseError,
     mockItemId,
     mockSubscriptionId,
-    onwardCallInsertQuery,
     parsedSiri,
     parsedSiriWithOnwardCalls,
     testInvalidSiri,
     testSiri,
+    testSiriWithDuplicates,
     testSiriWithInvalidVehicleActivities,
     testSiriWithOnwardCalls,
 } from "./test/testSiriVm";
@@ -64,7 +64,9 @@ describe("avl-processor", () => {
 
     const dbClient = {
         insertInto: () => ({
-            values: valuesMock,
+            values: vi.fn().mockReturnValue({
+                onConflict: valuesMock,
+            }),
         }),
     };
 
@@ -107,7 +109,9 @@ describe("avl-processor", () => {
 
     it("correctly processes a siri-vm file", async () => {
         const valuesMock = vi.fn().mockReturnValue({
-            execute: vi.fn().mockResolvedValue(""),
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+            }),
         });
 
         const dbClient = {
@@ -131,10 +135,12 @@ describe("avl-processor", () => {
 
     it("correctly processes a siri-vm file with OnwardCalls data", async () => {
         const valuesMock = vi.fn().mockReturnValue({
-            execute: vi.fn().mockResolvedValue(""),
-            returning: vi.fn().mockReturnValue({
-                executeTakeFirst: vi.fn().mockResolvedValue({
-                    id: 123,
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+                returning: vi.fn().mockReturnValue({
+                    executeTakeFirst: vi.fn().mockResolvedValue({
+                        id: 123,
+                    }),
                 }),
             }),
         });
@@ -153,9 +159,33 @@ describe("avl-processor", () => {
             "avl-validation-errors-table",
         );
 
-        expect(valuesMock).toHaveBeenNthCalledWith(1, [parsedSiriWithOnwardCalls[0]]);
-        expect(valuesMock).toHaveBeenNthCalledWith(2, parsedSiriWithOnwardCalls[1]);
-        expect(valuesMock).toHaveBeenNthCalledWith(3, onwardCallInsertQuery);
+        expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls);
+    });
+
+    it("correctly removes duplicates before inserting into the db", async () => {
+        const valuesMock = vi.fn().mockReturnValue({
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+            }),
+        });
+
+        const dbClient = {
+            insertInto: () => ({
+                values: valuesMock,
+            }),
+        };
+
+        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiriWithDuplicates } });
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "avl-validation-errors-table",
+        );
+
+        expect(uuidSpy).toHaveBeenCalledOnce();
+
+        expect(valuesMock).toBeCalledWith([parsedSiri[0]]);
     });
 
     it("does not insert to database if invalid siri", async () => {

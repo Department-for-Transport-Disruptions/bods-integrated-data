@@ -13,7 +13,7 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "axios": "^1.6.7"
+        "axios": "^1.7.4"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

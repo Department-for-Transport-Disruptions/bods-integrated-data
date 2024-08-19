@@ -1,6 +1,6 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Avl, KyselyDb, NewAvl } from "../database";
+import { KyselyDb, NewAvl } from "../database";
 import { matchAvlToTimetables, removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
@@ -34,7 +34,7 @@ describe("utils", () => {
 
     describe("mapAvlToGtfsEntity", () => {
         it("returns a mapped GTFS entity", () => {
-            const avl: Avl = {
+            const avl: NewAvl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -78,9 +78,9 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 item_id: null,
+                onward_calls: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -112,7 +112,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with an occupancy status when occupancy data exists", () => {
-            const avl: Avl = {
+            const avl: NewAvl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -156,9 +156,9 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 item_id: null,
+                onward_calls: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -190,7 +190,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a bearing when bearing data exists", () => {
-            const avl: Avl = {
+            const avl: NewAvl = {
                 id: 0,
                 bearing: "1",
                 latitude: 2,
@@ -234,9 +234,9 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 item_id: null,
+                onward_calls: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -268,7 +268,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a vehicle label when the vehicle ref is a valid UK vehicle registration number", () => {
-            const avl: Avl = {
+            const avl: NewAvl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -312,9 +312,9 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 item_id: null,
+                onward_calls: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -346,7 +346,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a route ID if a corresponding route can be found", () => {
-            const avl: Avl = {
+            const avl: NewAvl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -390,9 +390,9 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 item_id: null,
+                onward_calls: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -424,7 +424,7 @@ describe("utils", () => {
         });
 
         it("returns a mapped GTFS entity with a trip ID if a corresponding trip can be found", () => {
-            const avl: Avl = {
+            const avl: NewAvl = {
                 id: 0,
                 bearing: "",
                 latitude: 2,
@@ -468,9 +468,9 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 item_id: null,
+                onward_calls: null,
             };
 
             const expected: transit_realtime.IFeedEntity = {
@@ -503,7 +503,7 @@ describe("utils", () => {
     });
 
     it("returns a mapped GTFS entity with a start date and start time when departure time data exists", () => {
-        const avl: Avl = {
+        const avl: NewAvl = {
             id: 0,
             bearing: "1",
             latitude: 2,
@@ -547,9 +547,9 @@ describe("utils", () => {
             ticket_machine_service_code: null,
             journey_code: null,
             vehicle_unique_id: null,
-            has_onward_calls: false,
             subscription_id: "",
             item_id: null,
+            onward_calls: null,
         };
 
         const expected: transit_realtime.IFeedEntity = {
