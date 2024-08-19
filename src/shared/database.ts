@@ -218,7 +218,6 @@ export interface AvlTable {
     ticket_machine_service_code: string | null;
     journey_code: string | null;
     vehicle_unique_id: string | null;
-    has_onward_calls: boolean | null;
     route_id: number | null;
     trip_id: string | null;
     item_id: string | null;

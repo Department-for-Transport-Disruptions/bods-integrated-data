@@ -154,7 +154,6 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                             destination_ref: eb.ref("excluded.destination_ref"),
                             direction_ref: eb.ref("excluded.direction_ref"),
                             geom: eb.ref("excluded.geom"),
-                            has_onward_calls: eb.ref("excluded.has_onward_calls"),
                             headway_deviation: eb.ref("excluded.headway_deviation"),
                             item_id: eb.ref("excluded.item_id"),
                             journey_code: eb.ref("excluded.journey_code"),

@@ -67,7 +67,6 @@ const mockAvl: Avl[] = [
         ticket_machine_service_code: null,
         journey_code: null,
         vehicle_unique_id: null,
-        has_onward_calls: false,
         subscription_id: "",
         onward_calls: null,
     },
@@ -114,7 +113,6 @@ const mockAvl: Avl[] = [
         ticket_machine_service_code: "123",
         journey_code: "VJ_123",
         vehicle_unique_id: "Vehicle_123",
-        has_onward_calls: true,
         route_id: null,
         trip_id: null,
         subscription_id: "",
@@ -208,7 +206,6 @@ describe("utils", () => {
                 ticket_machine_service_code: null,
                 journey_code: null,
                 vehicle_unique_id: null,
-                has_onward_calls: false,
                 subscription_id: "",
                 onward_calls: null,
             };
@@ -296,9 +293,23 @@ describe("utils", () => {
                 ticket_machine_service_code: "ticket_machine_service_code",
                 journey_code: "journey_code",
                 vehicle_unique_id: "vehicle_unique_id",
-                has_onward_calls: false,
                 subscription_id: "",
-                onward_calls: null,
+                onward_calls: [
+                    {
+                        stop_point_ref: "1234",
+                        aimed_arrival_time: "2024-08-01T10:00:00",
+                        aimed_departure_time: "2024-08-01T08:00:00",
+                        expected_arrival_time: "2024-08-01T10:06:23",
+                        expected_departure_time: "2024-08-01T08:02:12",
+                    },
+                    {
+                        stop_point_ref: "5678",
+                        aimed_arrival_time: "2024-08-01T10:30:00",
+                        aimed_departure_time: "2024-08-01T09:10:00",
+                        expected_arrival_time: "2024-08-01T10:31:23",
+                        expected_departure_time: "2024-08-01T09:10:02",
+                    },
+                ],
             };
 
             const expectedVehicleActivities: SiriVehicleActivity[] = [

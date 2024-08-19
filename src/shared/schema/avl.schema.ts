@@ -221,7 +221,6 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                 journey_code:
                     vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
                 vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
-                has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
                 onward_calls: onwardCalls && onwardCalls.length > 0 ? JSON.stringify(onwardCalls) : null,
             };
         });
