@@ -55,13 +55,16 @@ const directionMap: Record<string, string> = {
 
 export const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string().min(1),
-    ItemIdentifier: z.string().nullish(),
+    ItemIdentifier: z.string().regex(NM_TOKEN_REGEX).nullish(),
     ValidUntilTime: z.string().min(1),
-    VehicleMonitoringRef: z.coerce.string().nullish(),
+    VehicleMonitoringRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
     MonitoredVehicleJourney: z.object({
         LineRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         DirectionRef: z.union([
-            z.string().transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
+            z
+                .string()
+                .regex(NM_TOKEN_REGEX)
+                .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
             z.number(),
         ]),
         FramedVehicleJourneyRef: z
@@ -148,12 +151,12 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
         Siri: z.object({
             ServiceDelivery: z.object({
                 ResponseTimestamp: z.string(),
-                ItemIdentifier: z.string().optional(),
+                ItemIdentifier: z.string().regex(NM_TOKEN_REGEX).nullish(),
                 ProducerRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
                 VehicleMonitoringDelivery: z.object({
                     ResponseTimestamp: z.string(),
-                    RequestMessageRef: z.string().uuid().or(txcEmptyProperty).optional(),
-                    ValidUntil: z.string().optional(),
+                    RequestMessageRef: z.string().uuid().or(txcEmptyProperty).nullish(),
+                    ValidUntil: z.string().nullish(),
                     VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
                 }),
             }),
