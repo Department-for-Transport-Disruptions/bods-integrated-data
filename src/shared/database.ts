@@ -1,5 +1,5 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable, Updateable } from "kysely";
+import { ColumnType, Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable, Updateable } from "kysely";
 import { Pool } from "pg";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
@@ -89,7 +89,6 @@ export interface Database {
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
     tfl_line: TflLineTable;
-    avl_onward_call: AvlOnwardCallTable;
 }
 
 export interface NaptanStopTable {
@@ -219,10 +218,20 @@ export interface AvlTable {
     ticket_machine_service_code: string | null;
     journey_code: string | null;
     vehicle_unique_id: string | null;
-    has_onward_calls: boolean | null;
     route_id: number | null;
     trip_id: string | null;
     item_id: string | null;
+    onward_calls: ColumnType<
+        {
+            stop_point_ref: string | null;
+            aimed_arrival_time: string | null;
+            expected_arrival_time: string | null;
+            aimed_departure_time: string | null;
+            expected_departure_time: string | null;
+        }[],
+        string,
+        string
+    > | null;
 }
 
 export type Avl = Selectable<AvlTable>;
@@ -258,20 +267,6 @@ export interface BodsAvlTable {
 export type BodsAvl = Selectable<BodsAvlTable>;
 export type NewBodsAvl = Insertable<BodsAvlTable>;
 export type BodsAvlUpdate = Updateable<BodsAvlTable>;
-
-export interface AvlOnwardCallTable {
-    id: Generated<number>;
-    avl_id: number;
-    stop_point_ref: string | null;
-    aimed_arrival_time: string | null;
-    expected_arrival_time: string | null;
-    aimed_departure_time: string | null;
-    expected_departure_time: string | null;
-}
-
-export type AvlOnwardCall = Selectable<AvlOnwardCallTable>;
-export type NewAvlOnwardCall = Insertable<AvlOnwardCallTable>;
-export type AvlOnwardCallUpdate = Updateable<AvlOnwardCallTable>;
 
 export interface TflLineTable {
     id: string;
