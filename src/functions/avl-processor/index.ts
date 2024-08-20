@@ -1,11 +1,6 @@
 import { randomUUID } from "node:crypto";
-import {
-    getAvlErrorDetails,
-    getAvlSubscription,
-    insertAvls,
-    insertAvlsWithOnwardCalls,
-} from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -113,18 +108,7 @@ export const processSqsRecord = async (
                 );
             }
 
-            const avlsWithOnwardCalls = avls.filter((avl) => avl.onward_calls);
-            const avlsWithoutOnwardCalls = avls
-                .filter((avl) => !avl.onward_calls)
-                .map<NewAvl>(({ onward_calls, ...rest }) => rest);
-
-            if (avlsWithoutOnwardCalls.length > 0) {
-                await insertAvls(dbClient, avlsWithoutOnwardCalls, subscriptionId);
-            }
-
-            if (avlsWithOnwardCalls.length > 0) {
-                await insertAvlsWithOnwardCalls(dbClient, avlsWithOnwardCalls, subscriptionId);
-            }
+            await insertAvls(dbClient, avls, subscriptionId);
 
             logger.info("AVL processed successfully", {
                 subscriptionId,

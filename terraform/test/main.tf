@@ -293,11 +293,11 @@ module "integrated_data_disruptions_pipeline" {
   source = "../modules/data-pipelines/disruptions-pipeline"
 
   environment        = local.env
-  vpc_id             = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host            = module.integrated_data_aurora_db_dev.db_host
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
   saveJson           = true
 }
 

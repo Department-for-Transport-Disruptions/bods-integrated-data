@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
-import { NewAvl, NewAvlOnwardCall, NewBodsAvl } from "../database";
+import { Avl, NewAvl, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
@@ -167,7 +167,7 @@ export type SiriVM = z.infer<ReturnType<typeof siriSchema>>;
 export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
     siriSchema(errors).transform((item) => {
         return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
-            let onwardCalls: Omit<NewAvlOnwardCall, "avl_id">[] = [];
+            let onwardCalls: Avl["onward_calls"] = [];
 
             if (vehicleActivity.MonitoredVehicleJourney.OnwardCalls) {
                 onwardCalls = vehicleActivity.MonitoredVehicleJourney.OnwardCalls.OnwardCall.map((onwardCall) => {
@@ -221,8 +221,7 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                 journey_code:
                     vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
                 vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
-                has_onward_calls: !!vehicleActivity.MonitoredVehicleJourney.OnwardCalls,
-                onward_calls: onwardCalls && onwardCalls.length > 0 ? onwardCalls : null,
+                onward_calls: onwardCalls && onwardCalls.length > 0 ? JSON.stringify(onwardCalls) : null,
             };
         });
     });
@@ -257,8 +256,6 @@ export const siriBodsSchemaTransformed = siriSchema().transform((item) => {
 
     return avls;
 });
-
-export type SiriSchemaTransformed = z.infer<ReturnType<typeof siriSchemaTransformed>>;
 
 export const tflVehicleLocationSchema = z.object({
     producerRef: z.string(),
