@@ -100,6 +100,7 @@ export const avlValidationErrorLevels = ["CRITICAL", "NON-CRITICAL"] as const;
 export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidationErrorLevels)[number]> = {
     Bearing: "CRITICAL",
     BlockRef: "NON-CRITICAL",
+    DestinationName: "NON-CRITICAL",
     DestinationRef: "CRITICAL",
     DirectionRef: "NON-CRITICAL",
     LineRef: "CRITICAL",
@@ -117,4 +118,7 @@ export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidati
     Longitude: "CRITICAL",
     Latitude: "CRITICAL",
     VehicleMonitoringDelivery: "CRITICAL",
+    Occupancy: "NON-CRITICAL",
 };
+
+export const avlOccupancyValues = ["full", "seatsAvailable", "standingAvailable"] as const;

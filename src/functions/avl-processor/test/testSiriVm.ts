@@ -310,6 +310,8 @@ export const testSiriWithInvalidVehicleActivities = `
                     <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>
                     <PublishedLineName>1</PublishedLineName>
+                    <Occupancy>wrong</Occupancy>
+                    <DestinationName>invalid $ name</DestinationName>
                 </MonitoredVehicleJourney>
             </VehicleActivity>
         </VehicleMonitoringDelivery>

@@ -184,7 +184,7 @@ export interface AvlTable {
     vehicle_monitoring_ref: string | null;
     line_ref: string | null;
     direction_ref: string;
-    occupancy: string | null;
+    occupancy: "full" | "seatsAvailable" | "standingAvailable" | null;
     operator_ref: string;
     data_frame_ref: string | null;
     dated_vehicle_journey_ref: string | null;
