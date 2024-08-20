@@ -283,11 +283,6 @@ module "integrated_data_avl_data_producer_api" {
   internal_data_endpoint      = local.secrets["internal_avl_ingestion_nlb_ip"]
 }
 
-module "integrated_data_avl_data_consumer_api" {
-  source      = "../modules/avl-consumer-api"
-  environment = local.env
-}
-
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
 

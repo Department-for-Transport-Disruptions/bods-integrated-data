@@ -10,8 +10,8 @@ terraform {
 }
 
 module "integrated_data_avl_consumer_subscription_table" {
-  source = "../modules/shared/dynamo-table"
+  source = "../shared/dynamo-table"
 
-  environment = local.env
+  environment = var.environment
   table_name  = "integrated-data-avl-consumer-subscription-table"
 }

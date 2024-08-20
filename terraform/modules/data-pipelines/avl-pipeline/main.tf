@@ -800,3 +800,8 @@ module "siri_vm_api_public" {
   siri_vm_downloader_invoke_arn    = module.siri_vm_downloader.invoke_arn
   siri_vm_downloader_function_name = module.siri_vm_downloader.function_name
 }
+
+module "integrated_data_avl_data_consumer_subscriptions" {
+  source      = "../modules/avl-consumer-subscriptions"
+  environment = var.environment
+}

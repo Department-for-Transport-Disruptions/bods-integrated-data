@@ -186,11 +186,6 @@ module "integrated_data_avl_data_producer_api" {
   avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
 }
 
-module "integrated_data_avl_data_consumer_api" {
-  source      = "../modules/avl-consumer-api"
-  environment = local.env
-}
-
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
 
