@@ -81,10 +81,49 @@ module "integrated_data_gtfs_rt_downloader_function" {
   }
 }
 
+module "integrated_data_gtfs_rt_service_alerts_downloader_function" {
+  source = "../../shared/lambda-function"
+
+  environment     = var.environment
+  function_name   = "integrated-data-gtfs-rt-service-alerts-downloader"
+  zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-rt-service-alerts-downloader.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 120
+  memory          = 1024
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${var.gtfs_rt_service_alerts_bucket_arn}/*"
+      ]
+  }, ]
+
+  env_vars = {
+    STAGE       = var.environment
+    BUCKET_NAME = var.gtfs_rt_service_alerts_bucket_name
+  }
+}
+
 resource "aws_lambda_function_url" "gtfs_rt_download_url" {
   count = var.environment == "local" ? 1 : 0
 
   function_name      = module.integrated_data_gtfs_rt_downloader_function.function_name
+  authorization_type = "NONE"
+}
+
+resource "aws_lambda_function_url" "gtfs_rt_service_alerts_download_url" {
+  count = var.environment == "local" ? 1 : 0
+
+  function_name      = module.integrated_data_gtfs_rt_service_alerts_downloader_function.function_name
   authorization_type = "NONE"
 }
 
