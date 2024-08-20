@@ -802,6 +802,6 @@ module "siri_vm_api_public" {
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
-  source      = "../modules/avl-consumer-subscriptions"
+  source      = "../../avl-consumer-subscriptions"
   environment = var.environment
 }
