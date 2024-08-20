@@ -195,19 +195,21 @@ module "integrated_data_ecs_cluster" {
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
-  environment                  = local.env
-  vpc_id                       = module.integrated_data_vpc.vpc_id
-  private_subnet_ids           = module.integrated_data_vpc.private_subnet_ids
-  db_secret_arn                = module.integrated_data_aurora_db.db_secret_arn
-  db_sg_id                     = module.integrated_data_aurora_db.db_sg_id
-  db_host                      = module.integrated_data_aurora_db.db_host
-  db_reader_host               = module.integrated_data_aurora_db.db_reader_host
-  cluster_id                   = module.integrated_data_ecs_cluster.cluster_id
-  bods_avl_processor_image_url = local.secrets["bods_avl_processor_image_url"]
-  bods_avl_processor_frequency = 30
-  bods_avl_cleardown_frequency = 30
-  bods_avl_processor_cpu       = 2048
-  bods_avl_processor_memory    = 4096
+  environment                        = local.env
+  vpc_id                             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids                 = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                           = module.integrated_data_aurora_db.db_sg_id
+  db_host                            = module.integrated_data_aurora_db.db_host
+  db_reader_host                     = module.integrated_data_aurora_db.db_reader_host
+  cluster_id                         = module.integrated_data_ecs_cluster.cluster_id
+  bods_avl_processor_image_url       = local.secrets["bods_avl_processor_image_url"]
+  bods_avl_processor_frequency       = 30
+  bods_avl_cleardown_frequency       = 30
+  bods_avl_processor_cpu             = 2048
+  bods_avl_processor_memory          = 4096
+  gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
+  gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
 }
 
 module "integrated_data_avl_pipeline" {
@@ -342,14 +344,16 @@ module "integrated_data_timetables_sfn" {
 module "integrated_data_gtfs_api" {
   source = "../modules/gtfs-api"
 
-  environment                       = local.env
-  gtfs_downloader_lambda_name       = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
-  gtfs_downloader_invoke_arn        = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
-  gtfs_region_retriever_invoke_arn  = module.integrated_data_gtfs_downloader.gtfs_region_retriever_invoke_arn
-  gtfs_region_retriever_lambda_name = module.integrated_data_gtfs_downloader.gtfs_region_retriever_lambda_name
-  gtfs_rt_downloader_lambda_name    = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
-  gtfs_rt_downloader_invoke_arn     = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
-  acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
-  hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
-  domain                            = module.integrated_data_route53.public_hosted_zone_name
+  environment                                   = local.env
+  gtfs_downloader_lambda_name                   = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
+  gtfs_downloader_invoke_arn                    = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
+  gtfs_region_retriever_invoke_arn              = module.integrated_data_gtfs_downloader.gtfs_region_retriever_invoke_arn
+  gtfs_region_retriever_lambda_name             = module.integrated_data_gtfs_downloader.gtfs_region_retriever_lambda_name
+  gtfs_rt_downloader_lambda_name                = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
+  gtfs_rt_downloader_invoke_arn                 = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
+  gtfs_rt_service_alerts_downloader_lambda_name = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_service_alerts_downloader_lambda_name
+  gtfs_rt_service_alerts_downloader_invoke_arn  = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_service_alerts_downloader_invoke_arn
+  acm_certificate_arn                           = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                                = module.integrated_data_route53.public_hosted_zone_id
+  domain                                        = module.integrated_data_route53.public_hosted_zone_name
 }
