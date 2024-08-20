@@ -1,6 +1,6 @@
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
-import { getMetricStatistics } from "@bods-integrated-data/shared/cloudwatch";
+import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
@@ -26,20 +26,18 @@ export const getTotalAvlsProcessed = async (subscriptionId: string) => {
     const now = getDate();
     const dayAgo = now.subtract(24, "hours");
 
-    // TODO: Swap to using log insights query
-    const data = await getMetricStatistics(
-        "custom/AVLMetrics",
-        "TotalAvlProcessed",
-        ["Sum"],
-        dayAgo.toDate(),
-        now.toDate(),
-        300,
-        [{ Name: "SubscriptionId", Value: subscriptionId }],
+    const data = await runLogInsightsQuery(
+        dayAgo.unix(),
+        now.unix(),
+        `filter msg = "AVL processed successfully" and subscriptionId = "${subscriptionId}"
+        | stats count(*) as avlProcessed`,
     );
 
-    const totalSum = data.Datapoints?.reduce((acc, datapoint) => acc + (datapoint.Sum || 0), 0);
+    const avlProcessedCount = Number.parseInt(
+        data?.[0]?.find((result) => result.field === "avlProcessed")?.value || "0",
+    );
 
-    return totalSum ?? 0;
+    return avlProcessedCount;
 };
 
 const generateValidationSummary = (errors: AvlValidationError[], totalProcessed: number) => {
