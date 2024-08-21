@@ -1,3 +1,4 @@
+export * from "./avl-consumer-subscriptions.schema";
 export * from "./avl-subscribe.schema";
 export * from "./avl-unsubscribe.schema";
 export * from "./avl-validate.schema";

@@ -1,6 +1,7 @@
 export * from "./convert-agency-csv-to-json";
 export * from "./create-avl-mock-data-producer";
 export * from "./get-ecs-cluster-for-service";
+export * from "./invoke-avl-consumer-subscriber";
 export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-datafeed-validator";
 export * from "./invoke-avl-feed-validator";

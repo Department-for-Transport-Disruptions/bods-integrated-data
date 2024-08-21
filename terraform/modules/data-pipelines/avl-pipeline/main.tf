@@ -802,6 +802,9 @@ module "siri_vm_api_public" {
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
-  source      = "../../avl-consumer-subscriptions"
-  environment = var.environment
+  source                          = "../../avl-consumer-subscriptions"
+  environment                     = var.environment
+  avl_producer_subscription_table = var.avl_subscription_table_name
+  aws_account_id                  = var.aws_account_id
+  aws_region                      = var.aws_region
 }

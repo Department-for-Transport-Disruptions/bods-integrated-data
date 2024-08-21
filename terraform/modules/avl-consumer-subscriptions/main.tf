@@ -15,3 +15,40 @@ module "integrated_data_avl_consumer_subscription_table" {
   environment = var.environment
   table_name  = "integrated-data-avl-consumer-subscription-table"
 }
+
+module "avl_consumer_subscriber" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-consumer-subscriber"
+  zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-subscriber.zip"
+  handler       = "index.handler"
+  memory        = 256
+  runtime       = "nodejs20.x"
+  timeout       = 60
+
+  permissions = [
+    {
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+    },
+    {
+      Action = [
+        "dynamodb:GetItem"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_producer_subscription_table}"
+    }
+  ]
+
+
+  env_vars = {
+    STAGE                                = var.environment
+    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
+    AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = var.avl_producer_subscription_table
+  }
+}
