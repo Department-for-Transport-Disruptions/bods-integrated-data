@@ -1,4 +1,5 @@
 import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
@@ -19,7 +20,7 @@ describe("AVL-data-endpoint", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
-        getMetricStatistics: vi.fn(),
+        runLogInsightsQuery: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -29,7 +30,7 @@ describe("AVL-data-endpoint", () => {
     }));
 
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
-    const getMetricStatisticsSpy = vi.spyOn(cloudwatch, "getMetricStatistics");
+    const runLogInsightsQuerySpy = vi.spyOn(cloudwatch, "runLogInsightsQuery");
 
     MockDate.set("2024-03-11T00:00:00.000Z");
     const mockSubscriptionId = "411e4495-4a57-4d2f-89d5-cf105441f321";
@@ -79,23 +80,7 @@ describe("AVL-data-endpoint", () => {
             },
         ]);
 
-        const timestamp = new Date("2023-07-15T00:00:00Z");
-        getMetricStatisticsSpy.mockResolvedValue({
-            $metadata: {},
-            Label: "TotalAvlProcessed",
-            Datapoints: [
-                {
-                    Timestamp: timestamp,
-                    Sum: 1.0,
-                    Unit: "Count",
-                },
-                {
-                    Timestamp: timestamp,
-                    Sum: 1.0,
-                    Unit: "Count",
-                },
-            ],
-        });
+        runLogInsightsQuerySpy.mockResolvedValue([[{ field: "avlProcessed", value: "2" }]]);
     });
 
     afterEach(() => {
@@ -112,15 +97,12 @@ describe("AVL-data-endpoint", () => {
             body: mockResponseString,
         });
 
-        expect(cloudwatch.getMetricStatistics).toBeCalled();
-        expect(cloudwatch.getMetricStatistics).toBeCalledWith<Parameters<typeof cloudwatch.getMetricStatistics>>(
-            "custom/AVLMetrics",
-            "TotalAvlProcessed",
-            ["Sum"],
-            new Date("2024-03-10T00:00:00.000Z"),
-            new Date("2024-03-11T00:00:00.000Z"),
-            300,
-            [{ Name: "SubscriptionId", Value: mockSubscriptionId }],
+        expect(cloudwatch.runLogInsightsQuery).toBeCalled();
+        expect(cloudwatch.runLogInsightsQuery).toBeCalledWith<Parameters<typeof cloudwatch.runLogInsightsQuery>>(
+            getDate().subtract(24, "hours").unix(),
+            getDate().unix(),
+            `filter msg = "AVL processed successfully" and subscriptionId = "${mockSubscriptionId}"
+        | stats count(*) as avlProcessed`,
         );
     });
 
@@ -155,5 +137,11 @@ describe("AVL-data-endpoint", () => {
     it("Should add total number of avl items processed", async () => {
         const response = await getTotalAvlsProcessed(mockSubscriptionId);
         expect(response).toEqual(2);
+    });
+
+    it("Should return 0 when no avl items processed", async () => {
+        runLogInsightsQuerySpy.mockResolvedValueOnce([[]]);
+        const response = await getTotalAvlsProcessed(mockSubscriptionId);
+        expect(response).toEqual(0);
     });
 });
