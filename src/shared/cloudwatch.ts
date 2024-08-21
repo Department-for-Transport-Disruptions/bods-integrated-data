@@ -6,7 +6,12 @@ import {
     PutMetricDataCommand,
     Statistic,
 } from "@aws-sdk/client-cloudwatch";
-import { CloudWatchLogsClient, GetQueryResultsCommand, StartQueryCommand } from "@aws-sdk/client-cloudwatch-logs";
+import {
+    CloudWatchLogsClient,
+    GetQueryResultsCommand,
+    GetQueryResultsCommandOutput,
+    StartQueryCommand,
+} from "@aws-sdk/client-cloudwatch-logs";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -75,6 +80,25 @@ export const getMetricStatistics = async (
     return data;
 };
 
+const pollQueryResults = async (queryId: string | undefined, interval = 1000) => {
+    let queryResults: GetQueryResultsCommandOutput;
+    let queryStatus: string | undefined;
+
+    do {
+        queryResults = await cloudwatchLogsClient.send(
+            new GetQueryResultsCommand({
+                queryId,
+            }),
+        );
+        queryStatus = queryResults.status;
+        if (queryStatus === "Running") {
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+    } while (queryStatus === "Running");
+
+    return queryResults.results;
+};
+
 export const runLogInsightsQuery = async (startTime: number, endTime: number, queryString: string) => {
     const logQuery = await cloudwatchLogsClient.send(
         new StartQueryCommand({
@@ -84,9 +108,5 @@ export const runLogInsightsQuery = async (startTime: number, endTime: number, qu
         }),
     );
 
-    return await cloudwatchLogsClient.send(
-        new GetQueryResultsCommand({
-            queryId: logQuery.queryId,
-        }),
-    );
+    return await pollQueryResults(logQuery.queryId);
 };
