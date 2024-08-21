@@ -10,13 +10,16 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import {
+    AvlSubscription,
+    HeartbeatNotification,
+    heartbeatNotificationSchema,
+} from "@bods-integrated-data/shared/schema";
 import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { ALBEvent, ALBHandler, APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
-import { HeartbeatNotification, heartbeatNotificationSchema } from "./heartbeat.schema";
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -39,7 +42,7 @@ const processHeartbeatNotification = async (
 ) => {
     logger.info("Heartbeat notification received: processing notification");
 
-    if (data.HeartbeatNotification.Status !== "true") {
+    if (data.Siri.HeartbeatNotification.Status !== "true") {
         logger.warn(`Heartbeat notification for subscription: ${subscription.PK} did not include a status of true`);
         return;
     }
@@ -48,7 +51,7 @@ const processHeartbeatNotification = async (
 
     await putDynamoItem(tableName, subscription.PK, "SUBSCRIPTION", {
         ...subscription,
-        heartbeatLastReceivedDateTime: getDate(data.HeartbeatNotification.RequestTimestamp).toISOString(),
+        heartbeatLastReceivedDateTime: getDate(data.Siri.HeartbeatNotification.RequestTimestamp).toISOString(),
     });
 };
 
@@ -121,10 +124,9 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         }
 
         const xml = parseXml(body);
-        const siri = xml?.Siri;
 
-        if (siri?.HeartbeatNotification) {
-            await processHeartbeatNotification(heartbeatNotificationSchema.parse(siri), subscription, tableName);
+        if (xml?.Siri?.HeartbeatNotification) {
+            await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml.Siri), subscription, tableName);
             return createSuccessResponse();
         }
 
@@ -133,15 +135,15 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             return createNotFoundErrorResponse("Subscription is not live");
         }
 
-        if (siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
+        if (xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
             logger.warn("Received cancellation data from data producer, data will be ignored...");
             return createSuccessResponse();
         }
 
         if (
-            siri?.ServiceDelivery?.VehicleMonitoringDelivery &&
-            (!siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity ||
-                siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "")
+            xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery &&
+            (!xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity ||
+                xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "")
         ) {
             logger.warn("Received location data with no Vehicle Activity from data producer, data will be ignored...");
             return createSuccessResponse();
