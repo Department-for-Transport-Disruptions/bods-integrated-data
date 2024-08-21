@@ -1,16 +1,11 @@
-import { SubscriptionIdNotFoundError } from "../avl/utils";
 import { getDynamoItem } from "../dynamo";
-import { AvlConsumerSubscription, avlConsumerSubscriptionSchema } from "../schema";
+import { AvlConsumerSubscription } from "../schema";
 
-export const getAvlConsumerSubscription = async (subscriptionId: string, tableName: string) => {
+export const isActiveAvlConsumerSubscription = async (tableName: string, subscriptionId: string) => {
     const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, {
         PK: subscriptionId,
         SK: "SUBSCRIPTION",
     });
 
-    if (!subscription) {
-        throw new SubscriptionIdNotFoundError(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
-    }
-
-    return avlConsumerSubscriptionSchema.parse(subscription);
+    return subscription?.status === "live";
 };

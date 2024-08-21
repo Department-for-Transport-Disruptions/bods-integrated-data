@@ -1,18 +1,13 @@
-import { logger } from "@bods-integrated-data/shared/logger";
 import { Command } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subscriber")
     .addOption(STAGE_OPTION)
-    .option("--producerEndpoint <endpoint>", "Data producer endpoint")
-    .option("-u, --username <username>", "Data producer username")
-    .option("-p, --password <password>", "Data producer password")
-    .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
-    .option("--publisherId <publisherId>", "Data producer publisher ID")
-    .option("--requestorRef <requestorRef>", "Requestor Ref")
+    .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
+    .option("--subscriptionId <subscriptionId>", "Producer subscription IDs to subscribe to")
     .action(async (options) => {
-        let { stage, producerEndpoint, username, password, subscriptionId, publisherId, requestorRef } = options;
+        let { stage, consumerSubscriptionId, subscriptionId } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -27,49 +22,23 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
             stage = responses.stage;
         }
 
-        const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
-
-        if (!producerEndpoint) {
-            const response = await inquirer.prompt<{ producerEndpoint: string }>([
+        if (!consumerSubscriptionId) {
+            const response = await inquirer.prompt<{ consumerSubscriptionId: string }>([
                 {
-                    name: "producerEndpoint",
-                    message: "Enter the data producer endpoint",
+                    name: "consumerSubscriptionId",
+                    message: "Enter the consumer subscription ID",
                     type: "input",
                 },
             ]);
 
-            producerEndpoint = response.producerEndpoint;
-        }
-
-        if (!username) {
-            const response = await inquirer.prompt<{ username: string }>([
-                {
-                    name: "username",
-                    message: "Enter the data producer's username",
-                    type: "input",
-                },
-            ]);
-
-            username = response.username;
-        }
-
-        if (!password) {
-            const response = await inquirer.prompt<{ password: string }>([
-                {
-                    name: "password",
-                    message: "Enter the data producer's password",
-                    type: "password",
-                },
-            ]);
-
-            password = response.password;
+            consumerSubscriptionId = response.consumerSubscriptionId;
         }
 
         if (!subscriptionId) {
             const response = await inquirer.prompt<{ subscriptionId: string }>([
                 {
                     name: "subscriptionId",
-                    message: "Enter the data producer's subscriptionId",
+                    message: "Enter a comma-delimited list of producer subscription IDs to, up to five",
                     type: "input",
                 },
             ]);
@@ -77,36 +46,33 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
             subscriptionId = response.subscriptionId;
         }
 
-        if (!publisherId) {
-            const response = await inquirer.prompt<{ publisherId: string }>([
-                {
-                    name: "publisherId",
-                    message: "Enter the data producer's publisherId",
-                    type: "input",
-                },
-            ]);
-
-            publisherId = response.publisherId;
-        }
-
-        if (!requestorRef) {
-            const response = await inquirer.prompt<{ requestorRef: string }>([
-                {
-                    name: "requestorRef",
-                    message: "Enter the requestorRef",
-                    type: "input",
-                    default: "BODS",
-                },
-            ]);
-
-            requestorRef = response.requestorRef;
-        }
+        const requestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+  <SubscriptionRequest>
+    <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+    <ConsumerAddress>https://www.test.com/data</ConsumerAddress>
+    <RequestorRef>test</RequestorRef>
+    <MessageIdentifier>123</MessageIdentifier>
+    <SubscriptionContext>
+      <HeartbeatInterval>PT30S</HeartbeatInterval>
+    </SubscriptionContext>
+    <VehicleMonitoringSubscriptionRequest>
+      <SubscriptionIdentifier>${consumerSubscriptionId}</SubscriptionIdentifier>
+      <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
+      <VehicleMonitoringRequest version=\"2.0\">
+        <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+        <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
+      </VehicleMonitoringRequest>
+    </VehicleMonitoringSubscriptionRequest>
+  </SubscriptionRequest>
+</Siri>
+`;
 
         const invokePayload = {
-            headers: {
-                "x-api-key": apiKey,
+            queryStringParameters: {
+                subscriptionId,
             },
-            body: `{\"dataProducerEndpoint\": \"${producerEndpoint}\",\"description\": \"Subscription for ${username}\",\"shortDescription\": \"Subscription for ${producerEndpoint}\",\"username\": \"${username}\",\"password\": \"${password}\",\"subscriptionId\": \"${subscriptionId}\",\"publisherId\": \"${publisherId}\",\"requestorRef\": \"${requestorRef}\"}`,
+            body: requestBody,
         };
 
         await invokeLambda(stage, {
@@ -114,6 +80,4 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-
-        logger.info(`Subscription request for producer: ${producerEndpoint} sent to subscribe endpoint`);
     });

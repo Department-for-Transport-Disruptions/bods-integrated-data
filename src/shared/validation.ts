@@ -49,7 +49,7 @@ export const createNmTokenArrayValidation = (propertyName: string) => {
 };
 
 export const createSubscriptionIdArrayValidation = (propertyName: string) => {
-    return z.coerce
+    return z
         .string({
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,

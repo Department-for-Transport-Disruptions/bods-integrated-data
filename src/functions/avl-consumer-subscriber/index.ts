@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
     createConflictErrorResponse,
     createNotFoundErrorResponse,
@@ -6,7 +5,7 @@ import {
     createSuccessResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
-import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
+import { isActiveAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -65,12 +64,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const xml = parseXml(body);
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
 
-        const consumerSubscription = await getAvlConsumerSubscription(
+        const isActiveAvlSubscription = await isActiveAvlConsumerSubscription(
             avlProducerSubscriptionTableName,
             subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
         );
 
-        if (consumerSubscription?.status === "live") {
+        if (isActiveAvlSubscription) {
             return createConflictErrorResponse("Consumer subscription ID already active");
         }
 
@@ -87,11 +86,10 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const newConsumerSubscription: AvlConsumerSubscription = {
-            PK: randomUUID(),
+            subscriptionId: subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
             status: "live",
             url: subscriptionRequest.ConsumerAddress,
             requestorRef: subscriptionRequest.RequestorRef,
-            subscriptionId: subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
             heartbeatInterval: subscriptionRequest.SubscriptionContext.HeartbeatInterval,
             initialTerminationTime: subscriptionRequest.VehicleMonitoringSubscriptionRequest.InitialTerminationTime,
             requestTimestamp: subscriptionRequest.RequestTimestamp,
@@ -100,8 +98,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await putDynamoItem(
             avlConsumerSubscriptionTableName,
-            newConsumerSubscription.PK,
-            "Subscription",
+            newConsumerSubscription.subscriptionId,
+            "SUBSCRIPTION",
             newConsumerSubscription,
         );
 
