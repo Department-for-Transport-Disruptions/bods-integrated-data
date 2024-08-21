@@ -162,7 +162,7 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            subscriptionIds: ["1"],
+            producerSubscriptionIds: "1",
         };
 
         getDynamoItemSpy.mockResolvedValueOnce(consumerSubscription);
@@ -236,7 +236,7 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            subscriptionIds: ["1"],
+            producerSubscriptionIds: "1",
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(

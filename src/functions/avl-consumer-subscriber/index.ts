@@ -60,6 +60,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const requestParams = requestParamsSchema.parse(event.queryStringParameters);
+        const producerSubscriptionIds = requestParams.subscriptionId;
+
         const body = requestBodySchema.parse(event.body);
         const xml = parseXml(body);
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
@@ -73,11 +75,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             return createConflictErrorResponse("Consumer subscription ID already active");
         }
 
-        const subscriptionIds = requestParams.subscriptionId.split(",");
-
         const producerSubscriptions = await getAvlSubscriptions(avlProducerSubscriptionTableName);
 
-        for (const subscriptionId of subscriptionIds) {
+        for (const subscriptionId of producerSubscriptionIds.split(",")) {
             const subscription = producerSubscriptions.find(({ PK }) => PK === subscriptionId);
 
             if (!subscription || subscription.status === "inactive") {
@@ -93,7 +93,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             heartbeatInterval: subscriptionRequest.SubscriptionContext.HeartbeatInterval,
             initialTerminationTime: subscriptionRequest.VehicleMonitoringSubscriptionRequest.InitialTerminationTime,
             requestTimestamp: subscriptionRequest.RequestTimestamp,
-            subscriptionIds,
+            producerSubscriptionIds,
         };
 
         await putDynamoItem(
