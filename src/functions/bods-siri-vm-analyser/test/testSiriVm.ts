@@ -184,7 +184,6 @@ export const parsedSiri: NewAvl[] = [
         vehicle_journey_ref: "10",
         vehicle_monitoring_ref: "TEST",
         vehicle_unique_id: "Vehicle_123",
-        has_onward_calls: false,
     },
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
@@ -289,7 +288,6 @@ export const parsedBodsSiri: NewAvl[] = [
         vehicle_journey_ref: "10",
         vehicle_monitoring_ref: "TEST",
         vehicle_unique_id: "Vehicle_123",
-        has_onward_calls: false,
     },
     {
         response_time_stamp: "2018-08-17T15:14:21.432",
