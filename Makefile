@@ -234,9 +234,6 @@ run-local-avl-subscriptions:
 run-local-avl-subscription:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({ pathParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }}).then(console.log).catch(console.error)"
 
-run-local-avl-consumer-subscriber:
-	STAGE=local TABLE_NAME=${AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-consumer-subscriber'; handler({}).then(console.log).catch(console.error)"
-
 # NOC
 
 run-local-noc-retriever:

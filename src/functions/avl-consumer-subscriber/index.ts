@@ -65,7 +65,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
 
         const isActiveAvlSubscription = await isActiveAvlConsumerSubscription(
-            avlProducerSubscriptionTableName,
+            avlConsumerSubscriptionTableName,
             subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
         );
 
