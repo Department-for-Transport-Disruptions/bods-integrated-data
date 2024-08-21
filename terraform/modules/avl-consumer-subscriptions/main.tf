@@ -52,3 +52,33 @@ module "avl_consumer_subscriber" {
     AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = var.avl_producer_subscription_table
   }
 }
+
+
+module "avl_consumer_unsubscriber" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-consumer-unsubscriber"
+  zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-unsubscriber.zip"
+  handler       = "index.handler"
+  memory        = 256
+  runtime       = "nodejs20.x"
+  timeout       = 60
+
+  permissions = [
+    {
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+    }
+  ]
+
+
+  env_vars = {
+    STAGE                                = var.environment
+    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
+  }
+}

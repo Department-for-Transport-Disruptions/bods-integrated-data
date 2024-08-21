@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/avl-consumer-subscriber",
+    "name": "@bods-integrated-data/avl-consumer-unsubscriber",
     "version": "0.1.0",
-    "description": "AVL consumer subscriber lambda function",
+    "description": "AVL consumer unsubscriber lambda function",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-consumer-subscriber.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-consumer-subscriber.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-consumer-unsubscriber.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-consumer-unsubscriber.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],
