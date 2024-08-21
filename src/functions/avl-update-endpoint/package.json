@@ -14,7 +14,7 @@
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
         "mockdate": "^3.0.5",
-        "axios": "^1.7.2",
+        "axios": "^1.7.4",
         "zod": "^3.23.8"
     },
     "devDependencies": {

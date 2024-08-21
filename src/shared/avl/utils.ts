@@ -10,13 +10,12 @@ import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
-import { Avl, BodsAvl, KyselyDb, NewAvl, NewAvlOnwardCall } from "../database";
+import { Avl, BodsAvl, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
-import { SiriSchemaTransformed } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
 import { vehicleActivitySchema } from "../schema/avl.schema";
@@ -103,34 +102,101 @@ const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl =>
     item_id: avl.item_id ?? randomUUID(),
 });
 
+export const removeDuplicates = <T extends NewAvl | Avl>(avl: T[]): T[] => {
+    const uniqueRecordsMap: Map<string, T> = new Map();
+
+    for (const item of avl) {
+        const key = `${item.operator_ref}-${item.vehicle_ref}`;
+
+        if (!uniqueRecordsMap.has(key)) {
+            uniqueRecordsMap.set(key, item);
+        } else {
+            const existingRecord = uniqueRecordsMap.get(key);
+
+            if (!existingRecord || getDate(item.recorded_at_time).isAfter(getDate(existingRecord.recorded_at_time))) {
+                uniqueRecordsMap.set(key, item);
+            }
+        }
+    }
+
+    return Array.from(uniqueRecordsMap.values()).sort((a, b) => {
+        if (a.operator_ref < b.operator_ref) {
+            return -1;
+        }
+        if (a.operator_ref > b.operator_ref) {
+            return 1;
+        }
+        if (a.vehicle_ref < b.vehicle_ref) {
+            return -1;
+        }
+        if (a.vehicle_ref > b.vehicle_ref) {
+            return 1;
+        }
+
+        return 0;
+    });
+};
+
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
     const modifiedAvls = avls.map((avl) => includeAdditionalFields(avl, subscriptionId));
 
-    const insertChunks = chunkArray(modifiedAvls, 1000);
+    const insertChunks = chunkArray(removeDuplicates(modifiedAvls), 1000);
 
-    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("avl").values(chunk).execute()));
-};
-
-export const insertAvlsWithOnwardCalls = async (
-    dbClient: KyselyDb,
-    avlsWithOnwardCalls: SiriSchemaTransformed,
-    subscriptionId: string,
-) => {
     await Promise.all(
-        avlsWithOnwardCalls.map(async ({ onward_calls, ...avl }) => {
-            const modifiedAvl = includeAdditionalFields(avl, subscriptionId);
-
-            const res = await dbClient.insertInto("avl").values(modifiedAvl).returning("avl.id").executeTakeFirst();
-
-            if (!!onward_calls && !!res) {
-                const onwardCalls: NewAvlOnwardCall[] = onward_calls.map((onwardCall) => ({
-                    ...onwardCall,
-                    avl_id: res.id,
-                }));
-
-                await dbClient.insertInto("avl_onward_call").values(onwardCalls).execute();
-            }
-        }),
+        insertChunks.map((chunk) =>
+            dbClient
+                .insertInto("avl")
+                .values(chunk)
+                .onConflict((oc) =>
+                    oc
+                        .columns(["vehicle_ref", "operator_ref"])
+                        .doUpdateSet((eb) => ({
+                            destination_ref: eb.ref("excluded.destination_ref"),
+                            direction_ref: eb.ref("excluded.direction_ref"),
+                            geom: eb.ref("excluded.geom"),
+                            headway_deviation: eb.ref("excluded.headway_deviation"),
+                            item_id: eb.ref("excluded.item_id"),
+                            journey_code: eb.ref("excluded.journey_code"),
+                            latitude: eb.ref("excluded.latitude"),
+                            line_ref: eb.ref("excluded.line_ref"),
+                            load: eb.ref("excluded.load"),
+                            longitude: eb.ref("excluded.longitude"),
+                            monitored: eb.ref("excluded.monitored"),
+                            next_stop_point_id: eb.ref("excluded.next_stop_point_id"),
+                            next_stop_point_name: eb.ref("excluded.next_stop_point_name"),
+                            occupancy: eb.ref("excluded.occupancy"),
+                            odometer: eb.ref("excluded.odometer"),
+                            origin_aimed_departure_time: eb.ref("excluded.origin_aimed_departure_time"),
+                            origin_name: eb.ref("excluded.origin_name"),
+                            origin_ref: eb.ref("excluded.origin_ref"),
+                            passenger_count: eb.ref("excluded.passenger_count"),
+                            previous_stop_point_id: eb.ref("excluded.previous_stop_point_id"),
+                            previous_stop_point_name: eb.ref("excluded.previous_stop_point_name"),
+                            producer_ref: eb.ref("excluded.producer_ref"),
+                            published_line_name: eb.ref("excluded.published_line_name"),
+                            recorded_at_time: eb.ref("excluded.recorded_at_time"),
+                            response_time_stamp: eb.ref("excluded.response_time_stamp"),
+                            schedule_deviation: eb.ref("excluded.schedule_deviation"),
+                            subscription_id: eb.ref("excluded.subscription_id"),
+                            ticket_machine_service_code: eb.ref("excluded.ticket_machine_service_code"),
+                            valid_until_time: eb.ref("excluded.valid_until_time"),
+                            vehicle_journey_ref: eb.ref("excluded.vehicle_journey_ref"),
+                            vehicle_monitoring_ref: eb.ref("excluded.vehicle_monitoring_ref"),
+                            vehicle_name: eb.ref("excluded.vehicle_name"),
+                            vehicle_state: eb.ref("excluded.vehicle_state"),
+                            vehicle_unique_id: eb.ref("excluded.vehicle_unique_id"),
+                            destination_name: eb.ref("excluded.destination_name"),
+                            destination_aimed_arrival_time: eb.ref("excluded.destination_aimed_arrival_time"),
+                            dated_vehicle_journey_ref: eb.ref("excluded.dated_vehicle_journey_ref"),
+                            data_frame_ref: eb.ref("excluded.data_frame_ref"),
+                            block_ref: eb.ref("excluded.block_ref"),
+                            bearing: eb.ref("excluded.bearing"),
+                            onward_calls: eb.ref("excluded.onward_calls"),
+                        }))
+                        .whereRef("excluded.recorded_at_time", ">", "avl.recorded_at_time"),
+                )
+                .execute(),
+        ),
     );
 };
 
