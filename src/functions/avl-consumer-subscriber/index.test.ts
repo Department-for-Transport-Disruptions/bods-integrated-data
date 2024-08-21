@@ -184,7 +184,7 @@ describe("avl-consumer-subscriber", () => {
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
-    it("returns a 404 when at least one of the producer subscriptions is not live", async () => {
+    it("returns a 404 when at least one of the producer subscriptions is inactive", async () => {
         const producerSubscription: AvlSubscription = {
             PK: "2",
             description: "test-description",
