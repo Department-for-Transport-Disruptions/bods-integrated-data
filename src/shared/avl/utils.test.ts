@@ -371,7 +371,7 @@ describe("utils", () => {
 
         it("omits properties with empty strings or null values from the SIRI-VM XML", () => {
             const mockAvlWithEmptyProperties = structuredClone(mockAvl);
-            mockAvlWithEmptyProperties[0].origin_ref = "";
+            mockAvlWithEmptyProperties[0].origin_ref = null;
             mockAvlWithEmptyProperties[0].destination_ref = null;
             const siriVm = createSiriVm(mockAvlWithEmptyProperties, requestMessageRef, responseTime);
             expect(siriVm).toEqual(mockSiriVmWithOmittedPropertiesResult);

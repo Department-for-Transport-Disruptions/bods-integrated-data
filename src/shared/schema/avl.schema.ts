@@ -6,12 +6,16 @@ import { Avl, NewAvl, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
 import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
-import { NM_TOKEN_DISALLOWED_CHARS_REGEX, SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX } from "../validation";
+import {
+    NM_TOKEN_DISALLOWED_CHARS_REGEX,
+    NM_TOKEN_REGEX,
+    SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+} from "../validation";
 import { AvlValidationError } from "./avl-validation-error.schema";
 
 const onwardCallSchema = z
     .object({
-        StopPointRef: z.coerce.string().nullish(),
+        StopPointRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         AimedArrivalTime: z.coerce.string().nullish(),
         ExpectedArrivalTime: z.coerce.string().nullish(),
         AimedDepartureTime: z.coerce.string().nullish(),
@@ -51,26 +55,29 @@ const directionMap: Record<string, string> = {
 
 export const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string().min(1),
-    ItemIdentifier: z.string().nullish(),
+    ItemIdentifier: z.string().regex(NM_TOKEN_REGEX).nullish(),
     ValidUntilTime: z.string().min(1),
-    VehicleMonitoringRef: z.coerce.string().nullish(),
+    VehicleMonitoringRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
     MonitoredVehicleJourney: z.object({
-        LineRef: z.coerce.string().nullish(),
+        LineRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         DirectionRef: z.union([
-            z.string().transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
+            z
+                .string()
+                .regex(NM_TOKEN_REGEX)
+                .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
             z.number(),
         ]),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.union([z.string().min(1), z.number()]),
-                DatedVehicleJourneyRef: z.union([z.string().min(1), z.number()]),
+                DataFrameRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
+                DatedVehicleJourneyRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        OperatorRef: z.string().min(1),
-        OriginRef: z.coerce.string().nullish(),
+        OperatorRef: z.string().regex(NM_TOKEN_REGEX),
+        OriginRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         OriginName: z.coerce.string().nullish(),
-        DestinationRef: z.coerce.string().nullish(),
+        DestinationRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         DestinationName: z.coerce.string().nullish(),
         OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationAimedArrivalTime: z.coerce.string().nullish(),
@@ -81,15 +88,9 @@ export const vehicleActivitySchema = z.object({
         }),
         Bearing: z.coerce.string().nullish(),
         Occupancy: z.coerce.string().nullish(),
-        BlockRef: z.coerce.string().nullish(),
-        VehicleJourneyRef: z.coerce.string().nullish(),
-        VehicleRef: z.union([
-            z
-                .string()
-                .min(1)
-                .transform((ref) => ref.replace(/\s/g, "")),
-            z.number(),
-        ]),
+        BlockRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+        VehicleJourneyRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+        VehicleRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
         OnwardCalls: z
             .object({
                 OnwardCall: makeFilteredArraySchema("SiriVmOnwardCallsSchema", onwardCallSchema),
@@ -150,12 +151,12 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
         Siri: z.object({
             ServiceDelivery: z.object({
                 ResponseTimestamp: z.string(),
-                ItemIdentifier: z.string().optional(),
-                ProducerRef: z.union([z.string(), z.number()]),
+                ItemIdentifier: z.string().regex(NM_TOKEN_REGEX).nullish(),
+                ProducerRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
                 VehicleMonitoringDelivery: z.object({
                     ResponseTimestamp: z.string(),
-                    RequestMessageRef: z.string().uuid().or(txcEmptyProperty).optional(),
-                    ValidUntil: z.string().optional(),
+                    RequestMessageRef: z.string().uuid().or(txcEmptyProperty).nullish(),
+                    ValidUntil: z.string().nullish(),
                     VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
                 }),
             }),
