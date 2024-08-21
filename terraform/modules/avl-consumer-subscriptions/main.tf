@@ -69,6 +69,36 @@ module "avl_consumer_unsubscriber" {
     {
       Action = [
         "dynamodb:PutItem",
+        "dynamodb:Scan"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+    }
+  ]
+
+
+  env_vars = {
+    STAGE                                = var.environment
+    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
+  }
+}
+
+
+module "avl_consumer_heartbeat_notification" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-consumer-heartbeat-notification"
+  zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-heartbeat-notification.zip"
+  handler       = "index.handler"
+  memory        = 256
+  runtime       = "nodejs20.x"
+  timeout       = 60
+
+  permissions = [
+    {
+      Action = [
+        "dynamodb:PutItem",
         "dynamodb:GetItem"
       ],
       Effect   = "Allow",

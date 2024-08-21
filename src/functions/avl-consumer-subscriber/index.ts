@@ -94,6 +94,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             initialTerminationTime: subscriptionRequest.VehicleMonitoringSubscriptionRequest.InitialTerminationTime,
             requestTimestamp: subscriptionRequest.RequestTimestamp,
             producerSubscriptionIds,
+            heartbeatAttempts: 0,
         };
 
         await putDynamoItem(

@@ -1,6 +1,18 @@
 import { SubscriptionIdNotFoundError } from "../avl/utils";
-import { getDynamoItem } from "../dynamo";
-import { AvlConsumerSubscription, avlConsumerSubscriptionSchema } from "../schema";
+import { getDynamoItem, recursiveScan } from "../dynamo";
+import { AvlConsumerSubscription, avlConsumerSubscriptionSchema, avlConsumerSubscriptionsSchema } from "../schema";
+
+export const getAvlConsumerSubscriptions = async (tableName: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: tableName,
+    });
+
+    if (!subscriptions) {
+        return [];
+    }
+
+    return avlConsumerSubscriptionsSchema.parse(subscriptions);
+};
 
 export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string) => {
     const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, {

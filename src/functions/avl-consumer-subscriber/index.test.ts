@@ -163,6 +163,7 @@ describe("avl-consumer-subscriber", () => {
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
+            heartbeatAttempts: 0,
         };
 
         getDynamoItemSpy.mockResolvedValueOnce(consumerSubscription);
@@ -237,6 +238,7 @@ describe("avl-consumer-subscriber", () => {
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
+            heartbeatAttempts: 0,
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(

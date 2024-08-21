@@ -10,6 +10,9 @@ export const avlConsumerSubscriptionSchema = z.object({
     initialTerminationTime: z.string(),
     requestTimestamp: z.string(),
     producerSubscriptionIds: z.string(),
+    heartbeatAttempts: z.number(),
 });
 
 export type AvlConsumerSubscription = z.infer<typeof avlConsumerSubscriptionSchema>;
+
+export const avlConsumerSubscriptionsSchema = z.array(avlConsumerSubscriptionSchema);

@@ -126,7 +126,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         const xml = parseXml(body);
 
         if (xml?.Siri?.HeartbeatNotification) {
-            await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml.Siri), subscription, tableName);
+            await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
             return createSuccessResponse();
         }
 
