@@ -39,7 +39,7 @@ variable "db_name" {
 
 variable "retriever_schedule" {
   type        = string
-  description = "Schedule cron for runining the disruptions retriever"
+  description = "Schedule cron for running the disruptions retriever"
 }
 
 variable "save_json" {
