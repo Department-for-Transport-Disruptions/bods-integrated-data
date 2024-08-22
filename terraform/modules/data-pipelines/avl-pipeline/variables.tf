@@ -105,42 +105,6 @@ variable "siri_vm_generator_memory" {
   description = "Memory in MB to assign to the SIRI-VM Generator task"
 }
 
-variable "siri_vm_downloader_image_url" {
-  type        = string
-  description = "URL for the SIRI-VM Downloader image in ECR"
-}
-
-variable "siri_vm_downloader_cpu" {
-  type        = number
-  description = "CPU in MB to assign to the SIRI-VM Downloader task"
-}
-
-variable "siri_vm_downloader_memory" {
-  type        = number
-  description = "Memory in MB to assign to the SIRI-VM Downloader task"
-}
-
-variable "siri_vm_downloader_desired_task_count" {
-  type        = number
-  description = "Desired base number of SIRI-VM Downloader tasks"
-  default     = 1
-}
-
-variable "siri_vm_downloader_nlb_target_group_arn" {
-  type        = string
-  description = "ARN of the target group which should be associated with the SIRI-VM Downloader tasks"
-}
-
-variable "avl_consumer_api_key" {
-  type        = string
-  description = "AVL consumer API key"
-}
-
-variable "nlb_sg_id" {
-  type        = string
-  description = "ID of the Security Group used by the NLB infront of the SIRI-VM downloader"
-}
-
 variable "avl_validation_error_table_name" {
   type        = string
   description = "AVL validation error table name"

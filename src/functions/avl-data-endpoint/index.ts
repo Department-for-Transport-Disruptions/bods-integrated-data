@@ -133,11 +133,6 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             return createNotFoundErrorResponse("Subscription is not live");
         }
 
-        if (siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
-            logger.warn("Received cancellation data from data producer, data will be ignored...");
-            return createSuccessResponse();
-        }
-
         if (
             siri?.ServiceDelivery?.VehicleMonitoringDelivery &&
             (!siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity ||
