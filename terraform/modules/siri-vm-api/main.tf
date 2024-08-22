@@ -172,7 +172,7 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
         "Effect" : "Deny",
         "Principal" : "*",
         "Action" : "execute-api:Invoke",
-        "Resources" : [
+        "Resource" : [
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}"
         ],
@@ -186,7 +186,7 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
         "Effect" : "Allow",
         "Principal" : "*",
         "Action" : "execute-api:Invoke",
-        "Resources" : [
+        "Resource" : [
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}"
         ]
