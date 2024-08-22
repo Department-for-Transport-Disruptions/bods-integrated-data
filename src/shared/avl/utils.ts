@@ -579,3 +579,25 @@ export const getAvlErrorDetails = (error: ZodIssue) => {
 };
 
 export const generateApiKey = () => randomUUID().replaceAll("-", "");
+
+/**
+ * Returns a count of unique vehicles from the last 24 hours
+ * which will be present in the latest SIRI-VM file
+ *
+ * @param dbClient
+ */
+export const getLatestAvlVehicleCount = async (dbClient: KyselyDb) => {
+    const dayAgo = getDate().subtract(1, "day").toISOString();
+
+    const avl = await dbClient
+        .selectFrom("avl")
+        .where("recorded_at_time", ">", dayAgo)
+        .select((eb) => eb.fn.countAll<number>().as("vehicle_count"))
+        .executeTakeFirst();
+
+    if (!avl) {
+        return null;
+    }
+
+    return avl.vehicle_count;
+};
