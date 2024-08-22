@@ -2,7 +2,6 @@ import { createServerErrorResponse, createSuccessResponse } from "@bods-integrat
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { getLatestAvlVehicleCount } from "@bods-integrated-data/shared/avl/utils";
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
@@ -11,7 +10,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     try {
         const dbClient = await getDatabaseClient(process.env.STAGE === "local");
 
-        const vehicleCount = await getLatestAvlVehicleCount(dbClient);
+        const { vehicle_count: vehicleCount } = await getLatestAvlVehicleCount(dbClient);
+
+        logger.info("Successfully retrieved latest AVL vehicle count.");
 
         return createSuccessResponse(JSON.stringify({ num_of_siri_vehicles: vehicleCount }));
     } catch (e) {

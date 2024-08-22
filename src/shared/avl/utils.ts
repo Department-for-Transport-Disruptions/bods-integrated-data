@@ -586,18 +586,12 @@ export const generateApiKey = () => randomUUID().replaceAll("-", "");
  *
  * @param dbClient
  */
-export const getLatestAvlVehicleCount = async (dbClient: KyselyDb) => {
+export const getLatestAvlVehicleCount = (dbClient: KyselyDb) => {
     const dayAgo = getDate().subtract(1, "day").toISOString();
 
-    const avl = await dbClient
+    return dbClient
         .selectFrom("avl")
         .where("recorded_at_time", ">", dayAgo)
         .select((eb) => eb.fn.countAll<number>().as("vehicle_count"))
-        .executeTakeFirst();
-
-    if (!avl) {
-        return null;
-    }
-
-    return avl.vehicle_count;
+        .executeTakeFirstOrThrow();
 };
