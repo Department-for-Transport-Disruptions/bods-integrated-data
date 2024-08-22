@@ -11,7 +11,7 @@ terraform {
 
 locals {
   source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) :
-    data.aws_lambda_function.existing_function[0].source_code_hash)
+  data.aws_lambda_function.existing_function[0].source_code_hash)
   function_name = "${var.function_name}-${var.environment}"
 }
 
@@ -56,7 +56,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 resource "aws_iam_policy" "lambda_policy" {
   count = var.permissions != null ? 1 : 0
 
-  name   = "${var.function_name}-policy-${var.environment}"
+  name = "${var.function_name}-policy-${var.environment}"
   policy = jsonencode({
     Version   = "2012-10-17"
     Statement = var.permissions
@@ -80,9 +80,9 @@ resource "aws_iam_role" "lambda_role" {
   })
 
   inline_policy {
-    name   = "put-metrics-policy"
+    name = "put-metrics-policy"
     policy = jsonencode({
-      Version   = "2012-10-17"
+      Version = "2012-10-17"
       Statement = [
         {
           Action = [
@@ -97,9 +97,9 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {
-  role       = aws_iam_role.lambda_role.id
+  role = aws_iam_role.lambda_role.id
   policy_arn = (var.subnet_ids != null ? "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole" :
-    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
+  "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_custom_policy_attachment" {
@@ -127,7 +127,7 @@ resource "aws_lambda_function" "function" {
     for_each = var.needs_db_access || var.needs_vpc_access ? [1] : []
 
     content {
-      subnet_ids         = var.subnet_ids
+      subnet_ids = var.subnet_ids
       security_group_ids = var.needs_db_access ? [
         aws_security_group.db_sg[0].id
       ] : [var.custom_sg_id]
