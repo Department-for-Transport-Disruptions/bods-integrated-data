@@ -203,7 +203,7 @@ describe("avl-processor", () => {
         expect(valuesMock).not.toHaveBeenCalled();
     });
 
-    it("does insert to database if only invalid vehicle activities", async () => {
+    it("does not insert to database if only invalid vehicle activities", async () => {
         mocks.getS3Object.mockResolvedValueOnce({
             Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
         });
@@ -217,7 +217,7 @@ describe("avl-processor", () => {
 
         expect(valuesMock).not.toHaveBeenCalled();
 
-        expect(putMetricDataSpy).toHaveBeenCalledTimes(2);
+        expect(putMetricDataSpy).toHaveBeenCalledTimes(4);
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             1,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
@@ -225,6 +225,16 @@ describe("avl-processor", () => {
         );
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             2,
+            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
+            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
+        );
+        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
+            3,
+            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
+            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
+        );
+        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
+            4,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
             expectedPutMetricDataCallForFilteredArrayParseError.metricData,
         );
@@ -293,6 +303,22 @@ describe("avl-processor", () => {
                 name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.VehicleLocation.Longitude",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
+                responseTimestamp: "2018-08-17T15:14:21.432",
+                timeToExist,
+                vehicleJourneyRef: undefined,
+                vehicleRef: "200141",
+            },
+            {
+                PK: mockSubscriptionId,
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                details: "RecordedAtTime in future",
+                filename: record.s3.object.key,
+                itemIdentifier: undefined,
+                level: "CRITICAL",
+                lineRef: "ATB:Line:60",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[1].RecordedAtTime",
+                operatorRef: "123",
+                recordedAtTime: "2099-08-17T15:13:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
                 vehicleJourneyRef: undefined,
