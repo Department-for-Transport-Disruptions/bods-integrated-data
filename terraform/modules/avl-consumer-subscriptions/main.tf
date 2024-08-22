@@ -112,3 +112,13 @@ module "avl_consumer_heartbeat_notification" {
     AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
   }
 }
+
+module "avl_consumer_heartbeat_notification_sfn" {
+  count                = var.environment == "local" ? 0 : 1
+  step_function_name   = "integrated-data-avl-consumer-hb-notification"
+  source               = "../../modules/shared/lambda-trigger-sfn"
+  environment          = var.environment
+  function_arn         = module.avl_consumer_heartbeat_notification.function_arn
+  invoke_every_seconds = 30
+  depends_on           = [module.avl_consumer_heartbeat_notification]
+}
