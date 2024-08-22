@@ -263,7 +263,7 @@ module "integrated_data_avl_pipeline" {
   avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
   nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
-  external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_downloader"]
+  external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_api"]
 }
 
 module "integrated_data_avl_data_producer_api" {

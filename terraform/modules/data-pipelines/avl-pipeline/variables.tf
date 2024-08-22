@@ -146,7 +146,7 @@ variable "avl_validation_error_table_name" {
   description = "AVL validation error table name"
 }
 
-variable "external_vpces_for_sirivm_downloader" {
+variable "external_vpces_for_sirivm_api" {
   type     = list(string)
   nullable = true
   default  = null

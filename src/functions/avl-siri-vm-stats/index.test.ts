@@ -7,8 +7,6 @@ import { handler } from ".";
 describe("avl-siri-vm-stats", () => {
     const mocks = vi.hoisted(() => {
         return {
-            execute: vi.fn(),
-            destroy: vi.fn(),
             mockDbClient: {
                 destroy: vi.fn(),
             },

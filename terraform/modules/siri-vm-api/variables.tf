@@ -36,7 +36,7 @@ variable "siri_vm_stats_function_name" {
   type = string
 }
 
-variable "external_vpces_for_sirivm_downloader" {
+variable "external_vpces_for_sirivm_api" {
   type    = list(string)
   default = []
 }
