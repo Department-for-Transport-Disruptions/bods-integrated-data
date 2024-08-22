@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { handler } from ".";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { APIGatewayEvent, APIGatewayProxyEvent } from "aws-lambda";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { handler } from ".";
 
 describe("avl-siri-vm-stats", () => {
     const mocks = vi.hoisted(() => {
