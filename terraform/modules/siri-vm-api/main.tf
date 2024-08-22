@@ -99,7 +99,7 @@ resource "aws_api_gateway_deployment" "siri_vm_api_deployment" {
       jsonencode(aws_api_gateway_integration.siri_vm_api_downloader_integration),
       jsonencode(aws_api_gateway_integration.siri_vm_api_stats_integration),
       jsonencode(aws_api_gateway_rest_api.siri_vm_api.body),
-        var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_vm_api_resource_policy[0].policy) : ""
+      var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_vm_api_resource_policy[0].policy) : ""
     ])))
   }
 
@@ -143,7 +143,7 @@ resource "aws_api_gateway_stage" "siri_vm_api_stage" {
 
     content {
       destination_arn = aws_cloudwatch_log_group.siri_vm_api_log_group.arn
-      format          = jsonencode({
+      format = jsonencode({
         requestId         = "$context.requestId"
         extendedRequestId = "$context.extendedRequestId"
         ip                = "$context.identity.sourceIp"
@@ -165,8 +165,8 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
   count = var.private ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
-  policy      = jsonencode({
-    Version   = "2008-10-17"
+  policy = jsonencode({
+    Version = "2008-10-17"
     Statement = [
       {
         "Effect" : "Deny",
