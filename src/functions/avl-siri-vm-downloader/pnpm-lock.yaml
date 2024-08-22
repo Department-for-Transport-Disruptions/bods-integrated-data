@@ -8,6 +8,9 @@ dependencies:
   '@bods-integrated-data/shared':
     specifier: workspace:^
     version: link:../../shared
+  kysely:
+    specifier: ^0.27.3
+    version: 0.27.4
   zod:
     specifier: ^3.23.8
     version: 3.23.8
@@ -31,6 +34,11 @@ packages:
     dependencies:
       undici-types: 5.26.5
     dev: true
+
+  /kysely@0.27.4:
+    resolution: {integrity: sha512-dyNKv2KRvYOQPLCAOCjjQuCk4YFd33BvGdf/o5bC7FiW+BB6snA81Zt+2wT9QDFzKqxKa5rrOmvlK/anehCcgA==}
+    engines: {node: '>=14.0.0'}
+    dev: false
 
   /undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}

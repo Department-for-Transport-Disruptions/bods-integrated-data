@@ -44,7 +44,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -53,7 +53,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -62,7 +62,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -116,7 +116,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -161,7 +161,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn,
         aws_secretsmanager_secret.tfl_api_keys_secret.arn
@@ -215,7 +215,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
   name = "integrated-data-siri-vm-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -258,7 +258,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
   name = "integrated-data-siri-vm-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -461,7 +461,7 @@ resource "aws_iam_policy" "siri_vm_downloader_ecs_execution_policy" {
   name = "integrated-data-siri-vm-downloader-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -504,7 +504,7 @@ resource "aws_iam_policy" "siri_vm_downloader_ecs_task_policy" {
   name = "integrated-data-siri-vm-downloader-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -748,7 +748,7 @@ module "siri_vm_downloader" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
       ]
@@ -757,7 +757,7 @@ module "siri_vm_downloader" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -767,6 +767,42 @@ module "siri_vm_downloader" {
   env_vars = {
     STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+    DB_HOST       = var.db_reader_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+}
+
+module "siri_vm_stats" {
+  source = "../../shared/lambda-function"
+
+  environment     = var.environment
+  function_name   = "avl-siri-vm-stats"
+  zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-stats.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 300
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect   = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
+    }
+  ]
+
+  env_vars = {
+    STAGE         = var.environment
     DB_HOST       = var.db_reader_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
@@ -784,6 +820,8 @@ module "siri_vm_api_private" {
   private                              = true
   siri_vm_downloader_invoke_arn        = module.siri_vm_downloader.invoke_arn
   siri_vm_downloader_function_name     = module.siri_vm_downloader.function_name
+  siri_vm_stats_invoke_arn             = module.siri_vm_stats.invoke_arn
+  siri_vm_stats_function_name          = module.siri_vm_stats.function_name
   external_vpces_for_sirivm_downloader = var.external_vpces_for_sirivm_downloader
 }
 
@@ -799,6 +837,8 @@ module "siri_vm_api_public" {
   private                          = false
   siri_vm_downloader_invoke_arn    = module.siri_vm_downloader.invoke_arn
   siri_vm_downloader_function_name = module.siri_vm_downloader.function_name
+  siri_vm_stats_invoke_arn         = module.siri_vm_stats.invoke_arn
+  siri_vm_stats_function_name      = module.siri_vm_stats.function_name
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
