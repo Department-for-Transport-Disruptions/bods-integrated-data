@@ -203,7 +203,7 @@ describe("avl-processor", () => {
         expect(valuesMock).not.toHaveBeenCalled();
     });
 
-    it("does insert to database if only invalid vehicle activities", async () => {
+    it("does not insert to database if only invalid vehicle activities", async () => {
         mocks.getS3Object.mockResolvedValueOnce({
             Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
         });
@@ -217,7 +217,7 @@ describe("avl-processor", () => {
 
         expect(valuesMock).not.toHaveBeenCalled();
 
-        expect(putMetricDataSpy).toHaveBeenCalledTimes(2);
+        expect(putMetricDataSpy).toHaveBeenCalledTimes(4);
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             1,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
@@ -225,6 +225,16 @@ describe("avl-processor", () => {
         );
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             2,
+            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
+            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
+        );
+        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
+            3,
+            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
+            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
+        );
+        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
+            4,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
             expectedPutMetricDataCallForFilteredArrayParseError.metricData,
         );
