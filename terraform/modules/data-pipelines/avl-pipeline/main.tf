@@ -777,14 +777,16 @@ module "siri_vm_downloader" {
 module "siri_vm_api_private" {
   source = "../../siri-vm-api"
 
-  environment                          = var.environment
-  aws_region                           = var.aws_region
-  account_id                           = data.aws_caller_identity.current.account_id
-  api_name                             = "integrated-data-siri-vm-api-private"
-  private                              = true
-  siri_vm_downloader_invoke_arn        = module.siri_vm_downloader.invoke_arn
-  siri_vm_downloader_function_name     = module.siri_vm_downloader.function_name
-  external_vpces_for_sirivm_downloader = var.external_vpces_for_sirivm_downloader
+  environment                           = var.environment
+  aws_region                            = var.aws_region
+  account_id                            = data.aws_caller_identity.current.account_id
+  api_name                              = "integrated-data-siri-vm-api-private"
+  private                               = true
+  siri_vm_downloader_invoke_arn         = module.siri_vm_downloader.invoke_arn
+  siri_vm_downloader_function_name      = module.siri_vm_downloader.function_name
+  external_vpces_for_sirivm_downloader  = var.external_vpces_for_sirivm_downloader
+  avl_consumer_subscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.invoke_arn
+  avl_consumer_subscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.function_name
 }
 
 module "siri_vm_api_public" {
@@ -792,13 +794,15 @@ module "siri_vm_api_public" {
 
   source = "../../siri-vm-api"
 
-  environment                      = var.environment
-  aws_region                       = var.aws_region
-  account_id                       = data.aws_caller_identity.current.account_id
-  api_name                         = "integrated-data-siri-vm-api-public"
-  private                          = false
-  siri_vm_downloader_invoke_arn    = module.siri_vm_downloader.invoke_arn
-  siri_vm_downloader_function_name = module.siri_vm_downloader.function_name
+  environment                           = var.environment
+  aws_region                            = var.aws_region
+  account_id                            = data.aws_caller_identity.current.account_id
+  api_name                              = "integrated-data-siri-vm-api-public"
+  private                               = false
+  siri_vm_downloader_invoke_arn         = module.siri_vm_downloader.invoke_arn
+  siri_vm_downloader_function_name      = module.siri_vm_downloader.function_name
+  avl_consumer_subscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.invoke_arn
+  avl_consumer_subscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.function_name
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
