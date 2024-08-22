@@ -22,6 +22,7 @@ module "avl_feed_validator" {
   needs_vpc_access = true
   custom_sg_id     = var.sg_id
   subnet_ids       = var.subnet_ids
+  retry_attempts   = 0
 
   permissions = [
     {

@@ -83,13 +83,15 @@ resource "aws_iam_role" "lambda_role" {
     name = "put-metrics-policy"
     policy = jsonencode({
       Version = "2012-10-17"
-      Statement = [{
-        Action = [
-          "cloudwatch:PutMetricData"
-        ],
-        Effect   = "Allow",
-        Resource = "*"
-      }]
+      Statement = [
+        {
+          Action = [
+            "cloudwatch:PutMetricData"
+          ],
+          Effect   = "Allow",
+          Resource = "*"
+        }
+      ]
     })
   }
 }
@@ -183,6 +185,11 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   }
 
   depends_on = [aws_lambda_permission.allow_bucket_trigger]
+}
+
+resource "aws_lambda_function_event_invoke_config" "retry_config" {
+  function_name          = aws_lambda_function.function.function_name
+  maximum_retry_attempts = var.retry_attempts
 }
 
 output "lambda_arn" {
