@@ -246,7 +246,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 10
   avl_cleardown_frequency                     = 30
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
-  external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_downloader"]
+  external_vpces_for_sirivm_api               = local.secrets["external_vpces_for_sirivm_api"]
 }
 
 module "integrated_data_avl_data_producer_api" {
