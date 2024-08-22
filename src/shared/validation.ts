@@ -19,7 +19,7 @@ export const SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX = /[,\[\]\{\}\
 
 export const createPopulatedStringValidation = (propertyName: string) => {
     return z.coerce.string().regex(SIRI_VM_POPULATED_STRING_REGEX, {
-        message: `${propertyName} must only contain letters, numbers, periods, hyphens and underscores.`,
+        message: `${propertyName} must not contain the following disallowed characters as defined by the XSD: []{}?$%^=@#;:`,
     });
 };
 

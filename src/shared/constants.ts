@@ -122,3 +122,5 @@ export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidati
 };
 
 export const avlOccupancyValues = ["full", "seatsAvailable", "standingAvailable"] as const;
+
+export type AvlOccupancy = (typeof avlOccupancyValues)[number];

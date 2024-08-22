@@ -1,6 +1,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { ColumnType, Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable, Updateable } from "kysely";
 import { Pool } from "pg";
+import { AvlOccupancy } from "./constants";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -184,7 +185,7 @@ export interface AvlTable {
     vehicle_monitoring_ref: string | null;
     line_ref: string | null;
     direction_ref: string;
-    occupancy: "full" | "seatsAvailable" | "standingAvailable" | null;
+    occupancy: AvlOccupancy | null;
     operator_ref: string;
     data_frame_ref: string | null;
     dated_vehicle_journey_ref: string | null;
@@ -246,7 +247,7 @@ export interface BodsAvlTable {
     valid_until_time: string;
     line_ref: string | null;
     direction_ref: string;
-    occupancy: "full" | "seatsAvailable" | "standingAvailable" | null;
+    occupancy: AvlOccupancy | null;
     operator_ref: string;
     data_frame_ref: string | null;
     dated_vehicle_journey_ref: string | null;

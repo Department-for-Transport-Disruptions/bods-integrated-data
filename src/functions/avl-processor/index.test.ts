@@ -285,7 +285,8 @@ describe("avl-processor", () => {
             {
                 PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
-                details: "DestinationName must only contain letters, numbers, periods, hyphens and underscores.",
+                details:
+                    "DestinationName must not contain the following disallowed characters as defined by the XSD: []{}?$%^=@#;:",
                 filename: record.s3.object.key,
                 itemIdentifier: undefined,
                 level: "NON-CRITICAL",
