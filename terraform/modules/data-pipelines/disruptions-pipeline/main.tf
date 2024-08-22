@@ -60,6 +60,7 @@ module "integrated_data_bods_disruptions_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 60
   memory        = 256
+  schedule      = var.retriever_schedule
 
   permissions = [{
     Action = [
@@ -125,6 +126,6 @@ module "integrated_data_bods_disruptions_processor_function" {
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
     BUCKET_NAME   = aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.bucket
-    SAVE_JSON     = var.saveJson
+    SAVE_JSON     = var.save_json
   }
 }

@@ -218,5 +218,6 @@ module "integrated_data_disruptions_pipeline" {
   db_secret_arn      = "*"
   db_sg_id           = null
   db_host            = null
-  saveJson           = true
+  retriever_schedule = "rate(5 minutes)"
+  save_json          = true
 }
