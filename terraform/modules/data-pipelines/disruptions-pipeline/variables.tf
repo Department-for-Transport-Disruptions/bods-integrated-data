@@ -38,7 +38,7 @@ variable "db_name" {
 }
 
 variable "retriever_schedule" {
-  type        = bool
+  type        = string
   description = "Schedule cron for runining the disruptions retriever"
 }
 
