@@ -44,7 +44,7 @@ module "integrated_data_avl_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         module.integrated_data_avl_s3_sqs.sqs_arn
       ]
@@ -53,7 +53,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${module.integrated_data_avl_s3_sqs.bucket_arn}/*"
       ]
@@ -62,7 +62,7 @@ module "integrated_data_avl_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -116,7 +116,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -161,7 +161,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn,
         aws_secretsmanager_secret.tfl_api_keys_secret.arn
@@ -215,7 +215,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
   name = "integrated-data-siri-vm-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -258,7 +258,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
   name = "integrated-data-siri-vm-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -461,7 +461,7 @@ resource "aws_iam_policy" "siri_vm_downloader_ecs_execution_policy" {
   name = "integrated-data-siri-vm-downloader-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -504,7 +504,7 @@ resource "aws_iam_policy" "siri_vm_downloader_ecs_task_policy" {
   name = "integrated-data-siri-vm-downloader-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -748,7 +748,7 @@ module "siri_vm_downloader" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
       ]
@@ -757,7 +757,7 @@ module "siri_vm_downloader" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -794,7 +794,7 @@ module "siri_vm_stats" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn
       ]
