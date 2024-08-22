@@ -53,16 +53,6 @@ module "integrated_data_vpc" {
   region      = data.aws_region.current.name
 }
 
-module "integrated_data_internal_api" {
-  source = "../modules/networking/internal-api"
-
-  environment         = local.env
-  vpc_id              = module.integrated_data_vpc.vpc_id
-  nlb_subnet_ids      = module.integrated_data_vpc.public_subnet_ids
-  external_ip_range   = local.secrets["bods_ip_range"]
-  external_account_id = local.secrets["bods_account_id"]
-}
-
 module "integrated_data_route53" {
   source = "../modules/networking/route-53"
 
@@ -235,13 +225,6 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 30
   avl_cleardown_frequency                     = 60
-  siri_vm_downloader_image_url                = local.secrets["siri_vm_downloader_image_url"]
-  siri_vm_downloader_cpu                      = 512
-  siri_vm_downloader_memory                   = 1024
-  siri_vm_downloader_desired_task_count       = 1
-  siri_vm_downloader_nlb_target_group_arn     = module.integrated_data_internal_api.nlb_target_group_arn
-  avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
-  nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
   external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_downloader"]
 }
