@@ -113,6 +113,7 @@ variable "custom_sg_id" {
 
 variable "retry_attempts" {
   type        = number
-  default     = 2
+  nullable    = true
+  default     = null
   description = "Maximum number of retry attempts."
 }
