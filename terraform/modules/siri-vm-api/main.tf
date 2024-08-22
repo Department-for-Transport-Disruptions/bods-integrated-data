@@ -9,6 +9,23 @@ terraform {
   }
 }
 
+locals {
+  siri_vm_downloader_request_parameters = [
+    "method.request.querystring.downloadTfl",
+    "method.request.querystring.boundingBox",
+    "method.request.querystring.operatorRef",
+    "method.request.querystring.vehicleRef",
+    "method.request.querystring.lineRef",
+    "method.request.querystring.producerRef",
+    "method.request.querystring.originRef",
+    "method.request.querystring.destinationRef",
+    "method.request.querystring.subscriptionId"
+  ]
+  avl_consumer_subscriber_request_parameters = [
+    "method.request.querystring.subscriptionId"
+  ]
+}
+
 resource "aws_api_gateway_rest_api" "siri_vm_api" {
   name = "${var.api_name}-${var.environment}"
 
@@ -30,7 +47,7 @@ resource "aws_api_gateway_method" "siri_vm_api_downloader_method" {
   authorization = "NONE"
 
   request_parameters = {
-    for param in local.request_parameters : param => false
+    for param in local.siri_vm_downloader_request_parameters : param => false
   }
 }
 
@@ -55,13 +72,15 @@ resource "aws_api_gateway_integration" "siri_vm_api_downloader_integration" {
   type                    = "AWS_PROXY"
   uri                     = var.siri_vm_downloader_invoke_arn
 
-  cache_key_parameters = local.request_parameters
+  cache_key_parameters = local.siri_vm_downloader_request_parameters
 }
 
 resource "aws_api_gateway_deployment" "siri_vm_api_deployment" {
   triggers = {
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_api_gateway_integration.siri_vm_api_downloader_integration),
+      jsonencode(aws_api_gateway_integration.avl_consumer_subscriber_integration),
+      jsonencode(aws_api_gateway_integration.avl_consumer_unsubscriber_integration),
       jsonencode(aws_api_gateway_rest_api.siri_vm_api.body),
       var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_vm_api_resource_policy[0].policy) : ""
     ])))
@@ -140,21 +159,109 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
         "Principal" : "*",
         "Action" : "execute-api:Invoke",
         "Resource" : "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}"
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : "*",
+        "Action" : "execute-api:Invoke",
+        "Resource" : "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriber_resource.path}"
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : "*",
+        "Action" : "execute-api:Invoke",
+        "Resource" : "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}"
       }
     ]
   })
 }
 
-locals {
-  request_parameters = [
-    "method.request.querystring.downloadTfl",
-    "method.request.querystring.boundingBox",
-    "method.request.querystring.operatorRef",
-    "method.request.querystring.vehicleRef",
-    "method.request.querystring.lineRef",
-    "method.request.querystring.producerRef",
-    "method.request.querystring.originRef",
-    "method.request.querystring.destinationRef",
-    "method.request.querystring.subscriptionId"
-  ]
+resource "aws_api_gateway_resource" "avl_consumer_subscriber_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  parent_id   = aws_api_gateway_rest_api.siri_vm_api.root_resource_id
+  path_part   = "siri-vm/subscribe"
+}
+
+resource "aws_api_gateway_method" "avl_consumer_subscriber_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id   = aws_api_gateway_resource.avl_consumer_subscriber_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+
+  request_parameters = {
+    for param in local.avl_consumer_subscriber_request_parameters : param => false
+  }
+}
+
+resource "aws_api_gateway_method_settings" "avl_consumer_subscriber_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  stage_name  = aws_api_gateway_stage.siri_vm_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.avl_consumer_subscriber_resource.path_part}/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}"
+
+  settings {
+    caching_enabled = false
+    metrics_enabled = true
+    logging_level   = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "avl_consumer_subscriber_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id             = aws_api_gateway_resource.avl_consumer_subscriber_resource.id
+  http_method             = aws_api_gateway_method.avl_consumer_subscriber_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.avl_consumer_subscriber_invoke_arn
+
+  cache_key_parameters = local.avl_consumer_subscriber_request_parameters
+}
+
+resource "aws_lambda_permission" "avl_consumer_subscriber_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.avl_consumer_subscriber_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriber_resource.path}"
+}
+
+resource "aws_api_gateway_resource" "avl_consumer_unsubscriber_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  parent_id   = aws_api_gateway_rest_api.siri_vm_api.root_resource_id
+  path_part   = "siri-vm/unsubscribe"
+}
+
+resource "aws_api_gateway_method" "avl_consumer_unsubscriber_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id   = aws_api_gateway_resource.avl_consumer_unsubscriber_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_settings" "avl_consumer_unsubscriber_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  stage_name  = aws_api_gateway_stage.siri_vm_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path_part}/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}"
+
+  settings {
+    caching_enabled = false
+    metrics_enabled = true
+    logging_level   = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "avl_consumer_unsubscriber_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id             = aws_api_gateway_resource.avl_consumer_unsubscriber_resource.id
+  http_method             = aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.avl_consumer_unsubscriber_invoke_arn
+}
+
+resource "aws_lambda_permission" "avl_consumer_unsubscriber_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.avl_consumer_unsubscriber_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}"
 }

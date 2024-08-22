@@ -32,3 +32,21 @@ variable "external_vpces_for_sirivm_downloader" {
   type    = list(string)
   default = []
 }
+
+variable "avl_consumer_subscriber_invoke_arn" {
+  type = string
+}
+
+
+variable "avl_consumer_subscriber_function_name" {
+  type = string
+}
+
+variable "avl_consumer_unsubscriber_invoke_arn" {
+  type = string
+}
+
+
+variable "avl_consumer_unsubscriber_function_name" {
+  type = string
+}
