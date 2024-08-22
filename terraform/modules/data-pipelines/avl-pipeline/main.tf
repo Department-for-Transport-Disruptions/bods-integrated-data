@@ -785,8 +785,8 @@ module "siri_vm_api_private" {
   siri_vm_downloader_invoke_arn         = module.siri_vm_downloader.invoke_arn
   siri_vm_downloader_function_name      = module.siri_vm_downloader.function_name
   external_vpces_for_sirivm_downloader  = var.external_vpces_for_sirivm_downloader
-  avl_consumer_subscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.invoke_arn
-  avl_consumer_subscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.function_name
+  avl_consumer_subscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_arn
+  avl_consumer_subscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
 }
 
 module "siri_vm_api_public" {
@@ -801,8 +801,8 @@ module "siri_vm_api_public" {
   private                               = false
   siri_vm_downloader_invoke_arn         = module.siri_vm_downloader.invoke_arn
   siri_vm_downloader_function_name      = module.siri_vm_downloader.function_name
-  avl_consumer_subscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.invoke_arn
-  avl_consumer_subscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.module.avl_consumer_subscriber.function_name
+  avl_consumer_subscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_arn
+  avl_consumer_subscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
