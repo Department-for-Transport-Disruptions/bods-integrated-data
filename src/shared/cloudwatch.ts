@@ -90,18 +90,25 @@ const pollQueryResults = async (queryId: string | undefined, interval = 1000) =>
                 queryId,
             }),
         );
+
         queryStatus = queryResults.status;
-        if (queryStatus === "Running") {
+        if (queryStatus === "Running" || queryStatus === "Scheduled") {
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
-    } while (queryStatus === "Running");
+    } while (queryStatus === "Running" || queryStatus === "Scheduled");
 
     return queryResults.results;
 };
 
-export const runLogInsightsQuery = async (startTime: number, endTime: number, queryString: string) => {
+export const runLogInsightsQuery = async (
+    logGroupName: string,
+    startTime: number,
+    endTime: number,
+    queryString: string,
+) => {
     const logQuery = await cloudwatchLogsClient.send(
         new StartQueryCommand({
+            logGroupName,
             startTime,
             endTime,
             queryString,

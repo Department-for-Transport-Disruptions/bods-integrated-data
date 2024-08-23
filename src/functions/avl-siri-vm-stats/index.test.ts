@@ -41,10 +41,6 @@ describe("avl-siri-vm-stats", () => {
     it("should return a 500 if the database query is not successful", async () => {
         getLatestAvlVehicleCountMock.mockRejectedValueOnce(new Error());
 
-        const response = await handler(mockRequest, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
     });
 });
