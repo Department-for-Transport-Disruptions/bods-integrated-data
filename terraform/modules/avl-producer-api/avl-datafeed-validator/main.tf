@@ -29,7 +29,8 @@ module "avl_datafeed_validator" {
     },
     {
       Action = [
-        "cloudwatch:GetMetricStatistics"
+        "logs:StartQuery",
+        "logs:GetQueryResults"
       ],
       Effect   = "Allow",
       Resource = "*"
