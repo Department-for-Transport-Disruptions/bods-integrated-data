@@ -33,11 +33,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS downloader endpoint",
@@ -53,11 +49,7 @@ describe("gtfs-downloader-endpoint", () => {
             body: "",
         } as unknown as APIGatewayProxyEvent;
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS downloader endpoint",
