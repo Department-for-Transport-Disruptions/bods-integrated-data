@@ -110,7 +110,12 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
         const result = z.any().array().parse(input);
 
         return result.filter((item, index) => {
-            const parsedItem = vehicleActivitySchema.safeParse(item);
+            const parsedItem = vehicleActivitySchema
+                .refine((activity) => getDate(activity.RecordedAtTime) <= getDate().add(1, "minute"), {
+                    message: "RecordedAtTime in future",
+                    path: ["RecordedAtTime"],
+                })
+                .safeParse(item);
 
             if (!parsedItem.success) {
                 logger.warn("Error parsing item", parsedItem.error.format());

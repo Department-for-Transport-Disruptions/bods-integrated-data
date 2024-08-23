@@ -28,7 +28,15 @@ variable "siri_vm_downloader_function_name" {
   type = string
 }
 
-variable "external_vpces_for_sirivm_downloader" {
+variable "siri_vm_stats_invoke_arn" {
+  type = string
+}
+
+variable "siri_vm_stats_function_name" {
+  type = string
+}
+
+variable "external_vpces_for_sirivm_api" {
   type    = list(string)
   default = []
 }
