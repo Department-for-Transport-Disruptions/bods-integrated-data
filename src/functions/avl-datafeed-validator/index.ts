@@ -68,7 +68,7 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
             line_ref: error.lineRef,
             name: error.name,
             operator_ref: error.operatorRef,
-            recordedAtTime: error.recordedAtTime,
+            recorded_at_time: error.recordedAtTime,
             vehicle_journey_ref: error.vehicleJourneyRef,
             vehicle_ref: error.vehicleRef,
         },
@@ -78,7 +78,7 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
         {
             header: {
                 packet_name: errors[0].filename,
-                timeStamp: errors[0].responseTimestamp,
+                timestamp: errors[0].responseTimestamp,
                 feed_id: subscriptionId,
             },
             errors: errorsFormatted,
