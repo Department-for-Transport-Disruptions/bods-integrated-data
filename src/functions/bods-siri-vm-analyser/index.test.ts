@@ -54,9 +54,9 @@ describe("bods-siri-vm-analyser", () => {
             };
 
             const expected = {
-                placeholder: { absolute: 0, percentage: 0 },
-                placeholder2: { absolute: 1, percentage: 50 },
-                placeholder3: { absolute: 1, percentage: 100 },
+                placeholder: { oldCount: 2, newCount: 2, absoluteDifference: 0, percentageDifference: 0 },
+                placeholder2: { oldCount: 2, newCount: 1, absoluteDifference: 1, percentageDifference: 50 },
+                placeholder3: { oldCount: 1, newCount: 0, absoluteDifference: 1, percentageDifference: 100 },
             };
 
             await calculateItemsAndUploadToS3(bodsTotal, siriTotal, "test-bucket");

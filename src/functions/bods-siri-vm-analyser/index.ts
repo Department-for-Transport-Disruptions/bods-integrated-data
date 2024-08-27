@@ -2,19 +2,20 @@ import { Stream } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object, putS3Object } from "@bods-integrated-data/shared/s3";
-import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { Handler } from "aws-lambda";
 import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
-import unzipper from "unzipper";
+import { Entry, Parse } from "unzipper";
 
 interface TotalOfOperators {
     [key: string]: number;
 }
 
 interface OperatorDifference {
-    absolute: number;
-    percentage: number;
+    oldCount: number;
+    newCount: number;
+    absoluteDifference: number;
+    percentageDifference: number;
 }
 
 interface OperatorComparison {
@@ -31,14 +32,7 @@ const parseXml = (xml: string) => {
         isArray: (tagName) => arrayProperties.includes(tagName),
     });
 
-    const parsedXml = parser.parse(xml) as Record<string, unknown>;
-    const parsedJson = siriSchemaTransformed().safeParse(parsedXml);
-
-    if (!parsedJson.success) {
-        logger.error("There was an error parsing the AVL data", parsedJson.error.format());
-    }
-
-    return parsedJson.success ? parsedJson.data : [];
+    return parser.parse(xml) as Record<string, unknown>;
 };
 
 export const getTotalSiri = async (bucketName: string) => {
@@ -57,30 +51,42 @@ export const getTotalSiri = async (bucketName: string) => {
     return {};
 };
 
-export const getTotalBods = async () => {
+export const getTotalBods = async (): Promise<TotalOfOperators> => {
     const response = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/avl/download/bulk_archive", {
         responseType: "stream",
     });
 
-    const stream = response.data.pipe(unzipper.ParseOne());
+    const zip = response.data.pipe(
+        Parse({
+            forceStream: true,
+        }),
+    );
 
-    let xmlContent = "";
-    for await (const chunk of stream) {
-        xmlContent += chunk.toString("utf-8");
+    for await (const item of zip) {
+        const entry = item as Entry;
+
+        if (entry.type === "File") {
+            return getTotalVehicleActivites((await entry.buffer()).toString());
+        }
     }
 
-    return getTotalVehicleActivites(xmlContent);
+    return {};
 };
 
 export const getTotalVehicleActivites = (unparsedSiri: string) => {
-    const avls = parseXml(unparsedSiri);
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    const siri = parseXml(unparsedSiri) as any;
 
-    const totalVehicleActivities = avls.reduce((acc: TotalOfOperators, { operator_ref }) => {
-        acc[operator_ref] = (acc[operator_ref] || 0) + 1;
+    const vehicleActivities = siri.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity as {
+        MonitoredVehicleJourney: {
+            OperatorRef: string;
+        };
+    }[];
+
+    return vehicleActivities.reduce((acc: TotalOfOperators, { MonitoredVehicleJourney: { OperatorRef } }) => {
+        acc[OperatorRef] = (acc[OperatorRef] || 0) + 1;
         return acc;
     }, {});
-
-    return totalVehicleActivities;
 };
 
 export const calculateItemsAndUploadToS3 = async (
@@ -100,8 +106,10 @@ export const calculateItemsAndUploadToS3 = async (
             bodsCount !== 0 ? (absoluteDifference / bodsCount) * 100 : siriCount !== 0 ? 100 : 0;
 
         result[key] = {
-            absolute: absoluteDifference,
-            percentage: percentageDifference,
+            oldCount: bodsCount,
+            newCount: siriCount,
+            absoluteDifference: absoluteDifference,
+            percentageDifference: percentageDifference,
         };
     }
 
