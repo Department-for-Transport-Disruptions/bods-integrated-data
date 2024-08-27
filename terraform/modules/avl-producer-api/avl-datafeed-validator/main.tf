@@ -29,6 +29,15 @@ module "avl_datafeed_validator" {
     },
     {
       Action = [
+        "dynamodb:GetItem"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
+      ]
+    },
+    {
+      Action = [
         "logs:StartQuery",
         "logs:GetQueryResults"
       ],
@@ -51,6 +60,7 @@ module "avl_datafeed_validator" {
     AVL_VALIDATION_ERROR_TABLE   = var.avl_error_table_name
     AVL_PRODUCER_API_KEY_ARN     = var.avl_producer_api_key_arn
     AVL_PROCESSOR_LOG_GROUP_NAME = "/aws/lambda/integrated-data-avl-processor-${var.environment}"
+    AVL_SUBSCRIPTIONS_TABLE_NAME = var.avl_subscription_table_name
   }
 }
 

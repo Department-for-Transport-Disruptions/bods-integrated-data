@@ -1,9 +1,14 @@
 import {
+    createNotFoundErrorResponse,
     createServerErrorResponse,
     createValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
+import {
+    SubscriptionIdNotFoundError,
+    getAvlSubscription,
+    getAvlSubscriptionErrorData,
+} from "@bods-integrated-data/shared/avl/utils";
 import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -53,8 +58,8 @@ const generateValidationSummary = (errors: AvlValidationError[], totalProcessed:
         total_error_count: criticalCount + nonCriticalCount,
         critical_error_count: criticalCount,
         non_critical_error_count: nonCriticalCount,
-        critical_score: criticalCount / totalProcessed / 10,
-        non_critical_score: (nonCriticalCount / totalProcessed / 10) * 2,
+        critical_score: 1 - criticalCount / totalProcessed / 10,
+        non_critical_score: 1 - (nonCriticalCount / totalProcessed / 10) * 2,
         vehicle_activity_count: totalProcessed,
     };
 };
@@ -96,7 +101,14 @@ const generateReportBody = async (
     const reportBody = {
         feed_id: subscriptionId,
         packet_count: totalProcessed,
-        validation_summary: {},
+        validation_summary: {
+            total_error_count: 0,
+            critical_error_count: 0,
+            non_critical_error_count: 0,
+            critical_score: 1.0,
+            non_critical_score: 1.0,
+            vehicle_activity_count: totalProcessed,
+        },
         errors: {},
     };
 
@@ -113,14 +125,20 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
     try {
         const {
-            AVL_VALIDATION_ERROR_TABLE: tableName,
+            AVL_VALIDATION_ERROR_TABLE: validationErrorsTableName,
             AVL_PROCESSOR_LOG_GROUP_NAME: avlProcessorLogGroupName,
             AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
+            AVL_SUBSCRIPTIONS_TABLE_NAME: subscriptionsTableName,
         } = process.env;
 
-        if (!tableName || !avlProcessorLogGroupName || !avlProducerApiKeyArn) {
+        if (
+            !validationErrorsTableName ||
+            !avlProcessorLogGroupName ||
+            !avlProducerApiKeyArn ||
+            !subscriptionsTableName
+        ) {
             throw new Error(
-                "Missing env vars - AVL_VALIDATION_ERROR_TABLE, AVL_PRODUCER_API_KEY_ARN and AVL_PROCESSOR_LOG_GROUP_NAME must be set",
+                "Missing env vars - AVL_VALIDATION_ERROR_TABLE, AVL_PRODUCER_API_KEY_ARN, AVL_PROCESSOR_LOG_GROUP_NAME and AVL_SUBSCRIPTIONS_TABLE_NAME must be set",
             );
         }
 
@@ -130,7 +148,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         const { subscriptionId } = pathParamsSchema.parse(event.pathParameters);
         logger.subscriptionId = subscriptionId;
 
-        const errorData = await getAvlSubscriptionErrorData(tableName, subscriptionId);
+        const subscription = await getAvlSubscription(subscriptionId, subscriptionsTableName);
+
+        if (subscription.status === "inactive") {
+            logger.error("Subscription is not live, validation report will not be generated...");
+            return createNotFoundErrorResponse("Subscription is not live");
+        }
+
+        const errorData = await getAvlSubscriptionErrorData(validationErrorsTableName, subscriptionId);
 
         const reportBody = await generateReportBody(errorData, subscriptionId, avlProcessorLogGroupName);
 
@@ -152,6 +177,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         if (e instanceof Error) {
             logger.error("There was a problem with the avl data feed validator endpoint");
             logger.error(e);
+        }
+
+        if (e instanceof SubscriptionIdNotFoundError) {
+            logger.error("Subscription not found", e);
+            return createNotFoundErrorResponse("Subscription not found");
         }
 
         return createServerErrorResponse();
