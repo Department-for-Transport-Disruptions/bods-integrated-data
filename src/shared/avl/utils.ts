@@ -341,7 +341,6 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
             RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
-            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
                 LineRef: avl.line_ref,
                 DirectionRef: avl.direction_ref,
