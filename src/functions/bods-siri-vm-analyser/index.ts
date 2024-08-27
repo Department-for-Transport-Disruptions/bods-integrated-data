@@ -58,7 +58,7 @@ export const getTotalSiri = async (bucketName: string) => {
 };
 
 export const getTotalBods = async () => {
-    const response = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/fares/download/bulk_archive", {
+    const response = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/avl/download/bulk_archive", {
         responseType: "stream",
     });
 
