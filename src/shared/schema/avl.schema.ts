@@ -116,7 +116,8 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                 .safeParse(item);
 
             if (!parsedItem.success) {
-                logger.warn("Error parsing item", parsedItem.error.format());
+                logger.warn("Error parsing item");
+                logger.warn(parsedItem.error.format());
 
                 // optimistically parse the items for error logging purposes
                 const partiallyParsedItem = vehicleActivitySchema.deepPartial().safeParse(item).data;

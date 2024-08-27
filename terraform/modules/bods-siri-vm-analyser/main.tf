@@ -46,6 +46,15 @@ module "integrated_data_bods_siri_vm_analyser_function" {
     },
     {
       Action = [
+        "s3:ListBucket",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:s3:::${var.siri_vm_bucket_name}"
+      ]
+    },
+    {
+      Action = [
         "s3:PutObject",
       ],
       Effect = "Allow",
