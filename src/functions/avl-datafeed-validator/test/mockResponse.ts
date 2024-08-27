@@ -13,7 +13,7 @@ export const mockResponse = {
         {
             header: {
                 packet_name: "test",
-                timeStamp: "2024-03-11T00:00:00.000Z",
+                timestamp: "2024-03-11T00:00:00.000Z",
                 feed_id: "411e4495-4a57-4d2f-89d5-cf105441f321",
             },
             errors: [
@@ -24,7 +24,7 @@ export const mockResponse = {
                         line_ref: "ATB:Line:60",
                         name: "DestinationRef",
                         operator_ref: "123",
-                        recordedAtTime: "2024-03-11T00:05:00.000Z",
+                        recorded_at_time: "2024-03-11T00:05:00.000Z",
                         vehicle_ref: "200141",
                     },
                 },
@@ -35,7 +35,7 @@ export const mockResponse = {
                         line_ref: "ATB:Line:60",
                         name: "BlockRef",
                         operator_ref: "123",
-                        recordedAtTime: "2024-03-11T00:05:00.000Z",
+                        recorded_at_time: "2024-03-11T00:05:00.000Z",
                         vehicle_ref: "200141",
                     },
                 },

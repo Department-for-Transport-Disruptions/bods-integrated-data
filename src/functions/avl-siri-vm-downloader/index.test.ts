@@ -69,11 +69,8 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler(mockRequest, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the SIRI-VM downloader endpoint",
             expect.any(Error),
@@ -156,11 +153,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         it("returns a 500 when an unexpected error occurs", async () => {
             mocks.getS3Object.mockRejectedValueOnce(new Error());
 
-            const response = await handler(mockRequest, mockContext, mockCallback);
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow(
+                "An unexpected error occurred",
+            );
         });
     });
 
@@ -489,11 +484,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     operatorRef: "1",
                 };
 
-                const response = await handler(mockRequest, mockContext, mockCallback);
-                expect(response).toEqual({
-                    statusCode: 500,
-                    body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-                });
+                await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow(
+                    "An unexpected error occurred",
+                );
 
                 expect(logger.error).toHaveBeenCalledWith(
                     "There was a problem with the SIRI-VM downloader endpoint",

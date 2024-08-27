@@ -12,7 +12,7 @@ import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
-import { getDynamoItem, recursiveScan } from "../dynamo";
+import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
@@ -60,9 +60,10 @@ export const getAvlSubscriptionErrorData = async (
     const now = getDate();
     const past24Hours = now.subtract(24, "hours");
 
-    const subscriptionErrors = await recursiveScan({
+    const subscriptionErrors = await recursiveQuery({
         TableName: tableName,
-        FilterExpression: "#PK = :subscriptionId AND #recordedAtTime > :past24Hours",
+        KeyConditionExpression: "#PK = :subscriptionId",
+        FilterExpression: "#recordedAtTime > :past24Hours",
         ExpressionAttributeNames: {
             "#PK": "PK",
             "#recordedAtTime": "recordedAtTime",
@@ -579,3 +580,19 @@ export const getAvlErrorDetails = (error: ZodIssue) => {
 };
 
 export const generateApiKey = () => randomUUID().replaceAll("-", "");
+
+/**
+ * Returns a count of unique vehicles from the last 24 hours
+ * which will be present in the latest SIRI-VM file
+ *
+ * @param dbClient
+ */
+export const getLatestAvlVehicleCount = (dbClient: KyselyDb) => {
+    const dayAgo = getDate().subtract(1, "day").toISOString();
+
+    return dbClient
+        .selectFrom("avl")
+        .where("recorded_at_time", ">", dayAgo)
+        .select((eb) => eb.fn.countAll<number>().as("vehicle_count"))
+        .executeTakeFirstOrThrow();
+};
