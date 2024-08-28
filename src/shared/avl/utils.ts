@@ -418,12 +418,6 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
-        "?xml": {
-            "#text": "",
-            "@_version": "1.0",
-            "@_encoding": "UTF-8",
-            "@_standalone": "yes",
-        },
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
