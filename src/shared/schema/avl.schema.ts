@@ -162,6 +162,7 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
                     ResponseTimestamp: z.string(),
                     RequestMessageRef: z.string().uuid().or(txcEmptyProperty).nullish(),
                     ValidUntil: z.string().nullish(),
+                    ShortestPossibleCycle: z.string().nullish(),
                     VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
                 }),
             }),

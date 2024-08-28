@@ -408,6 +408,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                     ResponseTimestamp: currentTime,
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
+                    ShortestPossibleCycle: "PT5S",
                     VehicleActivity: validVehicleActivities,
                 },
             },
