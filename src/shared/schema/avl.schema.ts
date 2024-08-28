@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
+import { avlOccupancyValues } from "../constants";
 import { Avl, NewAvl, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
@@ -10,6 +11,7 @@ import {
     NM_TOKEN_DISALLOWED_CHARS_REGEX,
     NM_TOKEN_REGEX,
     SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+    createPopulatedStringValidation,
 } from "../validation";
 import { AvlValidationError } from "./avl-validation-error.schema";
 
@@ -76,9 +78,9 @@ export const vehicleActivitySchema = z.object({
         PublishedLineName: z.coerce.string().nullish(),
         OperatorRef: z.string().regex(NM_TOKEN_REGEX),
         OriginRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
-        OriginName: z.coerce.string().nullish(),
+        OriginName: createPopulatedStringValidation("OriginName").nullish(),
         DestinationRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
-        DestinationName: z.coerce.string().nullish(),
+        DestinationName: createPopulatedStringValidation("DestinationName").nullish(),
         OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationAimedArrivalTime: z.coerce.string().nullish(),
         Monitored: z.coerce.string().nullish(),
@@ -87,7 +89,7 @@ export const vehicleActivitySchema = z.object({
             Latitude: z.coerce.number(),
         }),
         Bearing: z.coerce.string().nullish(),
-        Occupancy: z.coerce.string().nullish(),
+        Occupancy: z.enum(avlOccupancyValues).nullish(),
         BlockRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         VehicleJourneyRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
         VehicleRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
@@ -119,9 +121,6 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                 logger.warn("Error parsing item");
                 logger.warn(parsedItem.error.format());
 
-                // optimistically parse the items for error logging purposes
-                const partiallyParsedItem = vehicleActivitySchema.deepPartial().safeParse(item).data;
-
                 errors?.push(
                     ...parsedItem.error.errors.map<AvlValidationError>((error) => {
                         const { name, message, level } = getAvlErrorDetails(error);
@@ -132,15 +131,15 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                             SK: randomUUID(),
                             details: message,
                             filename: "",
-                            itemIdentifier: partiallyParsedItem?.ItemIdentifier,
+                            itemIdentifier: item?.ItemIdentifier,
                             level,
-                            lineRef: partiallyParsedItem?.MonitoredVehicleJourney?.LineRef,
+                            lineRef: item?.MonitoredVehicleJourney?.LineRef,
                             name: nameWithPrefix,
-                            operatorRef: partiallyParsedItem?.MonitoredVehicleJourney?.OperatorRef,
-                            recordedAtTime: partiallyParsedItem?.RecordedAtTime,
+                            operatorRef: item?.MonitoredVehicleJourney?.OperatorRef,
+                            recordedAtTime: item?.RecordedAtTime,
                             timeToExist: 0,
-                            vehicleJourneyRef: partiallyParsedItem?.MonitoredVehicleJourney?.VehicleJourneyRef,
-                            vehicleRef: partiallyParsedItem?.MonitoredVehicleJourney?.VehicleRef?.toString(),
+                            vehicleJourneyRef: item?.MonitoredVehicleJourney?.VehicleJourneyRef,
+                            vehicleRef: item?.MonitoredVehicleJourney?.VehicleRef?.toString(),
                         };
                     }),
                 );
