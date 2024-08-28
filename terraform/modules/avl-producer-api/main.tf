@@ -120,12 +120,13 @@ module "avl_validate" {
 }
 
 module "avl_datafeed_validator" {
-  source                   = "./avl-datafeed-validator"
-  avl_error_table_name     = var.avl_error_table_name
-  avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
-  aws_account_id           = var.aws_account_id
-  aws_region               = var.aws_region
-  environment              = var.environment
+  source                      = "./avl-datafeed-validator"
+  avl_error_table_name        = var.avl_error_table_name
+  avl_producer_api_key_arn    = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
+  aws_account_id              = var.aws_account_id
+  aws_region                  = var.aws_region
+  environment                 = var.environment
+  avl_subscription_table_name = var.avl_subscription_table_name
 }
 
 module "avl_producer_api_gateway" {

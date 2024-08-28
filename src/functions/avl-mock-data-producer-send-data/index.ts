@@ -1,4 +1,4 @@
-import { getSiriVmValidUntilTimeOffset } from "@bods-integrated-data/shared/avl/utils";
+import { formatSiriVmDatetimes, getSiriVmValidUntilTimeOffset } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
@@ -13,7 +13,7 @@ export const handler: Handler = async (event, context) => {
         const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
 
         const responseTime = getDate();
-        const currentTime = responseTime.toISOString();
+        const currentTime = formatSiriVmDatetimes(responseTime, true);
         const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
         if (!stage || !dataEndpoint || !tableName) {

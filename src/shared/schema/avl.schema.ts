@@ -118,7 +118,8 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                 .safeParse(item);
 
             if (!parsedItem.success) {
-                logger.warn("Error parsing item", parsedItem.error.format());
+                logger.warn("Error parsing item");
+                logger.warn(parsedItem.error.format());
 
                 errors?.push(
                     ...parsedItem.error.errors.map<AvlValidationError>((error) => {

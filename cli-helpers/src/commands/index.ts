@@ -16,6 +16,7 @@ export * from "./invoke-bank-holidays-retriever";
 export * from "./invoke-bods-disruptions-retriever";
 export * from "./invoke-bods-disruptions-processor";
 export * from "./invoke-bods-fares-retriever";
+export * from "./invoke-bods-siri-vm-analyser";
 export * from "./invoke-bods-txc-processor";
 export * from "./invoke-bods-txc-retriever";
 export * from "./invoke-bods-txc-unzipper";
