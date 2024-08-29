@@ -12,6 +12,7 @@ import {
     NM_TOKEN_REGEX,
     REQUEST_PARAM_MAX_LENGTH,
     SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+    createNmTokenOrNumberSiriValidation,
     createNmTokenSiriValidation,
     createPopulatedStringValidation,
 } from "../validation";
@@ -75,18 +76,8 @@ export const vehicleActivitySchema = z.object({
         ]),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.union([
-                    z.string().regex(NM_TOKEN_REGEX, {
-                        message: `DataFrameRef must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
-                    }),
-                    z.number(),
-                ]),
-                DatedVehicleJourneyRef: z.union([
-                    z.string().regex(NM_TOKEN_REGEX, {
-                        message: `DatedVehicleJourneyRef must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
-                    }),
-                    z.number(),
-                ]),
+                DataFrameRef: createNmTokenOrNumberSiriValidation("DataFrameRef"),
+                DatedVehicleJourneyRef: createNmTokenOrNumberSiriValidation("DatedVehicleJourneyRef"),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
@@ -173,12 +164,7 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
             ServiceDelivery: z.object({
                 ResponseTimestamp: z.string(),
                 ItemIdentifier: createNmTokenSiriValidation("ItemIdentifier", false),
-                ProducerRef: z.union([
-                    z.string().regex(NM_TOKEN_REGEX, {
-                        message: `ProducerRef must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
-                    }),
-                    z.number(),
-                ]),
+                ProducerRef: createNmTokenOrNumberSiriValidation("ProducerRef"),
                 VehicleMonitoringDelivery: z.object({
                     ResponseTimestamp: z.string(),
                     RequestMessageRef: z.string().uuid().or(txcEmptyProperty).nullish(),

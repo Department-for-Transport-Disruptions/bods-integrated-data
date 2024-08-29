@@ -364,6 +364,32 @@ export const testSiriWithInvalidVehicleActivities = `
                     <PublishedLineName>1</PublishedLineName>
                 </MonitoredVehicleJourney>
             </VehicleActivity>
+            <VehicleActivity>
+                <RecordedAtTime>2018-08-17T15:13:20</RecordedAtTime>
+                <RequestMessageRef/>
+                <ValidUntilTime>2018-08-17T16:13:29</ValidUntilTime>
+                <MonitoredVehicleJourney>
+                    <LineRef>ATB:Line:60</LineRef>
+                    <DirectionRef>2</DirectionRef>
+                    <Occupancy>full</Occupancy>
+                    <OperatorRef>placeholder</OperatorRef>
+                    <FramedVehicleJourneyRef>
+                        <DataFrameRef>2018-08-17</DataFrameRef>
+                        <DatedVehicleJourneyRef>Invalid$</DatedVehicleJourneyRef>
+                    </FramedVehicleJourneyRef>
+                    <VehicleRef>200141</VehicleRef>
+                    <Bearing>0</Bearing>
+                    <VehicleLocation>
+                        <Longitude>10.40261</Longitude>
+                        <Latitude>63.43613</Latitude>
+                    </VehicleLocation>
+                    <BlockRef>blockRef</BlockRef>
+                    <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:13:20</OriginAimedDepartureTime>
+                    <DestinationRef>destinationRef</DestinationRef>
+                    <PublishedLineName>1</PublishedLineName>
+                </MonitoredVehicleJourney>
+            </VehicleActivity>
         </VehicleMonitoringDelivery>
     </ServiceDelivery>
 </Siri>

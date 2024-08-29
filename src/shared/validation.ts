@@ -52,6 +52,15 @@ export const createNmTokenSiriValidation = (propertyName: string, isRequired: bo
               .nullish();
 };
 
+export const createNmTokenOrNumberSiriValidation = (propertyName: string) => {
+    return z.union([
+        z.string().regex(NM_TOKEN_REGEX, {
+            message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+        }),
+        z.number(),
+    ]);
+};
+
 export const createNmTokenValidation = (propertyName: string) => {
     return z.coerce
         .string({
