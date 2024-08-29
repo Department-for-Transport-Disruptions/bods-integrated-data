@@ -31,10 +31,10 @@ const requestParamsSchema = z.preprocess(
 
 const putMetrics = async (
     download: string | undefined,
-    routeId: string | undefined,
+    routeId: string[] | undefined,
     startTimeAfter: number | undefined,
     startTimeBefore: number | undefined,
-    boundingBox: string | undefined,
+    boundingBox: number[] | undefined,
 ) => {
     await putMetricData(
         "custom/GTFSRTDownloader",
@@ -46,10 +46,10 @@ const putMetrics = async (
         ],
         [
             { name: "download", set: !!download },
-            { name: "routeId", set: !!routeId },
+            { name: "routeId", set: !!routeId?.length },
             { name: "startTimeAfter", set: !!startTimeAfter },
             { name: "startTimeBefore", set: !!startTimeBefore },
-            { name: "boundingBox", set: !!boundingBox },
+            { name: "boundingBox", set: !!boundingBox?.length },
         ]
             .map((item) =>
                 item.set
