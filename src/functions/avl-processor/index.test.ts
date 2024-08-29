@@ -366,7 +366,7 @@ describe("avl-processor", () => {
                 filename: record.s3.object.key,
                 itemIdentifier: undefined,
                 level: "CRITICAL",
-                lineRef: "Invalid$",
+                lineRef: "ATB:Line:60",
                 name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[1].RecordedAtTime",
                 operatorRef: "123",
                 recordedAtTime: "2099-08-17T15:13:20",
