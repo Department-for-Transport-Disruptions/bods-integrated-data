@@ -43,8 +43,8 @@ const requestParamsSchema = z.preprocess(
 
 const retrieveSiriVmData = async (
     dbClient: KyselyDb,
-    boundingBox?: string,
-    operatorRef?: string,
+    boundingBox?: number[],
+    operatorRef?: string[],
     vehicleRef?: string,
     lineRef?: string,
     producerRef?: string,
@@ -114,7 +114,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
 
         if (
             !boundingBox &&
-            (!operatorRef || operatorRef === "TFLO") &&
+            (!operatorRef || (operatorRef.includes("TFLO") && operatorRef.length === 1)) &&
             !vehicleRef &&
             !lineRef &&
             !producerRef &&
@@ -124,7 +124,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         ) {
             siriVm = await retrieveSiriVmFile(
                 bucketName,
-                downloadTfl === "true" || operatorRef === "TFLO"
+                downloadTfl === "true" || (operatorRef?.includes("TFLO") && operatorRef?.length === 1)
                     ? GENERATED_SIRI_VM_TFL_FILE_PATH
                     : GENERATED_SIRI_VM_FILE_PATH,
             );
