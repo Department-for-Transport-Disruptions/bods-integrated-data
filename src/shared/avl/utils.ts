@@ -360,7 +360,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                 },
                 Bearing: avl.bearing,
                 BlockRef: avl.block_ref,
-                VehicleRef: avl.vehicle_ref,
+                VehicleRef: avl.operator_ref === "TFLO" ? avl.vehicle_name || avl.vehicle_ref : avl.vehicle_ref,
                 VehicleJourneyRef: avl.vehicle_journey_ref,
             },
         };
