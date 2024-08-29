@@ -6,11 +6,11 @@ import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 import {
-    expectedServiceDeliveryRequestBody,
-    expectedServiceDeliveryRequestConfig,
+    expectedCheckStatusRequestBody,
+    expectedCheckStatusRequestConfig,
     mockAvlValidateRequest,
-    mockServiceDeliveryResponse,
-    mockServiceDeliveryResponseFalse,
+    mockCheckStatusResponse,
+    mockCheckStatusResponseFalse,
 } from "./test/mockData";
 
 vi.mock("axios");
@@ -49,7 +49,7 @@ describe("avl-validate", () => {
 
     it("should return a status code of 200 and the data producers SIRI version if a producer's feed can be successfully validated", async () => {
         mockedAxios.post.mockResolvedValue({
-            data: mockServiceDeliveryResponse,
+            data: mockCheckStatusResponse,
             status: 200,
         } as AxiosResponse);
 
@@ -60,8 +60,8 @@ describe("avl-validate", () => {
 
         expect(axiosSpy).toHaveBeenCalledWith(
             mockAvlValidateRequest.url,
-            expectedServiceDeliveryRequestBody,
-            expectedServiceDeliveryRequestConfig,
+            expectedCheckStatusRequestBody,
+            expectedCheckStatusRequestConfig,
         );
     });
 
@@ -142,8 +142,8 @@ describe("avl-validate", () => {
 
         expect(axiosSpy).toHaveBeenCalledWith(
             mockAvlValidateRequest.url,
-            expectedServiceDeliveryRequestBody,
-            expectedServiceDeliveryRequestConfig,
+            expectedCheckStatusRequestBody,
+            expectedCheckStatusRequestConfig,
         );
     });
 
@@ -160,8 +160,8 @@ describe("avl-validate", () => {
 
         expect(axiosSpy).toHaveBeenCalledWith(
             mockAvlValidateRequest.url,
-            expectedServiceDeliveryRequestBody,
-            expectedServiceDeliveryRequestConfig,
+            expectedCheckStatusRequestBody,
+            expectedCheckStatusRequestConfig,
         );
     });
 
@@ -180,15 +180,15 @@ describe("avl-validate", () => {
 
             expect(axiosSpy).toHaveBeenCalledWith(
                 mockAvlValidateRequest.url,
-                expectedServiceDeliveryRequestBody,
-                expectedServiceDeliveryRequestConfig,
+                expectedCheckStatusRequestBody,
+                expectedCheckStatusRequestConfig,
             );
         },
     );
 
     it("should return a 400 if a data producer does not return a status of true", async () => {
         mockedAxios.post.mockResolvedValue({
-            data: mockServiceDeliveryResponseFalse,
+            data: mockCheckStatusResponseFalse,
             status: 200,
         } as AxiosResponse);
 
@@ -199,8 +199,8 @@ describe("avl-validate", () => {
 
         expect(axiosSpy).toHaveBeenCalledWith(
             mockAvlValidateRequest.url,
-            expectedServiceDeliveryRequestBody,
-            expectedServiceDeliveryRequestConfig,
+            expectedCheckStatusRequestBody,
+            expectedCheckStatusRequestConfig,
         );
     });
 

@@ -21,26 +21,21 @@ export const avlValidateRequestSchema = z.object(
 
 export type AvlValidateRequestSchema = z.infer<typeof avlValidateRequestSchema>;
 
-export const avlServiceRequestSchema = z.object({
+export const avlCheckStatusRequestSchema = z.object({
     Siri: z.object({
-        ServiceRequest: z.object({
+        CheckStatusRequest: z.object({
             RequestTimestamp: z.string(),
+            AccountId: z.string(),
             RequestorRef: z.string(),
-            VehicleMonitoringRequest: z.object({
-                VehicleMonitoringRequest: z.object({
-                    RequestTimestamp: z.string(),
-                    "@_version": z.string(),
-                }),
-            }),
         }),
     }),
 });
 
-export type AvlServiceRequest = z.infer<typeof avlServiceRequestSchema>;
+export type AvlCheckStatusRequest = z.infer<typeof avlCheckStatusRequestSchema>;
 
-export const avlServiceDeliverySchema = z.object({
+export const avlCheckStatusResponseSchema = z.object({
     Siri: z.object({
-        ServiceDelivery: z.object({
+        CheckStatusResponse: z.object({
             Status: z.coerce.string(),
         }),
         "@_version": z.string(),
