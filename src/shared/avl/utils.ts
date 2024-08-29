@@ -236,8 +236,8 @@ export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
 
 export const getQueryForLatestAvl = (
     dbClient: KyselyDb,
-    boundingBox?: string,
-    operatorRef?: string,
+    boundingBox?: number[],
+    operatorRef?: string[],
     vehicleRef?: string,
     lineRef?: string,
     producerRef?: string,
@@ -249,13 +249,13 @@ export const getQueryForLatestAvl = (
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
 
     if (boundingBox) {
-        const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+        const [minX, minY, maxX, maxY] = boundingBox;
         const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
         query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
     }
 
     if (operatorRef) {
-        query = query.where("operator_ref", "in", operatorRef.split(","));
+        query = query.where("operator_ref", "in", operatorRef);
     }
 
     if (vehicleRef) {
@@ -291,8 +291,8 @@ export const getQueryForLatestAvl = (
 
 export const getAvlDataForSiriVm = async (
     dbClient: KyselyDb,
-    boundingBox?: string,
-    operatorRef?: string,
+    boundingBox?: number[],
+    operatorRef?: string[],
     vehicleRef?: string,
     lineRef?: string,
     producerRef?: string,
