@@ -11,7 +11,6 @@ import {
     createSiriVm,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -154,14 +153,8 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
-
-            await putMetricData("custom/SIRIVMDownloader", [
-                {
-                    MetricName: "4xx",
-                    Value: 1,
-                },
-            ]);
+            logger.warn(`Invalid request: ${JSON.stringify(event.queryStringParameters)}`);
+            logger.warn(e.errors);
 
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
@@ -171,15 +164,9 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the SIRI-VM downloader endpoint", e);
+            logger.error("There was a problem with the SIRI-VM downloader endpoint");
+            logger.error(e);
         }
-
-        await putMetricData("custom/SIRIVMDownloader", [
-            {
-                MetricName: "5xx",
-                Value: 1,
-            },
-        ]);
 
         return createServerErrorResponse();
     }
