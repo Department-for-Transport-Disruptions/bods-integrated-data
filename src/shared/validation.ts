@@ -34,6 +34,24 @@ export const createStringLengthValidation = (propertyName: string) => {
         });
 };
 
+export const createNmTokenSiriValidation = (propertyName: string, isRequired: boolean) => {
+    return isRequired
+        ? z.coerce
+              .string({
+                  required_error: `${propertyName} is required`,
+                  invalid_type_error: `${propertyName} must be a string`,
+              })
+              .regex(NM_TOKEN_REGEX, {
+                  message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+              })
+        : z.coerce
+              .string({ invalid_type_error: `${propertyName} must be a string` })
+              .regex(NM_TOKEN_REGEX, {
+                  message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+              })
+              .nullish();
+};
+
 export const createNmTokenValidation = (propertyName: string) => {
     return z.coerce
         .string({

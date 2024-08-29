@@ -293,7 +293,7 @@ export const testSiriWithInvalidVehicleActivities = `
                 <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
                 <ValidUntilTime>2018-08-17T16:22:29</ValidUntilTime>
                 <MonitoredVehicleJourney>
-                    <LineRef>ATB:Line:60</LineRef>
+                    <LineRef>Invalid$</LineRef>
                     <OperatorRef>123</OperatorRef>
                     <FramedVehicleJourneyRef>
                         <DatedVehicleJourneyRef>ATB:ServiceJourney:00600027</DatedVehicleJourneyRef>
