@@ -259,7 +259,12 @@ export const getQueryForLatestAvl = (
     }
 
     if (vehicleRef) {
-        query = query.where("vehicle_ref", "=", vehicleRef);
+        query = query.where((qb) =>
+            qb.or([
+                qb.and([qb("operator_ref", "!=", "TFLO"), qb("vehicle_ref", "=", vehicleRef)]),
+                qb.and([qb("operator_ref", "=", "TFLO"), qb("vehicle_name", "=", vehicleRef)]),
+            ]),
+        );
     }
 
     if (lineRef) {
