@@ -128,9 +128,9 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             return createSuccessResponse();
         }
 
-        if (subscription.status !== "live") {
-            logger.error("Subscription is not live, data will not be processed...");
-            return createNotFoundErrorResponse("Subscription is not live");
+        if (subscription.status === "inactive") {
+            logger.error("Subscription is inactive, data will not be processed...", { subscriptionId });
+            return createNotFoundErrorResponse("Subscription is inactive");
         }
 
         if (
