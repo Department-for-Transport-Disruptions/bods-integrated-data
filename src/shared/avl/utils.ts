@@ -387,6 +387,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                         },
                     },
                     VehicleUniqueId: avl.vehicle_unique_id ?? null,
+                    DriverRef: avl.driver_ref ?? null,
                 },
             };
         }
