@@ -107,7 +107,7 @@ describe("avl-processor", () => {
         uuidSpy.mockReturnValue(mockItemId);
     });
 
-    it.each(["live", "error"] as const)("correctly processes a siri-vm file", async (status) => {
+    it.each(["live", "error"] as const)("correctly processes a siri-vm file is subscription has status of %o", async (status) => {
         const avlSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
