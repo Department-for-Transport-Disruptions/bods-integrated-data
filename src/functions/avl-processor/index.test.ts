@@ -107,44 +107,47 @@ describe("avl-processor", () => {
         uuidSpy.mockReturnValue(mockItemId);
     });
 
-    it.each(["live", "error"] as const)("correctly processes a siri-vm file is subscription has status of %o", async (status) => {
-        const avlSubscription: AvlSubscription = {
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            status,
-            requestorRef: null,
-            publisherId: "test-publisher-id",
-            apiKey: "mock-api-key",
-        };
+    it.each(["live", "error"] as const)(
+        "correctly processes a siri-vm file is subscription has status of %o",
+        async (status) => {
+            const avlSubscription: AvlSubscription = {
+                PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status,
+                requestorRef: null,
+                publisherId: "test-publisher-id",
+                apiKey: "mock-api-key",
+            };
 
-        getDynamoItemSpy.mockResolvedValue({ ...avlSubscription, status });
+            getDynamoItemSpy.mockResolvedValue({ ...avlSubscription, status });
 
-        const valuesMock = vi.fn().mockReturnValue({
-            onConflict: vi.fn().mockReturnValue({
-                execute: vi.fn().mockResolvedValue(""),
-            }),
-        });
+            const valuesMock = vi.fn().mockReturnValue({
+                onConflict: vi.fn().mockReturnValue({
+                    execute: vi.fn().mockResolvedValue(""),
+                }),
+            });
 
-        const dbClient = {
-            insertInto: () => ({
-                values: valuesMock,
-            }),
-        };
+            const dbClient = {
+                insertInto: () => ({
+                    values: valuesMock,
+                }),
+            };
 
-        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiri } });
-        await processSqsRecord(
-            record as S3EventRecord,
-            dbClient as unknown as KyselyDb,
-            "table-name",
-            "avl-validation-errors-table",
-        );
+            mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiri } });
+            await processSqsRecord(
+                record as S3EventRecord,
+                dbClient as unknown as KyselyDb,
+                "table-name",
+                "avl-validation-errors-table",
+            );
 
-        expect(uuidSpy).toHaveBeenCalledOnce();
+            expect(uuidSpy).toHaveBeenCalledOnce();
 
-        expect(valuesMock).toBeCalledWith(parsedSiri);
-    });
+            expect(valuesMock).toBeCalledWith(parsedSiri);
+        },
+    );
 
     it("correctly processes a siri-vm file with OnwardCalls data", async () => {
         const valuesMock = vi.fn().mockReturnValue({
