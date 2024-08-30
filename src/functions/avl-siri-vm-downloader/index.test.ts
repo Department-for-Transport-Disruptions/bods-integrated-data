@@ -446,6 +446,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                         "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
                     ],
                 ],
+                [{ operatorRef: `${"TEST,".repeat(200)}TEST` }, ["operatorRef must be fewer than 200 values"]],
                 [
                     { operatorRef: "3," },
                     [
