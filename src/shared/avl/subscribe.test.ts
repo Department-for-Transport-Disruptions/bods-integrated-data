@@ -54,6 +54,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             url: "https://mock-data-producer.com",
             serviceStartDatetime: "2024-03-11T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
+            lastAvlDataReceivedDateTime: null,
+            heartbeatLastReceivedDateTime: null,
             publisherId: "mock-publisher-id",
             apiKey: "mock-api-key",
         };
@@ -96,6 +98,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             url: "https://mock-data-producer.com",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
             apiKey: "mock-api-key",
         };
@@ -106,6 +110,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
                 ...mockInput.subscription,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
+                lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             },
             mockInput.username,
             mockInput.password,
@@ -145,6 +151,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             url: "https://mock-data-producer.com",
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
             apiKey: "mock-api-key",
         };
@@ -156,6 +164,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
                 requestorRef: "BODS_MOCK_PRODUCER",
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
+                lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             },
             mockInput.username,
             mockInput.password,
@@ -195,6 +205,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: null,
             publisherId: "mock-publisher-id",
             lastModifiedDateTime: null,
+            lastAvlDataReceivedDateTime: null,
+            heartbeatLastReceivedDateTime: null,
             apiKey: "mock-api-key",
         };
 
@@ -233,6 +245,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: null,
             publisherId: "mock-publisher-id",
             lastModifiedDateTime: null,
+            lastAvlDataReceivedDateTime: null,
+            heartbeatLastReceivedDateTime: null,
             apiKey: "mock-api-key",
         };
 
@@ -277,6 +291,8 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             serviceStartDatetime: null,
             publisherId: "mock-publisher-id",
             lastModifiedDateTime: null,
+            lastAvlDataReceivedDateTime: null,
+            heartbeatLastReceivedDateTime: null,
             apiKey: "mock-api-key",
         };
 

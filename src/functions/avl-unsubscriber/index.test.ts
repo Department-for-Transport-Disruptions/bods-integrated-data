@@ -192,10 +192,6 @@ describe("avl-unsubscriber", () => {
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
     });
 });

@@ -110,3 +110,10 @@ variable "custom_sg_id" {
   default     = null
   description = "ID of a custom VPC security group"
 }
+
+variable "retry_attempts" {
+  type        = number
+  nullable    = true
+  default     = null
+  description = "Maximum number of retry attempts."
+}

@@ -90,10 +90,10 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  */
 export const getAvlDataForGtfs = async (
     dbClient: KyselyDb,
-    routeId?: string,
+    routeId?: string[],
     startTimeBefore?: number,
     startTimeAfter?: number,
-    boundingBox?: string,
+    boundingBox?: number[],
 ): Promise<BodsAvl[]> => {
     try {
         let query = dbClient
@@ -106,7 +106,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(
                 "route_id",
                 "in",
-                routeId.split(",").map((id) => Number(id)),
+                routeId.map((id) => Number(id)),
             );
         }
 
@@ -127,7 +127,7 @@ export const getAvlDataForGtfs = async (
         }
 
         if (boundingBox) {
-            const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+            const [minX, minY, maxX, maxY] = boundingBox;
             const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }

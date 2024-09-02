@@ -310,6 +310,58 @@ export const testSiriWithInvalidVehicleActivities = `
                     <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
                     <DestinationRef>destinationRef</DestinationRef>
                     <PublishedLineName>1</PublishedLineName>
+                    <Occupancy>wrong</Occupancy>
+                    <DestinationName>invalid $ name</DestinationName>
+                </MonitoredVehicleJourney>
+            </VehicleActivity>
+            <VehicleActivity>
+                <RecordedAtTime>2099-08-17T15:13:20</RecordedAtTime>
+                <ValidUntilTime>2018-08-17T16:13:29</ValidUntilTime>
+                <MonitoredVehicleJourney>
+                    <LineRef>ATB:Line:60</LineRef>
+                    <DirectionRef>2</DirectionRef>
+                    <Occupancy>full</Occupancy>
+                    <OperatorRef>123</OperatorRef>
+                    <FramedVehicleJourneyRef>
+                        <DataFrameRef>2018-08-17</DataFrameRef>
+                        <DatedVehicleJourneyRef>ATB:ServiceJourney:00600027</DatedVehicleJourneyRef>
+                    </FramedVehicleJourneyRef>
+                    <VehicleRef>200141</VehicleRef>
+                    <Bearing>0</Bearing>
+                    <VehicleLocation>
+                        <Longitude>10.40261</Longitude>
+                        <Latitude>63.43613</Latitude>
+                    </VehicleLocation>
+                    <BlockRef>blockRef</BlockRef>
+                    <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:13:20</OriginAimedDepartureTime>
+                    <DestinationRef>destinationRef</DestinationRef>
+                    <PublishedLineName>1</PublishedLineName>
+                </MonitoredVehicleJourney>
+            </VehicleActivity>
+            <VehicleActivity>
+                <RecordedAtTime>2024-07-22T12:01:00.000Z</RecordedAtTime>
+                <ValidUntilTime>2018-08-17T16:13:29</ValidUntilTime>
+                <MonitoredVehicleJourney>
+                    <LineRef>ATB:Line:60</LineRef>
+                    <DirectionRef>2</DirectionRef>
+                    <Occupancy>full</Occupancy>
+                    <OperatorRef>123</OperatorRef>
+                    <FramedVehicleJourneyRef>
+                        <DataFrameRef>2018-08-17</DataFrameRef>
+                        <DatedVehicleJourneyRef>ATB:ServiceJourney:00600027</DatedVehicleJourneyRef>
+                    </FramedVehicleJourneyRef>
+                    <VehicleRef>200141</VehicleRef>
+                    <Bearing>0</Bearing>
+                    <VehicleLocation>
+                        <Longitude>10.40261</Longitude>
+                        <Latitude>63.43613</Latitude>
+                    </VehicleLocation>
+                    <BlockRef>blockRef</BlockRef>
+                    <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:13:20</OriginAimedDepartureTime>
+                    <DestinationRef>destinationRef</DestinationRef>
+                    <PublishedLineName>1</PublishedLineName>
                 </MonitoredVehicleJourney>
             </VehicleActivity>
         </VehicleMonitoringDelivery>

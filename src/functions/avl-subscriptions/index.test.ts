@@ -62,11 +62,8 @@ describe("avl-subscriptions", () => {
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
         expect(getDynamoItemSpy).not.toHaveBeenCalled();
         expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
@@ -74,11 +71,8 @@ describe("avl-subscriptions", () => {
     it("should return a 500 when an unexpected error occurs retrieving subscriptions data", async () => {
         recursiveScanSpy.mockRejectedValueOnce(new Error());
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the AVL subscriptions endpoint",
             expect.any(Error),
