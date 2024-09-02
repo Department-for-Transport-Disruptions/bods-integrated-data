@@ -213,10 +213,3 @@ module "integrated_data_disruptions_pipeline" {
   db_host            = null
   saveJson           = true
 }
-
-module "integrated_data_bods_siri_vm_analyser" {
-  source = "../modules/bods-siri-vm-analyser"
-
-  environment         = local.env
-  siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
-}

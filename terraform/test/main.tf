@@ -340,10 +340,3 @@ module "integrated_data_gtfs_api" {
   hosted_zone_id                                = module.integrated_data_route53.public_hosted_zone_id
   domain                                        = module.integrated_data_route53.public_hosted_zone_name
 }
-
-module "integrated_data_bods_siri_vm_analyser" {
-  source = "../modules/bods-siri-vm-analyser"
-
-  environment         = local.env
-  siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
-}
