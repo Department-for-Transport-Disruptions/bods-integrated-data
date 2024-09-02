@@ -1,7 +1,7 @@
 import path from "node:path";
 import { PassThrough } from "node:stream";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     createLazyDownloadStreamFrom,
@@ -20,6 +20,8 @@ import {
     queryBuilder,
     regionalQueryBuilder,
 } from "./data";
+
+let dbClient: KyselyDb;
 
 /**
  * Checks if any of the generated files in the GTFS bucket are empty (not including headers)
@@ -105,7 +107,7 @@ export const handler: Handler = async (event, context) => {
         throw new Error("Env vars must be set");
     }
 
-    const dbClient = await getDatabaseClient(stage === "local");
+    dbClient = dbClient || (await getDatabaseClient(stage === "local"));
 
     const regionCode = regionCodeSchema.parse(event?.regionCode ?? "ALL");
 

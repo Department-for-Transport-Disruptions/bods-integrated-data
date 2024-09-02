@@ -1,14 +1,16 @@
 import { createServerErrorResponse, createSuccessResponse } from "@bods-integrated-data/shared/api";
 import { getLatestAvlVehicleCount } from "@bods-integrated-data/shared/avl/utils";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { APIGatewayProxyHandler } from "aws-lambda";
+
+let dbClient: KyselyDb;
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+        dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
         const { vehicle_count: vehicleCount } = await getLatestAvlVehicleCount(dbClient);
 

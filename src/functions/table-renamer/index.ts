@@ -3,6 +3,8 @@ import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/l
 import { Handler } from "aws-lambda";
 import { ReferenceExpression } from "kysely";
 
+let dbClient: KyselyDb;
+
 export interface TableKey {
     table: keyof Database;
     newTable: keyof Database;
@@ -68,7 +70,7 @@ export const renameTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         await checkTables(dbClient, databaseTables);

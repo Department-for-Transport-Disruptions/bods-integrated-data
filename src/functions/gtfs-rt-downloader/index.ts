@@ -1,6 +1,6 @@
 import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
     base64Encode,
     generateGtfsRtFeed,
@@ -17,6 +17,8 @@ import {
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
+
+let dbClient: KyselyDb;
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -81,7 +83,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         await putMetrics(download, routeId, startTimeAfter, startTimeBefore, boundingBox);
 
         if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
-            const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+            dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
             try {
                 const avlData = await getAvlDataForGtfs(

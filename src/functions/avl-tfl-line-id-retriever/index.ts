@@ -4,6 +4,8 @@ import { Handler } from "aws-lambda";
 import axios from "axios";
 import { TflLinesSchema } from "./tfl-line.schema";
 
+let dbClient: KyselyDb;
+
 export const getLineIds = async () => {
     const url = "https://api.tfl.gov.uk/Line/Mode/bus";
 
@@ -33,7 +35,7 @@ const insertLineIds = async (dbClient: KyselyDb, lineIds: NewTflLine[]) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info("Starting retrieval of TfL Line IDs");

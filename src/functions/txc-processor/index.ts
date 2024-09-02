@@ -33,6 +33,8 @@ import {
     isRequiredTndsServiceMode,
 } from "./utils";
 
+let dbClient: KyselyDb;
+
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
@@ -289,7 +291,7 @@ export const handler: S3Handler = async (event, context) => {
         throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
     }
 
-    const dbClient = await getDatabaseClient(stage === "local");
+    dbClient = dbClient || (await getDatabaseClient(stage === "local"));
     const record = event.Records[0];
 
     try {

@@ -19,6 +19,8 @@ import {
     getGtfsSeverityLevel,
 } from "./utils";
 
+let dbClient: KyselyDb;
+
 const arrayProperties = [
     "PtSituationElement",
     "ValidityPeriod",
@@ -148,7 +150,7 @@ export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson } = process.env;

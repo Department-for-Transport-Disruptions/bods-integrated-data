@@ -13,6 +13,8 @@ import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
 
+let dbClient: KyselyDb;
+
 const arrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];
 
 const getAndParseData = async (bucket: string, key: string) => {
@@ -96,7 +98,7 @@ export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info(`Starting NPTG uploader for ${object.key}`);

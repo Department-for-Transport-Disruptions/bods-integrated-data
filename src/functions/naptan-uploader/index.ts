@@ -6,6 +6,8 @@ import { Promise as BluebirdPromise } from "bluebird";
 import OsPoint from "ospoint";
 import { parse } from "papaparse";
 
+let dbClient: KyselyDb;
+
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
         naptanData as {
@@ -131,7 +133,7 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanData: unknown[]) => {
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info("Starting naptan uploader");
