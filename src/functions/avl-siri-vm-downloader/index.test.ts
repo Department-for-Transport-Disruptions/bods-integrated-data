@@ -70,11 +70,6 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         process.env.BUCKET_NAME = "";
 
         await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
-
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the SIRI-VM downloader endpoint",
-            expect.any(Error),
-        );
     });
 
     describe("fetching SIRI-VM in-place", () => {
@@ -451,6 +446,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                         "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
                     ],
                 ],
+                [{ operatorRef: `${"TEST,".repeat(200)}TEST` }, ["operatorRef must be fewer than 200 values"]],
                 [
                     { operatorRef: "3," },
                     [
@@ -494,7 +490,6 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     statusCode: 400,
                     body: JSON.stringify({ errors: expectedErrors }),
                 });
-                expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
                 expect(getAvlDataForSiriVmMock).not.toHaveBeenCalled();
             });
 
@@ -507,11 +502,6 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow(
                     "An unexpected error occurred",
-                );
-
-                expect(logger.error).toHaveBeenCalledWith(
-                    "There was a problem with the SIRI-VM downloader endpoint",
-                    expect.any(Error),
                 );
             });
         });

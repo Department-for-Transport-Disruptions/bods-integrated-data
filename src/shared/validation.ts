@@ -84,8 +84,8 @@ export const createNmTokenArrayValidation = (propertyName: string) => {
                     message: `${propertyName} must be comma-separated values of 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
                 })
                 .array()
-                .max(100, {
-                    message: `${propertyName} must be fewer than 100 values`,
+                .max(200, {
+                    message: `${propertyName} must be fewer than 200 values`,
                 }),
         );
 };

@@ -69,6 +69,7 @@ const mockAvl: Avl[] = [
         vehicle_unique_id: null,
         subscription_id: "",
         onward_calls: null,
+        driver_ref: null,
     },
     {
         id: 24183,
@@ -117,6 +118,7 @@ const mockAvl: Avl[] = [
         trip_id: null,
         subscription_id: "",
         onward_calls: null,
+        driver_ref: null,
     },
 ];
 
@@ -157,8 +159,11 @@ describe("utils", () => {
         });
     });
 
-    describe("createVehicleActivites", () => {
-        it("maps required database AVL fields to SIRI-VM fields", () => {
+    describe("createVehicleActivities", () => {
+        it.each([
+            ["NATX", "191D44717"],
+            ["TFLO", "LX20YTA"],
+        ])("maps required database AVL fields to SIRI-VM fields", (operatorRef, expectedVehicleRef) => {
             const currentTime = getDate().toISOString();
 
             const avl: Avl = {
@@ -170,7 +175,7 @@ describe("utils", () => {
                 valid_until_time: "2024-02-26 14:42:12",
                 line_ref: null,
                 direction_ref: "OUT",
-                operator_ref: "NATX",
+                operator_ref: operatorRef,
                 data_frame_ref: "",
                 dated_vehicle_journey_ref: "784105",
                 vehicle_ref: "191D44717",
@@ -184,7 +189,7 @@ describe("utils", () => {
                 occupancy: null,
                 origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
                 geom: null,
-                vehicle_name: null,
+                vehicle_name: "LX20YTA",
                 monitored: "true",
                 load: null,
                 passenger_count: null,
@@ -208,6 +213,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 subscription_id: "",
                 onward_calls: null,
+                driver_ref: null,
             };
 
             const expectedVehicleActivities: SiriVehicleActivity[] = [
@@ -234,7 +240,7 @@ describe("utils", () => {
                         },
                         Bearing: avl.bearing,
                         BlockRef: null,
-                        VehicleRef: avl.vehicle_ref,
+                        VehicleRef: expectedVehicleRef,
                         VehicleJourneyRef: null,
                     },
                 },
@@ -292,6 +298,7 @@ describe("utils", () => {
                 ticket_machine_service_code: "ticket_machine_service_code",
                 journey_code: "journey_code",
                 vehicle_unique_id: "vehicle_unique_id",
+                driver_ref: "1234",
                 subscription_id: "",
                 onward_calls: [
                     {
@@ -351,6 +358,7 @@ describe("utils", () => {
                                 },
                             },
                             VehicleUniqueId: avl.vehicle_unique_id,
+                            DriverRef: avl.driver_ref,
                         },
                     },
                 },

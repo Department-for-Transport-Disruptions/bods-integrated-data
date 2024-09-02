@@ -46,6 +46,7 @@ const extensionsSchema = z
                     .or(txcEmptyProperty)
                     .optional(),
                 VehicleUniqueId: z.coerce.string().nullish(),
+                DriverRef: z.coerce.string().nullish(),
             })
             .or(txcEmptyProperty)
             .optional(),
@@ -235,6 +236,7 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                 journey_code:
                     vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
                 vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
+                driver_ref: vehicleActivity.Extensions?.VehicleJourney?.DriverRef ?? null,
                 onward_calls: onwardCalls && onwardCalls.length > 0 ? JSON.stringify(onwardCalls) : null,
             };
         });
