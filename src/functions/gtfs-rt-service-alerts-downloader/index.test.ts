@@ -45,11 +45,8 @@ describe("gtfs-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler();
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler()).rejects.toThrow("An unexpected error occurred");
+
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS-RT service alerts downloader endpoint",
             expect.any(Error),
@@ -87,11 +84,8 @@ describe("gtfs-downloader-endpoint", () => {
                 download: "true",
             };
 
-            const response = await handler();
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await expect(handler()).rejects.toThrow("An unexpected error occurred");
+
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT service alerts downloader endpoint",
                 expect.any(Error),

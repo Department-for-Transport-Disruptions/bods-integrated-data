@@ -8,8 +8,8 @@ import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
-    AvlServiceRequest,
-    avlServiceDeliverySchema,
+    AvlCheckStatusRequest,
+    avlCheckStatusResponseSchema,
     avlValidateRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
@@ -27,23 +27,18 @@ const requestBodySchema = z
     .transform((body) => JSON.parse(body))
     .pipe(avlValidateRequestSchema);
 
-const generateServiceRequestMessage = (currentTimestamp: string) => {
-    const serviceRequestJson: AvlServiceRequest = {
+const generateCheckStatusRequestMessage = (currentTimestamp: string) => {
+    const checkStatusRequestJson: AvlCheckStatusRequest = {
         Siri: {
-            ServiceRequest: {
+            CheckStatusRequest: {
                 RequestTimestamp: currentTimestamp,
+                AccountId: "BODS",
                 RequestorRef: "BODS",
-                VehicleMonitoringRequest: {
-                    VehicleMonitoringRequest: {
-                        RequestTimestamp: currentTimestamp,
-                        "@_version": "2.0",
-                    },
-                },
             },
         },
     };
 
-    const completeObject: CompleteSiriObject<AvlServiceRequest["Siri"]> = {
+    const completeObject: CompleteSiriObject<AvlCheckStatusRequest["Siri"]> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -55,7 +50,7 @@ const generateServiceRequestMessage = (currentTimestamp: string) => {
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...serviceRequestJson.Siri,
+            ...checkStatusRequestJson.Siri,
         },
     };
 
@@ -79,7 +74,7 @@ const parseXml = (xml: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = avlServiceDeliverySchema.safeParse(parsedXml);
+    const parsedJson = avlCheckStatusResponseSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(
@@ -109,30 +104,33 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const requestTime = getDate();
         const currentTime = requestTime.toISOString();
 
-        const serviceRequest = generateServiceRequestMessage(currentTime);
+        const checkStatusRequest = generateCheckStatusRequestMessage(currentTime);
 
-        const serviceDeliveryResponse = await axios.post<string>(url, serviceRequest, {
+        const serviceDeliveryResponse = await axios.post<string>(url, checkStatusRequest, {
             headers: {
                 "Content-Type": "text/xml",
                 Authorization: createAuthorizationHeader(username, password),
             },
         });
 
-        const serviceDeliveryBody = serviceDeliveryResponse.data;
+        const checkStatusRequestBody = serviceDeliveryResponse.data;
 
-        if (!serviceDeliveryBody) {
+        if (!checkStatusRequestBody) {
             logger.warn("No body was returned from data producer");
             return { statusCode: 200, body: JSON.stringify({ siriVersion: "Unknown" }) };
         }
 
-        const parsedServiceDeliveryBody = parseXml(serviceDeliveryBody);
+        const parsedCheckStatusResponseBody = parseXml(checkStatusRequestBody);
 
-        if (parsedServiceDeliveryBody.Siri.ServiceDelivery.Status !== "true") {
+        if (parsedCheckStatusResponseBody.Siri.CheckStatusResponse.Status !== "true") {
             logger.warn("Data producer did not return a status of true");
             return createValidationErrorResponse(["Data producer did not return a status of true"]);
         }
 
-        return { statusCode: 200, body: JSON.stringify({ siriVersion: parsedServiceDeliveryBody.Siri["@_version"] }) };
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ siriVersion: parsedCheckStatusResponseBody.Siri["@_version"] }),
+        };
     } catch (error) {
         if (error instanceof ZodError) {
             logger.warn("Invalid request", error);

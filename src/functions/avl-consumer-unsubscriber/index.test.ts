@@ -56,12 +56,7 @@ describe("avl-consumer-unsubscriber", () => {
     it("returns a 500 when the required env var AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME is missing", async () => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = "";
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the avl-consumer-unsubscriber endpoint",

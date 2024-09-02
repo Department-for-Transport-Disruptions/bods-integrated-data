@@ -4,6 +4,8 @@ import {
     DynamoDBDocumentClient,
     GetCommand,
     PutCommand,
+    QueryCommand,
+    QueryCommandInput,
     ScanCommand,
     ScanCommandInput,
 } from "@aws-sdk/lib-dynamodb";
@@ -93,6 +95,26 @@ export const recursiveScan = async (scanCommandInput: ScanCommandInput): Promise
             ...dbData.Items,
             ...(await recursiveScan({
                 ...scanCommandInput,
+                ExclusiveStartKey: dbData.LastEvaluatedKey,
+            })),
+        ];
+    }
+
+    return dbData.Items;
+};
+
+export const recursiveQuery = async (queryCommandInput: QueryCommandInput): Promise<Record<string, unknown>[]> => {
+    const dbData = await dynamoDbDocClient.send(new QueryCommand(queryCommandInput));
+
+    if (!dbData.Items) {
+        return [];
+    }
+
+    if (dbData.LastEvaluatedKey) {
+        return [
+            ...dbData.Items,
+            ...(await recursiveQuery({
+                ...queryCommandInput,
                 ExclusiveStartKey: dbData.LastEvaluatedKey,
             })),
         ];

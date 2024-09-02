@@ -58,16 +58,6 @@ module "integrated_data_vpc" {
   public_subnet_cidr_blocks  = ["10.100.20.0/24", "10.100.21.0/24", "10.100.22.0/24"]
 }
 
-module "integrated_data_internal_api" {
-  source = "../modules/networking/internal-api"
-
-  environment         = local.env
-  vpc_id              = module.integrated_data_vpc.vpc_id
-  nlb_subnet_ids      = module.integrated_data_vpc.private_subnet_ids
-  external_ip_range   = local.secrets["bods_ip_range"]
-  external_account_id = local.secrets["bods_account_id"]
-}
-
 module "integrated_data_route53" {
   source = "../modules/networking/route-53"
 
@@ -255,15 +245,8 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_memory                    = 4096
   siri_vm_generator_frequency                 = 10
   avl_cleardown_frequency                     = 30
-  siri_vm_downloader_image_url                = local.secrets["siri_vm_downloader_image_url"]
-  siri_vm_downloader_cpu                      = 1024
-  siri_vm_downloader_memory                   = 2048
-  siri_vm_downloader_desired_task_count       = 3
-  siri_vm_downloader_nlb_target_group_arn     = module.integrated_data_internal_api.nlb_target_group_arn
-  avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
-  nlb_sg_id                                   = module.integrated_data_internal_api.nlb_sg_id
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
-  external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_downloader"]
+  external_vpces_for_sirivm_api               = local.secrets["external_vpces_for_sirivm_api"]
 }
 
 module "integrated_data_avl_data_producer_api" {
@@ -350,16 +333,18 @@ module "integrated_data_timetables_sfn" {
 module "integrated_data_gtfs_api" {
   source = "../modules/gtfs-api"
 
-  environment                       = local.env
-  gtfs_downloader_lambda_name       = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
-  gtfs_downloader_invoke_arn        = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
-  gtfs_region_retriever_invoke_arn  = module.integrated_data_gtfs_downloader.gtfs_region_retriever_invoke_arn
-  gtfs_region_retriever_lambda_name = module.integrated_data_gtfs_downloader.gtfs_region_retriever_lambda_name
-  gtfs_rt_downloader_lambda_name    = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
-  gtfs_rt_downloader_invoke_arn     = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
-  acm_certificate_arn               = module.integrated_data_acm.acm_certificate_arn
-  hosted_zone_id                    = module.integrated_data_route53.public_hosted_zone_id
-  domain                            = module.integrated_data_route53.public_hosted_zone_name
+  environment                                   = local.env
+  gtfs_downloader_lambda_name                   = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
+  gtfs_downloader_invoke_arn                    = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
+  gtfs_region_retriever_invoke_arn              = module.integrated_data_gtfs_downloader.gtfs_region_retriever_invoke_arn
+  gtfs_region_retriever_lambda_name             = module.integrated_data_gtfs_downloader.gtfs_region_retriever_lambda_name
+  gtfs_rt_downloader_lambda_name                = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
+  gtfs_rt_downloader_invoke_arn                 = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
+  gtfs_rt_service_alerts_downloader_lambda_name = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_service_alerts_downloader_lambda_name
+  gtfs_rt_service_alerts_downloader_invoke_arn  = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_service_alerts_downloader_invoke_arn
+  acm_certificate_arn                           = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                                = module.integrated_data_route53.public_hosted_zone_id
+  domain                                        = module.integrated_data_route53.public_hosted_zone_name
 }
 
 # VPN
@@ -391,4 +376,11 @@ module "internal_avl_ingestion" {
 locals {
   env     = "prod"
   secrets = jsondecode(data.sops_file.secrets.raw)
+}
+
+module "integrated_data_bods_siri_vm_analyser" {
+  source = "../modules/bods-siri-vm-analyser"
+
+  environment         = local.env
+  siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
 }
