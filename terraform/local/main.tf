@@ -145,13 +145,6 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_image_url                 = "siri-vm-generator:latest"
   siri_vm_generator_frequency                 = 240
   avl_cleardown_frequency                     = 120
-  siri_vm_downloader_image_url                = "siri-vm-downloader:latest"
-  siri_vm_downloader_cpu                      = 1024
-  siri_vm_downloader_memory                   = 2048
-  siri_vm_downloader_desired_task_count       = 3
-  siri_vm_downloader_nlb_target_group_arn     = ""
-  avl_consumer_api_key                        = local.secrets["avl_consumer_api_key"]
-  nlb_sg_id                                   = ""
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
 }
 
@@ -220,4 +213,11 @@ module "integrated_data_disruptions_pipeline" {
   db_host            = null
   retriever_schedule = "rate(5 minutes)"
   save_json          = true
+}
+
+module "integrated_data_bods_siri_vm_analyser" {
+  source = "../modules/bods-siri-vm-analyser"
+
+  environment         = local.env
+  siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
 }

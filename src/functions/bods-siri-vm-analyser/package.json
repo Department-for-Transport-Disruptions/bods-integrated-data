@@ -1,0 +1,29 @@
+{
+    "name": "@bods-integrated-data/bods-siri-vm-analyser",
+    "version": "0.1.0",
+    "description": "This function is to process SIRI-VM AVL data and upload it to the database",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-siri-vm-analyser.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-siri-vm-analyser.zip ../dist/bods-siri-vm-analyser.zip",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.4.1",
+        "axios": "^1.7.2",
+        "unzipper": "^0.10.14"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19",
+        "@types/unzipper": "^0.10.9",
+        "@types/xml2js": "^0.4.14",
+        "mockdate": "^3.0.5",
+        "xml2js": "^0.6.2",
+        "zod": "^3.23.8"
+    }
+}

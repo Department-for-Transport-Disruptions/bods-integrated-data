@@ -78,36 +78,41 @@ describe("AVL-data-endpoint", () => {
         MockDate.reset();
     });
 
-    it("Should add valid AVL data to S3", async () => {
-        const expectedSubscription: AvlSubscription = {
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            description: "test-description",
-            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
-            requestorRef: null,
-            shortDescription: "test-short-description",
-            status: "live",
-            url: "https://mock-data-producer.com/",
-            publisherId: "test-publisher-id",
-            apiKey: "mock-api-key",
-        };
+    it.each(["live", "error"] as const)(
+        "Should add valid AVL data to S3 if subscription status is %o",
+        async (status) => {
+            const avlSubscription: AvlSubscription = {
+                PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+                description: "test-description",
+                lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+                requestorRef: null,
+                shortDescription: "test-short-description",
+                status,
+                url: "https://mock-data-producer.com/",
+                publisherId: "test-publisher-id",
+                apiKey: "mock-api-key",
+            };
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
+            getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
-        expect(s3.putS3Object).toHaveBeenCalled();
-        expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiri}`,
-            Bucket: "test-bucket",
-            ContentType: "application/xml",
-            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
-        });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
-        expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
-            "test-dynamodb",
-            expectedSubscription.PK,
-            "SUBSCRIPTION",
-            expectedSubscription,
-        );
-    });
+            expect(s3.putS3Object).toHaveBeenCalled();
+            expect(s3.putS3Object).toHaveBeenCalledWith({
+                Body: `${testSiri}`,
+                Bucket: "test-bucket",
+                ContentType: "application/xml",
+                Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
+            });
+
+            expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
+                "test-dynamodb",
+                avlSubscription.PK,
+                "SUBSCRIPTION",
+                avlSubscription,
+            );
+        },
+    );
 
     it("Should add valid AVL data with a single vehicle activity to S3", async () => {
         const subscription: AvlSubscription = {
@@ -146,11 +151,8 @@ describe("AVL-data-endpoint", () => {
         process.env.TABLE_NAME = "";
         mockEvent.body = testSiriWithSingleVehicleActivity;
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
         expect(logger.error).toHaveBeenCalledWith("There was a problem with the Data endpoint", expect.any(Error));
         expect(s3.putS3Object).not.toHaveBeenCalled();
     });
@@ -200,7 +202,7 @@ describe("AVL-data-endpoint", () => {
         expect(s3.putS3Object).toHaveBeenCalled();
     });
 
-    it("Throws an error when the subscription is not live", async () => {
+    it("Throws an error when the subscription is inactive", async () => {
         getDynamoItemSpy.mockResolvedValue({
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
@@ -215,9 +217,8 @@ describe("AVL-data-endpoint", () => {
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 404,
-            body: JSON.stringify({ errors: ["Subscription is not live"] }),
+            body: JSON.stringify({ errors: ["Subscription is inactive"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith("Subscription is not live, data will not be processed...");
         expect(dynamo.putDynamoItem).not.toHaveBeenCalled();
     });
 
@@ -254,7 +255,6 @@ describe("AVL-data-endpoint", () => {
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
         expect(dynamo.putDynamoItem).not.toHaveBeenCalled();
     });
 

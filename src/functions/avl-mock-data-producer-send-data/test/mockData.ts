@@ -35,10 +35,10 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
         <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
         <ProducerRef>${subscriptionId}</ProducerRef>
         <VehicleMonitoringDelivery version="2.0">
-            <ResponseTimestamp>2024-03-11T15:20:02.093Z</ResponseTimestamp>
+            <ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp>
             <VehicleActivity>
-                <RecordedAtTime>2024-03-11T15:20:02.093Z</RecordedAtTime>
-                <ValidUntilTime>2024-03-11T15:25:02.093Z</ValidUntilTime>
+                <RecordedAtTime>2024-03-11T15:20:02.093+00:00</RecordedAtTime>
+                <ValidUntilTime>2024-03-11T15:25:02.093+00:00</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
                     <DirectionRef>2</DirectionRef>
@@ -60,8 +60,8 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
                 </MonitoredVehicleJourney>
             </VehicleActivity>
             <VehicleActivity>
-                <RecordedAtTime>2024-03-11T15:20:02.093Z</RecordedAtTime>
-                <ValidUntilTime>2024-03-11T15:25:02.093Z</ValidUntilTime>
+                <RecordedAtTime>2024-03-11T15:20:02.093+00:00</RecordedAtTime>
+                <ValidUntilTime>2024-03-11T15:25:02.093+00:00</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:11</LineRef>
                     <DirectionRef>2</DirectionRef>

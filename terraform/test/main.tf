@@ -226,7 +226,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 30
   avl_cleardown_frequency                     = 60
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
-  external_vpces_for_sirivm_downloader        = local.secrets["external_vpces_for_sirivm_downloader"]
+  external_vpces_for_sirivm_api               = local.secrets["external_vpces_for_sirivm_api"]
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -340,4 +340,11 @@ module "integrated_data_gtfs_api" {
   acm_certificate_arn                           = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                                = module.integrated_data_route53.public_hosted_zone_id
   domain                                        = module.integrated_data_route53.public_hosted_zone_name
+}
+
+module "integrated_data_bods_siri_vm_analyser" {
+  source = "../modules/bods-siri-vm-analyser"
+
+  environment         = local.env
+  siri_vm_bucket_name = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
 }

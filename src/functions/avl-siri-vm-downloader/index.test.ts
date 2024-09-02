@@ -69,15 +69,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler(mockRequest, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the SIRI-VM downloader endpoint",
-            expect.any(Error),
-        );
+        await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
     });
 
     describe("fetching SIRI-VM in-place", () => {
@@ -156,11 +148,9 @@ describe("avl-siri-vm-downloader-endpoint", () => {
         it("returns a 500 when an unexpected error occurs", async () => {
             mocks.getS3Object.mockRejectedValueOnce(new Error());
 
-            const response = await handler(mockRequest, mockContext, mockCallback);
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow(
+                "An unexpected error occurred",
+            );
         });
     });
 
@@ -184,7 +174,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
-                    "1,2,3,4",
+                    [1, 2, 3, 4],
                     undefined,
                     undefined,
                     undefined,
@@ -214,7 +204,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
                     undefined,
-                    "1",
+                    ["1"],
                     undefined,
                     undefined,
                     undefined,
@@ -225,7 +215,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 expect(logger.error).not.toHaveBeenCalled();
             });
 
-            it("returns a 200 with filtered data when the operatorRef query param is used", async () => {
+            it("returns a 200 with filtered data when the operatorRef query param is used with multiple refs", async () => {
                 getAvlDataForSiriVmMock.mockResolvedValueOnce([]);
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
@@ -243,7 +233,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
                     undefined,
-                    "1,2,3",
+                    ["1", "2", "3"],
                     undefined,
                     undefined,
                     undefined,
@@ -433,52 +423,73 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             it.each([
                 [
                     { boundingBox: "asdf" },
-                    "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                    [
+                        "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                        "boundingBox must use valid numbers",
+                    ],
                 ],
                 [
                     { boundingBox: "34.5,56.7,-34.697" },
-                    "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                    [
+                        "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                    ],
                 ],
                 [
                     { boundingBox: "34.5,56.7,-34.697,-19.0,33.333" },
-                    "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                    [
+                        "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                    ],
                 ],
                 [
                     { operatorRef: "asdf123!@£" },
-                    "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
+                [{ operatorRef: `${"TEST,".repeat(200)}TEST` }, ["operatorRef must be fewer than 200 values"]],
                 [
                     { operatorRef: "3," },
-                    "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
                 [
                     { vehicleRef: "asdf123!@£" },
-                    "vehicleRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "vehicleRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
                 [
                     { lineRef: "asdf123!@£" },
-                    "lineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "lineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
                 [
                     { producerRef: "asdf123!@£" },
-                    "producerRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "producerRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
                 [
                     { originRef: "asdf123!@£" },
-                    "originRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "originRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
                 [
                     { destinationRef: "asdf123!@£" },
-                    "destinationRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    [
+                        "destinationRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                    ],
                 ],
-            ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
+            ])("returns a 400 when the %o query param fails validation", async (params, expectedErrors) => {
                 mockRequest.queryStringParameters = params;
                 const response = await handler(mockRequest, mockContext, mockCallback);
                 expect(response).toEqual({
                     statusCode: 400,
-                    body: JSON.stringify({ errors: [expectedErrorMessage] }),
+                    body: JSON.stringify({ errors: expectedErrors }),
                 });
-                expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
                 expect(getAvlDataForSiriVmMock).not.toHaveBeenCalled();
             });
 
@@ -489,15 +500,8 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     operatorRef: "1",
                 };
 
-                const response = await handler(mockRequest, mockContext, mockCallback);
-                expect(response).toEqual({
-                    statusCode: 500,
-                    body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-                });
-
-                expect(logger.error).toHaveBeenCalledWith(
-                    "There was a problem with the SIRI-VM downloader endpoint",
-                    expect.any(Error),
+                await expect(handler(mockRequest, mockContext, mockCallback)).rejects.toThrow(
+                    "An unexpected error occurred",
                 );
             });
         });

@@ -38,10 +38,7 @@ export const createConflictErrorResponse = (error: string): APIGatewayProxyResul
 };
 
 export const createServerErrorResponse = (error?: string): APIGatewayProxyResult => {
-    return {
-        statusCode: 500,
-        body: JSON.stringify({ errors: [error || "An unexpected error occurred"] }),
-    };
+    throw new Error(error || "An unexpected error occurred");
 };
 
 export const validateApiKey = async (secretArn: string, headers: APIGatewayProxyEventHeaders) => {

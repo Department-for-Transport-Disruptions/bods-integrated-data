@@ -3,11 +3,12 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { APIGatewayProxyEvent } from "aws-lambda";
+import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
+import { APIGatewayProxyEventV2 } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getTotalAvlsProcessed, handler } from ".";
-import { mockResponseString } from "./test/mockResponse";
+import { mockNoErrorsResponse, mockResponseString } from "./test/mockResponse";
 
 describe("AVL-data-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
@@ -24,28 +25,54 @@ describe("AVL-data-endpoint", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        putDynamoItem: vi.fn(),
         getDynamoItem: vi.fn(),
-        recursiveScan: vi.fn(),
+        recursiveQuery: vi.fn(),
     }));
 
-    const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
+    vi.mock("@bods-integrated-data/shared/secretsManager", () => ({
+        getSecret: vi.fn(),
+    }));
+
+    const getSecretMock = vi.spyOn(secretsManagerFunctions, "getSecret");
+
+    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    const recursiveQuerySpy = vi.spyOn(dynamo, "recursiveQuery");
+
     const runLogInsightsQuerySpy = vi.spyOn(cloudwatch, "runLogInsightsQuery");
 
     MockDate.set("2024-03-11T00:00:00.000Z");
     const mockSubscriptionId = "411e4495-4a57-4d2f-89d5-cf105441f321";
-    let mockEvent: APIGatewayProxyEvent;
+    let mockEvent: APIGatewayProxyEventV2;
 
     beforeEach(() => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "test-dynamodb";
+        process.env.AVL_SUBSCRIPTIONS_TABLE_NAME = "test-sub-dynamodb";
+        process.env.AVL_PROCESSOR_LOG_GROUP_NAME = "test";
+        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-api-key";
+
+        getSecretMock.mockResolvedValue("mock-api-key");
 
         mockEvent = {
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-        } as unknown as APIGatewayProxyEvent;
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+        } as unknown as APIGatewayProxyEventV2;
 
-        recursiveScanSpy.mockResolvedValue([
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "live",
+            requestorRef: null,
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        });
+
+        recursiveQuerySpy.mockResolvedValue([
             {
                 PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
@@ -91,14 +118,18 @@ describe("AVL-data-endpoint", () => {
         MockDate.reset();
     });
 
-    it("Should get total avl processed from cloudwatch with correct date", async () => {
+    it("should get total avl processed from cloudwatch with correct date", async () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
             statusCode: 200,
             body: mockResponseString,
+            headers: {
+                "Content-Type": "application/json",
+            },
         });
 
         expect(cloudwatch.runLogInsightsQuery).toBeCalled();
         expect(cloudwatch.runLogInsightsQuery).toBeCalledWith<Parameters<typeof cloudwatch.runLogInsightsQuery>>(
+            "test",
             getDate().subtract(24, "hours").unix(),
             getDate().unix(),
             `filter msg = "AVL processed successfully" and subscriptionId = "${mockSubscriptionId}"
@@ -106,26 +137,25 @@ describe("AVL-data-endpoint", () => {
         );
     });
 
-    it("Throws an error when the required env vars are missing", async () => {
+    it("throws an error when the required env vars are missing", async () => {
         process.env.AVL_VALIDATION_ERROR_TABLE = "";
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
-        expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the avl data feed validator endpoint",
-            expect.any(Error),
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(
+            "An unexpected error occurred",
         );
+
+        expect(logger.error).toHaveBeenCalledWith("There was a problem with the avl data feed validator endpoint");
     });
 
-    it("Throws a validation error when invalid data passed", async () => {
+    it("throws a validation error when invalid data passed", async () => {
         const mockInvalidEvent = {
             pathParameters: {
                 subscriptionId: 123,
             },
-        } as unknown as APIGatewayProxyEvent;
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+        } as unknown as APIGatewayProxyEventV2;
         const response = await handler(mockInvalidEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
@@ -134,14 +164,68 @@ describe("AVL-data-endpoint", () => {
         expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
     });
 
-    it("Should add total number of avl items processed", async () => {
-        const response = await getTotalAvlsProcessed(mockSubscriptionId);
+    it("should add total number of avl items processed", async () => {
+        const response = await getTotalAvlsProcessed(mockSubscriptionId, "test");
         expect(response).toEqual(2);
     });
 
-    it("Should return 0 when no avl items processed", async () => {
+    it("should return 0 when no avl items processed", async () => {
         runLogInsightsQuerySpy.mockResolvedValueOnce([[]]);
-        const response = await getTotalAvlsProcessed(mockSubscriptionId);
+        const response = await getTotalAvlsProcessed(mockSubscriptionId, "test");
         expect(response).toEqual(0);
+    });
+
+    it("should return default values for validation if no errors are found", async () => {
+        recursiveQuerySpy.mockResolvedValue([]);
+
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
+            statusCode: 200,
+            body: JSON.stringify(mockNoErrorsResponse),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        expect(cloudwatch.runLogInsightsQuery).toBeCalled();
+        expect(cloudwatch.runLogInsightsQuery).toBeCalledWith<Parameters<typeof cloudwatch.runLogInsightsQuery>>(
+            "test",
+            getDate().subtract(24, "hours").unix(),
+            getDate().unix(),
+            `filter msg = "AVL processed successfully" and subscriptionId = "${mockSubscriptionId}"
+        | stats count(*) as avlProcessed`,
+        );
+    });
+
+    it("should throw a not found error if subscription ID is not found", async () => {
+        getDynamoItemSpy.mockResolvedValueOnce(null);
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 404,
+            body: JSON.stringify({
+                errors: ["Subscription not found"],
+            }),
+        });
+    });
+
+    it("should throw a not found error if subscription is inactive", async () => {
+        getDynamoItemSpy.mockResolvedValueOnce({
+            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
+            url: "https://mock-data-producer.com/",
+            description: "test-description",
+            shortDescription: "test-short-description",
+            status: "inactive",
+            requestorRef: null,
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        });
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 404,
+            body: JSON.stringify({
+                errors: ["Subscription is not live"],
+            }),
+        });
     });
 });
