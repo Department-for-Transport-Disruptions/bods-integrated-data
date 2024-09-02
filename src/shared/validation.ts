@@ -10,7 +10,7 @@ export const NM_TOKEN_REGEX = new RegExp(`^[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX
 export const NM_TOKEN_ARRAY_REGEX = new RegExp(
     `^[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX_LENGTH}}(,[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX_LENGTH}})*$`,
 );
-export const SUBSCRIPTION_ID_ARRAY_REGEX = /^[a-zA-Z0-9-]+(,[a-zA-Z0-9-]+){0,4}$/;
+export const SUBSCRIPTION_ID_ARRAY_REGEX = /^[0-9]+(,[0-9]+){0,4}$/;
 
 export const NM_TOKEN_DISALLOWED_CHARS_REGEX = /[^a-zA-Z0-9._:-]/g;
 export const SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX = /[,\[\]\{\}\?$%\^=@#;:]/g;
