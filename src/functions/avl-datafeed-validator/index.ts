@@ -1,11 +1,20 @@
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
-import { getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
+import {
+    createNotFoundErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+    validateApiKey,
+} from "@bods-integrated-data/shared/api";
+import {
+    SubscriptionIdNotFoundError,
+    getAvlSubscription,
+    getAvlSubscriptionErrorData,
+} from "@bods-integrated-data/shared/avl/utils";
 import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 const requestParamsSchema = z.preprocess(
@@ -22,11 +31,12 @@ const pathParamsSchema = z.preprocess(
     }),
 );
 
-export const getTotalAvlsProcessed = async (subscriptionId: string) => {
+export const getTotalAvlsProcessed = async (subscriptionId: string, avlProcessorLogGroupName: string) => {
     const now = getDate();
     const dayAgo = now.subtract(24, "hours");
 
     const data = await runLogInsightsQuery(
+        avlProcessorLogGroupName,
         dayAgo.unix(),
         now.unix(),
         `filter msg = "AVL processed successfully" and subscriptionId = "${subscriptionId}"
@@ -48,8 +58,8 @@ const generateValidationSummary = (errors: AvlValidationError[], totalProcessed:
         total_error_count: criticalCount + nonCriticalCount,
         critical_error_count: criticalCount,
         non_critical_error_count: nonCriticalCount,
-        critical_score: criticalCount / totalProcessed / 10,
-        non_critical_score: (nonCriticalCount / totalProcessed / 10) * 2,
+        critical_score: 1 - criticalCount / totalProcessed / 10,
+        non_critical_score: 1 - (nonCriticalCount / totalProcessed / 10) * 2,
         vehicle_activity_count: totalProcessed,
     };
 };
@@ -63,7 +73,7 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
             line_ref: error.lineRef,
             name: error.name,
             operator_ref: error.operatorRef,
-            recordedAtTime: error.recordedAtTime,
+            recorded_at_time: error.recordedAtTime,
             vehicle_journey_ref: error.vehicleJourneyRef,
             vehicle_ref: error.vehicleRef,
         },
@@ -73,7 +83,7 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
         {
             header: {
                 packet_name: errors[0].filename,
-                timeStamp: errors[0].responseTimestamp,
+                timestamp: errors[0].responseTimestamp,
                 feed_id: subscriptionId,
             },
             errors: errorsFormatted,
@@ -81,13 +91,24 @@ const generateResults = (errors: AvlValidationError[], subscriptionId: string) =
     ];
 };
 
-const generateReportBody = async (errorData: AvlValidationError[], subscriptionId: string) => {
-    const totalProcessed = await getTotalAvlsProcessed(subscriptionId);
+const generateReportBody = async (
+    errorData: AvlValidationError[],
+    subscriptionId: string,
+    avlProcessorLogGroupName: string,
+) => {
+    const totalProcessed = await getTotalAvlsProcessed(subscriptionId, avlProcessorLogGroupName);
 
     const reportBody = {
         feed_id: subscriptionId,
         packet_count: totalProcessed,
-        validation_summary: {},
+        validation_summary: {
+            total_error_count: 0,
+            critical_error_count: 0,
+            non_critical_error_count: 0,
+            critical_score: 1.0,
+            non_critical_score: 1.0,
+            vehicle_activity_count: totalProcessed,
+        },
         errors: {},
     };
 
@@ -99,29 +120,53 @@ const generateReportBody = async (errorData: AvlValidationError[], subscriptionI
     return reportBody;
 };
 
-export const handler: APIGatewayProxyHandler = async (event, context) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { AVL_VALIDATION_ERROR_TABLE: tableName } = process.env;
+        const {
+            AVL_VALIDATION_ERROR_TABLE: validationErrorsTableName,
+            AVL_PROCESSOR_LOG_GROUP_NAME: avlProcessorLogGroupName,
+            AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
+            AVL_SUBSCRIPTIONS_TABLE_NAME: subscriptionsTableName,
+        } = process.env;
 
-        if (!tableName) {
-            throw new Error("Missing env vars - AVL_VALIDATION_ERROR_TABLE must be set");
+        if (
+            !validationErrorsTableName ||
+            !avlProcessorLogGroupName ||
+            !avlProducerApiKeyArn ||
+            !subscriptionsTableName
+        ) {
+            throw new Error(
+                "Missing env vars - AVL_VALIDATION_ERROR_TABLE, AVL_PRODUCER_API_KEY_ARN, AVL_PROCESSOR_LOG_GROUP_NAME and AVL_SUBSCRIPTIONS_TABLE_NAME must be set",
+            );
         }
+
+        await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { sampleSize } = requestParamsSchema.parse(event.queryStringParameters);
         const { subscriptionId } = pathParamsSchema.parse(event.pathParameters);
         logger.subscriptionId = subscriptionId;
 
-        const errorData = await getAvlSubscriptionErrorData(tableName, subscriptionId);
+        const subscription = await getAvlSubscription(subscriptionId, subscriptionsTableName);
 
-        const reportBody = await generateReportBody(errorData, subscriptionId);
+        if (subscription.status === "inactive") {
+            logger.error("Subscription is not live, validation report will not be generated...");
+            return createNotFoundErrorResponse("Subscription is not live");
+        }
+
+        const errorData = await getAvlSubscriptionErrorData(validationErrorsTableName, subscriptionId);
+
+        const reportBody = await generateReportBody(errorData, subscriptionId, avlProcessorLogGroupName);
 
         logger.info("Executed avl data feed validator", { sampleSize });
 
         return {
             statusCode: 200,
             body: JSON.stringify(reportBody),
+            headers: {
+                "Content-Type": "application/json",
+            },
         };
     } catch (e) {
         if (e instanceof ZodError) {
@@ -130,7 +175,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the avl data feed validator endpoint", e);
+            logger.error("There was a problem with the avl data feed validator endpoint");
+            logger.error(e);
+        }
+
+        if (e instanceof SubscriptionIdNotFoundError) {
+            logger.error("Subscription not found", e);
+            return createNotFoundErrorResponse("Subscription not found");
         }
 
         return createServerErrorResponse();

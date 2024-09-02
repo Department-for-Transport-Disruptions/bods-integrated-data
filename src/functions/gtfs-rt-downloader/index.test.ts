@@ -59,11 +59,8 @@ describe("gtfs-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 500,
-            body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-        });
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
         expect(logger.error).toHaveBeenCalledWith(
             "There was a problem with the GTFS-RT downloader endpoint",
             expect.any(Error),
@@ -88,11 +85,8 @@ describe("gtfs-downloader-endpoint", () => {
         it("returns a 500 when no GTFS-RT data can be found", async () => {
             mocks.getS3Object.mockResolvedValueOnce({ Body: undefined });
 
-            const response = await handler(mockEvent, mockContext, mockCallback);
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
@@ -146,11 +140,8 @@ describe("gtfs-downloader-endpoint", () => {
                 download: "true",
             };
 
-            const response = await handler(mockEvent, mockContext, mockCallback);
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
@@ -162,32 +153,43 @@ describe("gtfs-downloader-endpoint", () => {
         it.each([
             [
                 { boundingBox: "asdf" },
-                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                [
+                    "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                    "boundingBox must use valid numbers",
+                ],
             ],
             [
                 { boundingBox: "34.5,56.7,-34.697" },
-                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                [
+                    "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                ],
             ],
             [
                 { boundingBox: "34.5,56.7,-34.697,-19.0,33.333" },
-                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                [
+                    "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+                ],
             ],
             [
                 { routeId: "asdf123!@£" },
-                "routeId must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                [
+                    "routeId must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                ],
             ],
             [
                 { routeId: "1," },
-                "routeId must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                [
+                    "routeId must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                ],
             ],
-            [{ startTimeBefore: "asdf123!@£" }, "startTimeBefore must be a number"],
-            [{ startTimeAfter: "asdf123!@£" }, "startTimeAfter must be a number"],
-        ])("returns a 400 when the %o query param fails validation", async (params, expectedErrorMessage) => {
+            [{ startTimeBefore: "asdf123!@£" }, ["startTimeBefore must be a number"]],
+            [{ startTimeAfter: "asdf123!@£" }, ["startTimeAfter must be a number"]],
+        ])("returns a 400 when the %o query param fails validation", async (params, expectedErrors) => {
             mockEvent.queryStringParameters = params;
             const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
                 statusCode: 400,
-                body: JSON.stringify({ errors: [expectedErrorMessage] }),
+                body: JSON.stringify({ errors: expectedErrors }),
             });
             expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
             expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
@@ -210,7 +212,7 @@ describe("gtfs-downloader-endpoint", () => {
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
-                "1",
+                ["1"],
                 undefined,
                 undefined,
                 undefined,
@@ -223,7 +225,7 @@ describe("gtfs-downloader-endpoint", () => {
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockEvent.queryStringParameters = {
-                routeId: "1,2,3",
+                routeId: "1,2, 3",
             };
 
             await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
@@ -235,7 +237,7 @@ describe("gtfs-downloader-endpoint", () => {
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
-                "1,2,3",
+                ["1", "2", "3"],
                 undefined,
                 undefined,
                 undefined,
@@ -313,7 +315,7 @@ describe("gtfs-downloader-endpoint", () => {
                 undefined,
                 undefined,
                 undefined,
-                "1,2,3,4",
+                [1, 2, 3, 4],
             );
             expect(logger.error).not.toHaveBeenCalled();
         });
@@ -325,11 +327,8 @@ describe("gtfs-downloader-endpoint", () => {
                 routeId: "1",
             };
 
-            const response = await handler(mockEvent, mockContext, mockCallback);
-            expect(response).toEqual({
-                statusCode: 500,
-                body: JSON.stringify({ errors: ["An unexpected error occurred"] }),
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
+
             expect(logger.error).toHaveBeenCalledWith(
                 "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),

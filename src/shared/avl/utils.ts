@@ -12,7 +12,7 @@ import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
-import { getDynamoItem, recursiveScan } from "../dynamo";
+import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
@@ -60,9 +60,10 @@ export const getAvlSubscriptionErrorData = async (
     const now = getDate();
     const past24Hours = now.subtract(24, "hours");
 
-    const subscriptionErrors = await recursiveScan({
+    const subscriptionErrors = await recursiveQuery({
         TableName: tableName,
-        FilterExpression: "#PK = :subscriptionId AND #recordedAtTime > :past24Hours",
+        KeyConditionExpression: "#PK = :subscriptionId",
+        FilterExpression: "#recordedAtTime > :past24Hours",
         ExpressionAttributeNames: {
             "#PK": "PK",
             "#recordedAtTime": "recordedAtTime",
@@ -207,14 +208,14 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
  */
 export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
     ...avl,
-    response_time_stamp: new Date(avl.response_time_stamp).toISOString(),
-    recorded_at_time: new Date(avl.recorded_at_time).toISOString(),
-    valid_until_time: new Date(avl.valid_until_time).toISOString(),
+    response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
+    recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
+    valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
     origin_aimed_departure_time: avl.origin_aimed_departure_time
-        ? new Date(avl.origin_aimed_departure_time).toISOString()
+        ? formatSiriVmDatetimes(getDate(avl.origin_aimed_departure_time), false)
         : null,
     destination_aimed_arrival_time: avl.destination_aimed_arrival_time
-        ? new Date(avl.destination_aimed_arrival_time).toISOString()
+        ? formatSiriVmDatetimes(getDate(avl.destination_aimed_arrival_time), false)
         : null,
 });
 
@@ -225,18 +226,18 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
  */
 export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
     ...avl,
-    response_time_stamp: new Date(avl.response_time_stamp).toISOString(),
-    recorded_at_time: new Date(avl.recorded_at_time).toISOString(),
-    valid_until_time: new Date(avl.valid_until_time).toISOString(),
+    response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
+    recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
+    valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
     origin_aimed_departure_time: avl.origin_aimed_departure_time
-        ? new Date(avl.origin_aimed_departure_time).toISOString()
+        ? formatSiriVmDatetimes(getDate(avl.origin_aimed_departure_time), false)
         : null,
 });
 
 export const getQueryForLatestAvl = (
     dbClient: KyselyDb,
-    boundingBox?: string,
-    operatorRef?: string,
+    boundingBox?: number[],
+    operatorRef?: string[],
     vehicleRef?: string,
     lineRef?: string,
     producerRef?: string,
@@ -248,17 +249,22 @@ export const getQueryForLatestAvl = (
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
 
     if (boundingBox) {
-        const [minX, minY, maxX, maxY] = boundingBox.split(",").map((coord) => Number(coord));
+        const [minX, minY, maxX, maxY] = boundingBox;
         const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
         query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
     }
 
     if (operatorRef) {
-        query = query.where("operator_ref", "in", operatorRef.split(","));
+        query = query.where("operator_ref", "in", operatorRef);
     }
 
     if (vehicleRef) {
-        query = query.where("vehicle_ref", "=", vehicleRef);
+        query = query.where((qb) =>
+            qb.or([
+                qb.and([qb("operator_ref", "!=", "TFLO"), qb("vehicle_ref", "=", vehicleRef)]),
+                qb.and([qb("operator_ref", "=", "TFLO"), qb("vehicle_name", "=", vehicleRef)]),
+            ]),
+        );
     }
 
     if (lineRef) {
@@ -290,8 +296,8 @@ export const getQueryForLatestAvl = (
 
 export const getAvlDataForSiriVm = async (
     dbClient: KyselyDb,
-    boundingBox?: string,
-    operatorRef?: string,
+    boundingBox?: number[],
+    operatorRef?: string[],
     vehicleRef?: string,
     lineRef?: string,
     producerRef?: string,
@@ -340,7 +346,6 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
             RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
             ValidUntilTime: validUntilTime,
-            VehicleMonitoringRef: avl.vehicle_monitoring_ref,
             MonitoredVehicleJourney: {
                 LineRef: avl.line_ref,
                 DirectionRef: avl.direction_ref,
@@ -360,7 +365,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                 },
                 Bearing: avl.bearing,
                 BlockRef: avl.block_ref,
-                VehicleRef: avl.vehicle_ref,
+                VehicleRef: avl.operator_ref === "TFLO" ? avl.vehicle_name || avl.vehicle_ref : avl.vehicle_ref,
                 VehicleJourneyRef: avl.vehicle_journey_ref,
             },
         };
@@ -390,8 +395,11 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
     });
 };
 
+export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
+    datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
+
 export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
-    const currentTime = responseTime.toISOString();
+    const currentTime = formatSiriVmDatetimes(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
     const vehicleActivities = createVehicleActivities(avls, validUntilTime);
     const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
@@ -405,6 +413,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                     ResponseTimestamp: currentTime,
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
+                    ShortestPossibleCycle: "PT5S",
                     VehicleActivity: validVehicleActivities,
                 },
             },
@@ -415,12 +424,6 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
-        "?xml": {
-            "#text": "",
-            "@_version": "1.0",
-            "@_encoding": "UTF-8",
-            "@_standalone": "yes",
-        },
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
@@ -446,7 +449,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
  * @param time The response time to offset from.
  * @returns The valid until time.
  */
-export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => time.add(5, "minutes").toISOString();
+export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriVmDatetimes(time.add(5, "minutes"), true);
 
 /**
  * Returns a SIRI-VM termination time value defined as 10 years after the given time.
@@ -579,3 +582,19 @@ export const getAvlErrorDetails = (error: ZodIssue) => {
 };
 
 export const generateApiKey = () => randomUUID().replaceAll("-", "");
+
+/**
+ * Returns a count of unique vehicles from the last 24 hours
+ * which will be present in the latest SIRI-VM file
+ *
+ * @param dbClient
+ */
+export const getLatestAvlVehicleCount = (dbClient: KyselyDb) => {
+    const dayAgo = getDate().subtract(1, "day").toISOString();
+
+    return dbClient
+        .selectFrom("avl")
+        .where("recorded_at_time", ">", dayAgo)
+        .select((eb) => eb.fn.countAll<number>().as("vehicle_count"))
+        .executeTakeFirstOrThrow();
+};

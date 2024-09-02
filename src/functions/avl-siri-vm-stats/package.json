@@ -1,0 +1,21 @@
+{
+    "name": "@bods-integrated-data/avl-siri-vm-stats",
+    "version": "0.1.0",
+    "description": "Lambda for retrieving stats about SIRI-VM",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-siri-vm-stats.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-siri-vm-stats.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}
