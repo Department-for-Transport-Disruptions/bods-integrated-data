@@ -83,6 +83,7 @@ export const testSiri = `
                             </TicketMachine>
                         </Operational>
                         <VehicleUniqueId>Vehicle_123</VehicleUniqueId>
+                        <DriverRef>123456</DriverRef>
                     </VehicleJourney>
                 </Extensions>
             </VehicleActivity>
@@ -448,6 +449,7 @@ export const parsedSiri: NewAvl[] = [
         vehicle_journey_ref: null,
         vehicle_monitoring_ref: null,
         vehicle_unique_id: null,
+        driver_ref: null,
         onward_calls: null,
     },
     {
@@ -482,6 +484,7 @@ export const parsedSiri: NewAvl[] = [
         vehicle_journey_ref: "10",
         vehicle_monitoring_ref: "TEST",
         vehicle_unique_id: "Vehicle_123",
+        driver_ref: "123456",
         onward_calls: null,
     },
 ] as NewAvl[];
@@ -519,6 +522,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         vehicle_journey_ref: null,
         vehicle_monitoring_ref: null,
         vehicle_unique_id: null,
+        driver_ref: null,
         onward_calls: null,
     },
     {
@@ -553,6 +557,7 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
         vehicle_journey_ref: "10",
         vehicle_monitoring_ref: "TEST",
         vehicle_unique_id: "Vehicle_123",
+        driver_ref: null,
         onward_calls:
             '[{"stop_point_ref":"STOP123","aimed_arrival_time":"2024-05-09T09:30:00+00:00","expected_arrival_time":"2024-05-09T09:30:00+00:00","aimed_departure_time":"2024-05-09T09:30:00+00:00","expected_departure_time":"2024-05-09T09:30:00+00:00"},{"stop_point_ref":"STOP456","aimed_arrival_time":"2024-05-09T09:30:00+00:00","expected_arrival_time":"2024-05-09T09:30:00+00:00","aimed_departure_time":"2024-05-09T09:30:00+00:00","expected_departure_time":"2024-05-09T09:30:00+00:00"}]',
     },

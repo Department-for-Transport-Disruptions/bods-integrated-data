@@ -233,6 +233,7 @@ export interface AvlTable {
         string,
         string
     > | null;
+    driver_ref: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;
