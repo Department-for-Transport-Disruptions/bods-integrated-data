@@ -73,10 +73,20 @@ export const handler: Handler = async (event, context) => {
             nonTerminatedSubscriptions.map(async (subscription) => {
                 // We expect to receive a heartbeat notification from a data producer every 30 seconds.
                 // If we do not receive a heartbeat notification after 90 seconds we will attempt to resubscribe to the data producer.
-                const isHeartbeatValid = isDateAfter(
-                    getDate(subscription.heartbeatLastReceivedDateTime ?? subscription.serviceStartDatetime),
-                    currentTime.subtract(90, "seconds"),
-                );
+                const isHeartbeatValid =
+                    isDateAfter(
+                        getDate(
+                            subscription.heartbeatLastReceivedDateTime ||
+                                subscription.lastResubscriptionTime ||
+                                subscription.serviceStartDatetime,
+                        ),
+                        currentTime.subtract(90, "seconds"),
+                    ) ||
+                    (subscription.lastAvlDataReceivedDateTime &&
+                        isDateAfter(
+                            getDate(subscription.lastAvlDataReceivedDateTime),
+                            currentTime.subtract(90, "seconds"),
+                        ));
 
                 if (isHeartbeatValid) {
                     if (subscription.status !== "live") {

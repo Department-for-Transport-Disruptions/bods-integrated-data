@@ -54,6 +54,10 @@ describe("avl-subscriber", () => {
         publisherId: mockAvlSubscribeMessage.publisherId,
         requestorRef: undefined,
         apiKey: "5965q7gh542843e2a75c1782a48637d5",
+        heartbeatLastReceivedDateTime: null,
+        lastAvlDataReceivedDateTime: null,
+        lastResubscriptionTime: null,
+        serviceStartDatetime: undefined,
     };
 
     let mockEvent: APIGatewayProxyEvent;
@@ -291,6 +295,12 @@ describe("avl-subscriber", () => {
 
     it("returns a 409 when attempting to subscribe with a subscription ID that is already active", async () => {
         getDynamoItemSpy.mockResolvedValue({
+            PK: "test",
+            url: "https://example.com",
+            description: "test",
+            shortDescription: "test",
+            publisherId: "test",
+            apiKey: "123",
             status: "live",
         });
 
@@ -302,6 +312,44 @@ describe("avl-subscriber", () => {
 
         expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalledOnce();
         expect(sendSubscriptionRequestAndUpdateDynamoSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it("handles resubscribing to a subscription in an error state", async () => {
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "test",
+            url: "https://example.com",
+            description: "test",
+            shortDescription: "test",
+            publisherId: "test",
+            apiKey: "123",
+            heartbeatLastReceivedDateTime: null,
+            lastAvlDataReceivedDateTime: "2024-09-02T13:34:00Z",
+            serviceStartDatetime: "2024-08-12T09:34:00Z",
+            status: "error",
+        });
+
+        const expectedSubscriptionDetails = {
+            ...mockAvlSubscriptionDetails,
+            apiKey: "123",
+            heartbeatLastReceivedDateTime: null,
+            lastAvlDataReceivedDateTime: "2024-09-02T13:34:00Z",
+            lastResubscriptionTime: "2024-03-11T15:20:02.093Z",
+            serviceStartDatetime: "2024-08-12T09:34:00Z",
+        };
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
+        expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+            mockAvlSubscribeMessage.subscriptionId,
+            expectedSubscriptionDetails,
+            mockAvlSubscribeMessage.username,
+            mockAvlSubscribeMessage.password,
+            "test-dynamo-table",
+            "https://www.test.com/data",
+            false,
+            "",
+        );
     });
 
     it.each([

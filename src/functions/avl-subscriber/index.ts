@@ -10,8 +10,13 @@ import {
     sendSubscriptionRequestAndUpdateDynamo,
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
-import { generateApiKey, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import {
+    SubscriptionIdNotFoundError,
+    generateApiKey,
+    getAvlSubscription,
+} from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -55,9 +60,19 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const { subscriptionId, username, password } = avlSubscribeMessage;
         logger.subscriptionId = subscriptionId;
 
-        const isActiveSubscription = await isActiveAvlSubscription(subscriptionId, tableName);
+        let activeSubscription: AvlSubscription | null = null;
 
-        if (isActiveSubscription) {
+        try {
+            activeSubscription = await getAvlSubscription(subscriptionId, tableName);
+        } catch (e) {
+            if (e instanceof SubscriptionIdNotFoundError) {
+                activeSubscription = null;
+            } else {
+                throw e;
+            }
+        }
+
+        if (activeSubscription?.status === "live") {
             return createConflictErrorResponse("Subscription ID already active");
         }
 
@@ -69,13 +84,21 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             throw new Error("No internal data endpoint set for internal data producer endpoint");
         }
 
+        const currentTime = getDate().toISOString();
+
         const subscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
             url: avlSubscribeMessage.dataProducerEndpoint,
             description: avlSubscribeMessage.description,
             shortDescription: avlSubscribeMessage.shortDescription,
             requestorRef: avlSubscribeMessage.requestorRef,
             publisherId: avlSubscribeMessage.publisherId,
-            apiKey: generateApiKey(),
+            apiKey: activeSubscription?.apiKey || generateApiKey(),
+            heartbeatLastReceivedDateTime: activeSubscription?.heartbeatLastReceivedDateTime
+                ? getDate().toISOString()
+                : null,
+            lastAvlDataReceivedDateTime: activeSubscription?.lastAvlDataReceivedDateTime ?? null,
+            serviceStartDatetime: activeSubscription?.serviceStartDatetime,
+            lastResubscriptionTime: activeSubscription ? currentTime : null,
         };
 
         try {
