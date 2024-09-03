@@ -109,8 +109,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 }
 
                 throw error;
-            } finally {
-                await dbClient.destroy();
             }
         }
 
@@ -153,3 +151,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         return createServerErrorResponse();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

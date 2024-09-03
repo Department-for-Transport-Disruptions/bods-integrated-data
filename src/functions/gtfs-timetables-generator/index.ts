@@ -145,7 +145,14 @@ export const handler: Handler = async (event, context) => {
 
             await dropRegionalTable(dbClient, regionCode);
         }
-
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

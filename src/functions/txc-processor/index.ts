@@ -311,7 +311,14 @@ export const handler: S3Handler = async (event, context) => {
         } else {
             throw e;
         }
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});
