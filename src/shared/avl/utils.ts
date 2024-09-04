@@ -193,6 +193,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                             block_ref: eb.ref("excluded.block_ref"),
                             bearing: eb.ref("excluded.bearing"),
                             onward_calls: eb.ref("excluded.onward_calls"),
+                            driver_ref: eb.ref("excluded.driver_ref"),
                         }))
                         .whereRef("excluded.recorded_at_time", ">", "avl.recorded_at_time"),
                 )
@@ -387,6 +388,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                         },
                     },
                     VehicleUniqueId: avl.vehicle_unique_id ?? null,
+                    DriverRef: avl.driver_ref ?? null,
                 },
             };
         }
