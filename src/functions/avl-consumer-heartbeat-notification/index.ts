@@ -46,8 +46,8 @@ export const handler: Handler = async (event, context) => {
 
                         await putDynamoItem(
                             avlConsumerSubscriptionTableName,
-                            subscription.subscriptionId,
-                            "SUBSCRIPTION",
+                            subscription.PK,
+                            subscription.SK,
                             updatedSubscription,
                         );
                     }
@@ -68,8 +68,8 @@ export const handler: Handler = async (event, context) => {
 
                         await putDynamoItem(
                             avlConsumerSubscriptionTableName,
-                            subscription.subscriptionId,
-                            "SUBSCRIPTION",
+                            subscription.PK,
+                            subscription.SK,
                             updatedSubscription,
                         );
                     } else {

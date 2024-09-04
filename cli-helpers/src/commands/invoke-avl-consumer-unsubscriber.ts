@@ -6,8 +6,9 @@ import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-unsubscriber")
     .addOption(STAGE_OPTION)
     .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
+    .option("--userId <userId>", "BODS user ID")
     .action(async (options) => {
-        let { stage, consumerSubscriptionId } = options;
+        let { stage, consumerSubscriptionId, userId } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -34,6 +35,18 @@ export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-un
             consumerSubscriptionId = response.consumerSubscriptionId;
         }
 
+        if (!userId) {
+            const response = await inquirer.prompt<{ userId: string }>([
+                {
+                    name: "userId",
+                    message: "Enter the BODS user ID",
+                    type: "input",
+                },
+            ]);
+
+            userId = response.userId;
+        }
+
         const requestBody = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -48,6 +61,9 @@ export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-un
 `;
 
         const invokePayload = {
+            headers: {
+                userId,
+            },
             body: requestBody,
         };
 

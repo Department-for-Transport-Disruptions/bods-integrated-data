@@ -6,15 +6,19 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../avl-consumer-unsubscriber";
 
-const mockRequestBody = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Siri version="2.0" xmlns="http://www.siri.org.uk/siri"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd">
+const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
+const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
+const mockUserId = "mock-user-id";
+
+const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\"
+  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+  xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <TerminateSubscriptionRequest>
     <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
     <RequestorRef>BODS</RequestorRef>
     <MessageIdentifier>1</MessageIdentifier>
-    <SubscriptionRef>1</SubscriptionRef>
+    <SubscriptionRef>${mockConsumerSubscriptionId}</SubscriptionRef>
   </TerminateSubscriptionRequest>
 </Siri>
 `;
@@ -30,23 +34,26 @@ describe("avl-consumer-unsubscriber", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        getDynamoItem: vi.fn(),
+        queryDynamo: vi.fn(),
         putDynamoItem: vi.fn(),
     }));
 
-    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
 
     let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
-        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = "mock-consumer-table";
+        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
 
         mockEvent = {
+            headers: {
+                userId: mockUserId,
+            },
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
 
-        getDynamoItemSpy.mockResolvedValue(null);
+        queryDynamoSpy.mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -62,6 +69,22 @@ describe("avl-consumer-unsubscriber", () => {
             "There was a problem with the avl-consumer-unsubscriber endpoint",
             expect.any(Error),
         );
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        [{}, ["userId header is required"]],
+        [{ userId: "" }, ["userId header must be 1-256 characters"]],
+        [{ userId: "1".repeat(257) }, ["userId header must be 1-256 characters"]],
+    ])("returns a 400 when the userId header is invalid (test: %o)", async (headers, expectedErrorMessages) => {
+        mockEvent.headers = headers;
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({ errors: expectedErrorMessages }),
+        });
+        expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
@@ -101,7 +124,9 @@ describe("avl-consumer-unsubscriber", () => {
 
     it("returns a 204 and sets the subscription status to inactive when the request is valid", async () => {
         const consumerSubscription: AvlConsumerSubscription = {
-            subscriptionId: "1234",
+            PK: mockConsumerSubscriptionId,
+            SK: mockUserId,
+            subscriptionId: mockConsumerSubscriptionId,
             status: "live",
             url: "https://www.test.com/data",
             requestorRef: "test",
@@ -112,7 +137,7 @@ describe("avl-consumer-unsubscriber", () => {
             heartbeatAttempts: 0,
         };
 
-        getDynamoItemSpy.mockResolvedValueOnce(consumerSubscription);
+        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
@@ -126,9 +151,9 @@ describe("avl-consumer-unsubscriber", () => {
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
-            "mock-consumer-table",
-            "1234",
-            "SUBSCRIPTION",
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
             updatedConsumerSubscription,
         );
     });

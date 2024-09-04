@@ -9,10 +9,14 @@ import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/ut
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
-import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
+import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+
+const requestHeadersSchema = z.object({
+    userId: createStringLengthValidation("userId header"),
+});
 
 const requestBodySchema = z.string({
     required_error: "Body is required",
@@ -46,25 +50,19 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
+        const { userId } = requestHeadersSchema.parse(event.headers);
         const body = requestBodySchema.parse(event.body);
         const xml = parseXml(body);
+        const subscriptionId = xml.Siri.TerminateSubscriptionRequest.SubscriptionRef;
 
-        const subscription = await getAvlConsumerSubscription(
-            avlConsumerSubscriptionTableName,
-            xml.Siri.TerminateSubscriptionRequest.SubscriptionRef,
-        );
+        const subscription = await getAvlConsumerSubscription(avlConsumerSubscriptionTableName, subscriptionId, userId);
 
         const updatedSubscription: AvlConsumerSubscription = {
             ...subscription,
             status: "inactive",
         };
 
-        await putDynamoItem(
-            avlConsumerSubscriptionTableName,
-            subscription.subscriptionId,
-            "SUBSCRIPTION",
-            updatedSubscription,
-        );
+        await putDynamoItem(avlConsumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
 
         return createNoContentResponse();
     } catch (e) {

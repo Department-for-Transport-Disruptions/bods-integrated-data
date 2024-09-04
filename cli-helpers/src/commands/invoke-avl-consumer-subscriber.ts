@@ -5,9 +5,10 @@ import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subscriber")
     .addOption(STAGE_OPTION)
     .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
+    .option("--userId <userId>", "BODS user ID")
     .option("--subscriptionId <subscriptionId>", "Producer subscription IDs to subscribe to")
     .action(async (options) => {
-        let { stage, consumerSubscriptionId, subscriptionId } = options;
+        let { stage, consumerSubscriptionId, userId, subscriptionId } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -32,6 +33,18 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
             ]);
 
             consumerSubscriptionId = response.consumerSubscriptionId;
+        }
+
+        if (!userId) {
+            const response = await inquirer.prompt<{ userId: string }>([
+                {
+                    name: "userId",
+                    message: "Enter the BODS user ID",
+                    type: "input",
+                },
+            ]);
+
+            userId = response.userId;
         }
 
         if (!subscriptionId) {
@@ -69,6 +82,9 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
 `;
 
         const invokePayload = {
+            headers: {
+                userId,
+            },
             queryStringParameters: {
                 subscriptionId,
             },

@@ -12,8 +12,9 @@ terraform {
 module "integrated_data_avl_consumer_subscription_table" {
   source = "../shared/dynamo-table"
 
-  environment = var.environment
-  table_name  = "integrated-data-avl-consumer-subscription-table"
+  environment            = var.environment
+  table_name             = "integrated-data-avl-consumer-subscription-table"
+  global_secondary_index = "subscriptionId"
 }
 
 module "avl_consumer_subscriber" {

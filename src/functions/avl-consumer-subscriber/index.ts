@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
     createConflictErrorResponse,
     createNotFoundErrorResponse,
@@ -10,10 +11,18 @@ import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
-import { InvalidXmlError, createSubscriptionIdArrayValidation } from "@bods-integrated-data/shared/validation";
+import {
+    InvalidXmlError,
+    createStringLengthValidation,
+    createSubscriptionIdArrayValidation,
+} from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+
+const requestHeadersSchema = z.object({
+    userId: createStringLengthValidation("userId header"),
+});
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -59,34 +68,39 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             );
         }
 
+        const { userId } = requestHeadersSchema.parse(event.headers);
         const requestParams = requestParamsSchema.parse(event.queryStringParameters);
         const producerSubscriptionIds = requestParams.subscriptionId;
 
         const body = requestBodySchema.parse(event.body);
         const xml = parseXml(body);
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
+        const subscriptionId = subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier;
 
-        const isActiveAvlSubscription = await isActiveAvlConsumerSubscription(
+        const isActiveSubscription = await isActiveAvlConsumerSubscription(
             avlConsumerSubscriptionTableName,
-            subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
+            subscriptionId,
+            userId,
         );
 
-        if (isActiveAvlSubscription) {
+        if (isActiveSubscription) {
             return createConflictErrorResponse("Consumer subscription ID already active");
         }
 
         const producerSubscriptions = await getAvlSubscriptions(avlProducerSubscriptionTableName);
 
-        for (const subscriptionId of producerSubscriptionIds.split(",")) {
-            const subscription = producerSubscriptions.find(({ PK }) => PK === subscriptionId);
+        for (const producerSubscriptionId of producerSubscriptionIds.split(",")) {
+            const subscription = producerSubscriptions.find(({ PK }) => PK === producerSubscriptionId);
 
             if (!subscription || subscription.status === "inactive") {
-                return createNotFoundErrorResponse(`Producer subscription ID not found: ${subscriptionId}`);
+                return createNotFoundErrorResponse(`Producer subscription ID not found: ${producerSubscriptionId}`);
             }
         }
 
-        const newConsumerSubscription: AvlConsumerSubscription = {
-            subscriptionId: subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier,
+        const consumerSubscription: AvlConsumerSubscription = {
+            PK: randomUUID(),
+            SK: userId,
+            subscriptionId,
             status: "live",
             url: subscriptionRequest.ConsumerAddress,
             requestorRef: subscriptionRequest.RequestorRef,
@@ -99,9 +113,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await putDynamoItem(
             avlConsumerSubscriptionTableName,
-            newConsumerSubscription.subscriptionId,
-            "SUBSCRIPTION",
-            newConsumerSubscription,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            consumerSubscription,
         );
 
         return createSuccessResponse();

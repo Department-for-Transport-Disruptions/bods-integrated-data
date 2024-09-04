@@ -6,6 +6,13 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
+const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
+const mockProducerSubscriptionTable = "mock-producer-subscription-table-name";
+const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
+const mockProducerSubscriptionId = "1";
+const mockUserId = "mock-user-id";
+const mockRandomId = "999";
+
 const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionRequest>
@@ -17,7 +24,7 @@ const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"y
       <HeartbeatInterval>PT30S</HeartbeatInterval>
     </SubscriptionContext>
     <VehicleMonitoringSubscriptionRequest>
-      <SubscriptionIdentifier>1234</SubscriptionIdentifier>
+      <SubscriptionIdentifier>${mockConsumerSubscriptionId}</SubscriptionIdentifier>
       <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
       <VehicleMonitoringRequest version=\"2.0\">
         <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
@@ -39,30 +46,36 @@ describe("avl-consumer-subscriber", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        getDynamoItem: vi.fn(),
+        queryDynamo: vi.fn(),
         putDynamoItem: vi.fn(),
         recursiveScan: vi.fn(),
     }));
 
-    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    vi.mock("node:crypto", () => ({
+        randomUUID: () => mockRandomId,
+    }));
+
+    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
-    const mockSubscriptionId = "1";
     let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
-        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = "mock-consumer-table";
-        process.env.AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = "mock-producer-table";
+        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
+        process.env.AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = mockProducerSubscriptionTable;
 
         mockEvent = {
+            headers: {
+                userId: mockUserId,
+            },
             queryStringParameters: {
-                subscriptionId: mockSubscriptionId,
+                subscriptionId: mockProducerSubscriptionId,
             },
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
 
-        getDynamoItemSpy.mockResolvedValue(null);
+        queryDynamoSpy.mockResolvedValue([]);
         recursiveScanSpy.mockResolvedValue([]);
     });
 
@@ -91,6 +104,22 @@ describe("avl-consumer-subscriber", () => {
             "There was a problem with the avl-consumer-subscriber endpoint",
             expect.any(Error),
         );
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        [{}, ["userId header is required"]],
+        [{ userId: "" }, ["userId header must be 1-256 characters"]],
+        [{ userId: "1".repeat(257) }, ["userId header must be 1-256 characters"]],
+    ])("returns a 400 when the userId header is invalid (test: %o)", async (headers, expectedErrorMessages) => {
+        mockEvent.headers = headers;
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({ errors: expectedErrorMessages }),
+        });
+        expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
@@ -145,18 +174,20 @@ describe("avl-consumer-subscriber", () => {
 
     it("returns a 409 when the consumer subscription is already live", async () => {
         const consumerSubscription: AvlConsumerSubscription = {
-            subscriptionId: "1234",
+            PK: mockRandomId,
+            SK: mockUserId,
+            subscriptionId: mockConsumerSubscriptionId,
             status: "live",
             url: "https://example.com",
             requestorRef: "123",
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
+            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
         };
 
-        getDynamoItemSpy.mockResolvedValueOnce(consumerSubscription);
+        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
@@ -200,7 +231,7 @@ describe("avl-consumer-subscriber", () => {
 
     it("returns a 200 and creates a new consumer subscription when the request is valid", async () => {
         const producerSubscription: AvlSubscription = {
-            PK: "1",
+            PK: mockProducerSubscriptionId,
             description: "test-description",
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
@@ -220,21 +251,23 @@ describe("avl-consumer-subscriber", () => {
         });
 
         const consumerSubscription: AvlConsumerSubscription = {
-            subscriptionId: "1234",
+            PK: mockRandomId,
+            SK: mockUserId,
+            subscriptionId: mockConsumerSubscriptionId,
             status: "live",
             url: "https://www.test.com/data",
             requestorRef: "test",
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
+            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
-            "mock-consumer-table",
-            "1234",
-            "SUBSCRIPTION",
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
             consumerSubscription,
         );
     });

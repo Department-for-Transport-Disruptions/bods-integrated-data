@@ -7,6 +7,8 @@ import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../avl-consumer-heartbeat-notification";
 
+const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
+
 describe("avl-consumer-heartbeat-notification", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
@@ -30,7 +32,7 @@ describe("avl-consumer-heartbeat-notification", () => {
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
     beforeEach(() => {
-        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = "mock-consumer-table";
+        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
 
         recursiveScanSpy.mockResolvedValue([]);
     });
@@ -57,7 +59,9 @@ describe("avl-consumer-heartbeat-notification", () => {
     it("sends heartbeats to each live subscription", async () => {
         const subscriptions: AvlConsumerSubscription[] = [
             {
-                subscriptionId: "1",
+                PK: "1234",
+                SK: "100",
+                subscriptionId: "1234",
                 status: "live",
                 url: "https://example.com",
                 requestorRef: "1",
@@ -68,7 +72,9 @@ describe("avl-consumer-heartbeat-notification", () => {
                 heartbeatAttempts: 0,
             },
             {
-                subscriptionId: "2",
+                PK: "1235",
+                SK: "100",
+                subscriptionId: "1235",
                 status: "error",
                 url: "https://example.com",
                 requestorRef: "2",
@@ -79,7 +85,9 @@ describe("avl-consumer-heartbeat-notification", () => {
                 heartbeatAttempts: 0,
             },
             {
-                subscriptionId: "3",
+                PK: "1236",
+                SK: "100",
+                subscriptionId: "1236",
                 status: "inactive",
                 url: "https://example.com",
                 requestorRef: "3",
@@ -119,7 +127,9 @@ describe("avl-consumer-heartbeat-notification", () => {
 
     it("increments the heartbeat attempts for a subscription when an unsuccessful request occurs", async () => {
         const subscription: AvlConsumerSubscription = {
-            subscriptionId: "1",
+            PK: "1234",
+            SK: "100",
+            subscriptionId: "1234",
             status: "live",
             url: "https://example.com",
             requestorRef: "1",
@@ -147,16 +157,18 @@ describe("avl-consumer-heartbeat-notification", () => {
 
         expect(putDynamoItemSpy).toHaveBeenCalledTimes(1);
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
-            "mock-consumer-table",
-            subscription.subscriptionId,
-            "SUBSCRIPTION",
+            mockConsumerSubscriptionTable,
+            subscription.PK,
+            subscription.SK,
             expectedSubscription,
         );
     });
 
     it("sets a subscription status to error when 3 or more failed heartbeat attempts occur", async () => {
         const subscription: AvlConsumerSubscription = {
-            subscriptionId: "1",
+            PK: "1234",
+            SK: "100",
+            subscriptionId: "1234",
             status: "live",
             url: "https://example.com",
             requestorRef: "1",
@@ -179,22 +191,24 @@ describe("avl-consumer-heartbeat-notification", () => {
 
         const expectedSubscription: AvlConsumerSubscription = {
             ...subscription,
-            status: "error",
             heartbeatAttempts: 3,
+            status: "error",
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledTimes(1);
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
-            "mock-consumer-table",
-            subscription.subscriptionId,
-            "SUBSCRIPTION",
+            mockConsumerSubscriptionTable,
+            subscription.PK,
+            subscription.SK,
             expectedSubscription,
         );
     });
 
     it("resets the heartbeat attempts for a subscription when an successful request occurs", async () => {
         const subscription: AvlConsumerSubscription = {
-            subscriptionId: "1",
+            PK: "1234",
+            SK: "100",
+            subscriptionId: "1234",
             status: "live",
             url: "https://example.com",
             requestorRef: "1",
@@ -216,20 +230,23 @@ describe("avl-consumer-heartbeat-notification", () => {
         const expectedSubscription: AvlConsumerSubscription = {
             ...subscription,
             heartbeatAttempts: 0,
+            status: "live",
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledTimes(1);
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
-            "mock-consumer-table",
-            subscription.subscriptionId,
-            "SUBSCRIPTION",
+            mockConsumerSubscriptionTable,
+            subscription.PK,
+            subscription.SK,
             expectedSubscription,
         );
     });
 
     it("suppresses unexpected error when sending a heartbeat notifications, and logs the error", async () => {
         const subscription: AvlConsumerSubscription = {
-            subscriptionId: "1",
+            PK: "1234",
+            SK: "100",
+            subscriptionId: "1234",
             status: "live",
             url: "https://example.com",
             requestorRef: "1",
