@@ -389,6 +389,13 @@ describe("utils", () => {
             const siriVm = createSiriVm(mockAvlWithMissingRequiredProperties, requestMessageRef, responseTime);
             expect(siriVm).toEqual(mockSiriVmWithMissingRequiredPropertiesResult);
         });
+
+        it("omits Bearing with -1 value", () => {
+            const mockAvlWithMissingBearing = structuredClone(mockAvl);
+            mockAvlWithMissingBearing[1].bearing = "-1";
+            const siriVm = createSiriVm(mockAvlWithMissingBearing, requestMessageRef, responseTime);
+            expect(siriVm).toEqual(mockSiriVmResult);
+        });
     });
 
     describe("removeDuplicates", () => {

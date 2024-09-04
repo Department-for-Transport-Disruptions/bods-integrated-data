@@ -18,7 +18,6 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import { vehicleActivitySchema } from "../schema/avl.schema";
 import { chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -364,7 +363,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                     Longitude: avl.longitude,
                     Latitude: avl.latitude,
                 },
-                Bearing: avl.bearing,
+                Bearing: avl.bearing === "-1" ? null : avl.bearing,
                 BlockRef: avl.block_ref,
                 VehicleRef: avl.operator_ref === "TFLO" ? avl.vehicle_name || avl.vehicle_ref : avl.vehicle_ref,
                 VehicleJourneyRef: avl.vehicle_journey_ref,
@@ -404,7 +403,6 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
     const currentTime = formatSiriVmDatetimes(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
     const vehicleActivities = createVehicleActivities(avls, validUntilTime);
-    const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
         Siri: {
@@ -416,7 +414,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
                     ShortestPossibleCycle: "PT5S",
-                    VehicleActivity: validVehicleActivities,
+                    VehicleActivity: vehicleActivities,
                 },
             },
         },
@@ -498,6 +496,32 @@ const runXmlLint = async (xml: string) => {
     }
 };
 
+const createAndValidateSiri = async (
+    avls: Avl[],
+    requestMessageRef: string,
+    responseTime: Dayjs,
+    lintSiri: boolean,
+    isTfl: boolean,
+) => {
+    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
+
+    if (lintSiri) {
+        try {
+            await runXmlLint(siriVm);
+        } catch (e) {
+            await putMetricData("custom/SiriVmGenerator", [
+                { MetricName: isTfl ? "TfLValidationError" : "ValidationError", Value: 1 },
+            ]);
+
+            logger.error(e);
+
+            throw e;
+        }
+    }
+
+    return siriVm;
+};
+
 export const generateSiriVmAndUploadToS3 = async (
     avls: Avl[],
     requestMessageRef: string,
@@ -509,35 +533,19 @@ export const generateSiriVmAndUploadToS3 = async (
     }
 
     const responseTime = getDate();
-    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
-    const siriVmTfl = createSiriVm(
-        avls.filter((avl) => avl.operator_ref === tflOperatorRef),
-        requestMessageRef,
-        responseTime,
-    );
 
-    if (lintSiri) {
-        const [siriVmValidation, siriVmTflValidation] = await Promise.allSettled([
-            runXmlLint(siriVm),
-            runXmlLint(siriVmTfl),
-        ]);
-
-        if (siriVmValidation.status === "rejected") {
-            await putMetricData("custom/SiriVmGenerator", [{ MetricName: "ValidationError", Value: 1 }]);
-
-            throw new Error("SIRI-VM file failed validation", {
-                cause: siriVmValidation.reason,
-            });
-        }
-
-        if (siriVmTflValidation.status === "rejected") {
-            await putMetricData("custom/SiriVmGenerator", [{ MetricName: "TfLValidationError", Value: 1 }]);
-
-            throw new Error("SIRI-VM TfL file failed validation", {
-                cause: siriVmTflValidation.reason,
-            });
-        }
-    }
+    const [siriVm, siriVmTfl] = await Promise.all([
+        Promise.resolve(createAndValidateSiri(avls, requestMessageRef, responseTime, lintSiri, false)),
+        Promise.resolve(
+            createAndValidateSiri(
+                avls.filter((avl) => avl.operator_ref === tflOperatorRef),
+                requestMessageRef,
+                responseTime,
+                lintSiri,
+                true,
+            ),
+        ),
+    ]);
 
     await Promise.all([
         putS3Object({
