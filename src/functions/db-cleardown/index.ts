@@ -3,6 +3,8 @@ import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/l
 import { Handler } from "aws-lambda";
 import { sql } from "kysely";
 
+let dbClient: KyselyDb;
+
 const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
     const gtfsTables: (keyof Database)[] = [
         "calendar",
@@ -37,7 +39,7 @@ export const handler: Handler = async (event, context) => {
 
     const { STAGE: stage, ONLY_GTFS = "false" } = process.env;
 
-    const dbClient = await getDatabaseClient(stage === "local");
+    dbClient = dbClient || (await getDatabaseClient(stage === "local"));
 
     try {
         logger.info("Preparing database...");
@@ -51,7 +53,14 @@ export const handler: Handler = async (event, context) => {
         }
 
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});
