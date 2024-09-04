@@ -1,4 +1,4 @@
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { nocSchema } from "@bods-integrated-data/shared/schema/noc.schema";
@@ -6,6 +6,8 @@ import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
 import { insertNocOperator } from "./data/database";
+
+let dbClient: KyselyDb;
 
 const arrayProperties = ["NOCTableRecord"];
 
@@ -46,7 +48,7 @@ export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info(`Starting processing of NOC data for ${object.key}`);
@@ -69,7 +71,14 @@ export const handler: S3Handler = async (event, context) => {
         }
 
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});
