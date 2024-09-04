@@ -26,6 +26,8 @@ import {
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 
+let dbClient: KyselyDb;
+
 const requestParamsSchema = z.preprocess(
     Object,
     z.object({
@@ -131,7 +133,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
                     : GENERATED_SIRI_VM_FILE_PATH,
             );
         } else {
-            const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+            dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
             siriVm = await retrieveSiriVmData(
                 dbClient,
@@ -174,3 +176,12 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         return createServerErrorResponse();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

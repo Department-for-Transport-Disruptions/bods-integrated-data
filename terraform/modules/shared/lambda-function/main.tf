@@ -109,6 +109,11 @@ resource "aws_iam_role_policy_attachment" "lambda_role_custom_policy_attachment"
   policy_arn = aws_iam_policy.lambda_policy[0].arn
 }
 
+resource "aws_iam_role_policy_attachment" "insights_policy" {
+  role       = aws_iam_role.lambda_role.id
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
+}
+
 resource "aws_lambda_function" "function" {
   function_name    = local.function_name
   filename         = var.zip_path
@@ -122,6 +127,10 @@ resource "aws_lambda_function" "function" {
   memory_size = var.memory
 
   reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
+
+  layers = [
+    "arn:aws:lambda:eu-west-2:580247275435:layer:LambdaInsightsExtension-Arm64:20"
+  ]
 
   dynamic "vpc_config" {
     for_each = var.needs_db_access || var.needs_vpc_access ? [1] : []
