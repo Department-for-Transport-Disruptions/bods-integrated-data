@@ -9,6 +9,7 @@ import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
+    createVehicleActivities,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -65,7 +66,9 @@ const retrieveSiriVmData = async (
 
     const requestMessageRef = randomUUID();
     const responseTime = getDate();
-    return createSiriVm(avls, requestMessageRef, responseTime);
+    const vehicleActivities = createVehicleActivities(avls, responseTime);
+
+    return createSiriVm(vehicleActivities, requestMessageRef, responseTime);
 };
 
 const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<string> => {

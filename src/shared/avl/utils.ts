@@ -340,8 +340,10 @@ export const getAvlDataForSiriVm = async (
  * @param validUntilTime Valid until time
  * @returns mapped SIRI-VM vehicle activities
  */
-export const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehicleActivity[] => {
-    return avls.map<SiriVehicleActivity>((avl) => {
+export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Partial<SiriVehicleActivity>[] => {
+    const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
+
+    return avls.map((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
@@ -392,19 +394,22 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
             };
         }
 
-        return vehicleActivity;
+        return cleanDeep(vehicleActivity, { emptyArrays: true });
     });
 };
 
 export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
     datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
 
-export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
+export const createSiriVm = (
+    vehicleActivities: Partial<SiriVehicleActivity>[],
+    requestMessageRef: string,
+    responseTime: Dayjs,
+) => {
     const currentTime = formatSiriVmDatetimes(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
-    const vehicleActivities = createVehicleActivities(avls, validUntilTime);
 
-    const siriVm: SiriVM = {
+    const siriVm = {
         Siri: {
             ServiceDelivery: {
                 ResponseTimestamp: currentTime,
@@ -420,8 +425,7 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
         },
     };
 
-    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
-    const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
+    const verifiedObject = siriSchema().parse(siriVm);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
         Siri: {
@@ -497,13 +501,13 @@ const runXmlLint = async (xml: string) => {
 };
 
 const createAndValidateSiri = async (
-    avls: Avl[],
+    vehicleActivities: Partial<SiriVehicleActivity>[],
     requestMessageRef: string,
     responseTime: Dayjs,
     lintSiri: boolean,
     isTfl: boolean,
 ) => {
-    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
+    const siriVm = createSiriVm(vehicleActivities, requestMessageRef, responseTime);
 
     if (lintSiri) {
         try {
@@ -534,11 +538,13 @@ export const generateSiriVmAndUploadToS3 = async (
 
     const responseTime = getDate();
 
+    const vehicleActivities = createVehicleActivities(avls, responseTime);
+
     const [siriVm, siriVmTfl] = await Promise.all([
-        Promise.resolve(createAndValidateSiri(avls, requestMessageRef, responseTime, lintSiri, false)),
+        Promise.resolve(createAndValidateSiri(vehicleActivities, requestMessageRef, responseTime, lintSiri, false)),
         Promise.resolve(
             createAndValidateSiri(
-                avls.filter((avl) => avl.operator_ref === tflOperatorRef),
+                vehicleActivities.filter((v) => v.MonitoredVehicleJourney?.OperatorRef === tflOperatorRef),
                 requestMessageRef,
                 responseTime,
                 lintSiri,
