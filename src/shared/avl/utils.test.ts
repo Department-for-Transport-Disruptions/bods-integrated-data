@@ -69,6 +69,7 @@ const mockAvl: Avl[] = [
         vehicle_unique_id: null,
         subscription_id: "",
         onward_calls: null,
+        driver_ref: null,
     },
     {
         id: 24183,
@@ -117,6 +118,7 @@ const mockAvl: Avl[] = [
         trip_id: null,
         subscription_id: "",
         onward_calls: null,
+        driver_ref: null,
     },
 ];
 
@@ -211,6 +213,7 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 subscription_id: "",
                 onward_calls: null,
+                driver_ref: null,
             };
 
             const expectedVehicleActivities: SiriVehicleActivity[] = [
@@ -295,6 +298,7 @@ describe("utils", () => {
                 ticket_machine_service_code: "ticket_machine_service_code",
                 journey_code: "journey_code",
                 vehicle_unique_id: "vehicle_unique_id",
+                driver_ref: "1234",
                 subscription_id: "",
                 onward_calls: [
                     {
@@ -354,6 +358,7 @@ describe("utils", () => {
                                 },
                             },
                             VehicleUniqueId: avl.vehicle_unique_id,
+                            DriverRef: avl.driver_ref,
                         },
                     },
                 },
