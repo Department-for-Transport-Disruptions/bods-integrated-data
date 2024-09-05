@@ -10,6 +10,8 @@ import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-vali
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 
+let dbClient: KyselyDb;
+
 const arrayProperties = ["VehicleActivity", "OnwardCall"];
 
 const parseXml = (xml: string, errors: AvlValidationError[]) => {
@@ -136,7 +138,7 @@ export const handler: SQSHandler = async (event, context) => {
         );
     }
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info(`Starting processing of SIRI-VM. Number of records to process: ${event.Records.length}`);
@@ -156,7 +158,14 @@ export const handler: SQSHandler = async (event, context) => {
         }
 
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

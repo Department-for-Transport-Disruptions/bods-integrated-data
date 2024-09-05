@@ -9,6 +9,8 @@ import { Handler } from "aws-lambda";
 import axios from "axios";
 import { RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
 
+let dbClient: KyselyDb;
+
 const getLineIds = async (dbClient: KyselyDb) => {
     const lineIds = await dbClient.selectFrom("tfl_line").selectAll().execute();
     return lineIds.map((lineId) => lineId.id);
@@ -56,7 +58,7 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info("Starting TfL location retriever");
@@ -87,7 +89,14 @@ export const handler: Handler = async (event, context) => {
         }
 
         throw error;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});
