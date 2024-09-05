@@ -379,7 +379,7 @@ export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Parti
             };
         }
 
-        if (avl.ticket_machine_service_code || avl.journey_code || avl.vehicle_unique_id) {
+        if (avl.ticket_machine_service_code || avl.journey_code || avl.vehicle_unique_id || avl.driver_ref) {
             vehicleActivity.Extensions = {
                 VehicleJourney: {
                     Operational: {
