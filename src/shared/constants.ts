@@ -1,3 +1,6 @@
+// Max decimal precision in JavaScript before scientific notation kicks in
+export const MAX_DECIMAL_PRECISION = 6;
+
 export const GTFS_FILE_SUFFIX = "_gtfs";
 
 export const regionCodes = ["E", "EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y", "ALL"] as const;

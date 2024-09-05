@@ -132,3 +132,5 @@ export const isPrivateAddress = (url: string) => {
 
     return privateIpRegex.test(url);
 };
+
+export const roundToDecimalPlaces = (number: number, precision: number) => +number.toFixed(precision);
