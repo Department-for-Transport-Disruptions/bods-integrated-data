@@ -56,7 +56,7 @@ export const mapAvlToGtfsEntity = (avl: NewAvl): transit_realtime.IFeedEntity =>
         vehicle: {
             occupancyStatus: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
             position: {
-                bearing: avl.bearing ? Number.parseInt(avl.bearing) : 0,
+                bearing: avl.bearing,
                 latitude: avl.latitude,
                 longitude: avl.longitude,
             },

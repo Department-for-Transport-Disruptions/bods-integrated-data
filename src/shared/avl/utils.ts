@@ -365,7 +365,7 @@ export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Parti
                     Longitude: avl.longitude,
                     Latitude: avl.latitude,
                 },
-                Bearing: avl.bearing === "-1" ? null : avl.bearing,
+                Bearing: avl.bearing === -1 ? null : avl.bearing,
                 BlockRef: avl.block_ref,
                 VehicleRef: avl.operator_ref === "TFLO" ? avl.vehicle_name || avl.vehicle_ref : avl.vehicle_ref,
                 VehicleJourneyRef: avl.vehicle_journey_ref,

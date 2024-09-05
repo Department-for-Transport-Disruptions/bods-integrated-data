@@ -37,7 +37,7 @@ const mockAvl: Avl[] = [
         vehicle_ref: "191D44717",
         longitude: -6.238029,
         latitude: 53.42605,
-        bearing: "119",
+        bearing: 119,
         published_line_name: "784",
         origin_ref: "98010",
         destination_ref: "98045",
@@ -181,7 +181,7 @@ describe("utils", () => {
                 vehicle_ref: "191D44717",
                 longitude: -6.238029,
                 latitude: 53.42605,
-                bearing: "119",
+                bearing: 119,
                 published_line_name: null,
                 origin_ref: null,
                 destination_ref: null,
@@ -258,7 +258,7 @@ describe("utils", () => {
                 vehicle_ref: "191D44717",
                 longitude: -6.238029,
                 latitude: 53.42605,
-                bearing: "119",
+                bearing: 119,
                 published_line_name: "784",
                 origin_ref: "98010",
                 destination_ref: "98045",
@@ -386,7 +386,7 @@ describe("utils", () => {
 
         it("omits Bearing with -1 value", () => {
             const mockAvlWithMissingBearing = structuredClone(mockAvl);
-            mockAvlWithMissingBearing[1].bearing = "-1";
+            mockAvlWithMissingBearing[1].bearing = -1;
             const vehicleActivites = createVehicleActivities(mockAvlWithMissingBearing, getDate());
             const siriVm = createSiriVm(vehicleActivites, requestMessageRef, responseTime);
             expect(siriVm).toEqual(mockSiriVmResult);
