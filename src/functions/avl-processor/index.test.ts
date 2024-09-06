@@ -233,7 +233,7 @@ describe("avl-processor", () => {
 
         expect(valuesMock).not.toHaveBeenCalled();
 
-        expect(putMetricDataSpy).toHaveBeenCalledTimes(6);
+        expect(putMetricDataSpy).toHaveBeenCalledTimes(3);
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             1,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
@@ -246,21 +246,6 @@ describe("avl-processor", () => {
         );
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             3,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            4,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            5,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            6,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
             expectedPutMetricDataCallForFilteredArrayParseError.metricData,
         );
