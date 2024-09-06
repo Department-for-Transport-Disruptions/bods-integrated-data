@@ -81,6 +81,18 @@ export const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml
                     <DestinationRef>Brighton</DestinationRef>
                     <PublishedLineName>11</PublishedLineName>
                 </MonitoredVehicleJourney>
+                <Extensions>
+                    <VehicleJourney>
+                        <Operational>
+                            <TicketMachine>
+                                <TicketMachineServiceCode>123</TicketMachineServiceCode>
+                                <JourneyCode>VJ_123</JourneyCode>
+                            </TicketMachine>
+                        </Operational>
+                        <VehicleUniqueId>Vehicle_123</VehicleUniqueId>
+                        <DriverRef>123456</DriverRef>
+                    </VehicleJourney>
+                </Extensions>
             </VehicleActivity>
         </VehicleMonitoringDelivery>
     </ServiceDelivery>

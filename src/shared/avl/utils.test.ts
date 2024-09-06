@@ -69,6 +69,7 @@ const mockAvl: Avl[] = [
         vehicle_unique_id: null,
         subscription_id: "",
         onward_calls: null,
+        driver_ref: null,
     },
     {
         id: 24183,
@@ -117,6 +118,7 @@ const mockAvl: Avl[] = [
         trip_id: null,
         subscription_id: "",
         onward_calls: null,
+        driver_ref: null,
     },
 ];
 
@@ -162,7 +164,7 @@ describe("utils", () => {
             ["NATX", "191D44717"],
             ["TFLO", "LX20YTA"],
         ])("maps required database AVL fields to SIRI-VM fields", (operatorRef, expectedVehicleRef) => {
-            const currentTime = getDate().toISOString();
+            const currentTime = getDate();
 
             const avl: Avl = {
                 id: 24173,
@@ -211,34 +213,25 @@ describe("utils", () => {
                 vehicle_unique_id: null,
                 subscription_id: "",
                 onward_calls: null,
+                driver_ref: null,
             };
 
             const expectedVehicleActivities: SiriVehicleActivity[] = [
                 {
-                    RecordedAtTime: currentTime,
+                    RecordedAtTime: currentTime.toISOString(),
                     ItemIdentifier: avl.item_id,
-                    ValidUntilTime: currentTime,
+                    ValidUntilTime: "2024-02-26T14:41:11.000+00:00",
                     MonitoredVehicleJourney: {
-                        LineRef: null,
                         DirectionRef: avl.direction_ref,
-                        PublishedLineName: null,
-                        Occupancy: avl.occupancy,
                         OperatorRef: avl.operator_ref,
-                        OriginRef: null,
-                        OriginName: null,
                         OriginAimedDepartureTime: avl.origin_aimed_departure_time,
-                        DestinationRef: null,
-                        DestinationName: null,
-                        DestinationAimedArrivalTime: avl.destination_aimed_arrival_time,
                         Monitored: avl.monitored,
                         VehicleLocation: {
                             Longitude: avl.longitude,
                             Latitude: avl.latitude,
                         },
                         Bearing: avl.bearing,
-                        BlockRef: null,
                         VehicleRef: expectedVehicleRef,
-                        VehicleJourneyRef: null,
                     },
                 },
             ];
@@ -248,7 +241,7 @@ describe("utils", () => {
         });
 
         it("maps optional fields", () => {
-            const currentTime = getDate().toISOString();
+            const currentTime = getDate();
 
             const avl: Avl = {
                 id: 24173,
@@ -295,6 +288,7 @@ describe("utils", () => {
                 ticket_machine_service_code: "ticket_machine_service_code",
                 journey_code: "journey_code",
                 vehicle_unique_id: "vehicle_unique_id",
+                driver_ref: "1234",
                 subscription_id: "",
                 onward_calls: [
                     {
@@ -316,9 +310,9 @@ describe("utils", () => {
 
             const expectedVehicleActivities: SiriVehicleActivity[] = [
                 {
-                    RecordedAtTime: currentTime,
+                    RecordedAtTime: currentTime.toISOString(),
                     ItemIdentifier: avl.item_id,
-                    ValidUntilTime: currentTime,
+                    ValidUntilTime: "2024-02-26T14:41:11.000+00:00",
                     MonitoredVehicleJourney: {
                         LineRef: avl.line_ref,
                         DirectionRef: avl.direction_ref,
@@ -354,6 +348,7 @@ describe("utils", () => {
                                 },
                             },
                             VehicleUniqueId: avl.vehicle_unique_id,
+                            DriverRef: avl.driver_ref,
                         },
                     },
                 },
@@ -365,8 +360,10 @@ describe("utils", () => {
     });
 
     describe("createSiriVm", () => {
+        const vehicleActivites = createVehicleActivities(mockAvl, getDate());
+
         it("creates valid SIRI-VM XML", () => {
-            const siriVm = createSiriVm(mockAvl, requestMessageRef, responseTime);
+            const siriVm = createSiriVm(vehicleActivites, requestMessageRef, responseTime);
             expect(siriVm).toEqual(mockSiriVmResult);
         });
 
@@ -374,15 +371,25 @@ describe("utils", () => {
             const mockAvlWithEmptyProperties = structuredClone(mockAvl);
             mockAvlWithEmptyProperties[0].origin_ref = null;
             mockAvlWithEmptyProperties[0].destination_ref = null;
-            const siriVm = createSiriVm(mockAvlWithEmptyProperties, requestMessageRef, responseTime);
+            const vehicleActivites = createVehicleActivities(mockAvlWithEmptyProperties, getDate());
+            const siriVm = createSiriVm(vehicleActivites, requestMessageRef, responseTime);
             expect(siriVm).toEqual(mockSiriVmWithOmittedPropertiesResult);
         });
 
         it("omits vehicle activities that do not include all required properties", () => {
             const mockAvlWithMissingRequiredProperties = structuredClone(mockAvl);
             mockAvlWithMissingRequiredProperties[0].operator_ref = "";
-            const siriVm = createSiriVm(mockAvlWithMissingRequiredProperties, requestMessageRef, responseTime);
+            const vehicleActivites = createVehicleActivities(mockAvlWithMissingRequiredProperties, getDate());
+            const siriVm = createSiriVm(vehicleActivites, requestMessageRef, responseTime);
             expect(siriVm).toEqual(mockSiriVmWithMissingRequiredPropertiesResult);
+        });
+
+        it("omits Bearing with -1 value", () => {
+            const mockAvlWithMissingBearing = structuredClone(mockAvl);
+            mockAvlWithMissingBearing[1].bearing = "-1";
+            const vehicleActivites = createVehicleActivities(mockAvlWithMissingBearing, getDate());
+            const siriVm = createSiriVm(vehicleActivites, requestMessageRef, responseTime);
+            expect(siriVm).toEqual(mockSiriVmResult);
         });
     });
 

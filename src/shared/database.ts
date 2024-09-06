@@ -2,6 +2,7 @@ import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-sec
 import { ColumnType, Generated, Insertable, Kysely, PostgresDialect, RawBuilder, Selectable, Updateable } from "kysely";
 import { Pool } from "pg";
 import { AvlOccupancy } from "./constants";
+import { logger } from "./logger";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -9,6 +10,8 @@ const isDocker = process.env.IS_DOCKER;
 const smClient = new SecretsManagerClient({ region: "eu-west-2" });
 
 export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
+    logger.info("Creating new DB Client");
+
     if (isLocal) {
         return new Kysely<Database>({
             dialect: new PostgresDialect({
@@ -233,6 +236,7 @@ export interface AvlTable {
         string,
         string
     > | null;
+    driver_ref: string | null;
 }
 
 export type Avl = Selectable<AvlTable>;

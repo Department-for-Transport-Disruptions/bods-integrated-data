@@ -2,15 +2,24 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
-import { avlOccupancyValues } from "../constants";
+import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
 import { Avl, NewAvl, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
-import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import {
+    makeFilteredArraySchema,
+    notEmpty,
+    roundToDecimalPlaces,
+    txcEmptyProperty,
+    txcSelfClosingProperty,
+} from "../utils";
 import {
     NM_TOKEN_DISALLOWED_CHARS_REGEX,
     NM_TOKEN_REGEX,
+    REQUEST_PARAM_MAX_LENGTH,
     SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
+    createNmTokenOrNumberSiriValidation,
+    createNmTokenSiriValidation,
     createPopulatedStringValidation,
 } from "../validation";
 import { AvlValidationError } from "./avl-validation-error.schema";
@@ -43,6 +52,7 @@ const extensionsSchema = z
                     .or(txcEmptyProperty)
                     .optional(),
                 VehicleUniqueId: z.coerce.string().nullish(),
+                DriverRef: z.coerce.string().nullish(),
             })
             .or(txcEmptyProperty)
             .optional(),
@@ -57,29 +67,33 @@ const directionMap: Record<string, string> = {
 
 export const vehicleActivitySchema = z.object({
     RecordedAtTime: z.string().min(1),
-    ItemIdentifier: z.string().regex(NM_TOKEN_REGEX).nullish(),
+    ItemIdentifier: createNmTokenSiriValidation("ItemIdentifier", false),
     ValidUntilTime: z.string().min(1),
-    VehicleMonitoringRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+    VehicleMonitoringRef: createNmTokenSiriValidation("VehicleMonitoringRef", false),
     MonitoredVehicleJourney: z.object({
-        LineRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+        LineRef: createNmTokenSiriValidation("LineRef", false),
         DirectionRef: z.union([
             z
                 .string()
-                .regex(NM_TOKEN_REGEX)
+                .regex(NM_TOKEN_REGEX, {
+                    message: `DirectionRef must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+                })
                 .transform((direction) => directionMap[direction.toLowerCase()] ?? direction.toLowerCase()),
             z.number(),
         ]),
         FramedVehicleJourneyRef: z
             .object({
-                DataFrameRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
-                DatedVehicleJourneyRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
+                DataFrameRef: createNmTokenOrNumberSiriValidation("DataFrameRef"),
+                DatedVehicleJourneyRef: createNmTokenOrNumberSiriValidation("DatedVehicleJourneyRef"),
             })
             .optional(),
         PublishedLineName: z.coerce.string().nullish(),
-        OperatorRef: z.string().regex(NM_TOKEN_REGEX),
-        OriginRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+        OperatorRef: z.string().regex(NM_TOKEN_REGEX, {
+            message: `OperatorRef must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+        }),
+        OriginRef: createNmTokenSiriValidation("OriginRef", false),
         OriginName: createPopulatedStringValidation("OriginName").nullish(),
-        DestinationRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+        DestinationRef: createNmTokenSiriValidation("DestinationRef", false),
         DestinationName: createPopulatedStringValidation("DestinationName").nullish(),
         OriginAimedDepartureTime: z.coerce.string().nullish(),
         DestinationAimedArrivalTime: z.coerce.string().nullish(),
@@ -90,8 +104,8 @@ export const vehicleActivitySchema = z.object({
         }),
         Bearing: z.coerce.string().nullish(),
         Occupancy: z.enum(avlOccupancyValues).nullish(),
-        BlockRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
-        VehicleJourneyRef: z.coerce.string().regex(NM_TOKEN_REGEX).nullish(),
+        BlockRef: createNmTokenSiriValidation("BlockRef", false),
+        VehicleJourneyRef: createNmTokenSiriValidation("VehicleJourneyRef", false),
         VehicleRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
         OnwardCalls: z
             .object({
@@ -156,8 +170,8 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
         Siri: z.object({
             ServiceDelivery: z.object({
                 ResponseTimestamp: z.string(),
-                ItemIdentifier: z.string().regex(NM_TOKEN_REGEX).nullish(),
-                ProducerRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
+                ItemIdentifier: createNmTokenSiriValidation("ItemIdentifier", false),
+                ProducerRef: createNmTokenOrNumberSiriValidation("ProducerRef"),
                 VehicleMonitoringDelivery: z.object({
                     ResponseTimestamp: z.string(),
                     RequestMessageRef: z.string().uuid().or(txcEmptyProperty).nullish(),
@@ -207,8 +221,14 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                     vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
                     null,
 
-                longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-                latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+                longitude: roundToDecimalPlaces(
+                    vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+                    MAX_DECIMAL_PRECISION,
+                ),
+                latitude: roundToDecimalPlaces(
+                    vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+                    MAX_DECIMAL_PRECISION,
+                ),
                 bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
                 monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
                 published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
@@ -228,6 +248,7 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                 journey_code:
                     vehicleActivity.Extensions?.VehicleJourney?.Operational?.TicketMachine?.JourneyCode ?? null,
                 vehicle_unique_id: vehicleActivity.Extensions?.VehicleJourney?.VehicleUniqueId ?? null,
+                driver_ref: vehicleActivity.Extensions?.VehicleJourney?.DriverRef ?? null,
                 onward_calls: onwardCalls && onwardCalls.length > 0 ? JSON.stringify(onwardCalls) : null,
             };
         });
@@ -315,8 +336,8 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         vehicle_name: item.vehicleName,
         operator_ref: item.operatorRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         monitored: item.monitored,
-        longitude: item.longitude,
-        latitude: item.latitude,
+        longitude: roundToDecimalPlaces(item.longitude, MAX_DECIMAL_PRECISION),
+        latitude: roundToDecimalPlaces(item.latitude, MAX_DECIMAL_PRECISION),
         recorded_at_time: recordedAtTime,
         bearing: item.bearing?.toString(),
         load: item.load,
