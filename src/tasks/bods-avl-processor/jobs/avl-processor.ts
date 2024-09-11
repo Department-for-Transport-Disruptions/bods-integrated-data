@@ -47,12 +47,12 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array) => {
                 Body: JSON.stringify(decodedJson),
             });
         }
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem uploading GTFS-RT data to S3", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem uploading GTFS-RT data to S3");
         }
 
-        throw error;
+        throw e;
     }
 };
 
@@ -67,7 +67,7 @@ const generateGtfs = async (avl: NewBodsAvl[]) => {
         logger.info("GTFS-RT saved to S3 successfully");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error running the GTFS-RT Generator", e);
+            logger.error(e, "There was an error running the GTFS-RT Generator");
         }
 
         throw e;
@@ -184,7 +184,7 @@ void (async () => {
         ]);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the BODS AVL Processor", e);
+            logger.error(e, "There was a problem with the BODS AVL Processor");
         }
 
         await putMetricData("custom/BODSAVLProcessor", [{ MetricName: "Errors", Value: 1 }]);

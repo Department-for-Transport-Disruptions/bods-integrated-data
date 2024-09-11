@@ -135,7 +135,7 @@ export const handler: Handler = async () => {
         await calculateItemsAndUploadToS3(totalBods, totalSiri, analysisBucket);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("BODS - Siri VM analysis has failed", e);
+            logger.error(e, "BODS - Siri VM analysis has failed");
         }
 
         throw e;

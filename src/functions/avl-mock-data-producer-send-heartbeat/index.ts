@@ -44,7 +44,7 @@ export const handler: Handler = async (event, context) => {
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error when sending a Heartbeat Notification", e);
+            logger.error(e, "There was an error when sending a Heartbeat Notification");
         }
 
         throw e;

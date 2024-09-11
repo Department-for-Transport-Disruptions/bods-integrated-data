@@ -27,7 +27,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml);
 
     if (!parsedJson.success) {
-        logger.error("There was an error parsing the AVL data", parsedJson.error.format());
+        logger.error(`There was an error parsing the AVL data: ${parsedJson.error.format()}`);
         errors.push(
             ...parsedJson.error.errors.map<AvlValidationError>((error) => {
                 const { name, message, level } = getAvlErrorDetails(error);
@@ -154,7 +154,7 @@ export const handler: SQSHandler = async (event, context) => {
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("AVL Processor has failed", e);
+            logger.error(e, "AVL Processor has failed");
         }
 
         throw e;

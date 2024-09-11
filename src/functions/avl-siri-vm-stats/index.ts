@@ -19,7 +19,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         return createSuccessResponse(JSON.stringify({ num_of_siri_vehicles: vehicleCount }));
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL SIRI-VM stats retriever", e);
+            logger.error(e, "There was a problem with the AVL SIRI-VM stats retriever");
         }
 
         return createServerErrorResponse();
