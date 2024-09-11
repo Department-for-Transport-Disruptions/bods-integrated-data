@@ -151,6 +151,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                     oc
                         .columns(["vehicle_ref", "operator_ref"])
                         .doUpdateSet((eb) => ({
+                            id: eb.ref("excluded.id"),
                             destination_ref: eb.ref("excluded.destination_ref"),
                             direction_ref: eb.ref("excluded.direction_ref"),
                             geom: eb.ref("excluded.geom"),
