@@ -138,7 +138,7 @@ export const getAvlDataForGtfs = async (
 
         return avls.map(mapBodsAvlDateStrings);
     } catch (e) {
-        if (encodeURIComponent instanceof Error) {
+        if (e instanceof Error) {
             logger.error(e, "There was a problem getting AVL data from the database");
         }
 
