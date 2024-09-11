@@ -2,11 +2,17 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
-import { avlOccupancyValues } from "../constants";
+import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
 import { Avl, NewAvl, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
-import { makeFilteredArraySchema, notEmpty, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
+import {
+    makeFilteredArraySchema,
+    notEmpty,
+    roundToDecimalPlaces,
+    txcEmptyProperty,
+    txcSelfClosingProperty,
+} from "../utils";
 import {
     NM_TOKEN_DISALLOWED_CHARS_REGEX,
     NM_TOKEN_REGEX,
@@ -215,8 +221,14 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                     vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
                     null,
 
-                longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-                latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+                longitude: roundToDecimalPlaces(
+                    vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+                    MAX_DECIMAL_PRECISION,
+                ),
+                latitude: roundToDecimalPlaces(
+                    vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+                    MAX_DECIMAL_PRECISION,
+                ),
                 bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
                 monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
                 published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
@@ -324,8 +336,8 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         vehicle_name: item.vehicleName,
         operator_ref: item.operatorRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         monitored: item.monitored,
-        longitude: item.longitude,
-        latitude: item.latitude,
+        longitude: roundToDecimalPlaces(item.longitude, MAX_DECIMAL_PRECISION),
+        latitude: roundToDecimalPlaces(item.latitude, MAX_DECIMAL_PRECISION),
         recorded_at_time: recordedAtTime,
         bearing: item.bearing?.toString(),
         load: item.load,
