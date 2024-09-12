@@ -34,7 +34,7 @@ void (async () => {
         logger.info("Successfully uploaded SIRI-VM data to S3");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Error generating SIRI-VM file", e);
+            logger.error(e, "Error generating SIRI-VM file");
         }
 
         await putMetricData("custom/SiriVmGenerator", [{ MetricName: "Errors", Value: 1 }]);

@@ -131,28 +131,28 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             statusCode: 200,
             body: JSON.stringify({ siriVersion: parsedCheckStatusResponseBody.Siri["@_version"] }),
         };
-    } catch (error) {
-        if (error instanceof ZodError) {
-            logger.warn("Invalid request", error);
-            return createValidationErrorResponse(error.errors.map((error) => error.message));
+    } catch (e) {
+        if (e instanceof ZodError) {
+            logger.warn(e, "Invalid request");
+            return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
-        if (error instanceof InvalidApiKeyError) {
+        if (e instanceof InvalidApiKeyError) {
             return createUnauthorizedErrorResponse();
         }
 
-        if (error instanceof AxiosError) {
-            logger.warn("Invalid request", error);
+        if (e instanceof AxiosError) {
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(["Invalid request to data producer"]);
         }
 
-        if (error instanceof InvalidXmlError) {
-            logger.warn("Invalid SIRI-VM XML received from the data producer", error);
+        if (e instanceof InvalidXmlError) {
+            logger.warn(e, "Invalid SIRI-VM XML received from the data producer");
             return { statusCode: 200, body: JSON.stringify({ siriVersion: "Unknown" }) };
         }
 
-        if (error instanceof Error) {
-            logger.error("There was a problem subscribing to the AVL feed.", error);
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem subscribing to the AVL feed.");
         }
 
         return createServerErrorResponse();

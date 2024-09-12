@@ -23,7 +23,7 @@ const parseXml = (xml: string) => {
     const parsedJson = avlSubscriptionRequestSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
-        logger.error("There was an error parsing the subscription request.", parsedJson.error.format());
+        logger.error(`There was an error parsing the subscription request: ${parsedJson.error.format()}`);
 
         throw new InvalidXmlError();
     }

@@ -115,7 +115,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
@@ -124,12 +124,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
-            logger.error("Subscription not found", e);
+            logger.error(e, "Subscription not found");
             return createNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL subscriptions endpoint", e);
+            logger.error(e, "There was a problem with the AVL subscriptions endpoint");
         }
 
         return createServerErrorResponse();
