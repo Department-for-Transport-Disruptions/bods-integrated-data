@@ -127,7 +127,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         return createSuccessResponse();
     } catch (e) {
-        console.error(e);
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));

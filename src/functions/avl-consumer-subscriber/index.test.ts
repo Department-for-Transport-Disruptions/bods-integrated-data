@@ -271,4 +271,52 @@ describe("avl-consumer-subscriber", () => {
             consumerSubscription,
         );
     });
+
+    it("returns a 200 and overwrites an existing consumer subscription when the request is valid when resubscribing", async () => {
+        const producerSubscription: AvlSubscription = {
+            PK: mockProducerSubscriptionId,
+            description: "test-description",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "live",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        };
+
+        recursiveScanSpy.mockResolvedValueOnce([producerSubscription]);
+
+        const consumerSubscription: AvlConsumerSubscription = {
+            PK: mockRandomId,
+            SK: mockUserId,
+            subscriptionId: mockConsumerSubscriptionId,
+            status: "error",
+            url: "https://www.test.com/data",
+            requestorRef: "test",
+            heartbeatInterval: "PT30S",
+            initialTerminationTime: "2034-03-11T15:20:02.093Z",
+            requestTimestamp: "2024-03-11T15:20:02.093Z",
+            producerSubscriptionIds: mockProducerSubscriptionId,
+            heartbeatAttempts: 0,
+        };
+
+        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 200,
+            body: "",
+        });
+
+        expect(putDynamoItemSpy).toHaveBeenCalledWith(
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            {
+                ...consumerSubscription,
+                status: "live",
+            },
+        );
+    });
 });
