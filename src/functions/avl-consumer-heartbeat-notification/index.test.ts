@@ -51,8 +51,8 @@ describe("avl-consumer-heartbeat-notification", () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(Error);
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the avl-consumer-heartbeat-notification endpoint",
             expect.any(Error),
+            "There was a problem with the avl-consumer-heartbeat-notification endpoint",
         );
     });
 
@@ -240,8 +240,8 @@ describe("avl-consumer-heartbeat-notification", () => {
         expect(axiosSpy).toHaveBeenCalledTimes(1);
         expect(logger.warn).not.toHaveBeenCalled();
         expect(logger.error).toHaveBeenCalledWith(
-            `Unhandled error sending heartbeat notification to subscription ${subscription.subscriptionId}`,
             expect.anything(),
+            `Unhandled error sending heartbeat notification to subscription ${subscription.subscriptionId}`,
         );
     });
 });

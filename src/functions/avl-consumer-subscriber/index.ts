@@ -128,17 +128,17 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         return createSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidXmlError) {
-            logger.warn("Invalid SIRI-VM XML provided", e);
+            logger.warn(e, "Invalid SIRI-VM XML provided");
             return createValidationErrorResponse(["Invalid SIRI-VM XML provided"]);
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the avl-consumer-subscriber endpoint", e);
+            logger.error(e, "There was a problem with the avl-consumer-subscriber endpoint");
         }
 
         return createServerErrorResponse();

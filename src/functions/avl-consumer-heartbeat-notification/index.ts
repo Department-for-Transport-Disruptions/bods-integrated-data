@@ -73,8 +73,8 @@ export const handler: Handler = async (event, context) => {
                         );
                     } else {
                         logger.error(
-                            `Unhandled error sending heartbeat notification to subscription ${subscription.subscriptionId}`,
                             e,
+                            `Unhandled error sending heartbeat notification to subscription ${subscription.subscriptionId}`,
                         );
                     }
                 }
@@ -82,7 +82,7 @@ export const handler: Handler = async (event, context) => {
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the avl-consumer-heartbeat-notification endpoint", e);
+            logger.error(e, "There was a problem with the avl-consumer-heartbeat-notification endpoint");
         }
 
         throw e;

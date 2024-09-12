@@ -66,8 +66,8 @@ describe("avl-consumer-unsubscriber", () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the avl-consumer-unsubscriber endpoint",
             expect.any(Error),
+            "There was a problem with the avl-consumer-unsubscriber endpoint",
         );
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
@@ -84,7 +84,7 @@ describe("avl-consumer-unsubscriber", () => {
             statusCode: 400,
             body: JSON.stringify({ errors: expectedErrorMessages }),
         });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+        expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid request");
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
@@ -96,7 +96,7 @@ describe("avl-consumer-unsubscriber", () => {
             statusCode: 400,
             body: JSON.stringify({ errors: ["Body must be a string"] }),
         });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+        expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid request");
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
@@ -108,7 +108,7 @@ describe("avl-consumer-unsubscriber", () => {
             statusCode: 400,
             body: JSON.stringify({ errors: ["Invalid SIRI-VM XML provided"] }),
         });
-        expect(logger.warn).toHaveBeenCalledWith("Invalid SIRI-VM XML provided", expect.anything());
+        expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid SIRI-VM XML provided");
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
@@ -118,7 +118,7 @@ describe("avl-consumer-unsubscriber", () => {
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.anything());
+        expect(logger.error).toHaveBeenCalledWith(expect.anything(), "Subscription not found");
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
