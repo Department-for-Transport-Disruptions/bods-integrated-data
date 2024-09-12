@@ -6,7 +6,7 @@ import {
     createSuccessResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
-import { isActiveAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
+import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -76,15 +76,22 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const xml = parseXml(body);
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
         const subscriptionId = subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier;
+        let PK = undefined;
 
-        const isActiveSubscription = await isActiveAvlConsumerSubscription(
-            avlConsumerSubscriptionTableName,
-            subscriptionId,
-            userId,
-        );
+        try {
+            const subscription = await getAvlConsumerSubscription(
+                avlConsumerSubscriptionTableName,
+                subscriptionId,
+                userId,
+            );
 
-        if (isActiveSubscription) {
-            return createConflictErrorResponse("Consumer subscription ID already active");
+            if (subscription.status === "live") {
+                return createConflictErrorResponse("Consumer subscription ID is already live");
+            }
+
+            PK = subscription.PK;
+        } catch (_error) {
+            // ignore caught error when no existing subscription is found
         }
 
         const producerSubscriptions = await getAvlSubscriptions(avlProducerSubscriptionTableName);
@@ -98,7 +105,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const consumerSubscription: AvlConsumerSubscription = {
-            PK: randomUUID(),
+            PK: PK || randomUUID(),
             SK: userId,
             subscriptionId,
             status: "live",
@@ -120,6 +127,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         return createSuccessResponse();
     } catch (e) {
+        console.error(e);
         if (e instanceof ZodError) {
             logger.warn("Invalid request", e.errors);
             return createValidationErrorResponse(e.errors.map((error) => error.message));

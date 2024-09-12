@@ -40,20 +40,30 @@ resource "aws_dynamodb_table" "table" {
   }
 
   dynamic "global_secondary_index" {
-    for_each = var.global_secondary_index != null ? [1] : []
+    for_each = var.global_secondary_indexes
 
     content {
-      name            = "${var.global_secondary_index}-index"
-      hash_key        = var.global_secondary_index
+      name            = "${global_secondary_index.value.hash_key}-index"
+      hash_key        = global_secondary_index.value.hash_key
+      range_key       = global_secondary_index.value.range_key
       projection_type = "ALL"
     }
   }
 
   dynamic "attribute" {
-    for_each = var.global_secondary_index != null ? [1] : []
+    for_each = var.global_secondary_indexes
 
     content {
-      name = var.global_secondary_index
+      name = attribute.value.hash_key
+      type = "S"
+    }
+  }
+
+  dynamic "attribute" {
+    for_each = var.global_secondary_indexes
+
+    content {
+      name = attribute.value.range_key
       type = "S"
     }
   }

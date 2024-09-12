@@ -20,21 +20,21 @@ describe("avl-consumer-heartbeat-notification", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+        queryDynamo: vi.fn(),
         putDynamoItem: vi.fn(),
-        recursiveScan: vi.fn(),
     }));
 
     const mockedAxios = vi.mocked(axios, true);
     const axiosSpy = vi.spyOn(mockedAxios, "post");
     MockDate.set("2024-03-11T15:20:02.093Z");
 
+    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
-    const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
     beforeEach(() => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
 
-        recursiveScanSpy.mockResolvedValue([]);
+        queryDynamoSpy.mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -71,35 +71,9 @@ describe("avl-consumer-heartbeat-notification", () => {
                 producerSubscriptionIds: "1",
                 heartbeatAttempts: 0,
             },
-            {
-                PK: "1235",
-                SK: "100",
-                subscriptionId: "1235",
-                status: "error",
-                url: "https://example.com",
-                requestorRef: "2",
-                heartbeatInterval: "PT30S",
-                initialTerminationTime: "2024-03-11T15:20:02.093Z",
-                requestTimestamp: "2024-03-11T15:20:02.093Z",
-                producerSubscriptionIds: "1",
-                heartbeatAttempts: 0,
-            },
-            {
-                PK: "1236",
-                SK: "100",
-                subscriptionId: "1236",
-                status: "inactive",
-                url: "https://example.com",
-                requestorRef: "3",
-                heartbeatInterval: "PT30S",
-                initialTerminationTime: "2024-03-11T15:20:02.093Z",
-                requestTimestamp: "2024-03-11T15:20:02.093Z",
-                producerSubscriptionIds: "1",
-                heartbeatAttempts: 0,
-            },
         ];
 
-        recursiveScanSpy.mockResolvedValueOnce(subscriptions);
+        queryDynamoSpy.mockResolvedValueOnce(subscriptions);
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -140,7 +114,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatAttempts: 0,
         };
 
-        recursiveScanSpy.mockResolvedValueOnce([subscription]);
+        queryDynamoSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed with status code 500", "500"));
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -179,7 +153,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatAttempts: 2,
         };
 
-        recursiveScanSpy.mockResolvedValueOnce([subscription]);
+        queryDynamoSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed with status code 500", "500"));
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -219,7 +193,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatAttempts: 1,
         };
 
-        recursiveScanSpy.mockResolvedValueOnce([subscription]);
+        queryDynamoSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -257,7 +231,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatAttempts: 1,
         };
 
-        recursiveScanSpy.mockResolvedValueOnce([subscription]);
+        queryDynamoSpy.mockResolvedValueOnce([subscription]);
         putDynamoItemSpy.mockRejectedValueOnce(new Error());
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 

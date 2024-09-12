@@ -192,7 +192,7 @@ describe("avl-consumer-subscriber", () => {
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 409,
-            body: JSON.stringify({ errors: ["Consumer subscription ID already active"] }),
+            body: JSON.stringify({ errors: ["Consumer subscription ID is already live"] }),
         });
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });

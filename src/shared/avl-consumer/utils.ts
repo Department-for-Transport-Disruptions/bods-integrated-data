@@ -1,15 +1,20 @@
 import { SubscriptionIdNotFoundError } from "../avl/utils";
-import { queryDynamo, recursiveScan } from "../dynamo";
-import { AvlConsumerSubscription, avlConsumerSubscriptionSchema, avlConsumerSubscriptionsSchema } from "../schema";
+import { queryDynamo } from "../dynamo";
+import {
+    AvlConsumerSubscription,
+    AvlSubscriptionStatus,
+    avlConsumerSubscriptionSchema,
+    avlConsumerSubscriptionsSchema,
+} from "../schema";
 
-export const getAvlConsumerSubscriptions = async (tableName: string) => {
-    const subscriptions = await recursiveScan({
+export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
+    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
         TableName: tableName,
+        FilterExpression: "status = :status",
+        ExpressionAttributeValues: {
+            ":status": status,
+        },
     });
-
-    if (!subscriptions) {
-        return [];
-    }
 
     return avlConsumerSubscriptionsSchema.parse(subscriptions);
 };
@@ -18,36 +23,16 @@ export const getAvlConsumerSubscription = async (tableName: string, subscription
     const subscriptions = await queryDynamo<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
-        KeyConditionExpression: "subscriptionId = :subscriptionId",
+        KeyConditionExpression: "subscriptionId = :subscriptionId AND SK = :SK",
         ExpressionAttributeValues: {
             ":subscriptionId": subscriptionId,
+            ":SK": userId,
         },
     });
 
-    for (const subscription of subscriptions) {
-        if (subscription.SK === userId) {
-            return avlConsumerSubscriptionSchema.parse(subscription);
-        }
+    if (subscriptions.length === 0) {
+        throw new SubscriptionIdNotFoundError(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
     }
 
-    throw new SubscriptionIdNotFoundError(`Subscription ID: ${subscriptionId} not found in DynamoDB`);
-};
-
-export const isActiveAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {
-    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
-        TableName: tableName,
-        IndexName: "subscriptionId-index",
-        KeyConditionExpression: "subscriptionId = :subscriptionId",
-        ExpressionAttributeValues: {
-            ":subscriptionId": subscriptionId,
-        },
-    });
-
-    for (const subscription of subscriptions) {
-        if (subscription.SK === userId && subscription.status === "live") {
-            return true;
-        }
-    }
-
-    return false;
+    return avlConsumerSubscriptionSchema.parse(subscriptions[0]);
 };

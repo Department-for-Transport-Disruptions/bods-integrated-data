@@ -20,8 +20,7 @@ export const handler: Handler = async (event, context) => {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
-        const subscriptions = await getAvlConsumerSubscriptions(avlConsumerSubscriptionTableName);
-        const liveSubscriptions = subscriptions.filter((subscription) => subscription.status === "live");
+        const liveSubscriptions = await getAvlConsumerSubscriptions(avlConsumerSubscriptionTableName, "live");
         const currentTimestamp = getDate().toISOString();
 
         await Promise.all(

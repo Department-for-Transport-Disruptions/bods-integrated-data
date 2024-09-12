@@ -15,9 +15,11 @@ variable "ttl_attribute" {
   description = "Enable TTL via a TTL attribute name"
 }
 
-variable "global_secondary_index" {
-  type        = string
-  nullable    = true
-  default     = null
-  description = "Global secondary index as hash key"
+variable "global_secondary_indexes" {
+  type = list(object({
+    hash_key  = string
+    range_key = string
+  }))
+  default     = []
+  description = "Global secondary indexes"
 }

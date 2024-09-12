@@ -252,8 +252,6 @@ resource "aws_api_gateway_integration" "avl_consumer_subscriber_integration" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = var.avl_consumer_subscriber_invoke_arn
-
-  cache_key_parameters = local.avl_consumer_subscriber_request_parameters
 }
 
 resource "aws_lambda_permission" "avl_consumer_subscriber_permissions" {
