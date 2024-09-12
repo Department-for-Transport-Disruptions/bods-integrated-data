@@ -151,6 +151,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                     oc
                         .columns(["vehicle_ref", "operator_ref"])
                         .doUpdateSet((eb) => ({
+                            id: eb.ref("excluded.id"),
                             destination_ref: eb.ref("excluded.destination_ref"),
                             direction_ref: eb.ref("excluded.direction_ref"),
                             geom: eb.ref("excluded.geom"),
@@ -324,12 +325,12 @@ export const getAvlDataForSiriVm = async (
         const avls = await query.execute();
 
         return avls.map(mapAvlDateStrings);
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem getting AVL data from the database", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem getting AVL data from the database");
         }
 
-        throw error;
+        throw e;
     }
 };
 

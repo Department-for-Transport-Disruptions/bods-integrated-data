@@ -135,7 +135,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("GTFS Timetable Generator successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the GTFS Timetable Generator", e);
+            logger.error(e, "There was a problem with the GTFS Timetable Generator");
         }
 
         throw e;

@@ -41,7 +41,7 @@ export const handler: Handler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error retrieving fares data", e);
+            logger.error(e, "There was an error retrieving fares data");
         }
 
         throw e;

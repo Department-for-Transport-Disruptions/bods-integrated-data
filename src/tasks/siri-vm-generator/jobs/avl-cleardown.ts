@@ -15,7 +15,7 @@ void (async () => {
         logger.info(`AVL cleardown successful: deleted ${result.numDeletedRows} rows`);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL cleardown", e);
+            logger.error(e, "There was a problem with the AVL cleardown");
         }
 
         await putMetricData("custom/SiriVmGeneratorAvlCleardown", [{ MetricName: "Errors", Value: 1 }]);

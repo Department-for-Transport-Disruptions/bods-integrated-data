@@ -74,8 +74,8 @@ describe("avl-subscriptions", () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the AVL subscriptions endpoint",
             expect.any(Error),
+            "There was a problem with the AVL subscriptions endpoint",
         );
     });
 
@@ -91,7 +91,7 @@ describe("avl-subscriptions", () => {
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
             });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(getDynamoItemSpy).not.toHaveBeenCalled();
             expect(recursiveScanSpy).not.toHaveBeenCalled();
         },
@@ -109,7 +109,7 @@ describe("avl-subscriptions", () => {
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
+        expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Subscription not found");
         expect(dynamo.putDynamoItem).not.toBeCalled();
     });
 

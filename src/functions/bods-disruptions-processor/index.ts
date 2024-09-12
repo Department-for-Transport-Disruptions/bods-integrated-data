@@ -137,12 +137,12 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array, saveJson: 
                 Body: JSON.stringify(decodedJson),
             });
         }
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem uploading GTFS-RT service alerts data to S3", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem uploading GTFS-RT service alerts data to S3");
         }
 
-        throw error;
+        throw e;
     }
 };
 
@@ -172,7 +172,7 @@ export const handler: S3Handler = async (event, context) => {
         await uploadGtfsRtToS3(bucketName, gtfsRtFeed, saveJson === "true");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the disruptions processor", e);
+            logger.error(e, "There was a problem with the disruptions processor");
         }
 
         throw e;

@@ -109,7 +109,7 @@ export const handler: S3Handler = async (event, context) => {
         logger.info("NPTG uploader successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the NPTG uploader", e);
+            logger.error(e, "There was a problem with the NPTG uploader");
         }
 
         throw e;
