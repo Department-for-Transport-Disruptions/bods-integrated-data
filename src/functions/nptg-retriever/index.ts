@@ -31,7 +31,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("NPTG retriever successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the NPTG retriever", e);
+            logger.error(e, "There was a problem with the NPTG retriever");
         }
 
         throw e;
