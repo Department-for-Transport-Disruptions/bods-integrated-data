@@ -325,12 +325,12 @@ export const getAvlDataForSiriVm = async (
         const avls = await query.execute();
 
         return avls.map(mapAvlDateStrings);
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem getting AVL data from the database", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem getting AVL data from the database");
         }
 
-        throw error;
+        throw e;
     }
 };
 
