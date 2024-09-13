@@ -205,6 +205,8 @@ module "integrated_data_gtfs_rt_pipeline" {
   bods_avl_processor_memory          = 4096
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
+  siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  save_json                          = false
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -287,7 +289,7 @@ module "integrated_data_disruptions_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db.db_sg_id
   db_host            = module.integrated_data_aurora_db.db_host
-  saveJson           = false
+  save_json          = false
 }
 
 

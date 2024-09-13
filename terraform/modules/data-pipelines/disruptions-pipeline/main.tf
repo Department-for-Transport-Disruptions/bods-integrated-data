@@ -61,15 +61,17 @@ module "integrated_data_bods_disruptions_retriever_function" {
   timeout       = 60
   memory        = 256
 
-  permissions = [{
-    Action = [
-      "s3:PutObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
-    ]
-  }]
+  permissions = [
+    {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
+      ]
+    }
+  ]
 
   env_vars = {
     STAGE                            = var.environment
@@ -92,31 +94,33 @@ module "integrated_data_bods_disruptions_processor_function" {
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
 
-  permissions = [{
-    Action = [
-      "secretsmanager:GetSecretValue",
-    ],
-    Effect = "Allow",
-    Resource = [
-      var.db_secret_arn,
-    ]
-    }, {
-    Action = [
-      "s3:GetObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
-    ]
-    }, {
-    Action = [
-      "s3:PutObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.arn}/*"
-    ]
-  }]
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+      }, {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
+      ]
+      }, {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.arn}/*"
+      ]
+    }
+  ]
 
   env_vars = {
     STAGE         = var.environment
@@ -125,6 +129,6 @@ module "integrated_data_bods_disruptions_processor_function" {
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
     BUCKET_NAME   = aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.bucket
-    SAVE_JSON     = var.saveJson
+    SAVE_JSON     = var.save_json
   }
 }
