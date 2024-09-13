@@ -140,6 +140,33 @@ describe("avl-feed-validator", () => {
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
 
+    it("should do nothing if subscriptions have no heartbeat data but have received AVL data", async () => {
+        const avlSubscriptions: AvlSubscription[] = [
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "live",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: null,
+                lastAvlDataReceivedDateTime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+        ];
+
+        recursiveScanSpy.mockResolvedValue(avlSubscriptions);
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
+        expect(getParameterSpy).not.toBeCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(axiosSpy).not.toHaveBeenCalledOnce();
+    });
+
     it("should resubscribe to the data producer if we have not received a heartbeat notification for that subscription in the last 90 seconds", async () => {
         const avlSubscriptions: AvlSubscription[] = [
             {
@@ -151,6 +178,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                lastAvlDataReceivedDateTime: "2024-04-29T15:00:00.000Z",
                 publisherId: "test-publisher-id-1",
                 apiKey: "mock-api-key-1",
             },
@@ -162,6 +190,7 @@ describe("avl-feed-validator", () => {
                 status: "live",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                lastAvlDataReceivedDateTime: "2024-04-29T15:20:00.000Z",
                 publisherId: "test-publisher-id-2",
                 apiKey: "mock-api-key-2",
             },
@@ -190,6 +219,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                lastAvlDataReceivedDateTime: "2024-04-29T15:00:00.000Z",
                 publisherId: "test-publisher-id-1",
                 apiKey: "mock-api-key-1",
             },
@@ -219,6 +249,7 @@ describe("avl-feed-validator", () => {
             PK: "mock-subscription-id-1",
             description: "test-description",
             heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+            lastAvlDataReceivedDateTime: "2024-04-29T15:00:00.000Z",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
