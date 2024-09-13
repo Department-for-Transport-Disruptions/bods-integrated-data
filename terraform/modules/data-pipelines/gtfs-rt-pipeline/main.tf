@@ -51,19 +51,19 @@ module "integrated_data_gtfs_rt_downloader_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${aws_s3_bucket.integrated_data_gtfs_rt_bucket.arn}/*"
       ]
-    }, {
+      }, {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.db_secret_arn,
       ]
-    }, {
+      }, {
       Action = [
         "cloudwatch:PutMetricData",
       ],
@@ -102,7 +102,7 @@ module "integrated_data_gtfs_rt_service_alerts_downloader_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "${var.gtfs_rt_service_alerts_bucket_arn}/*"
       ]
@@ -135,7 +135,7 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_execution_policy" {
   name = "integrated-data-bods-avl-processor-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -178,7 +178,7 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
   name = "integrated-data-bods-avl-processor-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
