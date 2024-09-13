@@ -54,6 +54,7 @@ export const generateSubscriptionRequestXml = (
                         VehicleMonitoringDetailLevel: "normal",
                         "@_version": "2.0",
                     },
+                    UpdateInterval: "PT10S",
                 },
             },
         },
