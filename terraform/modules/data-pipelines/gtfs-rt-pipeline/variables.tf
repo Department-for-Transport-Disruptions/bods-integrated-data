@@ -85,6 +85,11 @@ variable "siri_vm_bucket_name" {
   description = "Name of bucket containing the AVL SIRI-VM file"
 }
 
+variable "siri_vm_bucket_arn" {
+  type        = string
+  description = "Arn of bucket containing the AVL SIRI-VM file"
+}
+
 variable "save_json" {
   type        = bool
   description = "Whether or not to save the GTFS-RT as JSON as well"
