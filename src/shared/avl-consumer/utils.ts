@@ -7,12 +7,6 @@ import {
     avlConsumerSubscriptionsSchema,
 } from "../schema";
 
-export type SubscriptionTriggerMessage = {
-    subscriptionId: string;
-    frequency: number;
-    queueUrl: string;
-};
-
 export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
     const subscriptions = await queryDynamo<AvlConsumerSubscription>({
         TableName: tableName,

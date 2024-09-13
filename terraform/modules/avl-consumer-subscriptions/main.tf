@@ -20,49 +20,6 @@ module "integrated_data_avl_consumer_subscription_table" {
   }]
 }
 
-resource "aws_iam_policy" "integrated_data_consumer_subscription_schedule_policy" {
-  name = "integrated-data-consumer-subscription-schedule-policy-${var.environment}"
-
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "states:StartExecution"
-        ],
-        "Resource" : [
-          var.avl_consumer_subscription_trigger_function_arn
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role" "integrated_data_consumer_subscription_schedule_role" {
-  name = "integrated-data-consumer-subscription-schedule-role-${var.environment}"
-
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "scheduler.amazonaws.com"
-        },
-        "Action" : "sts:AssumeRole",
-        "Condition" : {
-          "StringEquals" : {
-            "aws:SourceAccount" : var.aws_account_id
-          }
-        }
-      }
-    ]
-  })
-
-  managed_policy_arns = [aws_iam_policy.integrated_data_consumer_subscription_schedule_policy.arn]
-}
-
 module "avl_consumer_subscriber" {
   source = "../shared/lambda-function"
 
@@ -89,38 +46,14 @@ module "avl_consumer_subscriber" {
       ],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_producer_subscription_table}"
-    },
-    {
-      Action = [
-        "sqs:CreateSchedule"
-      ],
-      Effect   = "Allow",
-      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-subscription-schedule-*"
-    },
-    {
-      Action = [
-        "sqs:CreateQueue"
-      ],
-      Effect   = "Allow",
-      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-queue-*"
-    },
-    {
-      Action = [
-        "lambda:CreateEventSourceMapping"
-      ],
-      Effect   = "Allow",
-      Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:event-source-mapping:*"
     }
   ]
 
 
   env_vars = {
-    STAGE                                             = var.environment
-    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME              = module.integrated_data_avl_consumer_subscription_table.table_name
-    AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME              = var.avl_producer_subscription_table
-    AVL_CONSUMER_SUBSCRIPTION_SEND_DATA_FUNCTION_NAME = var.avl_consumer_subscription_send_data_function_name
-    AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN    = var.avl_consumer_subscription_trigger_function_arn
-    AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN       = var.avl_producer_subscription_table
+    STAGE                                = var.environment
+    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
+    AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = var.avl_producer_subscription_table
   }
 }
 

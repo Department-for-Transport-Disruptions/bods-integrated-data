@@ -16,11 +16,3 @@ variable "aws_region" {
 variable "avl_producer_subscription_table" {
   type = string
 }
-
-variable "avl_consumer_subscription_send_data_function_name" {
-  type = string
-}
-
-variable "avl_consumer_subscription_trigger_function_arn" {
-  type = string
-}

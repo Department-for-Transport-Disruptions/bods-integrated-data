@@ -45,7 +45,6 @@ export const avlSubscriptionRequestSchema = z.object({
                     VehicleMonitoringDetailLevel: z.literal("normal"),
                     "@_version": z.string().nullish(),
                 }),
-                UpdateInterval: z.enum(["PT10S", "PT15S", "PT20S", "PT30S"]).default("PT10S"),
             }),
         }),
     }),
