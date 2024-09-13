@@ -1,7 +1,7 @@
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
-import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { checkSubscriptionIsHealthy, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -71,38 +71,9 @@ export const handler: Handler = async (event, context) => {
 
         await Promise.all(
             nonTerminatedSubscriptions.map(async (subscription) => {
-                const {
-                    heartbeatLastReceivedDateTime,
-                    lastResubscriptionTime,
-                    serviceStartDatetime,
-                    lastAvlDataReceivedDateTime,
-                } = subscription;
+                const subscriptionIsHealthy = checkSubscriptionIsHealthy(subscription, currentTime);
 
-                const heartbeatThreshold = currentTime.subtract(90, "seconds");
-
-                const heartbeatLastReceivedInThreshold =
-                    heartbeatLastReceivedDateTime &&
-                    isDateAfter(getDate(heartbeatLastReceivedDateTime), heartbeatThreshold);
-
-                const lastResubscriptionTimeInThreshold =
-                    lastResubscriptionTime && isDateAfter(getDate(lastResubscriptionTime), heartbeatThreshold);
-
-                const serviceStartDatetimeInThreshold =
-                    serviceStartDatetime && isDateAfter(getDate(serviceStartDatetime), heartbeatThreshold);
-
-                const lastAvlDataReceivedDateTimeInThreshold =
-                    lastAvlDataReceivedDateTime &&
-                    isDateAfter(getDate(lastAvlDataReceivedDateTime), heartbeatThreshold);
-
-                // We expect to receive a heartbeat notification from a data producer every 30 seconds.
-                // If we do not receive a heartbeat notification or avl data for 90 seconds we will attempt to resubscribe to the data producer.
-                const isHeartbeatValid =
-                    heartbeatLastReceivedInThreshold ||
-                    lastResubscriptionTimeInThreshold ||
-                    lastAvlDataReceivedDateTimeInThreshold ||
-                    serviceStartDatetimeInThreshold;
-
-                if (isHeartbeatValid) {
+                if (subscriptionIsHealthy) {
                     if (subscription.status !== "live") {
                         await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                             ...subscription,

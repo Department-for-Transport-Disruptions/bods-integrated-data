@@ -58,6 +58,7 @@ describe("avl-subscriber", () => {
         lastAvlDataReceivedDateTime: null,
         lastResubscriptionTime: null,
         serviceStartDatetime: undefined,
+        lastModifiedDateTime: null,
     };
 
     let mockEvent: APIGatewayProxyEvent;
@@ -335,6 +336,7 @@ describe("avl-subscriber", () => {
             lastAvlDataReceivedDateTime: "2024-09-02T13:34:00Z",
             lastResubscriptionTime: "2024-03-11T15:20:02.093Z",
             serviceStartDatetime: "2024-08-12T09:34:00Z",
+            lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
         };
 
         await handler(mockEvent, mockContext, mockCallback);

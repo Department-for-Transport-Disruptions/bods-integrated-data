@@ -99,6 +99,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             lastAvlDataReceivedDateTime: activeSubscription?.lastAvlDataReceivedDateTime ?? null,
             serviceStartDatetime: activeSubscription?.serviceStartDatetime,
             lastResubscriptionTime: activeSubscription ? currentTime : null,
+            lastModifiedDateTime: activeSubscription ? currentTime : null,
         };
 
         try {
