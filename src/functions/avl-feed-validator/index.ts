@@ -132,7 +132,7 @@ export const handler: Handler = async (event, context) => {
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error when running the AVL feed validator", e);
+            logger.error(e, "There was an error when running the AVL feed validator");
         }
 
         throw e;

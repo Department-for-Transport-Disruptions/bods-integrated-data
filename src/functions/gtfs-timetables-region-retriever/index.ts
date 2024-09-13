@@ -60,7 +60,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error when retrieving GTFS regions.", e);
+            logger.error(e, "There was an error when retrieving GTFS regions.");
         }
 
         throw e;

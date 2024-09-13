@@ -169,8 +169,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the SIRI-VM downloader endpoint");
-            logger.error(e);
+            logger.error(e, "There was a problem with the SIRI-VM downloader endpoint");
         }
 
         return createServerErrorResponse();
