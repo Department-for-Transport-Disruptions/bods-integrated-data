@@ -228,7 +228,7 @@ describe("AVL-data-endpoint", () => {
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             description: "test-description",
-            heartbeatLastReceivedDateTime: "2024-04-15T12:25:00.000Z",
+            heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
             shortDescription: "test-short-description",
             status: "live",
