@@ -49,7 +49,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("Database preparation complete");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("Error running the TXC Retriever", e);
+            logger.error(e, "Error running the TXC Retriever");
         }
 
         throw e;

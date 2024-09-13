@@ -153,7 +153,7 @@ describe("AVL-data-endpoint", () => {
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
-        expect(logger.error).toHaveBeenCalledWith("There was a problem with the Data endpoint", expect.any(Error));
+        expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "There was a problem with the Data endpoint");
         expect(s3.putS3Object).not.toHaveBeenCalled();
     });
 
@@ -173,7 +173,7 @@ describe("AVL-data-endpoint", () => {
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
             });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(s3.putS3Object).not.toHaveBeenCalled();
         },
     );
@@ -185,7 +185,7 @@ describe("AVL-data-endpoint", () => {
 
             const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(s3.putS3Object).not.toHaveBeenCalled();
         },
     );
