@@ -11,6 +11,8 @@ permissions:
 env:
   TERRAFORM_VERSION: 1.6.6
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  TF_VAR_datadog_api_key: ${{ secrets.DD_API_KEY }}
+  TF_VAR_datadog_app_key: ${{ secrets.DD_APP_KEY }}
   HUSKY: 0
   TZ: "Europe/London"
 
