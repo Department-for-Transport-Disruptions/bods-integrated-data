@@ -17,7 +17,7 @@ variable "avl_producer_subscription_table" {
   type = string
 }
 
-variable "avl_consumer_subscription_send_data_function_name" {
+variable "avl_consumer_subscription_data_sender_function_name" {
   type = string
 }
 

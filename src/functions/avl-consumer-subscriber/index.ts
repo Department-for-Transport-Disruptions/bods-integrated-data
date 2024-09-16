@@ -69,7 +69,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const {
             AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
             AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME,
-            AVL_CONSUMER_SUBSCRIPTION_SEND_DATA_FUNCTION_NAME,
+            AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME,
             AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN,
             AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN,
         } = process.env;
@@ -77,12 +77,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         if (
             !AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME ||
             !AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME ||
-            !AVL_CONSUMER_SUBSCRIPTION_SEND_DATA_FUNCTION_NAME ||
+            !AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME ||
             !AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN ||
             !AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN
         ) {
             throw new Error(
-                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_SEND_DATA_FUNCTION_NAME, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN and AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN must be set",
+                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN and AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN must be set",
             );
         }
 
@@ -150,7 +150,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await createEventSourceMapping({
             EventSourceArn: queueUrl,
-            FunctionName: AVL_CONSUMER_SUBSCRIPTION_SEND_DATA_FUNCTION_NAME,
+            FunctionName: AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME,
         });
 
         const queueMessage: SubscriptionTriggerMessage = {

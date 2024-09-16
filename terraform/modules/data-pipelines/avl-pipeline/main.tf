@@ -577,11 +577,11 @@ module "siri_vm_api_public" {
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
-  source                                            = "../../avl-consumer-subscriptions"
-  environment                                       = var.environment
-  aws_account_id                                    = var.aws_account_id
-  aws_region                                        = var.aws_region
-  avl_producer_subscription_table                   = var.avl_subscription_table_name
-  avl_consumer_subscription_send_data_function_name = "*" # todo: reference function name when it is available
-  avl_consumer_subscription_trigger_function_arn    = "*" # todo reference function arn when it is available
+  source                                              = "../../avl-consumer-subscriptions"
+  environment                                         = var.environment
+  aws_account_id                                      = var.aws_account_id
+  aws_region                                          = var.aws_region
+  avl_producer_subscription_table                     = var.avl_subscription_table_name
+  avl_consumer_subscription_data_sender_function_name = "*" # todo: reference function name when it is available
+  avl_consumer_subscription_trigger_function_arn      = "*" # todo reference function arn when it is available
 }

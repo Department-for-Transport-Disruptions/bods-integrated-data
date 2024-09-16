@@ -115,12 +115,12 @@ module "avl_consumer_subscriber" {
 
 
   env_vars = {
-    STAGE                                             = var.environment
-    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME              = module.integrated_data_avl_consumer_subscription_table.table_name
-    AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME              = var.avl_producer_subscription_table
-    AVL_CONSUMER_SUBSCRIPTION_SEND_DATA_FUNCTION_NAME = var.avl_consumer_subscription_send_data_function_name
-    AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN    = var.avl_consumer_subscription_trigger_function_arn
-    AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN       = var.avl_producer_subscription_table
+    STAGE                                               = var.environment
+    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME                = module.integrated_data_avl_consumer_subscription_table.table_name
+    AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME                = var.avl_producer_subscription_table
+    AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME = var.avl_consumer_subscription_data_sender_function_name
+    AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN      = var.avl_consumer_subscription_trigger_function_arn
+    AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN         = var.avl_producer_subscription_table
   }
 }
 
