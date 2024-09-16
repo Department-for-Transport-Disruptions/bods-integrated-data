@@ -21,7 +21,7 @@ export const resubscribeToDataProducer = async (
 
     if (!subscriptionUsername || !subscriptionPassword) {
         throw new Error(
-            `Cannot resubscribe to data producer as username or password is missing for subscription ID: ${subscription.PK}.`,
+            `Cannot resubscribe to data producer as username or password is missing for subscription ID: ${subscription.PK}`,
         );
     }
 
@@ -113,8 +113,10 @@ export const handler: Handler = async (event, context) => {
                 } catch (e) {
                     if (e instanceof AxiosError) {
                         logger.error(
-                            `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,
+                            `There was an error when resubscribing to the data producer - subscriptionId: ${subscription.PK}, code: ${e.code}, message: ${e.message}`,
                         );
+                    } else {
+                        logger.error(e, "There was an error when resubscribing to the data producer");
                     }
 
                     await putMetricData("custom/AVLMetrics", [
@@ -124,7 +126,7 @@ export const handler: Handler = async (event, context) => {
                         },
                     ]);
 
-                    throw e;
+                    return;
                 }
 
                 logger.info(`Successfully resubscribed to data producer with subscription ID: ${subscription.PK}`);
