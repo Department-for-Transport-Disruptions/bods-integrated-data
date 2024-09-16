@@ -93,9 +93,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestorRef: avlSubscribeMessage.requestorRef,
             publisherId: avlSubscribeMessage.publisherId,
             apiKey: activeSubscription?.apiKey || generateApiKey(),
-            heartbeatLastReceivedDateTime: activeSubscription?.heartbeatLastReceivedDateTime
-                ? getDate().toISOString()
-                : null,
+            heartbeatLastReceivedDateTime: activeSubscription?.heartbeatLastReceivedDateTime ?? null,
             lastAvlDataReceivedDateTime: activeSubscription?.lastAvlDataReceivedDateTime ?? null,
             serviceStartDatetime: activeSubscription?.serviceStartDatetime,
             lastResubscriptionTime: activeSubscription ? currentTime : null,
