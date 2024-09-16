@@ -13,13 +13,11 @@ variable "datadog_api_url" {
 variable "datadog_api_key" {
   type        = string
   description = "API key required by DataDog to submit metrics and events"
-  default     = ""
 }
 
 variable "datadog_app_key" {
   type        = string
   description = "Used in conjunction with the API key to give users access to DataDog's programmatic API"
-  default     = ""
 }
 
 variable "datadog_external_id" {

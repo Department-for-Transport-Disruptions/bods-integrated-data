@@ -342,5 +342,7 @@ module "integrated_data_gtfs_api" {
 module "integrated_data_avl_datadog" {
   source = "../modules/avl-datadog-monitoring"
 
-  environment = local.env
+  environment     = local.env
+  datadog_api_key = local.secrets["datadog_api_key"]
+  datadog_app_key = local.secrets["datadog_app_key"]
 }
