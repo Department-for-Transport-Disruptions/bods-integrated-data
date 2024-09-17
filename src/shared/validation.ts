@@ -33,6 +33,16 @@ export const createStringLengthValidation = (propertyName: string) => {
         });
 };
 
+export const createStringArrayValidation = (propertyName: string) => {
+    return z
+        .string({
+            required_error: `${propertyName} is required`,
+            invalid_type_error: `${propertyName} must be a string`,
+        })
+        .transform((val) => val.split(",").map((b) => b.trim()))
+        .pipe(z.string().array());
+};
+
 export const createNmTokenSiriValidation = (propertyName: string, isRequired: boolean) => {
     return isRequired
         ? z.coerce

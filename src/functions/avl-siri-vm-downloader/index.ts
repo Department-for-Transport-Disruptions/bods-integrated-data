@@ -21,6 +21,7 @@ import {
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
     createNmTokenValidation,
+    createStringArrayValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from "aws-lambda";
@@ -39,7 +40,7 @@ const requestParamsSchema = z.preprocess(
         producerRef: createNmTokenValidation("producerRef").optional(),
         originRef: createNmTokenValidation("originRef").optional(),
         destinationRef: createNmTokenValidation("destinationRef").optional(),
-        subscriptionId: createStringLengthValidation("subscriptionId").optional(),
+        subscriptionId: createStringArrayValidation("subscriptionId").optional(),
     }),
 );
 
@@ -52,7 +53,7 @@ const retrieveSiriVmData = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
 ) => {
     const avls = await getAvlDataForSiriVm(
         dbClient,
