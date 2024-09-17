@@ -13,6 +13,38 @@ variable "aws_region" {
   description = "AWS region"
 }
 
+variable "sg_id" {
+  type = string
+}
+
+variable "subnet_ids" {
+  type = list(string)
+}
+
+variable "db_sg_id" {
+  type        = string
+  description = "Database Security Group ID"
+}
+
+variable "db_host" {
+  type = string
+}
+
+variable "db_port" {
+  type    = number
+  default = 5432
+}
+
+variable "db_secret_arn" {
+  type        = string
+  description = "ARN of the secret containing the database credentials"
+}
+
+variable "db_name" {
+  type    = string
+  default = "bods_integrated_data"
+}
+
 variable "avl_producer_subscription_table" {
   type = string
 }

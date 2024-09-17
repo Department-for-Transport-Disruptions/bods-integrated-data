@@ -4,6 +4,7 @@ export * from "./get-ecs-cluster-for-service";
 export * from "./invoke-avl-consumer-heartbeat-notification";
 export * from "./invoke-avl-consumer-subscriber";
 export * from "./invoke-avl-consumer-unsubscriber";
+export * from "./invoke-avl-consumer-data-sender";
 export * from "./invoke-avl-data-endpoint";
 export * from "./invoke-avl-datafeed-validator";
 export * from "./invoke-avl-feed-validator";
