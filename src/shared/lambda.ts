@@ -12,6 +12,12 @@ const client = new LambdaClient({
     region: "eu-west-2",
 });
 
-export const createEventSourceMapping = (input: CreateEventSourceMappingCommandInput) => {
-    return client.send(new CreateEventSourceMappingCommand(input));
+export const createEventSourceMapping = async (input: CreateEventSourceMappingCommandInput) => {
+    const response = await client.send(new CreateEventSourceMappingCommand(input));
+
+    if (!response.UUID) {
+        throw new Error(`Error creating event source mapping: ${input.EventSourceArn}`);
+    }
+
+    return response.UUID;
 };

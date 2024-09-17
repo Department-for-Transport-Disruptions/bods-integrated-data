@@ -135,6 +135,9 @@ describe("avl-consumer-unsubscriber", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);

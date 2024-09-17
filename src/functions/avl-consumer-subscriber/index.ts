@@ -135,20 +135,16 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestTimestamp: subscriptionRequest.RequestTimestamp,
             producerSubscriptionIds,
             heartbeatAttempts: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
-
-        await putDynamoItem(
-            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
-            consumerSubscription.PK,
-            consumerSubscription.SK,
-            consumerSubscription,
-        );
 
         const queueUrl = await createQueue({
             QueueName: `consumer-subscription-queue-${userId}-${subscriptionId}`,
         });
 
-        await createEventSourceMapping({
+        const eventSourceMappingUuid = await createEventSourceMapping({
             EventSourceArn: queueUrl,
             FunctionName: AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME,
         });
@@ -160,8 +156,10 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             queueUrl,
         };
 
+        const scheduleName = `consumer-subscription-schedule-${userId}-${subscriptionId}`;
+
         await createSchedule({
-            Name: `consumer-subscription-schedule-${userId}-${subscriptionId}`,
+            Name: scheduleName,
             FlexibleTimeWindow: {
                 Mode: "OFF",
             },
@@ -172,6 +170,17 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 Input: JSON.stringify(queueMessage),
             },
         });
+
+        consumerSubscription.queueUrl = queueUrl;
+        consumerSubscription.eventSourceMappingUuid = eventSourceMappingUuid;
+        consumerSubscription.scheduleName = scheduleName;
+
+        await putDynamoItem(
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            consumerSubscription,
+        );
 
         return createSuccessResponse();
     } catch (e) {

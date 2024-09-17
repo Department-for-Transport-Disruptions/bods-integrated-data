@@ -17,6 +17,7 @@ const mockProducerSubscriptionId = "1";
 const mockUserId = "mock-user-id";
 const mockRandomId = "999";
 const mockQueueUrl = "mockQueueUrl";
+const mockEventSourceMappingUuid = "mockEventSourceMappingUuid";
 const mockSendDataLambdaName = "mockSendDataLambdaName";
 const mockSubscriptionTriggerLambdaArn = "mockSubscriptionTriggerLambdaArn";
 const mockSubscriptionScheduleRoleArn = "mockSubscriptionScheduleRoleArn";
@@ -86,6 +87,7 @@ describe("avl-consumer-subscriber", () => {
         queryDynamoSpy.mockResolvedValue([]);
         recursiveScanSpy.mockResolvedValue([]);
         createQueueSpy.mockResolvedValue(mockQueueUrl);
+        createEventSourceMappingSpy.mockResolvedValue(mockEventSourceMappingUuid);
     });
 
     afterEach(() => {
@@ -227,6 +229,9 @@ describe("avl-consumer-subscriber", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
@@ -304,6 +309,9 @@ describe("avl-consumer-subscriber", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
+            queueUrl: mockQueueUrl,
+            eventSourceMappingUuid: mockEventSourceMappingUuid,
+            scheduleName: `consumer-subscription-schedule-${mockUserId}-${mockConsumerSubscriptionId}`,
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
@@ -370,6 +378,9 @@ describe("avl-consumer-subscriber", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
+            queueUrl: mockQueueUrl,
+            eventSourceMappingUuid: mockEventSourceMappingUuid,
+            scheduleName: `consumer-subscription-schedule-${mockUserId}-${mockConsumerSubscriptionId}`,
         };
 
         queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
