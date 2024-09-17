@@ -3,7 +3,9 @@ import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-con
 import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { AvlConsumerSubscription } from "@bods-integrated-data/shared/schema";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { SQSHandler, SQSRecord } from "aws-lambda";
 import axios, { AxiosError } from "axios";
@@ -42,6 +44,7 @@ const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerS
             undefined,
             undefined,
             subscription.producerSubscriptionIds.split(","),
+            subscription.lastRetrievedAvlId,
         );
 
         const requestMessageRef = randomUUID();
@@ -55,6 +58,21 @@ const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerS
                 "Content-Type": "text/xml",
             },
         });
+
+        let highestRetrievedAvlId = 0;
+
+        for (const avl of avls) {
+            if (avl.id > highestRetrievedAvlId) {
+                highestRetrievedAvlId = avl.id;
+            }
+        }
+
+        const updatedSubscription: AvlConsumerSubscription = {
+            ...subscription,
+            lastRetrievedAvlId: highestRetrievedAvlId,
+        };
+
+        await putDynamoItem(consumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
     } catch (e) {
         if (e instanceof AxiosError) {
             logger.error(e, "Unsuccessful response from consumer subscription");

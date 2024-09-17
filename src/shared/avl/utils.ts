@@ -245,6 +245,7 @@ export const getQueryForLatestAvl = (
     originRef?: string,
     destinationRef?: string,
     subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
     recordedAtTimeAfter?: string,
 ) => {
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -288,6 +289,10 @@ export const getQueryForLatestAvl = (
         query = query.where("subscription_id", "in", subscriptionId);
     }
 
+    if (lastRetrievedAvlId) {
+        query = query.where("id", ">", lastRetrievedAvlId);
+    }
+
     if (recordedAtTimeAfter) {
         query = query.where("recorded_at_time", ">", recordedAtTimeAfter);
     }
@@ -305,6 +310,7 @@ export const getAvlDataForSiriVm = async (
     originRef?: string,
     destinationRef?: string,
     subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
 ) => {
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
@@ -319,6 +325,7 @@ export const getAvlDataForSiriVm = async (
             originRef,
             destinationRef,
             subscriptionId,
+            lastRetrievedAvlId,
             dayAgo,
         );
 

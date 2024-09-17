@@ -105,7 +105,8 @@ module "avl_consumer_data_sender" {
   permissions = [
     {
       Action = [
-        "dynamodb:Query"
+        "dynamodb:Query",
+        "dynamodb:PutItem"
       ],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"

@@ -13,6 +13,7 @@ export const avlConsumerSubscriptionSchema = z.object({
     requestTimestamp: z.string(),
     producerSubscriptionIds: z.string(),
     heartbeatAttempts: z.number(),
+    lastRetrievedAvlId: z.number().optional(),
 });
 
 export type AvlConsumerSubscription = z.infer<typeof avlConsumerSubscriptionSchema>;
