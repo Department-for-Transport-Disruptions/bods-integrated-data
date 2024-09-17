@@ -244,7 +244,7 @@ export const getQueryForLatestAvl = (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
     recordedAtTimeAfter?: string,
 ) => {
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -285,7 +285,7 @@ export const getQueryForLatestAvl = (
     }
 
     if (subscriptionId) {
-        query = query.where("subscription_id", "=", subscriptionId);
+        query = query.where("subscription_id", "in", subscriptionId);
     }
 
     if (recordedAtTimeAfter) {
@@ -304,7 +304,7 @@ export const getAvlDataForSiriVm = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
 ) => {
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
