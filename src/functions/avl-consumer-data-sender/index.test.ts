@@ -1,4 +1,5 @@
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
+import { Avl } from "@bods-integrated-data/shared/database";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
@@ -16,7 +17,57 @@ const mockProducerSubscriptionId = "1,2,3";
 const mockUserId = "mock-user-id";
 const mockRandomId = "4026f53d-3548-4999-a6b6-2e6893175894";
 
-const expectedSiriVmBody = `<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\"><ServiceDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><ProducerRef>DepartmentForTransport</ProducerRef><VehicleMonitoringDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><RequestMessageRef>4026f53d-3548-4999-a6b6-2e6893175894</RequestMessageRef><ValidUntil>2024-03-11T15:25:02.093+00:00</ValidUntil><ShortestPossibleCycle>PT5S</ShortestPossibleCycle></VehicleMonitoringDelivery></ServiceDelivery></Siri>`;
+const mockAvl: Avl = {
+    id: 1234,
+    response_time_stamp: "2024-02-26T14:37:04.665673+00:00",
+    producer_ref: "DfT",
+    recorded_at_time: "2024-02-26T14:36:11+00:00",
+    item_id: "56d177b9-2be9-49bb-852f-21e5a2400ea6",
+    valid_until_time: "2024-02-26 14:42:12",
+    line_ref: "784",
+    direction_ref: "OUT",
+    operator_ref: "NATX",
+    data_frame_ref: "",
+    dated_vehicle_journey_ref: "784105",
+    vehicle_ref: "191D44717",
+    longitude: -6.238029,
+    latitude: 53.42605,
+    bearing: "119",
+    published_line_name: "784",
+    origin_ref: "98010",
+    destination_ref: "98045",
+    block_ref: "784105",
+    occupancy: "full",
+    origin_aimed_departure_time: "2024-02-26T14:36:18+00:00",
+    geom: null,
+    vehicle_name: null,
+    monitored: null,
+    load: null,
+    passenger_count: null,
+    odometer: null,
+    headway_deviation: null,
+    schedule_deviation: null,
+    vehicle_state: null,
+    next_stop_point_id: null,
+    next_stop_point_name: null,
+    previous_stop_point_id: null,
+    previous_stop_point_name: null,
+    origin_name: null,
+    destination_name: null,
+    vehicle_journey_ref: null,
+    route_id: null,
+    trip_id: null,
+    vehicle_monitoring_ref: null,
+    destination_aimed_arrival_time: null,
+    ticket_machine_service_code: null,
+    journey_code: null,
+    vehicle_unique_id: null,
+    subscription_id: "3",
+    onward_calls: null,
+    driver_ref: null,
+};
+
+const expectedSiriVmBody = `<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\"><ServiceDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><ProducerRef>DepartmentForTransport</ProducerRef><VehicleMonitoringDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><RequestMessageRef>4026f53d-3548-4999-a6b6-2e6893175894</RequestMessageRef><ValidUntil>2024-03-11T15:25:02.093+00:00</ValidUntil><ShortestPossibleCycle>PT5S</ShortestPossibleCycle><VehicleActivity><RecordedAtTime>2024-02-26T14:36:11+00:00</RecordedAtTime><ItemIdentifier>56d177b9-2be9-49bb-852f-21e5a2400ea6</ItemIdentifier><ValidUntilTime>2024-03-11T15:25:02.093+00:00</ValidUntilTime><MonitoredVehicleJourney><LineRef>784</LineRef><DirectionRef>outbound</DirectionRef><PublishedLineName>784</PublishedLineName><OperatorRef>NATX</OperatorRef><OriginRef>98010</OriginRef><DestinationRef>98045</DestinationRef><OriginAimedDepartureTime>2024-02-26T14:36:18+00:00</OriginAimedDepartureTime><VehicleLocation><Longitude>-6.238029</Longitude><Latitude>53.42605</Latitude></VehicleLocation><Bearing>119</Bearing><Occupancy>full</Occupancy><BlockRef>784105</BlockRef><VehicleRef>191D44717</VehicleRef></MonitoredVehicleJourney></VehicleActivity></VehicleMonitoringDelivery></ServiceDelivery></Siri>`;
 
 const consumerSubscription: AvlConsumerSubscription = {
     PK: "123",
@@ -30,6 +81,7 @@ const consumerSubscription: AvlConsumerSubscription = {
     requestTimestamp: "2024-03-11T15:20:02.093Z",
     producerSubscriptionIds: mockProducerSubscriptionId,
     heartbeatAttempts: 0,
+    lastRetrievedAvlId: 5,
 };
 
 describe("avl-consumer-subscriber", () => {
@@ -52,6 +104,7 @@ describe("avl-consumer-subscriber", () => {
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         queryDynamo: vi.fn(),
+        putDynamoItem: vi.fn(),
     }));
 
     vi.mock("node:crypto", () => ({
@@ -64,6 +117,7 @@ describe("avl-consumer-subscriber", () => {
     }));
 
     const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const getAvlDataForSiriVmSpy = vi.spyOn(utilFunctions, "getAvlDataForSiriVm");
     const mockedAxios = vi.mocked(axios, true);
     const axiosSpy = vi.spyOn(mockedAxios, "post");
@@ -89,7 +143,7 @@ describe("avl-consumer-subscriber", () => {
         } as SQSEvent;
 
         queryDynamoSpy.mockResolvedValue([consumerSubscription]);
-        getAvlDataForSiriVmSpy.mockResolvedValue([]);
+        getAvlDataForSiriVmSpy.mockResolvedValue([mockAvl]);
     });
 
     afterEach(() => {
@@ -166,6 +220,7 @@ describe("avl-consumer-subscriber", () => {
             undefined,
             undefined,
             ["1", "2", "3"],
+            consumerSubscription.lastRetrievedAvlId,
         );
 
         expect(axiosSpy).toHaveBeenCalledTimes(1);
@@ -176,6 +231,18 @@ describe("avl-consumer-subscriber", () => {
         });
 
         expect(logger.error).not.toHaveBeenCalled();
+
+        const expectedUpdatedSubscription: AvlConsumerSubscription = {
+            ...consumerSubscription,
+            lastRetrievedAvlId: mockAvl.id,
+        };
+
+        expect(putDynamoItemSpy).toHaveBeenCalledWith(
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            expectedUpdatedSubscription,
+        );
     });
 
     it("throws an error when the consumer endpoint returns an unsuccesful response", async () => {
@@ -193,6 +260,7 @@ describe("avl-consumer-subscriber", () => {
             undefined,
             undefined,
             ["1", "2", "3"],
+            consumerSubscription.lastRetrievedAvlId,
         );
 
         expect(axiosSpy).toHaveBeenCalledTimes(1);
@@ -213,5 +281,7 @@ describe("avl-consumer-subscriber", () => {
             expect.anything(),
             "There was a problem with the avl-consumer-data-sender endpoint",
         );
+
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 });
