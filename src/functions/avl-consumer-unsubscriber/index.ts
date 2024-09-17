@@ -7,8 +7,11 @@ import {
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { deleteSchedule } from "@bods-integrated-data/shared/eventBridge";
+import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
+import { deleteQueue } from "@bods-integrated-data/shared/sqs";
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -57,9 +60,24 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const subscription = await getAvlConsumerSubscription(avlConsumerSubscriptionTableName, subscriptionId, userId);
 
+        await deleteSchedule({
+            Name: subscription.scheduleName,
+        });
+
+        await deleteEventSourceMapping({
+            UUID: subscription.eventSourceMappingUuid,
+        });
+
+        await deleteQueue({
+            QueueUrl: subscription.queueUrl,
+        });
+
         const updatedSubscription: AvlConsumerSubscription = {
             ...subscription,
             status: "inactive",
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         await putDynamoItem(avlConsumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);

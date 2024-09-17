@@ -1,4 +1,10 @@
-import { CreateQueueCommand, CreateQueueCommandInput, SQSClient } from "@aws-sdk/client-sqs";
+import {
+    CreateQueueCommand,
+    CreateQueueCommandInput,
+    DeleteQueueCommand,
+    DeleteQueueCommandInput,
+    SQSClient,
+} from "@aws-sdk/client-sqs";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isLocal = process.env.STAGE === "local";
@@ -16,4 +22,8 @@ export const createQueue = async (input: CreateQueueCommandInput) => {
     }
 
     return response.QueueUrl;
+};
+
+export const deleteQueue = (input: DeleteQueueCommandInput) => {
+    return client.send(new DeleteQueueCommand(input));
 };

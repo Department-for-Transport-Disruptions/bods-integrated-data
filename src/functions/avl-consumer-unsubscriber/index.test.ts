@@ -1,7 +1,10 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import * as eventBridge from "@bods-integrated-data/shared/eventBridge";
+import * as lambda from "@bods-integrated-data/shared/lambda";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlConsumerSubscription } from "@bods-integrated-data/shared/schema";
+import * as sqs from "@bods-integrated-data/shared/sqs";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../avl-consumer-unsubscriber";
@@ -40,6 +43,9 @@ describe("avl-consumer-unsubscriber", () => {
 
     const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
+    const deleteQueueSpy = vi.spyOn(sqs, "deleteQueue");
+    const deleteEventSourceMappingSpy = vi.spyOn(lambda, "deleteEventSourceMapping");
+    const deleteScheduleSpy = vi.spyOn(eventBridge, "deleteSchedule");
 
     let mockEvent: APIGatewayProxyEvent;
 
@@ -54,6 +60,9 @@ describe("avl-consumer-unsubscriber", () => {
         } as unknown as APIGatewayProxyEvent;
 
         queryDynamoSpy.mockResolvedValue([]);
+        deleteQueueSpy.mockResolvedValue({ $metadata: {} });
+        deleteEventSourceMappingSpy.mockResolvedValue({ $metadata: {} });
+        deleteScheduleSpy.mockResolvedValue({ $metadata: {} });
     });
 
     afterEach(() => {
@@ -135,9 +144,9 @@ describe("avl-consumer-unsubscriber", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 0,
-            queueUrl: "",
-            eventSourceMappingUuid: "",
-            scheduleName: "",
+            queueUrl: "mockQueueUrl",
+            eventSourceMappingUuid: "mockEventSourceMappingUuid",
+            scheduleName: "mockScheduleName",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
@@ -148,9 +157,16 @@ describe("avl-consumer-unsubscriber", () => {
             body: "",
         });
 
+        expect(deleteQueueSpy).toHaveBeenCalledWith({ QueueUrl: consumerSubscription.queueUrl });
+        expect(deleteEventSourceMappingSpy).toHaveBeenCalledWith({ UUID: consumerSubscription.eventSourceMappingUuid });
+        expect(deleteScheduleSpy).toHaveBeenCalledWith({ Name: consumerSubscription.scheduleName });
+
         const updatedConsumerSubscription: AvlConsumerSubscription = {
             ...consumerSubscription,
             status: "inactive",
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(

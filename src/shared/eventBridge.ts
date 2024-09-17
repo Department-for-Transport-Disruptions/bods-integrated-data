@@ -1,4 +1,10 @@
-import { CreateScheduleCommand, CreateScheduleCommandInput, SchedulerClient } from "@aws-sdk/client-scheduler";
+import {
+    CreateScheduleCommand,
+    CreateScheduleCommandInput,
+    DeleteScheduleCommand,
+    DeleteScheduleCommandInput,
+    SchedulerClient,
+} from "@aws-sdk/client-scheduler";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isLocal = process.env.STAGE === "local";
@@ -16,4 +22,8 @@ export const createSchedule = async (input: CreateScheduleCommandInput) => {
     }
 
     return response.ScheduleArn;
+};
+
+export const deleteSchedule = async (input: DeleteScheduleCommandInput) => {
+    return client.send(new DeleteScheduleCommand(input));
 };
