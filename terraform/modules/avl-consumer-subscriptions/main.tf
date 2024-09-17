@@ -87,6 +87,60 @@ module "avl_consumer_unsubscriber" {
   }
 }
 
+module "avl_consumer_data_sender" {
+  source = "../shared/lambda-function"
+
+  environment      = var.environment
+  function_name    = "integrated-data-avl-consumer-data-sender"
+  zip_path         = "${path.module}/../../../src/functions/dist/avl-consumer-data-sender.zip"
+  handler          = "index.handler"
+  memory           = 1024
+  runtime          = "nodejs20.x"
+  timeout          = 60
+  needs_vpc_access = true
+  custom_sg_id     = var.sg_id
+  subnet_ids       = var.subnet_ids
+  database_sg_id   = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "dynamodb:Query"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+    },
+    {
+      Action = [
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:ReceiveMessage"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-queue-*"
+    },
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
+    }
+  ]
+
+
+  env_vars = {
+    STAGE                                = var.environment
+    DB_HOST                              = var.db_host
+    DB_PORT                              = var.db_port
+    DB_SECRET_ARN                        = var.db_secret_arn
+    DB_NAME                              = var.db_name
+    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
+  }
+}
+
 
 module "avl_consumer_heartbeat_notification" {
   source = "../shared/lambda-function"

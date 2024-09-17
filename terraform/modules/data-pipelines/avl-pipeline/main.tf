@@ -579,7 +579,14 @@ module "siri_vm_api_public" {
 module "integrated_data_avl_data_consumer_subscriptions" {
   source                          = "../../avl-consumer-subscriptions"
   environment                     = var.environment
-  avl_producer_subscription_table = var.avl_subscription_table_name
   aws_account_id                  = var.aws_account_id
   aws_region                      = var.aws_region
+  sg_id                           = var.sg_id
+  subnet_ids                      = var.private_subnet_ids
+  db_sg_id                        = var.db_sg_id
+  db_host                         = var.db_host
+  db_port                         = var.db_port
+  db_secret_arn                   = var.db_secret_arn
+  db_name                         = var.db_name
+  avl_producer_subscription_table = var.avl_subscription_table_name
 }

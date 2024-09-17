@@ -127,6 +127,7 @@ module "integrated_data_avl_pipeline" {
 
   environment                                 = local.env
   vpc_id                                      = null
+  sg_id                                       = null
   private_subnet_ids                          = null
   db_secret_arn                               = "*"
   db_sg_id                                    = null
