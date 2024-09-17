@@ -155,6 +155,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const queueMessage: SubscriptionTriggerMessage = {
             subscriptionId: consumerSubscription.PK,
+            userId: consumerSubscription.SK,
             frequency: getDuration(updateInterval).asSeconds(),
             queueUrl,
         };

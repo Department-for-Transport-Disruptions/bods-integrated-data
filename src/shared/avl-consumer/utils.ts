@@ -9,6 +9,7 @@ import {
 
 export type SubscriptionTriggerMessage = {
     subscriptionId: string;
+    userId: string;
     frequency: number;
     queueUrl: string;
 };
