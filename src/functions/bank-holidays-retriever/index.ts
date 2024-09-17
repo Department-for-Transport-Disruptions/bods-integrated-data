@@ -36,7 +36,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("Bank Holidays retrieval complete");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error retrieving Bank Holidays data", e);
+            logger.error(e, "There was an error retrieving Bank Holidays data");
         }
 
         throw e;

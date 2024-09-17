@@ -95,8 +95,8 @@ describe("avl-tfl-location-retriever", () => {
             expect(vehicleLocations).toEqual([]);
 
             expect(logger.error).toHaveBeenCalledWith(
-                "Error fetching TFL vehicle locations with chunk URL https://api.tfl.gov.uk/RealTimeVehicleLocation/Lines/1,2",
                 expect.any(Error),
+                "Error fetching TFL vehicle locations with chunk URL https://api.tfl.gov.uk/RealTimeVehicleLocation/Lines/1,2",
             );
         });
 

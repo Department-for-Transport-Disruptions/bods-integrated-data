@@ -11,7 +11,7 @@ import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl } from "../database";
-import { getDate } from "../dates";
+import { getDate, isDateAfter } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
@@ -151,6 +151,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                     oc
                         .columns(["vehicle_ref", "operator_ref"])
                         .doUpdateSet((eb) => ({
+                            id: eb.ref("excluded.id"),
                             destination_ref: eb.ref("excluded.destination_ref"),
                             direction_ref: eb.ref("excluded.direction_ref"),
                             geom: eb.ref("excluded.geom"),
@@ -324,12 +325,12 @@ export const getAvlDataForSiriVm = async (
         const avls = await query.execute();
 
         return avls.map(mapAvlDateStrings);
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem getting AVL data from the database", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem getting AVL data from the database");
         }
 
-        throw error;
+        throw e;
     }
 };
 
@@ -613,4 +614,41 @@ export const getLatestAvlVehicleCount = (dbClient: KyselyDb) => {
         .where("recorded_at_time", ">", dayAgo)
         .select((eb) => eb.fn.countAll<number>().as("vehicle_count"))
         .executeTakeFirstOrThrow();
+};
+
+/**
+ * Checks if a given subscription is healthy by looking at whether any of heartbeatLastReceivedDateTime,
+ * lastResubscriptionTime, serviceStartDatetime, or lastAvlDataReceivedDateTime were in the last 90 seconds.
+ *
+ * Data producers are meant to send heartbeats at least every 30 seconds but this is not always the case so the extra
+ * checks are intended to prevent over re-subscribing
+ *
+ * @param subscription The subscription object to check
+ * @param currentTime The current time in DayJs
+ * @returns Whether the subscription is healthy or not
+ */
+export const checkSubscriptionIsHealthy = (subscription: AvlSubscription, currentTime: Dayjs) => {
+    const { heartbeatLastReceivedDateTime, lastResubscriptionTime, serviceStartDatetime, lastAvlDataReceivedDateTime } =
+        subscription;
+
+    const heartbeatThreshold = currentTime.subtract(90, "seconds");
+
+    const heartbeatLastReceivedInThreshold =
+        heartbeatLastReceivedDateTime && isDateAfter(getDate(heartbeatLastReceivedDateTime), heartbeatThreshold);
+
+    const lastResubscriptionTimeInThreshold =
+        lastResubscriptionTime && isDateAfter(getDate(lastResubscriptionTime), heartbeatThreshold);
+
+    const serviceStartDatetimeInThreshold =
+        serviceStartDatetime && isDateAfter(getDate(serviceStartDatetime), heartbeatThreshold);
+
+    const lastAvlDataReceivedDateTimeInThreshold =
+        lastAvlDataReceivedDateTime && isDateAfter(getDate(lastAvlDataReceivedDateTime), heartbeatThreshold);
+
+    return !!(
+        heartbeatLastReceivedInThreshold ||
+        lastResubscriptionTimeInThreshold ||
+        lastAvlDataReceivedDateTimeInThreshold ||
+        serviceStartDatetimeInThreshold
+    );
 };

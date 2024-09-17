@@ -170,17 +170,16 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the avl data feed validator endpoint");
-            logger.error(e);
+            logger.error(e, "There was a problem with the avl data feed validator endpoint");
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
-            logger.error("Subscription not found", e);
+            logger.error(e, "Subscription not found");
             return createNotFoundErrorResponse("Subscription not found");
         }
 

@@ -48,8 +48,8 @@ describe("gtfs-downloader-endpoint", () => {
         await expect(handler()).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the GTFS-RT service alerts downloader endpoint",
             expect.any(Error),
+            "There was a problem with the GTFS-RT service alerts downloader endpoint",
         );
     });
 
@@ -87,8 +87,8 @@ describe("gtfs-downloader-endpoint", () => {
             await expect(handler()).rejects.toThrow("An unexpected error occurred");
 
             expect(logger.error).toHaveBeenCalledWith(
-                "There was a problem with the GTFS-RT service alerts downloader endpoint",
                 expect.any(Error),
+                "There was a problem with the GTFS-RT service alerts downloader endpoint",
             );
         });
     });

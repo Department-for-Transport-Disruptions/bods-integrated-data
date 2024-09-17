@@ -23,7 +23,7 @@ export const handler = async (): Promise<APIGatewayProxyResult> => {
         };
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the GTFS-RT service alerts downloader endpoint", e);
+            logger.error(e, "There was a problem with the GTFS-RT service alerts downloader endpoint");
         }
 
         return createServerErrorResponse();

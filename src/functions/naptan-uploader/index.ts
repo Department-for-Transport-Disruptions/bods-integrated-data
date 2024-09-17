@@ -146,7 +146,7 @@ export const handler: S3Handler = async (event, context) => {
         logger.info("Naptan uploader successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the naptan uploader", e);
+            logger.error(e, "There was a problem with the naptan uploader");
         }
 
         throw e;

@@ -22,7 +22,7 @@ describe("avl-update-endpoint", () => {
 
     const expectedSubscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
         description: "updated description",
-        lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
+        lastModifiedDateTime: "2024-03-11T15:20:02.093Z",
         publisherId: "mock-publisher-id",
         requestorRef: null,
         serviceStartDatetime: "2024-01-01T15:20:02.093Z",
@@ -72,7 +72,7 @@ describe("avl-update-endpoint", () => {
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
-            apiKey: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+            apiKey: "5965q7gh542843e2a75c1782a48637d5",
         };
 
         getDynamoItemSpy.mockResolvedValue(avlSubscription);

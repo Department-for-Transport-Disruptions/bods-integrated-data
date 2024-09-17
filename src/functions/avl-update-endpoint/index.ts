@@ -15,6 +15,7 @@ import {
     generateApiKey,
     getAvlSubscription,
 } from "@bods-integrated-data/shared/avl/utils";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -81,8 +82,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestorRef: subscription.requestorRef,
             publisherId: subscription.publisherId,
             serviceStartDatetime: subscription.serviceStartDatetime,
-            lastModifiedDateTime: subscription.lastModifiedDateTime ?? null,
-            apiKey: generateApiKey(),
+            lastModifiedDateTime: getDate().toISOString(),
+            apiKey: subscription.apiKey || generateApiKey(),
         };
 
         try {
@@ -115,7 +116,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
@@ -124,12 +125,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
-            logger.error("Subscription not found", e);
+            logger.error(e, "Subscription not found");
             return createNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL subscriptions endpoint", e);
+            logger.error(e, "There was a problem with the AVL subscriptions endpoint");
         }
 
         return createServerErrorResponse();

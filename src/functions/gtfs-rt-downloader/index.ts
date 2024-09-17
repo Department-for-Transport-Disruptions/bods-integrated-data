@@ -103,12 +103,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                     body: base64GtfsRtFeed,
                     isBase64Encoded: true,
                 };
-            } catch (error) {
-                if (error instanceof Error) {
-                    logger.error("There was an error retrieving the route data", error);
+            } catch (e) {
+                if (e instanceof Error) {
+                    logger.error(e, "There was an error retrieving the route data");
                 }
 
-                throw error;
+                throw e;
             }
         }
 
@@ -140,12 +140,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the GTFS-RT downloader endpoint", e);
+            logger.error(e, "There was a problem with the GTFS-RT downloader endpoint");
         }
 
         return createServerErrorResponse();

@@ -28,9 +28,9 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
             });
 
             return response.data;
-        } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Error fetching TFL vehicle locations with chunk URL ${url}`, error);
+        } catch (e) {
+            if (e instanceof Error) {
+                logger.error(e, `Error fetching TFL vehicle locations with chunk URL ${url}`);
             }
 
             return { lines: [] };
@@ -83,12 +83,12 @@ export const handler: Handler = async (event, context) => {
         await insertAvls(dbClient, vehicleLocationsWithTflOperatorRef, "");
 
         logger.info("TfL location retriever successful");
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem with the TfL location retriever", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem with the TfL location retriever");
         }
 
-        throw error;
+        throw e;
     }
 };
 

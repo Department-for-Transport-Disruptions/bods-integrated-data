@@ -35,7 +35,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("NOC retrieval complete");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error retrieving NOC data", e);
+            logger.error(e, "There was an error retrieving NOC data");
         }
 
         throw e;

@@ -18,7 +18,7 @@ const retryBackOffOptions: BackoffOptions = {
     jitter: "full",
     numOfAttempts: 20,
     retry: (e, attemptNumber) => {
-        logger.warn(`Attempt ${attemptNumber} failed, ${attemptNumber < 20 ? "retrying" : "aborting"}...`, e as Error);
+        logger.warn(e, `Attempt ${attemptNumber} failed, ${attemptNumber < 20 ? "retrying" : "aborting"}...`);
 
         return true;
     },

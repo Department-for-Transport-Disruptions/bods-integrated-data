@@ -120,7 +120,7 @@ describe("avl-unsubscriber", () => {
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
             });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(putDynamoItemSpy).not.toHaveBeenCalled();
             expect(deleteParametersSpy).not.toHaveBeenCalled();
         },
@@ -134,7 +134,7 @@ describe("avl-unsubscriber", () => {
             statusCode: 404,
             body: JSON.stringify({ errors: ["Subscription not found"] }),
         });
-        expect(logger.error).toHaveBeenCalledWith("Subscription not found", expect.any(Error));
+        expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Subscription not found");
 
         expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();

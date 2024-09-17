@@ -14,7 +14,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("Executed lambda-template", { exampleVar });
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the lambda-template function", e);
+            logger.error(e, "There was a problem with the lambda-template function");
         }
 
         throw e;

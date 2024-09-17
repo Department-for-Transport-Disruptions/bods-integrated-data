@@ -70,7 +70,7 @@ export const handler: Handler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error retrieving BODS TXC data", e);
+            logger.error(e, "There was an error retrieving BODS TXC data");
         }
 
         throw e;

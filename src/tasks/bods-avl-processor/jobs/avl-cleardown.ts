@@ -15,7 +15,7 @@ void (async () => {
         logger.info(`AVL BODS cleardown successful: deleted ${result.numDeletedRows} rows`);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL BODS cleardown", e);
+            logger.error(e, "There was a problem with the AVL BODS cleardown");
         }
 
         await putMetricData("custom/BODSAVLCleardown", [{ MetricName: "Errors", Value: 1 }]);

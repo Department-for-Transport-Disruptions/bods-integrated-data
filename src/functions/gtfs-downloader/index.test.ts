@@ -36,8 +36,8 @@ describe("gtfs-downloader-endpoint", () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the GTFS downloader endpoint",
             expect.any(Error),
+            "There was a problem with the GTFS downloader endpoint",
         );
     });
 
@@ -52,8 +52,8 @@ describe("gtfs-downloader-endpoint", () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the GTFS downloader endpoint",
             expect.any(Error),
+            "There was a problem with the GTFS downloader endpoint",
         );
     });
 

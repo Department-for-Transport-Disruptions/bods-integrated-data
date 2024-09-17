@@ -304,9 +304,9 @@ export const handler: S3Handler = async (event, context) => {
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof InvalidOperatorError) {
-            logger.warn(`Invalid operator for TXC: ${record.s3.object.key}`, e);
+            logger.warn(e, `Invalid operator for TXC: ${record.s3.object.key}`);
         } else if (e instanceof Error) {
-            logger.error("There was a problem with the bods txc processor", e);
+            logger.error(e, "There was a problem with the bods txc processor");
             throw e;
         } else {
             throw e;

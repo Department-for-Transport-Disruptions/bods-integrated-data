@@ -31,7 +31,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("Naptan retriever successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the naptan retriever", e);
+            logger.error(e, "There was a problem with the naptan retriever");
         }
 
         throw e;
