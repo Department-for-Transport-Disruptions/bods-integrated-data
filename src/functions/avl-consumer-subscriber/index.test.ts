@@ -88,6 +88,7 @@ describe("avl-consumer-subscriber", () => {
         recursiveScanSpy.mockResolvedValue([]);
         createQueueSpy.mockResolvedValue(mockQueueUrl);
         createEventSourceMappingSpy.mockResolvedValue(mockEventSourceMappingUuid);
+        createScheduleSpy.mockResolvedValue("");
     });
 
     afterEach(() => {
