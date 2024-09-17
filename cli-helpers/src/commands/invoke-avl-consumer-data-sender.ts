@@ -47,8 +47,14 @@ export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data
         }
 
         const invokePayload = {
-            subscriptionId,
-            userId,
+            Records: [
+                {
+                    body: JSON.stringify({
+                        subscriptionId,
+                        userId,
+                    }),
+                },
+            ],
         };
 
         await invokeLambda(stage, {
