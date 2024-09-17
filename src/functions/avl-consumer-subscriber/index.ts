@@ -145,7 +145,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         );
 
         const queueUrl = await createQueue({
-            QueueName: `consumer-subscription-queue-${subscriptionId}`,
+            QueueName: `consumer-subscription-queue-${userId}-${subscriptionId}`,
         });
 
         await createEventSourceMapping({
@@ -161,7 +161,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
 
         await createSchedule({
-            Name: `consumer-subscription-schedule-${subscriptionId}`,
+            Name: `consumer-subscription-schedule-${userId}-${subscriptionId}`,
             FlexibleTimeWindow: {
                 Mode: "OFF",
             },

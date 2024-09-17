@@ -314,7 +314,7 @@ describe("avl-consumer-subscriber", () => {
         );
 
         expect(createQueueSpy).toHaveBeenCalledWith({
-            QueueName: `consumer-subscription-queue-${mockConsumerSubscriptionId}`,
+            QueueName: `consumer-subscription-queue-${mockUserId}-${mockConsumerSubscriptionId}`,
         });
 
         expect(createEventSourceMappingSpy).toHaveBeenCalledWith({
@@ -330,7 +330,7 @@ describe("avl-consumer-subscriber", () => {
         };
 
         expect(createScheduleSpy).toHaveBeenCalledWith({
-            Name: `consumer-subscription-schedule-${mockConsumerSubscriptionId}`,
+            Name: `consumer-subscription-schedule-${mockUserId}-${mockConsumerSubscriptionId}`,
             FlexibleTimeWindow: {
                 Mode: "OFF",
             },
