@@ -43,7 +43,7 @@ export const avlSubscriptionRequestSchema = z.object({
                 VehicleMonitoringRequest: z.object({
                     RequestTimestamp: z.string(),
                     VehicleMonitoringDetailLevel: z.literal("normal"),
-                    "@_version": z.string(),
+                    "@_version": z.string().nullish(),
                 }),
             }),
         }),
@@ -73,7 +73,7 @@ export type AvlSubscriptionResponse = z.infer<typeof avlSubscriptionResponseSche
 
 export const avlSubscriptionStatusesSchema = z.enum(avlSubscriptionStatuses);
 
-export type AvlSubscriptionStatuses = z.infer<typeof avlSubscriptionStatusesSchema>;
+export type AvlSubscriptionStatus = z.infer<typeof avlSubscriptionStatusesSchema>;
 
 export const avlSubscriptionSchema = z.object({
     PK: z.string(),

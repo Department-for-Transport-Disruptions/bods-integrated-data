@@ -9,6 +9,13 @@ export const createSuccessResponse = (body?: string): APIGatewayProxyResult => {
     };
 };
 
+export const createNoContentResponse = (body?: string): APIGatewayProxyResult => {
+    return {
+        statusCode: 204,
+        body: body ?? "",
+    };
+};
+
 export const createValidationErrorResponse = (errors: string[]): APIGatewayProxyResult => {
     return {
         statusCode: 400,

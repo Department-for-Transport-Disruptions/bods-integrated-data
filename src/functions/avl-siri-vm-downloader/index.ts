@@ -159,8 +159,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(`Invalid request: ${JSON.stringify(event.queryStringParameters)}`);
-            logger.warn(e.errors);
-
+            logger.warn(e);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
