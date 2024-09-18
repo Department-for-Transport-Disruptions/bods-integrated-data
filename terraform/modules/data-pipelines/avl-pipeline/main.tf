@@ -550,9 +550,9 @@ module "siri_vm_api_private" {
   siri_vm_stats_invoke_arn                = module.siri_vm_stats.invoke_arn
   siri_vm_stats_function_name             = module.siri_vm_stats.function_name
   external_vpces_for_sirivm_api           = var.external_vpces_for_sirivm_api
-  avl_consumer_subscriber_invoke_arn      = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_arn
+  avl_consumer_subscriber_invoke_arn      = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_invoke_arn
   avl_consumer_subscriber_function_name   = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
-  avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_arn
+  avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_invoke_arn
   avl_consumer_unsubscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_function_name
 }
 
@@ -570,9 +570,9 @@ module "siri_vm_api_public" {
   siri_vm_downloader_function_name        = module.siri_vm_downloader.function_name
   siri_vm_stats_invoke_arn                = module.siri_vm_stats.invoke_arn
   siri_vm_stats_function_name             = module.siri_vm_stats.function_name
-  avl_consumer_subscriber_invoke_arn      = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_arn
+  avl_consumer_subscriber_invoke_arn      = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_invoke_arn
   avl_consumer_subscriber_function_name   = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
-  avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_arn
+  avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_invoke_arn
   avl_consumer_unsubscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_function_name
 }
 
