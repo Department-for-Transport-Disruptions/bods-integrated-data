@@ -58,6 +58,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             heartbeatLastReceivedDateTime: null,
             publisherId: "mock-publisher-id",
             apiKey: "mock-api-key",
+            lastResubscriptionTime: null,
         };
 
         await sendSubscriptionRequestAndUpdateDynamo(
@@ -102,6 +103,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
             apiKey: "mock-api-key",
+            lastResubscriptionTime: "2024-03-11T15:20:02.093Z",
         };
 
         await sendSubscriptionRequestAndUpdateDynamo(
@@ -112,6 +114,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
                 lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
                 lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
+                lastResubscriptionTime: "2024-03-11T15:20:02.093Z",
             },
             mockInput.username,
             mockInput.password,
@@ -155,6 +158,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             publisherId: "mock-publisher-id",
             apiKey: "mock-api-key",
+            lastResubscriptionTime: null,
         };
 
         await sendSubscriptionRequestAndUpdateDynamo(
@@ -208,6 +212,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             lastAvlDataReceivedDateTime: null,
             heartbeatLastReceivedDateTime: null,
             apiKey: "mock-api-key",
+            lastResubscriptionTime: null,
         };
 
         await expect(
@@ -248,6 +253,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             lastAvlDataReceivedDateTime: null,
             heartbeatLastReceivedDateTime: null,
             apiKey: "mock-api-key",
+            lastResubscriptionTime: null,
         };
 
         await expect(
@@ -294,6 +300,7 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
             lastAvlDataReceivedDateTime: null,
             heartbeatLastReceivedDateTime: null,
             apiKey: "mock-api-key",
+            lastResubscriptionTime: null,
         };
 
         await expect(
