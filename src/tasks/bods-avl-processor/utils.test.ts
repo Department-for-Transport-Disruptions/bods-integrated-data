@@ -77,7 +77,7 @@ describe("utils", () => {
                     vehicle_ref: "AB123CD",
                     longitude: -3.556955,
                     latitude: 50.489206,
-                    bearing: "253",
+                    bearing: 253,
                     published_line_name: "174",
                     origin_ref: "1100DEC11150",
                     origin_aimed_departure_time: null,

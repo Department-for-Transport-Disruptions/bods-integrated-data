@@ -195,7 +195,7 @@ export interface AvlTable {
     vehicle_ref: string;
     longitude: number;
     latitude: number;
-    bearing: string | null;
+    bearing: number | null;
     published_line_name: string | null;
     origin_ref: string | null;
     origin_name: string | null;
@@ -258,7 +258,7 @@ export interface BodsAvlTable {
     vehicle_ref: string;
     longitude: number;
     latitude: number;
-    bearing: string | null;
+    bearing: number | null;
     published_line_name: string | null;
     origin_ref: string | null;
     origin_aimed_departure_time: string | null;

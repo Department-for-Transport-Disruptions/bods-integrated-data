@@ -102,7 +102,7 @@ export const vehicleActivitySchema = z.object({
             Longitude: z.coerce.number(),
             Latitude: z.coerce.number(),
         }),
-        Bearing: z.coerce.string().nullish(),
+        Bearing: z.coerce.number().nullish(),
         Occupancy: z.enum(avlOccupancyValues).nullish(),
         BlockRef: createNmTokenSiriValidation("BlockRef", false),
         VehicleJourneyRef: createNmTokenSiriValidation("VehicleJourneyRef", false),
@@ -229,7 +229,10 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                     vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
                     MAX_DECIMAL_PRECISION,
                 ),
-                bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+                bearing:
+                    typeof vehicleActivity.MonitoredVehicleJourney.Bearing === "number"
+                        ? roundToDecimalPlaces(vehicleActivity.MonitoredVehicleJourney.Bearing, MAX_DECIMAL_PRECISION)
+                        : vehicleActivity.MonitoredVehicleJourney.Bearing,
                 monitored: vehicleActivity.MonitoredVehicleJourney.Monitored ?? null,
                 published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
                 origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
@@ -339,7 +342,8 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         longitude: roundToDecimalPlaces(item.longitude, MAX_DECIMAL_PRECISION),
         latitude: roundToDecimalPlaces(item.latitude, MAX_DECIMAL_PRECISION),
         recorded_at_time: recordedAtTime,
-        bearing: item.bearing?.toString(),
+        bearing:
+            typeof item.bearing === "number" ? roundToDecimalPlaces(item.bearing, MAX_DECIMAL_PRECISION) : item.bearing,
         load: item.load,
         passenger_count: item.passengerCount,
         odometer: item.odometer,
