@@ -4,10 +4,9 @@ import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data-sender")
     .addOption(STAGE_OPTION)
-    .option("--subscriptionId <subscriptionId>", "Consumer subscription ID")
-    .option("--userId <userId>", "User ID")
+    .option("--PK <PK>", "Consumer subscription PK")
     .action(async (options) => {
-        let { stage, subscriptionId, userId } = options;
+        let { stage, PK } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -22,37 +21,22 @@ export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data
             stage = responses.stage;
         }
 
-        if (!subscriptionId) {
-            const response = await inquirer.prompt<{ subscriptionId: string }>([
+        if (!PK) {
+            const response = await inquirer.prompt<{ PK: string }>([
                 {
-                    name: "subscriptionId",
-                    message: "Enter the subscription ID",
+                    name: "PK",
+                    message: "Enter the subscription PK",
                     type: "input",
                 },
             ]);
 
-            subscriptionId = response.subscriptionId;
-        }
-
-        if (!userId) {
-            const response = await inquirer.prompt<{ userId: string }>([
-                {
-                    name: "userId",
-                    message: "Enter the user ID",
-                    type: "input",
-                },
-            ]);
-
-            userId = response.userId;
+            PK = response.PK;
         }
 
         const invokePayload = {
             Records: [
                 {
-                    body: JSON.stringify({
-                        subscriptionId,
-                        userId,
-                    }),
+                    body: JSON.stringify({ PK }),
                 },
             ],
         };

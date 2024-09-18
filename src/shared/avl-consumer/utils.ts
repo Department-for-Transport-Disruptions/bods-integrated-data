@@ -1,5 +1,5 @@
 import { SubscriptionIdNotFoundError } from "../avl/utils";
-import { queryDynamo } from "../dynamo";
+import { getDynamoItem, queryDynamo } from "../dynamo";
 import {
     AvlConsumerSubscription,
     AvlSubscriptionStatus,
@@ -7,7 +7,7 @@ import {
     avlConsumerSubscriptionsSchema,
 } from "../schema";
 
-export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
+export const getAvlConsumerSubscriptionsByStatus = async (tableName: string, status: AvlSubscriptionStatus) => {
     const subscriptions = await queryDynamo<AvlConsumerSubscription>({
         TableName: tableName,
         FilterExpression: "status = :status",
@@ -17,6 +17,16 @@ export const getAvlConsumerSubscriptions = async (tableName: string, status: Avl
     });
 
     return avlConsumerSubscriptionsSchema.parse(subscriptions);
+};
+
+export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: string) => {
+    const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, { PK });
+
+    if (!subscription) {
+        throw new SubscriptionIdNotFoundError(`Subscription PK: ${PK} not found in DynamoDB`);
+    }
+
+    return avlConsumerSubscriptionSchema.parse(subscription);
 };
 
 export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {

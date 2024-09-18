@@ -12,10 +12,6 @@ import { ZodError } from "zod";
 import { handler } from ".";
 
 const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
-const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
-const mockProducerSubscriptionId = "1,2,3";
-const mockUserId = "mock-user-id";
-const mockRandomId = "4026f53d-3548-4999-a6b6-2e6893175894";
 
 const mockAvl: Avl = {
     id: 1234,
@@ -71,15 +67,15 @@ const expectedSiriVmBody = `<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk
 
 const consumerSubscription: AvlConsumerSubscription = {
     PK: "123",
-    SK: mockUserId,
-    subscriptionId: mockConsumerSubscriptionId,
+    SK: "mock-user-id",
+    subscriptionId: "mock-consumer-subscription-id",
     status: "live",
     url: "https://example.com",
     requestorRef: "123",
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2024-03-11T15:20:02.093Z",
     requestTimestamp: "2024-03-11T15:20:02.093Z",
-    producerSubscriptionIds: mockProducerSubscriptionId,
+    producerSubscriptionIds: "1,2,3",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 5,
 };
@@ -103,12 +99,12 @@ describe("avl-consumer-subscriber", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        queryDynamo: vi.fn(),
+        getDynamoItem: vi.fn(),
         putDynamoItem: vi.fn(),
     }));
 
     vi.mock("node:crypto", () => ({
-        randomUUID: () => mockRandomId,
+        randomUUID: () => "4026f53d-3548-4999-a6b6-2e6893175894",
     }));
 
     vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
@@ -116,7 +112,7 @@ describe("avl-consumer-subscriber", () => {
         getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
     }));
 
-    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const getAvlDataForSiriVmSpy = vi.spyOn(utilFunctions, "getAvlDataForSiriVm");
     const mockedAxios = vi.mocked(axios, true);
@@ -134,15 +130,12 @@ describe("avl-consumer-subscriber", () => {
         mockEvent = {
             Records: [
                 {
-                    body: JSON.stringify({
-                        subscriptionId: mockConsumerSubscriptionId,
-                        userId: mockUserId,
-                    }),
+                    body: JSON.stringify({ PK: consumerSubscription.PK }),
                 },
             ],
         } as SQSEvent;
 
-        queryDynamoSpy.mockResolvedValue([consumerSubscription]);
+        getDynamoItemSpy.mockResolvedValue(consumerSubscription);
         getAvlDataForSiriVmSpy.mockResolvedValue([mockAvl]);
     });
 
@@ -164,13 +157,7 @@ describe("avl-consumer-subscriber", () => {
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 
-    it.each([
-        { subscriptionId: "", userId: mockUserId },
-        { userId: mockUserId },
-        { subscriptionId: mockConsumerSubscriptionId, userId: "" },
-        { userId: "" },
-        {},
-    ])("throws an error when the sqs message is invalid: %o", async (input) => {
+    it.each([{ PK: "" }, {}])("throws an error when the sqs message is invalid: %o", async (input) => {
         mockEvent = { Records: [{ body: JSON.stringify(input) }] } as SQSEvent;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(ZodError);
@@ -184,10 +171,10 @@ describe("avl-consumer-subscriber", () => {
     });
 
     it("throws an error when the subscription cannot be found", async () => {
-        queryDynamoSpy.mockResolvedValue([]);
+        getDynamoItemSpy.mockResolvedValue(null);
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
-            `Subscription ID: ${mockConsumerSubscriptionId} not found in DynamoDB`,
+            `Subscription PK: ${consumerSubscription.PK} not found in DynamoDB`,
         );
 
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
@@ -199,9 +186,11 @@ describe("avl-consumer-subscriber", () => {
             status: "inactive",
         };
 
-        queryDynamoSpy.mockResolvedValue([inactiveConsumerSubscription]);
+        getDynamoItemSpy.mockResolvedValue(inactiveConsumerSubscription);
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("Subscription no longer live");
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
+            `Subscription PK: ${inactiveConsumerSubscription.PK} no longer live`,
+        );
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 
