@@ -159,8 +159,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(`Invalid request: ${JSON.stringify(event.queryStringParameters)}`);
-            logger.warn(e.errors);
-
+            logger.warn(e);
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
@@ -169,8 +168,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the SIRI-VM downloader endpoint");
-            logger.error(e);
+            logger.error(e, "There was a problem with the SIRI-VM downloader endpoint");
         }
 
         return createServerErrorResponse();

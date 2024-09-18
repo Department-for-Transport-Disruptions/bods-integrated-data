@@ -10,8 +10,13 @@ import {
     sendSubscriptionRequestAndUpdateDynamo,
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/avl/subscribe";
-import { generateApiKey, isActiveAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import {
+    SubscriptionIdNotFoundError,
+    generateApiKey,
+    getAvlSubscription,
+} from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -55,9 +60,19 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const { subscriptionId, username, password } = avlSubscribeMessage;
         logger.subscriptionId = subscriptionId;
 
-        const isActiveSubscription = await isActiveAvlSubscription(subscriptionId, tableName);
+        let activeSubscription: AvlSubscription | null = null;
 
-        if (isActiveSubscription) {
+        try {
+            activeSubscription = await getAvlSubscription(subscriptionId, tableName);
+        } catch (e) {
+            if (e instanceof SubscriptionIdNotFoundError) {
+                activeSubscription = null;
+            } else {
+                throw e;
+            }
+        }
+
+        if (activeSubscription?.status === "live") {
             return createConflictErrorResponse("Subscription ID already active");
         }
 
@@ -69,13 +84,20 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             throw new Error("No internal data endpoint set for internal data producer endpoint");
         }
 
+        const currentTime = getDate().toISOString();
+
         const subscriptionDetails: Omit<AvlSubscription, "PK" | "status"> = {
             url: avlSubscribeMessage.dataProducerEndpoint,
             description: avlSubscribeMessage.description,
             shortDescription: avlSubscribeMessage.shortDescription,
             requestorRef: avlSubscribeMessage.requestorRef,
             publisherId: avlSubscribeMessage.publisherId,
-            apiKey: generateApiKey(),
+            apiKey: activeSubscription?.apiKey || generateApiKey(),
+            heartbeatLastReceivedDateTime: activeSubscription?.heartbeatLastReceivedDateTime ?? null,
+            lastAvlDataReceivedDateTime: activeSubscription?.lastAvlDataReceivedDateTime ?? null,
+            serviceStartDatetime: activeSubscription?.serviceStartDatetime,
+            lastResubscriptionTime: activeSubscription ? currentTime : null,
+            lastModifiedDateTime: activeSubscription ? currentTime : null,
         };
 
         try {
@@ -114,7 +136,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
+            logger.warn(e, "Invalid request");
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
@@ -123,12 +145,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof InvalidXmlError) {
-            logger.warn("Invalid SIRI-VM XML provided by the data producer", e);
+            logger.warn(e, "Invalid SIRI-VM XML provided by the data producer");
             return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL subscriber endpoint", e);
+            logger.error(e, "There was a problem with the AVL subscriber endpoint");
         }
 
         return createServerErrorResponse();

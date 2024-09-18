@@ -62,8 +62,8 @@ describe("gtfs-downloader-endpoint", () => {
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was a problem with the GTFS-RT downloader endpoint",
             expect.any(Error),
+            "There was a problem with the GTFS-RT downloader endpoint",
         );
     });
 
@@ -88,8 +88,8 @@ describe("gtfs-downloader-endpoint", () => {
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
             expect(logger.error).toHaveBeenCalledWith(
-                "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
+                "There was a problem with the GTFS-RT downloader endpoint",
             );
         });
     });
@@ -143,8 +143,8 @@ describe("gtfs-downloader-endpoint", () => {
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
             expect(logger.error).toHaveBeenCalledWith(
-                "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
+                "There was a problem with the GTFS-RT downloader endpoint",
             );
         });
     });
@@ -191,7 +191,7 @@ describe("gtfs-downloader-endpoint", () => {
                 statusCode: 400,
                 body: JSON.stringify({ errors: expectedErrors }),
             });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
         });
 
@@ -330,8 +330,8 @@ describe("gtfs-downloader-endpoint", () => {
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
             expect(logger.error).toHaveBeenCalledWith(
-                "There was a problem with the GTFS-RT downloader endpoint",
                 expect.any(Error),
+                "There was a problem with the GTFS-RT downloader endpoint",
             );
         });
     });

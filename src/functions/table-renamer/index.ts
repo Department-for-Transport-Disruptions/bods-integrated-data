@@ -77,7 +77,7 @@ export const handler: Handler = async (event, context) => {
         await renameTables(dbClient, databaseTables);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the Table renamer", e);
+            logger.error(e, "There was a problem with the Table renamer");
         }
 
         throw e;
