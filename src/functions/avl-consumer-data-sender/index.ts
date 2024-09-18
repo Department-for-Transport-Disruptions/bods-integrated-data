@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
+import { getAvlConsumerSubscriptionByPK } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -16,22 +16,16 @@ let dbClient: KyselyDb;
 const eventMessageSchema = z
     .string()
     .transform((body) => JSON.parse(body))
-    .pipe(
-        z.object({
-            subscriptionId: createStringLengthValidation("subscriptionId"),
-            userId: createStringLengthValidation("userId"),
-        }),
-    );
+    .pipe(z.object({ PK: createStringLengthValidation("PK") }));
 
 const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerSubscriptionTableName: string) => {
     try {
-        const { subscriptionId, userId } = eventMessageSchema.parse(record.body);
-        logger.subscriptionId = subscriptionId;
+        const { PK } = eventMessageSchema.parse(record.body);
 
-        const subscription = await getAvlConsumerSubscription(consumerSubscriptionTableName, subscriptionId, userId);
+        const subscription = await getAvlConsumerSubscriptionByPK(consumerSubscriptionTableName, PK);
 
         if (subscription.status !== "live") {
-            throw new Error("Subscription no longer live");
+            throw new Error(`Subscription PK: ${PK} no longer live`);
         }
 
         const avls = await getAvlDataForSiriVm(

@@ -1,5 +1,5 @@
 import {} from "@bods-integrated-data/shared/api";
-import { getAvlConsumerSubscriptions } from "@bods-integrated-data/shared/avl-consumer/utils";
+import { getAvlConsumerSubscriptionsByStatus } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { generateHeartbeatNotificationXml } from "@bods-integrated-data/shared/avl/heartbeat";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -20,7 +20,7 @@ export const handler: Handler = async (event, context) => {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
-        const liveSubscriptions = await getAvlConsumerSubscriptions(avlConsumerSubscriptionTableName, "live");
+        const liveSubscriptions = await getAvlConsumerSubscriptionsByStatus(avlConsumerSubscriptionTableName, "live");
         const currentTimestamp = getDate().toISOString();
 
         await Promise.all(
