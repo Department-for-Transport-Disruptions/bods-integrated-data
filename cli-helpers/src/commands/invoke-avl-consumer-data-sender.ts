@@ -4,9 +4,9 @@ import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data-sender")
     .addOption(STAGE_OPTION)
-    .option("--PK <PK>", "Consumer subscription PK")
+    .option("--subscriptionPK <subscriptionPK>", "Consumer subscription PK")
     .action(async (options) => {
-        let { stage, PK } = options;
+        let { stage, subscriptionPK } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -21,22 +21,22 @@ export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data
             stage = responses.stage;
         }
 
-        if (!PK) {
-            const response = await inquirer.prompt<{ PK: string }>([
+        if (!subscriptionPK) {
+            const response = await inquirer.prompt<{ subscriptionPK: string }>([
                 {
-                    name: "PK",
+                    name: "subscriptionPK",
                     message: "Enter the subscription PK",
                     type: "input",
                 },
             ]);
 
-            PK = response.PK;
+            subscriptionPK = response.subscriptionPK;
         }
 
         const invokePayload = {
             Records: [
                 {
-                    body: JSON.stringify({ PK }),
+                    body: JSON.stringify({ subscriptionPK }),
                 },
             ],
         };

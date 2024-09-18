@@ -130,7 +130,7 @@ describe("avl-consumer-subscriber", () => {
         mockEvent = {
             Records: [
                 {
-                    body: JSON.stringify({ PK: consumerSubscription.PK }),
+                    body: JSON.stringify({ subscriptionPK: consumerSubscription.PK }),
                 },
             ],
         } as SQSEvent;
@@ -157,7 +157,7 @@ describe("avl-consumer-subscriber", () => {
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 
-    it.each([{ PK: "" }, {}])("throws an error when the sqs message is invalid: %o", async (input) => {
+    it.each([{ subscriptionPK: "" }, {}])("throws an error when the sqs message is invalid: %o", async (input) => {
         mockEvent = { Records: [{ body: JSON.stringify(input) }] } as SQSEvent;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(ZodError);

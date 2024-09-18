@@ -16,16 +16,16 @@ let dbClient: KyselyDb;
 const eventMessageSchema = z
     .string()
     .transform((body) => JSON.parse(body))
-    .pipe(z.object({ PK: createStringLengthValidation("PK") }));
+    .pipe(z.object({ subscriptionPK: createStringLengthValidation("subscriptionPK") }));
 
 const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerSubscriptionTableName: string) => {
     try {
-        const { PK } = eventMessageSchema.parse(record.body);
+        const { subscriptionPK } = eventMessageSchema.parse(record.body);
 
-        const subscription = await getAvlConsumerSubscriptionByPK(consumerSubscriptionTableName, PK);
+        const subscription = await getAvlConsumerSubscriptionByPK(consumerSubscriptionTableName, subscriptionPK);
 
         if (subscription.status !== "live") {
-            throw new Error(`Subscription PK: ${PK} no longer live`);
+            throw new Error(`Subscription PK: ${subscriptionPK} no longer live`);
         }
 
         const avls = await getAvlDataForSiriVm(
