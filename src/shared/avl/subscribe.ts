@@ -7,7 +7,7 @@ import { logger } from "../logger";
 import {
     AvlSubscription,
     AvlSubscriptionRequest,
-    AvlSubscriptionStatuses,
+    AvlSubscriptionStatus,
     avlSubscriptionResponseSchema,
 } from "../schema/avl-subscribe.schema";
 import { putParameter } from "../ssm";
@@ -113,7 +113,7 @@ export const updateDynamoWithSubscriptionInfo = async (
     tableName: string,
     subscriptionId: string,
     subscription: Omit<AvlSubscription, "PK" | "status">,
-    status: AvlSubscriptionStatuses,
+    status: AvlSubscriptionStatus,
     currentTimestamp?: string,
 ) => {
     const subscriptionTableItems: Omit<AvlSubscription, "PK"> = {
