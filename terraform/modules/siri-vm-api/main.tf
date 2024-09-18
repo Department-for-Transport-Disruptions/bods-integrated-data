@@ -218,8 +218,8 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
 
 resource "aws_api_gateway_resource" "avl_consumer_subscriber_resource" {
   rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
-  parent_id   = aws_api_gateway_rest_api.siri_vm_api.root_resource_id
-  path_part   = "siri-vm/subscribe"
+  parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
+  path_part   = "subscribe"
 }
 
 resource "aws_api_gateway_method" "avl_consumer_subscriber_method" {
@@ -264,8 +264,8 @@ resource "aws_lambda_permission" "avl_consumer_subscriber_permissions" {
 
 resource "aws_api_gateway_resource" "avl_consumer_unsubscriber_resource" {
   rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
-  parent_id   = aws_api_gateway_rest_api.siri_vm_api.root_resource_id
-  path_part   = "siri-vm/unsubscribe"
+  parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
+  path_part   = "unsubscribe"
 }
 
 resource "aws_api_gateway_method" "avl_consumer_unsubscriber_method" {
