@@ -7,7 +7,7 @@ import {
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { SubscriptionIdNotFoundError, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
@@ -90,8 +90,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             }
 
             PK = subscription.PK;
-        } catch (_error) {
-            // ignore caught error when no existing subscription is found
+        } catch (e) {
+            if (e instanceof SubscriptionIdNotFoundError) {
+                PK = undefined;
+            } else {
+                throw e;
+            }
         }
 
         const producerSubscriptions = await getAvlSubscriptions(avlProducerSubscriptionTableName);
