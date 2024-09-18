@@ -130,6 +130,7 @@ export const updateDynamoWithSubscriptionInfo = async (
         apiKey: subscription.apiKey,
         heartbeatLastReceivedDateTime: subscription.heartbeatLastReceivedDateTime ?? null,
         lastAvlDataReceivedDateTime: subscription.lastAvlDataReceivedDateTime ?? null,
+        lastResubscriptionTime: subscription.lastResubscriptionTime ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");

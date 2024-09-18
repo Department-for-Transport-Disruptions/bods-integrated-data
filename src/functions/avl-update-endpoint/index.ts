@@ -15,6 +15,7 @@ import {
     generateApiKey,
     getAvlSubscription,
 } from "@bods-integrated-data/shared/avl/utils";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -81,8 +82,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestorRef: subscription.requestorRef,
             publisherId: subscription.publisherId,
             serviceStartDatetime: subscription.serviceStartDatetime,
-            lastModifiedDateTime: subscription.lastModifiedDateTime ?? null,
-            apiKey: generateApiKey(),
+            lastModifiedDateTime: getDate().toISOString(),
+            apiKey: subscription.apiKey || generateApiKey(),
         };
 
         try {

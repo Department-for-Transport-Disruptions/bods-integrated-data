@@ -1,7 +1,7 @@
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
-import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { checkSubscriptionIsHealthy, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { getDate, isDateAfter } from "@bods-integrated-data/shared/dates";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -21,7 +21,7 @@ export const resubscribeToDataProducer = async (
 
     if (!subscriptionUsername || !subscriptionPassword) {
         throw new Error(
-            `Cannot resubscribe to data producer as username or password is missing for subscription ID: ${subscription.PK}.`,
+            `Cannot resubscribe to data producer as username or password is missing for subscription ID: ${subscription.PK}`,
         );
     }
 
@@ -71,14 +71,9 @@ export const handler: Handler = async (event, context) => {
 
         await Promise.all(
             nonTerminatedSubscriptions.map(async (subscription) => {
-                // We expect to receive a heartbeat notification from a data producer every 30 seconds.
-                // If we do not receive a heartbeat notification after 90 seconds we will attempt to resubscribe to the data producer.
-                const isHeartbeatValid = isDateAfter(
-                    getDate(subscription.heartbeatLastReceivedDateTime ?? subscription.serviceStartDatetime),
-                    currentTime.subtract(90, "seconds"),
-                );
+                const subscriptionIsHealthy = checkSubscriptionIsHealthy(subscription, currentTime);
 
-                if (isHeartbeatValid) {
+                if (subscriptionIsHealthy) {
                     if (subscription.status !== "live") {
                         await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                             ...subscription,
@@ -118,8 +113,10 @@ export const handler: Handler = async (event, context) => {
                 } catch (e) {
                     if (e instanceof AxiosError) {
                         logger.error(
-                            `There was an error when resubscribing to the data producer - code: ${e.code}, message: ${e.message}`,
+                            `There was an error when resubscribing to the data producer - subscriptionId: ${subscription.PK}, code: ${e.code}, message: ${e.message}`,
                         );
+                    } else {
+                        logger.error(e, "There was an error when resubscribing to the data producer");
                     }
 
                     await putMetricData("custom/AVLMetrics", [
@@ -129,7 +126,7 @@ export const handler: Handler = async (event, context) => {
                         },
                     ]);
 
-                    throw e;
+                    return;
                 }
 
                 logger.info(`Successfully resubscribed to data producer with subscription ID: ${subscription.PK}`);
