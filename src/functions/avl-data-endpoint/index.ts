@@ -51,7 +51,7 @@ const processHeartbeatNotification = async (
 
     await putDynamoItem(tableName, subscription.PK, "SUBSCRIPTION", {
         ...subscription,
-        heartbeatLastReceivedDateTime: getDate(data.Siri.HeartbeatNotification.RequestTimestamp).toISOString(),
+        heartbeatLastReceivedDateTime: getDate().toISOString(),
     });
 };
 
