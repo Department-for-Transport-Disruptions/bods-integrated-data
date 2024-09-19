@@ -1,6 +1,8 @@
 import {
     CreateEventSourceMappingCommand,
     CreateEventSourceMappingCommandInput,
+    DeleteEventSourceMappingCommand,
+    DeleteEventSourceMappingCommandInput,
     LambdaClient,
 } from "@aws-sdk/client-lambda";
 
@@ -27,4 +29,8 @@ export const createEventSourceMapping = async (input: CreateEventSourceMappingCo
     }
 
     return response.UUID;
+};
+
+export const deleteEventSourceMapping = (input: DeleteEventSourceMappingCommandInput) => {
+    return client.send(new DeleteEventSourceMappingCommand(input));
 };

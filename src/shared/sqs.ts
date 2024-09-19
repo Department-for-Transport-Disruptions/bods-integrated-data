@@ -1,6 +1,8 @@
 import {
     CreateQueueCommand,
     CreateQueueCommandInput,
+    DeleteQueueCommand,
+    DeleteQueueCommandInput,
     SQSClient,
     SendMessageBatchCommand,
     SendMessageBatchRequestEntry,
@@ -31,6 +33,10 @@ export const createQueue = async (input: CreateQueueCommandInput) => {
     }
 
     return response.QueueUrl;
+};
+
+export const deleteQueue = (input: DeleteQueueCommandInput) => {
+    return client.send(new DeleteQueueCommand(input));
 };
 
 export const sendBatchMessage = async (queueUrl: string, entries: SendMessageBatchRequestEntry[]) => {
