@@ -69,7 +69,8 @@ module "integrated_data_gtfs_rt_downloader_function" {
       ],
       Effect   = "Allow",
       Resource = "*"
-  }]
+    }
+  ]
 
   env_vars = {
     STAGE         = var.environment
@@ -105,7 +106,8 @@ module "integrated_data_gtfs_rt_service_alerts_downloader_function" {
       Resource = [
         "${var.gtfs_rt_service_alerts_bucket_arn}/*"
       ]
-  }, ]
+    },
+  ]
 
   env_vars = {
     STAGE       = var.environment
@@ -164,7 +166,10 @@ resource "aws_iam_role" "bods_avl_processor_ecs_execution_role" {
     ]
   })
 
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.bods_avl_processor_ecs_execution_policy[0].arn]
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    aws_iam_policy.bods_avl_processor_ecs_execution_policy[0].arn
+  ]
 }
 
 resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
@@ -180,6 +185,13 @@ resource "aws_iam_policy" "bods_avl_processor_ecs_task_policy" {
         "Action" : "s3:PutObject",
         "Resource" : [
           "${aws_s3_bucket.integrated_data_gtfs_rt_bucket.arn}/*"
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "s3:GetObject",
+        "Resource" : [
+          "${var.siri_vm_bucket_arn}/*"
         ]
       },
       {
@@ -263,8 +275,16 @@ resource "aws_ecs_task_definition" "bods_avl_processor_task_definition" {
           "value" : var.db_secret_arn
         },
         {
-          "name" : "BUCKET_NAME",
+          "name" : "GTFS_BUCKET_NAME",
           "value" : aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
+        },
+        {
+          "name" : "SIRI_VM_BUCKET_NAME",
+          "value" : var.siri_vm_bucket_name
+        },
+        {
+          "name" : "SAVE_JSON",
+          "value" : tostring(var.save_json)
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",

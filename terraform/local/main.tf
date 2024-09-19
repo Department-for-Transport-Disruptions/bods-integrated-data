@@ -120,6 +120,9 @@ module "integrated_data_gtfs_rt_pipeline" {
   bods_avl_processor_frequency       = 240
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
+  siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  siri_vm_bucket_arn                 = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_arn
+  save_json                          = true
 }
 
 module "integrated_data_avl_pipeline" {
@@ -212,5 +215,5 @@ module "integrated_data_disruptions_pipeline" {
   db_secret_arn      = "*"
   db_sg_id           = null
   db_host            = null
-  saveJson           = true
+  save_json          = true
 }
