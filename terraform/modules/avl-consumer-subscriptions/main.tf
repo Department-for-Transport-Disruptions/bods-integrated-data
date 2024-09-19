@@ -90,17 +90,17 @@ module "avl_consumer_unsubscriber" {
 module "avl_consumer_data_sender" {
   source = "../shared/lambda-function"
 
-  environment      = var.environment
-  function_name    = "integrated-data-avl-consumer-data-sender"
-  zip_path         = "${path.module}/../../../src/functions/dist/avl-consumer-data-sender.zip"
-  handler          = "index.handler"
-  memory           = 1024
-  runtime          = "nodejs20.x"
-  timeout          = 60
-  needs_vpc_access = true
-  custom_sg_id     = var.sg_id
-  subnet_ids       = var.subnet_ids
-  database_sg_id   = var.db_sg_id
+  environment     = var.environment
+  function_name   = "integrated-data-avl-consumer-data-sender"
+  zip_path        = "${path.module}/../../../src/functions/dist/avl-consumer-data-sender.zip"
+  handler         = "index.handler"
+  memory          = 1024
+  runtime         = "nodejs20.x"
+  timeout         = 60
+  needs_db_access = var.environment != "local"
+  custom_sg_id    = var.sg_id
+  subnet_ids      = var.subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [
     {
