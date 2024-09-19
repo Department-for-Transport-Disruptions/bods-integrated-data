@@ -186,7 +186,7 @@ module "avl_consumer_data_sender" {
   runtime         = "nodejs20.x"
   timeout         = 60
   needs_db_access = var.environment != "local"
-  custom_sg_id    = var.sg_id
+  vpc_id          = var.vpc_id
   subnet_ids      = var.subnet_ids
   database_sg_id  = var.db_sg_id
 

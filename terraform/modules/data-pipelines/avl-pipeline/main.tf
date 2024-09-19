@@ -581,7 +581,7 @@ module "integrated_data_avl_data_consumer_subscriptions" {
   environment                     = var.environment
   aws_account_id                  = var.aws_account_id
   aws_region                      = var.aws_region
-  sg_id                           = var.sg_id
+  vpc_id                          = var.vpc_id
   subnet_ids                      = var.private_subnet_ids
   db_sg_id                        = var.db_sg_id
   db_host                         = var.db_host

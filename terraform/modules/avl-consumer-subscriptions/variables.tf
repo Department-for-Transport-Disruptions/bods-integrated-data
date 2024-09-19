@@ -13,8 +13,9 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-variable "sg_id" {
-  type = string
+variable "vpc_id" {
+  type        = string
+  description = "VPC ID"
 }
 
 variable "subnet_ids" {
