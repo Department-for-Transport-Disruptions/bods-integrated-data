@@ -154,7 +154,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const queueMessage: AvlSubscriptionTriggerMessage = {
             subscriptionPK: consumerSubscription.PK,
-            frequency: getDuration(updateInterval).asSeconds() as AvlSubscriptionTriggerMessage["frequency"],
+            frequencyInSeconds: getDuration(
+                updateInterval,
+            ).asSeconds() as AvlSubscriptionTriggerMessage["frequencyInSeconds"],
             queueUrl,
         };
 

@@ -334,7 +334,7 @@ describe("avl-consumer-subscriber", () => {
 
         const queueMessage: AvlSubscriptionTriggerMessage = {
             subscriptionPK: consumerSubscription.PK,
-            frequency: 10,
+            frequencyInSeconds: 10,
             queueUrl: mockQueueUrl,
         };
 

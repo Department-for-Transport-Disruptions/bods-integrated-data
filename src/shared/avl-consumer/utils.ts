@@ -10,7 +10,7 @@ import {
 
 export const subscriptionTriggerMessageSchema = z.object({
     subscriptionPK: z.string(),
-    frequency: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
+    frequencyInSeconds: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
     queueUrl: z.string(),
 });
 

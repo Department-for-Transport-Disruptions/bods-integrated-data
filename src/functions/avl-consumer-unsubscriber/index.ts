@@ -60,23 +60,46 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const subscription = await getAvlConsumerSubscription(avlConsumerSubscriptionTableName, subscriptionId, userId);
 
-        await deleteSchedule({
-            Name: subscription.scheduleName,
-        });
-        await deleteEventSourceMapping({
-            UUID: subscription.eventSourceMappingUuid,
-        });
-        await deleteQueue({
-            QueueUrl: subscription.queueUrl,
-        });
-
         const updatedSubscription: AvlConsumerSubscription = {
             ...subscription,
             status: "inactive",
-            queueUrl: "",
-            eventSourceMappingUuid: "",
-            scheduleName: "",
         };
+
+        if (subscription.scheduleName) {
+            try {
+                await deleteSchedule({
+                    Name: subscription.scheduleName,
+                });
+
+                updatedSubscription.scheduleName = "";
+            } catch (error) {
+                logger.error(error, "Error deleting schedule");
+            }
+        }
+
+        if (subscription.eventSourceMappingUuid) {
+            try {
+                await deleteEventSourceMapping({
+                    UUID: subscription.eventSourceMappingUuid,
+                });
+
+                updatedSubscription.eventSourceMappingUuid = "";
+            } catch (error) {
+                logger.error(error, "Error deleting event source mapping");
+            }
+        }
+
+        if (subscription.queueUrl) {
+            try {
+                await deleteQueue({
+                    QueueUrl: subscription.queueUrl,
+                });
+
+                updatedSubscription.queueUrl = "";
+            } catch (error) {
+                logger.error(error, "Error deleting queue");
+            }
+        }
 
         await putDynamoItem(avlConsumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
 

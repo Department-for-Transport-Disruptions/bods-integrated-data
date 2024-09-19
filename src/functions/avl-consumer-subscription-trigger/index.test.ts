@@ -26,7 +26,7 @@ describe("avl-consumer-subscription-trigger", () => {
             detail: {
                 subscriptionPK: "123",
                 queueUrl: "mock-queue-url",
-                frequency: 30,
+                frequencyInSeconds: 30,
             },
         } as typeof mockEvent;
     });
@@ -37,12 +37,12 @@ describe("avl-consumer-subscription-trigger", () => {
 
     it.each([
         {},
-        { queueUrl: "mock-queue-url", frequency: 30 },
-        { subcriptionPK: "123", frequency: 30 },
+        { queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", frequencyInSeconds: 30 },
         { subcriptionPK: "123", queueUrl: "mock-queue-url" },
-        { subcriptionPK: "", queueUrl: "mock-queue-url", frequency: 30 },
-        { subcriptionPK: "123", queueUrl: "", frequency: 30 },
-        { subcriptionPK: "123", queueUrl: "mock-queue-url", frequency: 5 },
+        { subcriptionPK: "", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", queueUrl: "", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", queueUrl: "mock-queue-url", frequencyInSeconds: 5 },
     ])("throws an error when the message is invalid (test: %o)", async (message) => {
         mockEvent.detail = message as AvlSubscriptionTriggerMessage;
 

@@ -11,11 +11,11 @@ export const handler: ScheduledHandler<AvlSubscriptionTriggerMessage> = async (e
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { subscriptionPK, frequency, queueUrl } = subscriptionTriggerMessageSchema.parse(event.detail);
+        const { subscriptionPK, frequencyInSeconds, queueUrl } = subscriptionTriggerMessageSchema.parse(event.detail);
 
         const entries: SendMessageBatchRequestEntry[] = [];
 
-        for (let i = 0, delay = frequency; delay <= 60; i++, delay += frequency) {
+        for (let i = 0, delay = frequencyInSeconds; delay <= 60; i++, delay += frequencyInSeconds) {
             entries.push({
                 Id: i.toString(),
                 DelaySeconds: delay,

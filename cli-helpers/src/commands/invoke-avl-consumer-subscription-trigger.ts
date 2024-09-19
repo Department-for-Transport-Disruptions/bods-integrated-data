@@ -6,9 +6,9 @@ export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-cons
     .addOption(STAGE_OPTION)
     .option("--subscriptionPK <subscriptionPK>", "Consumer subscription PK")
     .option("--queueUrl <queueUrl>", "Queue URL")
-    .option("--frequency <frequency>", "Frequency in seconds")
+    .option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds")
     .action(async (options) => {
-        let { stage, subscriptionPK, queueUrl, frequency } = options;
+        let { stage, subscriptionPK, queueUrl, frequencyInSeconds } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -47,23 +47,23 @@ export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-cons
             queueUrl = response.queueUrl;
         }
 
-        if (!frequency) {
-            const response = await inquirer.prompt<{ frequency: string }>([
+        if (!frequencyInSeconds) {
+            const response = await inquirer.prompt<{ frequencyInSeconds: string }>([
                 {
-                    name: "frequency",
+                    name: "frequencyInSeconds",
                     message: "Enter the frequency in seconds",
                     type: "input",
                 },
             ]);
 
-            frequency = response.frequency;
+            frequencyInSeconds = response.frequencyInSeconds;
         }
 
         const invokePayload = {
             detail: {
                 subscriptionPK,
                 queueUrl,
-                frequency: Number.parseInt(frequency),
+                frequencyInSeconds: Number.parseInt(frequencyInSeconds),
             },
         };
 
