@@ -118,7 +118,7 @@ module "avl_consumer_subscriber" {
     STAGE                                               = var.environment
     AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME                = module.integrated_data_avl_consumer_subscription_table.table_name
     AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME                = var.avl_producer_subscription_table
-    AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME = "*" # todo
+    AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME = module.avl_consumer_data_sender.function_name
     AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN      = module.avl_consumer_subscription_trigger.function_arn
     AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN         = var.avl_producer_subscription_table
   }

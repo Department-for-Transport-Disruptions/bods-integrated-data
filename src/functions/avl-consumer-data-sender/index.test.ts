@@ -78,6 +78,9 @@ const consumerSubscription: AvlConsumerSubscription = {
     producerSubscriptionIds: "1,2,3",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 5,
+    queueUrl: "",
+    eventSourceMappingUuid: "",
+    scheduleName: "",
 };
 
 describe("avl-consumer-subscriber", () => {
