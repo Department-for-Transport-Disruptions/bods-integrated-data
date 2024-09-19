@@ -37,7 +37,7 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "saveJson" {
+variable "save_json" {
   type        = bool
   description = "Whether or not to save the GTFS-RT as JSON as well"
 }
