@@ -14,10 +14,12 @@ module "integrated_data_avl_consumer_subscription_table" {
 
   environment = var.environment
   table_name  = "integrated-data-avl-consumer-subscription-table"
-  global_secondary_indexes = [{
-    hash_key  = "subscriptionId"
-    range_key = "SK"
-  }]
+  global_secondary_indexes = [
+    {
+      hash_key  = "subscriptionId"
+      range_key = "SK"
+    }
+  ]
 }
 
 module "avl_consumer_subscriber" {
@@ -34,11 +36,14 @@ module "avl_consumer_subscriber" {
   permissions = [
     {
       Action = [
+        "dynamodb:PutItem",
         "dynamodb:Query",
-        "dynamodb:PutItem"
       ],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
+      ]
     },
     {
       Action = [
@@ -73,10 +78,13 @@ module "avl_consumer_unsubscriber" {
     {
       Action = [
         "dynamodb:PutItem",
-        "dynamodb:Scan"
+        "dynamodb:Query"
       ],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
+      ]
     }
   ]
 
@@ -105,8 +113,11 @@ module "avl_consumer_heartbeat_notification" {
         "dynamodb:Query",
         "dynamodb:PutItem"
       ],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
+      ]
     }
   ]
 
