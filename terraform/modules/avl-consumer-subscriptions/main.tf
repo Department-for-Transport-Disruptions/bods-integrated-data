@@ -144,6 +144,27 @@ module "avl_consumer_unsubscriber" {
       ],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+    },
+    {
+      Action = [
+        "sqs:DeleteSchedule"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-subscription-schedule-*"
+    },
+    {
+      Action = [
+        "sqs:DeleteQueue"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-queue-*"
+    },
+    {
+      Action = [
+        "lambda:DeleteEventSourceMapping"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:event-source-mapping:*"
     }
   ]
 
