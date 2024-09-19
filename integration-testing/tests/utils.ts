@@ -44,16 +44,13 @@ export const getSecretByKey = async <T extends string>(stage: string, key: strin
     return JSON.parse(secret) as T;
 };
 
-export const cleardownTestSubscription = async (avlSubscriptionTableName: string, subcriptionId: string) => {
-    await deleteDynamoItem(avlSubscriptionTableName, {
-        PK: subcriptionId,
+export const cleardownTestSubscription = async (subscriptionTableName: string, subscriptionId: string) => {
+    await deleteDynamoItem(subscriptionTableName, {
+        PK: subscriptionId,
         SK: "SUBSCRIPTION",
     });
 };
 
-export const createTestSubscription = async (
-    avlSubscriptionTableName: string,
-    subscriptionDetails: AvlSubscription,
-) => {
-    await putDynamoItem(avlSubscriptionTableName, subscriptionDetails.PK, "SUBSCRIPTION", subscriptionDetails);
+export const createTestSubscription = async (subscriptionTableName: string, subscriptionDetails: AvlSubscription) => {
+    await putDynamoItem(subscriptionTableName, subscriptionDetails.PK, "SUBSCRIPTION", subscriptionDetails);
 };
