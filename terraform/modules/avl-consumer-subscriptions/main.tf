@@ -90,7 +90,7 @@ module "avl_consumer_subscriber" {
     },
     {
       Action = [
-        "dynamodb:GetItem"
+        "dynamodb:Scan"
       ],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_producer_subscription_table}"
