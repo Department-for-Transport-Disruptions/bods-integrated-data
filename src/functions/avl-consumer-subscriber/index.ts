@@ -93,7 +93,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const xml = parseXml(body);
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
         const subscriptionId = subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier;
-        const updateInterval = subscriptionRequest.VehicleMonitoringSubscriptionRequest.UpdateInterval;
+        const updateInterval = subscriptionRequest.VehicleMonitoringSubscriptionRequest.UpdateInterval || "PT10S";
         let PK = undefined;
 
         try {
