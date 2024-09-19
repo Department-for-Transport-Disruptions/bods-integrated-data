@@ -36,17 +36,14 @@ module "avl_consumer_subscriber" {
   permissions = [
     {
       Action = [
-        "dynamodb:PutItem"
-      ],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
-    },
-    {
-      Action = [
+        "dynamodb:PutItem",
         "dynamodb:Query",
       ],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/subscriptionId-index"
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
+      ]
     },
     {
       Action = [
