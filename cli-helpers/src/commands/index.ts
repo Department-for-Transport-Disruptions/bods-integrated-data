@@ -3,6 +3,7 @@ export * from "./create-avl-mock-data-producer";
 export * from "./get-ecs-cluster-for-service";
 export * from "./invoke-avl-consumer-heartbeat-notification";
 export * from "./invoke-avl-consumer-subscriber";
+export * from "./invoke-avl-consumer-subscription-trigger";
 export * from "./invoke-avl-consumer-unsubscriber";
 export * from "./invoke-avl-consumer-data-sender";
 export * from "./invoke-avl-data-endpoint";

@@ -247,6 +247,10 @@ run-local-avl-consumer-unsubscriber:
 run-local-avl-consumer-data-sender:
 	STAGE=local AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME=${AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-consumer-data-sender'; handler({ Records: [{ body: '{ \"subscriptionPK\": \"1\", }' }] }).then(console.log).catch(console.error)"
 
+# Change SUBSCRIPTION_PK, QUEUE_URL and FREQUENCY values as and when needed
+run-local-avl-consumer-subscription-trigger:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-consumer-subscription-trigger'; handler({ detail: { subscriptionPK: '${SUBSCRIPTION_PK}', queueUrl: '${QUEUE_URL}', frequency: ${FREQUENCY} } }).then(console.log).catch(console.error)"
+
 # NOC
 
 run-local-noc-retriever:
