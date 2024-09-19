@@ -70,6 +70,9 @@ describe("avl-consumer-heartbeat-notification", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 producerSubscriptionIds: "1",
                 heartbeatAttempts: 0,
+                queueUrl: "",
+                eventSourceMappingUuid: "",
+                scheduleName: "",
             },
         ];
 
@@ -112,6 +115,9 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([subscription]);
@@ -151,6 +157,9 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 2,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([subscription]);
@@ -191,6 +200,9 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 1,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([subscription]);
@@ -229,6 +241,9 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 1,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
         queryDynamoSpy.mockResolvedValueOnce([subscription]);

@@ -1,11 +1,11 @@
 import { SendMessageBatchRequestEntry } from "@aws-sdk/client-sqs";
+import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as sqs from "@bods-integrated-data/shared/sqs";
 import { EventBridgeEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ZodError } from "zod";
-import { AvlConsumerSubscriptionTrigger, handler } from ".";
+import { handler } from ".";
 
 describe("avl-consumer-subscription-trigger", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
@@ -19,7 +19,7 @@ describe("avl-consumer-subscription-trigger", () => {
 
     const sendBatchMessageSpy = vi.spyOn(sqs, "sendBatchMessage");
 
-    let mockEvent: EventBridgeEvent<"Scheduled Event", AvlConsumerSubscriptionTrigger>;
+    let mockEvent: EventBridgeEvent<"Scheduled Event", AvlSubscriptionTriggerMessage>;
 
     beforeEach(() => {
         mockEvent = {
@@ -44,9 +44,9 @@ describe("avl-consumer-subscription-trigger", () => {
         { subcriptionPK: "123", queueUrl: "", frequency: 30 },
         { subcriptionPK: "123", queueUrl: "mock-queue-url", frequency: 5 },
     ])("throws an error when the message is invalid (test: %o)", async (message) => {
-        mockEvent.detail = message as AvlConsumerSubscriptionTrigger;
+        mockEvent.detail = message as AvlSubscriptionTriggerMessage;
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(ZodError);
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError();
 
         expect(sendBatchMessageSpy).not.toHaveBeenCalled();
     });

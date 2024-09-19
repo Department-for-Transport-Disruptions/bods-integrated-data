@@ -1,23 +1,17 @@
 import type { SendMessageBatchRequestEntry } from "@aws-sdk/client-sqs";
-import {} from "@bods-integrated-data/shared/api";
+import {
+    AvlSubscriptionTriggerMessage,
+    subscriptionTriggerMessageSchema,
+} from "@bods-integrated-data/shared/avl-consumer/utils";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { sendBatchMessage } from "@bods-integrated-data/shared/sqs";
 import { ScheduledHandler } from "aws-lambda";
-import { z } from "zod";
 
-const eventMessageSchema = z.object({
-    subscriptionPK: z.string(),
-    frequency: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
-    queueUrl: z.string(),
-});
-
-export type AvlConsumerSubscriptionTrigger = z.infer<typeof eventMessageSchema>;
-
-export const handler: ScheduledHandler<AvlConsumerSubscriptionTrigger> = async (event, context) => {
+export const handler: ScheduledHandler<AvlSubscriptionTriggerMessage> = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { subscriptionPK, frequency, queueUrl } = eventMessageSchema.parse(event.detail);
+        const { subscriptionPK, frequency, queueUrl } = subscriptionTriggerMessageSchema.parse(event.detail);
 
         const entries: SendMessageBatchRequestEntry[] = [];
 
