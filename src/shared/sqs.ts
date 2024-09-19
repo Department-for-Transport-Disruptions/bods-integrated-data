@@ -1,4 +1,10 @@
-import { SQSClient, SendMessageBatchCommand, SendMessageBatchRequestEntry } from "@aws-sdk/client-sqs";
+import {
+    CreateQueueCommand,
+    CreateQueueCommandInput,
+    SQSClient,
+    SendMessageBatchCommand,
+    SendMessageBatchRequestEntry,
+} from "@aws-sdk/client-sqs";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -16,6 +22,16 @@ const client = new SQSClient({
           }
         : {}),
 });
+
+export const createQueue = async (input: CreateQueueCommandInput) => {
+    const response = await client.send(new CreateQueueCommand(input));
+
+    if (!response.QueueUrl) {
+        throw new Error(`Error creating queue: ${input.QueueName}`);
+    }
+
+    return response.QueueUrl;
+};
 
 export const sendBatchMessage = async (queueUrl: string, entries: SendMessageBatchRequestEntry[]) => {
     await client.send(
