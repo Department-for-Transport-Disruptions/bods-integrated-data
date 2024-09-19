@@ -204,8 +204,11 @@ module "avl_consumer_data_sender" {
         "dynamodb:Query",
         "dynamodb:PutItem"
       ],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}"
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
+      ]
     },
     {
       Action = [
