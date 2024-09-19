@@ -81,7 +81,7 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
         for (const query of queries) {
             if (query.include) {
                 const file = `${query.fileName}.txt`;
-                const downloadStream = createLazyDownloadStreamFrom(outputBucket, file);
+                const downloadStream = createLazyDownloadStreamFrom(outputBucket, `${filePath}/${file}`);
 
                 archive.append(downloadStream, {
                     name: file,
