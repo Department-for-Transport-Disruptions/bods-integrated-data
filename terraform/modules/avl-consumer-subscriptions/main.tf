@@ -12,8 +12,8 @@ terraform {
 module "integrated_data_avl_consumer_subscription_table" {
   source = "../shared/dynamo-table"
 
-  environment              = var.environment
-  table_name               = "integrated-data-avl-consumer-subscription-table"
+  environment = var.environment
+  table_name  = "integrated-data-avl-consumer-subscription-table"
   global_secondary_indexes = [
     {
       hash_key  = "subscriptionId"
@@ -39,7 +39,7 @@ module "avl_consumer_subscriber" {
         "dynamodb:PutItem",
         "dynamodb:Query",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
@@ -80,7 +80,7 @@ module "avl_consumer_unsubscriber" {
         "dynamodb:PutItem",
         "dynamodb:Query"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
@@ -113,7 +113,7 @@ module "avl_consumer_heartbeat_notification" {
         "dynamodb:Query",
         "dynamodb:PutItem"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
