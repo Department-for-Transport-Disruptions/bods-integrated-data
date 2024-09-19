@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { SubscriptionIdNotFoundError } from "../avl/utils";
 import { queryDynamo } from "../dynamo";
 import {
@@ -6,6 +7,14 @@ import {
     avlConsumerSubscriptionSchema,
     avlConsumerSubscriptionsSchema,
 } from "../schema";
+
+export const subscriptionTriggerMessageSchema = z.object({
+    subscriptionPK: z.string(),
+    frequency: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
+    queueUrl: z.string(),
+});
+
+export type AvlSubscriptionTriggerMessage = z.infer<typeof subscriptionTriggerMessageSchema>;
 
 export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
     const subscriptions = await queryDynamo<AvlConsumerSubscription>({
