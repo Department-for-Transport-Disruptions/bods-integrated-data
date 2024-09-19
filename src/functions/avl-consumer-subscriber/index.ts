@@ -16,7 +16,7 @@ import { createSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { createEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
-import { createQueue } from "@bods-integrated-data/shared/sqs";
+import { createQueue, getQueueAttributes } from "@bods-integrated-data/shared/sqs";
 import {
     InvalidXmlError,
     createStringLengthValidation,
@@ -147,8 +147,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             QueueName: `consumer-subscription-queue-${consumerSubscription.PK}`,
         });
 
+        const queueAttributes = await getQueueAttributes({
+            QueueUrl: queueUrl,
+        });
+
         const eventSourceMappingUuid = await createEventSourceMapping({
-            EventSourceArn: queueUrl,
+            EventSourceArn: queueAttributes?.QueueArn,
             FunctionName: AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME,
         });
 

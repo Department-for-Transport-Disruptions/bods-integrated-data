@@ -17,6 +17,7 @@ const mockProducerSubscriptionId = "1";
 const mockUserId = "mock-user-id";
 const mockRandomId = "999";
 const mockQueueUrl = "mockQueueUrl";
+const mockQueueArn = "mockQueueArn";
 const mockSendDataLambdaName = "mockSendDataLambdaName";
 const mockEventSourceMappingUuid = "mockEventSourceMappingUuid";
 const mockSubscriptionTriggerLambdaArn = "mockSubscriptionTriggerLambdaArn";
@@ -62,6 +63,7 @@ describe("avl-consumer-subscriber", () => {
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const createQueueSpy = vi.spyOn(sqs, "createQueue");
+    const getQueueAttributesSpy = vi.spyOn(sqs, "getQueueAttributes");
     const createEventSourceMappingSpy = vi.spyOn(lambda, "createEventSourceMapping");
     const createScheduleSpy = vi.spyOn(eventBridge, "createSchedule");
 
@@ -88,6 +90,7 @@ describe("avl-consumer-subscriber", () => {
         recursiveScanSpy.mockResolvedValue([]);
         putDynamoItemSpy.mockResolvedValue();
         createQueueSpy.mockResolvedValue(mockQueueUrl);
+        getQueueAttributesSpy.mockResolvedValue({ QueueArn: mockQueueArn });
         createEventSourceMappingSpy.mockResolvedValue(mockEventSourceMappingUuid);
         createScheduleSpy.mockResolvedValue("");
     });
@@ -325,6 +328,10 @@ describe("avl-consumer-subscriber", () => {
 
         expect(createQueueSpy).toHaveBeenCalledWith({
             QueueName: `consumer-subscription-queue-${mockRandomId}`,
+        });
+
+        expect(getQueueAttributesSpy).toHaveBeenCalledWith({
+            QueueUrl: mockQueueUrl,
         });
 
         expect(createEventSourceMappingSpy).toHaveBeenCalledWith({
