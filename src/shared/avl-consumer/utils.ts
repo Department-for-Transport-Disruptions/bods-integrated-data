@@ -10,6 +10,7 @@ import {
 
 export const subscriptionTriggerMessageSchema = z.object({
     subscriptionPK: z.string(),
+    SK: z.string(),
     frequencyInSeconds: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
     queueUrl: z.string(),
 });
@@ -28,8 +29,8 @@ export const getAvlConsumerSubscriptionsByStatus = async (tableName: string, sta
     return avlConsumerSubscriptionsSchema.parse(subscriptions);
 };
 
-export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: string) => {
-    const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, { PK });
+export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: string, SK: string) => {
+    const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, { PK, SK });
 
     if (!subscription) {
         throw new SubscriptionIdNotFoundError(`Subscription PK: ${PK} not found in DynamoDB`);

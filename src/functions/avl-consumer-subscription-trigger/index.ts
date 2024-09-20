@@ -10,7 +10,7 @@ export const handler: ScheduledHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { subscriptionPK, frequencyInSeconds, queueUrl } = subscriptionTriggerMessageSchema.parse(event);
+        const { subscriptionPK, SK, frequencyInSeconds, queueUrl } = subscriptionTriggerMessageSchema.parse(event);
 
         const entries: SendMessageBatchRequestEntry[] = [];
 
@@ -18,7 +18,7 @@ export const handler: ScheduledHandler = async (event, context) => {
             entries.push({
                 Id: i.toString(),
                 DelaySeconds: delay,
-                MessageBody: JSON.stringify({ subscriptionPK }),
+                MessageBody: JSON.stringify({ subscriptionPK, SK }),
             });
         }
 
