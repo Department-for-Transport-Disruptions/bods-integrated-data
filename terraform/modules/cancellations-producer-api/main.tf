@@ -19,10 +19,12 @@ resource "aws_secretsmanager_secret_version" "cancellations_producer_api_key_sec
 }
 
 module "cancellations_producer_api_gateway" {
-  count               = var.environment == "local" ? 0 : 1
-  source              = "./api-gateway"
-  environment         = var.environment
-  domain              = var.domain
-  acm_certificate_arn = var.acm_certificate_arn
-  hosted_zone_id      = var.hosted_zone_id
+  count                       = var.environment == "local" ? 0 : 1
+  source                      = "./api-gateway"
+  environment                 = var.environment
+  domain                      = var.domain
+  acm_certificate_arn         = var.acm_certificate_arn
+  hosted_zone_id              = var.hosted_zone_id
+  subscribe_lambda_invoke_arn = ""
+  subscribe_lambda_name       = ""
 }

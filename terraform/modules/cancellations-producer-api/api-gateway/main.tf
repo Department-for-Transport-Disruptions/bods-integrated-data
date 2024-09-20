@@ -14,10 +14,31 @@ resource "aws_apigatewayv2_api" "integrated_data_cancellations_producer_api" {
   protocol_type = "HTTP"
 }
 
+resource "aws_apigatewayv2_integration" "integrated_data_cancellations_producer_api_integration_subscribe" {
+  api_id                 = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.subscribe_lambda_invoke_arn
+  integration_method     = "POST"
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "integrated_data_cancellations_producer_api_route_subscribe" {
+  api_id    = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
+  route_key = "POST /subscriptions"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_cancellations_producer_api_integration_subscribe.id}"
+}
+
 
 resource "aws_apigatewayv2_deployment" "integrated_data_cancellations_producer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
   description = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.name
+
+  triggers = {
+    redeployment = sha1(join(",", tolist([
+      jsonencode(aws_apigatewayv2_route.integrated_data_cancellations_producer_api_route_subscribe),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_cancellations_producer_api_integration_subscribe),
+    ])))
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -62,4 +83,11 @@ resource "aws_apigatewayv2_api_mapping" "integrated_data_cancellations_producer_
   api_id      = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
   domain_name = aws_apigatewayv2_domain_name.integrated_data_cancellations_producer_api_domain.id
   stage       = aws_apigatewayv2_stage.integrated_data_cancellations_producer_api_stage.id
+}
+
+resource "aws_lambda_permission" "integrated_data_cancellations_producer_api_subscribe_permissions" {
+  function_name = var.subscribe_lambda_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_cancellations_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_cancellations_producer_api_stage.name}/*"
 }
