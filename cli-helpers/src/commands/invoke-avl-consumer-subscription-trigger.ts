@@ -60,11 +60,9 @@ export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-cons
         }
 
         const invokePayload = {
-            detail: {
-                subscriptionPK,
-                queueUrl,
-                frequencyInSeconds: Number.parseInt(frequencyInSeconds),
-            },
+            subscriptionPK,
+            queueUrl,
+            frequencyInSeconds: Number.parseInt(frequencyInSeconds),
         };
 
         await invokeLambda(stage, {

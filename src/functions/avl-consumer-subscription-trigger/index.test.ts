@@ -3,7 +3,6 @@ import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as sqs from "@bods-integrated-data/shared/sqs";
-import { EventBridgeEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -19,16 +18,14 @@ describe("avl-consumer-subscription-trigger", () => {
 
     const sendBatchMessageSpy = vi.spyOn(sqs, "sendBatchMessage");
 
-    let mockEvent: EventBridgeEvent<"Scheduled Event", AvlSubscriptionTriggerMessage>;
+    let mockEvent: Parameters<typeof handler>[0];
 
     beforeEach(() => {
         mockEvent = {
-            detail: {
-                subscriptionPK: "123",
-                queueUrl: "mock-queue-url",
-                frequencyInSeconds: 30,
-            },
-        } as typeof mockEvent;
+            subscriptionPK: "123",
+            queueUrl: "mock-queue-url",
+            frequencyInSeconds: 30,
+        } as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
     });
 
     afterEach(() => {
@@ -44,7 +41,7 @@ describe("avl-consumer-subscription-trigger", () => {
         { subcriptionPK: "123", queueUrl: "", frequencyInSeconds: 30 },
         { subcriptionPK: "123", queueUrl: "mock-queue-url", frequencyInSeconds: 5 },
     ])("throws an error when the message is invalid (test: %o)", async (message) => {
-        mockEvent.detail = message as AvlSubscriptionTriggerMessage;
+        mockEvent = message as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError();
 

@@ -249,7 +249,7 @@ run-local-avl-consumer-data-sender:
 
 # Change SUBSCRIPTION_PK, QUEUE_URL and FREQUENCY values as and when needed
 run-local-avl-consumer-subscription-trigger:
-	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-consumer-subscription-trigger'; handler({ detail: { subscriptionPK: '${SUBSCRIPTION_PK}', queueUrl: '${QUEUE_URL}', frequencyInSeconds: ${FREQUENCY} } }).then(console.log).catch(console.error)"
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-consumer-subscription-trigger'; handler({ subscriptionPK: '${SUBSCRIPTION_PK}', queueUrl: '${QUEUE_URL}', frequencyInSeconds: ${FREQUENCY} }).then(console.log).catch(console.error)"
 
 # NOC
 
