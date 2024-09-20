@@ -38,4 +38,33 @@ resource "aws_dynamodb_table" "table" {
       attribute_name = var.ttl_attribute
     }
   }
+
+  dynamic "global_secondary_index" {
+    for_each = var.global_secondary_indexes
+
+    content {
+      name            = "${global_secondary_index.value.hash_key}-index"
+      hash_key        = global_secondary_index.value.hash_key
+      range_key       = global_secondary_index.value.range_key
+      projection_type = "ALL"
+    }
+  }
+
+  dynamic "attribute" {
+    for_each = var.global_secondary_indexes
+
+    content {
+      name = attribute.value.hash_key
+      type = "S"
+    }
+  }
+
+  dynamic "attribute" {
+    for_each = var.global_secondary_indexes
+
+    content {
+      name = attribute.value.range_key
+      type = "S"
+    }
+  }
 }
