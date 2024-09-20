@@ -98,10 +98,10 @@ module "avl_consumer_subscriber" {
     },
     {
       Action = [
-        "sqs:CreateSchedule"
+        "scheduler:CreateSchedule"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-sub-schedule-*"
+      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:schedule/default/consumer-sub-schedule-*"
     },
     {
       Action = [
@@ -117,6 +117,13 @@ module "avl_consumer_subscriber" {
       ],
       Effect   = "Allow",
       Resource = "arn:aws:lambda:${var.aws_region}:${var.aws_account_id}:event-source-mapping:*"
+    },
+    {
+      Action = [
+        "iam:PassRole"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:iam::${var.aws_account_id}:role/${aws_iam_role.integrated_data_consumer_subscription_schedule_role.name}"
     }
   ]
 
@@ -157,10 +164,10 @@ module "avl_consumer_unsubscriber" {
     },
     {
       Action = [
-        "sqs:DeleteSchedule"
+        "scheduler:DeleteSchedule"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-sub-schedule-*"
+      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:schedule/default/consumer-sub-schedule-*"
     },
     {
       Action = [
