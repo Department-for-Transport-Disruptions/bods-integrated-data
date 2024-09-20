@@ -360,6 +360,8 @@ module "integrated_data_cancellations_data_producer_api" {
   hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
   domain                         = module.integrated_data_route53.public_hosted_zone_name
   cancellations_producer_api_key = local.secrets["cancellations_producer_api_key"]
+  sg_id                          = module.integrated_data_vpc.default_sg_id
+  subnet_ids                     = module.integrated_data_vpc.private_subnet_ids
 }
 
 # VPN

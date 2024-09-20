@@ -30,3 +30,12 @@ variable "hosted_zone_id" {
   type = string
 }
 
+variable "sg_id" {
+  type        = string
+  description = "Security group ID"
+}
+
+variable "subnet_ids" {
+  type = list(string)
+}
+
