@@ -342,6 +342,14 @@ module "integrated_data_gtfs_api" {
   domain                                        = module.integrated_data_route53.public_hosted_zone_name
 }
 
+module "integrated_data_avl_datadog" {
+  source = "../modules/avl-datadog-monitoring"
+
+  environment     = local.env
+  datadog_api_key = local.secrets["datadog_api_key"]
+  datadog_app_key = local.secrets["datadog_app_key"]
+}
+
 module "integrated_data_cancellations_data_producer_api" {
   source = "../modules/cancellations-producer-api"
 
