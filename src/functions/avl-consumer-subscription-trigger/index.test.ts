@@ -23,6 +23,7 @@ describe("avl-consumer-subscription-trigger", () => {
     beforeEach(() => {
         mockEvent = {
             subscriptionPK: "123",
+            SK: "1234",
             queueUrl: "mock-queue-url",
             frequencyInSeconds: 30,
         } as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
@@ -34,12 +35,14 @@ describe("avl-consumer-subscription-trigger", () => {
 
     it.each([
         {},
-        { queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", queueUrl: "mock-queue-url" },
-        { subcriptionPK: "", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", queueUrl: "", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", queueUrl: "mock-queue-url", frequencyInSeconds: 5 },
+        { SK: "1234", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "1234", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "1234", queueUrl: "mock-queue-url" },
+        { subcriptionPK: "", SK: "1234", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "1234", queueUrl: "", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "1234", queueUrl: "mock-queue-url", frequencyInSeconds: 5 },
     ])("throws an error when the message is invalid (test: %o)", async (message) => {
         mockEvent = message as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
 
@@ -67,12 +70,12 @@ describe("avl-consumer-subscription-trigger", () => {
             {
                 Id: "0",
                 DelaySeconds: 30,
-                MessageBody: JSON.stringify({ subscriptionPK: "123" }),
+                MessageBody: JSON.stringify({ subscriptionPK: "123", SK: "1234" }),
             },
             {
                 Id: "1",
                 DelaySeconds: 60,
-                MessageBody: JSON.stringify({ subscriptionPK: "123" }),
+                MessageBody: JSON.stringify({ subscriptionPK: "123", SK: "1234" }),
             },
         ];
 

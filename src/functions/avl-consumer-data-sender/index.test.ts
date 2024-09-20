@@ -133,7 +133,10 @@ describe("avl-consumer-subscriber", () => {
         mockEvent = {
             Records: [
                 {
-                    body: JSON.stringify({ subscriptionPK: consumerSubscription.PK }),
+                    body: JSON.stringify({
+                        subscriptionPK: consumerSubscription.PK,
+                        SK: consumerSubscription.SK,
+                    }),
                 },
             ],
         } as SQSEvent;
