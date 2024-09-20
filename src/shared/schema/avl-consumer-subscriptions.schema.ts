@@ -13,7 +13,7 @@ export const avlConsumerSubscriptionSchema = z.object({
     requestTimestamp: z.string(),
     producerSubscriptionIds: z.string(),
     heartbeatAttempts: z.number(),
-    lastRetrievedAvlId: z.number().optional(),
+    lastRetrievedAvlId: z.number(),
     queueUrl: z.string(),
     eventSourceMappingUuid: z.string(),
     scheduleName: z.string(),

@@ -138,6 +138,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestTimestamp: subscriptionRequest.RequestTimestamp,
             producerSubscriptionIds,
             heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
             queueUrl: "",
             eventSourceMappingUuid: "",
             scheduleName: "",
