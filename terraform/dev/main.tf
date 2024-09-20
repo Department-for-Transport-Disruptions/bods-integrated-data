@@ -348,4 +348,8 @@ module "integrated_data_avl_datadog" {
   environment     = local.env
   datadog_api_key = local.secrets["datadog_api_key"]
   datadog_app_key = local.secrets["datadog_app_key"]
+  project_name    = "integrated-data-avl"
+  thresholds      = {}
+  recovery        = {}
+  opt_out         = []
 }
