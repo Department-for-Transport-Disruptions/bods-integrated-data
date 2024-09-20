@@ -22,12 +22,13 @@ const avlProducerSubscriptionTableName = `integrated-data-avl-subscription-table
 const avlConsumerSubscriptionTableName = `integrated-data-avl-consumer-subscription-table-${stage}`;
 
 const testProducerSubscription: AvlSubscription = {
-    PK: "PLAYWRIGHT-PRODUCER",
+    PK: "1",
     url: "http://siri.ticketer.org.uk/api/vm",
     description: "Playwright test subscription",
     shortDescription: "Playwright test subscription",
     requestorRef: "BODS_MOCK_PRODUCER",
     publisherId: "PLAYWRIGHT",
+    apiKey: "test",
     status: "live",
 };
 
@@ -49,6 +50,7 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
     await cleardownTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription.PK);
+    await cleardownTestSubscription(avlConsumerSubscriptionTableName, testConsumerSubscription.subscriptionId);
 });
 
 test.describe("avl-consumer-api", () => {
@@ -92,7 +94,7 @@ test.describe("avl-consumer-api", () => {
 
         const subscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/subscribe?subscriptionId=1`, {
             data: subscriptionRequestBody,
-            headers: { userId: consumerSubscriptionId },
+            headers: { userId: consumerSubscriptionId, "Content-Type": "application/xml" },
         });
 
         const res = subscribeResponse.statusText();
