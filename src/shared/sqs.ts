@@ -34,14 +34,6 @@ export const createQueue = async (input: CreateQueueCommandInput) => {
         throw new Error(`Error creating queue: ${input.QueueName}`);
     }
 
-    const r2 = await client.send(
-        new GetQueueAttributesCommand({
-            QueueUrl: response.QueueUrl,
-        }),
-    );
-
-    r2.Attributes?.QueueArn;
-
     return response.QueueUrl;
 };
 

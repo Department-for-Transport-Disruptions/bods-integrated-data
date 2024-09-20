@@ -18,7 +18,7 @@ const mockUserId = "mock-user-id";
 const mockRandomId = "999";
 const mockQueueUrl = "mockQueueUrl";
 const mockQueueArn = "mockQueueArn";
-const mockSendDataLambdaName = "mockSendDataLambdaName";
+const mockSendDataLambdaArn = "mockSendDataLambdaArn";
 const mockEventSourceMappingUuid = "mockEventSourceMappingUuid";
 const mockSubscriptionTriggerLambdaArn = "mockSubscriptionTriggerLambdaArn";
 const mockSubscriptionScheduleRoleArn = "mockSubscriptionScheduleRoleArn";
@@ -72,7 +72,7 @@ describe("avl-consumer-subscriber", () => {
     beforeEach(() => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
         process.env.AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = mockProducerSubscriptionTable;
-        process.env.AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME = mockSendDataLambdaName;
+        process.env.AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN = mockSendDataLambdaArn;
         process.env.AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN = mockSubscriptionTriggerLambdaArn;
         process.env.AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN = mockSubscriptionScheduleRoleArn;
 
@@ -102,7 +102,7 @@ describe("avl-consumer-subscriber", () => {
     it.each([
         "AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME",
         "AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME",
-        "AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_NAME",
+        "AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN",
         "AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN",
         "AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN",
     ])("returns a 500 when the required env var %s is missing", async (input) => {
@@ -328,15 +328,19 @@ describe("avl-consumer-subscriber", () => {
 
         expect(createQueueSpy).toHaveBeenCalledWith({
             QueueName: `consumer-subscription-queue-${mockRandomId}`,
+            Attributes: {
+                VisibilityTimeout: "60",
+            },
         });
 
         expect(getQueueAttributesSpy).toHaveBeenCalledWith({
             QueueUrl: mockQueueUrl,
+            AttributeNames: ["QueueArn"],
         });
 
         expect(createEventSourceMappingSpy).toHaveBeenCalledWith({
-            EventSourceArn: mockQueueUrl,
-            FunctionName: mockSendDataLambdaName,
+            EventSourceArn: mockQueueArn,
+            FunctionName: mockSendDataLambdaArn,
         });
 
         const queueMessage: AvlSubscriptionTriggerMessage = {
