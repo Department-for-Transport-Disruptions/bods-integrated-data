@@ -23,7 +23,7 @@ module "integrated_data_avl_consumer_subscription_table" {
 }
 
 resource "aws_iam_policy" "integrated_data_consumer_subscription_schedule_policy" {
-  name = "integrated-data-consumer-subscription-schedule-policy-${var.environment}"
+  name = "integrated-data-consumer-sub-schedule-policy-${var.environment}"
 
   policy = jsonencode({
     "Version" : "2012-10-17",
@@ -42,7 +42,7 @@ resource "aws_iam_policy" "integrated_data_consumer_subscription_schedule_policy
 }
 
 resource "aws_iam_role" "integrated_data_consumer_subscription_schedule_role" {
-  name = "integrated-data-consumer-subscription-schedule-role-${var.environment}"
+  name = "integrated-data-consumer-sub-schedule-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -100,7 +100,7 @@ module "avl_consumer_subscriber" {
         "sqs:CreateSchedule"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-subscription-schedule-*"
+      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-sub-schedule-*"
     },
     {
       Action = [
@@ -108,7 +108,7 @@ module "avl_consumer_subscriber" {
         "sqs:GetQueueAttributes"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-queue-*"
+      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-sub-queue-*"
     },
     {
       Action = [
@@ -159,14 +159,14 @@ module "avl_consumer_unsubscriber" {
         "sqs:DeleteSchedule"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-subscription-schedule-*"
+      Resource = "arn:aws:scheduler:${var.aws_region}:${var.aws_account_id}:consumer-sub-schedule-*"
     },
     {
       Action = [
         "sqs:DeleteQueue"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-queue-*"
+      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-sub-queue-*"
     },
     {
       Action = [
@@ -218,7 +218,7 @@ module "avl_consumer_data_sender" {
         "sqs:ReceiveMessage"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-queue-*"
+      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-sub-queue-*"
     },
     {
       Action = [
@@ -302,7 +302,7 @@ module "avl_consumer_subscription_trigger" {
         "sqs:SendMessage"
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-subscription-*"
+      Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-sub-*"
     }
   ]
 }

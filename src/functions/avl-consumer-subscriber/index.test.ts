@@ -316,7 +316,7 @@ describe("avl-consumer-subscriber", () => {
             heartbeatAttempts: 0,
             queueUrl: mockQueueUrl,
             eventSourceMappingUuid: mockEventSourceMappingUuid,
-            scheduleName: `consumer-subscription-schedule-${mockRandomId}`,
+            scheduleName: `consumer-sub-schedule-${mockRandomId}`,
         };
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
@@ -327,7 +327,7 @@ describe("avl-consumer-subscriber", () => {
         );
 
         expect(createQueueSpy).toHaveBeenCalledWith({
-            QueueName: `consumer-subscription-queue-${mockRandomId}`,
+            QueueName: `consumer-sub-queue-${mockRandomId}`,
             Attributes: {
                 VisibilityTimeout: "60",
             },
@@ -350,7 +350,7 @@ describe("avl-consumer-subscriber", () => {
         };
 
         expect(createScheduleSpy).toHaveBeenCalledWith({
-            Name: `consumer-subscription-schedule-${mockRandomId}`,
+            Name: `consumer-sub-schedule-${mockRandomId}`,
             FlexibleTimeWindow: {
                 Mode: "OFF",
             },
@@ -392,7 +392,7 @@ describe("avl-consumer-subscriber", () => {
             heartbeatAttempts: 0,
             queueUrl: mockQueueUrl,
             eventSourceMappingUuid: mockEventSourceMappingUuid,
-            scheduleName: `consumer-subscription-schedule-${mockRandomId}`,
+            scheduleName: `consumer-sub-schedule-${mockRandomId}`,
         };
 
         queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);

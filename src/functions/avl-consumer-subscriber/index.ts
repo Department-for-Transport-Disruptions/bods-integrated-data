@@ -144,7 +144,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
 
         const queueUrl = await createQueue({
-            QueueName: `consumer-subscription-queue-${consumerSubscription.PK}`,
+            QueueName: `consumer-sub-queue-${consumerSubscription.PK}`,
             Attributes: {
                 VisibilityTimeout: "60",
             },
@@ -168,7 +168,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             queueUrl,
         };
 
-        const scheduleName = `consumer-subscription-schedule-${consumerSubscription.PK}`;
+        const scheduleName = `consumer-sub-schedule-${consumerSubscription.PK}`;
 
         await createSchedule({
             Name: scheduleName,
