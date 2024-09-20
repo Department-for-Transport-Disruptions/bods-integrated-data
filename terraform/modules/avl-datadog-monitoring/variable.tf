@@ -6,7 +6,7 @@ variable "environment" {
 
 variable "datadog_api_url" {
   type        = string
-  description = "The URL that is used to send information to for DataDog"
+  description = "The URL that is used to send information to DataDog"
   default     = "https://app.datadoghq.eu"
 }
 

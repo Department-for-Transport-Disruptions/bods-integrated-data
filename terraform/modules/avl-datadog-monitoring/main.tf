@@ -16,7 +16,7 @@ provider "datadog" {
 data "aws_caller_identity" "current" {}
 
 resource "aws_iam_role" "datadog_aws_integration" {
-  name               = "integrated-data-avl-${var.environment}-datadog-aws-integration-role"
+  name               = "integrated-data-avl-datadog-role-${var.environment}"
   description        = "Role for Datadog AWS Integration"
   assume_role_policy = data.aws_iam_policy_document.datadog_aws_integration_assume_role.json
 
@@ -44,7 +44,6 @@ data "aws_iam_policy_document" "datadog_aws_integration_assume_role" {
   }
 }
 
-## Integration
 resource "aws_iam_policy" "datadog_aws_integration" {
   name   = "integrated-data-avl-${var.environment}-datadog-aws-integration-policy"
   policy = data.aws_iam_policy_document.datadog_aws_integration.json
@@ -103,5 +102,5 @@ resource "aws_iam_role_policy_attachment" "datadog_aws_integration" {
 
 resource "datadog_integration_aws" "datadog_aws_integration" {
   account_id = data.aws_caller_identity.current.account_id
-  role_name  = "integrated-data-avl-${var.environment}-datadog-aws-integration-role"
+  role_name  = aws_iam_role.datadog_aws_integration.name
 }
