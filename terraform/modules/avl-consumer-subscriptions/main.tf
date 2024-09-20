@@ -31,10 +31,11 @@ resource "aws_iam_policy" "integrated_data_consumer_subscription_schedule_policy
       {
         "Effect" : "Allow",
         "Action" : [
-          "states:StartExecution"
+          "lambda:InvokeFunction"
         ],
         "Resource" : [
-          module.avl_consumer_subscription_trigger.function_arn
+          module.avl_consumer_subscription_trigger.function_arn,
+          "${module.avl_consumer_subscription_trigger.function_arn}:*"
         ]
       }
     ]
