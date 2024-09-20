@@ -266,7 +266,7 @@ module "avl_consumer_heartbeat_notification" {
   permissions = [
     {
       Action = [
-        "dynamodb:Query",
+        "dynamodb:Scan",
         "dynamodb:PutItem"
       ],
       Effect = "Allow",

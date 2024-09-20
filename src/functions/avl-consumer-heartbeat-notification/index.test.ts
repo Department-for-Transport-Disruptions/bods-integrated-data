@@ -20,7 +20,7 @@ describe("avl-consumer-heartbeat-notification", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        queryDynamo: vi.fn(),
+        scanDynamo: vi.fn(),
         putDynamoItem: vi.fn(),
     }));
 
@@ -28,13 +28,13 @@ describe("avl-consumer-heartbeat-notification", () => {
     const axiosSpy = vi.spyOn(mockedAxios, "post");
     MockDate.set("2024-03-11T15:20:02.093Z");
 
-    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const scanDynamoSpy = vi.spyOn(dynamo, "scanDynamo");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
 
     beforeEach(() => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
 
-        queryDynamoSpy.mockResolvedValue([]);
+        scanDynamoSpy.mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -77,7 +77,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             },
         ];
 
-        queryDynamoSpy.mockResolvedValueOnce(subscriptions);
+        scanDynamoSpy.mockResolvedValueOnce(subscriptions);
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -122,7 +122,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        scanDynamoSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed with status code 500", "500"));
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -165,7 +165,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        scanDynamoSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed with status code 500", "500"));
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -209,7 +209,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        scanDynamoSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -251,7 +251,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        scanDynamoSpy.mockResolvedValueOnce([subscription]);
         putDynamoItemSpy.mockRejectedValueOnce(new Error());
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
