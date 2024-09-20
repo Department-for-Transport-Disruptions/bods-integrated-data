@@ -206,11 +206,12 @@ module "avl_consumer_data_sender" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.subnet_ids
   database_sg_id  = var.db_sg_id
+  retry_attempts  = 0
 
   permissions = [
     {
       Action = [
-        "dynamodb:Query",
+        "dynamodb:GetItem",
         "dynamodb:PutItem"
       ],
       Effect = "Allow",
