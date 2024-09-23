@@ -351,6 +351,20 @@ module "integrated_data_gtfs_api" {
   domain                                        = module.integrated_data_route53.public_hosted_zone_name
 }
 
+module "integrated_data_cancellations_data_producer_api" {
+  source = "../modules/cancellations-producer-api"
+
+  aws_account_id                 = data.aws_caller_identity.current.account_id
+  aws_region                     = data.aws_region.current.name
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  cancellations_producer_api_key = local.secrets["cancellations_producer_api_key"]
+  sg_id                          = module.integrated_data_vpc.default_sg_id
+  subnet_ids                     = module.integrated_data_vpc.private_subnet_ids
+}
+
 # VPN
 
 module "stagecoach_vpn" {
