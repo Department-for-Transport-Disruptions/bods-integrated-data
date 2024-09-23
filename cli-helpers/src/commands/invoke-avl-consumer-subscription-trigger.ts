@@ -1,14 +1,22 @@
-import { Command } from "@commander-js/extra-typings";
+import { Command, Option } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-consumer-subscription-trigger")
     .addOption(STAGE_OPTION)
     .option("--subscriptionPK <subscriptionPK>", "Consumer subscription PK")
+    .option("--userId <userId>", "BODS user ID")
     .option("--queueUrl <queueUrl>", "Queue URL")
-    .option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds")
+    .addOption(
+        new Option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds").choices([
+            "10",
+            "15",
+            "20",
+            "30",
+        ]),
+    )
     .action(async (options) => {
-        let { stage, subscriptionPK, queueUrl, frequencyInSeconds } = options;
+        let { stage, subscriptionPK, userId, queueUrl, frequencyInSeconds } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -35,6 +43,18 @@ export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-cons
             subscriptionPK = response.subscriptionPK;
         }
 
+        if (!userId) {
+            const response = await inquirer.prompt<{ userId: string }>([
+                {
+                    name: "userId",
+                    message: "Enter the BODS user ID",
+                    type: "input",
+                },
+            ]);
+
+            userId = response.userId;
+        }
+
         if (!queueUrl) {
             const response = await inquirer.prompt<{ queueUrl: string }>([
                 {
@@ -52,7 +72,8 @@ export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-cons
                 {
                     name: "frequencyInSeconds",
                     message: "Enter the frequency in seconds",
-                    type: "input",
+                    type: "list",
+                    choices: ["10", "15", "20", "30"],
                 },
             ]);
 
@@ -61,6 +82,7 @@ export const invokeAvlConsumerSubscriptionTrigger = new Command("invoke-avl-cons
 
         const invokePayload = {
             subscriptionPK,
+            SK: userId,
             queueUrl,
             frequencyInSeconds: Number.parseInt(frequencyInSeconds),
         };

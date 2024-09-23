@@ -1,4 +1,4 @@
-import { Command } from "@commander-js/extra-typings";
+import { Command, Option } from "@commander-js/extra-typings";
 import inquirer from "inquirer";
 import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
 
@@ -7,8 +7,16 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
     .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
     .option("--userId <userId>", "BODS user ID")
     .option("--subscriptionId <subscriptionId>", "Producer subscription IDs to subscribe to")
+    .addOption(
+        new Option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds").choices([
+            "10",
+            "15",
+            "20",
+            "30",
+        ]),
+    )
     .action(async (options) => {
-        let { stage, consumerSubscriptionId, userId, subscriptionId } = options;
+        let { stage, consumerSubscriptionId, userId, subscriptionId, frequencyInSeconds } = options;
 
         if (!stage) {
             const responses = await inquirer.prompt<{ stage: string }>([
@@ -59,6 +67,19 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
             subscriptionId = response.subscriptionId;
         }
 
+        if (!frequencyInSeconds) {
+            const response = await inquirer.prompt<{ frequencyInSeconds: string }>([
+                {
+                    name: "frequencyInSeconds",
+                    message: "Enter the frequency in seconds",
+                    type: "list",
+                    choices: ["10", "15", "20", "30"],
+                },
+            ]);
+
+            frequencyInSeconds = response.frequencyInSeconds;
+        }
+
         const requestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
   <SubscriptionRequest>
@@ -76,6 +97,7 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
         <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
         <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
       </VehicleMonitoringRequest>
+      <UpdateInterval>PT${frequencyInSeconds}S</UpdateInterval>
     </VehicleMonitoringSubscriptionRequest>
   </SubscriptionRequest>
 </Siri>
