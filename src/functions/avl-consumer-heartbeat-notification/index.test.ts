@@ -68,12 +68,14 @@ describe("avl-consumer-heartbeat-notification", () => {
                 heartbeatInterval: "PT30S",
                 initialTerminationTime: "2024-03-11T15:20:02.093Z",
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
-                producerSubscriptionIds: "1",
                 heartbeatAttempts: 0,
                 lastRetrievedAvlId: 0,
                 queueUrl: "",
                 eventSourceMappingUuid: "",
                 scheduleName: "",
+                queryParams: {
+                    producerSubscriptionIds: "1",
+                },
             },
         ];
 
@@ -114,12 +116,14 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
             queueUrl: "",
             eventSourceMappingUuid: "",
             scheduleName: "",
+            queryParams: {
+                producerSubscriptionIds: "1",
+            },
         };
 
         recursiveScanSpy.mockResolvedValueOnce([subscription]);
@@ -157,12 +161,14 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
             heartbeatAttempts: 2,
             lastRetrievedAvlId: 0,
             queueUrl: "",
             eventSourceMappingUuid: "",
             scheduleName: "",
+            queryParams: {
+                producerSubscriptionIds: "1",
+            },
         };
 
         recursiveScanSpy.mockResolvedValueOnce([subscription]);
@@ -201,12 +207,14 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
             heartbeatAttempts: 1,
             lastRetrievedAvlId: 0,
             queueUrl: "",
             eventSourceMappingUuid: "",
             scheduleName: "",
+            queryParams: {
+                producerSubscriptionIds: "1",
+            },
         };
 
         recursiveScanSpy.mockResolvedValueOnce([subscription]);
@@ -243,12 +251,14 @@ describe("avl-consumer-heartbeat-notification", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
             heartbeatAttempts: 1,
             lastRetrievedAvlId: 0,
             queueUrl: "",
             eventSourceMappingUuid: "",
             scheduleName: "",
+            queryParams: {
+                producerSubscriptionIds: "1",
+            },
         };
 
         recursiveScanSpy.mockResolvedValueOnce([subscription]);
