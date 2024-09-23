@@ -13,6 +13,24 @@ const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
 const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
 const mockUserId = "mock-user-id";
 
+const consumerSubscription: AvlConsumerSubscription = {
+    PK: mockConsumerSubscriptionId,
+    SK: mockUserId,
+    subscriptionId: mockConsumerSubscriptionId,
+    status: "live",
+    url: "https://www.test.com/data",
+    requestorRef: "test",
+    heartbeatInterval: "PT30S",
+    initialTerminationTime: "2034-03-11T15:20:02.093Z",
+    requestTimestamp: "2024-03-11T15:20:02.093Z",
+    producerSubscriptionIds: "1",
+    heartbeatAttempts: 0,
+    lastRetrievedAvlId: 0,
+    queueUrl: "mockQueueUrl",
+    eventSourceMappingUuid: "mockEventSourceMappingUuid",
+    scheduleName: "mockScheduleName",
+};
+
 const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\"
   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
@@ -59,7 +77,7 @@ describe("avl-consumer-unsubscriber", () => {
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
 
-        queryDynamoSpy.mockResolvedValue([]);
+        queryDynamoSpy.mockResolvedValue([consumerSubscription]);
         deleteQueueSpy.mockResolvedValue({ $metadata: {} });
         deleteEventSourceMappingSpy.mockResolvedValue({ $metadata: {} });
         deleteScheduleSpy.mockResolvedValue({ $metadata: {} });
@@ -122,6 +140,8 @@ describe("avl-consumer-unsubscriber", () => {
     });
 
     it("returns a 404 when the subscription cannot be found", async () => {
+        queryDynamoSpy.mockResolvedValue([]);
+
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 404,
@@ -132,26 +152,6 @@ describe("avl-consumer-unsubscriber", () => {
     });
 
     it("returns a 204 and sets the subscription status to inactive when the request is valid", async () => {
-        const consumerSubscription: AvlConsumerSubscription = {
-            PK: mockConsumerSubscriptionId,
-            SK: mockUserId,
-            subscriptionId: mockConsumerSubscriptionId,
-            status: "live",
-            url: "https://www.test.com/data",
-            requestorRef: "test",
-            heartbeatInterval: "PT30S",
-            initialTerminationTime: "2034-03-11T15:20:02.093Z",
-            requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: "1",
-            heartbeatAttempts: 0,
-            lastRetrievedAvlId: 0,
-            queueUrl: "mockQueueUrl",
-            eventSourceMappingUuid: "mockEventSourceMappingUuid",
-            scheduleName: "mockScheduleName",
-        };
-
-        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
-
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 204,
@@ -175,5 +175,30 @@ describe("avl-consumer-unsubscriber", () => {
             consumerSubscription.SK,
             updatedConsumerSubscription,
         );
+    });
+
+    it("logs an error when the schedule cannot be deleted", async () => {
+        deleteQueueSpy.mockRejectedValue(new Error());
+        deleteEventSourceMappingSpy.mockRejectedValue(new Error());
+        deleteScheduleSpy.mockRejectedValue(new Error());
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(logger.error).toHaveBeenNthCalledWith(
+            1,
+            expect.any(Error),
+            `Error deleting schedule with name: ${consumerSubscription.scheduleName}`,
+        );
+        expect(logger.error).toHaveBeenNthCalledWith(
+            2,
+            expect.any(Error),
+            `Error deleting event source mapping with UUID: ${consumerSubscription.eventSourceMappingUuid}`,
+        );
+        expect(logger.error).toHaveBeenNthCalledWith(
+            3,
+            expect.any(Error),
+            `Error deleting queue with URL: ${consumerSubscription.queueUrl}`,
+        );
+        expect(putDynamoItemSpy).toHaveBeenCalled();
     });
 });

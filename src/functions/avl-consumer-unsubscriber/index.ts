@@ -73,7 +73,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
                 updatedSubscription.scheduleName = "";
             } catch (error) {
-                logger.error(error, "Error deleting schedule");
+                logger.error(error, `Error deleting schedule with name: ${subscription.scheduleName}`);
             }
         }
 
@@ -85,7 +85,10 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
                 updatedSubscription.eventSourceMappingUuid = "";
             } catch (error) {
-                logger.error(error, "Error deleting event source mapping");
+                logger.error(
+                    error,
+                    `Error deleting event source mapping with UUID: ${subscription.eventSourceMappingUuid}`,
+                );
             }
         }
 
@@ -97,7 +100,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
                 updatedSubscription.queueUrl = "";
             } catch (error) {
-                logger.error(error, "Error deleting queue");
+                logger.error(error, `Error deleting queue with URL: ${subscription.queueUrl}`);
             }
         }
 

@@ -31,6 +31,6 @@ export const createSchedule = async (input: CreateScheduleCommandInput) => {
     return response.ScheduleArn;
 };
 
-export const deleteSchedule = async (input: DeleteScheduleCommandInput) => {
+export const deleteSchedule = (input: DeleteScheduleCommandInput) => {
     return client.send(new DeleteScheduleCommand(input));
 };
