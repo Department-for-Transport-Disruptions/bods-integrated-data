@@ -26,7 +26,7 @@ const consumerSubscription: AvlConsumerSubscription = {
     producerSubscriptionIds: "1",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 0,
-    queueUrl: "mockQueueUrl",
+    queueUrl: "https://mockQueueUrl",
     eventSourceMappingUuid: "mockEventSourceMappingUuid",
     scheduleName: "mockScheduleName",
 };

@@ -14,7 +14,7 @@ export const avlConsumerSubscriptionSchema = z.object({
     producerSubscriptionIds: z.string(),
     heartbeatAttempts: z.number(),
     lastRetrievedAvlId: z.number(),
-    queueUrl: z.string(),
+    queueUrl: z.union([z.literal(""), z.string().url()]),
     eventSourceMappingUuid: z.string(),
     scheduleName: z.string(),
 });

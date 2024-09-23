@@ -24,7 +24,7 @@ describe("avl-consumer-subscription-trigger", () => {
         mockEvent = {
             subscriptionPK: "123",
             SK: "1234",
-            queueUrl: "mock-queue-url",
+            queueUrl: "https://mock-queue-url",
             frequencyInSeconds: 30,
         } as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
     });
@@ -35,14 +35,15 @@ describe("avl-consumer-subscription-trigger", () => {
 
     it.each([
         {},
-        { SK: "1234", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { SK: "1234", queueUrl: "https://mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", queueUrl: "https://mock-queue-url", frequencyInSeconds: 30 },
         { subcriptionPK: "123", SK: "1234", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", SK: "1234", queueUrl: "mock-queue-url" },
-        { subcriptionPK: "", SK: "1234", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", SK: "", queueUrl: "mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "1234", queueUrl: "https://mock-queue-url" },
+        { subcriptionPK: "", SK: "1234", queueUrl: "https://mock-queue-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "", queueUrl: "https://mock-queue-url", frequencyInSeconds: 30 },
         { subcriptionPK: "123", SK: "1234", queueUrl: "", frequencyInSeconds: 30 },
-        { subcriptionPK: "123", SK: "1234", queueUrl: "mock-queue-url", frequencyInSeconds: 5 },
+        { subcriptionPK: "123", SK: "1234", queueUrl: "invalid-url", frequencyInSeconds: 30 },
+        { subcriptionPK: "123", SK: "1234", queueUrl: "https://mock-queue-url", frequencyInSeconds: 5 },
     ])("throws an error when the message is invalid (test: %o)", async (message) => {
         mockEvent = message as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
 
@@ -79,7 +80,7 @@ describe("avl-consumer-subscription-trigger", () => {
             },
         ];
 
-        expect(sendBatchMessageSpy).toHaveBeenCalledWith("mock-queue-url", expectedMessages);
+        expect(sendBatchMessageSpy).toHaveBeenCalledWith("https://mock-queue-url", expectedMessages);
         expect(logger.error).not.toHaveBeenCalled();
     });
 });

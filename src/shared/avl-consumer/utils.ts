@@ -13,7 +13,7 @@ export const subscriptionTriggerMessageSchema = z.object({
     subscriptionPK: z.string(),
     SK: z.string(),
     frequencyInSeconds: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
-    queueUrl: z.string(),
+    queueUrl: z.string().url(),
 });
 
 export type AvlSubscriptionTriggerMessage = z.infer<typeof subscriptionTriggerMessageSchema>;

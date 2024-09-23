@@ -108,7 +108,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             }
         }
 
-        await putDynamoItem(avlConsumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
+        await putDynamoItem(
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            subscription.PK,
+            subscription.SK,
+            updatedSubscription,
+        );
 
         return createNoContentResponse();
     } catch (e) {
