@@ -46,6 +46,10 @@ const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerS
             subscription.lastRetrievedAvlId,
         );
 
+        if (!avls.length) {
+            return;
+        }
+
         const requestMessageRef = randomUUID();
         const responseTime = getDate();
         const vehicleActivities = createVehicleActivities(avls, responseTime);

@@ -200,7 +200,17 @@ describe("avl-consumer-subscriber", () => {
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 
-    it("sends data to the consumer", async () => {
+    it("does not send data to the consumer when there is no AVL", async () => {
+        getAvlDataForSiriVmSpy.mockResolvedValue([]);
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(axiosSpy).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
+    it("sends data to the consumer when there is at least one AVL", async () => {
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -244,26 +254,6 @@ describe("avl-consumer-subscriber", () => {
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed", "500"));
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(AxiosError);
-
-        expect(getAvlDataForSiriVmSpy).toHaveBeenCalledWith(
-            mocks.mockDbClient,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            ["1", "2", "3"],
-            consumerSubscription.lastRetrievedAvlId,
-        );
-
-        expect(axiosSpy).toHaveBeenCalledTimes(1);
-        expect(axiosSpy).toHaveBeenCalledWith(consumerSubscription.url, expectedSiriVmBody, {
-            headers: {
-                "Content-Type": "text/xml",
-            },
-        });
 
         expect(logger.error).toHaveBeenCalledTimes(2);
         expect(logger.error).toHaveBeenNthCalledWith(
