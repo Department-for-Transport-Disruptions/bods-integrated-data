@@ -1,29 +1,29 @@
+import { logger } from "../logger";
+import { putParameter } from "../ssm";
+import { getDate } from "../dates";
 import { randomUUID } from "node:crypto";
 import axios from "axios";
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { getDate } from "../dates";
-import { putDynamoItem } from "../dynamo";
-import { logger } from "../logger";
-import {
-    AvlSubscription,
-    AvlSubscriptionRequest,
-    AvlSubscriptionStatus,
-    avlSubscriptionResponseSchema,
-} from "../schema/avl-subscribe.schema";
-import { putParameter } from "../ssm";
 import { CompleteSiriObject, createAuthorizationHeader, getSiriVmTerminationTimeOffset } from "../utils";
 import { InvalidXmlError } from "../validation";
+import {
+    CancellationsSubscription,
+    CancellationsSubscriptionRequest,
+    cancellationsSubscriptionResponseSchema,
+    CancellationsSubscriptionStatus,
+} from "../schema/cancellations-subscribe.schema";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { putDynamoItem } from "../dynamo";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
     logger.info("Uploading subscription auth credentials to parameter store");
 
     await Promise.all([
-        putParameter(`/subscription/${subscriptionId}/username`, username, "SecureString", true),
-        putParameter(`/subscription/${subscriptionId}/password`, password, "SecureString", true),
+        putParameter(`/cancellations/subscription/${subscriptionId}/username`, username, "SecureString", true),
+        putParameter(`/cancellations/subscription/${subscriptionId}/password`, password, "SecureString", true),
     ]);
 };
 
-export const generateSubscriptionRequestXml = (
+export const generateCancellationsSubscriptionRequestXml = (
     subscriptionId: string,
     currentTimestamp: string,
     initialTerminationTime: string,
@@ -33,7 +33,7 @@ export const generateSubscriptionRequestXml = (
     apiKey: string,
     isInternal = false,
 ) => {
-    const subscriptionRequestJson: AvlSubscriptionRequest = {
+    const subscriptionRequestJson: CancellationsSubscriptionRequest = {
         Siri: {
             SubscriptionRequest: {
                 RequestTimestamp: currentTimestamp,
@@ -45,20 +45,21 @@ export const generateSubscriptionRequestXml = (
                 SubscriptionContext: {
                     HeartbeatInterval: "PT30S",
                 },
-                VehicleMonitoringSubscriptionRequest: {
+                SituationExchangeSubscriptionRequest: {
+                    SubscriberRef: subscriptionId,
                     SubscriptionIdentifier: subscriptionId,
                     InitialTerminationTime: initialTerminationTime,
-                    VehicleMonitoringRequest: {
+                    SituationExchangeRequest: {
                         RequestTimestamp: currentTimestamp,
-                        VehicleMonitoringDetailLevel: "normal",
                         "@_version": "2.0",
                     },
                 },
+                IncrementalUpdates: true,
             },
         },
     };
 
-    const completeObject: CompleteSiriObject<AvlSubscriptionRequest["Siri"]> = {
+    const completeObject: CompleteSiriObject<CancellationsSubscriptionRequest["Siri"]> = {
         "?xml": {
             "#text": "",
             "@_version": "1.0",
@@ -94,7 +95,7 @@ const parseXml = (xml: string, subscriptionId: string) => {
 
     const parsedXml = parser.parse(xml) as Record<string, unknown>;
 
-    const parsedJson = avlSubscriptionResponseSchema.safeParse(parsedXml);
+    const parsedJson = cancellationsSubscriptionResponseSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(
@@ -111,11 +112,11 @@ const parseXml = (xml: string, subscriptionId: string) => {
 export const updateDynamoWithSubscriptionInfo = async (
     tableName: string,
     subscriptionId: string,
-    subscription: Omit<AvlSubscription, "PK" | "status">,
-    status: AvlSubscriptionStatus,
+    subscription: Omit<CancellationsSubscription, "PK" | "status">,
+    status: CancellationsSubscriptionStatus,
     currentTimestamp?: string,
 ) => {
-    const subscriptionTableItems: Omit<AvlSubscription, "PK"> = {
+    const subscriptionTableItems: Omit<CancellationsSubscription, "PK"> = {
         url: subscription.url,
         status: status,
         description: subscription.description,
@@ -128,7 +129,7 @@ export const updateDynamoWithSubscriptionInfo = async (
         lastModifiedDateTime: currentTimestamp ?? null,
         apiKey: subscription.apiKey,
         heartbeatLastReceivedDateTime: subscription.heartbeatLastReceivedDateTime ?? null,
-        lastAvlDataReceivedDateTime: subscription.lastAvlDataReceivedDateTime ?? null,
+        lastCancellationsDataReceivedDateTime: subscription.lastCancellationsDataReceivedDateTime ?? null,
         lastResubscriptionTime: subscription.lastResubscriptionTime ?? null,
     };
 
@@ -139,12 +140,11 @@ export const updateDynamoWithSubscriptionInfo = async (
 
 export const sendSubscriptionRequestAndUpdateDynamo = async (
     subscriptionId: string,
-    subscriptionDetails: Omit<AvlSubscription, "PK" | "status">,
+    subscriptionDetails: Omit<CancellationsSubscription, "PK" | "status">,
     username: string,
     password: string,
     tableName: string,
     dataEndpoint: string,
-    isInternal = false,
     mockProducerSubscribeEndpoint?: string,
 ) => {
     const requestTime = getDate();
@@ -153,7 +153,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
 
     const messageIdentifier = randomUUID();
 
-    const subscriptionRequestMessage = generateSubscriptionRequestXml(
+    const subscriptionRequestMessage = generateCancellationsSubscriptionRequestXml(
         subscriptionId,
         currentTime,
         initialTerminationTime,
@@ -161,7 +161,6 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         dataEndpoint,
         subscriptionDetails.requestorRef ?? null,
         subscriptionDetails.apiKey,
-        isInternal,
     );
 
     const url =
@@ -172,7 +171,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            ...(!isInternal ? { Authorization: createAuthorizationHeader(username, password) } : {}),
+            Authorization: createAuthorizationHeader(username, password),
         },
     });
 

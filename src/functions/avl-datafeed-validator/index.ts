@@ -4,11 +4,7 @@ import {
     createValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import {
-    SubscriptionIdNotFoundError,
-    getAvlSubscription,
-    getAvlSubscriptionErrorData,
-} from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription, getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
 import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -16,6 +12,7 @@ import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-vali
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { ZodError, z } from "zod";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 
 const requestParamsSchema = z.preprocess(
     Object,

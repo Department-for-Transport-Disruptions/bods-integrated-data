@@ -5,7 +5,6 @@ import {
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
@@ -13,6 +12,7 @@ import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 
 const requestHeadersSchema = z.object({
     userId: createStringLengthValidation("userId header"),

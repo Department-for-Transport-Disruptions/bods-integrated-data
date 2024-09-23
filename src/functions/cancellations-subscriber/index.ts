@@ -1,15 +1,26 @@
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
+import {
+    createConflictErrorResponse,
+    createServerErrorResponse,
+    createValidationErrorResponse,
+    validateApiKey,
+} from "@bods-integrated-data/shared/api";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
-
-const requestParamsSchema = z.preprocess(
-    Object,
-    z.object({
-        exampleQueryParam: createStringLengthValidation("exampleQueryParam"),
-    }),
-);
+import {
+    cancellationsSubscribeMessageSchema,
+    CancellationsSubscription,
+} from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
+import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
+import {
+    addSubscriptionAuthCredsToSsm,
+    sendSubscriptionRequestAndUpdateDynamo,
+    updateDynamoWithSubscriptionInfo,
+} from "@bods-integrated-data/shared/cancellations/subscribe";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import { generateApiKey, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { AxiosError } from "axios";
 
 const requestBodySchema = z
     .string({
@@ -17,34 +28,102 @@ const requestBodySchema = z
         invalid_type_error: "Body must be a string",
     })
     .transform((body) => JSON.parse(body))
-    .pipe(
-        z.object(
-            {
-                exampleBodyParam: createStringLengthValidation("exampleBodyParam"),
-            },
-            {
-                message: "Body must be an object with required properties",
-            },
-        ),
-    );
+    .pipe(cancellationsSubscribeMessageSchema);
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { EXAMPLE_VAR: exampleVar } = process.env;
+        const {
+            TABLE_NAME: tableName,
+            STAGE: stage,
+            DATA_ENDPOINT: dataEndpoint,
+            CANCELLATIONS_PRODUCER_API_KEY_ARN: cancellationsProducerApiKeyArn,
+            MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
+        } = process.env;
 
-        if (!exampleVar) {
-            throw new Error("Missing env vars - EXAMPLE_VAR must be set");
+        if (!tableName || !dataEndpoint || !cancellationsProducerApiKeyArn) {
+            throw new Error(
+                "Missing env vars: TABLE_NAME, DATA_ENDPOINT and CANCELLATIONS_PRODUCER_API_KEY_ARN must be set.",
+            );
         }
 
-        const { exampleQueryParam } = requestParamsSchema.parse(event.queryStringParameters);
-        const { exampleBodyParam } = requestBodySchema.parse(event.body);
+        if (stage === "local" && !mockProducerSubscribeEndpoint) {
+            throw new Error("Missing env var: MOCK_PRODUCER_SUBSCRIBE_ENDPOINT must be set when STAGE === local");
+        }
 
-        logger.info("Executed lambda-http-template", { exampleVar, exampleQueryParam, exampleBodyParam });
+        await validateApiKey(cancellationsProducerApiKeyArn, event.headers);
+
+        const cancellationsSubscribeMessage = requestBodySchema.parse(event.body);
+
+        const { subscriptionId, username, password } = cancellationsSubscribeMessage;
+        logger.subscriptionId = subscriptionId;
+
+        let activeSubscription: CancellationsSubscription | null = null;
+
+        try {
+            activeSubscription = await getCancellationsSubscription(subscriptionId, tableName);
+        } catch (e) {
+            if (e instanceof SubscriptionIdNotFoundError) {
+                activeSubscription = null;
+            } else {
+                throw e;
+            }
+        }
+
+        if (activeSubscription?.status === "live") {
+            return createConflictErrorResponse("Subscription ID already active");
+        }
+
+        await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
+
+        const currentTime = getDate().toISOString();
+
+        const subscriptionDetails: Omit<CancellationsSubscription, "PK" | "status"> = {
+            url: cancellationsSubscribeMessage.dataProducerEndpoint,
+            description: cancellationsSubscribeMessage.description,
+            shortDescription: cancellationsSubscribeMessage.shortDescription,
+            requestorRef: cancellationsSubscribeMessage.requestorRef,
+            publisherId: cancellationsSubscribeMessage.publisherId,
+            apiKey: activeSubscription?.apiKey || generateApiKey(),
+            heartbeatLastReceivedDateTime: activeSubscription?.heartbeatLastReceivedDateTime ?? null,
+            lastCancellationsDataReceivedDateTime: activeSubscription?.lastCancellationsDataReceivedDateTime ?? null,
+            serviceStartDatetime: activeSubscription?.serviceStartDatetime,
+            lastResubscriptionTime: activeSubscription ? currentTime : null,
+            lastModifiedDateTime: activeSubscription ? currentTime : null,
+        };
+
+        try {
+            await sendSubscriptionRequestAndUpdateDynamo(
+                subscriptionId,
+                subscriptionDetails,
+                cancellationsSubscribeMessage.username,
+                cancellationsSubscribeMessage.password,
+                tableName,
+                dataEndpoint,
+                mockProducerSubscribeEndpoint,
+            );
+        } catch (e) {
+            if (e instanceof AxiosError) {
+                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
+
+                logger.error(
+                    `There was an error when sending the subscription request to the data producer - subscriptionId: ${subscriptionId}, code: ${e.code}, message: ${e.message}`,
+                );
+            }
+            await putMetricData("custom/CancellationsMetrics", [
+                {
+                    MetricName: "FailedSubscription",
+                    Value: 1,
+                },
+            ]);
+            throw e;
+        }
+
+        logger.info(`Successfully subscribed to data producer: ${cancellationsSubscribeMessage.dataProducerEndpoint}.`);
 
         return {
-            statusCode: 200,
+            statusCode: 201,
             body: "",
         };
     } catch (e) {

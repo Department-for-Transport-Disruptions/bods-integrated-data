@@ -1,4 +1,3 @@
-import { SubscriptionIdNotFoundError } from "../avl/utils";
 import { queryDynamo } from "../dynamo";
 import {
     AvlConsumerSubscription,
@@ -6,6 +5,7 @@ import {
     avlConsumerSubscriptionSchema,
     avlConsumerSubscriptionsSchema,
 } from "../schema";
+import { SubscriptionIdNotFoundError } from "../utils";
 
 export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
     const subscriptions = await queryDynamo<AvlConsumerSubscription>({

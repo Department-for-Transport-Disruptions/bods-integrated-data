@@ -8,6 +8,8 @@ import { logger } from "./logger";
 import { VehicleType } from "./schema";
 import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
+import { randomUUID } from "node:crypto";
+import { Dayjs } from "dayjs";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];
@@ -134,3 +136,35 @@ export const isPrivateAddress = (url: string) => {
 };
 
 export const roundToDecimalPlaces = (number: number, precision: number) => +number.toFixed(precision);
+
+export const generateApiKey = () => randomUUID().replaceAll("-", "");
+
+export class SubscriptionIdNotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "SubscriptionIdNotFoundError";
+        Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
+    }
+}
+
+export interface CompleteSiriObject<T> {
+    "?xml": {
+        "#text": "";
+        "@_version": "1.0";
+        "@_encoding": "UTF-8";
+        "@_standalone": "yes";
+    };
+    Siri: {
+        "@_version": "2.0";
+        "@_xmlns": "http://www.siri.org.uk/siri";
+        "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
+        "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
+    } & T;
+}
+
+/**
+ * Returns a SIRI-VM termination time value defined as 10 years after the given time.
+ * @param time The response time to offset from.
+ * @returns The termination.
+ */
+export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
