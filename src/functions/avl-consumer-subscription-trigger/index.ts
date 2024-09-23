@@ -17,7 +17,7 @@ export const handler: ScheduledHandler = async (event, context) => {
 
         const entries: SendMessageBatchRequestEntry[] = [];
 
-        for (let i = 0, delay = frequencyInSeconds; delay <= 60; i++, delay += frequencyInSeconds) {
+        for (let i = 0, delay = 0; delay < 60; i++, delay += frequencyInSeconds) {
             const dataSenderMessage: AvlSubscriptionDataSenderMessage = {
                 subscriptionPK,
                 SK,

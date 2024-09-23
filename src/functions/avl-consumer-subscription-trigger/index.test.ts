@@ -69,12 +69,12 @@ describe("avl-consumer-subscription-trigger", () => {
         const expectedMessages: SendMessageBatchRequestEntry[] = [
             {
                 Id: "0",
-                DelaySeconds: 30,
+                DelaySeconds: 0,
                 MessageBody: JSON.stringify({ subscriptionPK: "123", SK: "1234" }),
             },
             {
                 Id: "1",
-                DelaySeconds: 60,
+                DelaySeconds: 30,
                 MessageBody: JSON.stringify({ subscriptionPK: "123", SK: "1234" }),
             },
         ];
