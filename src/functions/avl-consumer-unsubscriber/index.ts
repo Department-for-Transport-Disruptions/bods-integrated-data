@@ -47,9 +47,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTableName } = process.env;
+        const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME } = process.env;
 
-        if (!avlConsumerSubscriptionTableName) {
+        if (!AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME) {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
@@ -58,7 +58,11 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const xml = parseXml(body);
         const subscriptionId = xml.Siri.TerminateSubscriptionRequest.SubscriptionRef;
 
-        const subscription = await getAvlConsumerSubscription(avlConsumerSubscriptionTableName, subscriptionId, userId);
+        const subscription = await getAvlConsumerSubscription(
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            subscriptionId,
+            userId,
+        );
 
         const updatedSubscription: AvlConsumerSubscription = {
             ...subscription,

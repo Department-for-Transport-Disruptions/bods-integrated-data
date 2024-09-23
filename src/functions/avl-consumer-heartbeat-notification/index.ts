@@ -14,13 +14,16 @@ export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTableName } = process.env;
+        const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME } = process.env;
 
-        if (!avlConsumerSubscriptionTableName) {
+        if (!AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME) {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
-        const liveSubscriptions = await getAvlConsumerSubscriptionsByStatus(avlConsumerSubscriptionTableName, "live");
+        const liveSubscriptions = await getAvlConsumerSubscriptionsByStatus(
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            "live",
+        );
         const currentTimestamp = getDate().toISOString();
 
         await Promise.all(
@@ -44,7 +47,7 @@ export const handler: Handler = async (event, context) => {
                         };
 
                         await putDynamoItem(
-                            avlConsumerSubscriptionTableName,
+                            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
                             subscription.PK,
                             subscription.SK,
                             updatedSubscription,
@@ -66,7 +69,7 @@ export const handler: Handler = async (event, context) => {
                         }
 
                         await putDynamoItem(
-                            avlConsumerSubscriptionTableName,
+                            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
                             subscription.PK,
                             subscription.SK,
                             updatedSubscription,
