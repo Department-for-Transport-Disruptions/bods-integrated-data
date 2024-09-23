@@ -1,5 +1,8 @@
 import type { SendMessageBatchRequestEntry } from "@aws-sdk/client-sqs";
-import { subscriptionTriggerMessageSchema } from "@bods-integrated-data/shared/avl-consumer/utils";
+import {
+    AvlSubscriptionDataSenderMessage,
+    subscriptionTriggerMessageSchema,
+} from "@bods-integrated-data/shared/avl-consumer/utils";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { sendBatchMessage } from "@bods-integrated-data/shared/sqs";
 import { ScheduledHandler } from "aws-lambda";
@@ -15,10 +18,15 @@ export const handler: ScheduledHandler = async (event, context) => {
         const entries: SendMessageBatchRequestEntry[] = [];
 
         for (let i = 0, delay = frequencyInSeconds; delay <= 60; i++, delay += frequencyInSeconds) {
+            const dataSenderMessage: AvlSubscriptionDataSenderMessage = {
+                subscriptionPK,
+                SK,
+            };
+
             entries.push({
                 Id: i.toString(),
                 DelaySeconds: delay,
-                MessageBody: JSON.stringify({ subscriptionPK, SK }),
+                MessageBody: JSON.stringify(dataSenderMessage),
             });
         }
 

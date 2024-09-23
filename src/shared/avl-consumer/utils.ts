@@ -7,6 +7,7 @@ import {
     avlConsumerSubscriptionSchema,
     avlConsumerSubscriptionsSchema,
 } from "../schema";
+import { createStringLengthValidation } from "../validation";
 
 export const subscriptionTriggerMessageSchema = z.object({
     subscriptionPK: z.string(),
@@ -16,6 +17,18 @@ export const subscriptionTriggerMessageSchema = z.object({
 });
 
 export type AvlSubscriptionTriggerMessage = z.infer<typeof subscriptionTriggerMessageSchema>;
+
+export const subscriptionDataSenderMessageSchema = z
+    .string()
+    .transform((body) => JSON.parse(body))
+    .pipe(
+        z.object({
+            subscriptionPK: createStringLengthValidation("subscriptionPK"),
+            SK: createStringLengthValidation("SK"),
+        }),
+    );
+
+export type AvlSubscriptionDataSenderMessage = z.infer<typeof subscriptionDataSenderMessageSchema>;
 
 export const getAvlConsumerSubscriptionsByStatus = async (tableName: string, status: AvlSubscriptionStatus) => {
     const subscriptions = await scanDynamo<AvlConsumerSubscription>({

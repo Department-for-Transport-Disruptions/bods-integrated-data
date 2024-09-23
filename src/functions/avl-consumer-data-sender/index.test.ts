@@ -1,3 +1,4 @@
+import { AvlSubscriptionDataSenderMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
 import { Avl } from "@bods-integrated-data/shared/database";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
@@ -8,7 +9,6 @@ import { SQSEvent } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { ZodError } from "zod";
 import { handler } from ".";
 
 const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
@@ -130,15 +130,13 @@ describe("avl-consumer-subscriber", () => {
     beforeEach(() => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
 
+        const dataSenderMessage: AvlSubscriptionDataSenderMessage = {
+            subscriptionPK: consumerSubscription.PK,
+            SK: consumerSubscription.SK,
+        };
+
         mockEvent = {
-            Records: [
-                {
-                    body: JSON.stringify({
-                        subscriptionPK: consumerSubscription.PK,
-                        SK: consumerSubscription.SK,
-                    }),
-                },
-            ],
+            Records: [{ body: JSON.stringify(dataSenderMessage) }],
         } as SQSEvent;
 
         getDynamoItemSpy.mockResolvedValue(consumerSubscription);
@@ -163,18 +161,21 @@ describe("avl-consumer-subscriber", () => {
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 
-    it.each([{ subscriptionPK: "" }, {}])("throws an error when the sqs message is invalid: %o", async (input) => {
-        mockEvent = { Records: [{ body: JSON.stringify(input) }] } as SQSEvent;
+    it.each([{ subscriptionPK: "subscription-PK", SK: "" }, { subscriptionPK: "", SK: "user-id" }, {}])(
+        "throws an error when the sqs message is invalid: %o",
+        async (input) => {
+            mockEvent = { Records: [{ body: JSON.stringify(input) }] } as SQSEvent;
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(ZodError);
+            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow();
 
-        expect(logger.error).toHaveBeenCalledWith(
-            expect.anything(),
-            "There was a problem with the avl-consumer-data-sender endpoint",
-        );
+            expect(logger.error).toHaveBeenCalledWith(
+                expect.anything(),
+                "There was a problem with the avl-consumer-data-sender endpoint",
+            );
 
-        expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
-    });
+            expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
+        },
+    );
 
     it("throws an error when the subscription cannot be found", async () => {
         getDynamoItemSpy.mockResolvedValue(null);

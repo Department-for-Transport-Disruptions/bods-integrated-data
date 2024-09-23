@@ -1,31 +1,22 @@
 import { randomUUID } from "node:crypto";
-import { getAvlConsumerSubscriptionByPK } from "@bods-integrated-data/shared/avl-consumer/utils";
+import {
+    getAvlConsumerSubscriptionByPK,
+    subscriptionDataSenderMessageSchema,
+} from "@bods-integrated-data/shared/avl-consumer/utils";
 import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription } from "@bods-integrated-data/shared/schema";
-import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { SQSHandler, SQSRecord } from "aws-lambda";
 import axios, { AxiosError } from "axios";
-import { z } from "zod";
 
 let dbClient: KyselyDb;
 
-const eventMessageSchema = z
-    .string()
-    .transform((body) => JSON.parse(body))
-    .pipe(
-        z.object({
-            subscriptionPK: createStringLengthValidation("subscriptionPK"),
-            SK: createStringLengthValidation("SK"),
-        }),
-    );
-
 const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerSubscriptionTableName: string) => {
     try {
-        const { subscriptionPK, SK } = eventMessageSchema.parse(record.body);
+        const { subscriptionPK, SK } = subscriptionDataSenderMessageSchema.parse(record.body);
 
         const subscription = await getAvlConsumerSubscriptionByPK(consumerSubscriptionTableName, subscriptionPK, SK);
 
