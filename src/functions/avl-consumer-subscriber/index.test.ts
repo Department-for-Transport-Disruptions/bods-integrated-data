@@ -59,7 +59,7 @@ describe("avl-consumer-subscriber", () => {
         randomUUID: () => mockRandomId,
     }));
 
-    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const recursiveQuerySpy = vi.spyOn(dynamo, "recursiveQuery");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const createQueueSpy = vi.spyOn(sqs, "createQueue");
@@ -86,7 +86,7 @@ describe("avl-consumer-subscriber", () => {
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
 
-        queryDynamoSpy.mockResolvedValue([]);
+        recursiveQuerySpy.mockResolvedValue([]);
         recursiveScanSpy.mockResolvedValue([]);
         putDynamoItemSpy.mockResolvedValue();
         createQueueSpy.mockResolvedValue(mockQueueUrl);
@@ -240,7 +240,7 @@ describe("avl-consumer-subscriber", () => {
             scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
+        recursiveQuerySpy.mockResolvedValueOnce([consumerSubscription]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
@@ -399,7 +399,7 @@ describe("avl-consumer-subscriber", () => {
             scheduleName: `consumer-sub-schedule-${mockRandomId}`,
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
+        recursiveQuerySpy.mockResolvedValueOnce([consumerSubscription]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({

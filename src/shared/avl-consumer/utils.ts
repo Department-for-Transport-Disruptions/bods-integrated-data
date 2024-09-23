@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SubscriptionIdNotFoundError } from "../avl/utils";
-import { getDynamoItem, queryDynamo, recursiveScan } from "../dynamo";
+import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import {
     AvlConsumerSubscription,
     AvlSubscriptionStatus,
@@ -56,7 +56,7 @@ export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: stri
 };
 
 export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {
-    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
+    const subscriptions = await recursiveQuery<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
         KeyConditionExpression: "subscriptionId = :subscriptionId AND SK = :SK",

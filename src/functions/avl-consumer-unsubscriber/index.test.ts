@@ -55,11 +55,11 @@ describe("avl-consumer-unsubscriber", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        queryDynamo: vi.fn(),
+        recursiveQuery: vi.fn(),
         putDynamoItem: vi.fn(),
     }));
 
-    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const recursiveQuerySpy = vi.spyOn(dynamo, "recursiveQuery");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const deleteQueueSpy = vi.spyOn(sqs, "deleteQueue");
     const deleteEventSourceMappingSpy = vi.spyOn(lambda, "deleteEventSourceMapping");
@@ -77,7 +77,7 @@ describe("avl-consumer-unsubscriber", () => {
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
 
-        queryDynamoSpy.mockResolvedValue([consumerSubscription]);
+        recursiveQuerySpy.mockResolvedValue([consumerSubscription]);
         deleteQueueSpy.mockResolvedValue({ $metadata: {} });
         deleteEventSourceMappingSpy.mockResolvedValue({ $metadata: {} });
         deleteScheduleSpy.mockResolvedValue({ $metadata: {} });
@@ -140,7 +140,7 @@ describe("avl-consumer-unsubscriber", () => {
     });
 
     it("returns a 404 when the subscription cannot be found", async () => {
-        queryDynamoSpy.mockResolvedValue([]);
+        recursiveQuerySpy.mockResolvedValue([]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({

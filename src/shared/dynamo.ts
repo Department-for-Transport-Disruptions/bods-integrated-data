@@ -83,12 +83,6 @@ export const getDynamoItem = async <T extends Record<string, unknown>>(
     return data.Item ? (data.Item as T) : null;
 };
 
-export const queryDynamo = async <T extends Record<string, unknown>>(queryCommandInput: QueryCommandInput) => {
-    const dbData = await dynamoDbDocClient.send(new QueryCommand(queryCommandInput));
-
-    return (dbData.Items || []) as T[];
-};
-
 export const recursiveScan = async <T extends Record<string, unknown>>(
     scanCommandInput: ScanCommandInput,
 ): Promise<T[]> => {
@@ -111,7 +105,9 @@ export const recursiveScan = async <T extends Record<string, unknown>>(
     return dbData.Items as T[];
 };
 
-export const recursiveQuery = async (queryCommandInput: QueryCommandInput): Promise<Record<string, unknown>[]> => {
+export const recursiveQuery = async <T extends Record<string, unknown>>(
+    queryCommandInput: QueryCommandInput,
+): Promise<T[]> => {
     const dbData = await dynamoDbDocClient.send(new QueryCommand(queryCommandInput));
 
     if (!dbData.Items) {
@@ -125,8 +121,8 @@ export const recursiveQuery = async (queryCommandInput: QueryCommandInput): Prom
                 ...queryCommandInput,
                 ExclusiveStartKey: dbData.LastEvaluatedKey,
             })),
-        ];
+        ] as T[];
     }
 
-    return dbData.Items;
+    return dbData.Items as T[];
 };
