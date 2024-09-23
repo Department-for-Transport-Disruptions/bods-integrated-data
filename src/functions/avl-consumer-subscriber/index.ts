@@ -7,10 +7,16 @@ import {
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { SubscriptionIdNotFoundError, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { getDuration } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { createSchedule } from "@bods-integrated-data/shared/eventBridge";
+import { createEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
+import { createQueue, getQueueAttributes } from "@bods-integrated-data/shared/sqs";
 import {
     InvalidXmlError,
     createStringLengthValidation,
@@ -19,6 +25,7 @@ import {
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+import { fromZodError } from "zod-validation-error";
 
 const requestHeadersSchema = z.object({
     userId: createStringLengthValidation("userId header"),
@@ -47,7 +54,8 @@ const parseXml = (xml: string) => {
     const parsedJson = avlSubscriptionRequestSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
-        throw new InvalidXmlError();
+        const validationError = fromZodError(parsedJson.error);
+        throw new InvalidXmlError(validationError.toString());
     }
 
     return parsedJson.data;
@@ -58,13 +66,22 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
     try {
         const {
-            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTableName,
-            AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME: avlProducerSubscriptionTableName,
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME,
+            AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN,
+            AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN,
+            AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN,
         } = process.env;
 
-        if (!avlConsumerSubscriptionTableName || !avlProducerSubscriptionTableName) {
+        if (
+            !AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME ||
+            !AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME ||
+            !AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN ||
+            !AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN ||
+            !AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN
+        ) {
             throw new Error(
-                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME and AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME must be set",
+                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN and AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN must be set",
             );
         }
 
@@ -76,11 +93,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const xml = parseXml(body);
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
         const subscriptionId = subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier;
+        const updateInterval = subscriptionRequest.VehicleMonitoringSubscriptionRequest.UpdateInterval || "PT10S";
         let PK = undefined;
 
         try {
             const subscription = await getAvlConsumerSubscription(
-                avlConsumerSubscriptionTableName,
+                AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
                 subscriptionId,
                 userId,
             );
@@ -92,13 +110,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             PK = subscription.PK;
         } catch (e) {
             if (e instanceof SubscriptionIdNotFoundError) {
-                PK = undefined;
+                PK = randomUUID();
             } else {
                 throw e;
             }
         }
 
-        const producerSubscriptions = await getAvlSubscriptions(avlProducerSubscriptionTableName);
+        const producerSubscriptions = await getAvlSubscriptions(AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME);
 
         for (const producerSubscriptionId of producerSubscriptionIds.split(",")) {
             const subscription = producerSubscriptions.find(({ PK }) => PK === producerSubscriptionId);
@@ -109,7 +127,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const consumerSubscription: AvlConsumerSubscription = {
-            PK: PK || randomUUID(),
+            PK,
             SK: userId,
             subscriptionId,
             status: "live",
@@ -120,10 +138,59 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestTimestamp: subscriptionRequest.RequestTimestamp,
             producerSubscriptionIds,
             heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
+        const queueUrl = await createQueue({
+            QueueName: `consumer-sub-queue-${consumerSubscription.PK}`,
+            Attributes: {
+                VisibilityTimeout: "60",
+            },
+        });
+
+        const queueAttributes = await getQueueAttributes({
+            QueueUrl: queueUrl,
+            AttributeNames: ["QueueArn"],
+        });
+
+        const eventSourceMappingUuid = await createEventSourceMapping({
+            EventSourceArn: queueAttributes?.QueueArn,
+            FunctionName: AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN,
+        });
+
+        const queueMessage: AvlSubscriptionTriggerMessage = {
+            subscriptionPK: consumerSubscription.PK,
+            SK: consumerSubscription.SK,
+            frequencyInSeconds: getDuration(
+                updateInterval,
+            ).asSeconds() as AvlSubscriptionTriggerMessage["frequencyInSeconds"],
+            queueUrl,
+        };
+
+        const scheduleName = `consumer-sub-schedule-${consumerSubscription.PK}`;
+
+        await createSchedule({
+            Name: scheduleName,
+            FlexibleTimeWindow: {
+                Mode: "OFF",
+            },
+            ScheduleExpression: "rate(1 minute)",
+            Target: {
+                Arn: AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN,
+                RoleArn: AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN,
+                Input: JSON.stringify(queueMessage),
+            },
+        });
+
+        consumerSubscription.queueUrl = queueUrl;
+        consumerSubscription.eventSourceMappingUuid = eventSourceMappingUuid;
+        consumerSubscription.scheduleName = scheduleName;
+
         await putDynamoItem(
-            avlConsumerSubscriptionTableName,
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
             consumerSubscription.PK,
             consumerSubscription.SK,
             consumerSubscription,
@@ -137,8 +204,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof InvalidXmlError) {
-            logger.warn(e, "Invalid SIRI-VM XML provided");
-            return createValidationErrorResponse(["Invalid SIRI-VM XML provided"]);
+            logger.warn(e, `Invalid SIRI-VM XML provided: ${e.message}`);
+            return createValidationErrorResponse([e.message]);
         }
 
         if (e instanceof Error) {

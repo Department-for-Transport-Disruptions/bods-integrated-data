@@ -7,8 +7,11 @@ import {
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
+import { deleteSchedule } from "@bods-integrated-data/shared/eventBridge";
+import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
+import { deleteQueue } from "@bods-integrated-data/shared/sqs";
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -44,9 +47,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTableName } = process.env;
+        const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME } = process.env;
 
-        if (!avlConsumerSubscriptionTableName) {
+        if (!AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME) {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
@@ -55,14 +58,62 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const xml = parseXml(body);
         const subscriptionId = xml.Siri.TerminateSubscriptionRequest.SubscriptionRef;
 
-        const subscription = await getAvlConsumerSubscription(avlConsumerSubscriptionTableName, subscriptionId, userId);
+        const subscription = await getAvlConsumerSubscription(
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            subscriptionId,
+            userId,
+        );
 
         const updatedSubscription: AvlConsumerSubscription = {
             ...subscription,
             status: "inactive",
         };
 
-        await putDynamoItem(avlConsumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
+        if (subscription.scheduleName) {
+            try {
+                await deleteSchedule({
+                    Name: subscription.scheduleName,
+                });
+
+                updatedSubscription.scheduleName = "";
+            } catch (error) {
+                logger.error(error, `Error deleting schedule with name: ${subscription.scheduleName}`);
+            }
+        }
+
+        if (subscription.eventSourceMappingUuid) {
+            try {
+                await deleteEventSourceMapping({
+                    UUID: subscription.eventSourceMappingUuid,
+                });
+
+                updatedSubscription.eventSourceMappingUuid = "";
+            } catch (error) {
+                logger.error(
+                    error,
+                    `Error deleting event source mapping with UUID: ${subscription.eventSourceMappingUuid}`,
+                );
+            }
+        }
+
+        if (subscription.queueUrl) {
+            try {
+                await deleteQueue({
+                    QueueUrl: subscription.queueUrl,
+                });
+
+                updatedSubscription.queueUrl = "";
+            } catch (error) {
+                logger.error(error, `Error deleting queue with URL: ${subscription.queueUrl}`);
+            }
+        }
+
+        await putDynamoItem(
+            AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
+            subscription.PK,
+            subscription.SK,
+            updatedSubscription,
+        );
 
         return createNoContentResponse();
     } catch (e) {

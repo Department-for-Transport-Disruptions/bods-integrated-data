@@ -209,6 +209,7 @@ module "integrated_data_avl_pipeline" {
 
   environment                                 = local.env
   vpc_id                                      = module.integrated_data_vpc_dev.vpc_id
+  sg_id                                       = module.integrated_data_vpc_dev.default_sg_id
   private_subnet_ids                          = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn                               = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                                    = module.integrated_data_aurora_db_dev.db_sg_id

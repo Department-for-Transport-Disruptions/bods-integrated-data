@@ -20,7 +20,7 @@ describe("avl-consumer-heartbeat-notification", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        queryDynamo: vi.fn(),
+        recursiveScan: vi.fn(),
         putDynamoItem: vi.fn(),
     }));
 
@@ -28,13 +28,13 @@ describe("avl-consumer-heartbeat-notification", () => {
     const axiosSpy = vi.spyOn(mockedAxios, "post");
     MockDate.set("2024-03-11T15:20:02.093Z");
 
-    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
 
     beforeEach(() => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
 
-        queryDynamoSpy.mockResolvedValue([]);
+        recursiveScanSpy.mockResolvedValue([]);
     });
 
     afterEach(() => {
@@ -70,10 +70,14 @@ describe("avl-consumer-heartbeat-notification", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 producerSubscriptionIds: "1",
                 heartbeatAttempts: 0,
+                lastRetrievedAvlId: 0,
+                queueUrl: "",
+                eventSourceMappingUuid: "",
+                scheduleName: "",
             },
         ];
 
-        queryDynamoSpy.mockResolvedValueOnce(subscriptions);
+        recursiveScanSpy.mockResolvedValueOnce(subscriptions);
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -112,9 +116,13 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        recursiveScanSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed with status code 500", "500"));
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -151,9 +159,13 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 2,
+            lastRetrievedAvlId: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        recursiveScanSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockRejectedValue(new AxiosError("Request failed with status code 500", "500"));
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -191,9 +203,13 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 1,
+            lastRetrievedAvlId: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        recursiveScanSpy.mockResolvedValueOnce([subscription]);
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
         await handler(mockEvent, mockContext, mockCallback);
@@ -229,9 +245,13 @@ describe("avl-consumer-heartbeat-notification", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             producerSubscriptionIds: "1",
             heartbeatAttempts: 1,
+            lastRetrievedAvlId: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([subscription]);
+        recursiveScanSpy.mockResolvedValueOnce([subscription]);
         putDynamoItemSpy.mockRejectedValueOnce(new Error());
         mockedAxios.post.mockResolvedValueOnce({ status: 200 });
 
