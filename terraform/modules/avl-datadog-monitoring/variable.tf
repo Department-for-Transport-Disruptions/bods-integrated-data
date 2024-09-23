@@ -193,14 +193,3 @@ locals {
     ECSThresholdOverrides    = coalesce(var.recovery.ECSThresholdOverrides, {})
   }
 }
-
-
-variable "evaluation_delay" {
-  description = "Delay in seconds for the metric evaluation"
-  default     = 900
-}
-
-variable "new_group_delay" {
-  description = "Delay in seconds before monitor new resource"
-  default     = 300
-}
