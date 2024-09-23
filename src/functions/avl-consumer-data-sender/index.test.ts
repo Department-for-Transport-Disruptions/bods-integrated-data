@@ -75,12 +75,14 @@ const consumerSubscription: AvlConsumerSubscription = {
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2024-03-11T15:20:02.093Z",
     requestTimestamp: "2024-03-11T15:20:02.093Z",
-    producerSubscriptionIds: "1,2,3",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 5,
     queueUrl: "",
     eventSourceMappingUuid: "",
     scheduleName: "",
+    queryParams: {
+        producerSubscriptionIds: "1,2,3",
+    },
 };
 
 describe("avl-consumer-subscriber", () => {
