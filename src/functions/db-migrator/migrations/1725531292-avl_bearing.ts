@@ -6,13 +6,13 @@ export async function up(db: Kysely<Database>): Promise<void> {
         ALTER TABLE avl
         ALTER COLUMN bearing TYPE float8
         USING bearing::float8
-      `.execute(db);
+    `.execute(db);
 
     await sql`
-          ALTER TABLE avl_bods
-          ALTER COLUMN bearing TYPE float8
-          USING bearing::float8
-        `.execute(db);
+        ALTER TABLE avl_bods
+        ALTER COLUMN bearing TYPE float8
+        USING bearing::float8
+    `.execute(db);
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
@@ -23,8 +23,8 @@ export async function down(db: Kysely<Database>): Promise<void> {
       `.execute(db);
 
     await sql`
-          ALTER TABLE avl_bods
-          ALTER COLUMN bearing TYPE text
-          USING bearing::text
-        `.execute(db);
+        ALTER TABLE avl_bods
+        ALTER COLUMN bearing TYPE text
+        USING bearing::text
+    `.execute(db);
 }
