@@ -28,14 +28,14 @@ const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerS
 
         const avls = await getAvlDataForSiriVm(
             dbClient,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            queryParams.producerSubscriptionIds.split(","),
+            queryParams.boundingBox,
+            queryParams.operatorRef,
+            queryParams.vehicleRef,
+            queryParams.lineRef,
+            queryParams.producerRef,
+            queryParams.originRef,
+            queryParams.destinationRef,
+            queryParams.producerSubscriptionIds,
             subscription.lastRetrievedAvlId,
         );
 
