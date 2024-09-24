@@ -209,6 +209,7 @@ module "integrated_data_avl_pipeline" {
 
   environment                                 = local.env
   vpc_id                                      = module.integrated_data_vpc_dev.vpc_id
+  sg_id                                       = module.integrated_data_vpc_dev.default_sg_id
   private_subnet_ids                          = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn                               = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                                    = module.integrated_data_aurora_db_dev.db_sg_id
@@ -352,4 +353,18 @@ module "integrated_data_avl_datadog" {
   thresholds      = {}
   recovery        = {}
   opt_out         = []
+}
+
+module "integrated_data_cancellations_data_producer_api" {
+  source = "../modules/cancellations-producer-api"
+
+  aws_account_id                 = data.aws_caller_identity.current.account_id
+  aws_region                     = data.aws_region.current.name
+  environment                    = local.env
+  acm_certificate_arn            = module.integrated_data_acm.acm_certificate_arn
+  hosted_zone_id                 = module.integrated_data_route53.public_hosted_zone_id
+  domain                         = module.integrated_data_route53.public_hosted_zone_name
+  cancellations_producer_api_key = local.secrets["cancellations_producer_api_key"]
+  sg_id                          = module.integrated_data_vpc_dev.default_sg_id
+  subnet_ids                     = module.integrated_data_vpc_dev.private_subnet_ids
 }

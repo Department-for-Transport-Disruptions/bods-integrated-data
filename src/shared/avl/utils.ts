@@ -203,12 +203,13 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
 };
 
 /**
- * Maps AVL timestamp fields as ISO strings.
+ * Maps various AVL fields into more usable formats.
  * @param avl The AVL
- * @returns The AVL with date strings
+ * @returns The mapped AVL
  */
-export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
+export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
     ...avl,
+    id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
     recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
     valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
@@ -221,12 +222,13 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
 });
 
 /**
- * Maps AVL timestamp fields as ISO strings.
+ * Maps various AVL fields into more usable formats.
  * @param avl The AVL
- * @returns The AVL with date strings
+ * @returns The mapped AVL
  */
-export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
+export const mapBodsAvlFieldsIntoUsableFormats = (avl: BodsAvl): BodsAvl => ({
     ...avl,
+    id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
     recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
     valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
@@ -244,7 +246,8 @@ export const getQueryForLatestAvl = (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
     recordedAtTimeAfter?: string,
 ) => {
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -285,7 +288,11 @@ export const getQueryForLatestAvl = (
     }
 
     if (subscriptionId) {
-        query = query.where("subscription_id", "=", subscriptionId);
+        query = query.where("subscription_id", "in", subscriptionId);
+    }
+
+    if (lastRetrievedAvlId) {
+        query = query.where("id", ">", lastRetrievedAvlId);
     }
 
     if (recordedAtTimeAfter) {
@@ -304,7 +311,8 @@ export const getAvlDataForSiriVm = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
 ) => {
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
@@ -319,12 +327,13 @@ export const getAvlDataForSiriVm = async (
             originRef,
             destinationRef,
             subscriptionId,
+            lastRetrievedAvlId,
             dayAgo,
         );
 
         const avls = await query.execute();
 
-        return avls.map(mapAvlDateStrings);
+        return avls.map(mapAvlFieldsIntoUsableFormats);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem getting AVL data from the database");
