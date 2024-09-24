@@ -81,7 +81,7 @@ const consumerSubscription: AvlConsumerSubscription = {
     eventSourceMappingUuid: "",
     scheduleName: "",
     queryParams: {
-        producerSubscriptionIds: ["1", "2", "3"],
+        subscriptionId: ["1", "2", "3"],
     },
 };
 

@@ -284,7 +284,7 @@ describe("avl-consumer-subscriber", () => {
             eventSourceMappingUuid: "",
             scheduleName: "",
             queryParams: {
-                producerSubscriptionIds: [mockProducerSubscriptionIds],
+                subscriptionId: [mockProducerSubscriptionIds],
             },
         };
 
@@ -374,7 +374,7 @@ describe("avl-consumer-subscriber", () => {
                 producerRef: "producer-ref",
                 originRef: "origin-ref",
                 destinationRef: "destination-ref",
-                producerSubscriptionIds: [mockProducerSubscriptionIds],
+                subscriptionId: [mockProducerSubscriptionIds],
             },
         };
 
@@ -461,7 +461,7 @@ describe("avl-consumer-subscriber", () => {
                 producerRef: "producer-ref",
                 originRef: "origin-ref",
                 destinationRef: "destination-ref",
-                producerSubscriptionIds: [mockProducerSubscriptionIds],
+                subscriptionId: [mockProducerSubscriptionIds],
             },
         };
 

@@ -35,7 +35,7 @@ const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerS
             queryParams.producerRef,
             queryParams.originRef,
             queryParams.destinationRef,
-            queryParams.producerSubscriptionIds,
+            queryParams.subscriptionId,
             subscription.lastRetrievedAvlId,
         );
 

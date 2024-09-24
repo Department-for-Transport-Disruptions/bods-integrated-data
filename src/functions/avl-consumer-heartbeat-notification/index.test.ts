@@ -74,7 +74,7 @@ describe("avl-consumer-heartbeat-notification", () => {
                 eventSourceMappingUuid: "",
                 scheduleName: "",
                 queryParams: {
-                    producerSubscriptionIds: ["1"],
+                    subscriptionId: ["1"],
                 },
             },
         ];
@@ -122,7 +122,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             eventSourceMappingUuid: "",
             scheduleName: "",
             queryParams: {
-                producerSubscriptionIds: ["1"],
+                subscriptionId: ["1"],
             },
         };
 
@@ -167,7 +167,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             eventSourceMappingUuid: "",
             scheduleName: "",
             queryParams: {
-                producerSubscriptionIds: ["1"],
+                subscriptionId: ["1"],
             },
         };
 
@@ -213,7 +213,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             eventSourceMappingUuid: "",
             scheduleName: "",
             queryParams: {
-                producerSubscriptionIds: ["1"],
+                subscriptionId: ["1"],
             },
         };
 
@@ -257,7 +257,7 @@ describe("avl-consumer-heartbeat-notification", () => {
             eventSourceMappingUuid: "",
             scheduleName: "",
             queryParams: {
-                producerSubscriptionIds: ["1"],
+                subscriptionId: ["1"],
             },
         };
 

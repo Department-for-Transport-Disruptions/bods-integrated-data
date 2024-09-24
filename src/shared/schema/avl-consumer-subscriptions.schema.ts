@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+    createBoundingBoxValidation,
+    createNmTokenArrayValidation,
+    createNmTokenValidation,
+    createSubscriptionIdArrayValidation,
+} from "../validation";
 import { avlSubscriptionStatusesSchema } from "./avl-subscribe.schema";
 
 export const avlConsumerSubscriptionSchema = z.object({
@@ -17,14 +23,14 @@ export const avlConsumerSubscriptionSchema = z.object({
     eventSourceMappingUuid: z.string(),
     scheduleName: z.string(),
     queryParams: z.object({
-        boundingBox: z.number().array().min(4).max(4).optional(),
-        operatorRef: z.string().min(1).array().optional(),
-        vehicleRef: z.string().min(1).optional(),
-        lineRef: z.string().min(1).optional(),
-        producerRef: z.string().min(1).optional(),
-        originRef: z.string().min(1).optional(),
-        destinationRef: z.string().min(1).optional(),
-        producerSubscriptionIds: z.string().min(1).array().min(1).max(5),
+        boundingBox: createBoundingBoxValidation("boundingBox").optional(),
+        operatorRef: createNmTokenArrayValidation("operatorRef").optional(),
+        vehicleRef: createNmTokenValidation("vehicleRef").optional(),
+        lineRef: createNmTokenValidation("lineRef").optional(),
+        producerRef: createNmTokenValidation("producerRef").optional(),
+        originRef: createNmTokenValidation("originRef").optional(),
+        destinationRef: createNmTokenValidation("destinationRef").optional(),
+        subscriptionId: createSubscriptionIdArrayValidation("subscriptionId"),
     }),
 });
 

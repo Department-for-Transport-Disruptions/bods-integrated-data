@@ -29,7 +29,7 @@ const consumerSubscription: AvlConsumerSubscription = {
     eventSourceMappingUuid: "mockEventSourceMappingUuid",
     scheduleName: "mockScheduleName",
     queryParams: {
-        producerSubscriptionIds: ["1"],
+        subscriptionId: ["1"],
     },
 };
 
