@@ -220,6 +220,9 @@ run-local-avl-mock-data-producer-subscribe:
 run-local-avl-mock-data-producer-send-data:
 	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
 
+run-local-avl-mock-data-receiver:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-mock-data-receiver'; handler({ body: ${BODY} }).catch(console.error)"
+
 run-local-avl-unsubscriber:
 	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscriptionId':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
 

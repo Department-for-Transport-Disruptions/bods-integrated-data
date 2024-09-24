@@ -303,3 +303,45 @@ resource "aws_lambda_permission" "avl_consumer_unsubscriber_permissions" {
 
   source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}"
 }
+
+resource "aws_api_gateway_resource" "avl_mock_data_receiver_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
+  path_part   = "mock-data-receiver"
+}
+
+resource "aws_api_gateway_method" "avl_mock_data_receiver_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id   = aws_api_gateway_resource.avl_mock_data_receiver_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_settings" "avl_mock_data_receiver_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  stage_name  = aws_api_gateway_stage.siri_vm_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.avl_mock_data_receiver_resource.path_part}/${aws_api_gateway_method.avl_mock_data_receiver_method.http_method}"
+
+  settings {
+    caching_enabled = false
+    metrics_enabled = false
+    logging_level   = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "avl_mock_data_receiver_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id             = aws_api_gateway_resource.avl_mock_data_receiver_resource.id
+  http_method             = aws_api_gateway_method.avl_mock_data_receiver_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.avl_mock_data_receiver_invoke_arn
+}
+
+resource "aws_lambda_permission" "avl_mock_data_receiver_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.avl_mock_data_receiver_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_mock_data_receiver_method.http_method}${aws_api_gateway_resource.avl_mock_data_receiver_resource.path}"
+}

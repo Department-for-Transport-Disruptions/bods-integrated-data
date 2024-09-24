@@ -554,6 +554,8 @@ module "siri_vm_api_private" {
   avl_consumer_subscriber_function_name   = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
   avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_invoke_arn
   avl_consumer_unsubscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_function_name
+  avl_mock_data_receiver_invoke_arn       = module.integrated_data_avl_data_consumer_subscriptions.avl_mock_data_receiver_lambda_invoke_arn
+  avl_mock_data_receiver_function_name    = module.integrated_data_avl_data_consumer_subscriptions.avl_mock_data_receiver_function_name
 }
 
 module "siri_vm_api_public" {
@@ -574,6 +576,8 @@ module "siri_vm_api_public" {
   avl_consumer_subscriber_function_name   = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
   avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_invoke_arn
   avl_consumer_unsubscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_function_name
+  avl_mock_data_receiver_invoke_arn       = module.integrated_data_avl_data_consumer_subscriptions.avl_mock_data_receiver_lambda_invoke_arn
+  avl_mock_data_receiver_function_name    = module.integrated_data_avl_data_consumer_subscriptions.avl_mock_data_receiver_function_name
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {

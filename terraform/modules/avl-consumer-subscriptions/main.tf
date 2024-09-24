@@ -315,3 +315,22 @@ module "avl_consumer_subscription_trigger" {
     }
   ]
 }
+
+module "avl_mock_data_receiver" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-avl-mock-data-receiver"
+  zip_path      = "${path.module}/../../../src/functions/dist/avl-mock-data-receiver.zip"
+  handler       = "index.handler"
+  memory        = 128
+  runtime       = "nodejs20.x"
+  timeout       = 60
+}
+
+resource "aws_lambda_function_url" "avl_mock_data_receiver_url" {
+  count = var.environment == "local" ? 1 : 0
+
+  function_name      = module.avl_mock_data_receiver.function_name
+  authorization_type = "NONE"
+}
