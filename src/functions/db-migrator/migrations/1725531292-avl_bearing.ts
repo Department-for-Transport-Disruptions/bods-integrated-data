@@ -18,8 +18,8 @@ export async function up(db: Kysely<Database>): Promise<void> {
 export async function down(db: Kysely<Database>): Promise<void> {
     await sql`
         ALTER TABLE avl
-        ALTER COLUMN bearing TYPE float8
-        USING bearing::float8
+        ALTER COLUMN bearing TYPE text
+        USING bearing::text
       `.execute(db);
 
     await sql`
