@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
+import { Dayjs } from "dayjs";
 import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { putMetricData } from "./cloudwatch";
@@ -8,8 +10,6 @@ import { logger } from "./logger";
 import { VehicleType } from "./schema";
 import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
-import { randomUUID } from "node:crypto";
-import { Dayjs } from "dayjs";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunkArray = [];

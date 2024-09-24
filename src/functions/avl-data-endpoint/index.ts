@@ -15,7 +15,7 @@ import {
     HeartbeatNotification,
     heartbeatNotificationSchema,
 } from "@bods-integrated-data/shared/schema";
-import { isApiGatewayEvent, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError, isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { ALBEvent, ALBHandler, APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -99,11 +99,15 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
-        const pathParams = isApiGatewayEvent(event)
-            ? event.pathParameters
-            : {
-                  subscriptionId: event.path.split("/")[1],
-              };
+        let pathParams = null;
+
+        if (stage !== "local") {
+            pathParams = isApiGatewayEvent(event)
+                ? event.pathParameters
+                : {
+                      subscriptionId: event.path.split("/")[1],
+                  };
+        }
 
         const parameters = stage === "local" ? event.queryStringParameters : pathParams;
 

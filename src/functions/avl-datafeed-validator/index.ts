@@ -9,10 +9,10 @@ import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { ZodError, z } from "zod";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 
 const requestParamsSchema = z.preprocess(
     Object,

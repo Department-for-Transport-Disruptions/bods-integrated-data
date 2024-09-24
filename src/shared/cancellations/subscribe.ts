@@ -1,18 +1,18 @@
-import { logger } from "../logger";
-import { putParameter } from "../ssm";
-import { getDate } from "../dates";
 import { randomUUID } from "node:crypto";
 import axios from "axios";
-import { CompleteSiriObject, createAuthorizationHeader, getSiriVmTerminationTimeOffset } from "../utils";
-import { InvalidXmlError } from "../validation";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { getDate } from "../dates";
+import { putDynamoItem } from "../dynamo";
+import { logger } from "../logger";
 import {
     CancellationsSubscription,
     CancellationsSubscriptionRequest,
-    cancellationsSubscriptionResponseSchema,
     CancellationsSubscriptionStatus,
+    cancellationsSubscriptionResponseSchema,
 } from "../schema/cancellations-subscribe.schema";
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { putDynamoItem } from "../dynamo";
+import { putParameter } from "../ssm";
+import { CompleteSiriObject, createAuthorizationHeader, getSiriVmTerminationTimeOffset } from "../utils";
+import { InvalidXmlError } from "../validation";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
     logger.info("Uploading subscription auth credentials to parameter store");
@@ -176,6 +176,8 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     });
 
     const subscriptionResponseBody = subscriptionResponse.data;
+
+    logger.info(subscriptionResponseBody);
 
     if (!subscriptionResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");

@@ -18,15 +18,27 @@ resource "aws_secretsmanager_secret_version" "cancellations_producer_api_key_sec
   secret_string = jsonencode(var.cancellations_producer_api_key)
 }
 
+module "integrated_data_cancellations_subscription_table" {
+  source = "../../modules/shared/dynamo-table"
+
+  environment = var.environment
+  table_name  = "integrated-data-cancellations-subscription-table"
+}
+
 module "cancellations_subscriber" {
   source = "./cancellations-subscriber"
 
-  environment                        = var.environment
-  aws_account_id                     = var.aws_account_id
-  aws_region                         = var.aws_region
-  sg_id                              = var.sg_id
-  subnet_ids                         = var.subnet_ids
-  cancellations_producer_api_key_arn = aws_secretsmanager_secret.cancellations_producer_api_key_secret.arn
+  environment                           = var.environment
+  aws_account_id                        = var.aws_account_id
+  aws_region                            = var.aws_region
+  sg_id                                 = var.sg_id
+  subnet_ids                            = var.subnet_ids
+  cancellations_producer_api_key_arn    = aws_secretsmanager_secret.cancellations_producer_api_key_secret.arn
+  cancellations_data_endpoint           = "https://www.test.com"
+  cancellations_subscription_table_name = module.integrated_data_cancellations_subscription_table.table_name
+  mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
+    var.mock_data_producer_subscribe_function_url :
+  "${var.mock_data_producer_api_endpoint}/subscriptions")
 }
 
 module "cancellations_producer_api_gateway" {

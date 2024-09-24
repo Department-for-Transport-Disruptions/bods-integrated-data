@@ -39,3 +39,16 @@ variable "subnet_ids" {
   type = list(string)
 }
 
+variable "mock_data_producer_subscribe_function_url" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
+variable "mock_data_producer_api_endpoint" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
+

@@ -8,10 +8,10 @@ import {
 import { getAvlSubscription, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 
 const requestParamsSchema = z.preprocess(
     Object,

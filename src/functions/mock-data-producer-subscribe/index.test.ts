@@ -27,12 +27,7 @@ describe("avl-mock-data-producer-subscribe", () => {
 
     it("should throw an error if invalid SIRI subscription request from data consumer is received", async () => {
         const invalidSubscriptionRequest = {
-            body: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-                    <Siri version='2.0' xmlns='http://www.siri.org.uk/siri' xmlns:ns2='http://www.ifopt.org.uk/acsb' xmlns:ns3='http://www.ifopt.org.uk/ifopt' xmlns:ns4='http://datex2.eu/schema/2_0RC1/2_0'>
-                        <SubscriptionRequest>
-                            <InvalidRequest/>
-                        </SubscriptionRequest>
-                    </Siri>`,
+            body: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?><InvalidRequest/>`,
         } as unknown as APIGatewayProxyEvent;
 
         await expect(handler(invalidSubscriptionRequest, mockContext, mockCallback)).rejects.toThrowError(

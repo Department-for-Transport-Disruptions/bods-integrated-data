@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { createStringLengthValidation } from "../validation";
 import { subscriptionStatuses } from "../constants";
+import { createStringLengthValidation } from "../validation";
 
 export const cancellationsSubscribeMessageSchema = z.object(
     {
@@ -92,3 +92,5 @@ export const cancellationsSubscriptionResponseSchema = z.object({
         }),
     }),
 });
+
+export type CancellationsSubscriptionResponse = z.infer<typeof cancellationsSubscriptionResponseSchema>;

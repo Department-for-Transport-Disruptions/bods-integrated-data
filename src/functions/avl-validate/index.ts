@@ -4,7 +4,6 @@ import {
     createValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
@@ -12,6 +11,7 @@ import {
     avlCheckStatusResponseSchema,
     avlValidateRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
+import { CompleteSiriObject } from "@bods-integrated-data/shared/utils";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";

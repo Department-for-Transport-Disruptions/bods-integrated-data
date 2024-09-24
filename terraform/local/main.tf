@@ -125,6 +125,19 @@ module "integrated_data_gtfs_rt_pipeline" {
   save_json                          = true
 }
 
+
+module "mock_data_producer" {
+  source = "../modules/mock-data-producer"
+
+  environment = local.env
+  avl_consumer_data_endpoint = (local.env == "local" ?
+    module.integrated_data_avl_data_producer_api.data_endpoint_function_url :
+  "https://${module.integrated_data_avl_data_producer_api.endpoint}/subscriptions")
+  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id              = data.aws_caller_identity.current.account_id
+  aws_region                  = data.aws_region.current.name
+}
+
 module "integrated_data_avl_pipeline" {
   source = "../modules/data-pipelines/avl-pipeline"
 
@@ -167,19 +180,20 @@ module "integrated_data_avl_validation_error_table" {
 }
 
 module "integrated_data_avl_data_producer_api" {
-  source                      = "../modules/avl-producer-api"
-  avl_raw_siri_bucket_name    = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
-  environment                 = local.env
-  sg_id                       = ""
-  subnet_ids                  = []
-  acm_certificate_arn         = ""
-  hosted_zone_id              = ""
-  domain                      = ""
-  avl_producer_api_key        = local.secrets["avl_producer_api_key"]
-  avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
+  source                                    = "../modules/avl-producer-api"
+  avl_raw_siri_bucket_name                  = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
+  avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id                            = data.aws_caller_identity.current.account_id
+  aws_region                                = data.aws_region.current.name
+  environment                               = local.env
+  sg_id                                     = ""
+  subnet_ids                                = []
+  acm_certificate_arn                       = ""
+  hosted_zone_id                            = ""
+  domain                                    = ""
+  avl_producer_api_key                      = local.secrets["avl_producer_api_key"]
+  avl_error_table_name                      = module.integrated_data_avl_validation_error_table.table_name
+  mock_data_producer_subscribe_function_url = module.mock_data_producer.subscribe_function_url
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -215,4 +229,19 @@ module "integrated_data_disruptions_pipeline" {
   db_sg_id           = null
   db_host            = null
   save_json          = true
+}
+
+module "integrated_data_cancellations_data_producer_api" {
+  source = "../modules/cancellations-producer-api"
+
+  aws_account_id                            = data.aws_caller_identity.current.account_id
+  aws_region                                = data.aws_region.current.name
+  environment                               = local.env
+  acm_certificate_arn                       = ""
+  hosted_zone_id                            = ""
+  domain                                    = ""
+  cancellations_producer_api_key            = local.secrets["cancellations_producer_api_key"]
+  sg_id                                     = ""
+  subnet_ids                                = []
+  mock_data_producer_subscribe_function_url = module.mock_data_producer.subscribe_function_url
 }

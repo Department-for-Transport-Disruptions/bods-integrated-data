@@ -1,26 +1,28 @@
 import {
     createConflictErrorResponse,
     createServerErrorResponse,
+    createUnauthorizedErrorResponse,
     createValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { APIGatewayProxyHandler } from "aws-lambda";
-import { ZodError, z } from "zod";
-import {
-    cancellationsSubscribeMessageSchema,
-    CancellationsSubscription,
-} from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
-import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
 import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
     updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/cancellations/subscribe";
-import { getDate } from "@bods-integrated-data/shared/dates";
-import { generateApiKey, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
+import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import {
+    CancellationsSubscription,
+    cancellationsSubscribeMessageSchema,
+} from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
+import { SubscriptionIdNotFoundError, generateApiKey } from "@bods-integrated-data/shared/utils";
+import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { AxiosError } from "axios";
+import { ZodError, z } from "zod";
 
 const requestBodySchema = z
     .string({
@@ -132,8 +134,17 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             return createValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
+        if (e instanceof InvalidApiKeyError) {
+            return createUnauthorizedErrorResponse();
+        }
+
+        if (e instanceof InvalidXmlError) {
+            logger.warn(e, "Invalid SIRI-VM XML provided by the data producer");
+            return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
+        }
+
         if (e instanceof Error) {
-            logger.error(e, "There was a problem with the lambda-http-template endpoint");
+            logger.error(e, "There was a problem with the cancellations subscriber endpoint");
         }
 
         return createServerErrorResponse();

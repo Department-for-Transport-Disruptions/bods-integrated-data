@@ -13,7 +13,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
-import { isPrivateAddress, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
