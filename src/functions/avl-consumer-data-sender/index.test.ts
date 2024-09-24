@@ -81,6 +81,13 @@ const consumerSubscription: AvlConsumerSubscription = {
     eventSourceMappingUuid: "",
     scheduleName: "",
     queryParams: {
+        boundingBox: [1, 2, 3, 4],
+        operatorRef: ["a", "b", "c"],
+        vehicleRef: "vehicle-ref",
+        lineRef: "line-ref",
+        producerRef: "producer-ref",
+        originRef: "origin-ref",
+        destinationRef: "destination-ref",
         subscriptionId: ["1", "2", "3"],
     },
 };
@@ -220,13 +227,13 @@ describe("avl-consumer-subscriber", () => {
 
         expect(getAvlDataForSiriVmSpy).toHaveBeenCalledWith(
             mocks.mockDbClient,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            [1, 2, 3, 4],
+            ["a", "b", "c"],
+            "vehicle-ref",
+            "line-ref",
+            "producer-ref",
+            "origin-ref",
+            "destination-ref",
             ["1", "2", "3"],
             consumerSubscription.lastRetrievedAvlId,
         );
