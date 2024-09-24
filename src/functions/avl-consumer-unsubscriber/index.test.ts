@@ -23,12 +23,14 @@ const consumerSubscription: AvlConsumerSubscription = {
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2034-03-11T15:20:02.093Z",
     requestTimestamp: "2024-03-11T15:20:02.093Z",
-    producerSubscriptionIds: "1",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 0,
     queueUrl: "https://mockQueueUrl",
     eventSourceMappingUuid: "mockEventSourceMappingUuid",
     scheduleName: "mockScheduleName",
+    queryParams: {
+        subscriptionId: ["1"],
+    },
 };
 
 const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>

@@ -102,18 +102,27 @@ export const createNmTokenArrayValidation = (propertyName: string) => {
 };
 
 export const createSubscriptionIdArrayValidation = (propertyName: string) => {
-    return z
+    return z.coerce
         .string({
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
-        .regex(SUBSCRIPTION_ID_ARRAY_REGEX, {
-            message: `${propertyName} must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs`,
-        });
+        .transform((box) => box.split(",").map((b) => b.trim()))
+        .pipe(
+            z
+                .string()
+                .regex(SUBSCRIPTION_ID_ARRAY_REGEX, {
+                    message: `${propertyName} must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs`,
+                })
+                .array()
+                .max(5, {
+                    message: `${propertyName} must be up to 5 IDs`,
+                }),
+        );
 };
 
 export const createBoundingBoxValidation = (propertyName: string) => {
-    return z
+    return z.coerce
         .string({
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
