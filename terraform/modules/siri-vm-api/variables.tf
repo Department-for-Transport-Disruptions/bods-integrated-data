@@ -55,11 +55,3 @@ variable "avl_consumer_unsubscriber_invoke_arn" {
 variable "avl_consumer_unsubscriber_function_name" {
   type = string
 }
-
-variable "avl_mock_data_receiver_invoke_arn" {
-  type = string
-}
-
-variable "avl_mock_data_receiver_function_name" {
-  type = string
-}
