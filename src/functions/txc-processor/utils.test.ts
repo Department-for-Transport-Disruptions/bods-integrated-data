@@ -36,7 +36,7 @@ describe("utils", () => {
             ["pickUpAndSetDown", DropOffType.DropOff],
             ["setDown", DropOffType.DropOff],
             ["pass", DropOffType.NoDropOff],
-            [undefined, DropOffType.DropOff],
+            [undefined, DropOffType.NoDropOff],
         ])("returns the correct drop off type for the activity", (input, expected) => {
             const result = getDropOffTypeFromStopActivity(input);
             expect(result).toEqual(expected);
