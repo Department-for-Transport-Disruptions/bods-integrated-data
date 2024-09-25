@@ -1,3 +1,4 @@
+import { QueueDeletedRecently } from "@aws-sdk/client-sqs";
 import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as eventBridge from "@bods-integrated-data/shared/eventBridge";
@@ -326,6 +327,33 @@ describe("avl-consumer-subscriber", () => {
         expect(response).toEqual({
             statusCode: 404,
             body: JSON.stringify({ errors: ["Producer subscription ID not found: 1"] }),
+        });
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns a 429 when trying to resubscribe to an existing error subscription that was deactivated too recently", async () => {
+        const producerSubscription: AvlSubscription = {
+            PK: mockProducerSubscriptionIds[0],
+            description: "test-description",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "live",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        };
+
+        recursiveScanSpy.mockResolvedValueOnce([producerSubscription]);
+        createQueueSpy.mockRejectedValue(new QueueDeletedRecently({ message: "", $metadata: {} }));
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 429,
+            headers: {
+                "Retry-After": 60,
+            },
+            body: JSON.stringify({ errors: ["Existing subscription is still deactivating, try again later"] }),
         });
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
