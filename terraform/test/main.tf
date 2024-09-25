@@ -358,3 +358,11 @@ module "integrated_data_cancellations_data_producer_api" {
   sg_id                          = module.integrated_data_vpc.default_sg_id
   subnet_ids                     = module.integrated_data_vpc.private_subnet_ids
 }
+
+module "integrated_data_avl_datadog" {
+  source = "../modules/avl-datadog-monitoring"
+
+  environment     = local.env
+  datadog_api_key = local.secrets["datadog_api_key"]
+  datadog_app_key = local.secrets["datadog_app_key"]
+}
