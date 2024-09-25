@@ -164,7 +164,7 @@ output "endpoint" {
 }
 
 module "avl_mock_data_receiver" {
-  source = "../shared/lambda-function"
+  source = "../../shared/lambda-function"
 
   environment   = var.environment
   function_name = "integrated-data-avl-mock-data-receiver"
