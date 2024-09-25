@@ -32,7 +32,7 @@ export const getDropOffTypeFromStopActivity = (activity?: string) => {
         case "pass":
             return DropOffType.NoDropOff;
         default:
-            return DropOffType.DropOff;
+            return DropOffType.NoDropOff;
     }
 };
 
