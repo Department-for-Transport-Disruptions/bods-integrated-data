@@ -22,6 +22,13 @@ locals {
     "method.request.querystring.subscriptionId"
   ]
   avl_consumer_subscriber_request_parameters = [
+    "method.request.querystring.boundingBox",
+    "method.request.querystring.operatorRef",
+    "method.request.querystring.vehicleRef",
+    "method.request.querystring.lineRef",
+    "method.request.querystring.producerRef",
+    "method.request.querystring.originRef",
+    "method.request.querystring.destinationRef",
     "method.request.querystring.subscriptionId"
   ]
 }

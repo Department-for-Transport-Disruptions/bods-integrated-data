@@ -24,16 +24,18 @@ const processSqsRecord = async (record: SQSRecord, dbClient: KyselyDb, consumerS
             throw new Error(`Subscription PK: ${subscriptionPK} no longer live`);
         }
 
+        const { queryParams } = subscription;
+
         const avls = await getAvlDataForSiriVm(
             dbClient,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            subscription.producerSubscriptionIds.split(","),
+            queryParams.boundingBox,
+            queryParams.operatorRef,
+            queryParams.vehicleRef,
+            queryParams.lineRef,
+            queryParams.producerRef,
+            queryParams.originRef,
+            queryParams.destinationRef,
+            queryParams.subscriptionId,
             subscription.lastRetrievedAvlId,
         );
 

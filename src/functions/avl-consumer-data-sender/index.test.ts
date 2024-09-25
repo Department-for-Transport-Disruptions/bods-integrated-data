@@ -75,12 +75,21 @@ const consumerSubscription: AvlConsumerSubscription = {
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2024-03-11T15:20:02.093Z",
     requestTimestamp: "2024-03-11T15:20:02.093Z",
-    producerSubscriptionIds: "1,2,3",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 5,
     queueUrl: "",
     eventSourceMappingUuid: "",
     scheduleName: "",
+    queryParams: {
+        boundingBox: [1, 2, 3, 4],
+        operatorRef: ["a", "b", "c"],
+        vehicleRef: "vehicle-ref",
+        lineRef: "line-ref",
+        producerRef: "producer-ref",
+        originRef: "origin-ref",
+        destinationRef: "destination-ref",
+        subscriptionId: ["1", "2", "3"],
+    },
 };
 
 describe("avl-consumer-subscriber", () => {
@@ -218,13 +227,13 @@ describe("avl-consumer-subscriber", () => {
 
         expect(getAvlDataForSiriVmSpy).toHaveBeenCalledWith(
             mocks.mockDbClient,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
+            [1, 2, 3, 4],
+            ["a", "b", "c"],
+            "vehicle-ref",
+            "line-ref",
+            "producer-ref",
+            "origin-ref",
+            "destination-ref",
             ["1", "2", "3"],
             consumerSubscription.lastRetrievedAvlId,
         );

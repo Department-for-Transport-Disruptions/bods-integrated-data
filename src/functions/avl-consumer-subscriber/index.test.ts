@@ -13,7 +13,7 @@ import { handler } from ".";
 const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
 const mockProducerSubscriptionTable = "mock-producer-subscription-table-name";
 const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
-const mockProducerSubscriptionId = "1";
+const mockProducerSubscriptionIds = "1";
 const mockUserId = "mock-user-id";
 const mockRandomId = "999";
 const mockQueueUrl = "https://mockQueueUrl";
@@ -81,7 +81,14 @@ describe("avl-consumer-subscriber", () => {
                 userId: mockUserId,
             },
             queryStringParameters: {
-                subscriptionId: mockProducerSubscriptionId,
+                boundingBox: "1,2,3,4",
+                operatorRef: "a,b,c",
+                vehicleRef: "vehicle-ref",
+                lineRef: "line-ref",
+                producerRef: "producer-ref",
+                originRef: "origin-ref",
+                destinationRef: "destination-ref",
+                subscriptionId: mockProducerSubscriptionIds,
             },
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
@@ -134,25 +141,64 @@ describe("avl-consumer-subscriber", () => {
     });
 
     it.each([
-        [undefined, "subscriptionId is required"],
         [
-            "1,",
-            "subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs",
+            { subscriptionId: "1," },
+            ["subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs"],
         ],
         [
-            "asdf!",
-            "subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs",
+            { subscriptionId: "asdf!" },
+            ["subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs"],
         ],
-    ])("returns a 400 when the subscriptionId query param is invalid", async (subscriptionId, expectedErrorMessage) => {
-        mockEvent.queryStringParameters = {
-            subscriptionId,
-        };
+        [
+            { subscriptionId: "1", boundingBox: "1234" },
+            [
+                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+            ],
+        ],
+        [
+            { subscriptionId: "1", operatorRef: "1," },
+            [
+                "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", vehicleRef: "" },
+            [
+                "vehicleRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", lineRef: "" },
+            [
+                "lineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", producerRef: "" },
+            [
+                "producerRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", originRef: "" },
+            [
+                "originRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", destinationRef: "" },
+            [
+                "destinationRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+    ])("returns a 400 when the %o query param is invalid", async (params, expectedErrors) => {
+        mockEvent.queryStringParameters = params;
         mockEvent.body = mockRequestBody;
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
-            body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            body: JSON.stringify({ errors: expectedErrors }),
         });
         expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid request");
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
@@ -232,12 +278,14 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
             queueUrl: "",
             eventSourceMappingUuid: "",
             scheduleName: "",
+            queryParams: {
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
         };
 
         recursiveQuerySpy.mockResolvedValueOnce([consumerSubscription]);
@@ -284,7 +332,7 @@ describe("avl-consumer-subscriber", () => {
 
     it("returns a 200 and creates a new consumer subscription when the request is valid", async () => {
         const producerSubscription: AvlSubscription = {
-            PK: mockProducerSubscriptionId,
+            PK: mockProducerSubscriptionIds[0],
             description: "test-description",
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
@@ -313,20 +361,22 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
             queueUrl: mockQueueUrl,
             eventSourceMappingUuid: mockEventSourceMappingUuid,
             scheduleName: `consumer-sub-schedule-${mockRandomId}`,
+            queryParams: {
+                boundingBox: [1, 2, 3, 4],
+                operatorRef: ["a", "b", "c"],
+                vehicleRef: "vehicle-ref",
+                lineRef: "line-ref",
+                producerRef: "producer-ref",
+                originRef: "origin-ref",
+                destinationRef: "destination-ref",
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
         };
-
-        expect(putDynamoItemSpy).toHaveBeenCalledWith(
-            mockConsumerSubscriptionTable,
-            consumerSubscription.PK,
-            consumerSubscription.SK,
-            consumerSubscription,
-        );
 
         expect(createQueueSpy).toHaveBeenCalledWith({
             QueueName: `consumer-sub-queue-${mockRandomId}`,
@@ -364,11 +414,18 @@ describe("avl-consumer-subscriber", () => {
                 Input: JSON.stringify(queueMessage),
             },
         });
+
+        expect(putDynamoItemSpy).toHaveBeenCalledWith(
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            consumerSubscription,
+        );
     });
 
     it("returns a 200 and overwrites an existing consumer subscription when the request is valid when resubscribing", async () => {
         const producerSubscription: AvlSubscription = {
-            PK: mockProducerSubscriptionId,
+            PK: mockProducerSubscriptionIds[0],
             description: "test-description",
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
@@ -391,12 +448,21 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
             queueUrl: mockQueueUrl,
             eventSourceMappingUuid: mockEventSourceMappingUuid,
             scheduleName: `consumer-sub-schedule-${mockRandomId}`,
+            queryParams: {
+                boundingBox: [1, 2, 3, 4],
+                operatorRef: ["a", "b", "c"],
+                vehicleRef: "vehicle-ref",
+                lineRef: "line-ref",
+                producerRef: "producer-ref",
+                originRef: "origin-ref",
+                destinationRef: "destination-ref",
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
         };
 
         recursiveQuerySpy.mockResolvedValueOnce([consumerSubscription]);
