@@ -419,7 +419,7 @@ export const createSiriVm = (
     const currentTime = formatSiriVmDatetimes(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
-    const siriVm = {
+    const siriVm: SiriVM = {
         Siri: {
             ServiceDelivery: {
                 ResponseTimestamp: currentTime,
@@ -429,7 +429,7 @@ export const createSiriVm = (
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
                     ShortestPossibleCycle: "PT5S",
-                    VehicleActivity: vehicleActivities,
+                    VehicleActivity: vehicleActivities as SiriVehicleActivity[],
                 },
             },
         },
