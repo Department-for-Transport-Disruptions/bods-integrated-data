@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { QueueDeletedRecently } from "@aws-sdk/client-sqs";
 import {
     createConflictErrorResponse,
     createNotFoundErrorResponse,
     createServerErrorResponse,
     createSuccessResponse,
+    createTooManyRequestsResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
@@ -136,6 +138,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             }
         }
 
+        logger.subscriptionId = PK;
+
         const producerSubscriptions = await getAvlSubscriptions(AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME);
 
         for (const producerSubscriptionId of subscriptionId) {
@@ -235,6 +239,11 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         if (e instanceof InvalidXmlError) {
             logger.warn(e, `Invalid SIRI-VM XML provided: ${e.message}`);
             return createValidationErrorResponse([e.message]);
+        }
+
+        if (e instanceof QueueDeletedRecently) {
+            logger.warn(e, "Queue deleted too recently when trying to resubscribe");
+            return createTooManyRequestsResponse("Existing subscription is still deactivating, try again later", 60);
         }
 
         if (e instanceof Error) {
