@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { QueueDeletedRecently } from "@aws-sdk/client-sqs";
 import {
     createConflictErrorResponse,
     createNotFoundErrorResponse,
@@ -241,12 +240,16 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             return createValidationErrorResponse([e.message]);
         }
 
-        if (e instanceof QueueDeletedRecently) {
-            logger.warn(e, "Queue deleted too recently when trying to resubscribe");
-            return createTooManyRequestsResponse("Existing subscription is still deactivating, try again later", 60);
-        }
-
         if (e instanceof Error) {
+            // Our AWS package versions do not support instanceof exception checks
+            if (e.name === "QueueDeletedRecently") {
+                logger.warn(e, "Queue deleted too recently when trying to resubscribe");
+                return createTooManyRequestsResponse(
+                    "Existing subscription is still deactivating, try again later",
+                    60,
+                );
+            }
+
             logger.error(e, "There was a problem with the avl-consumer-subscriber endpoint");
         }
 
