@@ -1,4 +1,3 @@
-import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { checkSubscriptionIsHealthy, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -6,6 +5,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
 import { getSubscriptionUsernameAndPassword, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
@@ -91,6 +91,7 @@ export const handler: Handler = async (event, context) => {
 
                 try {
                     await sendTerminateSubscriptionRequest(
+                        "avl",
                         subscription.PK,
                         subscription,
                         isPrivateAddress(subscription.url),

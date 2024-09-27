@@ -1,17 +1,17 @@
-import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMockData";
-import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
+import * as unsubscribe from "@bods-integrated-data/shared/unsubscribe";
+import { mockInput } from "@bods-integrated-data/shared/unsubscribeMockData";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
-describe("avl-unsubscriber", () => {
+describe("cancellations-unsubscriber", () => {
     let mockEvent: APIGatewayProxyEvent;
 
     vi.mock("@bods-integrated-data/shared/logger", () => ({
@@ -36,7 +36,7 @@ describe("avl-unsubscriber", () => {
         getSecret: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
+    vi.mock("@bods-integrated-data/shared/unsubscribe", () => ({
         sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
@@ -55,7 +55,7 @@ describe("avl-unsubscriber", () => {
     beforeEach(() => {
         vi.resetAllMocks();
         process.env.TABLE_NAME = "test-dynamo-table";
-        process.env.AVL_PRODUCER_API_KEY_ARN = "mock-key-arn";
+        process.env.CANCELLATIONS_PRODUCER_API_KEY_ARN = "mock-key-arn";
 
         mockEvent = {
             headers: {
@@ -74,7 +74,7 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should process an unsubscribe request if sendTerminateSubscriptionRequestAndUpdateDynamo is called successfully, including deleting auth creds from parameter store", async () => {
-        const avlSubscription: AvlSubscription = {
+        const cancellationsSubscription: CancellationsSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
             publisherId: "mock-publisher-id",
@@ -86,12 +86,13 @@ describe("avl-unsubscriber", () => {
             lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
             apiKey: "mock-api-key",
         };
-        getDynamoItemSpy.mockResolvedValue(avlSubscription);
+        getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
 
         await handler(mockEvent, mockContext, mockCallback);
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "cancellations",
             mockEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             false,
@@ -99,8 +100,8 @@ describe("avl-unsubscriber", () => {
 
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
         expect(deleteParametersSpy).toHaveBeenCalledWith([
-            "/subscription/mock-subscription-id/username",
-            "/subscription/mock-subscription-id/password",
+            "/cancellations/subscription/mock-subscription-id/username",
+            "/cancellations/subscription/mock-subscription-id/password",
         ]);
     });
 
@@ -141,7 +142,7 @@ describe("avl-unsubscriber", () => {
     });
 
     it("should not throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
-        const avlSubscription: AvlSubscription = {
+        const cancellationsSubscription: CancellationsSubscription = {
             PK: "mock-subscription-id",
             url: "https://mock-data-producer.com",
             publisherId: "mock-publisher-id",
@@ -154,7 +155,7 @@ describe("avl-unsubscriber", () => {
             apiKey: "mock-api-key",
         };
 
-        getDynamoItemSpy.mockResolvedValue(avlSubscription);
+        getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
 
         sendTerminateSubscriptionRequestSpy.mockRejectedValue({ statusCode: 500 });
 
@@ -166,12 +167,17 @@ describe("avl-unsubscriber", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "cancellations",
             mockEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             false,
         );
         expect(getDynamoItemSpy).toHaveBeenCalledOnce();
         expect(deleteParametersSpy).toHaveBeenCalledOnce();
+        expect(deleteParametersSpy).toHaveBeenCalledWith([
+            "/cancellations/subscription/mock-subscription-id/username",
+            "/cancellations/subscription/mock-subscription-id/password",
+        ]);
     });
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
@@ -187,8 +193,8 @@ describe("avl-unsubscriber", () => {
     });
 
     it.each([
-        [{ TABLE_NAME: "", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
-        [{ TABLE_NAME: "test-dynamo-table", AVL_PRODUCER_API_KEY_ARN: "" }],
+        [{ TABLE_NAME: "", CANCELLATIONS_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
+        [{ TABLE_NAME: "test-dynamo-table", CANCELLATIONS_PRODUCER_API_KEY_ARN: "" }],
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 

@@ -1,11 +1,11 @@
 import {
+    createHttpNoContentResponse,
     createHttpNotFoundErrorResponse,
     createHttpServerErrorResponse,
     createHttpUnauthorizedErrorResponse,
     createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -13,6 +13,7 @@ import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
 import { SubscriptionIdNotFoundError, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
@@ -65,6 +66,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
         try {
             await sendTerminateSubscriptionRequest(
+                "avl",
                 subscriptionId,
                 subscriptionDetail,
                 isPrivateAddress(subscription.url),
@@ -100,10 +102,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 
-        return {
-            statusCode: 204,
-            body: "",
-        };
+        return createHttpNoContentResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");

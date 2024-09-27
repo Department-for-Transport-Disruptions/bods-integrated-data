@@ -1,4 +1,5 @@
 import {
+    createHttpNoContentResponse,
     createHttpNotFoundErrorResponse,
     createHttpServerErrorResponse,
     createHttpUnauthorizedErrorResponse,
@@ -9,11 +10,11 @@ import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
 } from "@bods-integrated-data/shared/avl/subscribe";
-import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
 import { SubscriptionIdNotFoundError, generateApiKey, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
@@ -84,7 +85,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         try {
             logger.info("Unsubscribing using existing credentials ");
-            await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail, isInternal);
+            await sendTerminateSubscriptionRequest("avl", subscriptionId, subscriptionDetail, isInternal);
         } catch (e) {
             logger.warn(
                 `An error occurred when trying to unsubscribe from subscription with ID: ${subscriptionId}. Error ${e}`,
@@ -106,10 +107,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             mockProducerSubscribeEndpoint,
         );
 
-        return {
-            statusCode: 204,
-            body: "",
-        };
+        return createHttpNoContentResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");

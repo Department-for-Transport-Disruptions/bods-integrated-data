@@ -1,19 +1,20 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpNoContentResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
 import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
-import { SubscriptionIdNotFoundError, isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
@@ -22,7 +23,6 @@ import {
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
-import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -69,11 +69,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             apiKey: subscription.apiKey,
         };
         try {
-            await sendTerminateSubscriptionRequest(
-                subscriptionId,
-                subscriptionDetail,
-                isPrivateAddress(subscription.url),
-            );
+            await sendTerminateSubscriptionRequest("cancellations", subscriptionId, subscriptionDetail, false);
         } catch (e) {
             await putMetricData("custom/CancellationsMetrics", [
                 {
@@ -105,34 +101,31 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 
-        return {
-            statusCode: 204,
-            body: "",
-        };
+        return createHttpNoContentResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
             logger.warn(e, "Invalid SIRI-SX XML provided by the data producer");
-            return createValidationErrorResponse(["Invalid SIRI-SX XML provided by the data producer"]);
+            return createHttpValidationErrorResponse(["Invalid SIRI-SX XML provided by the data producer"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the cancellations unsubscribe endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

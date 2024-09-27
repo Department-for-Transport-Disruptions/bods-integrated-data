@@ -1,11 +1,11 @@
-import { mockInput } from "@bods-integrated-data/shared/avl/test/unsubscribeMockData";
-import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
+import * as unsubscribe from "@bods-integrated-data/shared/unsubscribe";
+import { mockInput } from "@bods-integrated-data/shared/unsubscribeMockData";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -36,7 +36,7 @@ describe("avl-unsubscriber", () => {
         getSecret: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
+    vi.mock("@bods-integrated-data/shared/unsubscribe", () => ({
         sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
@@ -92,6 +92,7 @@ describe("avl-unsubscriber", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             mockEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             false,
@@ -166,6 +167,7 @@ describe("avl-unsubscriber", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             mockEvent.pathParameters?.subscriptionId,
             { ...mockInput.subscription, requestorRef: null },
             false,
