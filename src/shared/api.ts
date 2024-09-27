@@ -2,49 +2,56 @@ import { APIGatewayProxyEventHeaders, APIGatewayProxyResult } from "aws-lambda";
 import { getSecret } from "./secretsManager";
 import { InvalidApiKeyError } from "./validation";
 
-export const createSuccessResponse = (body?: string): APIGatewayProxyResult => {
+export const createHttpSuccessResponse = (body?: string): APIGatewayProxyResult => {
     return {
         statusCode: 200,
         body: body ?? "",
     };
 };
 
-export const createNoContentResponse = (body?: string): APIGatewayProxyResult => {
+export const createHttpCreatedResponse = (body?: string): APIGatewayProxyResult => {
+    return {
+        statusCode: 201,
+        body: body ?? "",
+    };
+};
+
+export const createHttpNoContentResponse = (body?: string): APIGatewayProxyResult => {
     return {
         statusCode: 204,
         body: body ?? "",
     };
 };
 
-export const createValidationErrorResponse = (errors: string[]): APIGatewayProxyResult => {
+export const createHttpValidationErrorResponse = (errors: string[]): APIGatewayProxyResult => {
     return {
         statusCode: 400,
         body: JSON.stringify({ errors }),
     };
 };
 
-export const createUnauthorizedErrorResponse = (error?: string): APIGatewayProxyResult => {
+export const createHttpUnauthorizedErrorResponse = (error?: string): APIGatewayProxyResult => {
     return {
         statusCode: 401,
         body: JSON.stringify({ errors: [error || "Unauthorized"] }),
     };
 };
 
-export const createNotFoundErrorResponse = (error: string): APIGatewayProxyResult => {
+export const createHttpNotFoundErrorResponse = (error: string): APIGatewayProxyResult => {
     return {
         statusCode: 404,
         body: JSON.stringify({ errors: [error] }),
     };
 };
 
-export const createConflictErrorResponse = (error: string): APIGatewayProxyResult => {
+export const createHttpConflictErrorResponse = (error: string): APIGatewayProxyResult => {
     return {
         statusCode: 409,
         body: JSON.stringify({ errors: [error] }),
     };
 };
 
-export const createTooManyRequestsResponse = (error: string, retryAfter?: number): APIGatewayProxyResult => {
+export const createHttpTooManyRequestsErrorResponse = (error: string, retryAfter?: number): APIGatewayProxyResult => {
     return {
         statusCode: 429,
         headers: retryAfter ? { "Retry-After": retryAfter } : undefined,
@@ -52,7 +59,7 @@ export const createTooManyRequestsResponse = (error: string, retryAfter?: number
     };
 };
 
-export const createServerErrorResponse = (error?: string): APIGatewayProxyResult => {
+export const createHttpServerErrorResponse = (error?: string): APIGatewayProxyResult => {
     throw new Error(error || "An unexpected error occurred");
 };
 

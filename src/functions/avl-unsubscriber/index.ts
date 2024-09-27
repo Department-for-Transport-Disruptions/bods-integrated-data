@@ -1,8 +1,8 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
@@ -107,27 +107,27 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
             logger.warn(e, "Invalid SIRI-VM XML provided by the data producer");
-            return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
+            return createHttpValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the AVL unsubscribe endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

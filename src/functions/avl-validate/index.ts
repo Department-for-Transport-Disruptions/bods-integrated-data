@@ -1,7 +1,7 @@
 import {
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -124,7 +124,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         if (parsedCheckStatusResponseBody.Siri.CheckStatusResponse.Status !== "true") {
             logger.warn("Data producer did not return a status of true");
-            return createValidationErrorResponse(["Data producer did not return a status of true"]);
+            return createHttpValidationErrorResponse(["Data producer did not return a status of true"]);
         }
 
         return {
@@ -134,16 +134,16 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof AxiosError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(["Invalid request to data producer"]);
+            return createHttpValidationErrorResponse(["Invalid request to data producer"]);
         }
 
         if (e instanceof InvalidXmlError) {
@@ -155,6 +155,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             logger.error(e, "There was a problem subscribing to the AVL feed.");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

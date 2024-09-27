@@ -1,7 +1,7 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createValidationErrorResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import { getAvlSubscription, getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
@@ -149,7 +149,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
         if (subscription.status === "inactive") {
             logger.error("Subscription is not live, validation report will not be generated...");
-            return createNotFoundErrorResponse("Subscription is not live");
+            return createHttpNotFoundErrorResponse("Subscription is not live");
         }
 
         const errorData = await getAvlSubscriptionErrorData(validationErrorsTableName, subscriptionId);
@@ -168,7 +168,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof Error) {
@@ -177,9 +177,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

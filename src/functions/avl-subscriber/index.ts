@@ -1,8 +1,9 @@
 import {
-    createConflictErrorResponse,
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpConflictErrorResponse,
+    createHttpCreatedResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import {
@@ -69,7 +70,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (activeSubscription?.status === "live") {
-            return createConflictErrorResponse("Subscription ID already active");
+            return createHttpConflictErrorResponse("Subscription ID already active");
         }
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
@@ -126,29 +127,26 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         logger.info(`Successfully subscribed to data producer: ${avlSubscribeMessage.dataProducerEndpoint}.`);
 
-        return {
-            statusCode: 201,
-            body: "",
-        };
+        return createHttpCreatedResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
             logger.warn(e, "Invalid SIRI-VM XML provided by the data producer");
-            return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
+            return createHttpValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the AVL subscriber endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
