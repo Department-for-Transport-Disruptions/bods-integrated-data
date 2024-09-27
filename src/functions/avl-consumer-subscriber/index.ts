@@ -7,7 +7,10 @@ import {
     createTooManyRequestsResponse,
     createValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
-import { AvlSubscriptionTriggerMessage, getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
+import {
+    AvlSubscriptionTriggerMessage,
+    getAvlConsumerSubscription,
+} from "@bods-integrated-data/shared/avl-consumer/utils";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -15,8 +18,8 @@ import { createSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { createEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { createQueue, getQueueAttributes } from "@bods-integrated-data/shared/sqs";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import {
     InvalidXmlError,
     createBoundingBoxValidation,

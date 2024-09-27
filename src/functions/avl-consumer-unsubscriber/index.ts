@@ -11,11 +11,11 @@ import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
 import { deleteQueue } from "@bods-integrated-data/shared/sqs";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 
 const requestHeadersSchema = z.object({
     userId: createStringLengthValidation("userId header"),

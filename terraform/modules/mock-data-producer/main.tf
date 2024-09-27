@@ -134,7 +134,7 @@ resource "aws_apigatewayv2_deployment" "integrated_data_mock_data_producer_api_d
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_apigatewayv2_route.integrated_data_mock_data_producer_api_route_subscribe),
       jsonencode(aws_apigatewayv2_integration.integrated_data_mock_producer_api_integration_subscribe),
-            jsonencode(aws_apigatewayv2_route.integrated_data_avl_mock_data_receiver_route),
+      jsonencode(aws_apigatewayv2_route.integrated_data_avl_mock_data_receiver_route),
       jsonencode(aws_apigatewayv2_integration.integrated_data_avl_mock_data_receiver_integration),
     ])))
   }
