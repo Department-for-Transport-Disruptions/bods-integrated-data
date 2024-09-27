@@ -1,7 +1,12 @@
+import { QueueDeletedRecently } from "@aws-sdk/client-sqs";
+import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import * as eventBridge from "@bods-integrated-data/shared/eventBridge";
+import * as lambda from "@bods-integrated-data/shared/lambda";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
+import * as sqs from "@bods-integrated-data/shared/sqs";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
@@ -9,9 +14,15 @@ import { handler } from ".";
 const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
 const mockProducerSubscriptionTable = "mock-producer-subscription-table-name";
 const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
-const mockProducerSubscriptionId = "1";
+const mockProducerSubscriptionIds = "1";
 const mockUserId = "mock-user-id";
 const mockRandomId = "999";
+const mockQueueUrl = "https://mockQueueUrl";
+const mockQueueArn = "mockQueueArn";
+const mockSendDataLambdaArn = "mockSendDataLambdaArn";
+const mockEventSourceMappingUuid = "mockEventSourceMappingUuid";
+const mockSubscriptionTriggerLambdaArn = "mockSubscriptionTriggerLambdaArn";
+const mockSubscriptionScheduleRoleArn = "mockSubscriptionScheduleRoleArn";
 
 const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
@@ -45,58 +56,65 @@ describe("avl-consumer-subscriber", () => {
         withLambdaRequestTracker: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/dynamo", () => ({
-        queryDynamo: vi.fn(),
-        putDynamoItem: vi.fn(),
-        recursiveScan: vi.fn(),
-    }));
-
     vi.mock("node:crypto", () => ({
         randomUUID: () => mockRandomId,
     }));
 
-    const queryDynamoSpy = vi.spyOn(dynamo, "queryDynamo");
+    const recursiveQuerySpy = vi.spyOn(dynamo, "recursiveQuery");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
+    const createQueueSpy = vi.spyOn(sqs, "createQueue");
+    const getQueueAttributesSpy = vi.spyOn(sqs, "getQueueAttributes");
+    const createEventSourceMappingSpy = vi.spyOn(lambda, "createEventSourceMapping");
+    const createScheduleSpy = vi.spyOn(eventBridge, "createSchedule");
 
     let mockEvent: APIGatewayProxyEvent;
 
     beforeEach(() => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = mockConsumerSubscriptionTable;
         process.env.AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = mockProducerSubscriptionTable;
+        process.env.AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN = mockSendDataLambdaArn;
+        process.env.AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN = mockSubscriptionTriggerLambdaArn;
+        process.env.AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN = mockSubscriptionScheduleRoleArn;
 
         mockEvent = {
             headers: {
                 userId: mockUserId,
             },
             queryStringParameters: {
-                subscriptionId: mockProducerSubscriptionId,
+                boundingBox: "1,2,3,4",
+                operatorRef: "a,b,c",
+                vehicleRef: "vehicle-ref",
+                lineRef: "line-ref",
+                producerRef: "producer-ref",
+                originRef: "origin-ref",
+                destinationRef: "destination-ref",
+                subscriptionId: mockProducerSubscriptionIds,
             },
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
 
-        queryDynamoSpy.mockResolvedValue([]);
+        recursiveQuerySpy.mockResolvedValue([]);
         recursiveScanSpy.mockResolvedValue([]);
+        putDynamoItemSpy.mockResolvedValue();
+        createQueueSpy.mockResolvedValue(mockQueueUrl);
+        getQueueAttributesSpy.mockResolvedValue({ QueueArn: mockQueueArn });
+        createEventSourceMappingSpy.mockResolvedValue(mockEventSourceMappingUuid);
+        createScheduleSpy.mockResolvedValue("");
     });
 
     afterEach(() => {
         vi.resetAllMocks();
     });
 
-    it("returns a 500 when the required env var AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME is missing", async () => {
-        process.env.AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME = "";
-
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
-
-        expect(logger.error).toHaveBeenCalledWith(
-            expect.any(Error),
-            "There was a problem with the avl-consumer-subscriber endpoint",
-        );
-        expect(putDynamoItemSpy).not.toHaveBeenCalled();
-    });
-
-    it("returns a 500 when the required env var AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME is missing", async () => {
-        process.env.AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = "";
+    it.each([
+        "AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME",
+        "AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME",
+        "AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN",
+        "AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN",
+        "AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN",
+    ])("returns a 500 when the required env var %s is missing", async (input) => {
+        process.env[input] = "";
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
@@ -124,25 +142,64 @@ describe("avl-consumer-subscriber", () => {
     });
 
     it.each([
-        [undefined, "subscriptionId is required"],
         [
-            "1,",
-            "subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs",
+            { subscriptionId: "1," },
+            ["subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs"],
         ],
         [
-            "asdf!",
-            "subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs",
+            { subscriptionId: "asdf!" },
+            ["subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs"],
         ],
-    ])("returns a 400 when the subscriptionId query param is invalid", async (subscriptionId, expectedErrorMessage) => {
-        mockEvent.queryStringParameters = {
-            subscriptionId,
-        };
+        [
+            { subscriptionId: "1", boundingBox: "1234" },
+            [
+                "boundingBox must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude",
+            ],
+        ],
+        [
+            { subscriptionId: "1", operatorRef: "1," },
+            [
+                "operatorRef must be comma-separated values of 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", vehicleRef: "" },
+            [
+                "vehicleRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", lineRef: "" },
+            [
+                "lineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", producerRef: "" },
+            [
+                "producerRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", originRef: "" },
+            [
+                "originRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+        [
+            { subscriptionId: "1", destinationRef: "" },
+            [
+                "destinationRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+            ],
+        ],
+    ])("returns a 400 when the %o query param is invalid", async (params, expectedErrors) => {
+        mockEvent.queryStringParameters = params;
         mockEvent.body = mockRequestBody;
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
-            body: JSON.stringify({ errors: [expectedErrorMessage] }),
+            body: JSON.stringify({ errors: expectedErrors }),
         });
         expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid request");
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
@@ -163,12 +220,51 @@ describe("avl-consumer-subscriber", () => {
     it("returns a 400 when the body is an invalid siri-vm subscription request", async () => {
         mockEvent.body = "invalid xml";
 
+        const errorMessage = 'Validation error: Required at "Siri"';
+
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 400,
-            body: JSON.stringify({ errors: ["Invalid SIRI-VM XML provided"] }),
+            body: JSON.stringify({ errors: [errorMessage] }),
         });
-        expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid SIRI-VM XML provided");
+        expect(logger.warn).toHaveBeenCalledWith(expect.anything(), `Invalid SIRI-VM XML provided: ${errorMessage}`);
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns a 400 when a disallowed UpdateInterval is used", async () => {
+        mockEvent.body = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+  <SubscriptionRequest>
+    <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+    <ConsumerAddress>https://www.test.com/data</ConsumerAddress>
+    <RequestorRef>test</RequestorRef>
+    <MessageIdentifier>123</MessageIdentifier>
+    <SubscriptionContext>
+      <HeartbeatInterval>PT30S</HeartbeatInterval>
+    </SubscriptionContext>
+    <VehicleMonitoringSubscriptionRequest>
+      <SubscriptionIdentifier>${mockConsumerSubscriptionId}</SubscriptionIdentifier>
+      <InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime>
+      <VehicleMonitoringRequest version=\"2.0\">
+        <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+        <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
+      </VehicleMonitoringRequest>
+      <UpdateInterval>PT25S</UpdateInterval>
+    </VehicleMonitoringSubscriptionRequest>
+  </SubscriptionRequest>
+</Siri>
+`;
+        const errorMessage =
+            "Validation error: Invalid enum value. Expected 'PT10S' | 'PT15S' | 'PT20S' | 'PT30S', received 'PT25S' at \"Siri.SubscriptionRequest.VehicleMonitoringSubscriptionRequest.UpdateInterval\"";
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 400,
+            body: JSON.stringify({
+                errors: [errorMessage],
+            }),
+        });
+        expect(logger.warn).toHaveBeenCalledWith(expect.anything(), `Invalid SIRI-VM XML provided: ${errorMessage}`);
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
@@ -183,11 +279,17 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2024-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
+            queueUrl: "",
+            eventSourceMappingUuid: "",
+            scheduleName: "",
+            queryParams: {
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
+        recursiveQuerySpy.mockResolvedValueOnce([consumerSubscription]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
@@ -229,9 +331,36 @@ describe("avl-consumer-subscriber", () => {
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
+    it("returns a 429 when trying to resubscribe to an existing error subscription that was deactivated too recently", async () => {
+        const producerSubscription: AvlSubscription = {
+            PK: mockProducerSubscriptionIds[0],
+            description: "test-description",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "live",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        };
+
+        recursiveScanSpy.mockResolvedValueOnce([producerSubscription]);
+        createQueueSpy.mockRejectedValue(new QueueDeletedRecently({ message: "", $metadata: {} }));
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 429,
+            headers: {
+                "Retry-After": 60,
+            },
+            body: JSON.stringify({ errors: ["Existing subscription is still deactivating, try again later"] }),
+        });
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
     it("returns a 200 and creates a new consumer subscription when the request is valid", async () => {
         const producerSubscription: AvlSubscription = {
-            PK: mockProducerSubscriptionId,
+            PK: mockProducerSubscriptionIds[0],
             description: "test-description",
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
@@ -260,9 +389,59 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
+            queueUrl: mockQueueUrl,
+            eventSourceMappingUuid: mockEventSourceMappingUuid,
+            scheduleName: `consumer-sub-schedule-${mockRandomId}`,
+            queryParams: {
+                boundingBox: [1, 2, 3, 4],
+                operatorRef: ["a", "b", "c"],
+                vehicleRef: "vehicle-ref",
+                lineRef: "line-ref",
+                producerRef: "producer-ref",
+                originRef: "origin-ref",
+                destinationRef: "destination-ref",
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
         };
+
+        expect(createQueueSpy).toHaveBeenCalledWith({
+            QueueName: `consumer-sub-queue-${mockRandomId}`,
+            Attributes: {
+                VisibilityTimeout: "60",
+            },
+        });
+
+        expect(getQueueAttributesSpy).toHaveBeenCalledWith({
+            QueueUrl: mockQueueUrl,
+            AttributeNames: ["QueueArn"],
+        });
+
+        expect(createEventSourceMappingSpy).toHaveBeenCalledWith({
+            EventSourceArn: mockQueueArn,
+            FunctionName: mockSendDataLambdaArn,
+        });
+
+        const queueMessage: AvlSubscriptionTriggerMessage = {
+            subscriptionPK: consumerSubscription.PK,
+            SK: consumerSubscription.SK,
+            frequencyInSeconds: 10,
+            queueUrl: mockQueueUrl,
+        };
+
+        expect(createScheduleSpy).toHaveBeenCalledWith({
+            Name: `consumer-sub-schedule-${mockRandomId}`,
+            FlexibleTimeWindow: {
+                Mode: "OFF",
+            },
+            ScheduleExpression: "rate(1 minute)",
+            Target: {
+                Arn: mockSubscriptionTriggerLambdaArn,
+                RoleArn: mockSubscriptionScheduleRoleArn,
+                Input: JSON.stringify(queueMessage),
+            },
+        });
 
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
             mockConsumerSubscriptionTable,
@@ -274,7 +453,7 @@ describe("avl-consumer-subscriber", () => {
 
     it("returns a 200 and overwrites an existing consumer subscription when the request is valid when resubscribing", async () => {
         const producerSubscription: AvlSubscription = {
-            PK: mockProducerSubscriptionId,
+            PK: mockProducerSubscriptionIds[0],
             description: "test-description",
             lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
@@ -297,11 +476,24 @@ describe("avl-consumer-subscriber", () => {
             heartbeatInterval: "PT30S",
             initialTerminationTime: "2034-03-11T15:20:02.093Z",
             requestTimestamp: "2024-03-11T15:20:02.093Z",
-            producerSubscriptionIds: mockProducerSubscriptionId,
             heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
+            queueUrl: mockQueueUrl,
+            eventSourceMappingUuid: mockEventSourceMappingUuid,
+            scheduleName: `consumer-sub-schedule-${mockRandomId}`,
+            queryParams: {
+                boundingBox: [1, 2, 3, 4],
+                operatorRef: ["a", "b", "c"],
+                vehicleRef: "vehicle-ref",
+                lineRef: "line-ref",
+                producerRef: "producer-ref",
+                originRef: "origin-ref",
+                destinationRef: "destination-ref",
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
         };
 
-        queryDynamoSpy.mockResolvedValueOnce([consumerSubscription]);
+        recursiveQuerySpy.mockResolvedValueOnce([consumerSubscription]);
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({

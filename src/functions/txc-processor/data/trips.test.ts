@@ -1,4 +1,4 @@
-import { KyselyDb, NewTrip, Trip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewTrip, WheelchairAccessibility } from "@bods-integrated-data/shared/database";
 import MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { VehicleJourneyMapping } from "../types";
@@ -103,7 +103,7 @@ describe("trips", () => {
             },
         ];
 
-        insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
+        insertTripsMock.mockImplementation((_dbClient) => Promise.resolve());
 
         const updatedVehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, "");
 
@@ -162,7 +162,7 @@ describe("trips", () => {
             },
         ];
 
-        insertTripsMock.mockImplementation((_dbClient, trips) => Promise.resolve(trips) as Promise<Trip[]>);
+        insertTripsMock.mockImplementation((_dbClient) => Promise.resolve());
 
         await processTrips(dbClient, vehicleJourneyMappings, "");
 

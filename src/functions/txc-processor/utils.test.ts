@@ -3,6 +3,7 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { AbstractTimingLink, Operator, Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { describe, expect, it } from "vitest";
 import {
+    appendRolloverHours,
     getDropOffTypeFromStopActivity,
     getFirstNonZeroDuration,
     getJourneyPatternForVehicleJourney,
@@ -35,7 +36,7 @@ describe("utils", () => {
             ["pickUpAndSetDown", DropOffType.DropOff],
             ["setDown", DropOffType.DropOff],
             ["pass", DropOffType.NoDropOff],
-            [undefined, DropOffType.DropOff],
+            [undefined, DropOffType.NoDropOff],
         ])("returns the correct drop off type for the activity", (input, expected) => {
             const result = getDropOffTypeFromStopActivity(input);
             expect(result).toEqual(expected);
@@ -50,6 +51,12 @@ describe("utils", () => {
         ])("returns the correct time point for the timing status", (input, expected) => {
             const result = getTimepointFromTimingStatus(input);
             expect(result).toEqual(expected);
+        });
+    });
+
+    describe("appendRolloverHours", () => {
+        it("appends over 24 hours correctly", () => {
+            expect(appendRolloverHours("00:00:00", 1)).toEqual("24:00:00");
         });
     });
 
@@ -198,6 +205,133 @@ describe("utils", () => {
             const result = mapTimingLinksToStopTimes("trip_id", vehicleJourney, journeyPatternTimingLinks);
             expect(result).toEqual(expected);
         });
+
+        it("returns an empty array when there are no timing links", () => {
+            const vehicleJourney: VehicleJourney = {
+                DepartureTime: "00:00:00",
+                JourneyPatternRef: "",
+                LineRef: "",
+                ServiceRef: "",
+                VehicleJourneyCode: "1",
+            };
+
+            const result = mapTimingLinksToStopTimes("trip_id", vehicleJourney, []);
+            expect(result).toHaveLength(0);
+        });
+
+        it("correctly sets arrival times and departure times when a service day exceeds 24:00:00", () => {
+            const vehicleJourney: VehicleJourney = {
+                DepartureTime: "00:00:00",
+                JourneyPatternRef: "",
+                LineRef: "",
+                ServiceRef: "",
+                VehicleJourneyCode: "1",
+                VehicleJourneyTimingLink: [
+                    {
+                        JourneyPatternTimingLinkRef: "1",
+                    },
+                ],
+            };
+
+            const journeyPatternTimingLinks: AbstractTimingLink[] = [
+                {
+                    "@_id": "1",
+                    From: {
+                        StopPointRef: "1",
+                        Activity: "pickUp",
+                        TimingStatus: "principalTimingPoint",
+                    },
+                    To: {
+                        StopPointRef: "2",
+                    },
+                    RunTime: "PT24H",
+                },
+                {
+                    "@_id": "2",
+                    From: {
+                        StopPointRef: "2",
+                        Activity: "pickUpAndSetDown",
+                        TimingStatus: "principalTimingPoint",
+                    },
+                    To: {
+                        StopPointRef: "3",
+                    },
+                    RunTime: "PT25H",
+                },
+                {
+                    "@_id": "3",
+                    From: {
+                        StopPointRef: "3",
+                        Activity: "pickUpAndSetDown",
+                        TimingStatus: "timeInfoPoint",
+                    },
+                    To: {
+                        StopPointRef: "4",
+                        Activity: "setDown",
+                        TimingStatus: "timeInfoPoint",
+                    },
+                    RunTime: "PT15S",
+                },
+            ];
+
+            const expected: NewStopTime[] = [
+                {
+                    trip_id: "trip_id",
+                    stop_id: "1",
+                    destination_stop_id: "2",
+                    arrival_time: "00:00:00",
+                    departure_time: "00:00:00",
+                    stop_sequence: 0,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.NoDropOff,
+                    shape_dist_traveled: 0,
+                    timepoint: Timepoint.Exact,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "2",
+                    destination_stop_id: "3",
+                    arrival_time: "24:00:00",
+                    departure_time: "24:00:00",
+                    stop_sequence: 1,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: 0,
+                    timepoint: Timepoint.Exact,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "3",
+                    destination_stop_id: "4",
+                    arrival_time: "49:00:00",
+                    departure_time: "49:00:00",
+                    stop_sequence: 2,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: 0,
+                    timepoint: Timepoint.Approximate,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "4",
+                    destination_stop_id: "",
+                    arrival_time: "49:00:15",
+                    departure_time: "49:00:15",
+                    stop_sequence: 3,
+                    stop_headsign: "",
+                    pickup_type: PickupType.NoPickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: 0,
+                    timepoint: Timepoint.Approximate,
+                },
+            ];
+
+            const result = mapTimingLinksToStopTimes("trip_id", vehicleJourney, journeyPatternTimingLinks);
+            expect(result).toEqual(expected);
+        });
     });
 
     describe("mapTimingLinkToStopTime", () => {
@@ -208,7 +342,14 @@ describe("utils", () => {
             };
 
             expect(() =>
-                mapTimingLinkToStopTime("from", currentDepartureTime, "trip_id", 0, journeyPatternTimingLink),
+                mapTimingLinkToStopTime(
+                    "from",
+                    currentDepartureTime,
+                    currentDepartureTime,
+                    "trip_id",
+                    0,
+                    journeyPatternTimingLink,
+                ),
             ).toThrowError(
                 `Missing stop point ref for journey pattern timing link with ref: ${journeyPatternTimingLink["@_id"]}`,
             );
@@ -241,6 +382,7 @@ describe("utils", () => {
 
             const result = mapTimingLinkToStopTime(
                 "from",
+                currentDepartureTime,
                 currentDepartureTime,
                 "trip_id",
                 0,
@@ -279,6 +421,7 @@ describe("utils", () => {
             const result = mapTimingLinkToStopTime(
                 "to",
                 currentDepartureTime,
+                currentDepartureTime,
                 "trip_id",
                 0,
                 {},
@@ -314,7 +457,14 @@ describe("utils", () => {
                 timepoint: Timepoint.Exact,
             };
 
-            const result = mapTimingLinkToStopTime("to", currentDepartureTime, "trip_id", 0, journeyPatternTimingLink);
+            const result = mapTimingLinkToStopTime(
+                "to",
+                currentDepartureTime,
+                currentDepartureTime,
+                "trip_id",
+                0,
+                journeyPatternTimingLink,
+            );
 
             expect(result.nextArrivalTime.format("HH:mm:ss")).toEqual("00:01:00");
             expect(result.stopTime).toEqual(stopTime);
@@ -347,6 +497,7 @@ describe("utils", () => {
 
             const result = mapTimingLinkToStopTime(
                 "from",
+                currentDepartureTime,
                 currentDepartureTime,
                 "trip_id",
                 0,
@@ -386,6 +537,7 @@ describe("utils", () => {
 
             const result = mapTimingLinkToStopTime(
                 "from",
+                currentDepartureTime,
                 currentDepartureTime,
                 "trip_id",
                 0,

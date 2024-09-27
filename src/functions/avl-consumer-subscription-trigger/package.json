@@ -1,0 +1,24 @@
+{
+    "name": "@bods-integrated-data/avl-consumer-subscription-trigger",
+    "version": "0.1.0",
+    "description": "Trigger consumer subscription data sender",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-consumer-subscription-trigger.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-consumer-subscription-trigger.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@aws-sdk/client-sqs": "^3.649.0",
+        "@bods-integrated-data/shared": "workspace:^",
+        "zod": "^3.23.8",
+        "zod-validation-error": "^3.3.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

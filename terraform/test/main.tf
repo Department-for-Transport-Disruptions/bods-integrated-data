@@ -210,6 +210,7 @@ module "integrated_data_avl_pipeline" {
 
   environment                                 = local.env
   vpc_id                                      = module.integrated_data_vpc.vpc_id
+  sg_id                                       = module.integrated_data_vpc.default_sg_id
   private_subnet_ids                          = module.integrated_data_vpc.private_subnet_ids
   db_secret_arn                               = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                                    = module.integrated_data_aurora_db.db_sg_id
@@ -356,4 +357,16 @@ module "integrated_data_cancellations_data_producer_api" {
   cancellations_producer_api_key = local.secrets["cancellations_producer_api_key"]
   sg_id                          = module.integrated_data_vpc.default_sg_id
   subnet_ids                     = module.integrated_data_vpc.private_subnet_ids
+}
+
+module "integrated_data_avl_datadog" {
+  source = "../modules/avl-datadog-monitoring"
+
+  environment     = local.env
+  datadog_api_key = local.secrets["datadog_api_key"]
+  datadog_app_key = local.secrets["datadog_app_key"]
+  project_name    = "integrated-data-avl"
+  thresholds      = {}
+  recovery        = {}
+  opt_out         = []
 }

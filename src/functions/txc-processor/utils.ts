@@ -32,12 +32,21 @@ export const getDropOffTypeFromStopActivity = (activity?: string) => {
         case "pass":
             return DropOffType.NoDropOff;
         default:
-            return DropOffType.DropOff;
+            return DropOffType.NoDropOff;
     }
 };
 
 export const getTimepointFromTimingStatus = (timingStatus?: string) => {
     return timingStatus === "principalTimingPoint" ? Timepoint.Exact : Timepoint.Approximate;
+};
+
+export const appendRolloverHours = (timeString: string, daysPastInitialServiceDay: number) => {
+    const [hoursString] = timeString.split(":");
+
+    let hours = Number.parseInt(hoursString);
+    hours += daysPastInitialServiceDay * 24;
+
+    return timeString.replace(hoursString, hours.toString());
 };
 
 /**
@@ -54,12 +63,13 @@ export const mapTimingLinksToStopTimes = (
     vehicleJourney: VehicleJourney,
     journeyPatternTimingLinks: AbstractTimingLink[],
 ): NewStopTime[] => {
-    let currentStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
+    const initialStopDepartureTime = getDateWithCustomFormat(vehicleJourney.DepartureTime, "HH:mm:ss");
 
-    if (!currentStopDepartureTime.isValid()) {
+    if (!initialStopDepartureTime.isValid()) {
         throw new Error(`Invalid departure time in vehicle journey with code: ${vehicleJourney.VehicleJourneyCode}`);
     }
 
+    let currentStopDepartureTime = initialStopDepartureTime.clone();
     let sequenceNumber = 0;
 
     return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
@@ -69,6 +79,7 @@ export const mapTimingLinksToStopTimes = (
 
         const { nextArrivalTime, stopTime } = mapTimingLinkToStopTime(
             "from",
+            initialStopDepartureTime,
             currentStopDepartureTime,
             tripId,
             sequenceNumber,
@@ -88,6 +99,7 @@ export const mapTimingLinksToStopTimes = (
         if (index === journeyPatternTimingLinks.length - 1) {
             const { stopTime: finalStopTime } = mapTimingLinkToStopTime(
                 "to",
+                initialStopDepartureTime,
                 currentStopDepartureTime,
                 tripId,
                 sequenceNumber,
@@ -108,6 +120,7 @@ export const mapTimingLinksToStopTimes = (
  * Map a timing link to a stop time. Either the From or To stop usage activity is used depending on the `stopUsageType`.
  * A run time will optionally be returned if it can be calculated.
  * @param stopUsageType Which stop usage to use (from or to)
+ * @param initialStopDepartureTime Initial stop departure time
  * @param currentStopDepartureTime Current stop departure time
  * @param tripId Trip ID
  * @param sequenceNumber Current sequence number
@@ -117,6 +130,7 @@ export const mapTimingLinksToStopTimes = (
  */
 export const mapTimingLinkToStopTime = (
     stopUsageType: "from" | "to",
+    initialStopDepartureTime: Dayjs,
     currentStopDepartureTime: Dayjs,
     tripId: string,
     sequenceNumber: number,
@@ -178,14 +192,23 @@ export const mapTimingLinkToStopTime = (
         nextArrivalTime = nextArrivalTime.add(runTime);
     }
 
+    let arrivalTimeString = arrivalTime.format("HH:mm:ss");
+    let departureTimeString = departureTime.format("HH:mm:ss");
+    const daysPastInitialServiceDay = currentStopDepartureTime.diff(initialStopDepartureTime, "day");
+
+    if (daysPastInitialServiceDay > 0) {
+        arrivalTimeString = appendRolloverHours(arrivalTimeString, daysPastInitialServiceDay);
+        departureTimeString = appendRolloverHours(departureTimeString, daysPastInitialServiceDay);
+    }
+
     return {
         nextArrivalTime,
         stopTime: {
             trip_id: tripId,
             stop_id: stopPointRef,
             destination_stop_id: destinationStopPointRef,
-            arrival_time: arrivalTime.format("HH:mm:ss"),
-            departure_time: departureTime.format("HH:mm:ss"),
+            arrival_time: arrivalTimeString,
+            departure_time: departureTimeString,
             stop_sequence: sequenceNumber,
             stop_headsign: "",
             pickup_type: getPickupTypeFromStopActivity(activity),

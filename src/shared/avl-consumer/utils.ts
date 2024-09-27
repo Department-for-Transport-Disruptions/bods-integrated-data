@@ -1,4 +1,5 @@
-import { queryDynamo } from "../dynamo";
+import { z } from "zod";
+import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import {
     AvlConsumerSubscription,
     AvlSubscriptionStatus,
@@ -6,11 +7,36 @@ import {
     avlConsumerSubscriptionsSchema,
 } from "../schema";
 import { SubscriptionIdNotFoundError } from "../utils";
+import { createStringLengthValidation } from "../validation";
 
-export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
-    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
+export const subscriptionTriggerMessageSchema = z.object({
+    subscriptionPK: z.string(),
+    SK: z.string(),
+    frequencyInSeconds: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
+    queueUrl: z.string().url(),
+});
+
+export type AvlSubscriptionTriggerMessage = z.infer<typeof subscriptionTriggerMessageSchema>;
+
+export const subscriptionDataSenderMessageSchema = z
+    .string()
+    .transform((body) => JSON.parse(body))
+    .pipe(
+        z.object({
+            subscriptionPK: createStringLengthValidation("subscriptionPK"),
+            SK: createStringLengthValidation("SK"),
+        }),
+    );
+
+export type AvlSubscriptionDataSenderMessage = z.infer<typeof subscriptionDataSenderMessageSchema>;
+
+export const getAvlConsumerSubscriptionsByStatus = async (tableName: string, status: AvlSubscriptionStatus) => {
+    const subscriptions = await recursiveScan<AvlConsumerSubscription>({
         TableName: tableName,
-        FilterExpression: "status = :status",
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: {
+            "#status": "status",
+        },
         ExpressionAttributeValues: {
             ":status": status,
         },
@@ -19,8 +45,18 @@ export const getAvlConsumerSubscriptions = async (tableName: string, status: Avl
     return avlConsumerSubscriptionsSchema.parse(subscriptions);
 };
 
+export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: string, SK: string) => {
+    const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, { PK, SK });
+
+    if (!subscription) {
+        throw new SubscriptionIdNotFoundError(`Subscription PK: ${PK} not found in DynamoDB`);
+    }
+
+    return avlConsumerSubscriptionSchema.parse(subscription);
+};
+
 export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {
-    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
+    const subscriptions = await recursiveQuery<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
         KeyConditionExpression: "subscriptionId = :subscriptionId AND SK = :SK",

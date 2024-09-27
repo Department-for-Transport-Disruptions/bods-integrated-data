@@ -44,6 +44,14 @@ export const createConflictErrorResponse = (error: string): APIGatewayProxyResul
     };
 };
 
+export const createTooManyRequestsResponse = (error: string, retryAfter?: number): APIGatewayProxyResult => {
+    return {
+        statusCode: 429,
+        headers: retryAfter ? { "Retry-After": retryAfter } : undefined,
+        body: JSON.stringify({ errors: [error] }),
+    };
+};
+
 export const createServerErrorResponse = (error?: string): APIGatewayProxyResult => {
     throw new Error(error || "An unexpected error occurred");
 };
