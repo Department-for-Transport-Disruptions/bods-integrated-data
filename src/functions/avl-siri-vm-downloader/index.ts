@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import {
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
@@ -161,18 +161,18 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         if (e instanceof ZodError) {
             logger.warn(`Invalid request: ${JSON.stringify(event.queryStringParameters)}`);
             logger.warn(e);
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the SIRI-VM downloader endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
 

@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import {
-    createConflictErrorResponse,
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createSuccessResponse,
-    createTooManyRequestsResponse,
-    createValidationErrorResponse,
+    createHttpConflictErrorResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpSuccessResponse,
+    createHttpTooManyRequestsErrorResponse,
+    createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
     AvlSubscriptionTriggerMessage,
@@ -126,7 +126,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             );
 
             if (subscription.status === "live") {
-                return createConflictErrorResponse("Consumer subscription ID is already live");
+                return createHttpConflictErrorResponse("Consumer subscription ID is already live");
             }
 
             PK = subscription.PK;
@@ -146,7 +146,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             const subscription = producerSubscriptions.find(({ PK }) => PK === producerSubscriptionId);
 
             if (!subscription || subscription.status === "inactive") {
-                return createNotFoundErrorResponse(`Producer subscription ID not found: ${producerSubscriptionId}`);
+                return createHttpNotFoundErrorResponse(`Producer subscription ID not found: ${producerSubscriptionId}`);
             }
         }
 
@@ -229,23 +229,23 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             cleanDeep(consumerSubscription, { emptyStrings: false }),
         );
 
-        return createSuccessResponse();
+        return createHttpSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidXmlError) {
             logger.warn(e, `Invalid SIRI-VM XML provided: ${e.message}`);
-            return createValidationErrorResponse([e.message]);
+            return createHttpValidationErrorResponse([e.message]);
         }
 
         if (e instanceof Error) {
             // Our AWS package versions do not support instanceof exception checks
             if (e.name === "QueueDeletedRecently") {
                 logger.warn(e, "Queue deleted too recently when trying to resubscribe");
-                return createTooManyRequestsResponse(
+                return createHttpTooManyRequestsErrorResponse(
                     "Existing subscription is still deactivating, try again later",
                     60,
                 );
@@ -254,6 +254,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             logger.error(e, "There was a problem with the avl-consumer-subscriber endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

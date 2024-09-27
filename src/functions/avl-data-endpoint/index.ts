@@ -1,9 +1,9 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createSuccessResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpSuccessResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -114,7 +114,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         const { subscriptionId } = requestParamsSchema.parse(parameters);
 
         if (subscriptionId === "health") {
-            return createSuccessResponse();
+            return createHttpSuccessResponse();
         }
 
         logger.subscriptionId = subscriptionId;
@@ -131,12 +131,12 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
 
         if (xml?.Siri?.HeartbeatNotification) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
-            return createSuccessResponse();
+            return createHttpSuccessResponse();
         }
 
         if (subscription.status === "inactive") {
             logger.error("Subscription is inactive, data will not be processed...", { subscriptionId });
-            return createNotFoundErrorResponse("Subscription is inactive");
+            return createHttpNotFoundErrorResponse("Subscription is inactive");
         }
 
         if (
@@ -145,31 +145,31 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
                 xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "")
         ) {
             logger.warn("Received location data with no Vehicle Activity from data producer, data will be ignored...");
-            return createSuccessResponse();
+            return createHttpSuccessResponse();
         }
 
         await uploadSiriVmToS3(body, bucketName, subscription, tableName);
-        return createSuccessResponse();
+        return createHttpSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
             logger.warn(e, "Unauthorized request");
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the Data endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

@@ -177,8 +177,6 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
 
     const subscriptionResponseBody = subscriptionResponse.data;
 
-    logger.info(subscriptionResponseBody);
-
     if (!subscriptionResponseBody) {
         await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
         throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
