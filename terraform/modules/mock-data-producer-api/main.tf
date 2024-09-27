@@ -26,7 +26,7 @@ module "integrated_data_mock_data_producer_send_data" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
@@ -57,7 +57,7 @@ module "integrated_data_mock_data_producer_send_heartbeat" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
@@ -151,18 +151,6 @@ resource "aws_lambda_permission" "integrated_data_mock_producer_api_subscribe_pe
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_mock_producer_api[0].execution_arn}/${aws_apigatewayv2_stage.integrated_data_mock_producer_api_stage[0].name}/*"
-}
-
-output "subscribe_function_url" {
-  description = "Function URL for subscribe lambda for local deployment"
-  value = (var.environment == "local" ?
-  aws_lambda_function_url.integrated_data_mock_producer_subscribe_function_url[0].function_url : null)
-}
-
-output "endpoint" {
-  description = "HTTP API endpoint URL"
-  value = (var.environment == "local" ? null :
-  aws_apigatewayv2_api.integrated_data_mock_producer_api[0].api_endpoint)
 }
 
 module "integrated_data_mock_data_receiver" {

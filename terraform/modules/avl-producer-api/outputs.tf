@@ -3,7 +3,7 @@ output "avl_data_endpoint_function_name" {
 }
 
 output "data_endpoint_function_url" {
-  value = aws_lambda_function_url.avl_data_endpoint_function_url[0].function_url
+  value = aws_lambda_function_url.avl_data_endpoint_function_url.function_url
 }
 
 output "endpoint" {
