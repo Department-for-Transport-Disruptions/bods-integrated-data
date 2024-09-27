@@ -83,6 +83,7 @@ module "integrated_data_mock_data_producer_subscribe" {
   timeout       = 120
 }
 
+
 resource "aws_lambda_function_url" "integrated_data_mock_producer_subscribe_function_url" {
   count              = var.environment == "local" ? 1 : 0
   function_name      = module.integrated_data_mock_data_producer_subscribe.function_name
@@ -164,12 +165,12 @@ output "endpoint" {
   aws_apigatewayv2_api.integrated_data_mock_producer_api[0].api_endpoint)
 }
 
-module "avl_mock_data_receiver" {
-  source = "../../shared/lambda-function"
+module "integrated_data_mock_data_receiver" {
+  source = "../shared/lambda-function"
 
   environment   = var.environment
-  function_name = "integrated-data-avl-mock-data-receiver"
-  zip_path      = "${path.module}/../../../../src/functions/dist/avl-mock-data-receiver.zip"
+  function_name = "integrated-data-mock-data-receiver"
+  zip_path      = "${path.module}/../../../src/functions/dist/mock-data-receiver.zip"
   handler       = "index.handler"
   memory        = 128
   runtime       = "nodejs20.x"
@@ -179,30 +180,30 @@ module "avl_mock_data_receiver" {
 resource "aws_lambda_function_url" "avl_mock_data_receiver_url" {
   count = var.environment == "local" ? 1 : 0
 
-  function_name      = module.avl_mock_data_receiver.function_name
+  function_name      = module.integrated_data_mock_data_receiver.function_name
   authorization_type = "NONE"
 }
 
 resource "aws_apigatewayv2_integration" "integrated_data_avl_mock_data_receiver_integration" {
   count                  = var.environment == "local" ? 0 : 1
-  api_id                 = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
+  api_id                 = aws_apigatewayv2_api.integrated_data_mock_producer_api[0].id
   integration_type       = "AWS_PROXY"
-  integration_uri        = module.avl_mock_data_receiver.invoke_arn
+  integration_uri        = module.integrated_data_mock_data_receiver.invoke_arn
   integration_method     = "POST"
   payload_format_version = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "integrated_data_avl_mock_data_receiver_route" {
   count     = var.environment == "local" ? 0 : 1
-  api_id    = aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].id
+  api_id    = aws_apigatewayv2_api.integrated_data_mock_producer_api[0].id
   route_key = "POST /data"
   target    = "integrations/${aws_apigatewayv2_integration.integrated_data_avl_mock_data_receiver_integration[0].id}"
 }
 
-resource "aws_lambda_permission" "integrated_data_avl_mock_data_receiver_permissions" {
+resource "aws_lambda_permission" "integrated_data_mock_data_receiver_permissions" {
   count         = var.environment == "local" ? 0 : 1
-  function_name = module.avl_mock_data_receiver.function_name
+  function_name = module.integrated_data_mock_data_receiver.function_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.integrated_data_mock_avl_producer_api[0].execution_arn}/${aws_apigatewayv2_stage.integrated_data_mock_avl_producer_api_stage[0].name}/*"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_mock_producer_api[0].execution_arn}/${aws_apigatewayv2_stage.integrated_data_mock_producer_api_stage[0].name}/*"
 }
