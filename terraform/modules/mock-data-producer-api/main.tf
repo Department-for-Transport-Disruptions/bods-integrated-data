@@ -26,7 +26,7 @@ module "integrated_data_mock_data_producer_send_data" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
@@ -57,7 +57,7 @@ module "integrated_data_mock_data_producer_send_heartbeat" {
       Action = [
         "dynamodb:Scan",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
       ]
