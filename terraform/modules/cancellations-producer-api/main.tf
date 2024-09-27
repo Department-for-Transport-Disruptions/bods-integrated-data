@@ -38,7 +38,7 @@ module "cancellations_subscriber" {
   cancellations_subscription_table_name = module.integrated_data_cancellations_subscription_table.table_name
   mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
     var.mock_data_producer_subscribe_function_url :
-    "${var.mock_data_producer_api_endpoint}/subscriptions")
+  "${var.mock_data_producer_api_endpoint}/subscriptions")
 }
 
 module "cancellations_unsubscriber" {

@@ -4,7 +4,7 @@
     "description": "",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./cancellations-unsubscriber.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-unsubscriber.zip ../dist/cancellations-unsubscriber.zip",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/cancellations-unsubscriber.zip ../dist/cancellations-unsubscriber.zip",
         "test": "vitest run"
     },
     "keywords": [],

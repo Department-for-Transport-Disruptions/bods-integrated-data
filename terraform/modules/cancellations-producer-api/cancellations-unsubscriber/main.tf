@@ -25,11 +25,11 @@ module "cancellations_unsubscriber" {
 
   permissions = [
     {
-      Action   = ["ssm:GetParameter", "ssm:DeleteParameters"],
-      Effect   = "Allow",
+      Action = ["ssm:GetParameter", "ssm:DeleteParameters"],
+      Effect = "Allow",
       Resource = [
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription/*",
-        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/subscription*"
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/cancellations/subscription/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/cancellations/subscription*"
       ]
     },
     {
@@ -41,7 +41,7 @@ module "cancellations_unsubscriber" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         var.cancellations_producer_api_key_arn
       ]

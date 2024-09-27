@@ -17,7 +17,10 @@ export const resubscribeToDataProducer = async (
 ) => {
     logger.info(`Attempting to resubscribe to subscription ID: ${subscription.PK}`);
 
-    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscription.PK);
+    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(
+        subscription.PK,
+        "avl",
+    );
 
     if (!subscriptionUsername || !subscriptionPassword) {
         throw new Error(
