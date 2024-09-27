@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/avl-mock-data-producer-send-data",
+    "name": "@bods-integrated-data/mock-data-producer-send-data",
     "version": "0.1.0",
-    "description": "Function to send mock AVL data to our AVL data consumer",
+    "description": "Function to send mock data to our data consumers",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-mock-data-producer-send-heartbeat.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-mock-data-producer-send-heartbeat.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./mock-data-producer-send-data.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/mock-data-producer-send-data.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],

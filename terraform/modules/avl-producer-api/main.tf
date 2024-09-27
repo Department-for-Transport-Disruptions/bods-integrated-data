@@ -41,21 +41,8 @@ module "avl_data_endpoint" {
 }
 
 resource "aws_lambda_function_url" "avl_data_endpoint_function_url" {
-  count              = var.environment == "local" ? 1 : 0
   function_name      = module.avl_data_endpoint.function_name
   authorization_type = "NONE"
-}
-
-module "avl_mock_data_producer" {
-  source = "./mock-data-producer"
-
-  environment = var.environment
-  avl_consumer_data_endpoint = (var.environment == "local" ?
-    aws_lambda_function_url.avl_data_endpoint_function_url[0].function_url :
-  "https://${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
-  avl_subscription_table_name = var.avl_subscription_table_name
-  aws_account_id              = var.aws_account_id
-  aws_region                  = var.aws_region
 }
 
 module "avl_subscriber" {
@@ -64,8 +51,8 @@ module "avl_subscriber" {
   environment                 = var.environment
   avl_subscription_table_name = var.avl_subscription_table_name
   avl_mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
-    module.avl_mock_data_producer.subscribe_function_url :
-  "${module.avl_mock_data_producer.endpoint}/subscriptions")
+    var.mock_data_producer_subscribe_function_url :
+  "${var.mock_data_producer_api_endpoint}/subscriptions")
   avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/subscriptions" :
   "https://${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
   avl_internal_data_endpoint = var.internal_data_endpoint
@@ -99,8 +86,8 @@ module "avl_update_endpoint" {
 
   avl_subscription_table_name = var.avl_subscription_table_name
   avl_mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
-    module.avl_mock_data_producer.subscribe_function_url :
-  "${module.avl_mock_data_producer.endpoint}/subscriptions")
+    var.mock_data_producer_subscribe_function_url :
+  "${var.mock_data_producer_api_endpoint}/subscriptions")
   avl_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/subscriptions" :
   "https://${module.avl_producer_api_gateway[0].endpoint}/subscriptions")
   avl_internal_data_endpoint = var.internal_data_endpoint

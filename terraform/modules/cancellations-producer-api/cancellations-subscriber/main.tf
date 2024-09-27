@@ -26,6 +26,14 @@ module "cancellations_subscriber" {
 
   permissions = [
     {
+      Action = "ssm:PutParameter",
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/cancellations/subscription/*",
+        "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/cancellations/subscription*"
+      ]
+    },
+    {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
@@ -33,11 +41,24 @@ module "cancellations_subscriber" {
       Resource = [
         var.cancellations_producer_api_key_arn
       ]
-    }
+    },
+    {
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.cancellations_subscription_table_name}"
+
+    },
   ]
 
 
   env_vars = {
-    STAGE = var.environment
+    STAGE                              = var.environment
+    TABLE_NAME                         = var.cancellations_subscription_table_name
+    MOCK_PRODUCER_SUBSCRIBE_ENDPOINT   = var.mock_data_producer_subscribe_endpoint
+    DATA_ENDPOINT                      = var.cancellations_data_endpoint
+    CANCELLATIONS_PRODUCER_API_KEY_ARN = var.cancellations_producer_api_key_arn
   }
 }

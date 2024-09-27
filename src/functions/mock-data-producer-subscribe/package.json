@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/avl-mock-data-producer-subscribe",
+    "name": "@bods-integrated-data/mock-data-producer-subscribe",
     "version": "0.1.0",
-    "description": "Subscribe endpoint for the mock AVL data producer",
+    "description": "Subscribe endpoint for the mock data producer",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-mock-data-producer-subscribe.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-mock-data-producer-subscribe.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./mock-data-producer-subscribe.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/mock-data-producer-subscribe.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],

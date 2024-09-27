@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { avlSubscriptionStatuses } from "../constants";
+import { subscriptionStatuses } from "../constants";
 import { createStringLengthValidation } from "../validation";
 
 export const avlSubscribeMessageSchema = z.object(
@@ -72,7 +72,7 @@ export const avlSubscriptionResponseSchema = z.object({
 
 export type AvlSubscriptionResponse = z.infer<typeof avlSubscriptionResponseSchema>;
 
-export const avlSubscriptionStatusesSchema = z.enum(avlSubscriptionStatuses);
+export const avlSubscriptionStatusesSchema = z.enum(subscriptionStatuses);
 
 export type AvlSubscriptionStatus = z.infer<typeof avlSubscriptionStatusesSchema>;
 

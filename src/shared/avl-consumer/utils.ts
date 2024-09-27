@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { SubscriptionIdNotFoundError } from "../avl/utils";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import {
     AvlConsumerSubscription,
@@ -7,6 +6,7 @@ import {
     avlConsumerSubscriptionSchema,
     avlConsumerSubscriptionsSchema,
 } from "../schema";
+import { SubscriptionIdNotFoundError } from "../utils";
 import { createStringLengthValidation } from "../validation";
 
 export const subscriptionTriggerMessageSchema = z.object({

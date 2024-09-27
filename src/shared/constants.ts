@@ -97,7 +97,7 @@ export const REGIONS: Record<
 };
 
 export const tflOperatorRef = "TFLO";
-export const avlSubscriptionStatuses = ["live", "error", "inactive"] as const;
+export const subscriptionStatuses = ["live", "error", "inactive"] as const;
 export const avlValidationErrorLevels = ["CRITICAL", "NON-CRITICAL"] as const;
 
 export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidationErrorLevels)[number]> = {

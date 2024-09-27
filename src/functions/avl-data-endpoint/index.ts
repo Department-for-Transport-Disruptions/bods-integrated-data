@@ -1,11 +1,11 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createSuccessResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpSuccessResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
-import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -15,7 +15,7 @@ import {
     HeartbeatNotification,
     heartbeatNotificationSchema,
 } from "@bods-integrated-data/shared/schema";
-import { isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError, isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { ALBEvent, ALBHandler, APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -99,18 +99,22 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
-        const pathParams = isApiGatewayEvent(event)
-            ? event.pathParameters
-            : {
-                  subscriptionId: event.path.split("/")[1],
-              };
+        let pathParams = null;
+
+        if (stage !== "local") {
+            pathParams = isApiGatewayEvent(event)
+                ? event.pathParameters
+                : {
+                      subscriptionId: event.path.split("/")[1],
+                  };
+        }
 
         const parameters = stage === "local" ? event.queryStringParameters : pathParams;
 
         const { subscriptionId } = requestParamsSchema.parse(parameters);
 
         if (subscriptionId === "health") {
-            return createSuccessResponse();
+            return createHttpSuccessResponse();
         }
 
         logger.subscriptionId = subscriptionId;
@@ -127,12 +131,12 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
 
         if (xml?.Siri?.HeartbeatNotification) {
             await processHeartbeatNotification(heartbeatNotificationSchema.parse(xml), subscription, tableName);
-            return createSuccessResponse();
+            return createHttpSuccessResponse();
         }
 
         if (subscription.status === "inactive") {
             logger.error("Subscription is inactive, data will not be processed...", { subscriptionId });
-            return createNotFoundErrorResponse("Subscription is inactive");
+            return createHttpNotFoundErrorResponse("Subscription is inactive");
         }
 
         if (
@@ -141,31 +145,31 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
                 xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "")
         ) {
             logger.warn("Received location data with no Vehicle Activity from data producer, data will be ignored...");
-            return createSuccessResponse();
+            return createHttpSuccessResponse();
         }
 
         await uploadSiriVmToS3(body, bucketName, subscription, tableName);
-        return createSuccessResponse();
+        return createHttpSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
             logger.warn(e, "Unauthorized request");
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the Data endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
