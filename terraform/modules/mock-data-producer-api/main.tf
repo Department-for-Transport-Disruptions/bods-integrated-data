@@ -29,14 +29,17 @@ module "integrated_data_mock_data_producer_send_data" {
       Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.cancellations_subscription_table_name}",
       ]
     }
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    DATA_ENDPOINT = var.avl_consumer_data_endpoint
-    TABLE_NAME    = var.avl_subscription_table_name
+    STAGE                       = var.environment
+    AVL_DATA_ENDPOINT           = var.avl_consumer_data_endpoint
+    AVL_TABLE_NAME              = var.avl_subscription_table_name
+    CANCELLATIONS_DATA_ENDPOINT = var.cancellations_consumer_data_endpoint
+    CANCELLATIONS_TABLE_NAME    = var.cancellations_subscription_table_name
   }
 }
 
@@ -60,14 +63,17 @@ module "integrated_data_mock_data_producer_send_heartbeat" {
       Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.cancellations_subscription_table_name}",
       ]
     }
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    DATA_ENDPOINT = var.avl_consumer_data_endpoint
-    TABLE_NAME    = var.avl_subscription_table_name
+    STAGE                       = var.environment
+    AVL_DATA_ENDPOINT           = var.avl_consumer_data_endpoint
+    AVL_TABLE_NAME              = var.avl_subscription_table_name
+    CANCELLATIONS_DATA_ENDPOINT = var.cancellations_consumer_data_endpoint
+    CANCELLATIONS_TABLE_NAME    = var.cancellations_subscription_table_name
   }
 }
 

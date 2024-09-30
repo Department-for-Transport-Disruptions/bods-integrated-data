@@ -34,7 +34,7 @@ module "cancellations_subscriber" {
   sg_id                                 = var.sg_id
   subnet_ids                            = var.subnet_ids
   cancellations_producer_api_key_arn    = aws_secretsmanager_secret.cancellations_producer_api_key_secret.arn
-  cancellations_data_endpoint           = "https://www.test.com"
+  cancellations_data_endpoint           = "https://www.test.com" # todo - update this once data endpoint is made
   cancellations_subscription_table_name = module.integrated_data_cancellations_subscription_table.table_name
   mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
     var.mock_data_producer_subscribe_function_url :
@@ -64,4 +64,9 @@ module "cancellations_producer_api_gateway" {
   subscribe_lambda_name         = module.cancellations_subscriber.lambda_name
   unsubscribe_lambda_invoke_arn = module.cancellations_unsubscriber.invoke_arn
   unsubscribe_lambda_name       = module.cancellations_unsubscriber.lambda_name
+}
+
+resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
+  function_name      = "https://www.test.com" # todo - update this once data endpoint is made
+  authorization_type = "NONE"
 }
