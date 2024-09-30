@@ -1,4 +1,5 @@
 import { getAvlSubscriptions, getSiriVmValidUntilTimeOffset } from "@bods-integrated-data/shared/avl/utils";
+import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/cancellations/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema";
@@ -24,9 +25,9 @@ const getAvlRequestPromises = (
                 ? `${dataEndpoint}?subscriptionId=${subscription.PK}&apiKey=${subscription.apiKey}`
                 : `${dataEndpoint}/${subscription.PK}?apiKey=${subscription.apiKey}`;
 
-        const siriVm = generateMockSiriVm(subscription.PK, currentTime, validUntilTime);
+        const xml = generateMockSiriVm(subscription.PK, currentTime, validUntilTime);
 
-        await axios.post(url, siriVm, {
+        await axios.post(url, xml, {
             headers: {
                 "Content-Type": "text/xml",
             },
@@ -64,6 +65,11 @@ export const handler: Handler = async (event, context) => {
             (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
         );
 
+        const cancellationsSubscriptions = await getCancellationsSubscriptions(AVL_TABLE_NAME);
+        const cancellationsMockSubscriptions = cancellationsSubscriptions.filter(
+            (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
+        );
+
         const avlRequests = getAvlRequestPromises(
             STAGE,
             avlMockSubscriptions,
@@ -72,7 +78,15 @@ export const handler: Handler = async (event, context) => {
             validUntilTime,
         );
 
-        await Promise.all(avlRequests);
+        const cancellationsRequests = getAvlRequestPromises(
+            STAGE,
+            cancellationsMockSubscriptions,
+            CANCELLATIONS_TABLE_NAME,
+            currentTime,
+            validUntilTime,
+        );
+
+        await Promise.all([...avlRequests, ...cancellationsRequests]);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was an error when sending AVL data");

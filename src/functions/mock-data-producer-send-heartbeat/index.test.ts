@@ -18,6 +18,9 @@ describe("mock-data-producer-send-data", () => {
         process.env.STAGE = "dev";
         process.env.AVL_DATA_ENDPOINT = "https://www.avl-data-endpoint.com";
         process.env.AVL_TABLE_NAME = "integrated-data-avl-subscription-table-dev";
+        process.env.CANCELLATIONS_DATA_ENDPOINT = "https://www.cancelllations-data-endpoint.com";
+        process.env.CANCELLATIONS_TABLE_NAME = "integrated-data-cancellations-subscription-table-dev";
+
         vi.resetAllMocks();
     });
 
