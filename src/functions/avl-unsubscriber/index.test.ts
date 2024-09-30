@@ -6,7 +6,9 @@ import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsMa
 import * as ssm from "@bods-integrated-data/shared/ssm";
 import * as unsubscribe from "@bods-integrated-data/shared/unsubscribe";
 import { mockInput } from "@bods-integrated-data/shared/unsubscribeMockData";
+import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEvent } from "aws-lambda";
+import { AxiosError } from "axios";
 import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
@@ -141,40 +143,43 @@ describe("avl-unsubscriber", () => {
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("should not throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful", async () => {
-        const avlSubscription: AvlSubscription = {
-            PK: "mock-subscription-id",
-            url: "https://mock-data-producer.com",
-            publisherId: "mock-publisher-id",
-            description: "description",
-            shortDescription: "shortDescription",
-            status: "live",
-            requestorRef: null,
-            serviceStartDatetime: "2024-01-01T15:20:02.093Z",
-            lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
-            apiKey: "mock-api-key",
-        };
+    it.each([{ statusCode: 500 }, new AxiosError(), new InvalidXmlError()])(
+        "should not throw an error if a sendTerminateSubscriptionRequestAndUpdateDynamo was not successful: %o",
+        async (error) => {
+            const avlSubscription: AvlSubscription = {
+                PK: "mock-subscription-id",
+                url: "https://mock-data-producer.com",
+                publisherId: "mock-publisher-id",
+                description: "description",
+                shortDescription: "shortDescription",
+                status: "live",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                lastModifiedDateTime: "2024-01-01T15:20:02.093Z",
+                apiKey: "mock-api-key",
+            };
 
-        getDynamoItemSpy.mockResolvedValue(avlSubscription);
+            getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
-        sendTerminateSubscriptionRequestSpy.mockRejectedValue({ statusCode: 500 });
+            sendTerminateSubscriptionRequestSpy.mockRejectedValue(error);
 
-        const response = await handler(mockEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 204,
-            body: "",
-        });
+            const response = await handler(mockEvent, mockContext, mockCallback);
+            expect(response).toEqual({
+                statusCode: 204,
+                body: "",
+            });
 
-        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
-        expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
-            "avl",
-            mockEvent.pathParameters?.subscriptionId,
-            { ...mockInput.subscription, requestorRef: null },
-            false,
-        );
-        expect(getDynamoItemSpy).toHaveBeenCalledOnce();
-        expect(deleteParametersSpy).toHaveBeenCalledOnce();
-    });
+            expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
+            expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+                "avl",
+                mockEvent.pathParameters?.subscriptionId,
+                { ...mockInput.subscription, requestorRef: null },
+                false,
+            );
+            expect(getDynamoItemSpy).toHaveBeenCalledOnce();
+            expect(deleteParametersSpy).toHaveBeenCalledOnce();
+        },
+    );
 
     it.each([[undefined], ["invalid-key"]])("returns a 401 when an invalid api key is supplied", async (key) => {
         mockEvent.headers = {
