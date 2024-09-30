@@ -1,17 +1,17 @@
 import {
-    createNoContentResponse,
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createValidationErrorResponse,
+    createHttpNoContentResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/avl/utils";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { deleteSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
 import { deleteQueue } from "@bods-integrated-data/shared/sqs";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -115,27 +115,27 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             updatedSubscription,
         );
 
-        return createNoContentResponse();
+        return createHttpNoContentResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidXmlError) {
             logger.warn(e, "Invalid SIRI-VM XML provided");
-            return createValidationErrorResponse(["Invalid SIRI-VM XML provided"]);
+            return createHttpValidationErrorResponse(["Invalid SIRI-VM XML provided"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the avl-consumer-unsubscriber endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

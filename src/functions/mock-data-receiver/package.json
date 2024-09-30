@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/avl-mock-data-receiver",
+    "name": "@bods-integrated-data/mock-data-receiver",
     "version": "0.1.0",
-    "description": "AVL mock data receiver",
+    "description": "Mock data receiver",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-mock-data-receiver.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-mock-data-receiver.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./mock-data-receiver.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/mock-data-receiver.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],

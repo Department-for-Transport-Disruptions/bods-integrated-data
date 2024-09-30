@@ -18,27 +18,10 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import { chunkArray } from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
-
-export class SubscriptionIdNotFoundError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "SubscriptionIdNotFoundError";
-        Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
-    }
-}
-
-export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
-    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
-        PK: subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-
-    return subscription?.status === "live";
-};
 
 export const getAvlSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
@@ -466,13 +449,6 @@ export const createSiriVm = (
 export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriVmDatetimes(time.add(5, "minutes"), true);
 
 /**
- * Returns a SIRI-VM termination time value defined as 10 years after the given time.
- * @param time The response time to offset from.
- * @returns The termination.
- */
-export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
-
-/**
  * Spawns a child process to use the xmllint CLI command in order to validate
  * the SIRI-VM files against the XSD. If the file fails validation then it will
  * throw an error and log out the validation issues.
@@ -579,21 +555,6 @@ export const generateSiriVmAndUploadToS3 = async (
     ]);
 };
 
-export interface CompleteSiriObject<T> {
-    "?xml": {
-        "#text": "";
-        "@_version": "1.0";
-        "@_encoding": "UTF-8";
-        "@_standalone": "yes";
-    };
-    Siri: {
-        "@_version": "2.0";
-        "@_xmlns": "http://www.siri.org.uk/siri";
-        "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
-        "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
-    } & T;
-}
-
 export const getAvlErrorDetails = (error: ZodIssue) => {
     const validationError = fromZodIssue(error, { prefix: null, includePath: false });
     const { path } = validationError.details[0];
@@ -606,8 +567,6 @@ export const getAvlErrorDetails = (error: ZodIssue) => {
         level: avlValidationErrorLevelMappings[propertyName] || "CRITICAL",
     };
 };
-
-export const generateApiKey = () => randomUUID().replaceAll("-", "");
 
 /**
  * Returns a count of unique vehicles from the last 24 hours

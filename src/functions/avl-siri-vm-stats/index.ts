@@ -1,4 +1,4 @@
-import { createServerErrorResponse, createSuccessResponse } from "@bods-integrated-data/shared/api";
+import { createHttpServerErrorResponse, createHttpSuccessResponse } from "@bods-integrated-data/shared/api";
 import { getLatestAvlVehicleCount } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -16,13 +16,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         logger.info("Successfully retrieved latest AVL vehicle count.");
 
-        return createSuccessResponse(JSON.stringify({ num_of_siri_vehicles: vehicleCount }));
+        return createHttpSuccessResponse(JSON.stringify({ num_of_siri_vehicles: vehicleCount }));
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the AVL SIRI-VM stats retriever");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
 

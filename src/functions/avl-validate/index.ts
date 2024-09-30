@@ -1,10 +1,9 @@
 import {
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { CompleteSiriObject } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
@@ -12,6 +11,7 @@ import {
     avlCheckStatusResponseSchema,
     avlValidateRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
+import { CompleteSiriObject } from "@bods-integrated-data/shared/utils";
 import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
@@ -124,7 +124,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         if (parsedCheckStatusResponseBody.Siri.CheckStatusResponse.Status !== "true") {
             logger.warn("Data producer did not return a status of true");
-            return createValidationErrorResponse(["Data producer did not return a status of true"]);
+            return createHttpValidationErrorResponse(["Data producer did not return a status of true"]);
         }
 
         return {
@@ -134,16 +134,16 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof AxiosError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(["Invalid request to data producer"]);
+            return createHttpValidationErrorResponse(["Invalid request to data producer"]);
         }
 
         if (e instanceof InvalidXmlError) {
@@ -155,6 +155,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             logger.error(e, "There was a problem subscribing to the AVL feed.");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
