@@ -1,4 +1,5 @@
-import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import * as avlUtils from "@bods-integrated-data/shared/avl/utils";
+import * as cancellationsUtils from "@bods-integrated-data/shared/cancellations/utils";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { CancellationsSubscription } from "@bods-integrated-data/shared/schema";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
@@ -93,7 +94,7 @@ const mockCancellationsSubscriptions: CancellationsSubscription[] = [
     },
 ];
 
-const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+const expectedAvlXml = (subscriptionId: string) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns="http://www.siri.org.uk/siri"
     xmlns:ns2="http://www.ifopt.org.uk/acsb"
     xmlns:ns3="http://www.ifopt.org.uk/ifopt"
@@ -166,6 +167,89 @@ const expectedAVLDataForSubscription = (subscriptionId: string) => `<?xml versio
     </ServiceDelivery>
 </Siri>`;
 
+const expectedCancellationsXml = (subscriptionId: string) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+    xmlns:ns2="http://www.ifopt.org.uk/acsb"
+    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+    version="2.0">
+  <ServiceDelivery>
+  <ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp>
+  <ProducerRef>${subscriptionId}</ProducerRef>
+  <Status>true</Status>
+  <MoreData>false</MoreData>
+    <SituationExchangeDelivery version="2.0">
+      <ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp>
+      <SubscriberRef>247b3d8c-3675-4bae-aaa7-33fc15ead21c</SubscriberRef>
+      <SubscriptionRef>98b6de8a-64d4-43f7-bacd-3c3d624b9903</SubscriptionRef>
+      <Status>true</Status>
+      <Situations>
+        <PtSituationElement>
+          <CreationTime>2024-03-11T15:20:02.093+00:00</CreationTime>
+          <ParticipantRef>${subscriptionId}</ParticipantRef>
+          <SituationNumber>8027633</SituationNumber>
+          <Version>1</Version>
+          <Progress>open</Progress>
+          <Source>
+            <SourceType>Other</SourceType>
+          </Source>
+          <ValidityPeriod>
+            <StartTime>2024-03-11T15:20:02.093+00:00</StartTime>
+            <EndTime>2024-03-11T15:20:02.093+00:00</EndTime>
+          </ValidityPeriod>
+          <MiscellaneousReason>unknown</MiscellaneousReason>
+          <Affects>
+            <VehicleJourneys>
+              <AffectedVehicleJourney>
+                <VehicleJourneyRef>1055</VehicleJourneyRef>
+                <DatedVehicleJourneyRef>1055</DatedVehicleJourneyRef>
+                <Operator>
+                  <OperatorRef>ANEA</OperatorRef>
+                </Operator>
+                <LineRef>17B</LineRef>
+                <PublishedLineName>17B</PublishedLineName>
+                <DirectionRef>Outbound</DirectionRef>
+                <Origins>
+                  <AffectedStopPoint>
+                    <StopPointRef>079073001L</StopPointRef>
+                    <StopPointName>Bus Station Stand 12</StopPointName>
+                    <StopPointType>busStop</StopPointType>
+                  </AffectedStopPoint>
+                </Origins>
+                <Destinations>
+                  <AffectedStopPoint>
+                    <StopPointRef>077072001B</StopPointRef>
+                    <StopPointName>High Street Stand B</StopPointName>
+                    <StopPointType>busStop</StopPointType>
+                  </AffectedStopPoint>
+                </Destinations>
+                <OriginAimedDepartureTime>2024-03-11T15:20:02.093+00:00</OriginAimedDepartureTime>
+                <DestinationAimedArrivalTime>2024-03-11T15:20:02.093+00:00</DestinationAimedArrivalTime>
+                <Calls>
+                  <Call>
+                    <StopPointRef>079073001L</StopPointRef>
+                    <StopPointName>Bus Station Stand 12</StopPointName>
+                    <StopPointType>busStop</StopPointType>
+                    <Order>1</Order>
+                    <CallCondition>notStopping</CallCondition>
+                    <AimedDepartureTime>2024-03-11T15:20:02.093+00:00</AimedDepartureTime>
+                    <ExpectedDepartureTime>2024-03-11T15:20:02.093+00:00</ExpectedDepartureTime>
+                  </Call>
+                </Calls>
+              </AffectedVehicleJourney>
+            </VehicleJourneys>
+          </Affects>
+          <Consequences>
+            <Consequence>
+              <Condition>cancelled</Condition>
+            </Consequence>
+          </Consequences>
+        </PtSituationElement>
+      </Situations>
+    </SituationExchangeDelivery>
+  </ServiceDelivery>
+</Siri>`;
+
 describe("mock-data-producer-send-data", () => {
     MockDate.set("2024-03-11T15:20:02.093Z");
 
@@ -177,12 +261,12 @@ describe("mock-data-producer-send-data", () => {
         process.env.STAGE = "dev";
         process.env.AVL_DATA_ENDPOINT = "https://www.avl-data-endpoint.com";
         process.env.AVL_TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-        process.env.CANCELLATIONS_DATA_ENDPOINT = "https://www.cancelllations-data-endpoint.com";
+        process.env.CANCELLATIONS_DATA_ENDPOINT = "https://www.cancellations-data-endpoint.com";
         process.env.CANCELLATIONS_TABLE_NAME = "integrated-data-cancellations-subscription-table-dev";
 
         vi.resetAllMocks();
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValueOnce(mockAvlSubscriptions);
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValueOnce(mockCancellationsSubscriptions);
+        vi.spyOn(avlUtils, "getAvlSubscriptions").mockResolvedValue(mockAvlSubscriptions);
+        vi.spyOn(cancellationsUtils, "getCancellationsSubscriptions").mockResolvedValue(mockCancellationsSubscriptions);
     });
 
     afterAll(() => {
@@ -190,14 +274,17 @@ describe("mock-data-producer-send-data", () => {
     });
 
     it("should return and send no data if no subscriptions are returned from dynamo", async () => {
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([]);
+        vi.spyOn(avlUtils, "getAvlSubscriptions").mockResolvedValue([]);
+        vi.spyOn(cancellationsUtils, "getCancellationsSubscriptions").mockResolvedValue([]);
         await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).not.toBeCalled();
     });
 
     it("should return and send no data if no mock data producers are active", async () => {
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValueOnce([...mockAvlSubscriptions.slice(1)]);
-        vi.spyOn(dynamo, "recursiveScan").mockResolvedValueOnce([...mockCancellationsSubscriptions.slice(1)]);
+        vi.spyOn(avlUtils, "getAvlSubscriptions").mockResolvedValue(mockAvlSubscriptions.slice(1));
+        vi.spyOn(cancellationsUtils, "getCancellationsSubscriptions").mockResolvedValue(
+            mockCancellationsSubscriptions.slice(1),
+        );
         await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).not.toBeCalled();
     });
@@ -216,7 +303,7 @@ describe("mock-data-producer-send-data", () => {
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
             "https://www.avl-data-endpoint.com?subscriptionId=subscription-avl-1&apiKey=mock-api-key-1",
-            expectedAVLDataForSubscription("subscription-avl-1"),
+            expectedAvlXml("subscription-avl-1"),
             {
                 headers: {
                     "Content-Type": "text/xml",
@@ -226,8 +313,8 @@ describe("mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toHaveBeenNthCalledWith(
             2,
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-cancellations-1&apiKey=mock-api-key-1",
-            expectedAVLDataForSubscription("subscription-cancellations-2"),
+            "https://www.cancellations-data-endpoint.com?subscriptionId=subscription-cancellations-1&apiKey=mock-api-key-1",
+            expectedCancellationsXml("subscription-cancellations-1"),
             {
                 headers: {
                     "Content-Type": "text/xml",
@@ -245,7 +332,7 @@ describe("mock-data-producer-send-data", () => {
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
             "https://www.avl-data-endpoint.com/subscription-avl-1?apiKey=mock-api-key-1",
-            expectedAVLDataForSubscription("subscription-avl-1"),
+            expectedAvlXml("subscription-avl-1"),
             {
                 headers: {
                     "Content-Type": "text/xml",
@@ -255,8 +342,8 @@ describe("mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toHaveBeenNthCalledWith(
             2,
-            "https://www.avl-data-endpoint.com/subscription-cancellations-1?apiKey=mock-api-key-1",
-            expectedAVLDataForSubscription("subscription-cancellations-1"),
+            "https://www.cancellations-data-endpoint.com/subscription-cancellations-1?apiKey=mock-api-key-1",
+            expectedCancellationsXml("subscription-cancellations-1"),
             {
                 headers: {
                     "Content-Type": "text/xml",

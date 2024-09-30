@@ -2,7 +2,7 @@ import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/cancellations/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema";
+import { AvlSubscription, CancellationsSubscription } from "@bods-integrated-data/shared/schema";
 import { formatSiriVmDatetimes } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
@@ -10,7 +10,7 @@ import { generateMockHeartbeat } from "./mockHeartbeatNotification";
 
 const getRequestPromises = (
     stage: string,
-    subscriptions: AvlSubscription[],
+    subscriptions: AvlSubscription[] | CancellationsSubscription[],
     dataEndpoint: string,
     currentTime: string,
 ) => {
@@ -72,10 +72,13 @@ export const handler: Handler = async (event, context) => {
         }
 
         if (!cancellationsMockSubscriptions) {
-            logger.info("No avl mock data producers are currently active");
+            logger.info("No cancellations mock data producers are currently active");
         }
 
-        await Promise.all(getRequestPromises(STAGE, avlMockSubscriptions, AVL_DATA_ENDPOINT, currentTime));
+        const allMockSubscriptions = [...avlMockSubscriptions, ...cancellationsMockSubscriptions];
+        const promises = getRequestPromises(STAGE, allMockSubscriptions, AVL_DATA_ENDPOINT, currentTime);
+
+        await Promise.all(promises);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was an error when sending a Heartbeat Notification");

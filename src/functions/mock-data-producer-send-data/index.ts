@@ -2,10 +2,11 @@ import { getAvlSubscriptions, getSiriVmValidUntilTimeOffset } from "@bods-integr
 import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/cancellations/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema";
+import { AvlSubscription, CancellationsSubscription } from "@bods-integrated-data/shared/schema";
 import { formatSiriVmDatetimes } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { generateMockSiriCancellation } from "./mockSiriCancellation";
 import { generateMockSiriVm } from "./mockSiriVm";
 
 const getAvlRequestPromises = (
@@ -15,10 +16,6 @@ const getAvlRequestPromises = (
     currentTime: string,
     validUntilTime: string,
 ) => {
-    if (!subscriptions) {
-        logger.info("No AVL mock data producers are currently active.");
-    }
-
     return subscriptions.map(async (subscription) => {
         const url =
             stage === "local"
@@ -34,6 +31,30 @@ const getAvlRequestPromises = (
         });
 
         logger.info(`Successfully sent AVL data to: ${url}`);
+    });
+};
+
+const getCancellationsRequestPromises = (
+    stage: string,
+    subscriptions: CancellationsSubscription[],
+    dataEndpoint: string,
+    currentTime: string,
+) => {
+    return subscriptions.map(async (subscription) => {
+        const url =
+            stage === "local"
+                ? `${dataEndpoint}?subscriptionId=${subscription.PK}&apiKey=${subscription.apiKey}`
+                : `${dataEndpoint}/${subscription.PK}?apiKey=${subscription.apiKey}`;
+
+        const xml = generateMockSiriCancellation(subscription.PK, currentTime);
+
+        await axios.post(url, xml, {
+            headers: {
+                "Content-Type": "text/xml",
+            },
+        });
+
+        logger.info(`Successfully sent cancellations data to: ${url}`);
     });
 };
 
@@ -60,15 +81,25 @@ export const handler: Handler = async (event, context) => {
         const currentTime = formatSiriVmDatetimes(responseTime, true);
         const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
-        const avlSubscriptions = await getAvlSubscriptions(AVL_TABLE_NAME);
+        const [avlSubscriptions, cancellationsSubscriptions] = await Promise.all([
+            getAvlSubscriptions(AVL_TABLE_NAME),
+            getCancellationsSubscriptions(AVL_TABLE_NAME),
+        ]);
+
         const avlMockSubscriptions = avlSubscriptions.filter(
             (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
         );
-
-        const cancellationsSubscriptions = await getCancellationsSubscriptions(AVL_TABLE_NAME);
         const cancellationsMockSubscriptions = cancellationsSubscriptions.filter(
             (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
         );
+
+        if (!avlMockSubscriptions) {
+            logger.info("No avl mock data producers are currently active");
+        }
+
+        if (!cancellationsMockSubscriptions) {
+            logger.info("No cancellations mock data producers are currently active");
+        }
 
         const avlRequests = getAvlRequestPromises(
             STAGE,
@@ -78,15 +109,15 @@ export const handler: Handler = async (event, context) => {
             validUntilTime,
         );
 
-        const cancellationsRequests = getAvlRequestPromises(
+        const cancellationsRequests = getCancellationsRequestPromises(
             STAGE,
             cancellationsMockSubscriptions,
-            CANCELLATIONS_TABLE_NAME,
+            CANCELLATIONS_DATA_ENDPOINT,
             currentTime,
-            validUntilTime,
         );
 
-        await Promise.all([...avlRequests, ...cancellationsRequests]);
+        const allRequests = [...avlRequests, ...cancellationsRequests];
+        await Promise.all(allRequests);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was an error when sending AVL data");
