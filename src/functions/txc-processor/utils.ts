@@ -142,7 +142,7 @@ export const mapTimingLinkToStopTime = (
     const vehicleJourneyTimingLinkStopUsage =
         stopUsageType === "from" ? vehicleJourneyTimingLink?.From : vehicleJourneyTimingLink?.To;
 
-    const stopPointRef =
+    let stopPointRef =
         journeyPatternTimingLinkStopUsage?.StopPointRef || vehicleJourneyTimingLinkStopUsage?.StopPointRef;
 
     if (!stopPointRef) {
@@ -157,6 +157,9 @@ export const mapTimingLinkToStopTime = (
         destinationStopPointRef =
             journeyPatternTimingLink.To?.StopPointRef || vehicleJourneyTimingLink?.To?.StopPointRef || "";
     }
+
+    stopPointRef = stopPointRef.toUpperCase();
+    destinationStopPointRef = destinationStopPointRef.toUpperCase();
 
     const activity = journeyPatternTimingLinkStopUsage?.Activity || vehicleJourneyTimingLinkStopUsage?.Activity;
     const timingStatus =
