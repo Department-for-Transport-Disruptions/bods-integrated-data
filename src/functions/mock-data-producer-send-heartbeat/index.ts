@@ -75,10 +75,17 @@ export const handler: Handler = async (event, context) => {
             logger.info("No cancellations mock data producers are currently active");
         }
 
-        const allMockSubscriptions = [...avlMockSubscriptions, ...cancellationsMockSubscriptions];
-        const promises = getRequestPromises(STAGE, allMockSubscriptions, AVL_DATA_ENDPOINT, currentTime);
+        const avlRequests = getRequestPromises(STAGE, avlMockSubscriptions, AVL_DATA_ENDPOINT, currentTime);
 
-        await Promise.all(promises);
+        const cancellationsRequests = getRequestPromises(
+            STAGE,
+            cancellationsMockSubscriptions,
+            CANCELLATIONS_DATA_ENDPOINT,
+            currentTime,
+        );
+
+        const allRequests = [...avlRequests, ...cancellationsRequests];
+        await Promise.all(allRequests);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was an error when sending a Heartbeat Notification");
