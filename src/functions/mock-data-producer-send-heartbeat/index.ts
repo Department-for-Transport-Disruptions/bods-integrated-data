@@ -1,6 +1,6 @@
+import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { getMockDataProducerSubscriptions } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
 import { generateMockHeartbeat } from "./mockHeartbeatNotification";
@@ -9,15 +9,18 @@ export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { STAGE: stage, DATA_ENDPOINT: dataEndpoint, TABLE_NAME: tableName } = process.env;
+        const { STAGE, AVL_DATA_ENDPOINT, AVL_TABLE_NAME } = process.env;
 
         const currentTime = getDate().toISOString();
 
-        if (!stage || !dataEndpoint || !tableName) {
-            throw new Error("Missing env vars: STAGE, DATA_ENDPOINT and TABLE_NAME must be set");
+        if (!STAGE || !AVL_DATA_ENDPOINT || !AVL_TABLE_NAME) {
+            throw new Error("Missing env vars: STAGE, AVL_DATA_ENDPOINT and AVL_TABLE_NAME must be set");
         }
 
-        const subscriptions = await getMockDataProducerSubscriptions(tableName);
+        let subscriptions = await getAvlSubscriptions(AVL_TABLE_NAME);
+        subscriptions = subscriptions.filter(
+            (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
+        );
 
         if (!subscriptions) {
             logger.info("No mock data producers are currently active.");
@@ -27,11 +30,11 @@ export const handler: Handler = async (event, context) => {
         return Promise.all(
             subscriptions.map(async (subscription) => {
                 const url =
-                    stage === "local"
-                        ? `${dataEndpoint}?subscriptionId=${subscription.subscriptionId}&apiKey=${subscription.apiKey}`
-                        : `${dataEndpoint}/${subscription.subscriptionId}?apiKey=${subscription.apiKey}`;
+                    STAGE === "local"
+                        ? `${AVL_DATA_ENDPOINT}?subscriptionId=${subscription.PK}&apiKey=${subscription.apiKey}`
+                        : `${AVL_DATA_ENDPOINT}/${subscription.PK}?apiKey=${subscription.apiKey}`;
 
-                const HeartbeatNotification = generateMockHeartbeat(subscription.subscriptionId, currentTime);
+                const HeartbeatNotification = generateMockHeartbeat(subscription.PK, currentTime);
 
                 await axios.post(url, HeartbeatNotification, {
                     headers: {

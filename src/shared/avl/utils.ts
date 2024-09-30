@@ -18,7 +18,7 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray } from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriVmDatetimes } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
@@ -390,9 +390,6 @@ export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Parti
         return cleanDeep(vehicleActivity, { emptyArrays: true });
     });
 };
-
-export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
-    datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
 
 export const createSiriVm = (
     vehicleActivities: Partial<SiriVehicleActivity>[],

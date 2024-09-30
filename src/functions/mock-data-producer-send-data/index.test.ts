@@ -3,7 +3,7 @@ import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shar
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import axios, { AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 import { expectedAVLDataForSubscription, mockSubscriptionsFromDynamo } from "./test/mockData";
 
@@ -11,15 +11,16 @@ vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true);
 
 describe("mock-data-producer-send-data", () => {
-    beforeAll(() => {
-        process.env.DATA_ENDPOINT = "https://www.test-data-endpoint.com";
-    });
-
     MockDate.set("2024-03-11T15:20:02.093Z");
 
     const axiosSpy = vi.spyOn(mockedAxios, "post");
 
     beforeEach(() => {
+        process.env.STAGE = "dev";
+        process.env.AVL_DATA_ENDPOINT = "https://www.avl-data-endpoint.com";
+        process.env.AVL_TABLE_NAME = "integrated-data-avl-subscription-table-dev";
+        process.env.CANCELLATIONS_DATA_ENDPOINT = "https://www.cancelllations-data-endpoint.com";
+        process.env.CANCELLATIONS_TABLE_NAME = "integrated-data-cancellations-subscription-table-dev";
         vi.resetAllMocks();
     });
 
@@ -28,18 +29,12 @@ describe("mock-data-producer-send-data", () => {
     });
 
     it("should return and send no data if no subscriptions are returned from dynamo", async () => {
-        process.env.STAGE = "dev";
-        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue([]);
         await handler(mockEvent, mockContext, mockCallback);
         expect(axiosSpy).not.toBeCalled();
     });
 
     it("should return and send no data if no mock data producers are active", async () => {
-        process.env.STAGE = "dev";
-        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-
         const avlSubscriptions: AvlSubscription[] = [
             {
                 PK: "subscription-one",
@@ -71,7 +66,7 @@ describe("mock-data-producer-send-data", () => {
 
     it("should send mock avl data with the subscriptionId in the query string parameters if the stage is local", async () => {
         process.env.STAGE = "local";
-        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-local";
+        process.env.AVL_TABLE_NAME = "integrated-data-avl-subscription-table-local";
 
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
@@ -83,7 +78,7 @@ describe("mock-data-producer-send-data", () => {
         expect(axiosSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-one&apiKey=mock-api-key-1",
+            "https://www.avl-data-endpoint.com?subscriptionId=subscription-one&apiKey=mock-api-key-1",
             expectedAVLDataForSubscription("subscription-one"),
             {
                 headers: {
@@ -94,7 +89,7 @@ describe("mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toHaveBeenNthCalledWith(
             2,
-            "https://www.test-data-endpoint.com?subscriptionId=subscription-two&apiKey=mock-api-key-2",
+            "https://www.avl-data-endpoint.com?subscriptionId=subscription-two&apiKey=mock-api-key-2",
             expectedAVLDataForSubscription("subscription-two"),
             {
                 headers: {
@@ -104,9 +99,6 @@ describe("mock-data-producer-send-data", () => {
         );
     });
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
-        process.env.STAGE = "dev";
-        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
         axiosSpy.mockResolvedValue({
@@ -117,7 +109,7 @@ describe("mock-data-producer-send-data", () => {
         expect(axiosSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
-            "https://www.test-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
+            "https://www.avl-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
             expectedAVLDataForSubscription("subscription-one"),
             {
                 headers: {
@@ -128,7 +120,7 @@ describe("mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toHaveBeenNthCalledWith(
             2,
-            "https://www.test-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
+            "https://www.avl-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
             expectedAVLDataForSubscription("subscription-two"),
             {
                 headers: {
@@ -139,9 +131,6 @@ describe("mock-data-producer-send-data", () => {
     });
 
     it("should send mock avl data with the subscriptionId in the path parameters if the stage not local", async () => {
-        process.env.STAGE = "dev";
-        process.env.TABLE_NAME = "integrated-data-avl-subscription-table-dev";
-
         vi.spyOn(dynamo, "recursiveScan").mockResolvedValue(mockSubscriptionsFromDynamo);
 
         axiosSpy.mockRejectedValueOnce(new Error("There was an error when sending AVL data."));
@@ -153,7 +142,7 @@ describe("mock-data-producer-send-data", () => {
         expect(axiosSpy).toHaveBeenCalledTimes(2);
         expect(axiosSpy).toHaveBeenNthCalledWith(
             1,
-            "https://www.test-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
+            "https://www.avl-data-endpoint.com/subscription-one?apiKey=mock-api-key-1",
             expectedAVLDataForSubscription("subscription-one"),
             {
                 headers: {
@@ -164,7 +153,7 @@ describe("mock-data-producer-send-data", () => {
 
         expect(axiosSpy).toHaveBeenNthCalledWith(
             2,
-            "https://www.test-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
+            "https://www.avl-data-endpoint.com/subscription-two?apiKey=mock-api-key-2",
             expectedAVLDataForSubscription("subscription-two"),
             {
                 headers: {

@@ -95,11 +95,6 @@ export const avlSubscriptionSchema = z.object({
 
 export type AvlSubscription = z.infer<typeof avlSubscriptionSchema>;
 
-export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform((data) => ({
-    subscriptionId: data.PK,
-    ...data,
-}));
-
 export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);
 
 export const avlUpdateBodySchema = z.object(
