@@ -24,3 +24,13 @@ variable "subscribe_lambda_invoke_arn" {
   type        = string
   description = "Subscribe Lambda Invoke ARN"
 }
+
+variable "unsubscribe_lambda_name" {
+  type        = string
+  description = "Unsubscribe Lambda Name"
+}
+
+variable "unsubscribe_lambda_invoke_arn" {
+  type        = string
+  description = "Unsubscribe Lambda Invoke ARN"
+}
