@@ -111,7 +111,7 @@ describe("utils", () => {
                         TimingStatus: "principalTimingPoint",
                     },
                     To: {
-                        StopPointRef: "2",
+                        StopPointRef: "stop_id_2",
                         WaitTime: "PT15S",
                     },
                     RunTime: "PT1M",
@@ -119,7 +119,7 @@ describe("utils", () => {
                 {
                     "@_id": "2",
                     From: {
-                        StopPointRef: "2",
+                        StopPointRef: "stop_id_2",
                         Activity: "pickUpAndSetDown",
                         TimingStatus: "principalTimingPoint",
                         WaitTime: "PT30S",
@@ -151,7 +151,7 @@ describe("utils", () => {
                 {
                     trip_id: "trip_id",
                     stop_id: "1",
-                    destination_stop_id: "2",
+                    destination_stop_id: "STOP_ID_2",
                     arrival_time: "00:00:00",
                     departure_time: "00:00:15",
                     stop_sequence: 0,
@@ -163,7 +163,7 @@ describe("utils", () => {
                 },
                 {
                     trip_id: "trip_id",
-                    stop_id: "2",
+                    stop_id: "STOP_ID_2",
                     destination_stop_id: "3",
                     arrival_time: "00:01:15",
                     departure_time: "00:01:55",
@@ -368,7 +368,7 @@ describe("utils", () => {
 
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
-                stop_id: "stop_id",
+                stop_id: "STOP_ID",
                 destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
@@ -406,7 +406,7 @@ describe("utils", () => {
 
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
-                stop_id: "stop_id",
+                stop_id: "STOP_ID",
                 destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
@@ -445,7 +445,7 @@ describe("utils", () => {
 
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
-                stop_id: "stop_id",
+                stop_id: "STOP_ID",
                 destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
@@ -483,7 +483,7 @@ describe("utils", () => {
 
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
-                stop_id: "stop_id",
+                stop_id: "STOP_ID",
                 destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:00",
@@ -523,7 +523,7 @@ describe("utils", () => {
 
             const stopTime: NewStopTime = {
                 trip_id: "trip_id",
-                stop_id: "stop_id",
+                stop_id: "STOP_ID",
                 destination_stop_id: "",
                 arrival_time: "00:00:00",
                 departure_time: "00:00:30",
