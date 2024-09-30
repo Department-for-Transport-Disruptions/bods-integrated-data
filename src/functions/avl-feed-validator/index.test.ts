@@ -1,10 +1,10 @@
-import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManager from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
+import * as unsubscribe from "@bods-integrated-data/shared/unsubscribe";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,7 +35,7 @@ describe("avl-feed-validator", () => {
         getSecret: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
+    vi.mock("@bods-integrated-data/shared/unsubscribe", () => ({
         sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
@@ -219,6 +219,7 @@ describe("avl-feed-validator", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             "mock-subscription-id-1",
             {
                 PK: "mock-subscription-id-1",
@@ -314,6 +315,7 @@ describe("avl-feed-validator", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             "mock-subscription-id-1",
             {
                 PK: "mock-subscription-id-1",

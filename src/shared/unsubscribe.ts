@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import axios from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
-import { getDate } from "../dates";
-import { logger } from "../logger";
-import { AvlSubscription } from "../schema/avl-subscribe.schema";
-import { TerminateSubscriptionRequest, terminateSubscriptionResponseSchema } from "../schema/avl-unsubscribe.schema";
-import { createAuthorizationHeader, getSubscriptionUsernameAndPassword } from "../utils";
-import { CompleteSiriObject } from "../utils";
-import { InvalidXmlError } from "../validation";
+import { getDate } from "./dates";
+import { logger } from "./logger";
+import { AvlSubscription } from "./schema/avl-subscribe.schema";
+import { CancellationsSubscription } from "./schema/cancellations-subscribe.schema";
+import { TerminateSubscriptionRequest, terminateSubscriptionResponseSchema } from "./schema/unsubscribe.schema";
+import { createAuthorizationHeader, getSubscriptionUsernameAndPassword } from "./utils";
+import { CompleteSiriObject } from "./utils";
+import { InvalidXmlError } from "./validation";
 
 export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <Siri version='2.0' xmlns='http://www.siri.org.uk/siri' xmlns:ns2='http://www.ifopt.org.uk/acsb' xmlns:ns3='http://www.ifopt.org.uk/ifopt' xmlns:ns4='http://datex2.eu/schema/2_0RC1/2_0'>
@@ -87,8 +88,9 @@ const parseXml = (xml: string) => {
 };
 
 export const sendTerminateSubscriptionRequest = async (
+    subscriptionType: "avl" | "cancellations",
     subscriptionId: string,
-    subscription: Omit<AvlSubscription, "PK" | "status">,
+    subscription: Omit<AvlSubscription, "PK" | "status"> | Omit<CancellationsSubscription, "PK" | "status">,
     isInternal = false,
 ) => {
     const currentTime = getDate().toISOString();
@@ -101,7 +103,10 @@ export const sendTerminateSubscriptionRequest = async (
         subscription.requestorRef ?? null,
     );
 
-    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(subscriptionId);
+    const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(
+        subscriptionId,
+        subscriptionType,
+    );
 
     if (!subscriptionUsername || !subscriptionPassword) {
         logger.error(`Missing auth credentials for subscription id: ${subscriptionId}`);

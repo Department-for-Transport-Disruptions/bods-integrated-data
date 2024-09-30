@@ -88,10 +88,34 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, 
         });
     }, z.array(schema));
 
-export const getSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+export const getSubscriptionUsernameAndPassword = async (
+    subscriptionId: string,
+    subscriptionType: "avl" | "cancellations",
+) => {
     const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
-        getParameter(`/subscription/${subscriptionId}/username`, true),
-        getParameter(`/subscription/${subscriptionId}/password`, true),
+        getParameter(
+            `${subscriptionType === "cancellations" ? "/cancellations" : ""}/subscription/${subscriptionId}/username`,
+            true,
+        ),
+        getParameter(
+            `${subscriptionType === "cancellations" ? "/cancellations" : ""}/subscription/${subscriptionId}/password`,
+            true,
+        ),
+    ]);
+
+    const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
+    const subscriptionPassword = subscriptionPasswordParam.Parameter?.Value ?? null;
+
+    return {
+        subscriptionUsername,
+        subscriptionPassword,
+    };
+};
+
+export const getCancellationsSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+    const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
+        getParameter(`/cancellations/subscription/${subscriptionId}/username`, true),
+        getParameter(`/cancellations/subscription/${subscriptionId}/password`, true),
     ]);
 
     const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;

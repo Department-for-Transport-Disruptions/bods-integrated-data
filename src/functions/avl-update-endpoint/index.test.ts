@@ -1,9 +1,9 @@
 import * as subscribe from "@bods-integrated-data/shared/avl/subscribe";
-import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription, AvlUpdateBody } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManagerFunctions from "@bods-integrated-data/shared/secretsManager";
+import * as unsubscribe from "@bods-integrated-data/shared/unsubscribe";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import * as MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,7 +35,7 @@ describe("avl-update-endpoint", () => {
         getDynamoItem: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
+    vi.mock("@bods-integrated-data/shared/unsubscribe", () => ({
         sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
@@ -102,6 +102,7 @@ describe("avl-update-endpoint", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             mockEvent.pathParameters?.subscriptionId,
             expectedSubscriptionDetails,
             false,

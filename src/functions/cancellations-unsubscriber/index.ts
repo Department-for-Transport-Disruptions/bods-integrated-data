@@ -6,15 +6,15 @@ import {
     createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
-import { SubscriptionIdNotFoundError, isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
@@ -34,27 +34,31 @@ const requestParamsSchema = z.preprocess(
 const deleteSubscriptionAuthCredsFromSsm = async (subscriptionId: string) => {
     logger.info("Deleting subscription auth credentials from parameter store");
 
-    await deleteParameters([`/subscription/${subscriptionId}/username`, `/subscription/${subscriptionId}/password`]);
+    await deleteParameters([
+        `/cancellations/subscription/${subscriptionId}/username`,
+        `/cancellations/subscription/${subscriptionId}/password`,
+    ]);
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { TABLE_NAME: tableName, AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;
+        const { TABLE_NAME: tableName, CANCELLATIONS_PRODUCER_API_KEY_ARN: cancellationsProducerApiKeyArn } =
+            process.env;
 
-        if (!tableName || !avlProducerApiKeyArn) {
+        if (!tableName || !cancellationsProducerApiKeyArn) {
             throw new Error("Missing env vars: TABLE_NAME and AVL_PRODUCER_API_KEY_ARN must be set.");
         }
 
-        await validateApiKey(avlProducerApiKeyArn, event.headers);
+        await validateApiKey(cancellationsProducerApiKeyArn, event.headers);
 
         const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
         logger.subscriptionId = subscriptionId;
 
-        const subscription = await getAvlSubscription(subscriptionId, tableName);
+        const subscription = await getCancellationsSubscription(subscriptionId, tableName);
 
-        const subscriptionDetail: Omit<AvlSubscription, "PK" | "status"> = {
+        const subscriptionDetail: Omit<CancellationsSubscription, "PK" | "status"> = {
             url: subscription.url,
             description: subscription.description,
             shortDescription: subscription.shortDescription,
@@ -65,14 +69,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             apiKey: subscription.apiKey,
         };
         try {
-            await sendTerminateSubscriptionRequest(
-                "avl",
-                subscriptionId,
-                subscriptionDetail,
-                isPrivateAddress(subscription.url),
-            );
+            await sendTerminateSubscriptionRequest("cancellations", subscriptionId, subscriptionDetail, false);
         } catch (e) {
-            await putMetricData("custom/AVLMetrics", [
+            await putMetricData("custom/CancellationsMetrics", [
                 {
                     MetricName: "FailedUnsubscribeRequest",
                     Value: 1,
@@ -114,8 +113,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof InvalidXmlError) {
-            logger.warn(e, "Invalid SIRI-VM XML provided by the data producer");
-            return createHttpValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
+            logger.warn(e, "Invalid SIRI-SX XML provided by the data producer");
+            return createHttpValidationErrorResponse(["Invalid SIRI-SX XML provided by the data producer"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
@@ -124,7 +123,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof Error) {
-            logger.error(e, "There was a problem with the AVL unsubscribe endpoint");
+            logger.error(e, "There was a problem with the cancellations unsubscribe endpoint");
         }
 
         return createHttpServerErrorResponse();

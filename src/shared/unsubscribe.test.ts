@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import * as ssm from "../ssm";
-import { InvalidXmlError } from "../validation";
+import * as ssm from "./ssm";
+import { sendTerminateSubscriptionRequest } from "./unsubscribe";
 import {
     expectedRequestBody,
     expectedSubscriptionRequestConfig,
@@ -10,8 +10,8 @@ import {
     mockInput,
     mockSubscriptionInvalidBody,
     mockSubscriptionResponseBody,
-} from "./test/unsubscribeMockData";
-import { sendTerminateSubscriptionRequest } from "./unsubscribe";
+} from "./unsubscribeMockData";
+import { InvalidXmlError } from "./validation";
 
 vi.mock("node:crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
@@ -48,7 +48,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
-        await sendTerminateSubscriptionRequest(mockInput.subscriptionId, mockInput.subscription);
+        await sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription);
 
         expect(axiosSpy).toBeCalledWith(
             "https://mock-data-producer.com",
@@ -70,7 +70,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
         await expect(
-            sendTerminateSubscriptionRequest(mockInput.subscriptionId, mockInput.subscription),
+            sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError("Request failed with status code 500");
 
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -86,7 +86,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
         await expect(
-            sendTerminateSubscriptionRequest(mockInput.subscriptionId, mockInput.subscription),
+            sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError(
             "No response body received from the data producer - subscription ID: mock-subscription-id",
         );
@@ -104,7 +104,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
         await expect(
-            sendTerminateSubscriptionRequest(mockInput.subscriptionId, mockInput.subscription),
+            sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError(InvalidXmlError);
 
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -120,7 +120,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
         await expect(
-            sendTerminateSubscriptionRequest(mockInput.subscriptionId, mockInput.subscription),
+            sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError(
             "The data producer did not return a status of true - subscription ID: mock-subscription-id",
         );
@@ -133,7 +133,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         getParameterSpy.mockResolvedValue({ Parameter: undefined });
 
         await expect(
-            sendTerminateSubscriptionRequest(mockInput.subscriptionId, mockInput.subscription),
+            sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError("Missing auth credentials for subscription");
 
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
