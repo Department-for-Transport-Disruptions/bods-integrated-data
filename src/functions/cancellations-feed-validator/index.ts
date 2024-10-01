@@ -1,4 +1,3 @@
-import { checkCancellationsSubscriptionIsHealthy } from "@bods-integrated-data/shared/cancellations/utils";
 import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
@@ -10,7 +9,7 @@ import {
 } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
-import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
+import { checkSubscriptionIsHealthy, getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 
@@ -78,7 +77,11 @@ export const handler: Handler = async (event, context) => {
 
         await Promise.all(
             nonTerminatedSubscriptions.map(async (subscription) => {
-                const subscriptionIsHealthy = checkCancellationsSubscriptionIsHealthy(subscription, currentTime);
+                const subscriptionIsHealthy = checkSubscriptionIsHealthy(
+                    currentTime,
+                    subscription,
+                    subscription.lastCancellationsDataReceivedDateTime,
+                );
 
                 if (subscriptionIsHealthy) {
                     if (subscription.status !== "live") {

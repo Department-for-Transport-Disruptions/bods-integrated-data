@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { RouteType, WheelchairAccessibility } from "./database";
-import { VehicleType } from "./schema";
+import { getDate } from "./dates";
+import { AvlSubscription, VehicleType } from "./schema";
 import {
+    checkSubscriptionIsHealthy,
     chunkArray,
     getRouteTypeFromServiceMode,
     getWheelchairAccessibilityFromVehicleType,
@@ -127,6 +129,48 @@ describe("shared utils", () => {
             ["https://test.example.com", false],
         ])("returns true if address is private", (address: string, isPrivate: boolean) => {
             expect(isPrivateAddress(address)).toBe(isPrivate);
+        });
+    });
+
+    describe("checkSubscriptionHealthy", () => {
+        const subscription: AvlSubscription = {
+            apiKey: "123",
+            PK: "abc-def",
+            description: "Test",
+            publisherId: "Test",
+            shortDescription: "Test",
+            status: "live",
+            url: "https://test.example.com",
+        };
+        const currentTime = getDate();
+
+        it.each<[Partial<AvlSubscription>, boolean]>([
+            [{}, false],
+            [{ heartbeatLastReceivedDateTime: currentTime.subtract(20, "seconds").toISOString() }, true],
+            [{ lastResubscriptionTime: currentTime.subtract(80, "seconds").toISOString() }, true],
+            [{ serviceStartDatetime: currentTime.subtract(90, "seconds").toISOString() }, true],
+            [
+                {
+                    lastAvlDataReceivedDateTime: currentTime.subtract(30, "seconds").toISOString(),
+                    heartbeatLastReceivedDateTime: currentTime.subtract(140, "seconds").toISOString(),
+                },
+                true,
+            ],
+            [
+                {
+                    lastAvlDataReceivedDateTime: currentTime.subtract(130, "seconds").toISOString(),
+                    heartbeatLastReceivedDateTime: currentTime.subtract(240, "seconds").toISOString(),
+                },
+                false,
+            ],
+        ])("correctly determines if a subscription is healthy", (data, isHealthy) => {
+            expect(
+                checkSubscriptionIsHealthy(
+                    currentTime,
+                    { ...subscription, ...data },
+                    data?.lastAvlDataReceivedDateTime,
+                ),
+            ).toBe(isHealthy);
         });
     });
 });

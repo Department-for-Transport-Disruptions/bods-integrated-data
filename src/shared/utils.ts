@@ -5,10 +5,11 @@ import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
+import { getDate, isDateAfter } from "./dates";
 import { recursiveScan } from "./dynamo";
 import { logger } from "./logger";
 import { VehicleType } from "./schema";
-import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
+import { AvlSubscription, avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
@@ -192,3 +193,43 @@ export interface CompleteSiriObject<T> {
  * @returns The termination.
  */
 export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
+
+/**
+ * Checks if a given subscription is healthy by looking at whether any of heartbeatLastReceivedDateTime,
+ * lastResubscriptionTime, serviceStartDatetime, or lastDataReceivedDateTime were in the last 90 seconds.
+ *
+ * Data producers are meant to send heartbeats at least every 30 seconds but this is not always the case so the extra
+ * checks are intended to prevent over re-subscribing
+ *
+ * @param subscription The subscription object to check
+ * @param currentTime The current time in DayJs
+ * @returns Whether the subscription is healthy or not
+ */
+export const checkSubscriptionIsHealthy = (
+    currentTime: Dayjs,
+    subscription: AvlSubscription,
+    lastDataReceivedDateTime?: string | null,
+) => {
+    const { heartbeatLastReceivedDateTime, lastResubscriptionTime, serviceStartDatetime } = subscription;
+
+    const heartbeatThreshold = currentTime.subtract(90, "seconds");
+
+    const heartbeatLastReceivedInThreshold =
+        heartbeatLastReceivedDateTime && isDateAfter(getDate(heartbeatLastReceivedDateTime), heartbeatThreshold);
+
+    const lastResubscriptionTimeInThreshold =
+        lastResubscriptionTime && isDateAfter(getDate(lastResubscriptionTime), heartbeatThreshold);
+
+    const serviceStartDatetimeInThreshold =
+        serviceStartDatetime && isDateAfter(getDate(serviceStartDatetime), heartbeatThreshold);
+
+    const lastDataReceivedDateTimeInThreshold =
+        lastDataReceivedDateTime && isDateAfter(getDate(lastDataReceivedDateTime), heartbeatThreshold);
+
+    return !!(
+        heartbeatLastReceivedInThreshold ||
+        lastResubscriptionTimeInThreshold ||
+        lastDataReceivedDateTimeInThreshold ||
+        serviceStartDatetimeInThreshold
+    );
+};

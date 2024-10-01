@@ -1,4 +1,4 @@
-import { checkAvlSubscriptionIsHealthy, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -6,7 +6,11 @@ import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/l
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
-import { getSubscriptionUsernameAndPassword, isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import {
+    checkSubscriptionIsHealthy,
+    getSubscriptionUsernameAndPassword,
+    isPrivateAddress,
+} from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 
@@ -74,7 +78,11 @@ export const handler: Handler = async (event, context) => {
 
         await Promise.all(
             nonTerminatedSubscriptions.map(async (subscription) => {
-                const subscriptionIsHealthy = checkAvlSubscriptionIsHealthy(subscription, currentTime);
+                const subscriptionIsHealthy = checkSubscriptionIsHealthy(
+                    currentTime,
+                    subscription,
+                    subscription.lastAvlDataReceivedDateTime,
+                );
 
                 if (subscriptionIsHealthy) {
                     if (subscription.status !== "live") {
