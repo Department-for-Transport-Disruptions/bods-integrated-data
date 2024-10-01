@@ -1,11 +1,16 @@
 import { ECSClient, ListClustersCommand, ListServicesCommand } from "@aws-sdk/client-ecs";
 import { Command } from "@commander-js/extra-typings";
-
-const ecsClient = new ECSClient({ region: "eu-west-2" });
+import { withUserPrompts } from "../utils";
 
 export const getEcsClusterForService = new Command("get-ecs-cluster-for-service")
-    .requiredOption("-s, --service <service>", "Name of ECS service")
-    .action(async ({ service }) => {
+    .option("-s, --service <service>", "Name of ECS service")
+    .action(async (options) => {
+        const { service } = await withUserPrompts(options, {
+            service: { type: "input" },
+        });
+
+        const ecsClient = new ECSClient({ region: "eu-west-2" });
+
         const clusters = await ecsClient.send(new ListClustersCommand());
 
         if (!clusters.clusterArns) {

@@ -1,8 +1,6 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-
 import { Command } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
     .addOption(STAGE_OPTION)
@@ -12,82 +10,19 @@ export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
     .option("-d, --description <description>", "Data producer description")
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
     .action(async (options) => {
-        let { stage, producerEndpoint, username, password, subscriptionId, description } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
+        const { stage, producerEndpoint, username, password, subscriptionId, description } = await withUserPrompts(
+            options,
+            {
+                stage: { type: "list", choices: STAGES },
+                producerEndpoint: { type: "input" },
+                username: { type: "input" },
+                password: { type: "password" },
+                subscriptionId: { type: "input" },
+                description: { type: "input" },
+            },
+        );
 
         const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
-
-        if (!subscriptionId) {
-            const response = await inquirer.prompt<{ subscriptionId: string }>([
-                {
-                    name: "subscriptionId",
-                    message: "Enter the data producer's subscriptionId",
-                    type: "input",
-                },
-            ]);
-
-            subscriptionId = response.subscriptionId;
-        }
-
-        if (!producerEndpoint) {
-            const response = await inquirer.prompt<{ producerEndpoint: string }>([
-                {
-                    name: "producerEndpoint",
-                    message: "Enter the data producer endpoint",
-                    type: "input",
-                },
-            ]);
-
-            producerEndpoint = response.producerEndpoint;
-        }
-
-        if (!username) {
-            const response = await inquirer.prompt<{ username: string }>([
-                {
-                    name: "username",
-                    message: "Enter the data producer's username",
-                    type: "input",
-                },
-            ]);
-
-            username = response.username;
-        }
-
-        if (!password) {
-            const response = await inquirer.prompt<{ password: string }>([
-                {
-                    name: "password",
-                    message: "Enter the data producer's password",
-                    type: "password",
-                },
-            ]);
-
-            password = response.password;
-        }
-
-        if (!description) {
-            const response = await inquirer.prompt<{ description: string | undefined }>([
-                {
-                    name: "description",
-                    message: "Enter the data producer's description (optional)",
-                    type: "input",
-                },
-            ]);
-
-            description = response.description ?? `Subscription for ${username}`;
-        }
 
         const invokePayload = {
             headers: {
