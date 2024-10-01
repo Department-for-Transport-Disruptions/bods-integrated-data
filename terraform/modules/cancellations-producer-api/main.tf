@@ -81,6 +81,6 @@ module "cancellations_producer_api_gateway" {
 }
 
 resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
-  function_name      = "https://www.test.com" # todo - update this once data endpoint is made
+  function_name      = module.cancellations_data_endpoint.lambda_arn
   authorization_type = "NONE"
 }
