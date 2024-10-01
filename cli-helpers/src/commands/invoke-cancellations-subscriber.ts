@@ -1,7 +1,6 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeCancellationsSubscriber = new Command("invoke-cancellations-subscriber")
     .addOption(STAGE_OPTION)
@@ -12,95 +11,18 @@ export const invokeCancellationsSubscriber = new Command("invoke-cancellations-s
     .option("--publisherId <publisherId>", "Data producer publisher ID")
     .option("--requestorRef <requestorRef>", "Requestor Ref")
     .action(async (options) => {
-        let { stage, producerEndpoint, username, password, subscriptionId, publisherId, requestorRef } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
+        const { stage, producerEndpoint, username, password, subscriptionId, publisherId, requestorRef } =
+            await withUserPrompts(options, {
+                stage: { type: "list", choices: STAGES },
+                producerEndpoint: { type: "input" },
+                username: { type: "input" },
+                password: { type: "password" },
+                subscriptionId: { type: "input" },
+                publisherId: { type: "input" },
+                requestorRef: { type: "input" },
+            });
 
         const apiKey = await getSecretByKey(stage, "cancellations_producer_api_key");
-
-        if (!producerEndpoint) {
-            const response = await inquirer.prompt<{ producerEndpoint: string }>([
-                {
-                    name: "producerEndpoint",
-                    message: "Enter the data producer endpoint",
-                    type: "input",
-                },
-            ]);
-
-            producerEndpoint = response.producerEndpoint;
-        }
-
-        if (!username) {
-            const response = await inquirer.prompt<{ username: string }>([
-                {
-                    name: "username",
-                    message: "Enter the data producer's username",
-                    type: "input",
-                },
-            ]);
-
-            username = response.username;
-        }
-
-        if (!password) {
-            const response = await inquirer.prompt<{ password: string }>([
-                {
-                    name: "password",
-                    message: "Enter the data producer's password",
-                    type: "password",
-                },
-            ]);
-
-            password = response.password;
-        }
-
-        if (!subscriptionId) {
-            const response = await inquirer.prompt<{ subscriptionId: string }>([
-                {
-                    name: "subscriptionId",
-                    message: "Enter the data producer's subscriptionId",
-                    type: "input",
-                },
-            ]);
-
-            subscriptionId = response.subscriptionId;
-        }
-
-        if (!publisherId) {
-            const response = await inquirer.prompt<{ publisherId: string }>([
-                {
-                    name: "publisherId",
-                    message: "Enter the data producer's publisherId",
-                    type: "input",
-                },
-            ]);
-
-            publisherId = response.publisherId;
-        }
-
-        if (!requestorRef) {
-            const response = await inquirer.prompt<{ requestorRef: string }>([
-                {
-                    name: "requestorRef",
-                    message: "Enter the requestorRef",
-                    type: "input",
-                    default: "BODS",
-                },
-            ]);
-
-            requestorRef = response.requestorRef;
-        }
 
         const invokePayload = {
             headers: {
