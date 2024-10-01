@@ -1,17 +1,19 @@
-import { Command } from "@commander-js/extra-typings";
+import { Command, Option } from "@commander-js/extra-typings";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+
+const migrationOptions = ["migrate", "rollback"];
 
 export const invokeDbMigrator = new Command("invoke-db-migrator")
     .addOption(STAGE_OPTION)
-    .option("-r, --rollback <rollback>", "Perform a rollback")
+    .addOption(new Option("-m, --migrationType <migrationType>", "Migration type").choices(migrationOptions))
     .action(async (options) => {
-        const { stage, rollback } = await withUserPrompts(options, {
+        const { stage, migrationType } = await withUserPrompts(options, {
             stage: { type: "list", choices: STAGES },
-            rollback: { type: "checkbox" },
+            migrationType: { type: "list", choices: migrationOptions },
         });
 
         await invokeLambda(stage, {
-            FunctionName: `integrated-data-db-migrator-${rollback ? "rollback" : "migrate"}-${stage}`,
+            FunctionName: `integrated-data-db-migrator-${migrationType}-${stage}`,
             InvocationType: "RequestResponse",
         });
     });
