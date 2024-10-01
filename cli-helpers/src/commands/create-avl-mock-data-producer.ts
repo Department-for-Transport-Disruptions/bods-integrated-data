@@ -1,53 +1,19 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
 export const createAvlMockDataProducer = new Command("create-avl-mock-data-producer")
     .addOption(STAGE_OPTION)
     .option("-n, --name <name>", "Name of mock data producer")
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
     .action(async (options) => {
-        let { stage, name, subscriptionId } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
+        const { stage, name, subscriptionId } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+            name: { type: "input" },
+            subscriptionId: { type: "input" },
+        });
 
         const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
-
-        if (!name) {
-            const response = await inquirer.prompt<{ name: string }>([
-                {
-                    name: "name",
-                    message: "Name of mock producer",
-                    type: "input",
-                },
-            ]);
-
-            name = response.name;
-        }
-
-        if (!subscriptionId) {
-            const response = await inquirer.prompt<{ subscriptionId: string }>([
-                {
-                    name: "subscriptionId",
-                    message: "Enter the data producer's subscriptionId",
-                    type: "input",
-                },
-            ]);
-
-            subscriptionId = response.subscriptionId;
-        }
 
         const cleanName = name.replace(/\s+/g, "-");
         const invokePayload = {

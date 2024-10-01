@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
 import { z } from "zod";
+import { withUserPrompts } from "../utils";
 
 const agencyCsvSchema = z.object({
     agency_id: z.string(),
@@ -14,12 +15,13 @@ const agencyCsvSchema = z.object({
 });
 
 export const convertAgencyCsvToJson = new Command("convert-agency-csv-to-json")
-    .option("-f, --filePath <filePath>", "Path to agencies csv file")
-    .action(async ({ filePath }) => {
-        const json = csvToJson
-            .fieldDelimiter(",")
-            .supportQuotedField(true)
-            .getJsonFromCsv(filePath || "./agencies.csv");
+    .option("-f, --file <file>", "Path to agencies csv file")
+    .action(async (options) => {
+        const { file } = await withUserPrompts(options, {
+            file: { type: "input" },
+        });
+
+        const json = csvToJson.fieldDelimiter(",").supportQuotedField(true).getJsonFromCsv(file);
 
         const parsedJson = agencyCsvSchema.array().parse(json);
 

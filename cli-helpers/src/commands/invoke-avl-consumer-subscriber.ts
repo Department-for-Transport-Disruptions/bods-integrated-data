@@ -1,6 +1,7 @@
 import { Command, Option } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+
+const frequencyChoices = ["10", "15", "20", "30"];
 
 export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subscriber")
     .addOption(STAGE_OPTION)
@@ -8,77 +9,19 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
     .option("--userId <userId>", "BODS user ID")
     .option("--subscriptionId <subscriptionId>", "Producer subscription IDs to subscribe to")
     .addOption(
-        new Option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds").choices([
-            "10",
-            "15",
-            "20",
-            "30",
-        ]),
+        new Option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds").choices(frequencyChoices),
     )
     .action(async (options) => {
-        let { stage, consumerSubscriptionId, userId, subscriptionId, frequencyInSeconds } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
-
-        if (!consumerSubscriptionId) {
-            const response = await inquirer.prompt<{ consumerSubscriptionId: string }>([
-                {
-                    name: "consumerSubscriptionId",
-                    message: "Enter the consumer subscription ID",
-                    type: "input",
-                },
-            ]);
-
-            consumerSubscriptionId = response.consumerSubscriptionId;
-        }
-
-        if (!userId) {
-            const response = await inquirer.prompt<{ userId: string }>([
-                {
-                    name: "userId",
-                    message: "Enter the BODS user ID",
-                    type: "input",
-                },
-            ]);
-
-            userId = response.userId;
-        }
-
-        if (!subscriptionId) {
-            const response = await inquirer.prompt<{ subscriptionId: string }>([
-                {
-                    name: "subscriptionId",
-                    message: "Enter a comma-delimited list of producer subscription IDs to, up to five",
-                    type: "input",
-                },
-            ]);
-
-            subscriptionId = response.subscriptionId;
-        }
-
-        if (!frequencyInSeconds) {
-            const response = await inquirer.prompt<{ frequencyInSeconds: string }>([
-                {
-                    name: "frequencyInSeconds",
-                    message: "Enter the frequency in seconds",
-                    type: "list",
-                    choices: ["10", "15", "20", "30"],
-                },
-            ]);
-
-            frequencyInSeconds = response.frequencyInSeconds;
-        }
+        const { stage, consumerSubscriptionId, userId, subscriptionId, frequencyInSeconds } = await withUserPrompts(
+            options,
+            {
+                stage: { type: "list", choices: STAGES },
+                consumerSubscriptionId: { type: "input" },
+                userId: { type: "input" },
+                subscriptionId: { type: "input" },
+                frequencyInSeconds: { type: "list", choices: frequencyChoices },
+            },
+        );
 
         const requestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
