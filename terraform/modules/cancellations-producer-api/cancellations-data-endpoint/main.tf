@@ -9,7 +9,7 @@ terraform {
   }
 }
 
-module "integrated_data_bods_cancellations_data_endpoint_function" {
+module "integrated_data_cancellations_data_endpoint_function" {
   source = "../../shared/lambda-function"
 
   environment      = var.environment
