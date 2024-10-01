@@ -56,7 +56,7 @@ export const handler: Handler = async (event, context) => {
 
         const [avlSubscriptions, cancellationsSubscriptions] = await Promise.all([
             getAvlSubscriptions(AVL_TABLE_NAME),
-            getCancellationsSubscriptions(AVL_TABLE_NAME),
+            getCancellationsSubscriptions(CANCELLATIONS_TABLE_NAME),
         ]);
 
         const avlMockSubscriptions = avlSubscriptions.filter(

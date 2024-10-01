@@ -83,7 +83,7 @@ export const handler: Handler = async (event, context) => {
 
         const [avlSubscriptions, cancellationsSubscriptions] = await Promise.all([
             getAvlSubscriptions(AVL_TABLE_NAME),
-            getCancellationsSubscriptions(AVL_TABLE_NAME),
+            getCancellationsSubscriptions(CANCELLATIONS_TABLE_NAME),
         ]);
 
         const avlMockSubscriptions = avlSubscriptions.filter(
@@ -120,7 +120,7 @@ export const handler: Handler = async (event, context) => {
         await Promise.all(allRequests);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e, "There was an error when sending AVL data");
+            logger.error(e, "There was an error when sending mock data");
 
             throw e;
         }
