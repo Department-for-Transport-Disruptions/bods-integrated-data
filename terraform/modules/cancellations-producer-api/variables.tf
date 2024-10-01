@@ -51,4 +51,8 @@ variable "mock_data_producer_api_endpoint" {
   default  = null
 }
 
+variable "cancellations_raw_siri_bucket_name" {
+  type        = string
+  description = "Bucket Name for raw SIRI-SX data"
+}
 

@@ -1,39 +1,16 @@
 import { Command } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeAvlUnsubscriber = new Command("invoke-avl-unsubscriber")
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .action(async (options) => {
-        let { stage, subscriptionId } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
+        const { stage, subscriptionId } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+            subscriptionId: { type: "input" },
+        });
 
         const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
-
-        if (!subscriptionId) {
-            const responses = await inquirer.prompt<{ subscriptionId: string }>([
-                {
-                    name: "subscriptionId",
-                    message: "Enter the subscription ID of the data producer",
-                    type: "input",
-                },
-            ]);
-
-            subscriptionId = responses.subscriptionId;
-        }
 
         const invokePayload = {
             headers: {
