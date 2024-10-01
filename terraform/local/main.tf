@@ -230,6 +230,14 @@ module "integrated_data_disruptions_pipeline" {
   save_json          = true
 }
 
+module "integrated_data_cancellations_pipeline" {
+  source = "../modules/data-pipelines/cancellations-pipeline"
+
+  environment     = local.env
+  alarm_topic_arn = ""
+  ok_topic_arn    = ""
+}
+
 module "integrated_data_cancellations_data_producer_api" {
   source = "../modules/cancellations-producer-api"
 
@@ -243,4 +251,5 @@ module "integrated_data_cancellations_data_producer_api" {
   sg_id                                     = ""
   subnet_ids                                = []
   mock_data_producer_subscribe_function_url = module.mock_data_producer_api.subscribe_function_url
+  cancellations_raw_siri_bucket_name        = module.integrated_data_cancellations_pipeline.cancellations_raw_siri_bucket_name
 }

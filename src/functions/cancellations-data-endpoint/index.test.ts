@@ -2,24 +2,22 @@ import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as s3 from "@bods-integrated-data/shared/s3";
-import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
+import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 import {
     mockEmptySiri,
     mockHeartbeatNotification,
-    testCancellationsSiri,
-    testSiriVm,
-    testSiriVmWithSingleVehicleActivity,
-    testSiriWithEmptyVehicleActivity,
-    testSiriWithNoVehicleActivity,
-    testSiriWithSelfClosingVehicleActivity,
-    testVehicleActivityAndCancellationsSiri,
-} from "./testSiriVm";
+    testSiriSx,
+    testSiriSxWithSinglePtSituationElement,
+    testSiriWithEmptyPtSituationElement,
+    testSiriWithNoPtSituationElement,
+    testSiriWithSelfClosingPtSituationElement,
+} from "./testSiriSx";
 
-describe("AVL-data-endpoint", () => {
+describe("cancellations-data-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/logger", () => ({
         logger: {
             info: vi.fn(),
@@ -55,7 +53,7 @@ describe("AVL-data-endpoint", () => {
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-            body: testSiriVm,
+            body: testSiriSx,
         } as unknown as APIGatewayProxyEvent;
 
         getDynamoItemSpy.mockResolvedValue({
@@ -79,12 +77,12 @@ describe("AVL-data-endpoint", () => {
     });
 
     it.each(["live", "error"] as const)(
-        "Should add valid AVL data to S3 if subscription status is %o",
+        "should add valid cancellations data to S3 if subscription status is %o",
         async (status) => {
-            const avlSubscription: AvlSubscription = {
+            const cancellationsSubscription: CancellationsSubscription = {
                 PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
                 description: "test-description",
-                lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+                lastCancellationsDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
                 requestorRef: null,
                 shortDescription: "test-short-description",
                 status,
@@ -93,13 +91,13 @@ describe("AVL-data-endpoint", () => {
                 apiKey: "mock-api-key",
             };
 
-            getDynamoItemSpy.mockResolvedValue(avlSubscription);
+            getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
 
             await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
             expect(s3.putS3Object).toHaveBeenCalled();
             expect(s3.putS3Object).toHaveBeenCalledWith({
-                Body: `${testSiriVm}`,
+                Body: `${testSiriSx}`,
                 Bucket: "test-bucket",
                 ContentType: "application/xml",
                 Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -107,32 +105,32 @@ describe("AVL-data-endpoint", () => {
 
             expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
                 "test-dynamodb",
-                avlSubscription.PK,
+                cancellationsSubscription.PK,
                 "SUBSCRIPTION",
-                avlSubscription,
+                cancellationsSubscription,
             );
         },
     );
 
-    it("Should add valid AVL data with a single vehicle activity to S3", async () => {
-        const subscription: AvlSubscription = {
+    it("should add valid cancellations data with a single PtSituationElement to S3", async () => {
+        const subscription: CancellationsSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
             description: "test-description",
             shortDescription: "test-short-description",
-            lastAvlDataReceivedDateTime: "2024-03-11T00:00:00.000Z",
+            lastCancellationsDataReceivedDateTime: "2024-03-11T00:00:00.000Z",
             status: "live",
             requestorRef: null,
             publisherId: "test-publisher-id",
             apiKey: "mock-api-key",
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
-        mockEvent.body = testSiriVmWithSingleVehicleActivity;
+        mockEvent.body = testSiriSxWithSinglePtSituationElement;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiriVmWithSingleVehicleActivity}`,
+            Body: `${testSiriSxWithSinglePtSituationElement}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -142,18 +140,17 @@ describe("AVL-data-endpoint", () => {
             "test-dynamodb",
             subscription.PK,
             "SUBSCRIPTION",
-            { ...subscription, lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z" },
+            { ...subscription, lastCancellationsDataReceivedDateTime: "2024-03-11T15:20:02.093Z" },
         );
     });
 
-    it("Throws an error when the required env vars are missing", async () => {
+    it("throws an error when the required env vars are missing", async () => {
         process.env.BUCKET_NAME = "";
         process.env.TABLE_NAME = "";
-        mockEvent.body = testSiriVmWithSingleVehicleActivity;
+        mockEvent.body = testSiriSxWithSinglePtSituationElement;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
-        expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "There was a problem with the Data endpoint");
         expect(s3.putS3Object).not.toHaveBeenCalled();
     });
 
@@ -179,7 +176,7 @@ describe("AVL-data-endpoint", () => {
     );
 
     it.each([[null, "Body must be a string"]])(
-        "Throws an error when the body fails validation (test %#)",
+        "throws an error when the body fails validation (test %#)",
         async (body, expectedErrorMessage) => {
             mockEvent.body = body;
 
@@ -190,7 +187,7 @@ describe("AVL-data-endpoint", () => {
         },
     );
 
-    it.each(["abc", mockEmptySiri])("Does not throw an error when invalid XML is provided", async (input) => {
+    it.each(["abc", mockEmptySiri])("does not throw an error when invalid XML is provided", async (input) => {
         mockEvent.body = input;
 
         const response = await handler(mockEvent, mockContext, mockCallback);
@@ -202,7 +199,7 @@ describe("AVL-data-endpoint", () => {
         expect(s3.putS3Object).toHaveBeenCalled();
     });
 
-    it("Throws an error when the subscription is inactive", async () => {
+    it("throws an error when the subscription is inactive", async () => {
         getDynamoItemSpy.mockResolvedValue({
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             url: "https://mock-data-producer.com/",
@@ -225,7 +222,7 @@ describe("AVL-data-endpoint", () => {
     it("should process a valid heartbeat notification and update dynamodb with heartbeat details", async () => {
         mockEvent.body = mockHeartbeatNotification;
 
-        const expectedSubscription: AvlSubscription = {
+        const expectedSubscription: CancellationsSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             description: "test-description",
             heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
@@ -246,7 +243,7 @@ describe("AVL-data-endpoint", () => {
         );
     });
 
-    it("Throws an error if when processing a heartbeat notification the subscription does not exist in dynamodb", async () => {
+    it("throws an error if when processing a heartbeat notification the subscription does not exist in dynamodb", async () => {
         getDynamoItemSpy.mockResolvedValue(null);
         mockEvent.body = mockHeartbeatNotification;
 
@@ -270,91 +267,12 @@ describe("AVL-data-endpoint", () => {
         });
     });
 
-    it("handles an ALB event with a path", async () => {
-        getDynamoItemSpy.mockResolvedValue({
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            url: "https://mock-data-producer.com/",
-            description: "test-description",
-            shortDescription: "test-short-description",
-            status: "live",
-            requestorRef: null,
-            publisherId: "test-publisher-id",
-            apiKey: "mock-api-key",
-        });
-
-        const mockAlbEvent = {
-            path: `/${mockSubscriptionId}`,
-            body: testSiriVm,
-        } as unknown as ALBEvent;
-
-        const expectedSubscription: AvlSubscription = {
-            PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
-            description: "test-description",
-            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
-            requestorRef: null,
-            shortDescription: "test-short-description",
-            status: "live",
-            url: "https://mock-data-producer.com/",
-            publisherId: "test-publisher-id",
-            apiKey: "mock-api-key",
-        };
-
-        await expect(handler(mockAlbEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
-
-        expect(getDynamoItemSpy).toHaveBeenCalledWith("test-dynamodb", {
-            PK: mockSubscriptionId,
-            SK: "SUBSCRIPTION",
-        });
-
-        expect(s3.putS3Object).toHaveBeenCalled();
-        expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiriVm}`,
-            Bucket: "test-bucket",
-            ContentType: "application/xml",
-            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
-        });
-
-        expect(dynamo.putDynamoItem).toHaveBeenCalledWith<Parameters<typeof dynamo.putDynamoItem>>(
-            "test-dynamodb",
-            expectedSubscription.PK,
-            "SUBSCRIPTION",
-            expectedSubscription,
-        );
-    });
-
-    it("returns 200 for the healthcheck endpoint", async () => {
-        const mockAlbEvent = {
-            path: "/health",
-        } as unknown as ALBEvent;
-
-        const response = await handler(mockAlbEvent, mockContext, mockCallback);
-        expect(response).toEqual({
-            statusCode: 200,
-            body: "",
-        });
-
-        expect(s3.putS3Object).not.toHaveBeenCalledOnce();
-        expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
-    });
-
-    it("should return a 200 and add data to S3 if vehicle activity and cancellations received", async () => {
-        mockEvent.body = testVehicleActivityAndCancellationsSiri;
-        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
-
-        expect(s3.putS3Object).toHaveBeenCalledOnce();
-        expect(dynamo.putDynamoItem).toHaveBeenCalledOnce();
-    });
-
-    it("should return a 200 but not add data to S3 if only cancellations data is received", async () => {
-        mockEvent.body = testCancellationsSiri;
-        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
-
-        expect(s3.putS3Object).not.toHaveBeenCalledOnce();
-        expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
-    });
-
-    it.each([testSiriWithNoVehicleActivity, testSiriWithSelfClosingVehicleActivity, testSiriWithEmptyVehicleActivity])(
-        "should return a 200 but not add data to S3 if location data with no vehicle activities is received",
+    it.each([
+        testSiriWithNoPtSituationElement,
+        testSiriWithSelfClosingPtSituationElement,
+        testSiriWithEmptyPtSituationElement,
+    ])(
+        "should return a 200 but not add data to S3 if cancellations data with no PtSituationElements is received",
         async (input) => {
             mockEvent.body = input;
             await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });

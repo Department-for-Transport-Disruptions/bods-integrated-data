@@ -25,6 +25,7 @@ export * from "./invoke-bods-fares-retriever";
 export * from "./invoke-bods-txc-processor";
 export * from "./invoke-bods-txc-retriever";
 export * from "./invoke-bods-txc-unzipper";
+export * from "./invoke-cancellations-data-endpoint";
 export * from "./invoke-cancellations-subscriber";
 export * from "./invoke-db-cleardown";
 export * from "./invoke-db-migrator";
