@@ -1,9 +1,13 @@
-import { checkAvlSubscriptionIsHealthy, getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { checkCancellationsSubscriptionIsHealthy } from "@bods-integrated-data/shared/cancellations/utils";
+import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
+import {
+    CancellationsSubscribeMessage,
+    CancellationsSubscription,
+} from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
 import { getSubscriptionUsernameAndPassword, isPrivateAddress } from "@bods-integrated-data/shared/utils";
@@ -11,15 +15,15 @@ import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 
 export const resubscribeToDataProducer = async (
-    subscription: AvlSubscription,
+    subscription: CancellationsSubscription,
     subscribeEndpoint: string,
-    avlProducerApiKeyArn: string,
+    cancellationsProducerApiKeyArn: string,
 ) => {
     logger.info(`Attempting to resubscribe to subscription ID: ${subscription.PK}`);
 
     const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(
         subscription.PK,
-        "avl",
+        "cancellations",
     );
 
     if (!subscriptionUsername || !subscriptionPassword) {
@@ -28,7 +32,7 @@ export const resubscribeToDataProducer = async (
         );
     }
 
-    const subscriptionBody: AvlSubscribeMessage = {
+    const subscriptionBody: CancellationsSubscribeMessage = {
         dataProducerEndpoint: subscription.url,
         description: subscription.description,
         shortDescription: subscription.shortDescription,
@@ -39,32 +43,32 @@ export const resubscribeToDataProducer = async (
         publisherId: subscription.publisherId,
     };
 
-    const avlProducerApiKey = await getSecret<string>({ SecretId: avlProducerApiKeyArn });
+    const cancellationsProducerApiKey = await getSecret<string>({ SecretId: cancellationsProducerApiKeyArn });
 
-    await axios.post(subscribeEndpoint, subscriptionBody, { headers: { "x-api-key": avlProducerApiKey } });
+    await axios.post(subscribeEndpoint, subscriptionBody, { headers: { "x-api-key": cancellationsProducerApiKey } });
 };
 
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        logger.info("Starting AVL feed validator");
+        logger.info("Starting cancellations feed validator");
 
         const currentTime = getDate();
 
         const {
             TABLE_NAME: tableName,
             SUBSCRIBE_ENDPOINT: subscribeEndpoint,
-            AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn,
+            CANCELLATIONS_PRODUCER_API_KEY_ARN: cancellationsProducerApiKeyArn,
         } = process.env;
 
-        if (!tableName || !subscribeEndpoint || !avlProducerApiKeyArn) {
+        if (!tableName || !subscribeEndpoint || !cancellationsProducerApiKeyArn) {
             throw new Error(
-                "Missing env vars: TABLE_NAME, SUBSCRIBE_ENDPOINT and AVL_PRODUCER_API_KEY_ARN must be set",
+                "Missing env vars: TABLE_NAME, SUBSCRIBE_ENDPOINT and CANCELLATIONS_PRODUCER_API_KEY_ARN must be set",
             );
         }
 
-        const subscriptions = await getAvlSubscriptions(tableName);
+        const subscriptions = await getCancellationsSubscriptions(tableName);
         const nonTerminatedSubscriptions = subscriptions.filter((subscription) => subscription.status !== "inactive");
 
         if (!nonTerminatedSubscriptions) {
@@ -74,11 +78,11 @@ export const handler: Handler = async (event, context) => {
 
         await Promise.all(
             nonTerminatedSubscriptions.map(async (subscription) => {
-                const subscriptionIsHealthy = checkAvlSubscriptionIsHealthy(subscription, currentTime);
+                const subscriptionIsHealthy = checkCancellationsSubscriptionIsHealthy(subscription, currentTime);
 
                 if (subscriptionIsHealthy) {
                     if (subscription.status !== "live") {
-                        await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
+                        await putDynamoItem<CancellationsSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                             ...subscription,
                             status: "live",
                         });
@@ -87,14 +91,14 @@ export const handler: Handler = async (event, context) => {
                     return;
                 }
 
-                await putDynamoItem<AvlSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
+                await putDynamoItem<CancellationsSubscription>(tableName, subscription.PK, "SUBSCRIPTION", {
                     ...subscription,
                     status: "error",
                 });
 
                 try {
                     await sendTerminateSubscriptionRequest(
-                        "avl",
+                        "cancellations",
                         subscription.PK,
                         subscription,
                         isPrivateAddress(subscription.url),
@@ -106,9 +110,9 @@ export const handler: Handler = async (event, context) => {
                 }
 
                 try {
-                    await resubscribeToDataProducer(subscription, subscribeEndpoint, avlProducerApiKeyArn);
+                    await resubscribeToDataProducer(subscription, subscribeEndpoint, cancellationsProducerApiKeyArn);
 
-                    await putMetricData("custom/AVLMetrics", [
+                    await putMetricData("custom/CancellationsMetrics", [
                         {
                             MetricName: "Resubscriptions",
                             Value: 1,
@@ -123,9 +127,9 @@ export const handler: Handler = async (event, context) => {
                         logger.error(e, "There was an error when resubscribing to the data producer");
                     }
 
-                    await putMetricData("custom/AVLMetrics", [
+                    await putMetricData("custom/CancellationsMetrics", [
                         {
-                            MetricName: "AvlFeedOutage",
+                            MetricName: "CancellationsFeedOutage",
                             Value: 1,
                         },
                     ]);
@@ -138,7 +142,7 @@ export const handler: Handler = async (event, context) => {
         );
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e, "There was an error when running the AVL feed validator");
+            logger.error(e, "There was an error when running the cancellations feed validator");
         }
 
         throw e;

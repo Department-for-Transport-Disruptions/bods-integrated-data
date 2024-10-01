@@ -50,6 +50,8 @@ export const cancellationsSubscriptionSchema = z.object({
 
 export type CancellationsSubscription = z.infer<typeof cancellationsSubscriptionSchema>;
 
+export const cancellationsSubscriptionsSchema = z.array(cancellationsSubscriptionSchema);
+
 export const cancellationsSubscriptionRequestSchema = z.object({
     Siri: z.object({
         SubscriptionRequest: z.object({

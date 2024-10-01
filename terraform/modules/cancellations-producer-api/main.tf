@@ -41,6 +41,12 @@ module "cancellations_subscriber" {
   "${var.mock_data_producer_api_endpoint}/subscriptions")
 }
 
+resource "aws_lambda_function_url" "cancellations_subscribe_endpoint_function_url" {
+  count              = var.environment == "local" ? 1 : 0
+  function_name      = module.cancellations_subscriber.lambda_name
+  authorization_type = "NONE"
+}
+
 module "cancellations_unsubscriber" {
   source = "./cancellations-unsubscriber"
 
@@ -64,4 +70,28 @@ module "cancellations_producer_api_gateway" {
   subscribe_lambda_name         = module.cancellations_subscriber.lambda_name
   unsubscribe_lambda_invoke_arn = module.cancellations_unsubscriber.invoke_arn
   unsubscribe_lambda_name       = module.cancellations_unsubscriber.lambda_name
+}
+
+module "cancellations_feed_validator" {
+  source                                = "./cancellations-feed-validator"
+  cancellations_subscription_table_name = module.integrated_data_cancellations_subscription_table.table_name
+  aws_account_id                        = var.aws_account_id
+  aws_region                            = var.aws_region
+  environment                           = var.environment
+  cancellations_consumer_subscribe_endpoint = (var.environment == "local" ?
+    aws_lambda_function_url.cancellations_subscribe_endpoint_function_url[0].function_url :
+  "https://${module.cancellations_producer_api_gateway[0].endpoint}/subscriptions")
+  cancellations_producer_api_key_arn = aws_secretsmanager_secret.cancellations_producer_api_key_secret.arn
+  sg_id                              = var.sg_id
+  subnet_ids                         = var.subnet_ids
+}
+
+module "cancellations_feed_validator_sfn" {
+  count                = var.environment == "local" ? 0 : 1
+  step_function_name   = "integrated-data-cancellations-feed-validator"
+  source               = "../../modules/shared/lambda-trigger-sfn"
+  environment          = var.environment
+  function_arn         = module.cancellations_feed_validator.function_arn
+  invoke_every_seconds = 30
+  depends_on           = [module.cancellations_feed_validator]
 }

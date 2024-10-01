@@ -7,7 +7,7 @@ import { AvlSubscription, SiriVehicleActivity } from "../schema";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
-    checkSubscriptionIsHealthy,
+    checkAvlSubscriptionIsHealthy,
     createSiriVm,
     createVehicleActivities,
     generateSiriVmAndUploadToS3,
@@ -446,7 +446,7 @@ describe("utils", () => {
                 false,
             ],
         ])("correctly determines if a subscription is healthy", (data, isHealthy) => {
-            expect(checkSubscriptionIsHealthy({ ...subscription, ...data }, currentTime)).toBe(isHealthy);
+            expect(checkAvlSubscriptionIsHealthy({ ...subscription, ...data }, currentTime)).toBe(isHealthy);
         });
     });
 });

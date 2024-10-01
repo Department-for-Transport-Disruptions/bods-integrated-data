@@ -595,7 +595,7 @@ export const getLatestAvlVehicleCount = (dbClient: KyselyDb) => {
  * @param currentTime The current time in DayJs
  * @returns Whether the subscription is healthy or not
  */
-export const checkSubscriptionIsHealthy = (subscription: AvlSubscription, currentTime: Dayjs) => {
+export const checkAvlSubscriptionIsHealthy = (subscription: AvlSubscription, currentTime: Dayjs) => {
     const { heartbeatLastReceivedDateTime, lastResubscriptionTime, serviceStartDatetime, lastAvlDataReceivedDateTime } =
         subscription;
 
