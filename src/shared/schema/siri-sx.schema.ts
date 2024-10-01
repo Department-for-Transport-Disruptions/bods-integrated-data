@@ -80,7 +80,7 @@ const ptSituationSchema = z.object({
 
 export type PtSituation = z.infer<typeof ptSituationSchema>;
 
-export const situationSchema = z.object({
+export const siriSxSchema = z.object({
     Siri: z.object({
         ServiceDelivery: z.object({
             SituationExchangeDelivery: z.object({

@@ -7,7 +7,7 @@ export * from "./avl-validation-error.schema";
 export * from "./avl.schema";
 export * from "./cancellations-subscribe.schema";
 export * from "./dates.schema";
-export * from "./disruptions.schema";
+export * from "./siri-sx.schema";
 export * from "./misc.schema";
 export * from "./noc.schema";
 export * from "./nptg.schema";
