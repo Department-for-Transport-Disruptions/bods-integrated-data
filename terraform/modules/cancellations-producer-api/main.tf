@@ -81,6 +81,6 @@ module "cancellations_producer_api_gateway" {
 }
 
 resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
-  function_name      = module.cancellations_data_endpoint.lambda_arn
+  function_name      = module.cancellations_data_endpoint.function_name
   authorization_type = "NONE"
 }
