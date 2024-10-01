@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed } from "@bods-integrated-data/shared/gtfs-rt/utils";
@@ -18,7 +19,6 @@ import {
     getGtfsInformedIdentities,
     getGtfsSeverityLevel,
 } from "./utils";
-import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 
 let dbClient: KyselyDb;
 

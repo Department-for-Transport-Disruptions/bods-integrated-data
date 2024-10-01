@@ -11,10 +11,10 @@ import {
     mockEmptySiri,
     mockHeartbeatNotification,
     testSiriSx,
+    testSiriSxWithSinglePtSituationElement,
     testSiriWithEmptyPtSituationElement,
     testSiriWithNoPtSituationElement,
     testSiriWithSelfClosingPtSituationElement,
-    testSiriSxWithSinglePtSituationElement,
 } from "./testSiriSx";
 
 describe("cancellations-data-endpoint", () => {

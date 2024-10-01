@@ -6,6 +6,7 @@ import {
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
+import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -21,7 +22,6 @@ import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrat
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
-import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 
 const requestParamsSchema = z.preprocess(
     Object,
