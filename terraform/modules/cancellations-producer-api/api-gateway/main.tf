@@ -30,6 +30,15 @@ resource "aws_apigatewayv2_integration" "integrated_data_cancellations_producer_
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_integration" "integrated_data_cancellations_producer_api_integration_data" {
+  api_id                 = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.data_endpoint_lambda_invoke_arn
+  integration_method     = "POST"
+  payload_format_version = "2.0"
+}
+
+
 resource "aws_apigatewayv2_route" "integrated_data_cancellations_producer_api_route_subscribe" {
   api_id    = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
   route_key = "POST /subscriptions"
@@ -43,6 +52,13 @@ resource "aws_apigatewayv2_route" "integrated_data_cancellations_producer_api_ro
 }
 
 
+resource "aws_apigatewayv2_route" "integrated_data_cancellations_producer_api_route_data" {
+  api_id    = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
+  route_key = "POST /subscriptions/{subscriptionId}"
+  target    = "integrations/${aws_apigatewayv2_integration.integrated_data_cancellations_producer_api_integration_data.id}"
+}
+
+
 resource "aws_apigatewayv2_deployment" "integrated_data_cancellations_producer_api_deployment" {
   api_id      = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.id
   description = aws_apigatewayv2_api.integrated_data_cancellations_producer_api.name
@@ -51,8 +67,10 @@ resource "aws_apigatewayv2_deployment" "integrated_data_cancellations_producer_a
     redeployment = sha1(join(",", tolist([
       jsonencode(aws_apigatewayv2_route.integrated_data_cancellations_producer_api_route_subscribe),
       jsonencode(aws_apigatewayv2_route.integrated_data_cancellations_producer_api_route_unsubscribe),
+      jsonencode(aws_apigatewayv2_route.integrated_data_cancellations_producer_api_route_data),
       jsonencode(aws_apigatewayv2_integration.integrated_data_cancellations_producer_api_integration_subscribe),
       jsonencode(aws_apigatewayv2_integration.integrated_data_cancellations_producer_api_integration_unsubscribe),
+      jsonencode(aws_apigatewayv2_integration.integrated_data_cancellations_producer_api_integration_data)
     ])))
   }
 
@@ -110,6 +128,13 @@ resource "aws_lambda_permission" "integrated_data_cancellations_producer_api_sub
 
 resource "aws_lambda_permission" "integrated_data_cancellations_producer_api_unsubscribe_permissions" {
   function_name = var.unsubscribe_lambda_name
+  action        = "lambda:InvokeFunction"
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.integrated_data_cancellations_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_cancellations_producer_api_stage.name}/*"
+}
+
+resource "aws_lambda_permission" "integrated_data_cancellations_producer_api_data_permissions" {
+  function_name = var.data_endpoint_lambda_name
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.integrated_data_cancellations_producer_api.execution_arn}/${aws_apigatewayv2_stage.integrated_data_cancellations_producer_api_stage.name}/*"

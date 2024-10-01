@@ -68,16 +68,18 @@ module "cancellations_unsubscriber" {
 }
 
 module "cancellations_producer_api_gateway" {
-  count                         = var.environment == "local" ? 0 : 1
-  source                        = "./api-gateway"
-  environment                   = var.environment
-  domain                        = var.domain
-  acm_certificate_arn           = var.acm_certificate_arn
-  hosted_zone_id                = var.hosted_zone_id
-  subscribe_lambda_invoke_arn   = module.cancellations_subscriber.invoke_arn
-  subscribe_lambda_name         = module.cancellations_subscriber.lambda_name
-  unsubscribe_lambda_invoke_arn = module.cancellations_unsubscriber.invoke_arn
-  unsubscribe_lambda_name       = module.cancellations_unsubscriber.lambda_name
+  count                           = var.environment == "local" ? 0 : 1
+  source                          = "./api-gateway"
+  environment                     = var.environment
+  domain                          = var.domain
+  acm_certificate_arn             = var.acm_certificate_arn
+  hosted_zone_id                  = var.hosted_zone_id
+  subscribe_lambda_invoke_arn     = module.cancellations_subscriber.invoke_arn
+  subscribe_lambda_name           = module.cancellations_subscriber.lambda_name
+  unsubscribe_lambda_invoke_arn   = module.cancellations_unsubscriber.invoke_arn
+  unsubscribe_lambda_name         = module.cancellations_unsubscriber.lambda_name
+  data_endpoint_lambda_invoke_arn = module.cancellations_data_endpoint.invoke_arn
+  data_endpoint_lambda_name       = module.cancellations_data_endpoint.lambda_name
 }
 
 resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
