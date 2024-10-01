@@ -1,7 +1,7 @@
 {
     "name": "@bods-integrated-data/cancellations-feed-validator",
     "version": "0.1.0",
-    "description": "AVL Feed Validator",
+    "description": "Cancellations Feed Validator",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./cancellations-feed-validator.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/cancellations-feed-validator.zip ../dist",

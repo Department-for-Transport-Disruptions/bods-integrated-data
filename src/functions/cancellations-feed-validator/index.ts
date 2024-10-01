@@ -10,7 +10,7 @@ import {
 } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
-import { getSubscriptionUsernameAndPassword, isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import { getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 
@@ -97,12 +97,7 @@ export const handler: Handler = async (event, context) => {
                 });
 
                 try {
-                    await sendTerminateSubscriptionRequest(
-                        "cancellations",
-                        subscription.PK,
-                        subscription,
-                        isPrivateAddress(subscription.url),
-                    );
+                    await sendTerminateSubscriptionRequest("cancellations", subscription.PK, subscription, false);
                 } catch (e) {
                     logger.warn(
                         `An error occurred when trying to unsubscribe from subscription with ID: ${subscription.PK}. Error ${e}`,
