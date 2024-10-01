@@ -3,11 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Avl } from "../database";
 import { getDate } from "../dates";
 import * as s3 from "../s3";
-import { AvlSubscription, SiriVehicleActivity } from "../schema";
+import { SiriVehicleActivity } from "../schema";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
-    checkSubscriptionIsHealthy,
     createSiriVm,
     createVehicleActivities,
     generateSiriVmAndUploadToS3,
@@ -411,42 +410,6 @@ describe("utils", () => {
                 },
                 mockAvl[1],
             ]);
-        });
-    });
-
-    describe("checkSubscriptionHealthy", () => {
-        const subscription: AvlSubscription = {
-            apiKey: "123",
-            PK: "abc-def",
-            description: "Test",
-            publisherId: "Test",
-            shortDescription: "Test",
-            status: "live",
-            url: "https://test.example.com",
-        };
-        const currentTime = getDate();
-
-        it.each([
-            [{}, false],
-            [{ heartbeatLastReceivedDateTime: currentTime.subtract(20, "seconds").toISOString() }, true],
-            [{ lastResubscriptionTime: currentTime.subtract(80, "seconds").toISOString() }, true],
-            [{ serviceStartDatetime: currentTime.subtract(90, "seconds").toISOString() }, true],
-            [
-                {
-                    lastAvlDataReceivedDateTime: currentTime.subtract(30, "seconds").toISOString(),
-                    heartbeatLastReceivedDateTime: currentTime.subtract(140, "seconds").toISOString(),
-                },
-                true,
-            ],
-            [
-                {
-                    lastAvlDataReceivedDateTime: currentTime.subtract(130, "seconds").toISOString(),
-                    heartbeatLastReceivedDateTime: currentTime.subtract(240, "seconds").toISOString(),
-                },
-                false,
-            ],
-        ])("correctly determines if a subscription is healthy", (data, isHealthy) => {
-            expect(checkSubscriptionIsHealthy({ ...subscription, ...data }, currentTime)).toBe(isHealthy);
         });
     });
 });
