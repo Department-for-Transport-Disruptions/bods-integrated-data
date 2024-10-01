@@ -127,3 +127,19 @@ export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidati
 export const avlOccupancyValues = ["full", "seatsAvailable", "standingAvailable"] as const;
 
 export type AvlOccupancy = (typeof avlOccupancyValues)[number];
+
+export const siriSxArrayProperties = [
+    "PtSituationElement",
+    "ValidityPeriod",
+    "RelatedToRef",
+    "InfoLink",
+    "DayType",
+    "Consequence",
+    "AffectedNetwork",
+    "AffectedOperator",
+    "AffectedLine",
+    "AffectedPlace",
+    "AffectedStopPoint",
+    "AffectedVehicleJourney",
+    "Call",
+];

@@ -10,11 +10,11 @@ import { handler } from ".";
 import {
     mockEmptySiri,
     mockHeartbeatNotification,
-    testSiri,
+    testSiriSx,
     testSiriWithEmptyPtSituationElement,
     testSiriWithNoPtSituationElement,
     testSiriWithSelfClosingPtSituationElement,
-    testSiriWithSinglePtSituationElement,
+    testSiriSxWithSinglePtSituationElement,
 } from "./testSiriSx";
 
 describe("cancellations-data-endpoint", () => {
@@ -53,7 +53,7 @@ describe("cancellations-data-endpoint", () => {
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-            body: testSiri,
+            body: testSiriSx,
         } as unknown as APIGatewayProxyEvent;
 
         getDynamoItemSpy.mockResolvedValue({
@@ -97,7 +97,7 @@ describe("cancellations-data-endpoint", () => {
 
             expect(s3.putS3Object).toHaveBeenCalled();
             expect(s3.putS3Object).toHaveBeenCalledWith({
-                Body: `${testSiri}`,
+                Body: `${testSiriSx}`,
                 Bucket: "test-bucket",
                 ContentType: "application/xml",
                 Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -125,12 +125,12 @@ describe("cancellations-data-endpoint", () => {
             apiKey: "mock-api-key",
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
-        mockEvent.body = testSiriWithSinglePtSituationElement;
+        mockEvent.body = testSiriSxWithSinglePtSituationElement;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiriWithSinglePtSituationElement}`,
+            Body: `${testSiriSxWithSinglePtSituationElement}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -147,7 +147,7 @@ describe("cancellations-data-endpoint", () => {
     it("throws an error when the required env vars are missing", async () => {
         process.env.BUCKET_NAME = "";
         process.env.TABLE_NAME = "";
-        mockEvent.body = testSiriWithSinglePtSituationElement;
+        mockEvent.body = testSiriSxWithSinglePtSituationElement;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 

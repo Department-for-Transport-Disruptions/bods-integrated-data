@@ -11,11 +11,11 @@ import {
     mockEmptySiri,
     mockHeartbeatNotification,
     testCancellationsSiri,
-    testSiri,
+    testSiriVm,
+    testSiriVmWithSingleVehicleActivity,
     testSiriWithEmptyVehicleActivity,
     testSiriWithNoVehicleActivity,
     testSiriWithSelfClosingVehicleActivity,
-    testSiriWithSingleVehicleActivity,
     testVehicleActivityAndCancellationsSiri,
 } from "./testSiriVm";
 
@@ -55,7 +55,7 @@ describe("AVL-data-endpoint", () => {
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-            body: testSiri,
+            body: testSiriVm,
         } as unknown as APIGatewayProxyEvent;
 
         getDynamoItemSpy.mockResolvedValue({
@@ -99,7 +99,7 @@ describe("AVL-data-endpoint", () => {
 
             expect(s3.putS3Object).toHaveBeenCalled();
             expect(s3.putS3Object).toHaveBeenCalledWith({
-                Body: `${testSiri}`,
+                Body: `${testSiriVm}`,
                 Bucket: "test-bucket",
                 ContentType: "application/xml",
                 Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -127,12 +127,12 @@ describe("AVL-data-endpoint", () => {
             apiKey: "mock-api-key",
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
-        mockEvent.body = testSiriWithSingleVehicleActivity;
+        mockEvent.body = testSiriVmWithSingleVehicleActivity;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiriWithSingleVehicleActivity}`,
+            Body: `${testSiriVmWithSingleVehicleActivity}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -149,7 +149,7 @@ describe("AVL-data-endpoint", () => {
     it("Throws an error when the required env vars are missing", async () => {
         process.env.BUCKET_NAME = "";
         process.env.TABLE_NAME = "";
-        mockEvent.body = testSiriWithSingleVehicleActivity;
+        mockEvent.body = testSiriVmWithSingleVehicleActivity;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
@@ -284,7 +284,7 @@ describe("AVL-data-endpoint", () => {
 
         const mockAlbEvent = {
             path: `/${mockSubscriptionId}`,
-            body: testSiri,
+            body: testSiriVm,
         } as unknown as ALBEvent;
 
         const expectedSubscription: AvlSubscription = {
@@ -308,7 +308,7 @@ describe("AVL-data-endpoint", () => {
 
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiri}`,
+            Body: `${testSiriVm}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,

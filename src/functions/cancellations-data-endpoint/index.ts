@@ -21,6 +21,7 @@ import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrat
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -33,21 +34,6 @@ const requestBodySchema = z.string({
     required_error: "Body is required",
     invalid_type_error: "Body must be a string",
 });
-
-const arrayProperties = [
-    "PtSituationElement",
-    "ValidityPeriod",
-    "RelatedToRef",
-    "InfoLink",
-    "DayType",
-    "Consequence",
-    "AffectedOperator",
-    "AffectedLine",
-    "AffectedPlace",
-    "AffectedStopPoint",
-    "AffectedVehicleJourney",
-    "Call",
-];
 
 const processHeartbeatNotification = async (
     data: HeartbeatNotification,
@@ -94,7 +80,7 @@ const parseXml = (xml: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.includes(tagName),
+        isArray: (tagName) => siriSxArrayProperties.includes(tagName),
     });
 
     return parser.parse(xml);

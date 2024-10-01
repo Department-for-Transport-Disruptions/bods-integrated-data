@@ -1,4 +1,4 @@
-export const testSiri = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+export const testSiriSxWithSinglePtSituationElement = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://www.siri.org.uk/siri"
       version="2.0">
@@ -51,7 +51,7 @@ export const testSiri = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     </ServiceDelivery>
 </Siri>`;
 
-export const testSiriWithSinglePtSituationElement = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+export const testSiriSx = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://www.siri.org.uk/siri"
       version="2.0">
