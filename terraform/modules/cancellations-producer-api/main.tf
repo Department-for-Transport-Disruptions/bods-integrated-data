@@ -81,3 +81,8 @@ module "cancellations_producer_api_gateway" {
   data_endpoint_lambda_invoke_arn = module.cancellations_data_endpoint.invoke_arn
   data_endpoint_lambda_name       = module.cancellations_data_endpoint.lambda_name
 }
+
+resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
+  function_name      = module.cancellations_data_endpoint.function_name
+  authorization_type = "NONE"
+}

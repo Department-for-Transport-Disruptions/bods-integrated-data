@@ -129,11 +129,13 @@ module "integrated_data_gtfs_rt_pipeline" {
 module "mock_data_producer_api" {
   source = "../modules/mock-data-producer-api"
 
-  environment                 = local.env
-  avl_consumer_data_endpoint  = module.integrated_data_avl_data_producer_api.data_endpoint_function_url
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
+  environment                           = local.env
+  aws_account_id                        = data.aws_caller_identity.current.account_id
+  aws_region                            = data.aws_region.current.name
+  avl_consumer_data_endpoint            = module.integrated_data_avl_data_producer_api.data_endpoint_function_url
+  avl_subscription_table_name           = module.integrated_data_avl_subscription_table.table_name
+  cancellations_consumer_data_endpoint  = module.integrated_data_cancellations_data_producer_api.data_endpoint_function_url
+  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
 }
 
 module "integrated_data_avl_pipeline" {
