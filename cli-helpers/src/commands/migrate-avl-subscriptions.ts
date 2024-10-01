@@ -1,9 +1,7 @@
 import { writeFile } from "node:fs/promises";
-
 import { Command } from "@commander-js/extra-typings";
 import csvToJson from "convert-csv-to-json";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
 interface BodsSubscription {
     dataset_id: string;
@@ -43,40 +41,18 @@ const generateLambdaPayload = (
 
 export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
     .addOption(STAGE_OPTION)
-    .option("--fileName <fileName>", "Subscriptions CSV file name")
+    .option("--file <file>", "Subscriptions CSV file name")
     .action(async (options) => {
-        let { stage, fileName } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
+        const { stage, file } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+            file: { type: "input" },
+        });
 
         const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
-        if (!fileName) {
-            const responses = await inquirer.prompt<{ fileName: string }>([
-                {
-                    name: "fileName",
-                    message: "Enter the file name for the subscriptions CSV file",
-                    type: "input",
-                },
-            ]);
-
-            fileName = responses.fileName;
-        }
-
         const subscriptionsJson = csvToJson
             .fieldDelimiter(",")
-            .getJsonFromCsv(`${fileName}.csv`) as unknown as BodsSubscription[];
+            .getJsonFromCsv(`${file}.csv`) as unknown as BodsSubscription[];
 
         const setOfSubscriptionUrlAndUsername = new Set();
         const dataProducersToSubscribeTo: Subscription[] = [];

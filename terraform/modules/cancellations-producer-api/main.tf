@@ -25,16 +25,30 @@ module "integrated_data_cancellations_subscription_table" {
   table_name  = "integrated-data-cancellations-subscription-table"
 }
 
-module "cancellations_subscriber" {
-  source = "./cancellations-subscriber"
+module "cancellations_data_endpoint" {
+  source = "./cancellations-data-endpoint"
 
   environment                           = var.environment
+  bucket_name                           = var.cancellations_raw_siri_bucket_name
+  cancellations_subscription_table_name = module.integrated_data_cancellations_subscription_table.table_name
   aws_account_id                        = var.aws_account_id
   aws_region                            = var.aws_region
   sg_id                                 = var.sg_id
   subnet_ids                            = var.subnet_ids
-  cancellations_producer_api_key_arn    = aws_secretsmanager_secret.cancellations_producer_api_key_secret.arn
-  cancellations_data_endpoint           = "https://www.test.com"
+}
+
+module "cancellations_subscriber" {
+  source = "./cancellations-subscriber"
+
+  environment                        = var.environment
+  aws_account_id                     = var.aws_account_id
+  aws_region                         = var.aws_region
+  sg_id                              = var.sg_id
+  subnet_ids                         = var.subnet_ids
+  cancellations_producer_api_key_arn = aws_secretsmanager_secret.cancellations_producer_api_key_secret.arn
+  cancellations_data_endpoint = (var.environment == "local" ? "https://www.mock-data-endpoint.com/subscriptions"
+    :
+  "https://${module.cancellations_producer_api_gateway[0].endpoint}/subscriptions")
   cancellations_subscription_table_name = module.integrated_data_cancellations_subscription_table.table_name
   mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
     var.mock_data_producer_subscribe_function_url :
@@ -60,16 +74,23 @@ module "cancellations_unsubscriber" {
 }
 
 module "cancellations_producer_api_gateway" {
-  count                         = var.environment == "local" ? 0 : 1
-  source                        = "./api-gateway"
-  environment                   = var.environment
-  domain                        = var.domain
-  acm_certificate_arn           = var.acm_certificate_arn
-  hosted_zone_id                = var.hosted_zone_id
-  subscribe_lambda_invoke_arn   = module.cancellations_subscriber.invoke_arn
-  subscribe_lambda_name         = module.cancellations_subscriber.lambda_name
-  unsubscribe_lambda_invoke_arn = module.cancellations_unsubscriber.invoke_arn
-  unsubscribe_lambda_name       = module.cancellations_unsubscriber.lambda_name
+  count                           = var.environment == "local" ? 0 : 1
+  source                          = "./api-gateway"
+  environment                     = var.environment
+  domain                          = var.domain
+  acm_certificate_arn             = var.acm_certificate_arn
+  hosted_zone_id                  = var.hosted_zone_id
+  subscribe_lambda_invoke_arn     = module.cancellations_subscriber.invoke_arn
+  subscribe_lambda_name           = module.cancellations_subscriber.lambda_name
+  unsubscribe_lambda_invoke_arn   = module.cancellations_unsubscriber.invoke_arn
+  unsubscribe_lambda_name         = module.cancellations_unsubscriber.lambda_name
+  data_endpoint_lambda_invoke_arn = module.cancellations_data_endpoint.invoke_arn
+  data_endpoint_lambda_name       = module.cancellations_data_endpoint.lambda_name
+}
+
+resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
+  function_name      = module.cancellations_data_endpoint.function_name
+  authorization_type = "NONE"
 }
 
 module "cancellations_feed_validator" {

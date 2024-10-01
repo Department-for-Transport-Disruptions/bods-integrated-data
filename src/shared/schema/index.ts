@@ -5,6 +5,7 @@ export * from "./unsubscribe.schema";
 export * from "./avl-validate.schema";
 export * from "./avl-validation-error.schema";
 export * from "./avl.schema";
+export * from "./cancellations-subscribe.schema";
 export * from "./dates.schema";
 export * from "./disruptions.schema";
 export * from "./misc.schema";
