@@ -1,0 +1,26 @@
+{
+    "name": "@bods-integrated-data/cancellations-processor",
+    "version": "0.1.0",
+    "description": "This function is to process SIRI-VM cancellations data and upload it to the database",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./cancellations-processor.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/cancellations-processor.zip ../dist/cancellations-processor.zip",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "fast-xml-parser": "^4.4.1"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19",
+        "@types/xml2js": "^0.4.14",
+        "mockdate": "^3.0.5",
+        "xml2js": "^0.6.2",
+        "zod": "^3.23.8"
+    }
+}

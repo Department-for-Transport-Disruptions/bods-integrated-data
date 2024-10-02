@@ -74,6 +74,7 @@ export interface Database {
     nptg_region_new: NptgRegionTable;
     avl: AvlTable;
     avl_bods: BodsAvlTable;
+    situation: SituationTable;
     agency: GtfsAgencyTable;
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
@@ -485,5 +486,30 @@ export interface NocOperatorTable {
 export type NocOperator = Selectable<NocOperatorTable>;
 export type NewNocOperator = Insertable<NocOperatorTable>;
 export type NocOperatorUpdate = Updateable<NocOperatorTable>;
+
+export interface SituationTable {
+    id: Generated<number>;
+    // todo: other columns
+    // response_time_stamp: string;
+    // producer_ref: string;
+    // status: boolean;
+    // more_data: boolean;
+    // subscriber_ref: string;
+    // subscription_ref: string;
+    // creation_time: string;
+    // participant_ref: string;
+    // situation_number: string;
+    // version: string;
+    // progress: string;
+    // source_type: string;
+    // start_time: string;
+    // end_time: string;
+    // miscellaneous_reason: string;
+    // affects will belong in another table
+}
+
+export type Situation = Selectable<SituationTable>;
+export type NewSituation = Insertable<SituationTable>;
+export type SituationUpdate = Updateable<SituationTable>;
 
 export type KyselyDb = Kysely<Database>;

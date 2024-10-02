@@ -1,10 +1,11 @@
+import { KyselyDb, NewCancellation } from "../database";
 import { getDynamoItem, recursiveScan } from "../dynamo";
 import {
     CancellationsSubscription,
     cancellationsSubscriptionSchema,
     cancellationsSubscriptionsSchema,
 } from "../schema/cancellations-subscribe.schema";
-import { SubscriptionIdNotFoundError } from "../utils";
+import { SubscriptionIdNotFoundError, chunkArray } from "../utils";
 
 export const getCancellationsSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
@@ -29,4 +30,27 @@ export const getCancellationsSubscription = async (subscriptionId: string, table
     }
 
     return cancellationsSubscriptionSchema.parse(subscription);
+};
+
+export const insertCancellations = async (
+    dbClient: KyselyDb,
+    cancellations: NewCancellation[],
+    subscriptionId: string,
+) => {
+    const modifiedCancellations = cancellations.map((cancellation) => ({
+        ...cancellation,
+        subscription_id: subscriptionId,
+    }));
+
+    const insertChunks = chunkArray(modifiedCancellations, 1000);
+
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            dbClient
+                .insertInto("situation")
+                .values(chunk)
+                // todo: onConflict handler
+                .execute(),
+        ),
+    );
 };
