@@ -1,5 +1,8 @@
 import { SendMessageBatchRequestEntry } from "@aws-sdk/client-sqs";
-import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
+import {
+    AvlSubscriptionDataSenderMessage,
+    AvlSubscriptionTriggerMessage,
+} from "@bods-integrated-data/shared/avl-consumer/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import * as sqs from "@bods-integrated-data/shared/sqs";
@@ -25,7 +28,7 @@ describe("avl-consumer-subscription-trigger", () => {
             subscriptionPK: "123",
             SK: "1234",
             queueUrl: "https://mock-queue-url",
-            frequencyInSeconds: 30,
+            frequencyInSeconds: 20,
         } as AvlSubscriptionTriggerMessage as unknown as Parameters<typeof handler>[0];
     });
 
@@ -64,20 +67,27 @@ describe("avl-consumer-subscription-trigger", () => {
         );
     });
 
-    it("sends messages to the SQS queue", async () => {
+    it("sends data and heartbeat messages to the SQS queue", async () => {
         await handler(mockEvent, mockContext, mockCallback);
 
+        const expectedDataMessage: AvlSubscriptionDataSenderMessage = {
+            subscriptionPK: "123",
+            SK: "1234",
+            messageType: "data",
+        };
+
+        const expectedHeartbeatMessage: AvlSubscriptionDataSenderMessage = {
+            subscriptionPK: "123",
+            SK: "1234",
+            messageType: "heartbeat",
+        };
+
         const expectedMessages: SendMessageBatchRequestEntry[] = [
-            {
-                Id: "0",
-                DelaySeconds: 0,
-                MessageBody: JSON.stringify({ subscriptionPK: "123", SK: "1234" }),
-            },
-            {
-                Id: "1",
-                DelaySeconds: 30,
-                MessageBody: JSON.stringify({ subscriptionPK: "123", SK: "1234" }),
-            },
+            { Id: "0", DelaySeconds: 0, MessageBody: JSON.stringify(expectedDataMessage) },
+            { Id: "1", DelaySeconds: 20, MessageBody: JSON.stringify(expectedDataMessage) },
+            { Id: "2", DelaySeconds: 40, MessageBody: JSON.stringify(expectedDataMessage) },
+            { Id: "3", DelaySeconds: 0, MessageBody: JSON.stringify(expectedHeartbeatMessage) },
+            { Id: "4", DelaySeconds: 30, MessageBody: JSON.stringify(expectedHeartbeatMessage) },
         ];
 
         expect(sendBatchMessageSpy).toHaveBeenCalledWith("https://mock-queue-url", expectedMessages);
