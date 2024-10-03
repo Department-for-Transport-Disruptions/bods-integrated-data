@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { cleardownTestSubscription, createTestSubscription } from "./utils";
-import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema";
+import { cleardownTestSubscription, createTestSubscription, makeSubscriptionInactive } from "./utils";
+import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
 
 const { STAGE: stage } = process.env;
 
@@ -22,7 +22,7 @@ const avlProducerSubscriptionTableName = `integrated-data-avl-subscription-table
 const avlConsumerSubscriptionTableName = `integrated-data-avl-consumer-subscription-table-${stage}`;
 
 const testProducerSubscription: AvlSubscription = {
-    PK: "1",
+    PK: "1234",
     url: "http://siri.ticketer.org.uk/api/vm",
     description: "Playwright test subscription",
     shortDescription: "Playwright test subscription",
@@ -32,25 +32,29 @@ const testProducerSubscription: AvlSubscription = {
     status: "live",
 };
 
-const testConsumerSubscription: AvlSubscribeMessage = {
-    dataProducerEndpoint: "http://siri.ticketer.org.uk/api/vm",
-    description: "Playwright test subscription",
-    shortDescription: "Playwright test subscription",
-    username: "PLAYWRIGHT",
-    password: "PLAYWRIGHT",
-    subscriptionId: "PLAYWRIGHT",
+const testConsumerSubscription: AvlConsumerSubscription = {
+    PK: "621352ba-7fd9-47ab-b86f-38858d652951",
+    SK: "1",
+    subscriptionId: "PLAYWRIGHT_CONSUMER",
+    status: "live",
+    url: "www.test.com",
     requestorRef: "BODS_MOCK_PRODUCER",
-    publisherId: "PLAYWRIGHT",
+    heartbeatInterval: "PT30S",
+    initialTerminationTime: "2034-03-11T15:20:02.093Z",
+    requestTimestamp: "2024-10-03T13:03:04.520Z",
+    heartbeatAttempts: 0,
 };
+
+const consumerSubscriptionId = "PLAYWRIGHT_CONSUMER";
 
 test.beforeAll(async () => {
     await createTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription);
-    await cleardownTestSubscription(avlConsumerSubscriptionTableName, testConsumerSubscription.subscriptionId);
+    // await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
 });
 
 test.afterAll(async () => {
     await cleardownTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription.PK);
-    await cleardownTestSubscription(avlConsumerSubscriptionTableName, testConsumerSubscription.subscriptionId);
+    // await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
 });
 
 test.describe("avl-consumer-api", () => {
@@ -68,12 +72,11 @@ test.describe("avl-consumer-api", () => {
         expect(siriVmResponse.status()).toBe(200);
     });
 
-    test("should", async ({ request }) => {
-        const consumerSubscriptionId = "PLAYWRIGHT_CONSUMER";
+    test("should create a new avl consumer subscription when given valid inputs", async ({ request }) => {
         const subscriptionRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
             <Siri version=\"2.0\\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
               <SubscriptionRequest>
-                <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+                <RequestTimestamp>${new Date().toISOString()}</RequestTimestamp>
                 <ConsumerAddress>https://www.test.com/data</ConsumerAddress>
                 <RequestorRef>test</RequestorRef>
                 <MessageIdentifier>123</MessageIdentifier>
@@ -92,14 +95,35 @@ test.describe("avl-consumer-api", () => {
             </Siri>
             `;
 
-        const subscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/subscribe?subscriptionId=1`, {
-            data: subscriptionRequestBody,
-            headers: { userId: consumerSubscriptionId, "Content-Type": "application/xml" },
+        const subscribeResponse = await request.post(
+            `${avlConsumerApiUrl(stage)}/siri-vm/subscribe?subscriptionId=${testProducerSubscription.PK}`,
+            {
+                data: subscriptionRequestBody,
+                headers: { "x-user-id": "1", "Content-Type": "application/xml" },
+            },
+        );
+
+        expect(subscribeResponse.status()).toBe(200);
+    });
+
+    test("should delete an avl consumer subscription when given valid inputs", async ({ request }) => {
+        const terminateSubscriptionRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+            <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\"
+              xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+              xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+              <TerminateSubscriptionRequest>
+                <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+                <RequestorRef>BODS</RequestorRef>
+                <MessageIdentifier>1</MessageIdentifier>
+                <SubscriptionRef>${consumerSubscriptionId}</SubscriptionRef>
+              </TerminateSubscriptionRequest>
+            </Siri>
+            `;
+        const subscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
+            data: terminateSubscriptionRequestBody,
+            headers: { "x-user-id": "1", "Content-Type": "application/xml" },
         });
 
-        const res = subscribeResponse.statusText();
-
-        console.log(res);
-        expect(subscribeResponse.status()).toBe(200);
+        expect(subscribeResponse.status()).toBe(204);
     });
 });
