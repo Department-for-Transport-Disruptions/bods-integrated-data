@@ -28,7 +28,7 @@ export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-un
 
         const invokePayload = {
             headers: {
-                userId,
+                "x-user-id": userId,
             },
             body: requestBody,
         };

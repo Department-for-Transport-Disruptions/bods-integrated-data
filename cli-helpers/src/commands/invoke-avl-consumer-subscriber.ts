@@ -48,7 +48,7 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
 
         const invokePayload = {
             headers: {
-                userId,
+                "x-user-id": userId,
             },
             queryStringParameters: {
                 subscriptionId,
