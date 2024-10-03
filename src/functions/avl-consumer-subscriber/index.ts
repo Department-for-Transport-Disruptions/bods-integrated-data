@@ -35,7 +35,7 @@ import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 const requestHeadersSchema = z.object({
-    userId: createStringLengthValidation("userId header"),
+    "x-user-id": createStringLengthValidation("x-user-id header"),
 });
 
 const requestParamsSchema = z.preprocess(
@@ -99,7 +99,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             );
         }
 
-        const { userId } = requestHeadersSchema.parse(event.headers);
+        const headers = requestHeadersSchema.parse(event.headers);
+        const userId = headers["x-user-id"];
         const {
             boundingBox,
             operatorRef,

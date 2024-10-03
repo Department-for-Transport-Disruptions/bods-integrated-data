@@ -74,7 +74,7 @@ describe("avl-consumer-unsubscriber", () => {
 
         mockEvent = {
             headers: {
-                userId: mockUserId,
+                "x-user-id": mockUserId,
             },
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
@@ -102,10 +102,10 @@ describe("avl-consumer-unsubscriber", () => {
     });
 
     it.each([
-        [{}, ["userId header is required"]],
-        [{ userId: "" }, ["userId header must be 1-256 characters"]],
-        [{ userId: "1".repeat(257) }, ["userId header must be 1-256 characters"]],
-    ])("returns a 400 when the userId header is invalid (test: %o)", async (headers, expectedErrorMessages) => {
+        [{}, ["x-user-id header is required"]],
+        [{ "x-user-id": "" }, ["x-user-id header must be 1-256 characters"]],
+        [{ "x-user-id": "1".repeat(257) }, ["x-user-id header must be 1-256 characters"]],
+    ])("returns a 400 when the x-user-id header is invalid (test: %o)", async (headers, expectedErrorMessages) => {
         mockEvent.headers = headers;
 
         const response = await handler(mockEvent, mockContext, mockCallback);

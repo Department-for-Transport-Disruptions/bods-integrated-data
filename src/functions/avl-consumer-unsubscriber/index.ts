@@ -18,7 +18,7 @@ import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 
 const requestHeadersSchema = z.object({
-    userId: createStringLengthValidation("userId header"),
+    "x-user-id": createStringLengthValidation("x-user-id header"),
 });
 
 const requestBodySchema = z.string({
@@ -53,7 +53,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
         }
 
-        const { userId } = requestHeadersSchema.parse(event.headers);
+        const headers = requestHeadersSchema.parse(event.headers);
+        const userId = headers["x-user-id"];
         const body = requestBodySchema.parse(event.body);
         const xml = parseXml(body);
         const subscriptionId = xml.Siri.TerminateSubscriptionRequest.SubscriptionRef;
