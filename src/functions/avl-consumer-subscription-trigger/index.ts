@@ -9,6 +9,9 @@ import { ScheduledHandler } from "aws-lambda";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
+const LAMBDA_TRIGGER_FREQUENCY_IN_SECONDS = 60;
+const HEARTBEAT_FREQUENCY_IN_SECONDS = 30;
+
 export const handler: ScheduledHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
@@ -17,14 +20,29 @@ export const handler: ScheduledHandler = async (event, context) => {
 
         const entries: SendMessageBatchRequestEntry[] = [];
 
-        for (let i = 0, delay = 0; delay < 60; i++, delay += frequencyInSeconds) {
+        for (let delay = 0; delay < LAMBDA_TRIGGER_FREQUENCY_IN_SECONDS; delay += frequencyInSeconds) {
             const dataSenderMessage: AvlSubscriptionDataSenderMessage = {
                 subscriptionPK,
                 SK,
+                messageType: "data",
             };
 
             entries.push({
-                Id: i.toString(),
+                Id: entries.length.toString(),
+                DelaySeconds: delay,
+                MessageBody: JSON.stringify(dataSenderMessage),
+            });
+        }
+
+        for (let delay = 0; delay < LAMBDA_TRIGGER_FREQUENCY_IN_SECONDS; delay += HEARTBEAT_FREQUENCY_IN_SECONDS) {
+            const dataSenderMessage: AvlSubscriptionDataSenderMessage = {
+                subscriptionPK,
+                SK,
+                messageType: "heartbeat",
+            };
+
+            entries.push({
+                Id: entries.length.toString(),
                 DelaySeconds: delay,
                 MessageBody: JSON.stringify(dataSenderMessage),
             });
