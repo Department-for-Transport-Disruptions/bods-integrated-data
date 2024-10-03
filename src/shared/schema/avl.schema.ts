@@ -23,6 +23,7 @@ import {
     createPopulatedStringValidation,
 } from "../validation";
 import { AvlValidationError } from "./avl-validation-error.schema";
+import { normalizedStringSchema } from "./misc.schema";
 
 const onwardCallSchema = z
     .object({
@@ -174,7 +175,7 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
                 ProducerRef: createNmTokenOrNumberSiriValidation("ProducerRef"),
                 VehicleMonitoringDelivery: z.object({
                     ResponseTimestamp: z.string(),
-                    RequestMessageRef: z.string().uuid().or(txcEmptyProperty).nullish(),
+                    RequestMessageRef: normalizedStringSchema.nullish(),
                     ValidUntil: z.string().nullish(),
                     ShortestPossibleCycle: z.string().nullish(),
                     VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),

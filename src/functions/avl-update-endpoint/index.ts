@@ -1,24 +1,21 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpNoContentResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
 } from "@bods-integrated-data/shared/avl/subscribe";
-import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
-import {
-    SubscriptionIdNotFoundError,
-    generateApiKey,
-    getAvlSubscription,
-} from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlUpdateBodySchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
+import { SubscriptionIdNotFoundError, generateApiKey, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
@@ -88,7 +85,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         try {
             logger.info("Unsubscribing using existing credentials ");
-            await sendTerminateSubscriptionRequest(subscriptionId, subscriptionDetail, isInternal);
+            await sendTerminateSubscriptionRequest("avl", subscriptionId, subscriptionDetail, isInternal);
         } catch (e) {
             logger.warn(
                 `An error occurred when trying to unsubscribe from subscription with ID: ${subscriptionId}. Error ${e}`,
@@ -110,29 +107,26 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             mockProducerSubscribeEndpoint,
         );
 
-        return {
-            statusCode: 204,
-            body: "",
-        };
+        return createHttpNoContentResponse();
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createNotFoundErrorResponse("Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the AVL subscriptions endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

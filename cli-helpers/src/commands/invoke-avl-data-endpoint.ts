@@ -1,45 +1,19 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command, Option } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGE_OPTION_WITH_DEFAULT, getDynamoDbItem, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getDynamoDbItem, invokeLambda, withUserPrompts } from "../utils";
+
+const notificationTypeChoices = ["Heartbeat Notification", "AVL Data"];
 
 export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
-    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .addOption(STAGE_OPTION)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
-    .addOption(
-        new Option("-n, --notificationType <type>", "Notification type").choices([
-            "Heartbeat Notification",
-            "AVL Data",
-        ]),
-    )
+    .addOption(new Option("-n, --notificationType <type>", "Notification type").choices(notificationTypeChoices))
     .action(async (options) => {
-        const { stage } = options;
-        let { subscriptionId, notificationType } = options;
-
-        if (!notificationType) {
-            const response = await inquirer.prompt<{ notificationType: string }>([
-                {
-                    name: "notificationType",
-                    message: "Select the notification type",
-                    type: "list",
-                    choices: ["Heartbeat Notification", "AVL Data"],
-                },
-            ]);
-
-            notificationType = response.notificationType;
-        }
-
-        if (!subscriptionId) {
-            const response = await inquirer.prompt<{ subscriptionId: string }>([
-                {
-                    name: "subscriptionId",
-                    message: "Enter the subscription ID of the data producer",
-                    type: "input",
-                },
-            ]);
-
-            subscriptionId = response.subscriptionId;
-        }
+        const { stage, subscriptionId, notificationType } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+            subscriptionId: { type: "input" },
+            notificationType: { type: "list", choices: notificationTypeChoices },
+        });
 
         const subscription = await getDynamoDbItem(stage, `integrated-data-avl-subscription-table-${stage}`, {
             PK: subscriptionId,

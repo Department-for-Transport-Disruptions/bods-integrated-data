@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
-import { mapBodsAvlDateStrings } from "../avl/utils";
+import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
 import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
@@ -136,7 +136,7 @@ export const getAvlDataForGtfs = async (
 
         const avls = await query.execute();
 
-        return avls.map(mapBodsAvlDateStrings);
+        return avls.map(mapBodsAvlFieldsIntoUsableFormats);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem getting AVL data from the database");

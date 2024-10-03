@@ -1,12 +1,14 @@
+import { randomUUID } from "node:crypto";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
+import { Dayjs } from "dayjs";
 import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
-import { recursiveScan } from "./dynamo";
+import { getDate, isDateAfter } from "./dates";
 import { logger } from "./logger";
 import { VehicleType } from "./schema";
-import { avlSubscriptionSchemaTransformed } from "./schema/avl-subscribe.schema";
+import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
@@ -88,10 +90,19 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, 
         });
     }, z.array(schema));
 
-export const getSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+export const getSubscriptionUsernameAndPassword = async (
+    subscriptionId: string,
+    subscriptionType: "avl" | "cancellations",
+) => {
     const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
-        getParameter(`/subscription/${subscriptionId}/username`, true),
-        getParameter(`/subscription/${subscriptionId}/password`, true),
+        getParameter(
+            `${subscriptionType === "cancellations" ? "/cancellations" : ""}/subscription/${subscriptionId}/username`,
+            true,
+        ),
+        getParameter(
+            `${subscriptionType === "cancellations" ? "/cancellations" : ""}/subscription/${subscriptionId}/password`,
+            true,
+        ),
     ]);
 
     const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
@@ -103,20 +114,19 @@ export const getSubscriptionUsernameAndPassword = async (subscriptionId: string)
     };
 };
 
-export const getMockDataProducerSubscriptions = async (tableName: string) => {
-    const subscriptions = await recursiveScan({
-        TableName: tableName,
-    });
+export const getCancellationsSubscriptionUsernameAndPassword = async (subscriptionId: string) => {
+    const [subscriptionUsernameParam, subscriptionPasswordParam] = await Promise.all([
+        getParameter(`/cancellations/subscription/${subscriptionId}/username`, true),
+        getParameter(`/cancellations/subscription/${subscriptionId}/password`, true),
+    ]);
 
-    if (!subscriptions || subscriptions.length === 0) {
-        return null;
-    }
+    const subscriptionUsername = subscriptionUsernameParam.Parameter?.Value ?? null;
+    const subscriptionPassword = subscriptionPasswordParam.Parameter?.Value ?? null;
 
-    const parsedSubscriptions = z.array(avlSubscriptionSchemaTransformed).parse(subscriptions);
-
-    return parsedSubscriptions.filter(
-        (subscription) => subscription.requestorRef === "BODS_MOCK_PRODUCER" && subscription.status === "live",
-    );
+    return {
+        subscriptionUsername,
+        subscriptionPassword,
+    };
 };
 
 export const createAuthorizationHeader = (username: string, password: string) => {
@@ -134,3 +144,78 @@ export const isPrivateAddress = (url: string) => {
 };
 
 export const roundToDecimalPlaces = (number: number, precision: number) => +number.toFixed(precision);
+
+export const generateApiKey = () => randomUUID().replaceAll("-", "");
+
+export class SubscriptionIdNotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "SubscriptionIdNotFoundError";
+        Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
+    }
+}
+
+export interface CompleteSiriObject<T> {
+    "?xml": {
+        "#text": "";
+        "@_version": "1.0";
+        "@_encoding": "UTF-8";
+        "@_standalone": "yes";
+    };
+    Siri: {
+        "@_version": "2.0";
+        "@_xmlns": "http://www.siri.org.uk/siri";
+        "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
+        "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
+    } & T;
+}
+
+/**
+ * Returns a SIRI-VM termination time value defined as 10 years after the given time.
+ * @param time The response time to offset from.
+ * @returns The termination.
+ */
+export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
+
+/**
+ * Checks if a given subscription is healthy by looking at whether any of heartbeatLastReceivedDateTime,
+ * lastResubscriptionTime, serviceStartDatetime, or lastDataReceivedDateTime were in the last 90 seconds.
+ *
+ * Data producers are meant to send heartbeats at least every 30 seconds but this is not always the case so the extra
+ * checks are intended to prevent over re-subscribing
+ *
+ * @param subscription The subscription object to check
+ * @param currentTime The current time in DayJs
+ * @returns Whether the subscription is healthy or not
+ */
+export const checkSubscriptionIsHealthy = (
+    currentTime: Dayjs,
+    subscription: AvlSubscription,
+    lastDataReceivedDateTime?: string | null,
+) => {
+    const { heartbeatLastReceivedDateTime, lastResubscriptionTime, serviceStartDatetime } = subscription;
+
+    const heartbeatThreshold = currentTime.subtract(90, "seconds");
+
+    const heartbeatLastReceivedInThreshold =
+        heartbeatLastReceivedDateTime && isDateAfter(getDate(heartbeatLastReceivedDateTime), heartbeatThreshold);
+
+    const lastResubscriptionTimeInThreshold =
+        lastResubscriptionTime && isDateAfter(getDate(lastResubscriptionTime), heartbeatThreshold);
+
+    const serviceStartDatetimeInThreshold =
+        serviceStartDatetime && isDateAfter(getDate(serviceStartDatetime), heartbeatThreshold);
+
+    const lastDataReceivedDateTimeInThreshold =
+        lastDataReceivedDateTime && isDateAfter(getDate(lastDataReceivedDateTime), heartbeatThreshold);
+
+    return !!(
+        heartbeatLastReceivedInThreshold ||
+        lastResubscriptionTimeInThreshold ||
+        lastDataReceivedDateTimeInThreshold ||
+        serviceStartDatetimeInThreshold
+    );
+};
+
+export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
+    datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");

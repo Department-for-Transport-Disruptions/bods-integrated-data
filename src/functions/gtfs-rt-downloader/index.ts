@@ -1,4 +1,4 @@
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
+import { createHttpServerErrorResponse, createHttpValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import {
@@ -141,14 +141,14 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the GTFS-RT downloader endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
 

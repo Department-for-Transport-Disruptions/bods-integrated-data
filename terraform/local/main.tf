@@ -120,6 +120,22 @@ module "integrated_data_gtfs_rt_pipeline" {
   bods_avl_processor_frequency       = 240
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
+  siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
+  siri_vm_bucket_arn                 = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_arn
+  save_json                          = true
+}
+
+
+module "mock_data_producer_api" {
+  source = "../modules/mock-data-producer-api"
+
+  environment                           = local.env
+  aws_account_id                        = data.aws_caller_identity.current.account_id
+  aws_region                            = data.aws_region.current.name
+  avl_consumer_data_endpoint            = module.integrated_data_avl_data_producer_api.data_endpoint_function_url
+  avl_subscription_table_name           = module.integrated_data_avl_subscription_table.table_name
+  cancellations_consumer_data_endpoint  = module.integrated_data_cancellations_data_producer_api.data_endpoint_function_url
+  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
 }
 
 module "integrated_data_avl_pipeline" {
@@ -127,6 +143,7 @@ module "integrated_data_avl_pipeline" {
 
   environment                                 = local.env
   vpc_id                                      = null
+  sg_id                                       = null
   private_subnet_ids                          = null
   db_secret_arn                               = "*"
   db_sg_id                                    = null
@@ -164,19 +181,20 @@ module "integrated_data_avl_validation_error_table" {
 }
 
 module "integrated_data_avl_data_producer_api" {
-  source                      = "../modules/avl-producer-api"
-  avl_raw_siri_bucket_name    = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
-  avl_subscription_table_name = module.integrated_data_avl_subscription_table.table_name
-  aws_account_id              = data.aws_caller_identity.current.account_id
-  aws_region                  = data.aws_region.current.name
-  environment                 = local.env
-  sg_id                       = ""
-  subnet_ids                  = []
-  acm_certificate_arn         = ""
-  hosted_zone_id              = ""
-  domain                      = ""
-  avl_producer_api_key        = local.secrets["avl_producer_api_key"]
-  avl_error_table_name        = module.integrated_data_avl_validation_error_table.table_name
+  source                                    = "../modules/avl-producer-api"
+  avl_raw_siri_bucket_name                  = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
+  avl_subscription_table_name               = module.integrated_data_avl_subscription_table.table_name
+  aws_account_id                            = data.aws_caller_identity.current.account_id
+  aws_region                                = data.aws_region.current.name
+  environment                               = local.env
+  sg_id                                     = ""
+  subnet_ids                                = []
+  acm_certificate_arn                       = ""
+  hosted_zone_id                            = ""
+  domain                                    = ""
+  avl_producer_api_key                      = local.secrets["avl_producer_api_key"]
+  avl_error_table_name                      = module.integrated_data_avl_validation_error_table.table_name
+  mock_data_producer_subscribe_function_url = module.mock_data_producer_api.subscribe_function_url
 }
 
 module "integrated_data_bank_holidays_pipeline" {
@@ -211,5 +229,29 @@ module "integrated_data_disruptions_pipeline" {
   db_secret_arn      = "*"
   db_sg_id           = null
   db_host            = null
-  saveJson           = true
+  save_json          = true
+}
+
+module "integrated_data_cancellations_pipeline" {
+  source = "../modules/data-pipelines/cancellations-pipeline"
+
+  environment     = local.env
+  alarm_topic_arn = ""
+  ok_topic_arn    = ""
+}
+
+module "integrated_data_cancellations_data_producer_api" {
+  source = "../modules/cancellations-producer-api"
+
+  aws_account_id                            = data.aws_caller_identity.current.account_id
+  aws_region                                = data.aws_region.current.name
+  environment                               = local.env
+  acm_certificate_arn                       = ""
+  hosted_zone_id                            = ""
+  domain                                    = ""
+  cancellations_producer_api_key            = local.secrets["cancellations_producer_api_key"]
+  sg_id                                     = ""
+  subnet_ids                                = []
+  mock_data_producer_subscribe_function_url = module.mock_data_producer_api.subscribe_function_url
+  cancellations_raw_siri_bucket_name        = module.integrated_data_cancellations_pipeline.cancellations_raw_siri_bucket_name
 }

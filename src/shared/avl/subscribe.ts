@@ -11,9 +11,8 @@ import {
     avlSubscriptionResponseSchema,
 } from "../schema/avl-subscribe.schema";
 import { putParameter } from "../ssm";
-import { createAuthorizationHeader } from "../utils";
+import { CompleteSiriObject, createAuthorizationHeader, getSiriVmTerminationTimeOffset } from "../utils";
 import { InvalidXmlError } from "../validation";
-import { CompleteSiriObject, getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
     logger.info("Uploading subscription auth credentials to parameter store");

@@ -1,26 +1,43 @@
-import { SubscriptionIdNotFoundError } from "../avl/utils";
-import { queryDynamo } from "../dynamo";
-import {
-    AvlConsumerSubscription,
-    AvlSubscriptionStatus,
-    avlConsumerSubscriptionSchema,
-    avlConsumerSubscriptionsSchema,
-} from "../schema";
+import { z } from "zod";
+import { getDynamoItem, recursiveQuery } from "../dynamo";
+import { AvlConsumerSubscription, avlConsumerSubscriptionSchema } from "../schema";
+import { SubscriptionIdNotFoundError } from "../utils";
+import { createStringLengthValidation } from "../validation";
 
-export const getAvlConsumerSubscriptions = async (tableName: string, status: AvlSubscriptionStatus) => {
-    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
-        TableName: tableName,
-        FilterExpression: "status = :status",
-        ExpressionAttributeValues: {
-            ":status": status,
-        },
-    });
+export const subscriptionTriggerMessageSchema = z.object({
+    subscriptionPK: z.string(),
+    SK: z.string(),
+    frequencyInSeconds: z.union([z.literal(10), z.literal(15), z.literal(20), z.literal(30)]),
+    queueUrl: z.string().url(),
+});
 
-    return avlConsumerSubscriptionsSchema.parse(subscriptions);
+export type AvlSubscriptionTriggerMessage = z.infer<typeof subscriptionTriggerMessageSchema>;
+
+export const subscriptionDataSenderMessageSchema = z
+    .string()
+    .transform((body) => JSON.parse(body))
+    .pipe(
+        z.object({
+            subscriptionPK: createStringLengthValidation("subscriptionPK"),
+            SK: createStringLengthValidation("SK"),
+            messageType: z.enum(["data", "heartbeat"]),
+        }),
+    );
+
+export type AvlSubscriptionDataSenderMessage = z.infer<typeof subscriptionDataSenderMessageSchema>;
+
+export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: string, SK: string) => {
+    const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, { PK, SK });
+
+    if (!subscription) {
+        throw new SubscriptionIdNotFoundError(`Subscription PK: ${PK} not found in DynamoDB`);
+    }
+
+    return avlConsumerSubscriptionSchema.parse(subscription);
 };
 
 export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {
-    const subscriptions = await queryDynamo<AvlConsumerSubscription>({
+    const subscriptions = await recursiveQuery<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
         KeyConditionExpression: "subscriptionId = :subscriptionId AND SK = :SK",

@@ -1,25 +1,14 @@
 import { Command } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeTndsTxcProcessor = new Command("invoke-tnds-txc-processor")
-    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .addOption(STAGE_OPTION)
     .option("-f, --file <file>", "File to process")
     .action(async (options) => {
-        const { stage } = options;
-        let { file } = options;
-
-        if (!file) {
-            const response = await inquirer.prompt<{ file: string }>([
-                {
-                    name: "file",
-                    message: "Enter the file to unzip",
-                    type: "input",
-                },
-            ]);
-
-            file = response.file;
-        }
+        const { stage, file } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+            file: { type: "input" },
+        });
 
         const payload = {
             Records: [

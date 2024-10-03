@@ -11,34 +11,17 @@ import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
 import { Avl, BodsAvl, KyselyDb, NewAvl } from "../database";
-import { getDate, isDateAfter } from "../dates";
+import { getDate } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import { chunkArray } from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriVmDatetimes } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
-
-export class SubscriptionIdNotFoundError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "SubscriptionIdNotFoundError";
-        Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
-    }
-}
-
-export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
-    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
-        PK: subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-
-    return subscription?.status === "live";
-};
 
 export const getAvlSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
@@ -203,12 +186,13 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
 };
 
 /**
- * Maps AVL timestamp fields as ISO strings.
+ * Maps various AVL fields into more usable formats.
  * @param avl The AVL
- * @returns The AVL with date strings
+ * @returns The mapped AVL
  */
-export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
+export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
     ...avl,
+    id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
     recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
     valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
@@ -221,12 +205,13 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
 });
 
 /**
- * Maps AVL timestamp fields as ISO strings.
+ * Maps various AVL fields into more usable formats.
  * @param avl The AVL
- * @returns The AVL with date strings
+ * @returns The mapped AVL
  */
-export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
+export const mapBodsAvlFieldsIntoUsableFormats = (avl: BodsAvl): BodsAvl => ({
     ...avl,
+    id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
     recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
     valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
@@ -244,7 +229,8 @@ export const getQueryForLatestAvl = (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
     recordedAtTimeAfter?: string,
 ) => {
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -285,7 +271,11 @@ export const getQueryForLatestAvl = (
     }
 
     if (subscriptionId) {
-        query = query.where("subscription_id", "=", subscriptionId);
+        query = query.where("subscription_id", "in", subscriptionId);
+    }
+
+    if (lastRetrievedAvlId) {
+        query = query.where("id", ">", lastRetrievedAvlId);
     }
 
     if (recordedAtTimeAfter) {
@@ -304,7 +294,8 @@ export const getAvlDataForSiriVm = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
 ) => {
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
@@ -319,12 +310,13 @@ export const getAvlDataForSiriVm = async (
             originRef,
             destinationRef,
             subscriptionId,
+            lastRetrievedAvlId,
             dayAgo,
         );
 
         const avls = await query.execute();
 
-        return avls.map(mapAvlDateStrings);
+        return avls.map(mapAvlFieldsIntoUsableFormats);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem getting AVL data from the database");
@@ -399,9 +391,6 @@ export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Parti
     });
 };
 
-export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
-    datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
-
 export const createSiriVm = (
     vehicleActivities: Partial<SiriVehicleActivity>[],
     requestMessageRef: string,
@@ -410,7 +399,7 @@ export const createSiriVm = (
     const currentTime = formatSiriVmDatetimes(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
-    const siriVm = {
+    const siriVm: SiriVM = {
         Siri: {
             ServiceDelivery: {
                 ResponseTimestamp: currentTime,
@@ -420,7 +409,7 @@ export const createSiriVm = (
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
                     ShortestPossibleCycle: "PT5S",
-                    VehicleActivity: vehicleActivities,
+                    VehicleActivity: vehicleActivities as SiriVehicleActivity[],
                 },
             },
         },
@@ -455,13 +444,6 @@ export const createSiriVm = (
  * @returns The valid until time.
  */
 export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriVmDatetimes(time.add(5, "minutes"), true);
-
-/**
- * Returns a SIRI-VM termination time value defined as 10 years after the given time.
- * @param time The response time to offset from.
- * @returns The termination.
- */
-export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
 
 /**
  * Spawns a child process to use the xmllint CLI command in order to validate
@@ -570,21 +552,6 @@ export const generateSiriVmAndUploadToS3 = async (
     ]);
 };
 
-export interface CompleteSiriObject<T> {
-    "?xml": {
-        "#text": "";
-        "@_version": "1.0";
-        "@_encoding": "UTF-8";
-        "@_standalone": "yes";
-    };
-    Siri: {
-        "@_version": "2.0";
-        "@_xmlns": "http://www.siri.org.uk/siri";
-        "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
-        "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
-    } & T;
-}
-
 export const getAvlErrorDetails = (error: ZodIssue) => {
     const validationError = fromZodIssue(error, { prefix: null, includePath: false });
     const { path } = validationError.details[0];
@@ -597,8 +564,6 @@ export const getAvlErrorDetails = (error: ZodIssue) => {
         level: avlValidationErrorLevelMappings[propertyName] || "CRITICAL",
     };
 };
-
-export const generateApiKey = () => randomUUID().replaceAll("-", "");
 
 /**
  * Returns a count of unique vehicles from the last 24 hours
@@ -614,41 +579,4 @@ export const getLatestAvlVehicleCount = (dbClient: KyselyDb) => {
         .where("recorded_at_time", ">", dayAgo)
         .select((eb) => eb.fn.countAll<number>().as("vehicle_count"))
         .executeTakeFirstOrThrow();
-};
-
-/**
- * Checks if a given subscription is healthy by looking at whether any of heartbeatLastReceivedDateTime,
- * lastResubscriptionTime, serviceStartDatetime, or lastAvlDataReceivedDateTime were in the last 90 seconds.
- *
- * Data producers are meant to send heartbeats at least every 30 seconds but this is not always the case so the extra
- * checks are intended to prevent over re-subscribing
- *
- * @param subscription The subscription object to check
- * @param currentTime The current time in DayJs
- * @returns Whether the subscription is healthy or not
- */
-export const checkSubscriptionIsHealthy = (subscription: AvlSubscription, currentTime: Dayjs) => {
-    const { heartbeatLastReceivedDateTime, lastResubscriptionTime, serviceStartDatetime, lastAvlDataReceivedDateTime } =
-        subscription;
-
-    const heartbeatThreshold = currentTime.subtract(90, "seconds");
-
-    const heartbeatLastReceivedInThreshold =
-        heartbeatLastReceivedDateTime && isDateAfter(getDate(heartbeatLastReceivedDateTime), heartbeatThreshold);
-
-    const lastResubscriptionTimeInThreshold =
-        lastResubscriptionTime && isDateAfter(getDate(lastResubscriptionTime), heartbeatThreshold);
-
-    const serviceStartDatetimeInThreshold =
-        serviceStartDatetime && isDateAfter(getDate(serviceStartDatetime), heartbeatThreshold);
-
-    const lastAvlDataReceivedDateTimeInThreshold =
-        lastAvlDataReceivedDateTime && isDateAfter(getDate(lastAvlDataReceivedDateTime), heartbeatThreshold);
-
-    return !!(
-        heartbeatLastReceivedInThreshold ||
-        lastResubscriptionTimeInThreshold ||
-        lastAvlDataReceivedDateTimeInThreshold ||
-        serviceStartDatetimeInThreshold
-    );
 };

@@ -1,6 +1,6 @@
 import { XMLBuilder } from "fast-xml-parser";
 import { HeartbeatNotification } from "../schema";
-import { CompleteSiriObject } from "./utils";
+import { CompleteSiriObject } from "../utils";
 
 export const generateHeartbeatNotificationXml = (subscriptionId: string, currentTimestamp: string) => {
     const subscriptionRequestJson: HeartbeatNotification = {

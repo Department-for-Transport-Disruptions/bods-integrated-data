@@ -4,14 +4,43 @@ import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from 
 import { DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-sdk/lib-dynamodb";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
+import inquirer, { QuestionMap } from "inquirer";
 
 export const STAGES = ["local", "dev", "test", "prod"];
 
 export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
 
-export const STAGE_OPTION_WITH_DEFAULT = new Option("-s, --stage <stage>", "Stage to use")
-    .choices(STAGES)
-    .default("local");
+type Prompt = {
+    type: keyof QuestionMap;
+    choices?: string[];
+};
+
+export const withUserPrompt = async (name: string, { type, choices }: Prompt) => {
+    const response = await inquirer.prompt<{ [name: string]: string }>([
+        {
+            name,
+            type,
+            choices,
+        },
+    ]);
+
+    return response[name];
+};
+
+export const withUserPrompts = async <T extends { [key: string]: string }>(
+    options: T,
+    prompts: Record<keyof T, Prompt>,
+) => {
+    const answers: Record<keyof T, string> = { ...options };
+
+    for await (const [option, prompt] of Object.entries(prompts) as Array<[key: keyof T, prompt: Prompt]>) {
+        if (!answers[option]) {
+            answers[option] = await withUserPrompt(option as string, prompt);
+        }
+    }
+
+    return answers;
+};
 
 export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandInputType) => {
     const lambdaClient = new LambdaClient({

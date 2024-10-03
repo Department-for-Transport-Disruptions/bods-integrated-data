@@ -152,8 +152,8 @@ describe("gtfs-timetables-generator", () => {
             await createGtfsZip("gtfsBucket", "outputBucket", "filePath", queries);
 
             expect(mocks.appendMock).toBeCalledTimes(2);
-            expect(mocks.appendMock).toBeCalledWith("stream", { name: "filePath/test.txt" });
-            expect(mocks.appendMock).toBeCalledWith("stream", { name: "filePath/test2.txt" });
+            expect(mocks.appendMock).toBeCalledWith("stream", { name: "test.txt" });
+            expect(mocks.appendMock).toBeCalledWith("stream", { name: "test2.txt" });
         });
 
         it("ignores files when include is false", async () => {
@@ -173,7 +173,7 @@ describe("gtfs-timetables-generator", () => {
             await createGtfsZip("gtfsBucket", "outputBucket", "filePath", queries);
 
             expect(mocks.appendMock).toBeCalledTimes(1);
-            expect(mocks.appendMock).toBeCalledWith("stream", { name: "filePath/test2.txt" });
+            expect(mocks.appendMock).toBeCalledWith("stream", { name: "test2.txt" });
         });
     });
 

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed } from "@bods-integrated-data/shared/gtfs-rt/utils";
@@ -21,17 +22,6 @@ import {
 
 let dbClient: KyselyDb;
 
-const arrayProperties = [
-    "PtSituationElement",
-    "ValidityPeriod",
-    "AffectedNetwork",
-    "AffectedVehicleJourney",
-    "AffectedLine",
-    "AffectedStopPoint",
-    "Call",
-    "Consequence",
-];
-
 const getAndParseData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
         Bucket: bucketName,
@@ -42,7 +32,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.includes(tagName),
+        isArray: (tagName) => siriSxArrayProperties.includes(tagName),
     });
 
     const xml = await file.Body?.transformToString();
