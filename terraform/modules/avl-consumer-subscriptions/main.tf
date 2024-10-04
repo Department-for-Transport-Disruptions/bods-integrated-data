@@ -251,49 +251,6 @@ module "avl_consumer_data_sender" {
   }
 }
 
-
-module "avl_consumer_heartbeat_notification" {
-  source = "../shared/lambda-function"
-
-  environment   = var.environment
-  function_name = "integrated-data-avl-consumer-heartbeat-notification"
-  zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-heartbeat-notification.zip"
-  handler       = "index.handler"
-  memory        = 256
-  runtime       = "nodejs20.x"
-  timeout       = 60
-
-  permissions = [
-    {
-      Action = [
-        "dynamodb:Scan",
-        "dynamodb:PutItem"
-      ],
-      Effect = "Allow",
-      Resource = [
-        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}",
-        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_avl_consumer_subscription_table.table_name}/index/*"
-      ]
-    }
-  ]
-
-
-  env_vars = {
-    STAGE                                = var.environment
-    AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
-  }
-}
-
-module "avl_consumer_heartbeat_notification_sfn" {
-  count                = var.environment == "local" ? 0 : 1
-  step_function_name   = "integrated-data-avl-consumer-hb-notification"
-  source               = "../../modules/shared/lambda-trigger-sfn"
-  environment          = var.environment
-  function_arn         = module.avl_consumer_heartbeat_notification.function_arn
-  invoke_every_seconds = 30
-  depends_on           = [module.avl_consumer_heartbeat_notification]
-}
-
 module "avl_consumer_subscription_trigger" {
   source = "../shared/lambda-function"
 

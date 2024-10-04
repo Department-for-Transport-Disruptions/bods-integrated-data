@@ -1,11 +1,6 @@
 import { z } from "zod";
-import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
-import {
-    AvlConsumerSubscription,
-    AvlSubscriptionStatus,
-    avlConsumerSubscriptionSchema,
-    avlConsumerSubscriptionsSchema,
-} from "../schema";
+import { getDynamoItem, recursiveQuery } from "../dynamo";
+import { AvlConsumerSubscription, avlConsumerSubscriptionSchema } from "../schema";
 import { SubscriptionIdNotFoundError } from "../utils";
 import { createStringLengthValidation } from "../validation";
 
@@ -25,25 +20,11 @@ export const subscriptionDataSenderMessageSchema = z
         z.object({
             subscriptionPK: createStringLengthValidation("subscriptionPK"),
             SK: createStringLengthValidation("SK"),
+            messageType: z.enum(["data", "heartbeat"]),
         }),
     );
 
 export type AvlSubscriptionDataSenderMessage = z.infer<typeof subscriptionDataSenderMessageSchema>;
-
-export const getAvlConsumerSubscriptionsByStatus = async (tableName: string, status: AvlSubscriptionStatus) => {
-    const subscriptions = await recursiveScan<AvlConsumerSubscription>({
-        TableName: tableName,
-        FilterExpression: "#status = :status",
-        ExpressionAttributeNames: {
-            "#status": "status",
-        },
-        ExpressionAttributeValues: {
-            ":status": status,
-        },
-    });
-
-    return avlConsumerSubscriptionsSchema.parse(subscriptions);
-};
 
 export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: string, SK: string) => {
     const subscription = await getDynamoItem<AvlConsumerSubscription>(tableName, { PK, SK });
