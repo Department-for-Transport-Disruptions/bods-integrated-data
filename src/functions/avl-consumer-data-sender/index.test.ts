@@ -200,7 +200,7 @@ describe("avl-consumer-subscriber", () => {
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 
-    it("throws an error when the subscription is not live", async () => {
+    it("returns early when the subscription is not live", async () => {
         const inactiveConsumerSubscription: AvlConsumerSubscription = {
             ...consumerSubscription,
             status: "inactive",
@@ -208,9 +208,9 @@ describe("avl-consumer-subscriber", () => {
 
         getDynamoItemSpy.mockResolvedValue(inactiveConsumerSubscription);
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
-            `Subscription PK: ${inactiveConsumerSubscription.PK} no longer live`,
-        );
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(logger.warn).toHaveBeenCalledWith(`Subscription PK: ${inactiveConsumerSubscription.PK} no longer live`);
         expect(getAvlDataForSiriVmSpy).not.toHaveBeenCalled();
     });
 

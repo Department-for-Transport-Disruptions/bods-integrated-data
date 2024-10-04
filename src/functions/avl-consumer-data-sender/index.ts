@@ -125,7 +125,8 @@ const processSqsRecord = async (record: SQSRecord, consumerSubscriptionTableName
     const subscription = await getAvlConsumerSubscriptionByPK(consumerSubscriptionTableName, subscriptionPK, SK);
 
     if (subscription.status !== "live") {
-        throw new Error(`Subscription PK: ${subscriptionPK} no longer live`);
+        logger.warn(`Subscription PK: ${subscriptionPK} no longer live`);
+        return;
     }
 
     if (messageType === "data") {
