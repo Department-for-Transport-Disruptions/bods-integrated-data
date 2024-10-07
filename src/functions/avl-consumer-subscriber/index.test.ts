@@ -1,3 +1,4 @@
+import { TooManyRequestsException } from "@aws-sdk/client-lambda";
 import { QueueDeletedRecently } from "@aws-sdk/client-sqs";
 import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
@@ -331,7 +332,7 @@ describe("avl-consumer-subscriber", () => {
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
-    it("returns a 429 when trying to resubscribe to an existing error subscription that was deactivated too recently", async () => {
+    it("returns a 503 when trying to resubscribe to an existing error subscription that was deactivated too recently", async () => {
         const producerSubscription: AvlSubscription = {
             PK: mockProducerSubscriptionIds[0],
             description: "test-description",
@@ -349,11 +350,38 @@ describe("avl-consumer-subscriber", () => {
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
-            statusCode: 429,
+            statusCode: 503,
             headers: {
                 "Retry-After": 60,
             },
             body: JSON.stringify({ errors: ["Existing subscription is still deactivating, try again later"] }),
+        });
+        expect(putDynamoItemSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns a 429 when hitting the AWS throttle limit creating resources", async () => {
+        const producerSubscription: AvlSubscription = {
+            PK: mockProducerSubscriptionIds[0],
+            description: "test-description",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "live",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        };
+
+        recursiveScanSpy.mockResolvedValueOnce([producerSubscription]);
+        createEventSourceMappingSpy.mockRejectedValue(new TooManyRequestsException({ message: "", $metadata: {} }));
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 429,
+            headers: {
+                "Retry-After": 60,
+            },
+            body: JSON.stringify({ errors: ["Too many subscribe requests, try again later"] }),
         });
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
