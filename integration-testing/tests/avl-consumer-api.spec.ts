@@ -125,6 +125,9 @@ test.describe("avl-consumer-api", () => {
             </Siri>
             `;
 
+        /// A wait time is added here because the event source mapping created in the subscribe endpoint takes approx.
+        // 12 seconds to create. Trying to hit the unsubscribe endpoint before this time will mean the event source mapping
+        // is not deleted which makes future test runs fail
         await new Promise((res) => setTimeout(res, 15000));
 
         const unsubscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
