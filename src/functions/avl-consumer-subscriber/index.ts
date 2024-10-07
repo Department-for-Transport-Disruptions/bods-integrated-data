@@ -252,6 +252,11 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 );
             }
 
+            if (e.name === "TooManyRequestsException") {
+                logger.warn(e, "Hit AWS throttle limit when trying to subscribe");
+                return createHttpTooManyRequestsErrorResponse("Too many subscribe requests, try again later", 60);
+            }
+
             logger.error(e, "There was a problem with the avl-consumer-subscriber endpoint");
         }
 
