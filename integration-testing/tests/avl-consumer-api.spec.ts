@@ -1,6 +1,6 @@
+import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
 import { expect, test } from "@playwright/test";
 import { cleardownTestSubscription, createTestSubscription, makeSubscriptionInactive } from "./utils";
-import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
 
 const { STAGE: stage } = process.env;
 

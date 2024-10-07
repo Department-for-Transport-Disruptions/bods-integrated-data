@@ -1,6 +1,6 @@
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { deleteDynamoItem, putDynamoItem } from "../data/dynamo";
 import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
+import { deleteDynamoItem, putDynamoItem } from "../data/dynamo";
 
 export const getSecretByKey = async <T extends string>(stage: string, key: string): Promise<T> => {
     const client = new SecretsManagerClient({
