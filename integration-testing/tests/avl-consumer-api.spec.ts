@@ -37,24 +37,29 @@ const testConsumerSubscription: AvlConsumerSubscription = {
     SK: "1",
     subscriptionId: "PLAYWRIGHT_CONSUMER",
     status: "live",
-    url: "www.test.com",
+    url: "https://www.test.com",
     requestorRef: "BODS_MOCK_PRODUCER",
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2034-03-11T15:20:02.093Z",
     requestTimestamp: "2024-10-03T13:03:04.520Z",
     heartbeatAttempts: 0,
+    queryParams: { subscriptionId: ["1234"] },
+    lastRetrievedAvlId: 0,
+    queueUrl: "",
+    eventSourceMappingUuid: "",
+    scheduleName: "",
 };
 
 const consumerSubscriptionId = "PLAYWRIGHT_CONSUMER";
 
 test.beforeAll(async () => {
     await createTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription);
-    // await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
+    await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
 });
 
 test.afterAll(async () => {
     await cleardownTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription.PK);
-    // await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
+    await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
 });
 
 test.describe("avl-consumer-api", () => {
@@ -119,11 +124,14 @@ test.describe("avl-consumer-api", () => {
               </TerminateSubscriptionRequest>
             </Siri>
             `;
-        const subscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
+
+        await new Promise((res) => setTimeout(res, 15000));
+
+        const unsubscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
             data: terminateSubscriptionRequestBody,
             headers: { "x-user-id": "1", "Content-Type": "application/xml" },
         });
 
-        expect(subscribeResponse.status()).toBe(204);
+        expect(unsubscribeResponse.status()).toBe(204);
     });
 });
