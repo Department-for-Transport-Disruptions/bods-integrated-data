@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed } from "@bods-integrated-data/shared/gtfs-rt/utils";
@@ -19,16 +20,7 @@ import {
     getGtfsSeverityLevel,
 } from "./utils";
 
-const arrayProperties = [
-    "PtSituationElement",
-    "ValidityPeriod",
-    "AffectedNetwork",
-    "AffectedVehicleJourney",
-    "AffectedLine",
-    "AffectedStopPoint",
-    "Call",
-    "Consequence",
-];
+let dbClient: KyselyDb;
 
 const getAndParseData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
@@ -40,7 +32,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.includes(tagName),
+        isArray: (tagName) => siriSxArrayProperties.includes(tagName),
     });
 
     const xml = await file.Body?.transformToString();
@@ -135,12 +127,12 @@ const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array, saveJson: 
                 Body: JSON.stringify(decodedJson),
             });
         }
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem uploading GTFS-RT service alerts data to S3", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem uploading GTFS-RT service alerts data to S3");
         }
 
-        throw error;
+        throw e;
     }
 };
 
@@ -148,7 +140,7 @@ export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         const { BUCKET_NAME: bucketName, SAVE_JSON: saveJson } = process.env;
@@ -170,11 +162,18 @@ export const handler: S3Handler = async (event, context) => {
         await uploadGtfsRtToS3(bucketName, gtfsRtFeed, saveJson === "true");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the disruptions processor", e);
+            logger.error(e, "There was a problem with the disruptions processor");
         }
 
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

@@ -18,28 +18,10 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import { vehicleActivitySchema } from "../schema/avl.schema";
-import { chunkArray } from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriVmDatetimes } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
-
-export class SubscriptionIdNotFoundError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "SubscriptionIdNotFoundError";
-        Object.setPrototypeOf(this, SubscriptionIdNotFoundError.prototype);
-    }
-}
-
-export const isActiveAvlSubscription = async (subscriptionId: string, tableName: string) => {
-    const subscription = await getDynamoItem<AvlSubscription>(tableName, {
-        PK: subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-
-    return subscription?.status === "live";
-};
 
 export const getAvlSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
@@ -152,6 +134,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                     oc
                         .columns(["vehicle_ref", "operator_ref"])
                         .doUpdateSet((eb) => ({
+                            id: eb.ref("excluded.id"),
                             destination_ref: eb.ref("excluded.destination_ref"),
                             direction_ref: eb.ref("excluded.direction_ref"),
                             geom: eb.ref("excluded.geom"),
@@ -193,6 +176,7 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                             block_ref: eb.ref("excluded.block_ref"),
                             bearing: eb.ref("excluded.bearing"),
                             onward_calls: eb.ref("excluded.onward_calls"),
+                            driver_ref: eb.ref("excluded.driver_ref"),
                         }))
                         .whereRef("excluded.recorded_at_time", ">", "avl.recorded_at_time"),
                 )
@@ -202,12 +186,13 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
 };
 
 /**
- * Maps AVL timestamp fields as ISO strings.
+ * Maps various AVL fields into more usable formats.
  * @param avl The AVL
- * @returns The AVL with date strings
+ * @returns The mapped AVL
  */
-export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
+export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
     ...avl,
+    id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
     recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
     valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
@@ -220,12 +205,13 @@ export const mapAvlDateStrings = <T extends Avl>(avl: T): T => ({
 });
 
 /**
- * Maps AVL timestamp fields as ISO strings.
+ * Maps various AVL fields into more usable formats.
  * @param avl The AVL
- * @returns The AVL with date strings
+ * @returns The mapped AVL
  */
-export const mapBodsAvlDateStrings = (avl: BodsAvl): BodsAvl => ({
+export const mapBodsAvlFieldsIntoUsableFormats = (avl: BodsAvl): BodsAvl => ({
     ...avl,
+    id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
     recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
     valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
@@ -243,7 +229,8 @@ export const getQueryForLatestAvl = (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
     recordedAtTimeAfter?: string,
 ) => {
     let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
@@ -284,7 +271,11 @@ export const getQueryForLatestAvl = (
     }
 
     if (subscriptionId) {
-        query = query.where("subscription_id", "=", subscriptionId);
+        query = query.where("subscription_id", "in", subscriptionId);
+    }
+
+    if (lastRetrievedAvlId) {
+        query = query.where("id", ">", lastRetrievedAvlId);
     }
 
     if (recordedAtTimeAfter) {
@@ -303,7 +294,8 @@ export const getAvlDataForSiriVm = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
+    lastRetrievedAvlId?: number,
 ) => {
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
@@ -318,18 +310,19 @@ export const getAvlDataForSiriVm = async (
             originRef,
             destinationRef,
             subscriptionId,
+            lastRetrievedAvlId,
             dayAgo,
         );
 
         const avls = await query.execute();
 
-        return avls.map(mapAvlDateStrings);
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem getting AVL data from the database", error);
+        return avls.map(mapAvlFieldsIntoUsableFormats);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem getting AVL data from the database");
         }
 
-        throw error;
+        throw e;
     }
 };
 
@@ -340,8 +333,10 @@ export const getAvlDataForSiriVm = async (
  * @param validUntilTime Valid until time
  * @returns mapped SIRI-VM vehicle activities
  */
-export const createVehicleActivities = (avls: Avl[], validUntilTime: string): SiriVehicleActivity[] => {
-    return avls.map<SiriVehicleActivity>((avl) => {
+export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Partial<SiriVehicleActivity>[] => {
+    const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
+
+    return avls.map((avl) => {
         const vehicleActivity: SiriVehicleActivity = {
             RecordedAtTime: avl.recorded_at_time,
             ItemIdentifier: avl.item_id,
@@ -363,7 +358,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                     Longitude: avl.longitude,
                     Latitude: avl.latitude,
                 },
-                Bearing: avl.bearing,
+                Bearing: avl.bearing === -1 ? null : avl.bearing,
                 BlockRef: avl.block_ref,
                 VehicleRef: avl.operator_ref === "TFLO" ? avl.vehicle_name || avl.vehicle_ref : avl.vehicle_ref,
                 VehicleJourneyRef: avl.vehicle_journey_ref,
@@ -377,7 +372,7 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
             };
         }
 
-        if (avl.ticket_machine_service_code || avl.journey_code || avl.vehicle_unique_id) {
+        if (avl.ticket_machine_service_code || avl.journey_code || avl.vehicle_unique_id || avl.driver_ref) {
             vehicleActivity.Extensions = {
                 VehicleJourney: {
                     Operational: {
@@ -387,22 +382,22 @@ export const createVehicleActivities = (avls: Avl[], validUntilTime: string): Si
                         },
                     },
                     VehicleUniqueId: avl.vehicle_unique_id ?? null,
+                    DriverRef: avl.driver_ref ?? null,
                 },
             };
         }
 
-        return vehicleActivity;
+        return cleanDeep(vehicleActivity, { emptyArrays: true });
     });
 };
 
-export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
-    datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
-
-export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTime: Dayjs) => {
+export const createSiriVm = (
+    vehicleActivities: Partial<SiriVehicleActivity>[],
+    requestMessageRef: string,
+    responseTime: Dayjs,
+) => {
     const currentTime = formatSiriVmDatetimes(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
-    const vehicleActivities = createVehicleActivities(avls, validUntilTime);
-    const validVehicleActivities = vehicleActivities.filter((vh) => vehicleActivitySchema.safeParse(vh).success);
 
     const siriVm: SiriVM = {
         Siri: {
@@ -414,14 +409,13 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
                     ShortestPossibleCycle: "PT5S",
-                    VehicleActivity: validVehicleActivities,
+                    VehicleActivity: vehicleActivities as SiriVehicleActivity[],
                 },
             },
         },
     };
 
-    const siriVmWithoutEmptyFields = cleanDeep(siriVm, { emptyArrays: false });
-    const verifiedObject = siriSchema().parse(siriVmWithoutEmptyFields);
+    const verifiedObject = siriSchema().parse(siriVm);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
         Siri: {
@@ -450,13 +444,6 @@ export const createSiriVm = (avls: Avl[], requestMessageRef: string, responseTim
  * @returns The valid until time.
  */
 export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriVmDatetimes(time.add(5, "minutes"), true);
-
-/**
- * Returns a SIRI-VM termination time value defined as 10 years after the given time.
- * @param time The response time to offset from.
- * @returns The termination.
- */
-export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
 
 /**
  * Spawns a child process to use the xmllint CLI command in order to validate
@@ -496,6 +483,32 @@ const runXmlLint = async (xml: string) => {
     }
 };
 
+const createAndValidateSiri = async (
+    vehicleActivities: Partial<SiriVehicleActivity>[],
+    requestMessageRef: string,
+    responseTime: Dayjs,
+    lintSiri: boolean,
+    isTfl: boolean,
+) => {
+    const siriVm = createSiriVm(vehicleActivities, requestMessageRef, responseTime);
+
+    if (lintSiri) {
+        try {
+            await runXmlLint(siriVm);
+        } catch (e) {
+            await putMetricData("custom/SiriVmGenerator", [
+                { MetricName: isTfl ? "TfLValidationError" : "ValidationError", Value: 1 },
+            ]);
+
+            logger.error(e);
+
+            throw e;
+        }
+    }
+
+    return siriVm;
+};
+
 export const generateSiriVmAndUploadToS3 = async (
     avls: Avl[],
     requestMessageRef: string,
@@ -507,35 +520,21 @@ export const generateSiriVmAndUploadToS3 = async (
     }
 
     const responseTime = getDate();
-    const siriVm = createSiriVm(avls, requestMessageRef, responseTime);
-    const siriVmTfl = createSiriVm(
-        avls.filter((avl) => avl.operator_ref === tflOperatorRef),
-        requestMessageRef,
-        responseTime,
-    );
 
-    if (lintSiri) {
-        const [siriVmValidation, siriVmTflValidation] = await Promise.allSettled([
-            runXmlLint(siriVm),
-            runXmlLint(siriVmTfl),
-        ]);
+    const vehicleActivities = createVehicleActivities(avls, responseTime);
 
-        if (siriVmValidation.status === "rejected") {
-            await putMetricData("custom/SiriVmGenerator", [{ MetricName: "ValidationError", Value: 1 }]);
-
-            throw new Error("SIRI-VM file failed validation", {
-                cause: siriVmValidation.reason,
-            });
-        }
-
-        if (siriVmTflValidation.status === "rejected") {
-            await putMetricData("custom/SiriVmGenerator", [{ MetricName: "TfLValidationError", Value: 1 }]);
-
-            throw new Error("SIRI-VM TfL file failed validation", {
-                cause: siriVmTflValidation.reason,
-            });
-        }
-    }
+    const [siriVm, siriVmTfl] = await Promise.all([
+        Promise.resolve(createAndValidateSiri(vehicleActivities, requestMessageRef, responseTime, lintSiri, false)),
+        Promise.resolve(
+            createAndValidateSiri(
+                vehicleActivities.filter((v) => v.MonitoredVehicleJourney?.OperatorRef === tflOperatorRef),
+                requestMessageRef,
+                responseTime,
+                lintSiri,
+                true,
+            ),
+        ),
+    ]);
 
     await Promise.all([
         putS3Object({
@@ -553,21 +552,6 @@ export const generateSiriVmAndUploadToS3 = async (
     ]);
 };
 
-export interface CompleteSiriObject<T> {
-    "?xml": {
-        "#text": "";
-        "@_version": "1.0";
-        "@_encoding": "UTF-8";
-        "@_standalone": "yes";
-    };
-    Siri: {
-        "@_version": "2.0";
-        "@_xmlns": "http://www.siri.org.uk/siri";
-        "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance";
-        "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd";
-    } & T;
-}
-
 export const getAvlErrorDetails = (error: ZodIssue) => {
     const validationError = fromZodIssue(error, { prefix: null, includePath: false });
     const { path } = validationError.details[0];
@@ -580,8 +564,6 @@ export const getAvlErrorDetails = (error: ZodIssue) => {
         level: avlValidationErrorLevelMappings[propertyName] || "CRITICAL",
     };
 };
-
-export const generateApiKey = () => randomUUID().replaceAll("-", "");
 
 /**
  * Returns a count of unique vehicles from the last 24 hours

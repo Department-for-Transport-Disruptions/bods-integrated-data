@@ -1,0 +1,25 @@
+{
+    "name": "@bods-integrated-data/mock-data-producer-send-data",
+    "version": "0.1.0",
+    "description": "Function to send mock heartbeat data to our data consumers",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./mock-data-producer-send-heartbeat.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/mock-data-producer-send-heartbeat.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "axios": "^1.7.4"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19",
+        "@vitest/coverage-v8": "^1.4.0",
+        "mockdate": "^3.0.5",
+        "zod": "^3.23.8"
+    }
+}

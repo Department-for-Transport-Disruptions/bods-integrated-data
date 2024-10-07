@@ -1,9 +1,10 @@
-import * as unsubscribe from "@bods-integrated-data/shared/avl/unsubscribe";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import * as secretsManager from "@bods-integrated-data/shared/secretsManager";
 import * as ssm from "@bods-integrated-data/shared/ssm";
+import * as unsubscribe from "@bods-integrated-data/shared/unsubscribe";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import * as MockDate from "mockdate";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,8 +35,17 @@ describe("avl-feed-validator", () => {
         getSecret: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/avl/unsubscribe", () => ({
+    vi.mock("@bods-integrated-data/shared/unsubscribe", () => ({
         sendTerminateSubscriptionRequest: vi.fn(),
+    }));
+
+    vi.mock("@bods-integrated-data/shared/logger", () => ({
+        logger: {
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+        withLambdaRequestTracker: vi.fn(),
     }));
 
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
@@ -140,6 +150,33 @@ describe("avl-feed-validator", () => {
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
 
+    it("should do nothing if subscriptions have no heartbeat data but have received AVL data", async () => {
+        const avlSubscriptions: AvlSubscription[] = [
+            {
+                PK: "mock-subscription-id-1",
+                url: "https://mock-data-producer.com/",
+                description: "test-description",
+                shortDescription: "test-short-description",
+                status: "live",
+                requestorRef: null,
+                serviceStartDatetime: "2024-01-01T15:20:02.093Z",
+                heartbeatLastReceivedDateTime: null,
+                lastAvlDataReceivedDateTime: "2024-04-29T15:14:30.000Z",
+                publisherId: "test-publisher-id-1",
+                apiKey: "mock-api-key-1",
+            },
+        ];
+
+        recursiveScanSpy.mockResolvedValue(avlSubscriptions);
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(sendTerminateSubscriptionRequestSpy).not.toHaveBeenCalledOnce();
+        expect(getParameterSpy).not.toBeCalledTimes(2);
+        expect(putDynamoItemSpy).not.toHaveBeenCalledOnce();
+        expect(axiosSpy).not.toHaveBeenCalledOnce();
+    });
+
     it("should resubscribe to the data producer if we have not received a heartbeat notification for that subscription in the last 90 seconds", async () => {
         const avlSubscriptions: AvlSubscription[] = [
             {
@@ -151,6 +188,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                lastAvlDataReceivedDateTime: "2024-04-29T15:00:00.000Z",
                 publisherId: "test-publisher-id-1",
                 apiKey: "mock-api-key-1",
             },
@@ -162,6 +200,7 @@ describe("avl-feed-validator", () => {
                 status: "live",
                 requestorRef: null,
                 serviceStartDatetime: "2024-04-29T15:15:30.000Z",
+                lastAvlDataReceivedDateTime: "2024-04-29T15:20:00.000Z",
                 publisherId: "test-publisher-id-2",
                 apiKey: "mock-api-key-2",
             },
@@ -180,6 +219,7 @@ describe("avl-feed-validator", () => {
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             "mock-subscription-id-1",
             {
                 PK: "mock-subscription-id-1",
@@ -190,6 +230,7 @@ describe("avl-feed-validator", () => {
                 requestorRef: null,
                 serviceStartDatetime: "2024-01-01T15:20:02.093Z",
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+                lastAvlDataReceivedDateTime: "2024-04-29T15:00:00.000Z",
                 publisherId: "test-publisher-id-1",
                 apiKey: "mock-api-key-1",
             },
@@ -219,6 +260,7 @@ describe("avl-feed-validator", () => {
             PK: "mock-subscription-id-1",
             description: "test-description",
             heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+            lastAvlDataReceivedDateTime: "2024-04-29T15:00:00.000Z",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",
@@ -229,7 +271,7 @@ describe("avl-feed-validator", () => {
         });
     });
 
-    it("should throw an error if we resubscribe to a data producer and a username or password is not found for that subscription", async () => {
+    it("should set status as error if we resubscribe to a data producer and a username or password is not found for that subscription", async () => {
         const avlSubscriptions: AvlSubscription[] = [
             {
                 PK: "mock-subscription-id-1",
@@ -261,12 +303,19 @@ describe("avl-feed-validator", () => {
         getParameterSpy.mockResolvedValue({ Parameter: undefined });
         getParameterSpy.mockResolvedValue({ Parameter: undefined });
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(
-            "Cannot resubscribe to data producer as username or password is missing for subscription ID: mock-subscription-id-1.",
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(logger.error).toHaveBeenCalledWith(
+            Error(
+                "Cannot resubscribe to data producer as username or password is missing for subscription ID: mock-subscription-id-1",
+            ),
+
+            "There was an error when resubscribing to the data producer",
         );
 
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledOnce();
         expect(sendTerminateSubscriptionRequestSpy).toHaveBeenCalledWith(
+            "avl",
             "mock-subscription-id-1",
             {
                 PK: "mock-subscription-id-1",
@@ -299,7 +348,7 @@ describe("avl-feed-validator", () => {
         expect(axiosSpy).not.toHaveBeenCalledOnce();
     });
 
-    it("should throw an error if we do not receive a 200 response from the /subscriptions endpoint", async () => {
+    it("should set status as error if we do not receive a 200 response from the /subscriptions endpoint", async () => {
         const avlSubscriptions: AvlSubscription[] = [
             {
                 PK: "mock-subscription-id-1",
@@ -331,16 +380,12 @@ describe("avl-feed-validator", () => {
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-username" } });
         getParameterSpy.mockResolvedValue({ Parameter: { Value: "test-password" } });
 
-        mockedAxios.post.mockRejectedValue({
-            message: "Request failed with status code 500",
-            code: "500",
-            isAxiosError: true,
-            toJSON: () => {},
-            name: "AxiosError",
-        } as AxiosError);
+        mockedAxios.post.mockRejectedValue(new AxiosError("Error resubscribing", "500"));
 
-        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrowError(
-            "Request failed with status code 500",
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(logger.error).toHaveBeenCalledWith(
+            "There was an error when resubscribing to the data producer - subscriptionId: mock-subscription-id-1, code: 500, message: Error resubscribing",
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();

@@ -1,18 +1,15 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createValidationErrorResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import {
-    SubscriptionIdNotFoundError,
-    getAvlSubscription,
-    getAvlSubscriptionErrorData,
-} from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription, getAvlSubscriptionErrorData } from "@bods-integrated-data/shared/avl/utils";
 import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
+import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { ZodError, z } from "zod";
@@ -152,7 +149,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
         if (subscription.status === "inactive") {
             logger.error("Subscription is not live, validation report will not be generated...");
-            return createNotFoundErrorResponse("Subscription is not live");
+            return createHttpNotFoundErrorResponse("Subscription is not live");
         }
 
         const errorData = await getAvlSubscriptionErrorData(validationErrorsTableName, subscriptionId);
@@ -170,20 +167,19 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            logger.warn(e, "Invalid request");
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the avl data feed validator endpoint");
-            logger.error(e);
+            logger.error(e, "There was a problem with the avl data feed validator endpoint");
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
-            logger.error("Subscription not found", e);
-            return createNotFoundErrorResponse("Subscription not found");
+            logger.error(e, "Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

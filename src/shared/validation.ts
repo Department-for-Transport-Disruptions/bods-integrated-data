@@ -8,6 +8,7 @@ export const NM_TOKEN_REGEX = new RegExp(`^[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX
 export const NM_TOKEN_ARRAY_REGEX = new RegExp(
     `^[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX_LENGTH}}(,[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX_LENGTH}})*$`,
 );
+export const SUBSCRIPTION_ID_ARRAY_REGEX = /^[0-9]+(,[0-9]+){0,4}$/;
 
 export const NM_TOKEN_DISALLOWED_CHARS_REGEX = /[^a-zA-Z0-9.\-_:]/g;
 
@@ -30,6 +31,43 @@ export const createStringLengthValidation = (propertyName: string) => {
         .regex(STRING_LENGTH_REGEX, {
             message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters`,
         });
+};
+
+export const createStringArrayValidation = (propertyName: string) => {
+    return z
+        .string({
+            required_error: `${propertyName} is required`,
+            invalid_type_error: `${propertyName} must be a string`,
+        })
+        .transform((val) => val.split(",").map((b) => b.trim()))
+        .pipe(z.string().array());
+};
+
+export const createNmTokenSiriValidation = (propertyName: string, isRequired: boolean) => {
+    return isRequired
+        ? z.coerce
+              .string({
+                  required_error: `${propertyName} is required`,
+                  invalid_type_error: `${propertyName} must be a string`,
+              })
+              .regex(NM_TOKEN_REGEX, {
+                  message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+              })
+        : z.coerce
+              .string({ invalid_type_error: `${propertyName} must be a string` })
+              .regex(NM_TOKEN_REGEX, {
+                  message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+              })
+              .nullish();
+};
+
+export const createNmTokenOrNumberSiriValidation = (propertyName: string) => {
+    return z.union([
+        z.string().regex(NM_TOKEN_REGEX, {
+            message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+        }),
+        z.number(),
+    ]);
 };
 
 export const createNmTokenValidation = (propertyName: string) => {
@@ -63,8 +101,28 @@ export const createNmTokenArrayValidation = (propertyName: string) => {
         );
 };
 
+export const createSubscriptionIdArrayValidation = (propertyName: string) => {
+    return z.coerce
+        .string({
+            required_error: `${propertyName} is required`,
+            invalid_type_error: `${propertyName} must be a string`,
+        })
+        .transform((box) => box.split(",").map((b) => b.trim()))
+        .pipe(
+            z
+                .string()
+                .regex(SUBSCRIPTION_ID_ARRAY_REGEX, {
+                    message: `${propertyName} must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs`,
+                })
+                .array()
+                .max(5, {
+                    message: `${propertyName} must be up to 5 IDs`,
+                }),
+        );
+};
+
 export const createBoundingBoxValidation = (propertyName: string) => {
-    return z
+    return z.coerce
         .string({
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,

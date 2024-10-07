@@ -1,11 +1,15 @@
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION_WITH_DEFAULT, getSecretByKey, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeAvlSubscriptions = new Command("invoke-avl-subscriptions")
     .option("--subscriptionId <subscriptionId>", "Subscription ID")
-    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .addOption(STAGE_OPTION)
     .action(async (options) => {
-        const { stage, subscriptionId } = options;
+        const { stage, subscriptionId } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+            subscriptionId: { type: "input" },
+        });
+
         const apiKey = await getSecretByKey(stage, "avl_producer_api_key");
 
         const invokePayload = {

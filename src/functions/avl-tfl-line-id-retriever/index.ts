@@ -4,6 +4,8 @@ import { Handler } from "aws-lambda";
 import axios from "axios";
 import { TflLinesSchema } from "./tfl-line.schema";
 
+let dbClient: KyselyDb;
+
 export const getLineIds = async () => {
     const url = "https://api.tfl.gov.uk/Line/Mode/bus";
 
@@ -11,12 +13,12 @@ export const getLineIds = async () => {
         const response = await axios.get<TflLinesSchema>(url);
 
         return response.data.map((line) => ({ id: line.id }));
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error(`Error fetching TfL line IDs with URL ${url}`, error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, `Error fetching TfL line IDs with URL ${url}`);
         }
 
-        throw error;
+        throw e;
     }
 };
 
@@ -33,7 +35,7 @@ const insertLineIds = async (dbClient: KyselyDb, lineIds: NewTflLine[]) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info("Starting retrieval of TfL Line IDs");
@@ -45,9 +47,18 @@ export const handler: Handler = async (event, context) => {
         logger.info("TfL line ID retrieval complete");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error retrieving TfL line IDs", e);
+            logger.error(e, "There was an error retrieving TfL line IDs");
         }
 
         throw e;
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

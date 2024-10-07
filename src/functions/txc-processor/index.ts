@@ -33,6 +33,8 @@ import {
     isRequiredTndsServiceMode,
 } from "./utils";
 
+let dbClient: KyselyDb;
+
 const txcArrayProperties = [
     "ServicedOrganisation",
     "AnnotatedStopPointRef",
@@ -289,7 +291,7 @@ export const handler: S3Handler = async (event, context) => {
         throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
     }
 
-    const dbClient = await getDatabaseClient(stage === "local");
+    dbClient = dbClient || (await getDatabaseClient(stage === "local"));
     const record = event.Records[0];
 
     try {
@@ -302,14 +304,21 @@ export const handler: S3Handler = async (event, context) => {
         logger.info("TXC processor successful");
     } catch (e) {
         if (e instanceof InvalidOperatorError) {
-            logger.warn(`Invalid operator for TXC: ${record.s3.object.key}`, e);
+            logger.warn(e, `Invalid operator for TXC: ${record.s3.object.key}`);
         } else if (e instanceof Error) {
-            logger.error("There was a problem with the bods txc processor", e);
+            logger.error(e, "There was a problem with the bods txc processor");
             throw e;
         } else {
             throw e;
         }
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

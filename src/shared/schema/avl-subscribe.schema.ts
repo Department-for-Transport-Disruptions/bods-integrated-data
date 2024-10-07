@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { avlSubscriptionStatuses } from "../constants";
+import { subscriptionStatuses } from "../constants";
 import { createStringLengthValidation } from "../validation";
 
 export const avlSubscribeMessageSchema = z.object(
@@ -43,8 +43,9 @@ export const avlSubscriptionRequestSchema = z.object({
                 VehicleMonitoringRequest: z.object({
                     RequestTimestamp: z.string(),
                     VehicleMonitoringDetailLevel: z.literal("normal"),
-                    "@_version": z.string(),
+                    "@_version": z.string().nullish(),
                 }),
+                UpdateInterval: z.enum(["PT10S", "PT15S", "PT20S", "PT30S"]).optional(),
             }),
         }),
     }),
@@ -71,9 +72,9 @@ export const avlSubscriptionResponseSchema = z.object({
 
 export type AvlSubscriptionResponse = z.infer<typeof avlSubscriptionResponseSchema>;
 
-export const avlSubscriptionStatusesSchema = z.enum(avlSubscriptionStatuses);
+export const avlSubscriptionStatusesSchema = z.enum(subscriptionStatuses);
 
-export type AvlSubscriptionStatuses = z.infer<typeof avlSubscriptionStatusesSchema>;
+export type AvlSubscriptionStatus = z.infer<typeof avlSubscriptionStatusesSchema>;
 
 export const avlSubscriptionSchema = z.object({
     PK: z.string(),
@@ -89,14 +90,10 @@ export const avlSubscriptionSchema = z.object({
     lastAvlDataReceivedDateTime: z.string().nullish(),
     lastModifiedDateTime: z.string().nullish(),
     apiKey: z.string(),
+    lastResubscriptionTime: z.string().nullish(),
 });
 
 export type AvlSubscription = z.infer<typeof avlSubscriptionSchema>;
-
-export const avlSubscriptionSchemaTransformed = avlSubscriptionSchema.transform((data) => ({
-    subscriptionId: data.PK,
-    ...data,
-}));
 
 export const avlSubscriptionsSchema = z.array(avlSubscriptionSchema);
 

@@ -7,6 +7,7 @@ TNDS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-tnds-txc-local"
 TNDS_FTP_ARN=""
 AVL_UNPROCESSED_SIRI_BUCKET_NAME="integrated-data-avl-raw-siri-vm-local"
 AVL_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-subscription-table-local"
+AVL_VALIDATION_ERROR_TABLE_NAME="integrated-data-avl-validation-error-table-local"
 AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
@@ -23,6 +24,8 @@ GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 AVL_CONSUMER_API_KEY_ARN=""
 AVL_PRODUCER_API_KEY_ARN=""
+AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME="integrated-data-avl-consumer-subscription-table-local"
+CANCELLATIONS_SUBSCRIPTION_TABLE_NAME="integrated-data-cancellations-subscription-table-local"
 
 # Dev
 
@@ -207,7 +210,7 @@ run-local-avl-data-endpoint:
 	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
-	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local AVL_SUBSCRIPTION_TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_VALIDATION_ERROR_TABLE_NAME=${AVL_VALIDATION_ERROR_TABLE_NAME} FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
 run-local-avl-retriever:
 	STAGE=local TARGET_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"
@@ -216,7 +219,10 @@ run-local-avl-mock-data-producer-subscribe:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-subscribe'; handler().catch(e => console.error(e))"
 
 run-local-avl-mock-data-producer-send-data:
-	STAGE=local DATA_ENDPOINT="https://www.local.com" npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
+	STAGE=local AVL_DATA_ENDPOINT="https://www.local.com" CANCELLATIONS_DATA_ENDPOINT="https://www.local.com" AVL_TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} CANCELLATIONS_TABLE_NAME=${CANCELLATIONS_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-mock-data-producer-send-data'; handler().catch(e => console.error(e))"
+
+run-local-avl-mock-data-receiver:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-mock-data-receiver'; handler({ body: ${BODY} }).catch(console.error)"
 
 run-local-avl-unsubscriber:
 	STAGE=local SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" STAGE="local" TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} npx tsx -e "import {handler} from './src/functions/avl-unsubscriber'; handler({pathParameters: {'subscriptionId':'${SUBSCRIPTION_ID}'} }).catch(e => console.error(e))"
@@ -232,6 +238,22 @@ run-local-avl-subscriptions:
 
 run-local-avl-subscription:
 	STAGE=local TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_API_KEY_ARN=${AVL_PRODUCER_API_KEY_ARN} SUBSCRIPTION_ID="${SUBSCRIPTION_ID}" npx tsx -e "import {handler} from './src/functions/avl-subscriptions'; handler({ pathParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }}).then(console.log).catch(console.error)"
+
+# Change SUBSCRIPTION_PK, USER_ID, SUBSCRIPTION_ID and FREQUENCY values as and when needed
+run-local-avl-consumer-subscriber:
+	STAGE=local AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME=${AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME} AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN=${AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN} AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN=${AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN} AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN=${AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN} npx tsx -e "import {handler} from './src/functions/avl-consumer-subscriber'; handler({ headers: { 'x-user-id': '${USER_ID}' }, queryStringParameters: { subscriptionId: '${SUBSCRIPTION_ID}' }, body: '<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\"><SubscriptionRequest><RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp><ConsumerAddress>https://httpstat.us/200</ConsumerAddress><RequestorRef>test</RequestorRef><MessageIdentifier>123</MessageIdentifier><SubscriptionContext><HeartbeatInterval>PT30S</HeartbeatInterval></SubscriptionContext><VehicleMonitoringSubscriptionRequest><SubscriptionIdentifier>${SUBSCRIPTION_PK}</SubscriptionIdentifier><InitialTerminationTime>2034-03-11T15:20:02.093Z</InitialTerminationTime><VehicleMonitoringRequest version=\"2.0\"><RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp><VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel></VehicleMonitoringRequest><UpdateInterval>PT${FREQUENCY}S</UpdateInterval></VehicleMonitoringSubscriptionRequest></SubscriptionRequest></Siri>' }).then(console.log).catch(console.error)"
+
+# Change SUBSCRIPTION_PK and USER_ID values as and when needed
+run-local-avl-consumer-unsubscriber:
+	STAGE=local AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME=${AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-consumer-unsubscriber'; handler({ headers: { 'x-user-id': '${USER_ID}' }, body: '<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\"><TerminateSubscriptionRequest><RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp><RequestorRef>BODS</RequestorRef><MessageIdentifier>1</MessageIdentifier><SubscriptionRef>${SUBSCRIPTION_PK}</SubscriptionRef></TerminateSubscriptionRequest></Siri>' }).then(console.log).catch(console.error)"
+
+# Change SUBSCRIPTION_PK and USER_ID values as and when needed
+run-local-avl-consumer-data-sender:
+	STAGE=local AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME=${AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-consumer-data-sender'; handler({ Records: [{ body: '{ \"subscriptionPK\": \"${SUBSCRIPTION_PK}\", \"SK\": \"${USER_ID}\" }' }] }).then(console.log).catch(console.error)"
+
+# Change SUBSCRIPTION_PK, USER_ID, QUEUE_URL and FREQUENCY values as and when needed
+run-local-avl-consumer-subscription-trigger:
+	STAGE=local npx tsx -e "import {handler} from './src/functions/avl-consumer-subscription-trigger'; handler({ subscriptionPK: '${SUBSCRIPTION_PK}', SK: '${USER_ID}', queueUrl: '${QUEUE_URL}', frequencyInSeconds: ${FREQUENCY} }).then(console.log).catch(console.error)"
 
 # NOC
 

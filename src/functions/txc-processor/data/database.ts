@@ -18,7 +18,7 @@ const retryBackOffOptions: BackoffOptions = {
     jitter: "full",
     numOfAttempts: 20,
     retry: (e, attemptNumber) => {
-        logger.warn(`Attempt ${attemptNumber} failed, ${attemptNumber < 20 ? "retrying" : "aborting"}...`, e as Error);
+        logger.warn(e, `Attempt ${attemptNumber} failed, ${attemptNumber < 20 ? "retrying" : "aborting"}...`);
 
         return true;
     },
@@ -178,8 +178,9 @@ export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime
     await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
 };
 
-export const insertTrips = (dbClient: KyselyDb, trips: NewTrip[]) => {
-    return dbClient.insertInto("trip_new").values(trips).returningAll().execute();
+export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
+    const insertChunks = chunkArray(trips, 3000);
+    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("trip_new").values(chunk).execute()));
 };
 
 export const updateTripWithOriginAndDestinationRef = async (

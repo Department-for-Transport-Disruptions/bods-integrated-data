@@ -1,3 +1,6 @@
+// Max decimal precision in JavaScript before scientific notation kicks in
+export const MAX_DECIMAL_PRECISION = 6;
+
 export const GTFS_FILE_SUFFIX = "_gtfs";
 
 export const regionCodes = ["E", "EA", "EM", "L", "NE", "NW", "S", "SE", "SW", "W", "WM", "Y", "ALL"] as const;
@@ -94,7 +97,7 @@ export const REGIONS: Record<
 };
 
 export const tflOperatorRef = "TFLO";
-export const avlSubscriptionStatuses = ["live", "error", "inactive"] as const;
+export const subscriptionStatuses = ["live", "error", "inactive"] as const;
 export const avlValidationErrorLevels = ["CRITICAL", "NON-CRITICAL"] as const;
 
 export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidationErrorLevels)[number]> = {
@@ -124,3 +127,19 @@ export const avlValidationErrorLevelMappings: Record<string, (typeof avlValidati
 export const avlOccupancyValues = ["full", "seatsAvailable", "standingAvailable"] as const;
 
 export type AvlOccupancy = (typeof avlOccupancyValues)[number];
+
+export const siriSxArrayProperties = [
+    "PtSituationElement",
+    "ValidityPeriod",
+    "RelatedToRef",
+    "InfoLink",
+    "DayType",
+    "Consequence",
+    "AffectedNetwork",
+    "AffectedOperator",
+    "AffectedLine",
+    "AffectedPlace",
+    "AffectedStopPoint",
+    "AffectedVehicleJourney",
+    "Call",
+];

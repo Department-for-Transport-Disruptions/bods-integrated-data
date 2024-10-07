@@ -7,13 +7,12 @@ import { logger } from "../logger";
 import {
     AvlSubscription,
     AvlSubscriptionRequest,
-    AvlSubscriptionStatuses,
+    AvlSubscriptionStatus,
     avlSubscriptionResponseSchema,
 } from "../schema/avl-subscribe.schema";
 import { putParameter } from "../ssm";
-import { createAuthorizationHeader } from "../utils";
+import { CompleteSiriObject, createAuthorizationHeader, getSiriVmTerminationTimeOffset } from "../utils";
 import { InvalidXmlError } from "../validation";
-import { CompleteSiriObject, getSiriVmTerminationTimeOffset } from "./utils";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
     logger.info("Uploading subscription auth credentials to parameter store");
@@ -113,7 +112,7 @@ export const updateDynamoWithSubscriptionInfo = async (
     tableName: string,
     subscriptionId: string,
     subscription: Omit<AvlSubscription, "PK" | "status">,
-    status: AvlSubscriptionStatuses,
+    status: AvlSubscriptionStatus,
     currentTimestamp?: string,
 ) => {
     const subscriptionTableItems: Omit<AvlSubscription, "PK"> = {
@@ -130,6 +129,7 @@ export const updateDynamoWithSubscriptionInfo = async (
         apiKey: subscription.apiKey,
         heartbeatLastReceivedDateTime: subscription.heartbeatLastReceivedDateTime ?? null,
         lastAvlDataReceivedDateTime: subscription.lastAvlDataReceivedDateTime ?? null,
+        lastResubscriptionTime: subscription.lastResubscriptionTime ?? null,
     };
 
     logger.info("Updating DynamoDB with subscription information");

@@ -1,4 +1,4 @@
-import { createServerErrorResponse, createValidationErrorResponse } from "@bods-integrated-data/shared/api";
+import { createHttpServerErrorResponse, createHttpValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { GTFS_FILE_SUFFIX, REGIONS, RegionCode } from "@bods-integrated-data/shared/constants";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
@@ -51,14 +51,14 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            logger.warn(e, "Invalid request");
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the GTFS downloader endpoint", e);
+            logger.error(e, "There was a problem with the GTFS downloader endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

@@ -1,19 +1,20 @@
 import {
-    createNotFoundErrorResponse,
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpNoContentResponse,
+    createHttpNotFoundErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
-import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/avl/unsubscribe";
-import { SubscriptionIdNotFoundError, getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
+import { getAvlSubscription } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
-import { isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
+import { SubscriptionIdNotFoundError, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
@@ -65,6 +66,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         };
         try {
             await sendTerminateSubscriptionRequest(
+                "avl",
                 subscriptionId,
                 subscriptionDetail,
                 isPrivateAddress(subscription.url),
@@ -100,34 +102,31 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await deleteSubscriptionAuthCredsFromSsm(subscriptionId);
 
-        return {
-            statusCode: 204,
-            body: "",
-        };
+        return createHttpNoContentResponse();
     } catch (e) {
         if (e instanceof ZodError) {
-            logger.warn("Invalid request", e.errors);
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            logger.warn(e, "Invalid request");
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof InvalidXmlError) {
-            logger.warn("Invalid SIRI-VM XML provided by the data producer", e);
-            return createValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
+            logger.warn(e, "Invalid SIRI-VM XML provided by the data producer");
+            return createHttpValidationErrorResponse(["Invalid SIRI-VM XML provided by the data producer"]);
         }
 
         if (e instanceof SubscriptionIdNotFoundError) {
-            logger.error("Subscription not found", e);
-            return createNotFoundErrorResponse("Subscription not found");
+            logger.error(e, "Subscription not found");
+            return createHttpNotFoundErrorResponse("Subscription not found");
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the AVL unsubscribe endpoint", e);
+            logger.error(e, "There was a problem with the AVL unsubscribe endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };

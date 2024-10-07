@@ -57,10 +57,10 @@ function name, as well as `lambda-http-template` and `LambdaTemplate` in the fil
 
 ```typescript
 import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGE_OPTION, invokeLambda } from "../utils";
 
 export const invokeLambdaTemplate = new Command("invoke-lambda-http-template")
-    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = options;
 

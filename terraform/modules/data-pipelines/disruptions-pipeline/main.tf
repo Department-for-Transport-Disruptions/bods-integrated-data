@@ -62,15 +62,17 @@ module "integrated_data_bods_disruptions_retriever_function" {
   memory        = 256
   schedule      = var.retriever_schedule
 
-  permissions = [{
-    Action = [
-      "s3:PutObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
-    ]
-  }]
+  permissions = [
+    {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
+      ]
+    }
+  ]
 
   env_vars = {
     STAGE                            = var.environment
@@ -97,31 +99,33 @@ module "integrated_data_bods_disruptions_processor_function" {
     arn = aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn
   }
 
-  permissions = [{
-    Action = [
-      "secretsmanager:GetSecretValue",
-    ],
-    Effect = "Allow",
-    Resource = [
-      var.db_secret_arn,
-    ]
-    }, {
-    Action = [
-      "s3:GetObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
-    ]
-    }, {
-    Action = [
-      "s3:PutObject",
-    ],
-    Effect = "Allow",
-    Resource = [
-      "${aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.arn}/*"
-    ]
-  }]
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+      }, {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn}/*"
+      ]
+      }, {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.arn}/*"
+      ]
+    }
+  ]
 
   env_vars = {
     STAGE         = var.environment

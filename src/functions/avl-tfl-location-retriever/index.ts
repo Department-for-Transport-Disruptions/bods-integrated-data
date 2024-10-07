@@ -9,6 +9,8 @@ import { Handler } from "aws-lambda";
 import axios from "axios";
 import { RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
 
+let dbClient: KyselyDb;
+
 const getLineIds = async (dbClient: KyselyDb) => {
     const lineIds = await dbClient.selectFrom("tfl_line").selectAll().execute();
     return lineIds.map((lineId) => lineId.id);
@@ -26,9 +28,9 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
             });
 
             return response.data;
-        } catch (error) {
-            if (error instanceof Error) {
-                logger.error(`Error fetching TFL vehicle locations with chunk URL ${url}`, error);
+        } catch (e) {
+            if (e instanceof Error) {
+                logger.error(e, `Error fetching TFL vehicle locations with chunk URL ${url}`);
             }
 
             return { lines: [] };
@@ -56,7 +58,7 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info("Starting TfL location retriever");
@@ -81,13 +83,20 @@ export const handler: Handler = async (event, context) => {
         await insertAvls(dbClient, vehicleLocationsWithTflOperatorRef, "");
 
         logger.info("TfL location retriever successful");
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem with the TfL location retriever", error);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem with the TfL location retriever");
         }
 
-        throw error;
-    } finally {
-        await dbClient.destroy();
+        throw e;
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

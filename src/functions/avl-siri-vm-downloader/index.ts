@@ -1,14 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import {
-    createServerErrorResponse,
-    createUnauthorizedErrorResponse,
-    createValidationErrorResponse,
+    createHttpServerErrorResponse,
+    createHttpUnauthorizedErrorResponse,
+    createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
+    createVehicleActivities,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -20,10 +21,13 @@ import {
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
     createNmTokenValidation,
+    createStringArrayValidation,
     createStringLengthValidation,
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
+
+let dbClient: KyselyDb;
 
 const requestParamsSchema = z.preprocess(
     Object,
@@ -36,7 +40,7 @@ const requestParamsSchema = z.preprocess(
         producerRef: createNmTokenValidation("producerRef").optional(),
         originRef: createNmTokenValidation("originRef").optional(),
         destinationRef: createNmTokenValidation("destinationRef").optional(),
-        subscriptionId: createStringLengthValidation("subscriptionId").optional(),
+        subscriptionId: createStringArrayValidation("subscriptionId").optional(),
     }),
 );
 
@@ -49,7 +53,7 @@ const retrieveSiriVmData = async (
     producerRef?: string,
     originRef?: string,
     destinationRef?: string,
-    subscriptionId?: string,
+    subscriptionId?: string[],
 ) => {
     const avls = await getAvlDataForSiriVm(
         dbClient,
@@ -65,7 +69,9 @@ const retrieveSiriVmData = async (
 
     const requestMessageRef = randomUUID();
     const responseTime = getDate();
-    return createSiriVm(avls, requestMessageRef, responseTime);
+    const vehicleActivities = createVehicleActivities(avls, responseTime);
+
+    return createSiriVm(vehicleActivities, requestMessageRef, responseTime);
 };
 
 const retrieveSiriVmFile = async (bucketName: string, key: string): Promise<string> => {
@@ -128,7 +134,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
                     : GENERATED_SIRI_VM_FILE_PATH,
             );
         } else {
-            const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+            dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
             siriVm = await retrieveSiriVmData(
                 dbClient,
@@ -154,20 +160,27 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(`Invalid request: ${JSON.stringify(event.queryStringParameters)}`);
-            logger.warn(e.errors);
-
-            return createValidationErrorResponse(e.errors.map((error) => error.message));
+            logger.warn(e);
+            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
         }
 
         if (e instanceof InvalidApiKeyError) {
-            return createUnauthorizedErrorResponse();
+            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof Error) {
-            logger.error("There was a problem with the SIRI-VM downloader endpoint");
-            logger.error(e);
+            logger.error(e, "There was a problem with the SIRI-VM downloader endpoint");
         }
 
-        return createServerErrorResponse();
+        return createHttpServerErrorResponse();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

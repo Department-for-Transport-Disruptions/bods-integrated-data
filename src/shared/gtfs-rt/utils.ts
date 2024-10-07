@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
-import { mapBodsAvlDateStrings } from "../avl/utils";
+import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
 import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
@@ -56,7 +56,7 @@ export const mapAvlToGtfsEntity = (avl: NewAvl): transit_realtime.IFeedEntity =>
         vehicle: {
             occupancyStatus: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
             position: {
-                bearing: avl.bearing ? Number.parseInt(avl.bearing) : 0,
+                bearing: avl.bearing,
                 latitude: avl.latitude,
                 longitude: avl.longitude,
             },
@@ -136,13 +136,13 @@ export const getAvlDataForGtfs = async (
 
         const avls = await query.execute();
 
-        return avls.map(mapBodsAvlDateStrings);
-    } catch (error) {
-        if (error instanceof Error) {
-            logger.error("There was a problem getting AVL data from the database", error);
+        return avls.map(mapBodsAvlFieldsIntoUsableFormats);
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem getting AVL data from the database");
         }
 
-        throw error;
+        throw e;
     }
 };
 

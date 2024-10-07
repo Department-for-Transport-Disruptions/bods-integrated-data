@@ -1,7 +1,7 @@
 import path from "node:path";
 import { PassThrough } from "node:stream";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     createLazyDownloadStreamFrom,
@@ -20,6 +20,8 @@ import {
     queryBuilder,
     regionalQueryBuilder,
 } from "./data";
+
+let dbClient: KyselyDb;
 
 /**
  * Checks if any of the generated files in the GTFS bucket are empty (not including headers)
@@ -78,8 +80,8 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
 
         for (const query of queries) {
             if (query.include) {
-                const file = `${filePath}/${query.fileName}.txt`;
-                const downloadStream = createLazyDownloadStreamFrom(outputBucket, file);
+                const file = `${query.fileName}.txt`;
+                const downloadStream = createLazyDownloadStreamFrom(outputBucket, `${filePath}/${file}`);
 
                 archive.append(downloadStream, {
                     name: file,
@@ -105,7 +107,7 @@ export const handler: Handler = async (event, context) => {
         throw new Error("Env vars must be set");
     }
 
-    const dbClient = await getDatabaseClient(stage === "local");
+    dbClient = dbClient || (await getDatabaseClient(stage === "local"));
 
     const regionCode = regionCodeSchema.parse(event?.regionCode ?? "ALL");
 
@@ -133,7 +135,7 @@ export const handler: Handler = async (event, context) => {
         logger.info("GTFS Timetable Generator successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the GTFS Timetable Generator", e);
+            logger.error(e, "There was a problem with the GTFS Timetable Generator");
         }
 
         throw e;
@@ -143,7 +145,14 @@ export const handler: Handler = async (event, context) => {
 
             await dropRegionalTable(dbClient, regionCode);
         }
-
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

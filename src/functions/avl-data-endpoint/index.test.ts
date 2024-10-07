@@ -11,11 +11,11 @@ import {
     mockEmptySiri,
     mockHeartbeatNotification,
     testCancellationsSiri,
-    testSiri,
+    testSiriVm,
+    testSiriVmWithSingleVehicleActivity,
     testSiriWithEmptyVehicleActivity,
     testSiriWithNoVehicleActivity,
     testSiriWithSelfClosingVehicleActivity,
-    testSiriWithSingleVehicleActivity,
     testVehicleActivityAndCancellationsSiri,
 } from "./testSiriVm";
 
@@ -55,7 +55,7 @@ describe("AVL-data-endpoint", () => {
             pathParameters: {
                 subscriptionId: mockSubscriptionId,
             },
-            body: testSiri,
+            body: testSiriVm,
         } as unknown as APIGatewayProxyEvent;
 
         getDynamoItemSpy.mockResolvedValue({
@@ -99,7 +99,7 @@ describe("AVL-data-endpoint", () => {
 
             expect(s3.putS3Object).toHaveBeenCalled();
             expect(s3.putS3Object).toHaveBeenCalledWith({
-                Body: `${testSiri}`,
+                Body: `${testSiriVm}`,
                 Bucket: "test-bucket",
                 ContentType: "application/xml",
                 Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -127,12 +127,12 @@ describe("AVL-data-endpoint", () => {
             apiKey: "mock-api-key",
         };
         getDynamoItemSpy.mockResolvedValue(subscription);
-        mockEvent.body = testSiriWithSingleVehicleActivity;
+        mockEvent.body = testSiriVmWithSingleVehicleActivity;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiriWithSingleVehicleActivity}`,
+            Body: `${testSiriVmWithSingleVehicleActivity}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
@@ -149,11 +149,11 @@ describe("AVL-data-endpoint", () => {
     it("Throws an error when the required env vars are missing", async () => {
         process.env.BUCKET_NAME = "";
         process.env.TABLE_NAME = "";
-        mockEvent.body = testSiriWithSingleVehicleActivity;
+        mockEvent.body = testSiriVmWithSingleVehicleActivity;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
-        expect(logger.error).toHaveBeenCalledWith("There was a problem with the Data endpoint", expect.any(Error));
+        expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "There was a problem with the Data endpoint");
         expect(s3.putS3Object).not.toHaveBeenCalled();
     });
 
@@ -173,7 +173,7 @@ describe("AVL-data-endpoint", () => {
                 statusCode: 400,
                 body: JSON.stringify({ errors: [expectedErrorMessage] }),
             });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(s3.putS3Object).not.toHaveBeenCalled();
         },
     );
@@ -185,7 +185,7 @@ describe("AVL-data-endpoint", () => {
 
             const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({ statusCode: 400, body: JSON.stringify({ errors: [expectedErrorMessage] }) });
-            expect(logger.warn).toHaveBeenCalledWith("Invalid request", [expect.anything()]);
+            expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(s3.putS3Object).not.toHaveBeenCalled();
         },
     );
@@ -228,7 +228,7 @@ describe("AVL-data-endpoint", () => {
         const expectedSubscription: AvlSubscription = {
             PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
             description: "test-description",
-            heartbeatLastReceivedDateTime: "2024-04-15T12:25:00.000Z",
+            heartbeatLastReceivedDateTime: "2024-03-11T15:20:02.093Z",
             requestorRef: null,
             shortDescription: "test-short-description",
             status: "live",
@@ -284,7 +284,7 @@ describe("AVL-data-endpoint", () => {
 
         const mockAlbEvent = {
             path: `/${mockSubscriptionId}`,
-            body: testSiri,
+            body: testSiriVm,
         } as unknown as ALBEvent;
 
         const expectedSubscription: AvlSubscription = {
@@ -308,7 +308,7 @@ describe("AVL-data-endpoint", () => {
 
         expect(s3.putS3Object).toHaveBeenCalled();
         expect(s3.putS3Object).toHaveBeenCalledWith({
-            Body: `${testSiri}`,
+            Body: `${testSiriVm}`,
             Bucket: "test-bucket",
             ContentType: "application/xml",
             Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,

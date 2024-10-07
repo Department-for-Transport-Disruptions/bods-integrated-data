@@ -394,7 +394,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                 createSiriVmMock.mockReturnValueOnce("siri-output");
 
                 mockRequest.queryStringParameters = {
-                    subscriptionId: "1",
+                    subscriptionId: "1,2,3",
                 };
 
                 await expect(handler(mockRequest, mockContext, mockCallback)).resolves.toEqual({
@@ -413,7 +413,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
                     undefined,
                     undefined,
                     undefined,
-                    "1",
+                    ["1", "2", "3"],
                 );
                 expect(logger.error).not.toHaveBeenCalled();
             });

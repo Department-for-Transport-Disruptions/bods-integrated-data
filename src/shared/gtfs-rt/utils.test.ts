@@ -36,7 +36,7 @@ describe("utils", () => {
         it("returns a mapped GTFS entity", () => {
             const avl: NewAvl = {
                 id: 0,
-                bearing: "",
+                bearing: 0,
                 latitude: 2,
                 longitude: 3,
                 vehicle_ref: "ABC",
@@ -114,7 +114,7 @@ describe("utils", () => {
         it("returns a mapped GTFS entity with an occupancy status when occupancy data exists", () => {
             const avl: NewAvl = {
                 id: 0,
-                bearing: "",
+                bearing: null,
                 latitude: 2,
                 longitude: 3,
                 vehicle_ref: "ABC",
@@ -166,7 +166,7 @@ describe("utils", () => {
                 vehicle: {
                     occupancyStatus: OccupancyStatus.FULL,
                     position: {
-                        bearing: 0,
+                        bearing: null,
                         latitude: 2,
                         longitude: 3,
                     },
@@ -192,7 +192,7 @@ describe("utils", () => {
         it("returns a mapped GTFS entity with a bearing when bearing data exists", () => {
             const avl: NewAvl = {
                 id: 0,
-                bearing: "1",
+                bearing: 1,
                 latitude: 2,
                 longitude: 3,
                 vehicle_ref: "ABC",
@@ -270,7 +270,7 @@ describe("utils", () => {
         it("returns a mapped GTFS entity with a vehicle label when the vehicle ref is a valid UK vehicle registration number", () => {
             const avl: NewAvl = {
                 id: 0,
-                bearing: "",
+                bearing: null,
                 latitude: 2,
                 longitude: 3,
                 vehicle_ref: "AB12CDE",
@@ -322,7 +322,7 @@ describe("utils", () => {
                 vehicle: {
                     occupancyStatus: null,
                     position: {
-                        bearing: 0,
+                        bearing: null,
                         latitude: 2,
                         longitude: 3,
                     },
@@ -348,7 +348,7 @@ describe("utils", () => {
         it("returns a mapped GTFS entity with a route ID if a corresponding route can be found", () => {
             const avl: NewAvl = {
                 id: 0,
-                bearing: "",
+                bearing: null,
                 latitude: 2,
                 longitude: 3,
                 vehicle_ref: "ABC",
@@ -400,7 +400,7 @@ describe("utils", () => {
                 vehicle: {
                     occupancyStatus: null,
                     position: {
-                        bearing: 0,
+                        bearing: null,
                         latitude: 2,
                         longitude: 3,
                     },
@@ -426,7 +426,7 @@ describe("utils", () => {
         it("returns a mapped GTFS entity with a trip ID if a corresponding trip can be found", () => {
             const avl: NewAvl = {
                 id: 0,
-                bearing: "",
+                bearing: null,
                 latitude: 2,
                 longitude: 3,
                 vehicle_ref: "ABC",
@@ -478,7 +478,7 @@ describe("utils", () => {
                 vehicle: {
                     occupancyStatus: null,
                     position: {
-                        bearing: 0,
+                        bearing: null,
                         latitude: 2,
                         longitude: 3,
                     },
@@ -505,7 +505,7 @@ describe("utils", () => {
     it("returns a mapped GTFS entity with a start date and start time when departure time data exists", () => {
         const avl: NewAvl = {
             id: 0,
-            bearing: "1",
+            bearing: 1,
             latitude: 2,
             longitude: 3,
             vehicle_ref: "ABC",

@@ -540,16 +540,20 @@ module "siri_vm_stats" {
 module "siri_vm_api_private" {
   source = "../../siri-vm-api"
 
-  environment                      = var.environment
-  aws_region                       = var.aws_region
-  account_id                       = data.aws_caller_identity.current.account_id
-  api_name                         = "integrated-data-siri-vm-api-private"
-  private                          = true
-  siri_vm_downloader_invoke_arn    = module.siri_vm_downloader.invoke_arn
-  siri_vm_downloader_function_name = module.siri_vm_downloader.function_name
-  siri_vm_stats_invoke_arn         = module.siri_vm_stats.invoke_arn
-  siri_vm_stats_function_name      = module.siri_vm_stats.function_name
-  external_vpces_for_sirivm_api    = var.external_vpces_for_sirivm_api
+  environment                             = var.environment
+  aws_region                              = var.aws_region
+  account_id                              = data.aws_caller_identity.current.account_id
+  api_name                                = "integrated-data-siri-vm-api-private"
+  private                                 = true
+  siri_vm_downloader_invoke_arn           = module.siri_vm_downloader.invoke_arn
+  siri_vm_downloader_function_name        = module.siri_vm_downloader.function_name
+  siri_vm_stats_invoke_arn                = module.siri_vm_stats.invoke_arn
+  siri_vm_stats_function_name             = module.siri_vm_stats.function_name
+  external_vpces_for_sirivm_api           = var.external_vpces_for_sirivm_api
+  avl_consumer_subscriber_invoke_arn      = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_invoke_arn
+  avl_consumer_subscriber_function_name   = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
+  avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_invoke_arn
+  avl_consumer_unsubscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_function_name
 }
 
 module "siri_vm_api_public" {
@@ -557,18 +561,32 @@ module "siri_vm_api_public" {
 
   source = "../../siri-vm-api"
 
-  environment                      = var.environment
-  aws_region                       = var.aws_region
-  account_id                       = data.aws_caller_identity.current.account_id
-  api_name                         = "integrated-data-siri-vm-api-public"
-  private                          = false
-  siri_vm_downloader_invoke_arn    = module.siri_vm_downloader.invoke_arn
-  siri_vm_downloader_function_name = module.siri_vm_downloader.function_name
-  siri_vm_stats_invoke_arn         = module.siri_vm_stats.invoke_arn
-  siri_vm_stats_function_name      = module.siri_vm_stats.function_name
+  environment                             = var.environment
+  aws_region                              = var.aws_region
+  account_id                              = data.aws_caller_identity.current.account_id
+  api_name                                = "integrated-data-siri-vm-api-public"
+  private                                 = false
+  siri_vm_downloader_invoke_arn           = module.siri_vm_downloader.invoke_arn
+  siri_vm_downloader_function_name        = module.siri_vm_downloader.function_name
+  siri_vm_stats_invoke_arn                = module.siri_vm_stats.invoke_arn
+  siri_vm_stats_function_name             = module.siri_vm_stats.function_name
+  avl_consumer_subscriber_invoke_arn      = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_lambda_invoke_arn
+  avl_consumer_subscriber_function_name   = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_subscriber_function_name
+  avl_consumer_unsubscriber_invoke_arn    = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_lambda_invoke_arn
+  avl_consumer_unsubscriber_function_name = module.integrated_data_avl_data_consumer_subscriptions.avl_consumer_unsubscriber_function_name
 }
 
 module "integrated_data_avl_data_consumer_subscriptions" {
-  source      = "../../avl-consumer-subscriptions"
-  environment = var.environment
+  source                          = "../../avl-consumer-subscriptions"
+  environment                     = var.environment
+  aws_account_id                  = var.aws_account_id
+  aws_region                      = var.aws_region
+  vpc_id                          = var.vpc_id
+  subnet_ids                      = var.private_subnet_ids
+  db_sg_id                        = var.db_sg_id
+  db_host                         = var.db_host
+  db_port                         = var.db_port
+  db_secret_arn                   = var.db_secret_arn
+  db_name                         = var.db_name
+  avl_producer_subscription_table = var.avl_subscription_table_name
 }

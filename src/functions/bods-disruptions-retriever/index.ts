@@ -27,7 +27,7 @@ export const handler: Handler = async (event, context) => {
         await getDisruptionsDataAndUploadToS3(disruptionsUnzippedBucketName);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was an error retrieving disruptions data", e);
+            logger.error(e, "There was an error retrieving disruptions data");
         }
 
         throw e;

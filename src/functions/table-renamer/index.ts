@@ -3,6 +3,8 @@ import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/l
 import { Handler } from "aws-lambda";
 import { ReferenceExpression } from "kysely";
 
+let dbClient: KyselyDb;
+
 export interface TableKey {
     table: keyof Database;
     newTable: keyof Database;
@@ -68,18 +70,25 @@ export const renameTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         await checkTables(dbClient, databaseTables);
         await renameTables(dbClient, databaseTables);
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the Table renamer", e);
+            logger.error(e, "There was a problem with the Table renamer");
         }
 
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});

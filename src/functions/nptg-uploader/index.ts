@@ -13,6 +13,8 @@ import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { fromZodError } from "zod-validation-error";
 
+let dbClient: KyselyDb;
+
 const arrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];
 
 const getAndParseData = async (bucket: string, key: string) => {
@@ -96,7 +98,7 @@ export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { bucket, object } = event.Records[0].s3;
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local");
+    dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
         logger.info(`Starting NPTG uploader for ${object.key}`);
@@ -107,11 +109,18 @@ export const handler: S3Handler = async (event, context) => {
         logger.info("NPTG uploader successful");
     } catch (e) {
         if (e instanceof Error) {
-            logger.error("There was a problem with the NPTG uploader", e);
+            logger.error(e, "There was a problem with the NPTG uploader");
         }
 
         throw e;
-    } finally {
-        await dbClient.destroy();
     }
 };
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
+        await dbClient.destroy();
+    }
+
+    process.exit(0);
+});
