@@ -1,4 +1,3 @@
-import {} from "@aws-sdk/client-lambda";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as eventBridge from "@bods-integrated-data/shared/eventBridge";
 import * as lambda from "@bods-integrated-data/shared/lambda";
