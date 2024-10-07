@@ -2,8 +2,8 @@ import { check } from "k6";
 import exec from "k6/execution";
 import http from "k6/http";
 
-const SMALL_PRODUCER_SUBSCRIPTION_ID = "14964";
-const LARGE_PRODUCER_SUBSCRIPTION_ID = "3492";
+const SMALL_PRODUCER_SUBSCRIPTION_ID = "14964"; // ensure that this subscription exists and that it produces a small amount of vehicle activities.
+const LARGE_PRODUCER_SUBSCRIPTION_ID = "3492"; // ensure that this subscription exists and that it produces a large amount of vehicle activities.
 const LARGE_PRODUCER_PERCENTAGE = 0.25;
 
 const vuCount = 3;
