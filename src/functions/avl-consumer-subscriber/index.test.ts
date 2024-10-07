@@ -332,7 +332,7 @@ describe("avl-consumer-subscriber", () => {
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
     });
 
-    it("returns a 429 when trying to resubscribe to an existing error subscription that was deactivated too recently", async () => {
+    it("returns a 503 when trying to resubscribe to an existing error subscription that was deactivated too recently", async () => {
         const producerSubscription: AvlSubscription = {
             PK: mockProducerSubscriptionIds[0],
             description: "test-description",
@@ -350,7 +350,7 @@ describe("avl-consumer-subscriber", () => {
 
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
-            statusCode: 429,
+            statusCode: 503,
             headers: {
                 "Retry-After": 60,
             },

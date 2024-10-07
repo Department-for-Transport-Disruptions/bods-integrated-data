@@ -3,6 +3,7 @@ import {
     createHttpConflictErrorResponse,
     createHttpNotFoundErrorResponse,
     createHttpServerErrorResponse,
+    createHttpServiceUnavailableErrorResponse,
     createHttpSuccessResponse,
     createHttpTooManyRequestsErrorResponse,
     createHttpValidationErrorResponse,
@@ -246,7 +247,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             // Our AWS package versions do not support instanceof exception checks
             if (e.name === "QueueDeletedRecently") {
                 logger.warn(e, "Queue deleted too recently when trying to resubscribe");
-                return createHttpTooManyRequestsErrorResponse(
+                return createHttpServiceUnavailableErrorResponse(
                     "Existing subscription is still deactivating, try again later",
                     60,
                 );
