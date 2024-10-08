@@ -1,4 +1,6 @@
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
+import { deleteDynamoItem, putDynamoItem } from "../data/dynamo";
 
 export const getSecretByKey = async <T extends string>(stage: string, key: string): Promise<T> => {
     const client = new SecretsManagerClient({
@@ -40,4 +42,30 @@ export const getSecretByKey = async <T extends string>(stage: string, key: strin
     }
 
     return JSON.parse(secret) as T;
+};
+
+export const cleardownTestSubscription = async (subscriptionTableName: string, subscriptionId: string) => {
+    await deleteDynamoItem(subscriptionTableName, {
+        PK: subscriptionId,
+        SK: "SUBSCRIPTION",
+    });
+};
+
+export const makeSubscriptionInactive = async (
+    subscriptionTableName: string,
+    subscriptionDetails: AvlConsumerSubscription | AvlSubscription,
+) => {
+    await putDynamoItem(
+        subscriptionTableName,
+        subscriptionDetails.PK,
+        "SK" in subscriptionDetails ? subscriptionDetails.SK : "SUBSCRIPTION",
+        {
+            ...subscriptionDetails,
+            status: "inactive",
+        },
+    );
+};
+
+export const createTestSubscription = async (subscriptionTableName: string, subscriptionDetails: AvlSubscription) => {
+    await putDynamoItem(subscriptionTableName, subscriptionDetails.PK, "SUBSCRIPTION", subscriptionDetails);
 };
