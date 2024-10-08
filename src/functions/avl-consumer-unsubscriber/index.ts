@@ -2,6 +2,7 @@ import {
     createHttpNoContentResponse,
     createHttpNotFoundErrorResponse,
     createHttpServerErrorResponse,
+    createHttpServiceUnavailableErrorResponse,
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
@@ -58,6 +59,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const body = requestBodySchema.parse(event.body);
         const xml = parseXml(body);
         const subscriptionId = xml.Siri.TerminateSubscriptionRequest.SubscriptionRef;
+        logger.subscriptionId = subscriptionId;
 
         const subscription = await getAvlConsumerSubscription(
             AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
@@ -79,6 +81,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 updatedSubscription.scheduleName = "";
             } catch (error) {
                 logger.error(error, `Error deleting schedule with name: ${subscription.scheduleName}`);
+                updatedSubscription.status = "error";
             }
         }
 
@@ -94,6 +97,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                     error,
                     `Error deleting event source mapping with UUID: ${subscription.eventSourceMappingUuid}`,
                 );
+                updatedSubscription.status = "error";
             }
         }
 
@@ -106,6 +110,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 updatedSubscription.queueUrl = "";
             } catch (error) {
                 logger.error(error, `Error deleting queue with URL: ${subscription.queueUrl}`);
+                updatedSubscription.status = "error";
             }
         }
 
@@ -115,6 +120,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             subscription.SK,
             updatedSubscription,
         );
+
+        if (updatedSubscription.status === "error") {
+            return createHttpServiceUnavailableErrorResponse(
+                "Unable to fully unsubscribe subscription, try again later",
+                60,
+            );
+        }
 
         return createHttpNoContentResponse();
     } catch (e) {
