@@ -1,7 +1,7 @@
 # Creates SQS monitor alert
 resource "datadog_monitor" "sqs_queue_size" {
 
-  message             = "${each.value.message} ${var.default_alert}"
+  message             = "approximate_number_of_messages-${var.default_alert}"
   name                = "${var.project_name}-${var.environment}"
   type                = "query alert"
   require_full_window = false
