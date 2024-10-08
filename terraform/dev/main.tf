@@ -308,6 +308,7 @@ module "integrated_data_disruptions_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+  retriever_schedule = "rate(5 minutes)"
   save_json          = true
 }
 
@@ -391,4 +392,3 @@ module "integrated_data_cancellations_data_producer_api" {
   mock_data_producer_api_endpoint    = module.integrated_data_mock_data_producer_api.endpoint
   cancellations_raw_siri_bucket_name = module.integrated_data_cancellations_pipeline.cancellations_raw_siri_bucket_name
 }
-
