@@ -59,6 +59,17 @@ export const createHttpTooManyRequestsErrorResponse = (error: string, retryAfter
     };
 };
 
+export const createHttpServiceUnavailableErrorResponse = (
+    error: string,
+    retryAfter?: number,
+): APIGatewayProxyResult => {
+    return {
+        statusCode: 503,
+        headers: retryAfter ? { "Retry-After": retryAfter } : undefined,
+        body: JSON.stringify({ errors: [error] }),
+    };
+};
+
 export const createHttpServerErrorResponse = (error?: string): APIGatewayProxyResult => {
     throw new Error(error || "An unexpected error occurred");
 };

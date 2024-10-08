@@ -17,6 +17,7 @@ export const handler: ScheduledHandler = async (event, context) => {
 
     try {
         const { subscriptionPK, SK, frequencyInSeconds, queueUrl } = subscriptionTriggerMessageSchema.parse(event);
+        logger.subscriptionId = subscriptionPK;
 
         const entries: SendMessageBatchRequestEntry[] = [];
 

@@ -179,12 +179,20 @@ describe("avl-consumer-unsubscriber", () => {
         );
     });
 
-    it("logs an error when the schedule cannot be deleted", async () => {
+    it("returns a 503 when errors occur deleting AWS resources", async () => {
         deleteQueueSpy.mockRejectedValue(new Error());
         deleteEventSourceMappingSpy.mockRejectedValue(new Error());
         deleteScheduleSpy.mockRejectedValue(new Error());
 
-        await handler(mockEvent, mockContext, mockCallback);
+        const response = await handler(mockEvent, mockContext, mockCallback);
+
+        expect(response).toEqual({
+            statusCode: 503,
+            headers: {
+                "Retry-After": 60,
+            },
+            body: JSON.stringify({ errors: ["Unable to fully unsubscribe subscription, try again later"] }),
+        });
 
         expect(logger.error).toHaveBeenNthCalledWith(
             1,
@@ -201,6 +209,17 @@ describe("avl-consumer-unsubscriber", () => {
             expect.any(Error),
             `Error deleting queue with URL: ${consumerSubscription.queueUrl}`,
         );
-        expect(putDynamoItemSpy).toHaveBeenCalled();
+
+        const updatedConsumerSubscription: AvlConsumerSubscription = {
+            ...consumerSubscription,
+            status: "error",
+        };
+
+        expect(putDynamoItemSpy).toHaveBeenCalledWith(
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            updatedConsumerSubscription,
+        );
     });
 });
