@@ -52,6 +52,19 @@ const testConsumerSubscription: AvlConsumerSubscription = {
 
 const consumerSubscriptionId = "PLAYWRIGHT_CONSUMER";
 
+const terminateSubscriptionRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+            <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\"
+              xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+              xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
+              <TerminateSubscriptionRequest>
+                <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
+                <RequestorRef>BODS</RequestorRef>
+                <MessageIdentifier>1</MessageIdentifier>
+                <SubscriptionRef>${consumerSubscriptionId}</SubscriptionRef>
+              </TerminateSubscriptionRequest>
+            </Siri>
+            `;
+
 test.beforeAll(async () => {
     await createTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription);
     await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
@@ -111,20 +124,18 @@ test.describe("avl-consumer-api", () => {
         expect(subscribeResponse.status()).toBe(200);
     });
 
-    test("should delete an avl consumer subscription when given valid inputs", async ({ request }) => {
-        const terminateSubscriptionRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-            <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\"
-              xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
-              xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
-              <TerminateSubscriptionRequest>
-                <RequestTimestamp>2024-03-11T15:20:02.093Z</RequestTimestamp>
-                <RequestorRef>BODS</RequestorRef>
-                <MessageIdentifier>1</MessageIdentifier>
-                <SubscriptionRef>${consumerSubscriptionId}</SubscriptionRef>
-              </TerminateSubscriptionRequest>
-            </Siri>
-            `;
+    test("should throw an error when deleting an avl consumer subscription too soon after creating one", async ({
+        request,
+    }) => {
+        const unsubscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
+            data: terminateSubscriptionRequestBody,
+            headers: { "x-user-id": "1", "Content-Type": "application/xml" },
+        });
 
+        expect(unsubscribeResponse.status()).toBe(503);
+    });
+
+    test("should delete an avl consumer subscription when given valid inputs", async ({ request }) => {
         /// A wait time is added here because the event source mapping created in the subscribe endpoint takes approx.
         // 12 seconds to create. Trying to hit the unsubscribe endpoint before this time will mean the event source mapping
         // is not deleted which makes future test runs fail
