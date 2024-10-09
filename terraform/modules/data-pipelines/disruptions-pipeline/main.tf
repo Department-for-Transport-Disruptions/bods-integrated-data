@@ -60,6 +60,7 @@ module "integrated_data_bods_disruptions_retriever_function" {
   runtime       = "nodejs20.x"
   timeout       = 60
   memory        = 256
+  schedule      = var.retriever_schedule
 
   permissions = [
     {
@@ -93,6 +94,10 @@ module "integrated_data_bods_disruptions_processor_function" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
+  s3_bucket_trigger = {
+    id  = aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.id
+    arn = aws_s3_bucket.integrated_data_bods_disruptions_unzipped_bucket.arn
+  }
 
   permissions = [
     {

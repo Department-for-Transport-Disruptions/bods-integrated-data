@@ -37,6 +37,11 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
+variable "retriever_schedule" {
+  type        = string
+  description = "Schedule cron for running the disruptions retriever"
+}
+
 variable "save_json" {
   type        = bool
   description = "Whether or not to save the GTFS-RT as JSON as well"
