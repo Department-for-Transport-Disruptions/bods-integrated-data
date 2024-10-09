@@ -10,6 +10,8 @@ import { logger } from "./logger";
 import { VehicleType } from "./schema";
 import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
+import { unlink, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunks: T[][] = [];
@@ -219,3 +221,41 @@ export const checkSubscriptionIsHealthy = (
 
 export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
     datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
+
+/**
+ * Spawns a child process to use the xmllint CLI command in order to validate
+ * the SIRI-VM files against the XSD. If the file fails validation then it will
+ * throw an error and log out the validation issues.
+ *
+ * @param xml
+ */
+export const runXmlLint = async (xml: string) => {
+    const fileName = randomUUID();
+    await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
+
+    const command = spawn("xmllint", [
+        `/app/${fileName}.xml`,
+        "--noout",
+        "--nowarning",
+        "--schema",
+        "/app/xsd/www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+    ]);
+
+    let error = "";
+
+    for await (const chunk of command.stderr) {
+        error += chunk;
+    }
+
+    const exitCode = await new Promise((resolve) => {
+        command.on("close", resolve);
+    });
+
+    await unlink(`/app/${fileName}.xml`);
+
+    if (exitCode) {
+        logger.error(error.slice(0, 10000));
+
+        throw new Error();
+    }
+};
