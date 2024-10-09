@@ -235,9 +235,19 @@ module "integrated_data_disruptions_pipeline" {
 module "integrated_data_cancellations_pipeline" {
   source = "../modules/data-pipelines/cancellations-pipeline"
 
-  environment     = local.env
-  alarm_topic_arn = ""
-  ok_topic_arn    = ""
+  environment                           = local.env
+  aws_account_id                        = data.aws_caller_identity.current.account_id
+  aws_region                            = data.aws_region.current.name
+  vpc_id                                = null
+  sg_id                                 = null
+  private_subnet_ids                    = null
+  db_secret_arn                         = "*"
+  db_sg_id                              = null
+  db_host                               = null
+  db_reader_host                        = null
+  alarm_topic_arn                       = ""
+  ok_topic_arn                          = ""
+  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
 }
 
 module "integrated_data_cancellations_data_producer_api" {

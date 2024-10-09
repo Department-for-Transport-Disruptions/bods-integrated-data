@@ -367,9 +367,19 @@ module "integrated_data_gtfs_api" {
 module "integrated_data_cancellations_pipeline" {
   source = "../modules/data-pipelines/cancellations-pipeline"
 
-  environment     = local.env
-  alarm_topic_arn = module.integrated_data_monitoring.alarm_topic_arn
-  ok_topic_arn    = module.integrated_data_monitoring.ok_topic_arn
+  environment                           = local.env
+  aws_account_id                        = data.aws_caller_identity.current.account_id
+  aws_region                            = data.aws_region.current.name
+  vpc_id                                = module.integrated_data_vpc.vpc_id
+  sg_id                                 = module.integrated_data_vpc.default_sg_id
+  private_subnet_ids                    = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn                         = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id                              = module.integrated_data_aurora_db.db_sg_id
+  db_host                               = module.integrated_data_aurora_db.db_host
+  db_reader_host                        = module.integrated_data_aurora_db.db_reader_host
+  alarm_topic_arn                       = module.integrated_data_monitoring.alarm_topic_arn
+  ok_topic_arn                          = module.integrated_data_monitoring.ok_topic_arn
+  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
 }
 
 module "integrated_data_cancellations_data_producer_api" {
