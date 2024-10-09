@@ -12,13 +12,13 @@ import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
-    const chunkArray = [];
+    const chunks: T[][] = [];
 
     for (let i = 0; i < array.length; i += chunkSize) {
-        chunkArray.push(array.slice(i, i + chunkSize));
+        chunks.push(array.slice(i, i + chunkSize));
     }
 
-    return chunkArray;
+    return chunks;
 };
 
 export const notEmpty = <T>(value: T | null | undefined): value is T => {
