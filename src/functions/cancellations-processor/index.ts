@@ -1,4 +1,5 @@
-import { getCancellationsSubscription, insertCancellations } from "@bods-integrated-data/shared/cancellations/utils";
+import { getCancellationsSubscription, insertSituations } from "@bods-integrated-data/shared/cancellations/utils";
+import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewSituation, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -8,14 +9,12 @@ import { XMLParser } from "fast-xml-parser";
 
 let dbClient: KyselyDb;
 
-const arrayProperties = ["VehicleActivity", "OnwardCall"];
-
 const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.includes(tagName),
+        isArray: (tagName) => siriSxArrayProperties.includes(tagName),
     });
 
     const parsedXml = parser.parse(xml);
@@ -35,8 +34,8 @@ export const processSqsRecord = async (
 ) => {
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
-
         logger.subscriptionId = subscriptionId;
+
         const subscription = await getCancellationsSubscription(subscriptionId, cancellationsSubscriptionTableName);
 
         if (subscription.status === "inactive") {
@@ -44,7 +43,7 @@ export const processSqsRecord = async (
                 subscriptionId,
             });
             throw new Error(
-                `Unable to process cancellations for subscription ${subscriptionId} because it is inactive.`,
+                `Unable to process cancellations for subscription ${subscriptionId} because it is inactive`,
             );
         }
 
@@ -60,18 +59,29 @@ export const processSqsRecord = async (
             const siriSx = parseXml(xml);
 
             if (siriSx) {
-                const situations = siriSx?.Siri.ServiceDelivery.SituationExchangeDelivery.Situations.PtSituationElement;
+                const { ResponseTimestamp, ProducerRef, SituationExchangeDelivery } = siriSx.Siri.ServiceDelivery;
+                const ptSituations = SituationExchangeDelivery.Situations.PtSituationElement;
 
-                const cancellations: NewSituation[] = situations.flatMap((situation) => {
-                    return situation.Consequences.Consequence.map((_consequence) => {
-                        const cancellation: NewSituation = {};
-                        // todo: map data
+                if (ptSituations) {
+                    const situations: NewSituation[] = ptSituations.map((ptSituation) => {
+                        const version = ptSituation.Version || 0;
+                        const id = `${subscriptionId}-${ptSituation.SituationNumber}-${version}`;
 
-                        return cancellation;
+                        const situation: NewSituation = {
+                            id,
+                            subscription_id: subscriptionId,
+                            response_time_stamp: ResponseTimestamp,
+                            producer_ref: ProducerRef || "",
+                            situation_number: ptSituation.SituationNumber,
+                            version,
+                            situation: ptSituation,
+                        };
+
+                        return situation;
                     });
-                });
 
-                await insertCancellations(dbClient, cancellations, subscriptionId);
+                    await insertSituations(dbClient, situations);
+                }
             }
 
             logger.info("Cancellations processed successfully", {
