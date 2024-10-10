@@ -1,5 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/client-lambda";
+import { ListObjectsV2Command, S3Client, _Object } from "@aws-sdk/client-s3";
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-sdk/lib-dynamodb";
 import { logger } from "@bods-integrated-data/shared/logger";
@@ -13,14 +14,16 @@ export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").ch
 type Prompt = {
     type: keyof QuestionMap;
     choices?: string[];
+    default?: string;
 };
 
-export const withUserPrompt = async (name: string, { type, choices }: Prompt) => {
+export const withUserPrompt = async (name: string, prompt: Prompt) => {
     const response = await inquirer.prompt<{ [name: string]: string }>([
         {
             name,
-            type,
-            choices,
+            type: prompt.type,
+            choices: prompt.choices,
+            default: prompt.default,
         },
     ]);
 
@@ -142,4 +145,40 @@ export const getDynamoDbItem = async <T extends Record<string, unknown>>(
     );
 
     return data.Item ? (data.Item as T) : null;
+};
+
+export const listS3ObjectsByCommonPrefix = async (client: S3Client, bucketName: string, delimiter: string) => {
+    const response = await client.send(
+        new ListObjectsV2Command({
+            Bucket: bucketName,
+            Delimiter: delimiter,
+        }),
+    );
+
+    return response.CommonPrefixes || [];
+};
+
+export const listS3Objects = async (client: S3Client, bucketName: string, keyPrefix: string) => {
+    const objects: _Object[] = [];
+    let isTruncated = undefined;
+    let startAfterKey = undefined;
+
+    do {
+        const response = await client.send(
+            new ListObjectsV2Command({
+                Bucket: bucketName,
+                Prefix: keyPrefix,
+                StartAfter: startAfterKey,
+            }),
+        );
+
+        if (response.Contents) {
+            objects.push(...response.Contents);
+            startAfterKey = objects[objects.length - 1].Key;
+        }
+
+        isTruncated = response.IsTruncated;
+    } while (isTruncated);
+
+    return objects;
 };
