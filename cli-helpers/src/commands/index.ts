@@ -1,3 +1,4 @@
+export * from "./analyse-avl-frequency";
 export * from "./convert-agency-csv-to-json";
 export * from "./create-avl-mock-data-producer";
 export * from "./create-cancellations-mock-data-producer";
