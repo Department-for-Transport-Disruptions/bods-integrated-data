@@ -41,9 +41,12 @@ export const insertSituations = async (dbClient: KyselyDb, cancellations: NewSit
                 .insertInto("situation")
                 .values(chunk)
                 .onConflict((oc) =>
-                    oc.columns(["situation_number", "version"]).doUpdateSet((eb) => ({
+                    oc.column("id").doUpdateSet((eb) => ({
+                        subscription_id: eb.ref("excluded.subscription_id"),
                         response_time_stamp: eb.ref("excluded.response_time_stamp"),
                         producer_ref: eb.ref("excluded.producer_ref"),
+                        situation_number: eb.ref("excluded.situation_number"),
+                        version: eb.ref("excluded.version"),
                         situation: eb.ref("excluded.situation"),
                     })),
                 )
