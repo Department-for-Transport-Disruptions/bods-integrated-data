@@ -3,6 +3,7 @@ import { ColumnType, Generated, Insertable, Kysely, PostgresDialect, RawBuilder,
 import { Pool } from "pg";
 import { AvlOccupancy } from "./constants";
 import { logger } from "./logger";
+import { PtSituationElement } from "./schema";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -74,6 +75,7 @@ export interface Database {
     nptg_region_new: NptgRegionTable;
     avl: AvlTable;
     avl_bods: BodsAvlTable;
+    situation: SituationTable;
     agency: GtfsAgencyTable;
     calendar: GtfsCalendarTable;
     calendar_new: GtfsCalendarTable;
@@ -485,5 +487,19 @@ export interface NocOperatorTable {
 export type NocOperator = Selectable<NocOperatorTable>;
 export type NewNocOperator = Insertable<NocOperatorTable>;
 export type NocOperatorUpdate = Updateable<NocOperatorTable>;
+
+export interface SituationTable {
+    id: string;
+    subscription_id: string;
+    response_time_stamp: string;
+    producer_ref: string | null;
+    situation_number: string;
+    version: number | null;
+    situation: ColumnType<PtSituationElement>;
+}
+
+export type Situation = Selectable<SituationTable>;
+export type NewSituation = Insertable<SituationTable>;
+export type SituationUpdate = Updateable<SituationTable>;
 
 export type KyselyDb = Kysely<Database>;

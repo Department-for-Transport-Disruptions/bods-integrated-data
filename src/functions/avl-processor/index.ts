@@ -77,15 +77,15 @@ export const processSqsRecord = async (
 ) => {
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
-
         logger.subscriptionId = subscriptionId;
+
         const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
         if (subscription.status === "inactive") {
             logger.warn(`Subscription ${subscriptionId} is inactive, data will not be processed.`, {
                 subscriptionId,
             });
-            throw new Error(`Unable to process AVL for subscription ${subscriptionId} because it is inactive.`);
+            throw new Error(`Unable to process AVL for subscription ${subscriptionId} because it is inactive`);
         }
 
         const data = await getS3Object({

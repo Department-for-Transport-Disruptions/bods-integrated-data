@@ -1,3 +1,5 @@
+export * from "./siri-sx/siriSxTypes";
+export * from "./siri-sx/siriSxTypes.zod";
 export * from "./avl-consumer-subscriptions.schema";
 export * from "./avl-heartbeat.schema";
 export * from "./avl-subscribe.schema";
@@ -7,7 +9,6 @@ export * from "./avl-validation-error.schema";
 export * from "./avl.schema";
 export * from "./cancellations-subscribe.schema";
 export * from "./dates.schema";
-export * from "./disruptions.schema";
 export * from "./misc.schema";
 export * from "./noc.schema";
 export * from "./nptg.schema";

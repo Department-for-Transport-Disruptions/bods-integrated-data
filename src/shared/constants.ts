@@ -142,4 +142,8 @@ export const siriSxArrayProperties = [
     "AffectedStopPoint",
     "AffectedVehicleJourney",
     "Call",
+    "Facility",
+    "JourneyPartInfo",
+    "Origins",
+    "Destinations",
 ];

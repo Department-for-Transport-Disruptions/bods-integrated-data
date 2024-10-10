@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/avl-processor",
+    "name": "@bods-integrated-data/cancellations-processor",
     "version": "0.1.0",
-    "description": "This function is to process SIRI-VM AVL data and upload it to the database",
+    "description": "This function is to process SIRI-SX cancellations data and upload it to the database",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-processor.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-processor.zip ../dist/avl-processor.zip",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./cancellations-processor.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/cancellations-processor.zip ../dist/cancellations-processor.zip",
         "test": "vitest run"
     },
     "keywords": [],
