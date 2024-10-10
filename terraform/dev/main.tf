@@ -308,6 +308,7 @@ module "integrated_data_disruptions_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+  retriever_schedule = "rate(5 minutes)"
   save_json          = true
 }
 
