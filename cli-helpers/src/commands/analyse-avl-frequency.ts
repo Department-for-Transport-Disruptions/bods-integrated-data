@@ -159,7 +159,7 @@ export const analyseAvlFrequency = new Command("analyse-avl-frequency")
             s3Client.destroy();
         }
 
-        logger.info(`${frequencyResults}/${subscriptionCount} subscriptions have results to analyse`);
+        logger.info(`${frequencyResults.length}/${subscriptionCount} subscriptions have results to analyse`);
 
         generateResultsFile(dateOptions.dateString, frequencyResults);
     });
