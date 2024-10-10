@@ -75,12 +75,12 @@ module "integrated_data_cancellations_processor_function" {
   ]
 
   env_vars = {
-    STAGE                       = var.environment
-    DB_HOST                     = var.db_host
-    DB_PORT                     = var.db_port
-    DB_SECRET_ARN               = var.db_secret_arn
-    DB_NAME                     = var.db_name
-    AVL_SUBSCRIPTION_TABLE_NAME = var.cancellations_subscription_table_name
+    STAGE                                 = var.environment
+    DB_HOST                               = var.db_host
+    DB_PORT                               = var.db_port
+    DB_SECRET_ARN                         = var.db_secret_arn
+    DB_NAME                               = var.db_name
+    CANCELLATIONS_SUBSCRIPTION_TABLE_NAME = var.cancellations_subscription_table_name
   }
 }
 

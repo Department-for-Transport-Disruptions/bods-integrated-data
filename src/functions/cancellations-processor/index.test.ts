@@ -112,7 +112,7 @@ describe("cancellations-processor", () => {
             mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiriSx } });
             await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name");
 
-            expect(valuesMock).toBeCalledWith(parsedSiriSx);
+            expect(valuesMock).toHaveBeenCalledWith(parsedSiriSx);
         },
     );
 
@@ -151,7 +151,7 @@ describe("cancellations-processor", () => {
         expect(valuesMock).not.toHaveBeenCalled();
     });
 
-    it("does not insert into the database when the siri-sx only contains invalid situations", async () => {
+    it("only inserts valid siri-sx situations into the database", async () => {
         const expectedPutMetricDataCallForFilteredArrayParseError = {
             namespace: "custom/SiriSxPtSituationArraySchema",
             metricData: [
@@ -168,22 +168,29 @@ describe("cancellations-processor", () => {
             ],
         };
 
+        const valuesMock = vi.fn().mockReturnValue({
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+            }),
+        });
+
+        const dbClient = {
+            insertInto: () => ({
+                values: valuesMock,
+            }),
+        };
+
         mocks.getS3Object.mockResolvedValueOnce({
             Body: { transformToString: () => testSiriSxWithInvalidSituations },
         });
 
         await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name");
 
-        expect(valuesMock).not.toHaveBeenCalled();
+        expect(valuesMock).toHaveBeenCalledWith(parsedSiriSx.slice(0, 1));
 
-        expect(putMetricDataSpy).toHaveBeenCalledTimes(2);
+        expect(putMetricDataSpy).toHaveBeenCalledTimes(1);
         expect(putMetricDataSpy).toHaveBeenNthCalledWith(
             1,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            2,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
             expectedPutMetricDataCallForFilteredArrayParseError.metricData,
         );

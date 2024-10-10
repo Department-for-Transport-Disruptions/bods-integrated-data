@@ -492,9 +492,9 @@ export interface SituationTable {
     id: string;
     subscription_id: string;
     response_time_stamp: string;
-    producer_ref: string;
+    producer_ref: string | null;
     situation_number: string;
-    version: number;
+    version: number | null;
     situation: ColumnType<PtSituationElement>;
 }
 

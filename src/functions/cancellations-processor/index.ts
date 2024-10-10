@@ -64,16 +64,15 @@ export const processSqsRecord = async (
 
                 if (ptSituations) {
                     const situations: NewSituation[] = ptSituations.map((ptSituation) => {
-                        const version = ptSituation.Version || 0;
-                        const id = `${subscriptionId}-${ptSituation.SituationNumber}-${version}`;
+                        const id = [subscriptionId, ptSituation.SituationNumber, ptSituation.Version].join("-");
 
                         const situation: NewSituation = {
                             id,
                             subscription_id: subscriptionId,
                             response_time_stamp: ResponseTimestamp,
-                            producer_ref: ProducerRef || "",
+                            producer_ref: ProducerRef,
                             situation_number: ptSituation.SituationNumber,
-                            version,
+                            version: ptSituation.Version,
                             situation: ptSituation,
                         };
 
@@ -107,7 +106,7 @@ export const handler: SQSHandler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        logger.info(`Starting processing of SIRI-VM. Number of records to process: ${event.Records.length}`);
+        logger.info(`Starting processing of SIRI-SX. Number of records to process: ${event.Records.length}`);
 
         await Promise.all(
             event.Records.map((record) =>

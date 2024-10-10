@@ -140,6 +140,7 @@ export const testSiriSxWithInvalidSituations = `<?xml version="1.0" encoding="ut
         <PtSituationElement>
           <CreationTime>2024-10-09T11:45:00+00:00</CreationTime>
           <ParticipantRef>ATB</ParticipantRef>
+          <SituationNumber>123</SituationNumber>
           <Version>2</Version>
           <Source>
             <SourceType>other</SourceType>
@@ -302,12 +303,12 @@ export const parsedSiriSx: NewSituation[] = [
         },
     },
     {
-        id: `${mockSubscriptionId}-124-0`,
+        id: `${mockSubscriptionId}-124-`,
         subscription_id: mockSubscriptionId,
         response_time_stamp: "2024-10-09T12:00:00+00:00",
         producer_ref: "ATB",
         situation_number: "124",
-        version: 0,
+        version: undefined,
         situation: {
             CreationTime: "2024-10-09T11:45:00+00:00",
             ParticipantRef: "ATB",
