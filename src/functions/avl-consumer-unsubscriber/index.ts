@@ -65,8 +65,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const subscription = await getAvlConsumerSubscription(
             AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
-            subscriptionId,
             userId,
+            subscriptionId,
         );
 
         const updatedSubscription: AvlConsumerSubscription = {

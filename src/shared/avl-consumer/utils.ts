@@ -36,7 +36,7 @@ export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: stri
     return avlConsumerSubscriptionSchema.parse(subscription);
 };
 
-export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {
+export const getAvlConsumerSubscription = async (tableName: string, userId: string, subscriptionId: string) => {
     const subscriptions = await recursiveQuery<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
