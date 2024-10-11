@@ -1,82 +1,111 @@
-export const generateMockSiriCancellation = (subscriptionId: string, currentTime: string) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Siri xmlns="http://www.siri.org.uk/siri"
-    xmlns:ns2="http://www.ifopt.org.uk/acsb"
-    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
-    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
-    version="2.0">
+export const generateMockSiriCancellation = (subscriptionId: string, currentTime: string) => `<?xml version="1.0" encoding="utf-8"?>
+<Siri version="2.0" xmlns="http://www.siri.org.uk/siri"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd">
   <ServiceDelivery>
-  <ResponseTimestamp>${currentTime}</ResponseTimestamp>
-  <ProducerRef>${subscriptionId}</ProducerRef>
-  <Status>true</Status>
-  <MoreData>false</MoreData>
+    <ResponseTimestamp>${currentTime}</ResponseTimestamp>
+    <ProducerRef>ATB</ProducerRef>
+    <Status>true</Status>
+    <MoreData>false</MoreData>
     <SituationExchangeDelivery version="2.0">
       <ResponseTimestamp>${currentTime}</ResponseTimestamp>
-      <SubscriberRef>247b3d8c-3675-4bae-aaa7-33fc15ead21c</SubscriberRef>
-      <SubscriptionRef>98b6de8a-64d4-43f7-bacd-3c3d624b9903</SubscriptionRef>
+      <SubscriberRef>${subscriptionId}</SubscriberRef>
+      <SubscriptionRef>${subscriptionId}</SubscriptionRef>
       <Status>true</Status>
       <Situations>
         <PtSituationElement>
-          <CreationTime>${currentTime}</CreationTime>
-          <ParticipantRef>${subscriptionId}</ParticipantRef>
-          <SituationNumber>8027633</SituationNumber>
-          <Version>1</Version>
-          <Progress>open</Progress>
+          <CreationTime>2024-10-09T11:45:00+00:00</CreationTime>
+          <ParticipantRef>ATB</ParticipantRef>
+          <SituationNumber>123</SituationNumber>
+          <Version>2</Version>
           <Source>
-            <SourceType>Other</SourceType>
+            <SourceType>other</SourceType>
           </Source>
+          <Progress>closed</Progress>
           <ValidityPeriod>
-            <StartTime>${currentTime}</StartTime>
-            <EndTime>${currentTime}</EndTime>
+            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
+            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
           </ValidityPeriod>
-          <MiscellaneousReason>unknown</MiscellaneousReason>
+          <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>
             <VehicleJourneys>
               <AffectedVehicleJourney>
-                <VehicleJourneyRef>1055</VehicleJourneyRef>
-                <DatedVehicleJourneyRef>1055</DatedVehicleJourneyRef>
+                <VehicleJourneyRef>2</VehicleJourneyRef>
+                <DatedVehicleJourneyRef>2</DatedVehicleJourneyRef>
                 <Operator>
-                  <OperatorRef>ANEA</OperatorRef>
+                  <OperatorRef>ABCD</OperatorRef>
                 </Operator>
-                <LineRef>17B</LineRef>
-                <PublishedLineName>17B</PublishedLineName>
+                <LineRef>1</LineRef>
+                <PublishedLineName>1</PublishedLineName>
                 <DirectionRef>Outbound</DirectionRef>
                 <Origins>
-                  <AffectedStopPoint>
-                    <StopPointRef>079073001L</StopPointRef>
-                    <StopPointName>Bus Station Stand 12</StopPointName>
-                    <StopPointType>busStop</StopPointType>
-                  </AffectedStopPoint>
+                  <StopPointRef>01</StopPointRef>
+                  <StopPointName>First</StopPointName>
+                  <StopPointType>busStop</StopPointType>
                 </Origins>
                 <Destinations>
-                  <AffectedStopPoint>
-                    <StopPointRef>077072001B</StopPointRef>
-                    <StopPointName>High Street Stand B</StopPointName>
-                    <StopPointType>busStop</StopPointType>
-                  </AffectedStopPoint>
+                  <StopPointRef>02</StopPointRef>
+                  <StopPointName>Second</StopPointName>
+                  <StopPointType>busStop</StopPointType>
                 </Destinations>
-                <OriginAimedDepartureTime>${currentTime}</OriginAimedDepartureTime>
-                <DestinationAimedArrivalTime>${currentTime}</DestinationAimedArrivalTime>
-                <Calls>
-                  <Call>
-                    <StopPointRef>079073001L</StopPointRef>
-                    <StopPointName>Bus Station Stand 12</StopPointName>
-                    <StopPointType>busStop</StopPointType>
-                    <Order>1</Order>
-                    <CallCondition>notStopping</CallCondition>
-                    <AimedDepartureTime>${currentTime}</AimedDepartureTime>
-                    <ExpectedDepartureTime>${currentTime}</ExpectedDepartureTime>
-                  </Call>
-                </Calls>
+                <Route />
               </AffectedVehicleJourney>
             </VehicleJourneys>
           </Affects>
           <Consequences>
             <Consequence>
               <Condition>cancelled</Condition>
+              <Severity>severe</Severity>
+            </Consequence>
+          </Consequences>
+        </PtSituationElement>
+        <PtSituationElement>
+          <CreationTime>2024-10-09T11:45:00+00:00</CreationTime>
+          <ParticipantRef>ATB</ParticipantRef>
+          <SituationNumber>124</SituationNumber>
+          <Source>
+            <SourceType>email</SourceType>
+          </Source>
+          <Progress>closed</Progress>
+          <ValidityPeriod>
+            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
+            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
+          </ValidityPeriod>
+          <MiscellaneousReason>roadworks</MiscellaneousReason>
+          <Affects>
+            <VehicleJourneys>
+              <AffectedVehicleJourney>
+                <VehicleJourneyRef>3</VehicleJourneyRef>
+                <DatedVehicleJourneyRef>3</DatedVehicleJourneyRef>
+                <Operator>
+                  <OperatorRef>ABCD</OperatorRef>
+                </Operator>
+                <LineRef>1</LineRef>
+                <PublishedLineName>1</PublishedLineName>
+                <DirectionRef>Outbound</DirectionRef>
+                <Origins>
+                  <StopPointRef>01</StopPointRef>
+                  <StopPointName>First</StopPointName>
+                  <StopPointType>busStop</StopPointType>
+                </Origins>
+                <Destinations>
+                  <StopPointRef>02</StopPointRef>
+                  <StopPointName>Second</StopPointName>
+                  <StopPointType>busStop</StopPointType>
+                </Destinations>
+                <Route />
+              </AffectedVehicleJourney>
+            </VehicleJourneys>
+          </Affects>
+          <Consequences>
+            <Consequence>
+              <Condition>cancelled</Condition>
+              <Severity>severe</Severity>
             </Consequence>
           </Consequences>
         </PtSituationElement>
       </Situations>
     </SituationExchangeDelivery>
   </ServiceDelivery>
-</Siri>`;
+</Siri>
+`;
