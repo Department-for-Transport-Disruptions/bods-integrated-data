@@ -9,12 +9,13 @@ describe("gtfs-downloader-endpoint", () => {
     const mockBucketName = "mock-bucket";
     const getPresignedUrlMock = vi.spyOn(s3, "getPresignedUrl");
 
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
         logger: {
+            info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
         },
-        withLambdaRequestTracker: vi.fn(),
     }));
 
     beforeEach(() => {

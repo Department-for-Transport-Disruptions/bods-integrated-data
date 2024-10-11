@@ -2,7 +2,7 @@ import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/canc
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     CancellationsSubscribeMessage,
     CancellationsSubscription,
@@ -12,6 +12,9 @@ import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/u
 import { checkSubscriptionIsHealthy, getSubscriptionUsernameAndPassword } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 export const resubscribeToDataProducer = async (
     subscription: CancellationsSubscription,

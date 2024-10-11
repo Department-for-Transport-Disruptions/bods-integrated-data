@@ -10,13 +10,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
 describe("avl-consumer-subscription-trigger", () => {
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
         logger: {
             info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
         },
-        withLambdaRequestTracker: vi.fn(),
     }));
 
     const sendBatchMessageSpy = vi.spyOn(sqs, "sendBatchMessage");

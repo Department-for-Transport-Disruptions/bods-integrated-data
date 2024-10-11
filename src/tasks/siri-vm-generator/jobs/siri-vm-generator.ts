@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 void (async () => {
     performance.mark("siri-vm-generator-start");

@@ -2,7 +2,7 @@ import path from "node:path";
 import { PassThrough } from "node:stream";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     createLazyDownloadStreamFrom,
     getS3Object,
@@ -12,6 +12,7 @@ import {
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import archiver from "archiver";
 import { Handler } from "aws-lambda";
+import { z } from "zod";
 import {
     Query,
     createRegionalTripTable,
@@ -20,6 +21,8 @@ import {
     queryBuilder,
     regionalQueryBuilder,
 } from "./data";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

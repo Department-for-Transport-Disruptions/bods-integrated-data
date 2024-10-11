@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     AvlSubscriptionRequest,
     AvlSubscriptionResponse,
@@ -13,6 +13,9 @@ import { CompleteSiriObject } from "@bods-integrated-data/shared/utils";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const parseXml = (xml: string) => {
     const parser = new XMLParser({

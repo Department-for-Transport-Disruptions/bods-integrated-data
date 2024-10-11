@@ -11,6 +11,9 @@ dependencies:
   fast-xml-parser:
     specifier: ^4.4.1
     version: 4.4.1
+  zod:
+    specifier: ^3.23.8
+    version: 3.23.8
 
 devDependencies:
   '@types/aws-lambda':
@@ -22,9 +25,6 @@ devDependencies:
   mockdate:
     specifier: ^3.0.5
     version: 3.0.5
-  zod:
-    specifier: ^3.23.8
-    version: 3.23.8
 
 packages:
 
@@ -59,4 +59,4 @@ packages:
 
   /zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-    dev: true
+    dev: false
