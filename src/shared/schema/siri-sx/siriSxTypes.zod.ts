@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { z } from "zod";
 import { putMetricData } from "../../cloudwatch";
 import { logger } from "../../logger";
+import { datetimeSchema } from "../misc.schema";
 import {
     ArrivalBoardingActivity,
     CallStatus,
@@ -21,8 +22,6 @@ import {
     StopPointType,
     VehicleMode,
 } from "./enums";
-
-export const datetimeSchema = z.string().datetime({ offset: true });
 
 export const booleanStringSchema = z.string().transform((value) => value === "true");
 
