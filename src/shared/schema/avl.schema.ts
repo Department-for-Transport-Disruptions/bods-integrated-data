@@ -120,6 +120,10 @@ export const vehicleActivitySchema = z.object({
 
 export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
 
+/**
+ * The purpose of this transformer is to filter out invalid AVLs
+ * and return the rest of the data as valid.
+ */
 const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlValidationError[]) =>
     z.preprocess((input) => {
         const result = z.any().array().parse(input);
@@ -187,7 +191,7 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
 export type SiriVM = z.infer<ReturnType<typeof siriSchema>>;
 
 export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
-    siriSchema(errors).transform((item) => {
+    siriSchema(errors).transform<NewAvl[]>((item) => {
         return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
             let onwardCalls: Avl["onward_calls"] = [];
 
@@ -258,35 +262,30 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
         });
     });
 
-export const siriBodsSchemaTransformed = siriSchema().transform((item) => {
-    const avls: NewBodsAvl[] = item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map<NewBodsAvl>(
-        (vehicleActivity) => ({
-            response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
-            producer_ref: item.Siri.ServiceDelivery.ProducerRef.toString(),
-            recorded_at_time: vehicleActivity.RecordedAtTime,
-            valid_until_time: vehicleActivity.ValidUntilTime,
-            line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-            direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
-            occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
-            operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-            data_frame_ref:
-                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
-            dated_vehicle_journey_ref:
-                vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
-                null,
-            vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
-            longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-            latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
-            bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-            published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-            origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-            origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
-            destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-            block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-        }),
-    );
-
-    return avls;
+export const siriBodsSchemaTransformed = siriSchema().transform<NewBodsAvl[]>((item) => {
+    return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
+        response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
+        producer_ref: item.Siri.ServiceDelivery.ProducerRef.toString(),
+        recorded_at_time: vehicleActivity.RecordedAtTime,
+        valid_until_time: vehicleActivity.ValidUntilTime,
+        line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
+        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
+        occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
+        operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
+        data_frame_ref:
+            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
+        dated_vehicle_journey_ref:
+            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ?? null,
+        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
+        longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
+        latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
+        bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
+        published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
+        origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
+        origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
+        destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
+        block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
+    }));
 });
 
 export const tflVehicleLocationSchema = z.object({

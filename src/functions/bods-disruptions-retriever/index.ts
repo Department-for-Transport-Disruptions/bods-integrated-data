@@ -1,8 +1,11 @@
 import { Stream } from "node:stream";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { unzip } from "@bods-integrated-data/shared/unzip";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const getDisruptionsDataAndUploadToS3 = async (disruptionsUnzippedBucketName: string) => {
     logger.info("Starting retrieval of disruptions data");

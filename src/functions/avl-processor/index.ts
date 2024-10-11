@@ -3,12 +3,15 @@ import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integr
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
@@ -77,15 +80,15 @@ export const processSqsRecord = async (
 ) => {
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
-
         logger.subscriptionId = subscriptionId;
+
         const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
         if (subscription.status === "inactive") {
             logger.warn(`Subscription ${subscriptionId} is inactive, data will not be processed.`, {
                 subscriptionId,
             });
-            throw new Error(`Unable to process AVL for subscription ${subscriptionId} because it is inactive.`);
+            throw new Error(`Unable to process AVL for subscription ${subscriptionId} because it is inactive`);
         }
 
         const data = await getS3Object({

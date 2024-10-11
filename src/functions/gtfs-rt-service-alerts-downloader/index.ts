@@ -1,7 +1,10 @@
 import { createHttpServerErrorResponse } from "@bods-integrated-data/shared/api";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyResult } from "aws-lambda";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 export const handler = async (): Promise<APIGatewayProxyResult> => {
     try {

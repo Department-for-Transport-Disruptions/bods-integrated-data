@@ -3,11 +3,13 @@ import {
     AvlSubscriptionDataSenderMessage,
     subscriptionTriggerMessageSchema,
 } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { sendBatchMessage } from "@bods-integrated-data/shared/sqs";
 import { ScheduledHandler } from "aws-lambda";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const LAMBDA_TRIGGER_FREQUENCY_IN_SECONDS = 60;
 const HEARTBEAT_FREQUENCY_IN_SECONDS = 30;

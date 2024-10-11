@@ -1,12 +1,15 @@
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/cancellations/utils";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, CancellationsSubscription } from "@bods-integrated-data/shared/schema";
 import { formatSiriVmDatetimes } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { z } from "zod";
 import { generateMockHeartbeat } from "./mockHeartbeatNotification";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const getRequestPromises = (
     stage: string,

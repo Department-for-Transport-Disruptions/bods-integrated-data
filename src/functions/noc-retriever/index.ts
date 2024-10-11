@@ -1,8 +1,11 @@
 import { PassThrough, Stream } from "node:stream";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const getNocDataAndUploadToS3 = async (nocBucketName: string) => {
     const response = await axios.get<Stream>("https://www.travelinedata.org.uk/noc/api/1.0/nocrecords.xml", {

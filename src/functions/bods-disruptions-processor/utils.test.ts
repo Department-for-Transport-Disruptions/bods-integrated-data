@@ -1,4 +1,5 @@
-import { Consequence, PtSituation } from "@bods-integrated-data/shared/schema";
+import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
+import { Condition, Severity, VehicleMode } from "@bods-integrated-data/shared/schema/siri-sx/enums";
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { describe, expect, it } from "vitest";
 import { getGtfsActivePeriods, getGtfsCause, getGtfsEffect, getGtfsSeverityLevel } from "./utils";
@@ -41,7 +42,7 @@ describe("utils", () => {
             [{ PersonnelReason: "asdf" }, Cause.UNKNOWN_CAUSE],
             [{ MiscellaneousReason: "asdf" }, Cause.UNKNOWN_CAUSE],
         ])("returns the correct cause", (input, expected) => {
-            expect(getGtfsCause(input as PtSituation)).toEqual(expected);
+            expect(getGtfsCause(input as PtSituationElement)).toEqual(expected);
         });
     });
 
@@ -49,13 +50,13 @@ describe("utils", () => {
         it("returns the reduced service effect appropriately", () => {
             const input: Consequence = {
                 Blocking: {
-                    JourneyPlanner: "true",
+                    JourneyPlanner: true,
                 },
                 Advice: {
                     Details: "something reduced service something",
                 },
-                Condition: "",
-                Severity: "",
+                Condition: Condition.unknown,
+                Severity: Severity.unknown,
             };
 
             expect(getGtfsEffect(input)).toEqual(Effect.REDUCED_SERVICE);
@@ -66,13 +67,13 @@ describe("utils", () => {
             (details) => {
                 const input: Consequence = {
                     Blocking: {
-                        JourneyPlanner: "true",
+                        JourneyPlanner: true,
                     },
                     Advice: {
                         Details: details,
                     },
-                    Condition: "",
-                    Severity: "",
+                    Condition: Condition.unknown,
+                    Severity: Severity.unknown,
                 };
 
                 expect(getGtfsEffect(input)).toEqual(Effect.DETOUR);
@@ -82,7 +83,7 @@ describe("utils", () => {
         it("returns the modified service effect when there is at least one affected line", () => {
             const input: Consequence = {
                 Blocking: {
-                    JourneyPlanner: "true",
+                    JourneyPlanner: true,
                 },
                 Affects: {
                     Networks: {
@@ -91,14 +92,16 @@ describe("utils", () => {
                                 AffectedLine: [
                                     {
                                         LineRef: "1",
+                                        PublishedLineName: "",
                                     },
                                 ],
+                                VehicleMode: VehicleMode.bus,
                             },
                         ],
                     },
                 },
-                Condition: "",
-                Severity: "",
+                Condition: Condition.unknown,
+                Severity: Severity.unknown,
             };
 
             expect(getGtfsEffect(input)).toEqual(Effect.MODIFIED_SERVICE);
@@ -107,7 +110,7 @@ describe("utils", () => {
         it("returns the modified service effect when there is at least one affected stop point", () => {
             const input: Consequence = {
                 Blocking: {
-                    JourneyPlanner: "true",
+                    JourneyPlanner: true,
                 },
                 Affects: {
                     StopPoints: {
@@ -118,8 +121,8 @@ describe("utils", () => {
                         ],
                     },
                 },
-                Condition: "",
-                Severity: "",
+                Condition: Condition.unknown,
+                Severity: Severity.unknown,
             };
 
             expect(getGtfsEffect(input)).toEqual(Effect.MODIFIED_SERVICE);
@@ -130,13 +133,13 @@ describe("utils", () => {
             (details) => {
                 const input: Consequence = {
                     Blocking: {
-                        JourneyPlanner: "true",
+                        JourneyPlanner: true,
                     },
                     Advice: {
                         Details: details,
                     },
-                    Condition: "",
-                    Severity: "",
+                    Condition: Condition.unknown,
+                    Severity: Severity.unknown,
                 };
 
                 expect(getGtfsEffect(input)).toEqual(Effect.OTHER_EFFECT);
@@ -148,8 +151,8 @@ describe("utils", () => {
                 Delays: {
                     Delay: "PT5M",
                 },
-                Condition: "",
-                Severity: "",
+                Condition: Condition.unknown,
+                Severity: Severity.unknown,
             };
 
             expect(getGtfsEffect(input)).toEqual(Effect.SIGNIFICANT_DELAYS);
@@ -160,8 +163,8 @@ describe("utils", () => {
                 Delays: {
                     Delay: "PT0M",
                 },
-                Condition: "",
-                Severity: "",
+                Condition: Condition.unknown,
+                Severity: Severity.unknown,
             };
 
             expect(getGtfsEffect(input)).toEqual(Effect.UNKNOWN_EFFECT);
@@ -169,8 +172,8 @@ describe("utils", () => {
 
         it("returns the unknown effect when no other effect can be determined", () => {
             const input: Consequence = {
-                Condition: "",
-                Severity: "",
+                Condition: Condition.unknown,
+                Severity: Severity.unknown,
             };
 
             expect(getGtfsEffect(input)).toEqual(Effect.UNKNOWN_EFFECT);
@@ -191,8 +194,9 @@ describe("utils", () => {
     });
 
     describe("getGtfsActivePeriods", () => {
-        it("returns a correct active periods", () => {
-            const input: PtSituation = {
+        it("returns correct active periods", () => {
+            const input: PtSituationElement = {
+                SituationNumber: "1",
                 Consequences: {
                     Consequence: [],
                 },
@@ -205,7 +209,8 @@ describe("utils", () => {
                         StartTime: "2024-08-05T09:00:00.000Z",
                     },
                 ],
-            };
+            } as unknown as PtSituationElement;
+
             const expected: transit_realtime.ITimeRange[] = [
                 {
                     start: 1722841200,

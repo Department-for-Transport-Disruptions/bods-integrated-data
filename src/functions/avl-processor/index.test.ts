@@ -108,7 +108,7 @@ describe("avl-processor", () => {
     });
 
     it.each(["live", "error"] as const)(
-        "correctly processes a siri-vm file is subscription has status of %o",
+        "correctly processes a siri-vm file when subscription has status of %o",
         async (status) => {
             const avlSubscription: AvlSubscription = {
                 PK: "411e4495-4a57-4d2f-89d5-cf105441f321",
@@ -121,7 +121,7 @@ describe("avl-processor", () => {
                 apiKey: "mock-api-key",
             };
 
-            getDynamoItemSpy.mockResolvedValue({ ...avlSubscription, status });
+            getDynamoItemSpy.mockResolvedValue(avlSubscription);
 
             const valuesMock = vi.fn().mockReturnValue({
                 onConflict: vi.fn().mockReturnValue({
@@ -438,7 +438,7 @@ describe("avl-processor", () => {
                 "table-name",
                 "avl-validation-errors-table",
             ),
-        ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} because it is inactive.`);
+        ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} because it is inactive`);
 
         expect(valuesMock).not.toHaveBeenCalled();
 

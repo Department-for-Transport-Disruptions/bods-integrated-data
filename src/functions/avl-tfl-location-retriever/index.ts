@@ -1,13 +1,16 @@
 import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
 import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { z } from "zod";
 import { RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

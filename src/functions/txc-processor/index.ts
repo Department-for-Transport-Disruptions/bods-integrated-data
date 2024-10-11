@@ -1,6 +1,6 @@
 import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
     Operator,
@@ -14,6 +14,7 @@ import {
 } from "@bods-integrated-data/shared/schema";
 import { S3EventRecord, S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { processAgencies } from "./data/agencies";
 import { processCalendars } from "./data/calendar";
@@ -32,6 +33,8 @@ import {
     isRequiredTndsDataset,
     isRequiredTndsServiceMode,
 } from "./utils";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

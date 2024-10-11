@@ -17,7 +17,7 @@ import { getDuration } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { createSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { createEventSourceMapping } from "@bods-integrated-data/shared/lambda";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
 import { createQueue, getQueueAttributes } from "@bods-integrated-data/shared/sqs";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
@@ -34,6 +34,8 @@ import cleanDeep from "clean-deep";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const requestHeadersSchema = z.object({
     "x-user-id": createStringLengthValidation("x-user-id header"),

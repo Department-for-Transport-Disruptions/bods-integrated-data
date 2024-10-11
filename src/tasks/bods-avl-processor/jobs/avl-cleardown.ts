@@ -1,7 +1,10 @@
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { sql } from "kysely";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 void (async () => {
     const dbClient = await getDatabaseClient(process.env.STAGE === "local");

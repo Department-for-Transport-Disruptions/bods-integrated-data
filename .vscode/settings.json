@@ -9,5 +9,8 @@
     },
     "[terraform]": {
         "editor.defaultFormatter": "hashicorp.terraform"
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "redhat.vscode-xml"
     }
 }

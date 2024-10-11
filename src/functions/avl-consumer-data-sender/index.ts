@@ -8,10 +8,13 @@ import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bod
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription } from "@bods-integrated-data/shared/schema";
 import { SQSHandler, SQSRecord } from "aws-lambda";
 import axios, { AxiosError } from "axios";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const MAX_HEARTBEAT_ATTEMPTS = 3;
 

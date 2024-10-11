@@ -3,14 +3,14 @@ import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed } from "@bods-integrated-data/shared/gtfs-rt/utils";
-import {} from "@bods-integrated-data/shared/logger";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object, putS3Object } from "@bods-integrated-data/shared/s3";
-import { PtSituation, situationSchema } from "@bods-integrated-data/shared/schema";
+import { PtSituationElement, siriSxSchema } from "@bods-integrated-data/shared/schema";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { transit_realtime } from "gtfs-realtime-bindings";
+import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
     getGtfsActivePeriods,
@@ -19,6 +19,8 @@ import {
     getGtfsInformedIdentities,
     getGtfsSeverityLevel,
 } from "./utils";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
@@ -42,7 +44,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
     }
 
     const parsedXml = parser.parse(xml);
-    const parseResult = situationSchema.safeParse(parsedXml);
+    const parseResult = siriSxSchema.safeParse(parsedXml);
 
     if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
@@ -56,9 +58,13 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
 
 const mapPtSituationsToGtfsAlertEntities = async (
     dbClient: KyselyDb,
-    ptSituations: PtSituation[],
+    ptSituations: PtSituationElement[],
 ): Promise<transit_realtime.IFeedEntity[]> => {
     const promises = ptSituations.flatMap((ptSituation) => {
+        if (!ptSituation.Consequences) {
+            return [];
+        }
+
         return ptSituation.Consequences.Consequence.map(async (consequence) => {
             const entity: transit_realtime.IFeedEntity = {
                 id: randomUUID(),
@@ -84,11 +90,9 @@ const mapPtSituationsToGtfsAlertEntities = async (
                         ],
                     },
                     url: {
-                        translation: [
-                            {
-                                text: ptSituation.InfoLinks?.InfoLink.Uri || "",
-                            },
-                        ],
+                        translation: ptSituation.InfoLinks?.InfoLink.map((link) => ({
+                            text: link.Uri,
+                        })),
                     },
                     headerText: {
                         translation: [

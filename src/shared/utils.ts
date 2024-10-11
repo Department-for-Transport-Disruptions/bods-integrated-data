@@ -7,7 +7,7 @@ import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { getDate, isDateAfter } from "./dates";
 import { logger } from "./logger";
-import { VehicleType } from "./schema";
+import { CancellationsSubscription, VehicleType } from "./schema";
 import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
 
@@ -190,7 +190,7 @@ export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "yea
  */
 export const checkSubscriptionIsHealthy = (
     currentTime: Dayjs,
-    subscription: AvlSubscription,
+    subscription: AvlSubscription | CancellationsSubscription,
     lastDataReceivedDateTime?: string | null,
 ) => {
     const { heartbeatLastReceivedDateTime, lastResubscriptionTime, serviceStartDatetime } = subscription;

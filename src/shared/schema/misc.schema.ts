@@ -5,3 +5,5 @@ export const regionCodeSchema = z.enum(regionCodes, { message: "Invalid region c
 export const regionNameSchema = z.enum(regionNames, { message: "Invalid region name" });
 
 export const normalizedStringSchema = z.string().transform(encodeURIComponent);
+
+export const datetimeSchema = z.string().datetime({ offset: true, local: true });
