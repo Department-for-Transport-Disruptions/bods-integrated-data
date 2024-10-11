@@ -123,6 +123,7 @@ resource "aws_api_gateway_deployment" "siri_vm_api_deployment" {
       jsonencode(aws_api_gateway_integration.siri_vm_api_downloader_integration),
       jsonencode(aws_api_gateway_integration.avl_consumer_subscriber_integration),
       jsonencode(aws_api_gateway_integration.avl_consumer_unsubscriber_integration),
+      jsonencode(aws_api_gateway_integration.avl_consumer_subscriptions_integration),
       jsonencode(aws_api_gateway_integration.siri_vm_api_stats_integration),
       jsonencode(aws_api_gateway_rest_api.siri_vm_api.body),
       var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_vm_api_resource_policy[0].policy) : ""
@@ -216,7 +217,8 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriber_resource.path}",
-          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}"
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
         ]
       }
     ]
@@ -309,4 +311,46 @@ resource "aws_lambda_permission" "avl_consumer_unsubscriber_permissions" {
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}"
+}
+
+resource "aws_api_gateway_resource" "avl_consumer_subscriptions_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
+  path_part   = "subscriptions"
+}
+
+resource "aws_api_gateway_method" "avl_consumer_subscriptions_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id   = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_settings" "avl_consumer_subscriptions_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
+  stage_name  = aws_api_gateway_stage.siri_vm_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path_part}/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}"
+
+  settings {
+    caching_enabled = false
+    metrics_enabled = true
+    logging_level   = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "avl_consumer_subscriptions_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_vm_api.id
+  resource_id             = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
+  http_method             = aws_api_gateway_method.avl_consumer_subscriptions_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.avl_consumer_subscriptions_invoke_arn
+}
+
+resource "aws_lambda_permission" "avl_consumer_subscriptions_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.avl_consumer_subscriptions_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
 }

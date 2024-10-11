@@ -13,3 +13,11 @@ output "avl_consumer_unsubscriber_lambda_invoke_arn" {
 output "avl_consumer_unsubscriber_function_name" {
   value = module.avl_consumer_unsubscriber.function_name
 }
+
+output "avl_consumer_subscriptions_lambda_invoke_arn" {
+  value = module.avl_consumer_subscriptions.invoke_arn
+}
+
+output "avl_consumer_subscriptions_function_name" {
+  value = module.avl_consumer_subscriptions.function_name
+}
