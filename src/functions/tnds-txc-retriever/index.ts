@@ -1,10 +1,13 @@
 import { Writable } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { Handler } from "aws-lambda";
 import { Client } from "basic-ftp";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 interface FtpCredentials {
     host: string;

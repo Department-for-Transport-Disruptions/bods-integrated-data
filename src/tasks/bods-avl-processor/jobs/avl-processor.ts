@@ -6,11 +6,14 @@ import {
     mapAvlToGtfsEntity,
     matchAvlToTimetables,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
-import { logger } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object, putS3Object } from "@bods-integrated-data/shared/s3";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { transit_realtime } from "gtfs-realtime-bindings";
+import { z } from "zod";
 import { parseXml } from "../utils";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const {
     PROCESSOR_FREQUENCY_IN_SECONDS: processorFrequency,

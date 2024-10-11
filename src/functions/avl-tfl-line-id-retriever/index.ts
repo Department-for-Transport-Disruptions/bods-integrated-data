@@ -1,8 +1,11 @@
 import { KyselyDb, NewTflLine, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { z } from "zod";
 import { TflLinesSchema } from "./tfl-line.schema";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

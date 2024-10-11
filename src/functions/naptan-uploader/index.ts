@@ -1,10 +1,13 @@
 import { KyselyDb, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { S3Event, S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
 import OsPoint from "ospoint";
 import { parse } from "papaparse";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

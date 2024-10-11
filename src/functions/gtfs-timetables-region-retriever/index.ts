@@ -1,9 +1,12 @@
 import { GTFS_FILE_SUFFIX, REGIONS } from "@bods-integrated-data/shared/constants";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { makeFilteredArraySchema, notEmpty } from "@bods-integrated-data/shared/utils";
 import { APIGatewayProxyHandler } from "aws-lambda";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});

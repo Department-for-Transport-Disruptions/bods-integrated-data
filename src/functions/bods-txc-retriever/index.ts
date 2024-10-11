@@ -1,10 +1,13 @@
 import { Stream } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { Handler } from "aws-lambda";
 import axios from "axios";
 import { Entry, Parse } from "unzipper";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketName: string, prefix: string) => {
     logger.info("Starting retrieval of BODS data");

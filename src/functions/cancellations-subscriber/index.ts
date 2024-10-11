@@ -14,7 +14,7 @@ import {
 import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     CancellationsSubscription,
     cancellationsSubscribeMessageSchema,
@@ -24,6 +24,8 @@ import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/share
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const requestBodySchema = z
     .string({

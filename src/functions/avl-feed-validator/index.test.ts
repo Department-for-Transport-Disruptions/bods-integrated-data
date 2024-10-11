@@ -39,13 +39,13 @@ describe("avl-feed-validator", () => {
         sendTerminateSubscriptionRequest: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
         logger: {
             info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
         },
-        withLambdaRequestTracker: vi.fn(),
     }));
 
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");

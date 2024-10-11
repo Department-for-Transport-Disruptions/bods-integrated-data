@@ -3,13 +3,14 @@ import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed } from "@bods-integrated-data/shared/gtfs-rt/utils";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object, putS3Object } from "@bods-integrated-data/shared/s3";
 import { PtSituationElement, siriSxSchema } from "@bods-integrated-data/shared/schema";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { transit_realtime } from "gtfs-realtime-bindings";
+import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
     getGtfsActivePeriods,
@@ -18,6 +19,8 @@ import {
     getGtfsInformedIdentities,
     getGtfsSeverityLevel,
 } from "./utils";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

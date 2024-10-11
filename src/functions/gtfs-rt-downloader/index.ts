@@ -7,7 +7,7 @@ import {
     getAvlDataForGtfs,
     mapAvlToGtfsEntity,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import {
@@ -17,6 +17,8 @@ import {
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

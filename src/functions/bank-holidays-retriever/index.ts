@@ -1,7 +1,10 @@
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { Handler } from "aws-lambda";
 import axios from "axios";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: string) => {
     const url = "https://www.gov.uk/bank-holidays.json";

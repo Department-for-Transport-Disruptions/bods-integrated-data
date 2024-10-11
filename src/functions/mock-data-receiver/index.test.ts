@@ -5,11 +5,13 @@ import { describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
 describe("avl-mock-data-receiver", () => {
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
         logger: {
             info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
         },
-        withLambdaRequestTracker: vi.fn(),
     }));
 
     it("returns a 200 and logs the body", async () => {
