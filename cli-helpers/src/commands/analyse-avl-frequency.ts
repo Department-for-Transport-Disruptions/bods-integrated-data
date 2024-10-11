@@ -6,6 +6,7 @@ import { Command } from "commander";
 import { asString, generateCsv, mkConfig } from "export-to-csv";
 import { Stats } from "fast-stats";
 import { STAGES, STAGE_OPTION, listS3Objects, listS3ObjectsByCommonPrefix, withUserPrompts } from "../utils";
+import { createS3Client } from "../utils/awsClients";
 
 type Dayjs = ReturnType<typeof getDate>;
 
@@ -123,18 +124,7 @@ export const analyseAvlFrequency = new Command("analyse-avl-frequency")
         const frequencyResults: FrequencyResult[] = [];
         let subscriptionCount = 0;
 
-        const s3Client = new S3Client({
-            region: "eu-west-2",
-            ...(stage === "local"
-                ? {
-                      endpoint: "http://localhost:4566",
-                      credentials: {
-                          accessKeyId: "DUMMY",
-                          secretAccessKey: "DUMMY",
-                      },
-                  }
-                : {}),
-        });
+        const s3Client = createS3Client(stage);
 
         try {
             logger.info(`Fetching subscription IDs for bucket ${bucketName}`);

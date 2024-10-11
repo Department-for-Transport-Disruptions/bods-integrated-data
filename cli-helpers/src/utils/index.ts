@@ -1,14 +1,13 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { InvokeCommand, InvokeCommandInputType, LambdaClient } from "@aws-sdk/client-lambda";
+import { InvokeCommand, InvokeCommandInputType } from "@aws-sdk/client-lambda";
 import { ListObjectsV2Command, S3Client, _Object } from "@aws-sdk/client-s3";
-import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { GetSecretValueCommand, ListSecretsCommand } from "@aws-sdk/client-secrets-manager";
 import { DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-sdk/lib-dynamodb";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 import inquirer, { QuestionMap } from "inquirer";
+import { createLambdaClient, createSecretsManagerClient } from "./awsClients";
 
 export const STAGES = ["local", "dev", "test", "prod"];
-
 export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
 
 type Prompt = {
@@ -46,18 +45,7 @@ export const withUserPrompts = async <T extends { [key: string]: string }>(
 };
 
 export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandInputType) => {
-    const lambdaClient = new LambdaClient({
-        region: "eu-west-2",
-        ...(stage === "local"
-            ? {
-                  endpoint: "http://localhost:4566",
-                  credentials: {
-                      accessKeyId: "DUMMY",
-                      secretAccessKey: "DUMMY",
-                  },
-              }
-            : {}),
-    });
+    const lambdaClient = createLambdaClient(stage);
 
     try {
         logger.info(`Invoking lambda: ${invokeCommand.FunctionName}`);
@@ -84,10 +72,7 @@ export const invokeLambda = async (stage: string, invokeCommand: InvokeCommandIn
 };
 
 export const getSecretByKey = async <T extends string>(stage: string, key: string): Promise<T> => {
-    const client = new SecretsManagerClient({
-        endpoint: stage === "local" ? "http://localhost:4566" : undefined,
-        region: "eu-west-2",
-    });
+    const client = createSecretsManagerClient(stage);
 
     const listSecretsCommand = new ListSecretsCommand({
         Filters: [
@@ -116,6 +101,8 @@ export const getSecretByKey = async <T extends string>(stage: string, key: strin
     });
 
     const response = await client.send(getSecretCommand);
+    client.destroy();
+
     const secret = response.SecretString;
 
     if (!secret) {
@@ -126,18 +113,11 @@ export const getSecretByKey = async <T extends string>(stage: string, key: strin
 };
 
 export const getDynamoDbItem = async <T extends Record<string, unknown>>(
-    stage: string,
+    client: DynamoDBDocumentClient,
     tableName: string,
     key: Record<string, NativeAttributeValue>,
 ) => {
-    const dynamoDbDocClient = DynamoDBDocumentClient.from(
-        new DynamoDBClient({
-            endpoint: stage === "local" ? "http://localhost:4566" : undefined,
-            region: "eu-west-2",
-        }),
-    );
-
-    const data = await dynamoDbDocClient.send(
+    const data = await client.send(
         new GetCommand({
             TableName: tableName,
             Key: key,

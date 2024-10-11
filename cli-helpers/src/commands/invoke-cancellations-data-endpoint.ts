@@ -1,6 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command, Option } from "@commander-js/extra-typings";
 import { STAGES, STAGE_OPTION, getDynamoDbItem, invokeLambda, withUserPrompts } from "../utils";
+import { createDynamoDbDocClient } from "../utils/awsClients";
 
 const notificationTypeChoices = ["Heartbeat Notification", "AVL Data"];
 
@@ -15,10 +16,16 @@ export const invokeCancellationsDataEndpoint = new Command("invoke-cancellations
             notificationType: { type: "list", choices: notificationTypeChoices },
         });
 
-        const subscription = await getDynamoDbItem(stage, `integrated-data-cancellations-subscription-table-${stage}`, {
-            PK: subscriptionId,
-            SK: "SUBSCRIPTION",
-        });
+        const dynamoDbClient = createDynamoDbDocClient(stage);
+        const subscription = await getDynamoDbItem(
+            dynamoDbClient,
+            `integrated-data-cancellations-subscription-table-${stage}`,
+            {
+                PK: subscriptionId,
+                SK: "SUBSCRIPTION",
+            },
+        );
+        dynamoDbClient.destroy();
 
         if (!subscription) {
             logger.error(`Subscription with ID not found: ${subscriptionId}`);
