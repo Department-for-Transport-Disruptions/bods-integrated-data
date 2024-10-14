@@ -7,6 +7,19 @@ import {
 } from "../validation";
 import { avlSubscriptionStatusesSchema } from "./avl-subscribe.schema";
 
+const subscriptionsQueryParamsSchema = z.object({
+    boundingBox: createBoundingBoxValidation("boundingBox").optional(),
+    operatorRef: createNmTokenArrayValidation("operatorRef").optional(),
+    vehicleRef: createNmTokenValidation("vehicleRef").optional(),
+    lineRef: createNmTokenValidation("lineRef").optional(),
+    producerRef: createNmTokenValidation("producerRef").optional(),
+    originRef: createNmTokenValidation("originRef").optional(),
+    destinationRef: createNmTokenValidation("destinationRef").optional(),
+    subscriptionId: createSubscriptionIdArrayValidation("subscriptionId"),
+});
+
+export type AvlConsumerQueryParams = z.infer<typeof subscriptionsQueryParamsSchema>;
+
 export const avlConsumerSubscriptionSchema = z.object({
     PK: z.string(),
     SK: z.string(),
@@ -22,16 +35,7 @@ export const avlConsumerSubscriptionSchema = z.object({
     queueUrl: z.union([z.literal(""), z.string().url()]),
     eventSourceMappingUuid: z.string(),
     scheduleName: z.string(),
-    queryParams: z.object({
-        boundingBox: createBoundingBoxValidation("boundingBox").optional(),
-        operatorRef: createNmTokenArrayValidation("operatorRef").optional(),
-        vehicleRef: createNmTokenValidation("vehicleRef").optional(),
-        lineRef: createNmTokenValidation("lineRef").optional(),
-        producerRef: createNmTokenValidation("producerRef").optional(),
-        originRef: createNmTokenValidation("originRef").optional(),
-        destinationRef: createNmTokenValidation("destinationRef").optional(),
-        subscriptionId: createSubscriptionIdArrayValidation("subscriptionId"),
-    }),
+    queryParams: subscriptionsQueryParamsSchema,
 });
 
 export type AvlConsumerSubscription = z.infer<typeof avlConsumerSubscriptionSchema>;

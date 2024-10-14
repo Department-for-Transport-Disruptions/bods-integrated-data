@@ -4,10 +4,11 @@ import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHand
 import { AvlConsumerSubscription } from "@bods-integrated-data/shared/schema";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { handler } from "../avl-consumer-subscriptions";
+import { ApiAvlConsumerSubscription, handler } from "../avl-consumer-subscriptions";
 
 const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
 const mockUserId = "mock-user-id-1";
+const mockSubscriptionId = "2";
 
 const consumerSubscriptions: AvlConsumerSubscription[] = [
     {
@@ -32,7 +33,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
     {
         PK: "2",
         SK: mockUserId,
-        subscriptionId: "2",
+        subscriptionId: mockSubscriptionId,
         status: "inactive",
         url: "https://www.test.com/data",
         requestorRef: "test",
@@ -99,9 +100,11 @@ describe("avl-consumer-subscriptions", () => {
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+        recursiveQuery: vi.fn(),
         recursiveScan: vi.fn(),
     }));
 
+    const recursiveQuerySpy = vi.spyOn(dynamo, "recursiveQuery");
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
     let mockEvent: APIGatewayProxyEvent;
@@ -115,6 +118,9 @@ describe("avl-consumer-subscriptions", () => {
             },
         } as unknown as APIGatewayProxyEvent;
 
+        recursiveQuerySpy.mockResolvedValue(
+            consumerSubscriptions.filter((sub) => sub.subscriptionId === mockSubscriptionId),
+        );
         recursiveScanSpy.mockResolvedValue(consumerSubscriptions.filter((sub) => sub.SK === mockUserId));
     });
 
@@ -131,6 +137,8 @@ describe("avl-consumer-subscriptions", () => {
             expect.any(Error),
             "There was a problem with the avl-consumer-subscriptions endpoint",
         );
+
+        expect(recursiveQuerySpy).not.toHaveBeenCalled();
         expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
 
@@ -147,14 +155,112 @@ describe("avl-consumer-subscriptions", () => {
             body: JSON.stringify({ errors: expectedErrorMessages }),
         });
         expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "Invalid request");
+
+        expect(recursiveQuerySpy).not.toHaveBeenCalled();
         expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
 
-    it("returns a 200 with the user's subscriptions when the request is valid", async () => {
+    it.each([[null], [{}], [{ subscriptionId: "" }]])(
+        "returns a 200 with all subscriptions data when passing no subscription ID param (test: %o)",
+        async (input) => {
+            const expectedResponse: ApiAvlConsumerSubscription[] = [
+                {
+                    id: "1",
+                    subscriptionId: "1",
+                    status: "live",
+                    url: "https://www.test.com/data",
+                    requestorRef: "test",
+                    heartbeatInterval: "PT30S",
+                    initialTerminationTime: "2034-03-11T15:20:02.093Z",
+                    requestTimestamp: "2024-03-11T15:20:02.093Z",
+                    queryParams: {
+                        subscriptionId: ["1"],
+                    },
+                },
+                {
+                    id: "2",
+                    subscriptionId: "2",
+                    status: "inactive",
+                    url: "https://www.test.com/data",
+                    requestorRef: "test",
+                    heartbeatInterval: "PT30S",
+                    initialTerminationTime: "2034-03-11T15:20:02.093Z",
+                    requestTimestamp: "2024-03-11T15:20:02.093Z",
+                    queryParams: {
+                        subscriptionId: ["1"],
+                    },
+                },
+                {
+                    id: "3",
+                    subscriptionId: "3",
+                    status: "error",
+                    url: "https://www.test.com/data",
+                    requestorRef: "test",
+                    heartbeatInterval: "PT30S",
+                    initialTerminationTime: "2034-03-11T15:20:02.093Z",
+                    requestTimestamp: "2024-03-11T15:20:02.093Z",
+                    queryParams: {
+                        subscriptionId: ["1"],
+                    },
+                },
+            ];
+
+            mockEvent.pathParameters = input;
+
+            const response = await handler(mockEvent, mockContext, mockCallback);
+            expect(response).toEqual({
+                statusCode: 200,
+                body: JSON.stringify(expectedResponse),
+            });
+
+            expect(recursiveQuerySpy).not.toHaveBeenCalled();
+            expect(recursiveScanSpy).toHaveBeenCalled();
+        },
+    );
+
+    it("returns a 200 with a single subscription when passing a subscription ID param", async () => {
+        const expectedResponse: ApiAvlConsumerSubscription = {
+            id: "2",
+            subscriptionId: mockSubscriptionId,
+            status: "inactive",
+            url: "https://www.test.com/data",
+            requestorRef: "test",
+            heartbeatInterval: "PT30S",
+            initialTerminationTime: "2034-03-11T15:20:02.093Z",
+            requestTimestamp: "2024-03-11T15:20:02.093Z",
+            queryParams: {
+                subscriptionId: ["1"],
+            },
+        };
+
+        mockEvent.pathParameters = {
+            subscriptionId: mockSubscriptionId,
+        };
+
         const response = await handler(mockEvent, mockContext, mockCallback);
         expect(response).toEqual({
             statusCode: 200,
-            body: JSON.stringify(consumerSubscriptions.slice(0, 3)),
+            body: JSON.stringify(expectedResponse),
         });
+
+        expect(recursiveQuerySpy).toHaveBeenCalled();
+        expect(recursiveScanSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns a 404 when querying a subscription that does not exist", async () => {
+        mockEvent.pathParameters = {
+            subscriptionId: mockSubscriptionId,
+        };
+
+        recursiveQuerySpy.mockResolvedValue([]);
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 404,
+            body: JSON.stringify({ errors: ["Subscription not found"] }),
+        });
+
+        expect(recursiveQuerySpy).toHaveBeenCalled();
+        expect(recursiveScanSpy).not.toHaveBeenCalled();
     });
 });
