@@ -161,6 +161,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             status: "live",
             url: subscriptionRequest.ConsumerAddress,
             requestorRef: subscriptionRequest.RequestorRef,
+            updateInterval: updateInterval,
             heartbeatInterval: subscriptionRequest.SubscriptionContext.HeartbeatInterval,
             initialTerminationTime: subscriptionRequest.VehicleMonitoringSubscriptionRequest.InitialTerminationTime,
             requestTimestamp: subscriptionRequest.RequestTimestamp,

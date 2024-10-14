@@ -27,6 +27,7 @@ export const avlConsumerSubscriptionSchema = z.object({
     status: avlSubscriptionStatusesSchema,
     url: z.string().url(),
     requestorRef: z.string(),
+    updateInterval: z.string(),
     heartbeatInterval: z.string(),
     initialTerminationTime: z.string(),
     requestTimestamp: z.string(),

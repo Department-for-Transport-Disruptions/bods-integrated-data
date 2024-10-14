@@ -34,6 +34,7 @@ export type ApiAvlConsumerSubscription = {
     status: string;
     url: string;
     requestorRef: string;
+    updateInterval: string;
     heartbeatInterval: string;
     initialTerminationTime: string;
     requestTimestamp: string;
@@ -47,6 +48,7 @@ export const mapApiAvlSubscriptionResponse = (subscription: AvlConsumerSubscript
         status: subscription.status,
         url: subscription.url,
         requestorRef: subscription.requestorRef,
+        updateInterval: subscription.updateInterval,
         heartbeatInterval: subscription.heartbeatInterval,
         initialTerminationTime: subscription.initialTerminationTime,
         requestTimestamp: subscription.requestTimestamp,
