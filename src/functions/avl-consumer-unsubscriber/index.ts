@@ -9,7 +9,7 @@ import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-con
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { deleteSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
 import { deleteQueue } from "@bods-integrated-data/shared/sqs";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
@@ -17,6 +17,8 @@ import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const requestHeadersSchema = z.object({
     "x-user-id": createStringLengthValidation("x-user-id header"),

@@ -20,6 +20,9 @@ dependencies:
   yauzl:
     specifier: ^3.1.1
     version: 3.1.1
+  zod:
+    specifier: ^3.23.8
+    version: 3.23.8
 
 devDependencies:
   '@types/adm-zip':
@@ -91,4 +94,8 @@ packages:
     dependencies:
       buffer-crc32: 0.2.13
       pend: 1.2.0
+    dev: false
+
+  /zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: false

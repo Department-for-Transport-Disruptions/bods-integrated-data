@@ -3,6 +3,20 @@ variable "environment" {
   description = "Environment"
 }
 
+variable "aws_account_id" {
+  type        = string
+  description = "AWS account id"
+}
+
+variable "aws_region" {
+  type        = string
+  description = "AWS region"
+}
+
+variable "sg_id" {
+  type = string
+}
+
 variable "ok_topic_arn" {
   type        = string
   description = "ARN of the SNS topic to use for ok notifications"
@@ -79,4 +93,9 @@ variable "cluster_id" {
 variable "private_subnet_ids" {
   type        = list(string)
   description = "List of Subnet IDs"
+}
+
+variable "cancellations_subscription_table_name" {
+  type        = string
+  description = "Cancellations subscription DynamoDB table name"
 }

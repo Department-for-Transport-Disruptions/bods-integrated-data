@@ -193,3 +193,13 @@ locals {
     ECSThresholdOverrides    = coalesce(var.recovery.ECSThresholdOverrides, {})
   }
 }
+
+variable "sqs_critical_threshold" {
+  description = "The monitor critical threshold"
+  default     = 10
+}
+
+variable "sqs_normal_threshold" {
+  description = "The normal length of the queue"
+  default     = 0
+}

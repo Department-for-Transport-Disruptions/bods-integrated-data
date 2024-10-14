@@ -1,6 +1,6 @@
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { Consequence, PtSituation } from "@bods-integrated-data/shared/schema";
+import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
 import { transit_realtime } from "gtfs-realtime-bindings";
 
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;
@@ -49,7 +49,7 @@ const isReason = <T extends Record<string, string>>(reasonAliases: T, reasonToCh
     return reason && (reason === reasonToCheck || reason === reasonAliases[reasonToCheck]);
 };
 
-export const getGtfsCause = (ptSituation: PtSituation): transit_realtime.Alert.Cause => {
+export const getGtfsCause = (ptSituation: PtSituationElement): transit_realtime.Alert.Cause => {
     const environmentReason = ptSituation.EnvironmentReason;
     const equipmentReason = ptSituation.EquipmentReason;
     const personnelReason = ptSituation.PersonnelReason;
@@ -119,7 +119,7 @@ export const getGtfsCause = (ptSituation: PtSituation): transit_realtime.Alert.C
 };
 
 export const getGtfsEffect = (consequence: Consequence): transit_realtime.Alert.Effect => {
-    if (consequence.Blocking?.JourneyPlanner === "true") {
+    if (consequence.Blocking?.JourneyPlanner) {
         const details = consequence.Advice?.Details.toLowerCase() || "";
 
         if (details.includes("reduced service")) {
@@ -184,7 +184,7 @@ export const getGtfsSeverityLevel = (severity: string): transit_realtime.Alert.S
     return SeverityLevel.UNKNOWN_SEVERITY;
 };
 
-export const getGtfsActivePeriods = (ptSituation: PtSituation): transit_realtime.ITimeRange[] => {
+export const getGtfsActivePeriods = (ptSituation: PtSituationElement): transit_realtime.ITimeRange[] => {
     return ptSituation.ValidityPeriod.map((period) => ({
         start: getDate(period.StartTime).unix(),
         end: period.EndTime ? getDate(period.EndTime).unix() : undefined,

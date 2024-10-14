@@ -15,8 +15,6 @@
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "^4.4.1",
         "mockdate": "^3.0.5",
-        "@types/xml2js": "^0.4.14",
-        "xml2js": "^0.6.2",
         "zod": "^3.23.8"
     },
     "devDependencies": {

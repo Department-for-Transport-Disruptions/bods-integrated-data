@@ -1,8 +1,10 @@
 import { createHttpServerErrorResponse, createHttpValidationErrorResponse } from "@bods-integrated-data/shared/api";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const requestParamsSchema = z.preprocess(
     Object,

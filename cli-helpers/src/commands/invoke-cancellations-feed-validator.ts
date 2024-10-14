@@ -1,24 +1,12 @@
 import { Command } from "@commander-js/extra-typings";
-import inquirer from "inquirer";
-import { STAGES, STAGE_OPTION_WITH_DEFAULT, invokeLambda } from "../utils";
+import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeCancellationsFeedValidator = new Command("invoke-cancellations-feed-validator")
-    .addOption(STAGE_OPTION_WITH_DEFAULT)
+    .addOption(STAGE_OPTION)
     .action(async (options) => {
-        let { stage } = options;
-
-        if (!stage) {
-            const responses = await inquirer.prompt<{ stage: string }>([
-                {
-                    name: "stage",
-                    message: "Select the stage",
-                    type: "list",
-                    choices: STAGES,
-                },
-            ]);
-
-            stage = responses.stage;
-        }
+        const { stage } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+        });
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-cancellations-feed-validator-${stage}`,

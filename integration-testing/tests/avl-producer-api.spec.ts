@@ -1,9 +1,9 @@
 import { AvlSubscribeMessage } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { expect, test } from "@playwright/test";
-import { deleteDynamoItem, getDynamoItem } from "../data/dynamo";
+import { getDynamoItem } from "../data/dynamo";
 import { generateMockHeartbeat } from "../data/mockHeartbeat";
 import { generateMockSiriVm } from "../data/mockSiri";
-import { getSecretByKey } from "./utils";
+import { cleardownTestSubscription, getSecretByKey } from "./utils";
 
 const { STAGE: stage } = process.env;
 
@@ -28,13 +28,6 @@ const testSubscription: AvlSubscribeMessage = {
     publisherId: "PLAYWRIGHT",
 };
 
-const cleardownTestSubscription = async () => {
-    await deleteDynamoItem(avlSubscriptionTableName, {
-        PK: testSubscription.subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-};
-
 const getTestSubscription = async () => {
     const dynamoItem = await getDynamoItem(avlSubscriptionTableName, {
         PK: testSubscription.subscriptionId,
@@ -49,12 +42,12 @@ const getTestSubscription = async () => {
 };
 
 test.beforeAll(async () => {
-    await cleardownTestSubscription();
+    await cleardownTestSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
     headers["x-api-key"] = await getSecretByKey(stage, "avl_producer_api_key");
 });
 
 test.afterAll(async () => {
-    await cleardownTestSubscription();
+    await cleardownTestSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
 });
 
 test.describe("avl-producer-api", () => {

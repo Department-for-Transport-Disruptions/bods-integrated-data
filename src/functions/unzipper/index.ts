@@ -1,8 +1,11 @@
 import { Readable } from "node:stream";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { unzip } from "@bods-integrated-data/shared/unzip";
 import { S3Handler } from "aws-lambda";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});

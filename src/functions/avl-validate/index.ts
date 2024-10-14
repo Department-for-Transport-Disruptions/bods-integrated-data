@@ -5,7 +5,7 @@ import {
     validateApiKey,
 } from "@bods-integrated-data/shared/api";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     AvlCheckStatusRequest,
     avlCheckStatusResponseSchema,
@@ -18,6 +18,8 @@ import { APIGatewayProxyHandler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const requestBodySchema = z
     .string({

@@ -1,5 +1,11 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-sdk/lib-dynamodb";
+import {
+    DeleteCommand,
+    DynamoDBDocumentClient,
+    GetCommand,
+    NativeAttributeValue,
+    PutCommand,
+} from "@aws-sdk/lib-dynamodb";
 
 const dynamoDbDocClient = DynamoDBDocumentClient.from(
     new DynamoDBClient({
@@ -28,4 +34,22 @@ export const getDynamoItem = async <T extends Record<string, unknown>>(
     );
 
     return data.Item ? (data.Item as T) : null;
+};
+
+export const putDynamoItem = async <T extends Record<string, unknown>>(
+    tableName: string,
+    pk: string,
+    sk: string,
+    tableItems: T,
+) => {
+    await dynamoDbDocClient.send(
+        new PutCommand({
+            TableName: tableName,
+            Item: {
+                PK: pk,
+                SK: sk,
+                ...tableItems,
+            },
+        }),
+    );
 };

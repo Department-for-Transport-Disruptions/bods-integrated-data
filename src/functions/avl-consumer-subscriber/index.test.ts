@@ -48,13 +48,13 @@ const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"y
 `;
 
 describe("avl-consumer-subscriber", () => {
-    vi.mock("@bods-integrated-data/shared/logger", () => ({
+    vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
         logger: {
             info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
         },
-        withLambdaRequestTracker: vi.fn(),
     }));
 
     vi.mock("node:crypto", () => ({

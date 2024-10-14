@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { datetimeSchema } from "./misc.schema";
 
 export const heartbeatNotificationSchema = z.object({
     Siri: z.object({
         HeartbeatNotification: z.object({
-            RequestTimestamp: z.string().datetime({ offset: true }),
+            RequestTimestamp: datetimeSchema,
             ProducerRef: z.string().optional(),
             Status: z.coerce.string(),
-            ServiceStartedTime: z.string().datetime({ offset: true }).optional(),
+            ServiceStartedTime: datetimeSchema.optional(),
         }),
     }),
 });

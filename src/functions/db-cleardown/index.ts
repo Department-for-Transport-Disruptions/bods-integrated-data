@@ -1,7 +1,10 @@
 import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
 import { sql } from "kysely";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 

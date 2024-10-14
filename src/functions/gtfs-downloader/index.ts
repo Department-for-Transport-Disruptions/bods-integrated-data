@@ -1,10 +1,12 @@
 import { createHttpServerErrorResponse, createHttpValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { GTFS_FILE_SUFFIX, REGIONS, RegionCode } from "@bods-integrated-data/shared/constants";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getPresignedUrl } from "@bods-integrated-data/shared/s3";
 import { regionCodeSchema, regionNameSchema } from "@bods-integrated-data/shared/schema/misc.schema";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { ZodError, z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 const requestParamsSchema = z.preprocess(
     Object,

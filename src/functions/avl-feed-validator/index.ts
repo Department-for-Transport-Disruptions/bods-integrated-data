@@ -2,7 +2,7 @@ import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
-import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscribeMessage, AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
@@ -13,6 +13,9 @@ import {
 } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios, { AxiosError } from "axios";
+import { z } from "zod";
+
+z.setErrorMap(errorMapWithDataLogging);
 
 export const resubscribeToDataProducer = async (
     subscription: AvlSubscription,
