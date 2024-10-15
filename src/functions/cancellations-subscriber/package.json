@@ -1,7 +1,7 @@
 {
     "name": "@bods-integrated-data/cancellations-subscriber",
     "version": "0.1.0",
-    "description": "Template for a typescript lambda",
+    "description": "HTTP lambda for subscribing to cancellations data provider",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./cancellations-subscriber.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/cancellations-subscriber.zip ../dist",

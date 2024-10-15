@@ -20,6 +20,7 @@ const consumerSubscription: AvlConsumerSubscription = {
     status: "live",
     url: "https://www.test.com/data",
     requestorRef: "test",
+    updateInterval: "PT10S",
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2034-03-11T15:20:02.093Z",
     requestTimestamp: "2024-03-11T15:20:02.093Z",
