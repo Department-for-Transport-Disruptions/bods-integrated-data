@@ -224,7 +224,7 @@ export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: bool
 
 /**
  * Spawns a child process to use the xmllint CLI command in order to validate
- * the SIRI-VM files against the XSD. If the file fails validation then it will
+ * the SIRI files against the XSD. If the file fails validation then it will
  * throw an error and log out the validation issues.
  *
  * @param xml

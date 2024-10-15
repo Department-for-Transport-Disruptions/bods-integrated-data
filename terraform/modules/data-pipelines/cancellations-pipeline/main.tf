@@ -44,7 +44,7 @@ module "integrated_data_cancellations_processor_function" {
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         module.integrated_data_cancellations_s3_sqs.sqs_arn
       ]
@@ -53,7 +53,7 @@ module "integrated_data_cancellations_processor_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         "${module.integrated_data_cancellations_s3_sqs.bucket_arn}/*"
       ]
@@ -62,7 +62,7 @@ module "integrated_data_cancellations_processor_function" {
       Action = [
         "secretsmanager:GetSecretValue",
       ],
-      Effect = "Allow",
+      Effect   = "Allow",
       Resource = [
         var.db_secret_arn
       ]
@@ -115,7 +115,7 @@ resource "aws_iam_policy" "siri_sx_generator_ecs_execution_policy" {
   name = "integrated-data-siri-sx-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -158,7 +158,7 @@ resource "aws_iam_policy" "siri_sx_generator_ecs_task_policy" {
   name = "integrated-data-siri-sx-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -229,7 +229,6 @@ resource "aws_vpc_security_group_egress_rule" "siri_sx_generator_sg_allow_all_eg
   ip_protocol = "-1"
 }
 
-// TODO - Why do we allow lambda ingress?
 resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
   count = var.environment != "local" ? 1 : 0
 
