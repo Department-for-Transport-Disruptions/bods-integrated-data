@@ -115,7 +115,7 @@ resource "aws_iam_policy" "siri_sx_generator_ecs_execution_policy" {
   name = "integrated-data-siri-sx-generator-ecs-execution-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
@@ -158,7 +158,7 @@ resource "aws_iam_policy" "siri_sx_generator_ecs_task_policy" {
   name = "integrated-data-siri-sx-generator-ecs-task-policy-${var.environment}"
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         "Effect" : "Allow",
