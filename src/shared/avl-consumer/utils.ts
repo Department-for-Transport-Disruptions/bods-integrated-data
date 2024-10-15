@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { getDynamoItem, recursiveQuery } from "../dynamo";
-import { AvlConsumerSubscription, avlConsumerSubscriptionSchema } from "../schema";
+import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
+import { AvlConsumerSubscription, avlConsumerSubscriptionSchema, avlConsumerSubscriptionsSchema } from "../schema";
 import { SubscriptionIdNotFoundError } from "../utils";
 import { createStringLengthValidation } from "../validation";
 
@@ -36,7 +36,7 @@ export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: stri
     return avlConsumerSubscriptionSchema.parse(subscription);
 };
 
-export const getAvlConsumerSubscription = async (tableName: string, subscriptionId: string, userId: string) => {
+export const getAvlConsumerSubscription = async (tableName: string, userId: string, subscriptionId: string) => {
     const subscriptions = await recursiveQuery<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
@@ -52,4 +52,20 @@ export const getAvlConsumerSubscription = async (tableName: string, subscription
     }
 
     return avlConsumerSubscriptionSchema.parse(subscriptions[0]);
+};
+
+export const getAvlConsumerSubscriptions = async (tableName: string, userId: string) => {
+    const subscriptions = await recursiveScan({
+        TableName: tableName,
+        FilterExpression: "SK = :SK",
+        ExpressionAttributeValues: {
+            ":SK": userId,
+        },
+    });
+
+    if (!subscriptions) {
+        return [];
+    }
+
+    return avlConsumerSubscriptionsSchema.parse(subscriptions);
 };

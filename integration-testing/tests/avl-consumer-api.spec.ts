@@ -39,6 +39,7 @@ const testConsumerSubscription: AvlConsumerSubscription = {
     status: "live",
     url: "https://www.test.com",
     requestorRef: "BODS_MOCK_PRODUCER",
+    updateInterval: "PT30S",
     heartbeatInterval: "PT30S",
     initialTerminationTime: "2034-03-11T15:20:02.093Z",
     requestTimestamp: "2024-10-03T13:03:04.520Z",
@@ -114,7 +115,7 @@ test.describe("avl-consumer-api", () => {
             `;
 
         const subscribeResponse = await request.post(
-            `${avlConsumerApiUrl(stage)}/siri-vm/subscribe?subscriptionId=${testProducerSubscription.PK}`,
+            `${avlConsumerApiUrl(stage)}/siri-vm/subscriptions?subscriptionId=${testProducerSubscription.PK}`,
             {
                 data: subscriptionRequestBody,
                 headers: { "x-user-id": "1", "Content-Type": "application/xml" },
@@ -127,7 +128,7 @@ test.describe("avl-consumer-api", () => {
     test("should throw an error when deleting an avl consumer subscription too soon after creating one", async ({
         request,
     }) => {
-        const unsubscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
+        const unsubscribeResponse = await request.delete(`${avlConsumerApiUrl(stage)}/siri-vm/subscriptions`, {
             data: terminateSubscriptionRequestBody,
             headers: { "x-user-id": "1", "Content-Type": "application/xml" },
         });
@@ -141,7 +142,7 @@ test.describe("avl-consumer-api", () => {
         // is not deleted which makes future test runs fail
         await new Promise((res) => setTimeout(res, 15000));
 
-        const unsubscribeResponse = await request.post(`${avlConsumerApiUrl(stage)}/siri-vm/unsubscribe`, {
+        const unsubscribeResponse = await request.delete(`${avlConsumerApiUrl(stage)}/siri-vm/subscriptions`, {
             data: terminateSubscriptionRequestBody,
             headers: { "x-user-id": "1", "Content-Type": "application/xml" },
         });

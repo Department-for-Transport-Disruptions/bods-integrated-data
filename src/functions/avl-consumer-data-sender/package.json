@@ -1,7 +1,7 @@
 {
     "name": "@bods-integrated-data/avl-consumer-data-sender",
     "version": "0.1.0",
-    "description": "Template for a typescript lambda",
+    "description": "Lambda for sending AVL subscription data to subscribers",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./avl-consumer-data-sender.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/avl-consumer-data-sender.zip ../dist",

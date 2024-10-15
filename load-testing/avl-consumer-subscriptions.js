@@ -51,7 +51,7 @@ export function subscribe_scenario() {
             ? LARGE_PRODUCER_SUBSCRIPTION_ID
             : SMALL_PRODUCER_SUBSCRIPTION_ID;
 
-    const url = `https://ya6tiqlzae.execute-api.eu-west-2.amazonaws.com/v1/siri-vm/subscribe?subscriptionId=${producerSubscriptionId}`;
+    const url = `https://ya6tiqlzae.execute-api.eu-west-2.amazonaws.com/v1/siri-vm/subscriptions?subscriptionId=${producerSubscriptionId}`;
 
     const body = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd">
@@ -83,7 +83,7 @@ export function subscribe_scenario() {
 export function unsubscribe_scenario() {
     const subscriptionId = `load-${exec.scenario.iterationInTest}`;
 
-    const url = "https://ya6tiqlzae.execute-api.eu-west-2.amazonaws.com/v1/siri-vm/unsubscribe";
+    const url = "https://ya6tiqlzae.execute-api.eu-west-2.amazonaws.com/v1/siri-vm/subscriptions";
 
     const body = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri"
@@ -97,6 +97,6 @@ export function unsubscribe_scenario() {
   </TerminateSubscriptionRequest>
 </Siri>`;
 
-    const response = http.post(url, body, { headers });
+    const response = http.delete(url, body, { headers });
     check(response, { "response code was 204": (res) => res.status === 204 });
 }

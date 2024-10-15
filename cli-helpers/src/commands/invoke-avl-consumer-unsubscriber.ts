@@ -4,13 +4,13 @@ import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-unsubscriber")
     .addOption(STAGE_OPTION)
-    .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
     .option("--userId <userId>", "BODS user ID")
+    .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
     .action(async (options) => {
-        const { stage, consumerSubscriptionId, userId } = await withUserPrompts(options, {
+        const { stage, userId, consumerSubscriptionId } = await withUserPrompts(options, {
             stage: { type: "list", choices: STAGES },
-            consumerSubscriptionId: { type: "input" },
             userId: { type: "input" },
+            consumerSubscriptionId: { type: "input" },
         });
 
         const requestBody = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

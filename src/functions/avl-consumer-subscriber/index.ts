@@ -125,8 +125,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         try {
             const subscription = await getAvlConsumerSubscription(
                 AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
-                consumerSubscriptionId,
                 userId,
+                consumerSubscriptionId,
             );
 
             if (subscription.status === "live") {
@@ -161,6 +161,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             status: "live",
             url: subscriptionRequest.ConsumerAddress,
             requestorRef: subscriptionRequest.RequestorRef,
+            updateInterval: updateInterval,
             heartbeatInterval: subscriptionRequest.SubscriptionContext.HeartbeatInterval,
             initialTerminationTime: subscriptionRequest.VehicleMonitoringSubscriptionRequest.InitialTerminationTime,
             requestTimestamp: subscriptionRequest.RequestTimestamp,

@@ -55,3 +55,11 @@ variable "avl_consumer_unsubscriber_invoke_arn" {
 variable "avl_consumer_unsubscriber_function_name" {
   type = string
 }
+
+variable "avl_consumer_subscriptions_invoke_arn" {
+  type = string
+}
+
+variable "avl_consumer_subscriptions_function_name" {
+  type = string
+}

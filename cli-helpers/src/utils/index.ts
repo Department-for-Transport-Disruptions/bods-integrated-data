@@ -8,7 +8,7 @@ import inquirer, { QuestionMap } from "inquirer";
 import { createLambdaClient, createSecretsManagerClient } from "./awsClients";
 
 export const STAGES = ["local", "dev", "test", "prod"];
-export const STAGE_OPTION = new Option("-s, --stage <stage>", "Stage to use").choices(STAGES);
+export const STAGE_OPTION = new Option("--stage <stage>", "Stage to use").choices(STAGES);
 
 type Prompt = {
     type: keyof QuestionMap;
