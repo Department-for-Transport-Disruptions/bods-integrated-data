@@ -31,6 +31,9 @@ locals {
     "method.request.querystring.destinationRef",
     "method.request.querystring.subscriptionId"
   ]
+  avl_consumer_subscriptions_request_parameters = [
+    "method.request.querystring.subscriptionId"
+  ]
 }
 
 resource "aws_api_gateway_rest_api" "siri_vm_api" {
@@ -216,8 +219,8 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
         "Resource" : [
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}",
-          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriber_resource.path}",
-          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
         ]
       }
@@ -225,15 +228,15 @@ resource "aws_api_gateway_rest_api_policy" "siri_vm_api_resource_policy" {
   })
 }
 
-resource "aws_api_gateway_resource" "avl_consumer_subscriber_resource" {
+resource "aws_api_gateway_resource" "avl_consumer_subscriptions_resource" {
   rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
   parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
-  path_part   = "subscribe"
+  path_part   = "subscriptions"
 }
 
 resource "aws_api_gateway_method" "avl_consumer_subscriber_method" {
   rest_api_id   = aws_api_gateway_rest_api.siri_vm_api.id
-  resource_id   = aws_api_gateway_resource.avl_consumer_subscriber_resource.id
+  resource_id   = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
   http_method   = "POST"
   authorization = "NONE"
 
@@ -245,7 +248,7 @@ resource "aws_api_gateway_method" "avl_consumer_subscriber_method" {
 resource "aws_api_gateway_method_settings" "avl_consumer_subscriber_method_settings" {
   rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
   stage_name  = aws_api_gateway_stage.siri_vm_api_stage.stage_name
-  method_path = "${aws_api_gateway_resource.avl_consumer_subscriber_resource.path_part}/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}"
+  method_path = "${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path_part}/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}"
 
   settings {
     caching_enabled = false
@@ -256,7 +259,7 @@ resource "aws_api_gateway_method_settings" "avl_consumer_subscriber_method_setti
 
 resource "aws_api_gateway_integration" "avl_consumer_subscriber_integration" {
   rest_api_id             = aws_api_gateway_rest_api.siri_vm_api.id
-  resource_id             = aws_api_gateway_resource.avl_consumer_subscriber_resource.id
+  resource_id             = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
   http_method             = aws_api_gateway_method.avl_consumer_subscriber_method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -268,26 +271,20 @@ resource "aws_lambda_permission" "avl_consumer_subscriber_permissions" {
   function_name = var.avl_consumer_subscriber_function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriber_resource.path}"
-}
-
-resource "aws_api_gateway_resource" "avl_consumer_unsubscriber_resource" {
-  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
-  parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
-  path_part   = "unsubscribe"
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
 }
 
 resource "aws_api_gateway_method" "avl_consumer_unsubscriber_method" {
   rest_api_id   = aws_api_gateway_rest_api.siri_vm_api.id
-  resource_id   = aws_api_gateway_resource.avl_consumer_unsubscriber_resource.id
-  http_method   = "POST"
+  resource_id   = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
+  http_method   = "DELETE"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_method_settings" "avl_consumer_unsubscriber_method_settings" {
   rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
   stage_name  = aws_api_gateway_stage.siri_vm_api_stage.stage_name
-  method_path = "${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path_part}/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}"
+  method_path = "${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path_part}/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}"
 
   settings {
     caching_enabled = false
@@ -298,7 +295,7 @@ resource "aws_api_gateway_method_settings" "avl_consumer_unsubscriber_method_set
 
 resource "aws_api_gateway_integration" "avl_consumer_unsubscriber_integration" {
   rest_api_id             = aws_api_gateway_rest_api.siri_vm_api.id
-  resource_id             = aws_api_gateway_resource.avl_consumer_unsubscriber_resource.id
+  resource_id             = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
   http_method             = aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -310,13 +307,7 @@ resource "aws_lambda_permission" "avl_consumer_unsubscriber_permissions" {
   function_name = var.avl_consumer_unsubscriber_function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_unsubscriber_resource.path}"
-}
-
-resource "aws_api_gateway_resource" "avl_consumer_subscriptions_resource" {
-  rest_api_id = aws_api_gateway_rest_api.siri_vm_api.id
-  parent_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
-  path_part   = "subscriptions"
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_vm_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
 }
 
 resource "aws_api_gateway_method" "avl_consumer_subscriptions_method" {
@@ -324,6 +315,10 @@ resource "aws_api_gateway_method" "avl_consumer_subscriptions_method" {
   resource_id   = aws_api_gateway_resource.avl_consumer_subscriptions_resource.id
   http_method   = "GET"
   authorization = "NONE"
+
+  request_parameters = {
+    for param in local.avl_consumer_subscriptions_request_parameters : param => false
+  }
 }
 
 resource "aws_api_gateway_method_settings" "avl_consumer_subscriptions_method_settings" {
