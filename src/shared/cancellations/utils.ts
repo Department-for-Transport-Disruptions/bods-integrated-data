@@ -2,7 +2,6 @@ import { sync as commandExistsSync } from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
-import { GENERATED_SIRI_SX_FILE_PATH } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
 import { KyselyDb, NewSituation, Situation } from "../database";
 import { getDate } from "../dates";
@@ -22,6 +21,8 @@ import {
     formatSiriVmDatetimes,
     runXmlLint,
 } from "../utils";
+
+export const GENERATED_SIRI_SX_FILE_PATH = "SIRI-SX.xml";
 
 export const getCancellationsSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({

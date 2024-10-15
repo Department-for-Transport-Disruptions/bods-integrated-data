@@ -27,8 +27,6 @@ import {
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
 
-export const GENERATED_SIRI_SX_FILE_PATH = "SIRI-SX.xml";
-
 export const getAvlSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({
         TableName: tableName,
