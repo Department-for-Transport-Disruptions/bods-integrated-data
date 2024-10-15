@@ -1,8 +1,6 @@
-import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { unlink, writeFile } from "node:fs/promises";
 import cleanDeep from "clean-deep";
-import commandExists from "command-exists";
+import { sync as commandExistsSync } from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
@@ -15,10 +13,16 @@ import { getDate } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
-import { SiriVM, SiriVehicleActivity, siriSchema } from "../schema";
+import { SiriVM, SiriVehicleActivity, siriVmSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriVmDatetimes } from "../utils";
+import {
+    CompleteSiriObject,
+    SubscriptionIdNotFoundError,
+    chunkArray,
+    formatSiriVmDatetimes,
+    runXmlLint,
+} from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
@@ -80,7 +84,8 @@ export const getAvlSubscription = async (subscriptionId: string, tableName: stri
 
 const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl => ({
     ...avl,
-    geom: sql`ST_SetSRID(ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
+    geom: sql`ST_SetSRID
+        (ST_MakePoint(${avl.longitude}, ${avl.latitude}), 4326)`,
     subscription_id: subscriptionId,
     item_id: avl.item_id ?? randomUUID(),
 });
@@ -237,7 +242,8 @@ export const getQueryForLatestAvl = (
 
     if (boundingBox) {
         const [minX, minY, maxX, maxY] = boundingBox;
-        const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
+        const envelope = sql<string>`ST_MakeEnvelope
+            (${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
         query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
     }
 
@@ -415,7 +421,7 @@ export const createSiriVm = (
         },
     };
 
-    const verifiedObject = siriSchema().parse(siriVm);
+    const verifiedObject = siriVmSchema().parse(siriVm);
 
     const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
         Siri: {
@@ -444,44 +450,6 @@ export const createSiriVm = (
  * @returns The valid until time.
  */
 export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriVmDatetimes(time.add(5, "minutes"), true);
-
-/**
- * Spawns a child process to use the xmllint CLI command in order to validate
- * the SIRI-VM files against the XSD. If the file fails validation then it will
- * throw an error and log out the validation issues.
- *
- * @param xml
- */
-const runXmlLint = async (xml: string) => {
-    const fileName = randomUUID();
-    await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
-
-    const command = spawn("xmllint", [
-        `/app/${fileName}.xml`,
-        "--noout",
-        "--nowarning",
-        "--schema",
-        "/app/xsd/www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-    ]);
-
-    let error = "";
-
-    for await (const chunk of command.stderr) {
-        error += chunk;
-    }
-
-    const exitCode = await new Promise((resolve) => {
-        command.on("close", resolve);
-    });
-
-    await unlink(`/app/${fileName}.xml`);
-
-    if (exitCode) {
-        logger.error(error.slice(0, 10000));
-
-        throw new Error();
-    }
-};
 
 const createAndValidateSiri = async (
     vehicleActivities: Partial<SiriVehicleActivity>[],
@@ -515,7 +483,7 @@ export const generateSiriVmAndUploadToS3 = async (
     bucketName: string,
     lintSiri = true,
 ) => {
-    if (lintSiri && !commandExists("xmllint")) {
+    if (lintSiri && !commandExistsSync("xmllint")) {
         throw new Error("xmllint not available");
     }
 

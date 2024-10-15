@@ -61,6 +61,20 @@ services:
     networks:
       - bods_integrated_data_network
 
+  siri-sx-generator:
+    container_name: bods_integrated_data_siri_sx_generator
+    image: siri-sx-generator:latest
+    environment:
+      - IS_DOCKER=true
+      - STAGE=local
+      - BUCKET_NAME=integrated-data-cancellations-generated-siri-sx-local
+      - GENERATOR_FREQUENCY_IN_SECONDS=30
+      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
+    volumes:
+      - ./:/app/data
+    networks:
+      - bods_integrated_data_network
+
 networks:
   bods_integrated_data_network:
     driver: bridge

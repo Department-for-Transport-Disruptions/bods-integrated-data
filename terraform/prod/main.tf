@@ -381,6 +381,12 @@ module "integrated_data_cancellations_pipeline" {
   alarm_topic_arn                       = module.integrated_data_monitoring.alarm_topic_arn
   ok_topic_arn                          = module.integrated_data_monitoring.ok_topic_arn
   cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
+  cluster_id                            = module.integrated_data_ecs_cluster.cluster_id
+  siri_sx_generator_cpu                 = 2048
+  siri_sx_generator_frequency           = 10
+  siri_sx_generator_image_url           = local.secrets["siri_sx_generator_image_url"]
+  siri_sx_generator_memory              = 4096
+  situations_cleardown_frequency        = 30
 }
 
 module "integrated_data_cancellations_data_producer_api" {

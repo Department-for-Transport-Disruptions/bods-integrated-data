@@ -170,7 +170,7 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
         });
     }, z.array(vehicleActivitySchema));
 
-export const siriSchema = (errors?: AvlValidationError[]) =>
+export const siriVmSchema = (errors?: AvlValidationError[]) =>
     z.object({
         Siri: z.object({
             ServiceDelivery: z.object({
@@ -188,10 +188,10 @@ export const siriSchema = (errors?: AvlValidationError[]) =>
         }),
     });
 
-export type SiriVM = z.infer<ReturnType<typeof siriSchema>>;
+export type SiriVM = z.infer<ReturnType<typeof siriVmSchema>>;
 
 export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
-    siriSchema(errors).transform<NewAvl[]>((item) => {
+    siriVmSchema(errors).transform<NewAvl[]>((item) => {
         return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => {
             let onwardCalls: Avl["onward_calls"] = [];
 
@@ -262,7 +262,7 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
         });
     });
 
-export const siriBodsSchemaTransformed = siriSchema().transform<NewBodsAvl[]>((item) => {
+export const siriBodsSchemaTransformed = siriVmSchema().transform<NewBodsAvl[]>((item) => {
     return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
         response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
         producer_ref: item.Siri.ServiceDelivery.ProducerRef.toString(),
