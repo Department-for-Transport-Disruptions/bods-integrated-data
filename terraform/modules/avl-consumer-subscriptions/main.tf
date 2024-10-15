@@ -207,6 +207,7 @@ module "avl_consumer_subscriptions" {
   permissions = [
     {
       Action = [
+        "dynamodb:Query",
         "dynamodb:Scan"
       ],
       Effect = "Allow",

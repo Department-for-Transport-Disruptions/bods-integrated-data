@@ -23,7 +23,7 @@ After copying the lambda-http-template directory and renaming it to your functio
 ```JSON
 "name": "@bods-integrated-data/lambda-http-template",
     "version": "0.1.0",
-    "description": "Template for a typescript lambda",
+    "description": "Template for a typescript HTTP lambda",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./lambda-http-template.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/lambda-http-template.zip ../dist",
