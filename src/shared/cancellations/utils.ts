@@ -1,27 +1,27 @@
+import { sync as commandExistsSync } from "command-exists";
+import { Dayjs } from "dayjs";
+import { XMLBuilder } from "fast-xml-parser";
+import { sql } from "kysely";
+import { GENERATED_SIRI_SX_FILE_PATH } from "../avl/utils";
+import { putMetricData } from "../cloudwatch";
 import { KyselyDb, NewSituation, Situation } from "../database";
+import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
+import { logger } from "../logger";
+import { putS3Object } from "../s3";
+import { SiriSx } from "../schema";
 import {
     CancellationsSubscription,
     cancellationsSubscriptionSchema,
     cancellationsSubscriptionsSchema,
 } from "../schema/cancellations-subscribe.schema";
 import {
+    CompleteSiriObject,
     SubscriptionIdNotFoundError,
     chunkArray,
-    runXmlLint,
     formatSiriVmDatetimes,
-    CompleteSiriObject,
+    runXmlLint,
 } from "../utils";
-import { sync as commandExistsSync } from "command-exists";
-import { getDate } from "../dates";
-import { putS3Object } from "../s3";
-import { GENERATED_SIRI_SX_FILE_PATH } from "../avl/utils";
-import { Dayjs } from "dayjs";
-import { SiriSx } from "../schema";
-import { putMetricData } from "../cloudwatch";
-import { logger } from "../logger";
-import { sql } from "kysely";
-import { XMLBuilder } from "fast-xml-parser";
 
 export const getCancellationsSubscriptions = async (tableName: string) => {
     const subscriptions = await recursiveScan({

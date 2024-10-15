@@ -1,4 +1,6 @@
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { unlink, writeFile } from "node:fs/promises";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import { Dayjs } from "dayjs";
 import { ZodSchema, z } from "zod";
@@ -10,8 +12,6 @@ import { logger } from "./logger";
 import { CancellationsSubscription, VehicleType } from "./schema";
 import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
-import { unlink, writeFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
 
 export const chunkArray = <T>(array: T[], chunkSize: number) => {
     const chunks: T[][] = [];
