@@ -231,6 +231,7 @@ export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: bool
  */
 export const runXmlLint = async (xml: string) => {
     const fileName = randomUUID();
+
     await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
 
     const command = spawn("xmllint", [

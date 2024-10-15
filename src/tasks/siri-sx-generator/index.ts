@@ -12,12 +12,6 @@ const bree = new Bree({
     logger,
     jobs: [
         {
-            name: "situations-cleardown",
-            interval: `${cleardownFrequency}s`,
-            timeout: 0,
-            closeWorkerAfterMs: 30000,
-        },
-        {
             name: "siri-sx-generator",
             interval: `${generatorFrequency}s`,
             timeout: 0,

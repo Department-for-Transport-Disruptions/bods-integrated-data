@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger } from "@bods-integrated-data/shared/logger";
-import { generateSiriSxAndUploadToS3 } from "@bods-integrated-data/shared/cancellations/utils";
+import {
+    generateSiriSxAndUploadToS3,
+    getSituationsDataForSiriSX,
+} from "@bods-integrated-data/shared/cancellations/utils";
 
 void (async () => {
     performance.mark("siri-sx-generator-start");
