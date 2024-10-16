@@ -244,7 +244,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
 resource "aws_ecs_task_definition" "siri_sx_generator_task_definition" {
   count = var.environment != "local" ? 1 : 0
 
-  family                   = "integrated-data-siri-vm-generator"
+  family                   = "integrated-data-siri-sx-generator"
   cpu                      = var.siri_sx_generator_cpu
   memory                   = var.siri_sx_generator_memory
   requires_compatibilities = ["FARGATE"]
