@@ -3,7 +3,6 @@ import { gzipSync } from "node:zlib";
 import {
     createHttpServerErrorResponse,
     createHttpSuccessResponse,
-    createHttpUnauthorizedErrorResponse,
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
@@ -15,7 +14,7 @@ import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/databa
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { InvalidApiKeyError, createStringArrayValidation } from "@bods-integrated-data/shared/validation";
+import { createStringArrayValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";
 
@@ -87,10 +86,6 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
             logger.warn(`Invalid request: ${JSON.stringify(event.queryStringParameters)}`);
             logger.warn(e);
             return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
-        }
-
-        if (e instanceof InvalidApiKeyError) {
-            return createHttpUnauthorizedErrorResponse();
         }
 
         if (e instanceof Error) {
