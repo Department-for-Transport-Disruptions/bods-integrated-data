@@ -19,6 +19,11 @@ variable "private" {
   description = "Whether to make the API private or not"
 }
 
+variable "external_vpces" {
+  type    = list(string)
+  default = []
+}
+
 variable "siri_vm_downloader_invoke_arn" {
   type = string
 }
@@ -33,11 +38,6 @@ variable "siri_vm_stats_invoke_arn" {
 
 variable "siri_vm_stats_function_name" {
   type = string
-}
-
-variable "external_vpces_for_sirivm_api" {
-  type    = list(string)
-  default = []
 }
 
 variable "avl_consumer_subscriber_invoke_arn" {
