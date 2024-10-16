@@ -11,7 +11,7 @@ if (!stage) {
 const avlConsumerApiUrl = (stage: string) => {
     switch (stage) {
         case "dev":
-            return "https://gx1l45x0e7.execute-api.eu-west-2.amazonaws.com/v1";
+            return "https://02xbj36irk.execute-api.eu-west-2.amazonaws.com/v1";
         case "test":
             return "https://ya6tiqlzae.execute-api.eu-west-2.amazonaws.com/v1";
         default:
