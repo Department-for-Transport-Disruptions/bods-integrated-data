@@ -30,6 +30,7 @@ export * from "./invoke-bods-txc-retriever";
 export * from "./invoke-bods-txc-unzipper";
 export * from "./invoke-cancellations-data-endpoint";
 export * from "./invoke-cancellations-processor";
+export * from "./invoke-cancellations-siri-sx-downloader";
 export * from "./invoke-cancellations-subscriber";
 export * from "./invoke-cancellations-feed-validator";
 export * from "./invoke-db-cleardown";

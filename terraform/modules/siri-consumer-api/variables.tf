@@ -63,3 +63,11 @@ variable "avl_consumer_subscriptions_invoke_arn" {
 variable "avl_consumer_subscriptions_function_name" {
   type = string
 }
+
+variable "siri_sx_downloader_invoke_arn" {
+  type = string
+}
+
+variable "siri_sx_downloader_function_name" {
+  type = string
+}

@@ -16,15 +16,8 @@ describe("avl-siri-vm-downloader-endpoint", () => {
             mockDbClient: {
                 destroy: vi.fn(),
             },
-            createResponseStream: vi.fn((_responseStream, response) => response),
-            streamifyResponse: vi.fn((handler) => handler),
         };
     });
-
-    vi.mock("./utils", async () => ({
-        createResponseStream: mocks.createResponseStream,
-        streamifyResponse: mocks.streamifyResponse,
-    }));
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),

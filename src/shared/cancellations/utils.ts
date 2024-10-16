@@ -66,7 +66,7 @@ export const insertSituations = async (dbClient: KyselyDb, cancellations: NewSit
     );
 };
 
-const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
+export const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = formatSiriDatetime(responseTime, true);
 
     const siriSx: SiriSx = {
@@ -153,9 +153,9 @@ export const generateSiriSxAndUploadToS3 = async (
     });
 };
 
-export const getSituationsDataForSiriSx = async (dbClient: KyselyDb) => {
+export const getSituationsDataForSiriSx = async (dbClient: KyselyDb, subscriptionId?: string[]) => {
     try {
-        const query = dbClient
+        let query = dbClient
             .selectFrom("situation as all_situations")
             .innerJoin(
                 dbClient
@@ -170,6 +170,10 @@ export const getSituationsDataForSiriSx = async (dbClient: KyselyDb) => {
                         .onRef("all_situations.version", "=", "highest_version_situation.max_version"),
             )
             .selectAll("all_situations");
+
+        if (subscriptionId) {
+            query = query.where("all_situations.subscription_id", "in", subscriptionId);
+        }
 
         const situations = await query.execute();
 

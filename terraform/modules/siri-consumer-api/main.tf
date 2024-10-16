@@ -34,6 +34,9 @@ locals {
   avl_consumer_subscriptions_request_parameters = [
     "method.request.querystring.subscriptionId"
   ]
+  siri_sx_downloader_request_parameters = [
+    "method.request.querystring.subscriptionId"
+  ]
 }
 
 resource "aws_api_gateway_rest_api" "siri_consumer_api" {
@@ -42,118 +45,6 @@ resource "aws_api_gateway_rest_api" "siri_consumer_api" {
   endpoint_configuration {
     types = [var.private ? "PRIVATE" : "REGIONAL"]
   }
-}
-
-resource "aws_api_gateway_resource" "siri_vm_api_downloader_resource" {
-  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
-  parent_id   = aws_api_gateway_rest_api.siri_consumer_api.root_resource_id
-  path_part   = "siri-vm"
-}
-
-resource "aws_api_gateway_method" "siri_vm_api_downloader_method" {
-  rest_api_id   = aws_api_gateway_rest_api.siri_consumer_api.id
-  resource_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
-  http_method   = "GET"
-  authorization = "NONE"
-
-  request_parameters = {
-    for param in local.siri_vm_downloader_request_parameters : param => false
-  }
-}
-
-resource "aws_api_gateway_method_settings" "siri_vm_api_downloader_method_settings" {
-  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
-  stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
-  method_path = "${aws_api_gateway_resource.siri_vm_api_downloader_resource.path_part}/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}"
-
-  settings {
-    caching_enabled      = true
-    cache_ttl_in_seconds = 5
-    metrics_enabled      = true
-    logging_level        = "INFO"
-  }
-}
-
-resource "aws_api_gateway_integration" "siri_vm_api_downloader_integration" {
-  rest_api_id             = aws_api_gateway_rest_api.siri_consumer_api.id
-  resource_id             = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
-  http_method             = aws_api_gateway_method.siri_vm_api_downloader_method.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = var.siri_vm_downloader_invoke_arn
-
-  cache_key_parameters = local.siri_vm_downloader_request_parameters
-}
-
-resource "aws_api_gateway_resource" "siri_vm_api_stats_resource" {
-  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
-  parent_id   = aws_api_gateway_rest_api.siri_consumer_api.root_resource_id
-  path_part   = "stats"
-}
-
-resource "aws_api_gateway_method" "siri_vm_api_stats_method" {
-  rest_api_id   = aws_api_gateway_rest_api.siri_consumer_api.id
-  resource_id   = aws_api_gateway_resource.siri_vm_api_stats_resource.id
-  http_method   = "GET"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method_settings" "siri_vm_api_stats_method_settings" {
-  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
-  stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
-  method_path = "${aws_api_gateway_resource.siri_vm_api_stats_resource.path_part}/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}"
-
-  settings {
-    caching_enabled      = true
-    cache_ttl_in_seconds = 5
-    metrics_enabled      = true
-    logging_level        = "INFO"
-  }
-}
-
-resource "aws_api_gateway_integration" "siri_vm_api_stats_integration" {
-  rest_api_id             = aws_api_gateway_rest_api.siri_consumer_api.id
-  resource_id             = aws_api_gateway_resource.siri_vm_api_stats_resource.id
-  http_method             = aws_api_gateway_method.siri_vm_api_stats_method.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = var.siri_vm_stats_invoke_arn
-}
-
-resource "aws_api_gateway_deployment" "siri_consumer_api_deployment" {
-  triggers = {
-    redeployment = sha1(join(",", tolist([
-      jsonencode(aws_api_gateway_integration.siri_vm_api_downloader_integration),
-      jsonencode(aws_api_gateway_integration.avl_consumer_subscriber_integration),
-      jsonencode(aws_api_gateway_integration.avl_consumer_unsubscriber_integration),
-      jsonencode(aws_api_gateway_integration.avl_consumer_subscriptions_integration),
-      jsonencode(aws_api_gateway_integration.siri_vm_api_stats_integration),
-      jsonencode(aws_api_gateway_rest_api.siri_consumer_api.body),
-      var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_consumer_api_resource_policy[0].policy) : ""
-    ])))
-  }
-
-  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_lambda_permission" "siri_vm_downloader_api_permissions" {
-  action        = "lambda:InvokeFunction"
-  function_name = var.siri_vm_downloader_function_name
-  principal     = "apigateway.amazonaws.com"
-
-  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}"
-}
-
-resource "aws_lambda_permission" "siri_vm_stats_api_permissions" {
-  action        = "lambda:InvokeFunction"
-  function_name = var.siri_vm_stats_function_name
-  principal     = "apigateway.amazonaws.com"
-
-  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}"
 }
 
 resource "aws_cloudwatch_log_group" "siri_consumer_api_log_group" {
@@ -226,6 +117,118 @@ resource "aws_api_gateway_rest_api_policy" "siri_consumer_api_resource_policy" {
       }
     ]
   })
+}
+
+resource "aws_api_gateway_deployment" "siri_consumer_api_deployment" {
+  triggers = {
+    redeployment = sha1(join(",", tolist([
+      jsonencode(aws_api_gateway_integration.siri_vm_api_downloader_integration),
+      jsonencode(aws_api_gateway_integration.avl_consumer_subscriber_integration),
+      jsonencode(aws_api_gateway_integration.avl_consumer_unsubscriber_integration),
+      jsonencode(aws_api_gateway_integration.avl_consumer_subscriptions_integration),
+      jsonencode(aws_api_gateway_integration.siri_vm_api_stats_integration),
+      jsonencode(aws_api_gateway_rest_api.siri_consumer_api.body),
+      var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_consumer_api_resource_policy[0].policy) : ""
+    ])))
+  }
+
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_resource" "siri_vm_api_downloader_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+  parent_id   = aws_api_gateway_rest_api.siri_consumer_api.root_resource_id
+  path_part   = "siri-vm"
+}
+
+resource "aws_api_gateway_method" "siri_vm_api_downloader_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_consumer_api.id
+  resource_id   = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+
+  request_parameters = {
+    for param in local.siri_vm_downloader_request_parameters : param => false
+  }
+}
+
+resource "aws_api_gateway_method_settings" "siri_vm_api_downloader_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+  stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.siri_vm_api_downloader_resource.path_part}/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}"
+
+  settings {
+    caching_enabled      = true
+    cache_ttl_in_seconds = 5
+    metrics_enabled      = true
+    logging_level        = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "siri_vm_api_downloader_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_consumer_api.id
+  resource_id             = aws_api_gateway_resource.siri_vm_api_downloader_resource.id
+  http_method             = aws_api_gateway_method.siri_vm_api_downloader_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.siri_vm_downloader_invoke_arn
+
+  cache_key_parameters = local.siri_vm_downloader_request_parameters
+}
+
+resource "aws_lambda_permission" "siri_vm_api_downloader_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.siri_vm_downloader_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}"
+}
+
+resource "aws_api_gateway_resource" "siri_vm_api_stats_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+  parent_id   = aws_api_gateway_rest_api.siri_consumer_api.root_resource_id
+  path_part   = "stats"
+}
+
+resource "aws_api_gateway_method" "siri_vm_api_stats_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_consumer_api.id
+  resource_id   = aws_api_gateway_resource.siri_vm_api_stats_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_settings" "siri_vm_api_stats_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+  stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.siri_vm_api_stats_resource.path_part}/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}"
+
+  settings {
+    caching_enabled      = true
+    cache_ttl_in_seconds = 5
+    metrics_enabled      = true
+    logging_level        = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "siri_vm_api_stats_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_consumer_api.id
+  resource_id             = aws_api_gateway_resource.siri_vm_api_stats_resource.id
+  http_method             = aws_api_gateway_method.siri_vm_api_stats_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.siri_vm_stats_invoke_arn
+}
+
+resource "aws_lambda_permission" "siri_vm_api_stats_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.siri_vm_stats_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}"
 }
 
 resource "aws_api_gateway_resource" "avl_consumer_subscriptions_resource" {
@@ -348,4 +351,53 @@ resource "aws_lambda_permission" "avl_consumer_subscriptions_permissions" {
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
+}
+
+resource "aws_api_gateway_resource" "siri_sx_downloader_resource" {
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+  parent_id   = aws_api_gateway_rest_api.siri_consumer_api.root_resource_id
+  path_part   = "siri-sx"
+}
+
+resource "aws_api_gateway_method" "siri_sx_downloader_method" {
+  rest_api_id   = aws_api_gateway_rest_api.siri_consumer_api.id
+  resource_id   = aws_api_gateway_resource.siri_sx_downloader_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+
+  request_parameters = {
+    for param in local.siri_sx_downloader_request_parameters : param => false
+  }
+}
+
+resource "aws_api_gateway_method_settings" "siri_sx_downloader_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
+  stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
+  method_path = "${aws_api_gateway_resource.siri_sx_downloader_resource.path_part}/${aws_api_gateway_method.siri_sx_downloader_method.http_method}"
+
+  settings {
+    caching_enabled      = true
+    cache_ttl_in_seconds = 5
+    metrics_enabled      = true
+    logging_level        = "INFO"
+  }
+}
+
+resource "aws_api_gateway_integration" "siri_sx_downloader_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.siri_consumer_api.id
+  resource_id             = aws_api_gateway_resource.siri_sx_downloader_resource.id
+  http_method             = aws_api_gateway_method.siri_sx_downloader_method.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.siri_sx_downloader_invoke_arn
+
+  cache_key_parameters = local.siri_sx_downloader_request_parameters
+}
+
+resource "aws_lambda_permission" "siri_sx_downloader_permissions" {
+  action        = "lambda:InvokeFunction"
+  function_name = var.siri_sx_downloader_function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_sx_downloader_method.http_method}${aws_api_gateway_resource.siri_sx_downloader_resource.path}"
 }
