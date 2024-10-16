@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
     generateSiriSxAndUploadToS3,
-    getSituationsDataForSiriSX,
+    getSituationsDataForSiriSx,
 } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
@@ -22,7 +22,7 @@ void (async () => {
         }
 
         const requestMessageRef = randomUUID();
-        const situations = await getSituationsDataForSiriSX(dbClient);
+        const situations = await getSituationsDataForSiriSx(dbClient);
 
         await generateSiriSxAndUploadToS3(situations, requestMessageRef, bucketName);
 

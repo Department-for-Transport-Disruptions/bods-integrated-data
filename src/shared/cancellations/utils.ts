@@ -14,13 +14,7 @@ import {
     cancellationsSubscriptionSchema,
     cancellationsSubscriptionsSchema,
 } from "../schema/cancellations-subscribe.schema";
-import {
-    CompleteSiriObject,
-    SubscriptionIdNotFoundError,
-    chunkArray,
-    formatSiriVmDatetimes,
-    runXmlLint,
-} from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriDatetime, runXmlLint } from "../utils";
 
 export const GENERATED_SIRI_SX_FILE_PATH = "SIRI-SX.xml";
 
@@ -73,7 +67,7 @@ export const insertSituations = async (dbClient: KyselyDb, cancellations: NewSit
 };
 
 const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
-    const currentTime = formatSiriVmDatetimes(responseTime, true);
+    const currentTime = formatSiriDatetime(responseTime, true);
 
     const siriSx: SiriSx = {
         Siri: {
@@ -159,7 +153,7 @@ export const generateSiriSxAndUploadToS3 = async (
     });
 };
 
-export const getSituationsDataForSiriSX = async (dbClient: KyselyDb) => {
+export const getSituationsDataForSiriSx = async (dbClient: KyselyDb) => {
     try {
         const query = dbClient
             .selectFrom("situation as all_situations")

@@ -3,7 +3,7 @@ import { getCancellationsSubscriptions } from "@bods-integrated-data/shared/canc
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, CancellationsSubscription } from "@bods-integrated-data/shared/schema";
-import { formatSiriVmDatetimes } from "@bods-integrated-data/shared/utils";
+import { formatSiriDatetime } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
 import { z } from "zod";
@@ -81,7 +81,7 @@ export const handler: Handler = async (event, context) => {
         }
 
         const responseTime = getDate();
-        const currentTime = formatSiriVmDatetimes(responseTime, true);
+        const currentTime = formatSiriDatetime(responseTime, true);
         const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
         const [avlSubscriptions, cancellationsSubscriptions] = await Promise.all([

@@ -16,13 +16,7 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriVmSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
-import {
-    CompleteSiriObject,
-    SubscriptionIdNotFoundError,
-    chunkArray,
-    formatSiriVmDatetimes,
-    runXmlLint,
-} from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriDatetime, runXmlLint } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
@@ -198,14 +192,14 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
 export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
     ...avl,
     id: Number.parseInt(avl.id as unknown as string),
-    response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
-    recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
-    valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
+    response_time_stamp: formatSiriDatetime(getDate(avl.response_time_stamp), true),
+    recorded_at_time: formatSiriDatetime(getDate(avl.recorded_at_time), false),
+    valid_until_time: formatSiriDatetime(getDate(avl.valid_until_time), true),
     origin_aimed_departure_time: avl.origin_aimed_departure_time
-        ? formatSiriVmDatetimes(getDate(avl.origin_aimed_departure_time), false)
+        ? formatSiriDatetime(getDate(avl.origin_aimed_departure_time), false)
         : null,
     destination_aimed_arrival_time: avl.destination_aimed_arrival_time
-        ? formatSiriVmDatetimes(getDate(avl.destination_aimed_arrival_time), false)
+        ? formatSiriDatetime(getDate(avl.destination_aimed_arrival_time), false)
         : null,
 });
 
@@ -217,11 +211,11 @@ export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
 export const mapBodsAvlFieldsIntoUsableFormats = (avl: BodsAvl): BodsAvl => ({
     ...avl,
     id: Number.parseInt(avl.id as unknown as string),
-    response_time_stamp: formatSiriVmDatetimes(getDate(avl.response_time_stamp), true),
-    recorded_at_time: formatSiriVmDatetimes(getDate(avl.recorded_at_time), false),
-    valid_until_time: formatSiriVmDatetimes(getDate(avl.valid_until_time), true),
+    response_time_stamp: formatSiriDatetime(getDate(avl.response_time_stamp), true),
+    recorded_at_time: formatSiriDatetime(getDate(avl.recorded_at_time), false),
+    valid_until_time: formatSiriDatetime(getDate(avl.valid_until_time), true),
     origin_aimed_departure_time: avl.origin_aimed_departure_time
-        ? formatSiriVmDatetimes(getDate(avl.origin_aimed_departure_time), false)
+        ? formatSiriDatetime(getDate(avl.origin_aimed_departure_time), false)
         : null,
 });
 
@@ -402,7 +396,7 @@ export const createSiriVm = (
     requestMessageRef: string,
     responseTime: Dayjs,
 ) => {
-    const currentTime = formatSiriVmDatetimes(responseTime, true);
+    const currentTime = formatSiriDatetime(responseTime, true);
     const validUntilTime = getSiriVmValidUntilTimeOffset(responseTime);
 
     const siriVm: SiriVM = {
@@ -445,11 +439,11 @@ export const createSiriVm = (
 };
 
 /**
- * Returns a SIRI-VM valid until time value defined as 5 minutes after the given time.
+ * Returns a SIRI valid until time value defined as 5 minutes after the given time.
  * @param time The response time to offset from.
  * @returns The valid until time.
  */
-export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriVmDatetimes(time.add(5, "minutes"), true);
+export const getSiriVmValidUntilTimeOffset = (time: Dayjs) => formatSiriDatetime(time.add(5, "minutes"), true);
 
 const createAndValidateSiri = async (
     vehicleActivities: Partial<SiriVehicleActivity>[],
