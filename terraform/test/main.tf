@@ -230,7 +230,6 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 30
   avl_cleardown_frequency                     = 60
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
-  external_vpces_for_sirivm_api               = local.secrets["external_vpces_for_sirivm_api"]
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -397,6 +396,47 @@ module "integrated_data_cancellations_data_producer_api" {
   subnet_ids                         = module.integrated_data_vpc.private_subnet_ids
   mock_data_producer_api_endpoint    = module.integrated_data_mock_data_producer_api.endpoint
   cancellations_raw_siri_bucket_name = module.integrated_data_cancellations_pipeline.cancellations_raw_siri_bucket_name
+}
+
+module "siri_consumer_api_private" {
+  source = "../modules/siri-consumer-api"
+
+  environment                              = local.env
+  aws_region                               = data.aws_region.current.name
+  account_id                               = data.aws_caller_identity.current.account_id
+  api_name                                 = "integrated-data-siri-consumer-api-private"
+  private                                  = true
+  external_vpces                           = local.secrets["external_vpces_for_siri_consumer_api"]
+  siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
+  siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
+  siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
+  siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
+  avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
+  avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
+  avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
+  avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
+  avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
+  avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
+}
+
+module "siri_consumer_api_public" {
+  source = "../modules/siri-consumer-api"
+
+  environment                              = local.env
+  aws_region                               = data.aws_region.current.name
+  account_id                               = data.aws_caller_identity.current.account_id
+  api_name                                 = "integrated-data-siri-consumer-api-public"
+  private                                  = false
+  siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
+  siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
+  siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
+  siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
+  avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
+  avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
+  avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
+  avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
+  avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
+  avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
 }
 
 module "integrated_data_avl_datadog" {
