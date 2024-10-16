@@ -1,5 +1,4 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { ECSClient } from "@aws-sdk/client-ecs";
 import { LambdaClient } from "@aws-sdk/client-lambda";
 import { S3Client } from "@aws-sdk/client-s3";
 import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
@@ -23,21 +22,6 @@ export const createDynamoDbDocClient = (stage: string) => {
                 : {}),
         }),
     );
-};
-
-export const createEcsClient = (stage: string) => {
-    return new ECSClient({
-        region: AWS_REGION,
-        ...(stage === "local"
-            ? {
-                  endpoint: LOCALSTACK_HOSTNAME,
-                  credentials: {
-                      accessKeyId: "DUMMY",
-                      secretAccessKey: "DUMMY",
-                  },
-              }
-            : {}),
-    });
 };
 
 export const createLambdaClient = (stage: string) => {
