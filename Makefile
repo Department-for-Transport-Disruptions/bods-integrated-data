@@ -292,3 +292,8 @@ run-local-bods-disruptions-retriever:
 
 run-local-bods-disruptions-processor:
 	STAGE=local BUCKET_NAME=${BODS_DISRUPTIONS_BUCKET_NAME} SAVE_JSON=true npx tsx -e "import {handler} from './src/functions/bods-disruptions-processor'; handler({Records:[{s3:{bucket:{name:'${BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME}'},object:{key:'disruptions/sirisx.xml'}}}]}).catch(console.error)"
+
+# Cancellations
+
+run-local-cancellations-siri-sx-downloader:
+	STAGE=local BUCKET_NAME="integrated-data-cancellations-generated-siri-sx-local" npx tsx -e "import {handler} from './src/functions/cancellations-siri-sx-downloader'; handler({ queryStringParameters: { subscriptionId: '${SUBSCRIPTION_ID}' } }).then(console.log).catch(console.error)"

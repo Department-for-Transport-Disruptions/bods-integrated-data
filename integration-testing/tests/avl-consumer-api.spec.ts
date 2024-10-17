@@ -13,7 +13,7 @@ const avlConsumerApiUrl = (stage: string) => {
         case "dev":
             return "https://02xbj36irk.execute-api.eu-west-2.amazonaws.com/v1";
         case "test":
-            return "https://ya6tiqlzae.execute-api.eu-west-2.amazonaws.com/v1";
+            return "https://6tfu67dcng.execute-api.eu-west-2.amazonaws.com/v1";
         default:
             throw new Error("Integration test can only be run in the dev or test environments.");
     }

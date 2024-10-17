@@ -173,11 +173,11 @@ export interface CompleteSiriObject<T> {
 }
 
 /**
- * Returns a SIRI-VM termination time value defined as 10 years after the given time.
+ * Returns a SIRI termination time value defined as 10 years after the given time.
  * @param time The response time to offset from.
  * @returns The termination.
  */
-export const getSiriVmTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
+export const getSiriTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
 
 /**
  * Checks if a given subscription is healthy by looking at whether any of heartbeatLastReceivedDateTime,
@@ -219,7 +219,7 @@ export const checkSubscriptionIsHealthy = (
     );
 };
 
-export const formatSiriVmDatetimes = (datetime: Dayjs, includeMilliseconds: boolean) =>
+export const formatSiriDatetime = (datetime: Dayjs, includeMilliseconds: boolean) =>
     datetime.format(includeMilliseconds ? "YYYY-MM-DDTHH:mm:ss.SSSZ" : "YYYY-MM-DDTHH:mm:ssZ");
 
 /**

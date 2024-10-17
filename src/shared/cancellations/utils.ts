@@ -14,13 +14,7 @@ import {
     cancellationsSubscriptionSchema,
     cancellationsSubscriptionsSchema,
 } from "../schema/cancellations-subscribe.schema";
-import {
-    CompleteSiriObject,
-    SubscriptionIdNotFoundError,
-    chunkArray,
-    formatSiriVmDatetimes,
-    runXmlLint,
-} from "../utils";
+import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriDatetime, runXmlLint } from "../utils";
 
 export const GENERATED_SIRI_SX_FILE_PATH = "SIRI-SX.xml";
 
@@ -72,8 +66,8 @@ export const insertSituations = async (dbClient: KyselyDb, cancellations: NewSit
     );
 };
 
-const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
-    const currentTime = formatSiriVmDatetimes(responseTime, true);
+export const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
+    const currentTime = formatSiriDatetime(responseTime, true);
 
     const siriSx: SiriSx = {
         Siri: {
@@ -159,9 +153,9 @@ export const generateSiriSxAndUploadToS3 = async (
     });
 };
 
-export const getSituationsDataForSiriSX = async (dbClient: KyselyDb) => {
+export const getSituationsDataForSiriSx = async (dbClient: KyselyDb, subscriptionId?: string[]) => {
     try {
-        const query = dbClient
+        let query = dbClient
             .selectFrom("situation as all_situations")
             .innerJoin(
                 dbClient
@@ -176,6 +170,10 @@ export const getSituationsDataForSiriSX = async (dbClient: KyselyDb) => {
                         .onRef("all_situations.version", "=", "highest_version_situation.max_version"),
             )
             .selectAll("all_situations");
+
+        if (subscriptionId) {
+            query = query.where("all_situations.subscription_id", "in", subscriptionId);
+        }
 
         const situations = await query.execute();
 

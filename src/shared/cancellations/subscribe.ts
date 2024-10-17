@@ -11,7 +11,7 @@ import {
     cancellationsSubscriptionResponseSchema,
 } from "../schema/cancellations-subscribe.schema";
 import { putParameter } from "../ssm";
-import { CompleteSiriObject, createAuthorizationHeader, getSiriVmTerminationTimeOffset } from "../utils";
+import { CompleteSiriObject, createAuthorizationHeader, getSiriTerminationTimeOffset } from "../utils";
 import { InvalidXmlError } from "../validation";
 
 export const addSubscriptionAuthCredsToSsm = async (subscriptionId: string, username: string, password: string) => {
@@ -149,7 +149,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
 ) => {
     const requestTime = getDate();
     const currentTime = requestTime.toISOString();
-    const initialTerminationTime = getSiriVmTerminationTimeOffset(requestTime);
+    const initialTerminationTime = getSiriTerminationTimeOffset(requestTime);
 
     const messageIdentifier = randomUUID();
 

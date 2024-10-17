@@ -427,6 +427,8 @@ module "siri_consumer_api_private" {
   avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
   avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
   avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
+  siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
+  siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
 }
 
 module "siri_consumer_api_public" {
@@ -447,4 +449,6 @@ module "siri_consumer_api_public" {
   avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
   avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
   avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
+  siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
+  siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
 }
