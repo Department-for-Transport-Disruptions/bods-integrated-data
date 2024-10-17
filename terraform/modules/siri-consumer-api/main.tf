@@ -95,7 +95,11 @@ resource "aws_api_gateway_rest_api_policy" "siri_consumer_api_resource_policy" {
         "Action" : "execute-api:Invoke",
         "Resource" : [
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}${aws_api_gateway_resource.siri_vm_api_downloader_resource.path}",
-          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}"
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_sx_downloader_method.http_method}${aws_api_gateway_resource.siri_sx_downloader_resource.path}",
         ],
         "Condition" : {
           "StringNotEquals" : {
@@ -112,7 +116,8 @@ resource "aws_api_gateway_rest_api_policy" "siri_consumer_api_resource_policy" {
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}${aws_api_gateway_resource.siri_vm_api_stats_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
           "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
-          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}"
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path}",
+          "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.siri_consumer_api.id}/*/${aws_api_gateway_method.siri_sx_downloader_method.http_method}${aws_api_gateway_resource.siri_sx_downloader_resource.path}",
         ]
       }
     ]
@@ -127,6 +132,7 @@ resource "aws_api_gateway_deployment" "siri_consumer_api_deployment" {
       jsonencode(aws_api_gateway_integration.avl_consumer_unsubscriber_integration),
       jsonencode(aws_api_gateway_integration.avl_consumer_subscriptions_integration),
       jsonencode(aws_api_gateway_integration.siri_vm_api_stats_integration),
+      jsonencode(aws_api_gateway_integration.siri_sx_downloader_integration),
       jsonencode(aws_api_gateway_rest_api.siri_consumer_api.body),
       var.private ? jsonencode(aws_api_gateway_rest_api_policy.siri_consumer_api_resource_policy[0].policy) : ""
     ])))
