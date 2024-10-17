@@ -459,7 +459,7 @@ module "siri_vm_downloader" {
   source = "../../shared/lambda-function"
 
   environment     = var.environment
-  function_name   = "integrated-data-avl-siri-vm-downloader"
+  function_name   = "avl-siri-vm-downloader"
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-downloader.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
@@ -505,7 +505,7 @@ module "siri_vm_stats" {
   source = "../../shared/lambda-function"
 
   environment     = var.environment
-  function_name   = "integrated-data-avl-siri-vm-stats"
+  function_name   = "avl-siri-vm-stats"
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-stats.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
