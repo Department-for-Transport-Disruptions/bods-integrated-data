@@ -14,7 +14,7 @@ export const mapStop = (
     naptanStop?: NaptanStopWithRegionCode,
 ): NewStop => {
     const stop: NewStop = {
-        id,
+        id: id.toUpperCase(),
         wheelchair_boarding: 0,
         parent_station: null,
         stop_name: name,
