@@ -70,6 +70,7 @@ export const mapTimingLinksToStopTimes = (
     }
 
     let currentStopDepartureTime = initialStopDepartureTime.clone();
+    const initialStopDepartureDate = initialStopDepartureTime.startOf("day");
     let sequenceNumber = 0;
 
     return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
@@ -79,7 +80,7 @@ export const mapTimingLinksToStopTimes = (
 
         const { nextArrivalTime, stopTime } = mapTimingLinkToStopTime(
             "from",
-            initialStopDepartureTime,
+            initialStopDepartureDate,
             currentStopDepartureTime,
             tripId,
             sequenceNumber,
@@ -99,7 +100,7 @@ export const mapTimingLinksToStopTimes = (
         if (index === journeyPatternTimingLinks.length - 1) {
             const { stopTime: finalStopTime } = mapTimingLinkToStopTime(
                 "to",
-                initialStopDepartureTime,
+                initialStopDepartureDate,
                 currentStopDepartureTime,
                 tripId,
                 sequenceNumber,
@@ -120,7 +121,7 @@ export const mapTimingLinksToStopTimes = (
  * Map a timing link to a stop time. Either the From or To stop usage activity is used depending on the `stopUsageType`.
  * A run time will optionally be returned if it can be calculated.
  * @param stopUsageType Which stop usage to use (from or to)
- * @param initialStopDepartureTime Initial stop departure time
+ * @param initialStopDepartureDate Initial stop departure date (midnight)
  * @param currentStopDepartureTime Current stop departure time
  * @param tripId Trip ID
  * @param sequenceNumber Current sequence number
@@ -130,7 +131,7 @@ export const mapTimingLinksToStopTimes = (
  */
 export const mapTimingLinkToStopTime = (
     stopUsageType: "from" | "to",
-    initialStopDepartureTime: Dayjs,
+    initialStopDepartureDate: Dayjs,
     currentStopDepartureTime: Dayjs,
     tripId: string,
     sequenceNumber: number,
@@ -197,7 +198,7 @@ export const mapTimingLinkToStopTime = (
 
     let arrivalTimeString = arrivalTime.format("HH:mm:ss");
     let departureTimeString = departureTime.format("HH:mm:ss");
-    const daysPastInitialServiceDay = currentStopDepartureTime.diff(initialStopDepartureTime, "day");
+    const daysPastInitialServiceDay = currentStopDepartureTime.diff(initialStopDepartureDate, "day");
 
     if (daysPastInitialServiceDay > 0) {
         arrivalTimeString = appendRolloverHours(arrivalTimeString, daysPastInitialServiceDay);
