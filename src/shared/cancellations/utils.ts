@@ -153,27 +153,19 @@ export const generateSiriSxAndUploadToS3 = async (
     });
 };
 
+const getQueryForSituations = (dbClient: KyselyDb, subscriptionId?: string[]) => {
+    let query = dbClient.selectFrom("situation").distinctOn(["subscription_id", "situation_number"]).selectAll();
+
+    if (subscriptionId) {
+        query = query.where("subscription_id", "in", subscriptionId);
+    }
+
+    return query.orderBy(["subscription_id", "situation_number", sql<string>`version DESC NULLS LAST`]);
+};
+
 export const getSituationsDataForSiriSx = async (dbClient: KyselyDb, subscriptionId?: string[]) => {
     try {
-        let query = dbClient
-            .selectFrom("situation as all_situations")
-            .innerJoin(
-                dbClient
-                    .selectFrom("situation")
-                    .select(["subscription_id", "situation_number", sql`MAX(version)`.as("max_version")])
-                    .groupBy(["subscription_id", "situation_number"])
-                    .as("highest_version_situation"),
-                (join) =>
-                    join
-                        .onRef("all_situations.subscription_id", "=", "highest_version_situation.subscription_id")
-                        .onRef("all_situations.situation_number", "=", "highest_version_situation.situation_number")
-                        .onRef("all_situations.version", "=", "highest_version_situation.max_version"),
-            )
-            .selectAll("all_situations");
-
-        if (subscriptionId) {
-            query = query.where("all_situations.subscription_id", "in", subscriptionId);
-        }
+        const query = getQueryForSituations(dbClient, subscriptionId);
 
         const situations = await query.execute();
 
