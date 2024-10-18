@@ -69,7 +69,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const headers = requestHeadersSchema.parse(event.headers);
         const userId = headers["x-user-id"];
 
-        const { subscriptionId } = requestParamsSchema.parse(event.pathParameters);
+        const { subscriptionId } = requestParamsSchema.parse(event.queryStringParameters);
 
         let response = null;
 

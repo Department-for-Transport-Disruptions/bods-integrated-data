@@ -16,7 +16,7 @@ export const invokeAvlConsumerSubscriptions = new Command("invoke-avl-consumer-s
             headers: {
                 "x-user-id": userId,
             },
-            pathParameters: {
+            queryStringParameters: {
                 subscriptionId,
             },
         };
