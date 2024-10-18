@@ -1,7 +1,10 @@
+import { randomUUID } from "node:crypto";
 import dayjs from "dayjs";
 import { z } from "zod";
+import { getCancellationErrorDetails } from "../../cancellations/utils";
 import { putMetricData } from "../../cloudwatch";
 import { logger } from "../../logger";
+import { CancellationsValidationError } from "../cancellations-validation-error.schema";
 import { datetimeSchema } from "../misc.schema";
 import {
     ArrivalBoardingActivity,
@@ -297,28 +300,46 @@ export const ptSituationElementSchema = z
         Affects: affectsSchema.optional(),
         Consequences: consequencesSchema.optional(),
     })
-    .refine(
-        (situation) =>
-            situation.MiscellaneousReason ||
-            situation.PersonnelReason ||
-            situation.EquipmentReason ||
-            situation.EnvironmentReason,
+    .and(
+        z.union([
+            z.object({ MiscellaneousReason: miscellaneousReasonSchema }),
+            z.object({ PersonnelReason: personnelReasonSchema }),
+            z.object({ EquipmentReason: equipmentReasonSchema }),
+            z.object({ EnvironmentReason: environmentReasonSchema }),
+        ]),
     );
 
 /**
  * The purpose of this transformer is to filter out invalid situations
  * and return the rest of the data as valid.
  */
-const makeFilteredPtSituationArraySchema = (namespace: string) =>
+const makeFilteredPtSituationArraySchema = (namespace: string, errors?: CancellationsValidationError[]) =>
     z.preprocess((input) => {
         const result = z.any().array().parse(input);
 
-        return result.filter((item) => {
+        return result.filter((item, _index) => {
             const parsedItem = ptSituationElementSchema.safeParse(item);
 
             if (!parsedItem.success) {
                 logger.warn("Error parsing item");
                 logger.warn(parsedItem.error.format());
+
+                errors?.push(
+                    ...parsedItem.error.errors.map<CancellationsValidationError>((error) => {
+                        const { name, message } = getCancellationErrorDetails(error);
+
+                        return {
+                            PK: "",
+                            SK: randomUUID(),
+                            timeToExist: 0,
+                            details: message,
+                            filename: "",
+                            name,
+                            situationNumber: item.SituationNumber,
+                            version: item.Version,
+                        };
+                    }),
+                );
 
                 putMetricData(`custom/${namespace}`, [
                     { MetricName: "MakeFilteredPtSituationArrayParseError", Value: 1 },
@@ -329,26 +350,21 @@ const makeFilteredPtSituationArraySchema = (namespace: string) =>
         });
     }, z.array(ptSituationElementSchema));
 
-export const situationsSchema = z.object({
-    PtSituationElement: makeFilteredPtSituationArraySchema("SiriSxPtSituationArraySchema"),
-});
-
-export const situationExchangeDeliverySchema = z.object({
-    ResponseTimestamp: datetimeSchema,
-    Status: booleanStringSchema.optional(),
-    ShortestPossibleCycle: z.string().optional(),
-    Situations: situationsSchema,
-});
-
-export const serviceDeliverySchema = z.object({
-    ResponseTimestamp: datetimeSchema,
-    ProducerRef: z.string().optional(),
-    ResponseMessageIdentifier: z.string().optional(),
-    SituationExchangeDelivery: situationExchangeDeliverySchema,
-});
-
-export const siriSxSchema = z.object({
-    Siri: z.object({
-        ServiceDelivery: serviceDeliverySchema,
-    }),
-});
+export const siriSxSchema = (errors?: CancellationsValidationError[]) =>
+    z.object({
+        Siri: z.object({
+            ServiceDelivery: z.object({
+                ResponseTimestamp: datetimeSchema,
+                ProducerRef: z.string().optional(),
+                ResponseMessageIdentifier: z.string().optional(),
+                SituationExchangeDelivery: z.object({
+                    ResponseTimestamp: datetimeSchema,
+                    Status: booleanStringSchema.optional(),
+                    ShortestPossibleCycle: z.string().optional(),
+                    Situations: z.object({
+                        PtSituationElement: makeFilteredPtSituationArraySchema("SiriSxPtSituationArraySchema", errors),
+                    }),
+                }),
+            }),
+        }),
+    });

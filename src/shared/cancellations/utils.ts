@@ -1,14 +1,17 @@
+import cleanDeep from "clean-deep";
 import { sync as commandExistsSync } from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
+import { ZodIssue } from "zod";
+import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { KyselyDb, NewSituation, Situation } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
-import { SiriSx } from "../schema";
+import { SiriSx, siriSxSchema } from "../schema";
 import {
     CancellationsSubscription,
     cancellationsSubscriptionSchema,
@@ -85,13 +88,16 @@ export const createSiriSx = (situations: Situation[], requestMessageRef: string,
         },
     };
 
+    const siriSxWithoutEmptyFields = cleanDeep(siriSx, { emptyArrays: false });
+    const verifiedObject = siriSxSchema().parse(siriSxWithoutEmptyFields);
+
     const completeObject: Partial<CompleteSiriObject<SiriSx["Siri"]>> = {
         Siri: {
             "@_version": "2.0",
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...siriSx.Siri,
+            ...verifiedObject.Siri,
         },
     };
 
@@ -177,4 +183,23 @@ export const getSituationsDataForSiriSx = async (dbClient: KyselyDb, subscriptio
 
         throw e;
     }
+};
+
+export const getCancellationErrorDetails = (error: ZodIssue) => {
+    const validationError = fromZodIssue(error, { prefix: null, includePath: false });
+    const details = validationError.details[0];
+    let name = details.path.join(".");
+    let message = validationError.message;
+
+    if (details.code === "invalid_union") {
+        const paths = details.unionErrors.map((unionError) => {
+            const unionValidationError = fromZodIssue(unionError.errors[0], { prefix: null, includePath: false });
+            return unionValidationError.details[0].path.join(".");
+        });
+
+        name = paths.join(", ");
+        message = "Required one of";
+    }
+
+    return { name, message };
 };

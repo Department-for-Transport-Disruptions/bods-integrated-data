@@ -72,6 +72,11 @@ module "integrated_data_cancellations_processor_function" {
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.cancellations_subscription_table_name}"
     },
+    {
+      Action   = ["dynamodb:BatchWriteItem"],
+      Effect   = "Allow",
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.cancellations_errors_table_name}"
+    }
   ]
 
   env_vars = {
@@ -81,6 +86,7 @@ module "integrated_data_cancellations_processor_function" {
     DB_SECRET_ARN                         = var.db_secret_arn
     DB_NAME                               = var.db_name
     CANCELLATIONS_SUBSCRIPTION_TABLE_NAME = var.cancellations_subscription_table_name
+    CANCELLATIONS_ERRORS_TABLE_NAME       = var.cancellations_errors_table_name
   }
 }
 

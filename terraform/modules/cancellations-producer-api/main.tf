@@ -25,6 +25,14 @@ module "integrated_data_cancellations_subscription_table" {
   table_name  = "integrated-data-cancellations-subscription-table"
 }
 
+module "integrated_data_cancellations_validation_error_table" {
+  source = "../../modules/shared/dynamo-table"
+
+  environment   = var.environment
+  table_name    = "integrated-data-cancellations-validation-error-table"
+  ttl_attribute = "timeToExist"
+}
+
 module "cancellations_data_endpoint" {
   source = "./cancellations-data-endpoint"
 
