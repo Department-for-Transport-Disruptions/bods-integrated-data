@@ -8,6 +8,7 @@ export * from "./avl-validate.schema";
 export * from "./avl-validation-error.schema";
 export * from "./avl.schema";
 export * from "./cancellations-subscribe.schema";
+export * from "./cancellations-validation-error.schema";
 export * from "./dates.schema";
 export * from "./misc.schema";
 export * from "./noc.schema";

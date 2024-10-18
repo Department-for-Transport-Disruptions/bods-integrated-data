@@ -99,3 +99,8 @@ variable "cancellations_subscription_table_name" {
   type        = string
   description = "Cancellations subscription DynamoDB table name"
 }
+
+variable "cancellations_errors_table_name" {
+  type        = string
+  description = "Cancellations errors DynamoDB table name"
+}

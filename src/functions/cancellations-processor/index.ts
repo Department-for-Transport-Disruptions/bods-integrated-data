@@ -1,9 +1,16 @@
-import { getCancellationsSubscription, insertSituations } from "@bods-integrated-data/shared/cancellations/utils";
+import { randomUUID } from "node:crypto";
+import {
+    getCancellationErrorDetails,
+    getCancellationsSubscription,
+    insertSituations,
+} from "@bods-integrated-data/shared/cancellations/utils";
 import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewSituation, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
+import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { siriSxSchema } from "@bods-integrated-data/shared/schema";
+import { CancellationsValidationError, siriSxSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
@@ -12,7 +19,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const parseXml = (xml: string) => {
+const parseXml = (xml: string, errors: CancellationsValidationError[]) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
@@ -21,19 +28,60 @@ const parseXml = (xml: string) => {
     });
 
     const parsedXml = parser.parse(xml);
-    const parsedJson = siriSxSchema.safeParse(parsedXml);
+    const parsedJson = siriSxSchema(errors).safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(`There was an error parsing the cancellations data: ${parsedJson.error.format()}`);
+
+        errors.push(
+            ...parsedJson.error.errors.map<CancellationsValidationError>((error) => {
+                const { name, message } = getCancellationErrorDetails(error);
+
+                return {
+                    PK: "",
+                    SK: randomUUID(),
+                    timeToExist: 0,
+                    details: message,
+                    filename: "",
+                    name,
+                    responseTimestamp: parsedXml?.Siri?.ServiceDelivery?.ResponseTimestamp,
+                    responseMessageIdentifier: parsedXml?.Siri?.ServiceDelivery?.ResponseMessageIdentifier,
+                    producerRef: parsedXml?.Siri?.ServiceDelivery?.ProducerRef,
+                };
+            }),
+        );
     }
 
-    return parsedJson.data;
+    return {
+        responseTimestamp: parsedXml?.Siri?.ServiceDelivery?.ResponseTimestamp,
+        siriSx: parsedJson.data,
+    };
+};
+
+const uploadValidationErrorsToDatabase = async (
+    subscriptionId: string,
+    filename: string,
+    tableName: string,
+    errors: CancellationsValidationError[],
+    responseTimestamp?: string,
+) => {
+    const timeToExist = getDate().add(3, "days").unix();
+
+    for (const error of errors) {
+        error.PK = subscriptionId;
+        error.filename = filename;
+        error.responseTimestamp = responseTimestamp;
+        error.timeToExist = timeToExist;
+    }
+
+    await putDynamoItems(tableName, errors);
 };
 
 export const processSqsRecord = async (
     record: S3EventRecord,
     dbClient: KyselyDb,
     cancellationsSubscriptionTableName: string,
+    cancellationsValidationErrorTableName: string,
 ) => {
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
@@ -59,7 +107,18 @@ export const processSqsRecord = async (
 
         if (body) {
             const xml = await body.transformToString();
-            const siriSx = parseXml(xml);
+            const errors: CancellationsValidationError[] = [];
+            const { responseTimestamp, siriSx } = parseXml(xml, errors);
+
+            if (errors.length > 0) {
+                await uploadValidationErrorsToDatabase(
+                    subscriptionId,
+                    record.s3.object.key,
+                    cancellationsValidationErrorTableName,
+                    errors,
+                    responseTimestamp,
+                );
+            }
 
             if (siriSx) {
                 const { ResponseTimestamp, ProducerRef, SituationExchangeDelivery } = siriSx.Siri.ServiceDelivery;
@@ -100,10 +159,12 @@ export const processSqsRecord = async (
 export const handler: SQSHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { CANCELLATIONS_SUBSCRIPTION_TABLE_NAME: cancellationsSubscriptionTableName } = process.env;
+    const { CANCELLATIONS_SUBSCRIPTION_TABLE_NAME, CANCELLATIONS_ERRORS_TABLE_NAME } = process.env;
 
-    if (!cancellationsSubscriptionTableName) {
-        throw new Error("Missing env vars: CANCELLATIONS_SUBSCRIPTION_TABLE_NAME must be set.");
+    if (!CANCELLATIONS_SUBSCRIPTION_TABLE_NAME || !CANCELLATIONS_ERRORS_TABLE_NAME) {
+        throw new Error(
+            "Missing env vars: CANCELLATIONS_SUBSCRIPTION_TABLE_NAME and CANCELLATIONS_ERRORS_TABLE_NAME must be set.",
+        );
     }
 
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
@@ -115,7 +176,12 @@ export const handler: SQSHandler = async (event, context) => {
             event.Records.map((record) =>
                 Promise.all(
                     (JSON.parse(record.body) as S3Event).Records.map((s3Record) =>
-                        processSqsRecord(s3Record, dbClient, cancellationsSubscriptionTableName),
+                        processSqsRecord(
+                            s3Record,
+                            dbClient,
+                            CANCELLATIONS_SUBSCRIPTION_TABLE_NAME,
+                            CANCELLATIONS_ERRORS_TABLE_NAME,
+                        ),
                     ),
                 ),
             ),
