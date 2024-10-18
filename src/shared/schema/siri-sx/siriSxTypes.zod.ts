@@ -276,6 +276,10 @@ export const consequencesSchema = z.object({
     Consequence: z.array(consequenceSchema),
 });
 
+/**
+ * The use of multiple "and" clauses here is used to preserve the specific order
+ * of properties, in case the schema is ever used to generate siri-sx XML.
+ */
 export const ptSituationElementSchema = z
     .object({
         CreationTime: situationElementRefSchema.shape.CreationTime,
@@ -289,16 +293,6 @@ export const ptSituationElementSchema = z
         ValidityPeriod: z.array(periodSchema),
         Repetitions: repetitionsSchema.optional(),
         PublicationWindow: periodSchema.optional(),
-        MiscellaneousReason: miscellaneousReasonSchema.optional(),
-        PersonnelReason: personnelReasonSchema.optional(),
-        EquipmentReason: equipmentReasonSchema.optional(),
-        EnvironmentReason: environmentReasonSchema.optional(),
-        Planned: booleanStringSchema.optional(),
-        Summary: z.string().optional(),
-        Description: z.string().optional(),
-        InfoLinks: infoLinksSchema.optional(),
-        Affects: affectsSchema.optional(),
-        Consequences: consequencesSchema.optional(),
     })
     .and(
         z.union([
@@ -307,6 +301,16 @@ export const ptSituationElementSchema = z
             z.object({ EquipmentReason: equipmentReasonSchema }),
             z.object({ EnvironmentReason: environmentReasonSchema }),
         ]),
+    )
+    .and(
+        z.object({
+            Planned: booleanStringSchema.optional(),
+            Summary: z.string().optional(),
+            Description: z.string().optional(),
+            InfoLinks: infoLinksSchema.optional(),
+            Affects: affectsSchema.optional(),
+            Consequences: consequencesSchema.optional(),
+        }),
     );
 
 /**
@@ -317,7 +321,7 @@ const makeFilteredPtSituationArraySchema = (namespace: string, errors?: Cancella
     z.preprocess((input) => {
         const result = z.any().array().parse(input);
 
-        return result.filter((item, _index) => {
+        return result.filter((item) => {
             const parsedItem = ptSituationElementSchema.safeParse(item);
 
             if (!parsedItem.success) {
@@ -335,8 +339,8 @@ const makeFilteredPtSituationArraySchema = (namespace: string, errors?: Cancella
                             details: message,
                             filename: "",
                             name,
-                            situationNumber: item.SituationNumber,
-                            version: item.Version,
+                            situationNumber: item?.SituationNumber,
+                            version: item?.Version,
                         };
                     }),
                 );
