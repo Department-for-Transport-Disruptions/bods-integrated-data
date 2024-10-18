@@ -212,7 +212,7 @@ describe("avl-consumer-subscriptions", () => {
                 },
             ];
 
-            mockEvent.pathParameters = input;
+            mockEvent.queryStringParameters = input;
 
             const response = await handler(mockEvent, mockContext, mockCallback);
             expect(response).toEqual({
@@ -241,7 +241,7 @@ describe("avl-consumer-subscriptions", () => {
             },
         };
 
-        mockEvent.pathParameters = {
+        mockEvent.queryStringParameters = {
             subscriptionId: mockSubscriptionId,
         };
 
@@ -256,7 +256,7 @@ describe("avl-consumer-subscriptions", () => {
     });
 
     it("returns a 404 when querying a subscription that does not exist", async () => {
-        mockEvent.pathParameters = {
+        mockEvent.queryStringParameters = {
             subscriptionId: mockSubscriptionId,
         };
 
