@@ -1,5 +1,4 @@
 import { z } from "zod";
-import {} from "./enums";
 import {
     affectedLineSchema,
     affectedOperatorSchema,
