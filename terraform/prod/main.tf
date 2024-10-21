@@ -428,7 +428,7 @@ module "siri_consumer_api_private" {
   siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
 }
 
-# temporary moved block prevent siri consumer api being destroyed during module move
+# temporary moved block to prevent siri consumer api being destroyed during module move
 moved {
   from = module.integrated_data_avl_pipeline.module.siri_vm_api_private
   to   = module.siri_consumer_api_private
