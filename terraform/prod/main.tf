@@ -430,8 +430,8 @@ module "siri_consumer_api_private" {
 
 # temporary moved block to prevent siri consumer api being destroyed during module move
 moved {
-  from = module.integrated_data_avl_pipeline.module.siri_vm_api_private
-  to   = module.siri_consumer_api_private
+  from = module.integrated_data_avl_pipeline.module.siri_vm_api_private.aws_api_gateway_rest_api.siri_vm_api
+  to   = module.siri_consumer_api_private.aws_api_gateway_rest_api.siri_consumer_api
 }
 
 # VPN
