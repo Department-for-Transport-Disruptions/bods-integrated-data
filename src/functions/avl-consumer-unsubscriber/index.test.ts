@@ -57,6 +57,10 @@ describe("avl-consumer-unsubscriber", () => {
         },
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         recursiveQuery: vi.fn(),
         putDynamoItem: vi.fn(),

@@ -13,6 +13,7 @@ import {
     getAvlConsumerSubscription,
 } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { createSchedule } from "@bods-integrated-data/shared/eventBridge";
@@ -249,6 +250,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         if (e instanceof Error) {
             // Our AWS package versions do not support instanceof exception checks
             if (e.name === "QueueDeletedRecently") {
+                await putMetricData("custom/AvlConsumerMetrics", [
+                    {
+                        MetricName: "FailedSubscribe",
+                        Value: 1,
+                    },
+                ]);
+
                 logger.warn(e, "Queue deleted too recently when trying to resubscribe");
                 return createHttpServiceUnavailableErrorResponse(
                     "Existing subscription is still deactivating, try again later",
@@ -257,6 +265,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             }
 
             if (e.name === "TooManyRequestsException") {
+                await putMetricData("custom/AvlConsumerMetrics", [
+                    {
+                        MetricName: "FailedSubscribe",
+                        Value: 1,
+                    },
+                ]);
+
                 logger.warn(e, "Hit AWS throttle limit when trying to subscribe");
                 return createHttpTooManyRequestsErrorResponse("Too many subscribe requests, try again later", 60);
             }

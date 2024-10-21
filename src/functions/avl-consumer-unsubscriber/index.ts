@@ -6,6 +6,7 @@ import {
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { deleteSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
@@ -124,6 +125,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         );
 
         if (updatedSubscription.status === "error") {
+            await putMetricData("custom/AvlConsumerMetrics", [
+                {
+                    MetricName: "FailedUnsubscribe",
+                    Value: 1,
+                },
+            ]);
+
             return createHttpServiceUnavailableErrorResponse(
                 "Unable to fully unsubscribe subscription, try again later",
                 60,

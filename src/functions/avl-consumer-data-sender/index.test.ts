@@ -111,6 +111,10 @@ describe("avl-consumer-subscriber", () => {
         },
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
+    }));
+
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         getDynamoItem: vi.fn(),
         putDynamoItem: vi.fn(),
