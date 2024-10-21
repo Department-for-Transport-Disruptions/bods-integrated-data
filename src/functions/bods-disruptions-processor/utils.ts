@@ -50,10 +50,10 @@ const isReason = <T extends Record<string, string>>(reasonAliases: T, reasonToCh
 };
 
 export const getGtfsCause = (ptSituation: PtSituationElement): transit_realtime.Alert.Cause => {
-    const environmentReason = ptSituation.EnvironmentReason;
-    const equipmentReason = ptSituation.EquipmentReason;
-    const personnelReason = ptSituation.PersonnelReason;
-    const miscellaneousReason = ptSituation.MiscellaneousReason;
+    const environmentReason = "EnvironmentReason" in ptSituation ? ptSituation.EnvironmentReason : undefined;
+    const equipmentReason = "EquipmentReason" in ptSituation ? ptSituation.EquipmentReason : undefined;
+    const personnelReason = "PersonnelReason" in ptSituation ? ptSituation.PersonnelReason : undefined;
+    const miscellaneousReason = "MiscellaneousReason" in ptSituation ? ptSituation.MiscellaneousReason : undefined;
 
     if (isReason(miscellaneousReasonAliases, "accident", miscellaneousReason)) {
         return Cause.ACCIDENT;

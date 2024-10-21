@@ -1,7 +1,13 @@
+import * as crypto from "node:crypto";
 import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
-import { AvlSubscription, CancellationsSubscription } from "@bods-integrated-data/shared/schema";
+import {
+    AvlSubscription,
+    CancellationsSubscription,
+    CancellationsValidationError,
+} from "@bods-integrated-data/shared/schema";
 import { S3EventRecord } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,12 +17,17 @@ import {
     parsedSiriSx,
     testInvalidSiriSx,
     testSiriSx,
-    testSiriSxWithInvalidSituations,
+    testSiriSxWithInvalidSituationsAndData,
+    testSiriSxWithInvalidSituationsOnly,
 } from "./test/testSiriSx";
 
 describe("cancellations-processor", () => {
     const mocks = vi.hoisted(() => ({
         getS3Object: vi.fn(),
+    }));
+
+    vi.mock("node:crypto", () => ({
+        randomUUID: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
@@ -34,7 +45,9 @@ describe("cancellations-processor", () => {
     }));
 
     MockDate.set("2024-07-22T12:00:00.000Z");
+    const uuidSpy = vi.spyOn(crypto, "randomUUID");
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+    const putDynamoItemsSpy = vi.spyOn(dynamo, "putDynamoItems");
     const putMetricDataSpy = vi.spyOn(cloudwatch, "putMetricData");
 
     const valuesMock = vi.fn().mockReturnValue({
@@ -78,6 +91,7 @@ describe("cancellations-processor", () => {
             apiKey: "mock-api-key",
         };
 
+        uuidSpy.mockReturnValue("12a345b6-2be9-49bb-852f-21e5a2400ea6");
         getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
     });
 
@@ -108,9 +122,14 @@ describe("cancellations-processor", () => {
             };
 
             getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
-
             mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiriSx } });
-            await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name");
+
+            await processSqsRecord(
+                record as S3EventRecord,
+                dbClient as unknown as KyselyDb,
+                "table-name",
+                "cancellations-validation-errors-table",
+            );
 
             expect(valuesMock).toHaveBeenCalledWith(parsedSiriSx);
         },
@@ -131,7 +150,12 @@ describe("cancellations-processor", () => {
         getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
 
         await expect(
-            processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name"),
+            processSqsRecord(
+                record as S3EventRecord,
+                dbClient as unknown as KyselyDb,
+                "table-name",
+                "cancellations-validation-errors-table",
+            ),
         ).rejects.toThrowError(
             `Unable to process cancellations for subscription ${mockSubscriptionId} because it is inactive`,
         );
@@ -146,7 +170,12 @@ describe("cancellations-processor", () => {
             Body: { transformToString: () => testInvalidSiriSx },
         });
 
-        await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name");
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "cancellations-validation-errors-table",
+        );
 
         expect(valuesMock).not.toHaveBeenCalled();
     });
@@ -181,10 +210,15 @@ describe("cancellations-processor", () => {
         };
 
         mocks.getS3Object.mockResolvedValueOnce({
-            Body: { transformToString: () => testSiriSxWithInvalidSituations },
+            Body: { transformToString: () => testSiriSxWithInvalidSituationsOnly },
         });
 
-        await processSqsRecord(record as S3EventRecord, dbClient as unknown as KyselyDb, "table-name");
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "cancellations-validation-errors-table",
+        );
 
         expect(valuesMock).toHaveBeenCalledWith(parsedSiriSx.slice(0, 1));
 
@@ -193,6 +227,56 @@ describe("cancellations-processor", () => {
             1,
             expectedPutMetricDataCallForFilteredArrayParseError.namespace,
             expectedPutMetricDataCallForFilteredArrayParseError.metricData,
+        );
+    });
+
+    it("uploads validation errors to dynamoDB", async () => {
+        /**
+         * This variable represents a time to live (TTL) in the dynamoDB table
+         * in order for dynamoDB to automatically clear entries older than the TTL:
+         * https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
+         */
+        const timeToExist = getDate().add(3, "days").unix();
+
+        const expectedValidationErrors: CancellationsValidationError[] = [
+            {
+                PK: mockSubscriptionId,
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                timeToExist,
+                details: "Required one of",
+                filename: record.s3.object.key,
+                name: "MiscellaneousReason, PersonnelReason, EquipmentReason, EnvironmentReason",
+                responseTimestamp: "asdf",
+                situationNumber: "123",
+                version: "2",
+            },
+            {
+                PK: mockSubscriptionId,
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                timeToExist,
+                details: "Invalid datetime",
+                filename: record.s3.object.key,
+                name: "Siri.ServiceDelivery.ResponseTimestamp",
+                responseTimestamp: "asdf",
+                responseMessageIdentifier: "444",
+                producerRef: "ATB",
+            },
+        ];
+
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriSxWithInvalidSituationsAndData },
+        });
+
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            "table-name",
+            "cancellations-validation-errors-table",
+        );
+
+        expect(putDynamoItemsSpy).toHaveBeenCalledWith(
+            "cancellations-validation-errors-table",
+            expectedValidationErrors,
         );
     });
 });

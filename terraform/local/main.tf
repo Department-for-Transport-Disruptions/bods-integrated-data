@@ -135,7 +135,7 @@ module "mock_data_producer_api" {
   avl_consumer_data_endpoint            = module.integrated_data_avl_data_producer_api.data_endpoint_function_url
   avl_subscription_table_name           = module.integrated_data_avl_subscription_table.table_name
   cancellations_consumer_data_endpoint  = module.integrated_data_cancellations_data_producer_api.data_endpoint_function_url
-  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
+  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.subscriptions_table_name
 }
 
 module "integrated_data_avl_pipeline" {
@@ -248,7 +248,8 @@ module "integrated_data_cancellations_pipeline" {
   db_reader_host                        = null
   alarm_topic_arn                       = ""
   ok_topic_arn                          = ""
-  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.table_name
+  cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.subscriptions_table_name
+  cancellations_errors_table_name       = module.integrated_data_cancellations_data_producer_api.errors_table_name
   cluster_id                            = ""
   siri_sx_generator_cpu                 = 1024
   siri_sx_generator_frequency           = 240

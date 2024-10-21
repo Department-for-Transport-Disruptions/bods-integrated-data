@@ -18,11 +18,8 @@ import {
     ptSituationElementSchema,
     referenceSchema,
     repetitionsSchema,
-    serviceDeliverySchema,
     siriSxSchema,
     situationElementRefSchema,
-    situationExchangeDeliverySchema,
-    situationsSchema,
     sourceSchema,
 } from "./siriSxTypes.zod";
 
@@ -46,7 +43,4 @@ export type Affects = z.infer<typeof affectsSchema>;
 export type Consequence = z.infer<typeof consequenceSchema>;
 export type Consequences = z.infer<typeof consequencesSchema>;
 export type PtSituationElement = z.infer<typeof ptSituationElementSchema>;
-export type Situations = z.infer<typeof situationsSchema>;
-export type SituationExchangeDelivery = z.infer<typeof situationExchangeDeliverySchema>;
-export type ServiceDelivery = z.infer<typeof serviceDeliverySchema>;
-export type SiriSx = z.infer<typeof siriSxSchema>;
+export type SiriSx = z.infer<ReturnType<typeof siriSxSchema>>;

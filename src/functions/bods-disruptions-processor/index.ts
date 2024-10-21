@@ -44,7 +44,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
     }
 
     const parsedXml = parser.parse(xml);
-    const parseResult = siriSxSchema.safeParse(parsedXml);
+    const parseResult = siriSxSchema().safeParse(parsedXml);
 
     if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
