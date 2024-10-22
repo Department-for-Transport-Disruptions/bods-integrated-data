@@ -6,22 +6,22 @@ const frequencyChoices = ["10", "15", "20", "30"];
 export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subscriber")
     .addOption(STAGE_OPTION)
     .option("--userId <userId>", "BODS user ID")
+    .option("--name <name>", "Subscription name")
     .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
     .option("--subscriptionId <subscriptionId>", "Producer subscription IDs to subscribe to")
     .addOption(
         new Option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds").choices(frequencyChoices),
     )
     .action(async (options) => {
-        const { stage, userId, consumerSubscriptionId, subscriptionId, frequencyInSeconds } = await withUserPrompts(
-            options,
-            {
+        const { stage, userId, name, consumerSubscriptionId, subscriptionId, frequencyInSeconds } =
+            await withUserPrompts(options, {
                 stage: { type: "list", choices: STAGES },
                 userId: { type: "input" },
+                name: { type: "input" },
                 consumerSubscriptionId: { type: "input" },
                 subscriptionId: { type: "input" },
                 frequencyInSeconds: { type: "list", choices: frequencyChoices },
-            },
-        );
+            });
 
         const requestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
@@ -51,6 +51,7 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
                 "x-user-id": userId,
             },
             queryStringParameters: {
+                name,
                 subscriptionId,
             },
             body: requestBody,

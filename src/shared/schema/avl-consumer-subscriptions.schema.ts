@@ -23,6 +23,7 @@ export type AvlConsumerQueryParams = z.infer<typeof subscriptionsQueryParamsSche
 export const avlConsumerSubscriptionSchema = z.object({
     PK: z.string(),
     SK: z.string(),
+    name: z.string(),
     subscriptionId: z.string(),
     status: avlSubscriptionStatusesSchema,
     url: z.string().url(),

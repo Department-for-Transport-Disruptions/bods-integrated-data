@@ -68,6 +68,7 @@ const expectedSiriVmBody = `<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk
 const consumerSubscription: AvlConsumerSubscription = {
     PK: "123",
     SK: "mock-user-id",
+    name: "consumer-sub-1",
     subscriptionId: "mock-consumer-subscription-id",
     status: "live",
     url: "https://example.com",
@@ -309,6 +310,7 @@ describe("avl-consumer-subscriber", () => {
             const subscription: AvlConsumerSubscription = {
                 PK: "1234",
                 SK: "100",
+                name: "consumer-sub-1",
                 subscriptionId: "1234",
                 status: "live",
                 url: "https://example.com",
@@ -358,6 +360,7 @@ describe("avl-consumer-subscriber", () => {
             const subscription: AvlConsumerSubscription = {
                 PK: "1234",
                 SK: "100",
+                name: "consumer-sub-1",
                 subscriptionId: "1234",
                 status: "live",
                 url: "https://example.com",
@@ -405,6 +408,7 @@ describe("avl-consumer-subscriber", () => {
             const subscription: AvlConsumerSubscription = {
                 PK: "1234",
                 SK: "100",
+                name: "consumer-sub-1",
                 subscriptionId: "1234",
                 status: "live",
                 url: "https://example.com",
@@ -453,6 +457,7 @@ describe("avl-consumer-subscriber", () => {
             const subscription: AvlConsumerSubscription = {
                 PK: "1234",
                 SK: "100",
+                name: "consumer-sub-1",
                 subscriptionId: "1234",
                 status: "live",
                 url: "https://example.com",
@@ -499,6 +504,7 @@ describe("avl-consumer-subscriber", () => {
             const subscription: AvlConsumerSubscription = {
                 PK: "1234",
                 SK: "100",
+                name: "consumer-sub-1",
                 subscriptionId: "1234",
                 status: "live",
                 url: "https://example.com",
