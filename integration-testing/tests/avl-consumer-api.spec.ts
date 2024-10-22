@@ -119,7 +119,7 @@ test.describe("avl-consumer-api", () => {
             `${avlConsumerApiUrl(stage)}/siri-vm/subscriptions?subscriptionId=${testProducerSubscription.PK}`,
             {
                 data: subscriptionRequestBody,
-                headers: { "x-user-id": "1", "Content-Type": "application/xml" },
+                headers: { "x-api-key": "1", "Content-Type": "application/xml" },
             },
         );
 
@@ -131,7 +131,7 @@ test.describe("avl-consumer-api", () => {
     }) => {
         const unsubscribeResponse = await request.delete(`${avlConsumerApiUrl(stage)}/siri-vm/subscriptions`, {
             data: terminateSubscriptionRequestBody,
-            headers: { "x-user-id": "1", "Content-Type": "application/xml" },
+            headers: { "x-api-key": "1", "Content-Type": "application/xml" },
         });
 
         expect(unsubscribeResponse.status()).toBe(503);
@@ -145,7 +145,7 @@ test.describe("avl-consumer-api", () => {
 
         const unsubscribeResponse = await request.delete(`${avlConsumerApiUrl(stage)}/siri-vm/subscriptions`, {
             data: terminateSubscriptionRequestBody,
-            headers: { "x-user-id": "1", "Content-Type": "application/xml" },
+            headers: { "x-api-key": "1", "Content-Type": "application/xml" },
         });
 
         expect(unsubscribeResponse.status()).toBe(204);

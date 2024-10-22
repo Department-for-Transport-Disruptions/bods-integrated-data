@@ -12,11 +12,11 @@ import { handler } from "../avl-consumer-unsubscriber";
 
 const mockConsumerSubscriptionTable = "mock-consumer-subscription-table-name";
 const mockConsumerSubscriptionId = "mock-consumer-subscription-id";
-const mockUserId = "mock-user-id";
+const mockApiKey = "mock-api-key";
 
 const consumerSubscription: AvlConsumerSubscription = {
     PK: mockConsumerSubscriptionId,
-    SK: mockUserId,
+    SK: mockApiKey,
     subscriptionId: mockConsumerSubscriptionId,
     status: "live",
     url: "https://www.test.com/data",
@@ -83,7 +83,7 @@ describe("avl-consumer-unsubscriber", () => {
 
         mockEvent = {
             headers: {
-                "x-user-id": mockUserId,
+                "x-api-key": mockApiKey,
             },
             body: mockRequestBody,
         } as unknown as APIGatewayProxyEvent;
@@ -112,10 +112,10 @@ describe("avl-consumer-unsubscriber", () => {
     });
 
     it.each([
-        [{}, ["x-user-id header is required"]],
-        [{ "x-user-id": "" }, ["x-user-id header must be 1-256 characters"]],
-        [{ "x-user-id": "1".repeat(257) }, ["x-user-id header must be 1-256 characters"]],
-    ])("returns a 400 when the x-user-id header is invalid (test: %o)", async (headers, expectedErrorMessages) => {
+        [{}, ["x-api-key header is required"]],
+        [{ "x-api-key": "" }, ["x-api-key header must be 1-256 characters"]],
+        [{ "x-api-key": "1".repeat(257) }, ["x-api-key header must be 1-256 characters"]],
+    ])("returns a 400 when the x-api-key header is invalid (test: %o)", async (headers, expectedErrorMessages) => {
         mockEvent.headers = headers;
 
         const response = await handler(mockEvent, mockContext, mockCallback);

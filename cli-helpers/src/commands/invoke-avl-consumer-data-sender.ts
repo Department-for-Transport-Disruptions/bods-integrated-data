@@ -3,19 +3,19 @@ import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
 export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data-sender")
     .addOption(STAGE_OPTION)
-    .option("--userId <userId>", "BODS user ID")
+    .option("--apiKey <apiKey>", "API key")
     .option("--subscriptionPK <subscriptionPK>", "Consumer subscription PK")
     .action(async (options) => {
-        const { stage, userId, subscriptionPK } = await withUserPrompts(options, {
+        const { stage, apiKey, subscriptionPK } = await withUserPrompts(options, {
             stage: { type: "list", choices: STAGES },
-            userId: { type: "input" },
+            apiKey: { type: "input" },
             subscriptionPK: { type: "input" },
         });
 
         const invokePayload = {
             Records: [
                 {
-                    body: JSON.stringify({ subscriptionPK, SK: userId }),
+                    body: JSON.stringify({ subscriptionPK, SK: apiKey }),
                 },
             ],
         };

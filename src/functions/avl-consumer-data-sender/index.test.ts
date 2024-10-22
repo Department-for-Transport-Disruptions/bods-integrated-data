@@ -67,7 +67,7 @@ const expectedSiriVmBody = `<Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk
 
 const consumerSubscription: AvlConsumerSubscription = {
     PK: "123",
-    SK: "mock-user-id",
+    SK: "mock-api-key",
     subscriptionId: "mock-consumer-subscription-id",
     status: "live",
     url: "https://example.com",
@@ -179,9 +179,9 @@ describe("avl-consumer-subscriber", () => {
 
     it.each([
         { subscriptionPK: "subscription-PK", SK: "", messageType: "data" },
-        { subscriptionPK: "", SK: "user-id", messageType: "heartbeat" },
-        { subscriptionPK: "subscription-PK", SK: "user-id", messageType: "unknown-message-type" },
-        { subscriptionPK: "subscription-PK", SK: "user-id", messageType: "" },
+        { subscriptionPK: "", SK: "api-key", messageType: "heartbeat" },
+        { subscriptionPK: "subscription-PK", SK: "api-key", messageType: "unknown-message-type" },
+        { subscriptionPK: "subscription-PK", SK: "api-key", messageType: "" },
         {},
     ])("throws an error when the sqs message is invalid: %o", async (input) => {
         mockEvent = { Records: [{ body: JSON.stringify(input) }] } as SQSEvent;

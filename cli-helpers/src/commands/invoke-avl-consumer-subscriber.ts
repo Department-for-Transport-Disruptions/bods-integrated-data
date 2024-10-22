@@ -5,18 +5,18 @@ const frequencyChoices = ["10", "15", "20", "30"];
 
 export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subscriber")
     .addOption(STAGE_OPTION)
-    .option("--userId <userId>", "BODS user ID")
+    .option("--apiKey <apiKey>", "API key")
     .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
     .option("--subscriptionId <subscriptionId>", "Producer subscription IDs to subscribe to")
     .addOption(
         new Option("--frequencyInSeconds <frequencyInSeconds>", "Frequency in seconds").choices(frequencyChoices),
     )
     .action(async (options) => {
-        const { stage, userId, consumerSubscriptionId, subscriptionId, frequencyInSeconds } = await withUserPrompts(
+        const { stage, apiKey, consumerSubscriptionId, subscriptionId, frequencyInSeconds } = await withUserPrompts(
             options,
             {
                 stage: { type: "list", choices: STAGES },
-                userId: { type: "input" },
+                apiKey: { type: "input" },
                 consumerSubscriptionId: { type: "input" },
                 subscriptionId: { type: "input" },
                 frequencyInSeconds: { type: "list", choices: frequencyChoices },
@@ -48,7 +48,7 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
 
         const invokePayload = {
             headers: {
-                "x-user-id": userId,
+                "x-api-key": apiKey,
             },
             queryStringParameters: {
                 subscriptionId,

@@ -39,7 +39,7 @@ import { fromZodError } from "zod-validation-error";
 z.setErrorMap(errorMapWithDataLogging);
 
 const requestHeadersSchema = z.object({
-    "x-user-id": createStringLengthValidation("x-user-id header"),
+    "x-api-key": createStringLengthValidation("x-api-key header"),
 });
 
 const requestParamsSchema = z.preprocess(
@@ -109,7 +109,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const headers = requestHeadersSchema.parse(event.headers);
-        const userId = headers["x-user-id"];
+        const apiKey = headers["x-api-key"];
         const {
             boundingBox,
             operatorRef,
@@ -131,7 +131,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         try {
             const subscription = await getAvlConsumerSubscription(
                 AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
-                userId,
+                apiKey,
                 consumerSubscriptionId,
             );
 
@@ -162,7 +162,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const consumerSubscription: AvlConsumerSubscription = {
             PK,
-            SK: userId,
+            SK: apiKey,
             subscriptionId: consumerSubscriptionId,
             status: "live",
             url: subscriptionRequest.ConsumerAddress,
