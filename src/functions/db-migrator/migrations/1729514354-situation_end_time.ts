@@ -1,5 +1,5 @@
-import { Kysely } from "kysely";
 import { Database } from "@bods-integrated-data/shared/database";
+import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema.alterTable("situation").addColumn("end_time", "timestamptz").execute();

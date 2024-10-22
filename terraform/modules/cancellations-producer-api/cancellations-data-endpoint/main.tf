@@ -34,7 +34,7 @@ module "integrated_data_cancellations_data_endpoint_function" {
       Action = [
         "s3:PutObject"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:s3:::${var.bucket_name}/*"
       ]
@@ -43,7 +43,7 @@ module "integrated_data_cancellations_data_endpoint_function" {
       Action = [
         "dynamodb:PutItem", "dynamodb:GetItem"
       ],
-      Effect   = "Allow",
+      Effect = "Allow",
       Resource = [
         "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.cancellations_subscription_table_name}"
       ]

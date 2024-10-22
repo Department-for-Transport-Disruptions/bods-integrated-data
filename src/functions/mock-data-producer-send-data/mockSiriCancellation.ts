@@ -26,7 +26,7 @@ export const generateMockSiriCancellation = (subscriptionId: string, currentTime
           <Progress>closed</Progress>
           <ValidityPeriod>
             <StartTime>${currentTime}</StartTime>
-            <EndTime>${getDate(currentTime).add(24, "hours")}</EndTime>
+            <EndTime>${getDate(currentTime).add(24, "hours").toISOString()}</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>
@@ -70,8 +70,8 @@ export const generateMockSiriCancellation = (subscriptionId: string, currentTime
           </Source>
           <Progress>closed</Progress>
           <ValidityPeriod>
-            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
-            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
+            <StartTime>${currentTime}</StartTime>
+            <EndTime>${getDate(currentTime).add(24, "hours").toISOString()}</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>

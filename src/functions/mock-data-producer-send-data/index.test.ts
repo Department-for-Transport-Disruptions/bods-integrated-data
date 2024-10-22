@@ -192,8 +192,8 @@ const expectedCancellationsXml = (subscriptionId: string) => `<?xml version="1.0
           </Source>
           <Progress>closed</Progress>
           <ValidityPeriod>
-            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
-            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
+            <StartTime>2024-03-11T15:20:02.093+00:00</StartTime>
+            <EndTime>2024-03-12T15:20:02.093Z</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>
@@ -237,8 +237,8 @@ const expectedCancellationsXml = (subscriptionId: string) => `<?xml version="1.0
           </Source>
           <Progress>closed</Progress>
           <ValidityPeriod>
-            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
-            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
+            <StartTime>2024-03-11T15:20:02.093+00:00</StartTime>
+            <EndTime>2024-03-12T15:20:02.093Z</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>

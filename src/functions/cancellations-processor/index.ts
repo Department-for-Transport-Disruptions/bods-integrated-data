@@ -11,10 +11,10 @@ import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { CancellationsValidationError, Period, siriSxSchema } from "@bods-integrated-data/shared/schema";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
-import { notEmpty } from "@bods-integrated-data/shared/utils";
 
 z.setErrorMap(errorMapWithDataLogging);
 
