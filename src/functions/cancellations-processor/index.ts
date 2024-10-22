@@ -10,10 +10,11 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { CancellationsValidationError, siriSxSchema } from "@bods-integrated-data/shared/schema";
+import { CancellationsValidationError, Period, siriSxSchema } from "@bods-integrated-data/shared/schema";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -77,6 +78,20 @@ const uploadValidationErrorsToDatabase = async (
     await putDynamoItems(tableName, errors);
 };
 
+const getSituationEndTime = (situationValidityPeriod: Period[]): string => {
+    const validityPeriodEndTimes = situationValidityPeriod.flatMap((period) => period.EndTime).filter(notEmpty);
+
+    const sortedValidityPeriodEndTimes = validityPeriodEndTimes.sort((a, b) =>
+        getDate(a).isAfter(getDate(b)) ? 1 : -1,
+    );
+
+    // End time is an optional field - if it is not provided we set a default end time of 24 hours after the current time.
+    return (
+        sortedValidityPeriodEndTimes[sortedValidityPeriodEndTimes.length - 1] ??
+        getDate().add(24, "hours").toISOString()
+    );
+};
+
 export const processSqsRecord = async (
     record: S3EventRecord,
     dbClient: KyselyDb,
@@ -128,6 +143,8 @@ export const processSqsRecord = async (
                     const situations: NewSituation[] = ptSituations.map((ptSituation) => {
                         const id = [subscriptionId, ptSituation.SituationNumber, ptSituation.Version].join("-");
 
+                        const situationEndTime = getSituationEndTime(ptSituation.ValidityPeriod);
+
                         const situation: NewSituation = {
                             id,
                             subscription_id: subscriptionId,
@@ -136,6 +153,7 @@ export const processSqsRecord = async (
                             situation_number: ptSituation.SituationNumber,
                             version: ptSituation.Version,
                             situation: ptSituation,
+                            end_time: situationEndTime,
                         };
 
                         return situation;

@@ -496,6 +496,7 @@ export interface SituationTable {
     situation_number: string;
     version: number | null;
     situation: ColumnType<PtSituationElement>;
+    end_time: string;
 }
 
 export type Situation = Selectable<SituationTable>;
