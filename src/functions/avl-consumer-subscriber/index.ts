@@ -84,6 +84,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
     try {
         const {
+            STAGE,
             AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
             AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME,
             AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN,
@@ -99,8 +100,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             !AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN ||
             !AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN ||
             !AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN ||
-            !ALARM_TOPIC_ARN ||
-            !OK_TOPIC_ARN
+            (STAGE !== "local" && !ALARM_TOPIC_ARN) ||
+            (STAGE !== "local" && !OK_TOPIC_ARN)
         ) {
             throw new Error(
                 "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN, ALARM_TOPIC_ARN and OK_TOPIC_ARN must be set",
@@ -220,7 +221,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                     Value: queueName,
                 },
             ],
-            AlarmActions: [ALARM_TOPIC_ARN, OK_TOPIC_ARN],
+            AlarmActions: [ALARM_TOPIC_ARN || "", OK_TOPIC_ARN || ""],
         });
 
         const eventSourceMappingUuid = await createEventSourceMapping({
