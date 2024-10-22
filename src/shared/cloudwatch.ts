@@ -1,8 +1,11 @@
 import {
     CloudWatchClient,
+    DeleteAlarmsCommand,
     Dimension,
     GetMetricStatisticsCommand,
     MetricDatum,
+    PutMetricAlarmCommand,
+    PutMetricAlarmCommandInput,
     PutMetricDataCommand,
     Statistic,
 } from "@aws-sdk/client-cloudwatch";
@@ -45,6 +48,18 @@ const cloudwatchLogsClient = new CloudWatchLogsClient({
           }
         : {}),
 });
+
+export const createAlarm = (input: PutMetricAlarmCommandInput) => {
+    return cloudwatchClient.send(new PutMetricAlarmCommand(input));
+};
+
+export const deleteAlarm = (name: string) => {
+    return cloudwatchClient.send(
+        new DeleteAlarmsCommand({
+            AlarmNames: [name],
+        }),
+    );
+};
 
 export const putMetricData = async (namespace: string, metricData: MetricDatum[], metricDimensions?: Dimension[]) => {
     await cloudwatchClient.send(

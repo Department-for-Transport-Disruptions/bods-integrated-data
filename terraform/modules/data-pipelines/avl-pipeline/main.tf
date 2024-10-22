@@ -550,4 +550,6 @@ module "integrated_data_avl_data_consumer_subscriptions" {
   db_secret_arn                   = var.db_secret_arn
   db_name                         = var.db_name
   avl_producer_subscription_table = var.avl_subscription_table_name
+  alarm_topic_arn                 = var.alarm_topic_arn
+  ok_topic_arn                    = var.ok_topic_arn
 }

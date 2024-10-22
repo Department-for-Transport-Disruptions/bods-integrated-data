@@ -113,6 +113,13 @@ module "avl_consumer_subscriber" {
     },
     {
       Action = [
+        "cloudwatch:PutMetricAlarm"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:cloudwatch:${var.aws_region}:${var.aws_account_id}:alarm:consumer-queue-alarm-*"
+    },
+    {
+      Action = [
         "lambda:CreateEventSourceMapping"
       ],
       Effect   = "Allow",
@@ -135,6 +142,8 @@ module "avl_consumer_subscriber" {
     AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN = module.avl_consumer_data_sender.function_arn
     AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN     = module.avl_consumer_subscription_trigger.function_arn
     AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN        = aws_iam_role.integrated_data_consumer_subscription_schedule_role.arn
+    ALARM_TOPIC_ARN                                    = var.alarm_topic_arn
+    OK_TOPIC_ARN                                       = var.ok_topic_arn
   }
 }
 
@@ -175,6 +184,13 @@ module "avl_consumer_unsubscriber" {
       ],
       Effect   = "Allow",
       Resource = "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:consumer-sub-queue-*"
+    },
+    {
+      Action = [
+        "cloudwatch:DeleteAlarms"
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:cloudwatch:${var.aws_region}:${var.aws_account_id}:alarm:consumer-queue-alarm-*"
     },
     {
       Action = [

@@ -6,7 +6,7 @@ import {
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import { getAvlConsumerSubscription } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
+import { deleteAlarm, putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { deleteSchedule } from "@bods-integrated-data/shared/eventBridge";
 import { deleteEventSourceMapping } from "@bods-integrated-data/shared/lambda";
@@ -81,9 +81,20 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                     Name: subscription.scheduleName,
                 });
 
-                updatedSubscription.scheduleName = "";
+                updatedSubscription.scheduleName = undefined;
             } catch (error) {
                 logger.error(error, `Error deleting schedule with name: ${subscription.scheduleName}`);
+                updatedSubscription.status = "error";
+            }
+        }
+
+        if (subscription.queueAlarmName) {
+            try {
+                await deleteAlarm(subscription.queueAlarmName);
+
+                updatedSubscription.queueAlarmName = undefined;
+            } catch (error) {
+                logger.error(error, `Error deleting alarm with name: ${subscription.queueAlarmName}`);
                 updatedSubscription.status = "error";
             }
         }
@@ -94,7 +105,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                     UUID: subscription.eventSourceMappingUuid,
                 });
 
-                updatedSubscription.eventSourceMappingUuid = "";
+                updatedSubscription.eventSourceMappingUuid = undefined;
             } catch (error) {
                 logger.error(
                     error,
@@ -110,7 +121,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                     QueueUrl: subscription.queueUrl,
                 });
 
-                updatedSubscription.queueUrl = "";
+                updatedSubscription.queueUrl = undefined;
             } catch (error) {
                 logger.error(error, `Error deleting queue with URL: ${subscription.queueUrl}`);
                 updatedSubscription.status = "error";
