@@ -1,3 +1,4 @@
+import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as eventBridge from "@bods-integrated-data/shared/eventBridge";
 import * as lambda from "@bods-integrated-data/shared/lambda";
@@ -27,6 +28,7 @@ const consumerSubscription: AvlConsumerSubscription = {
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 0,
     queueUrl: "https://mockQueueUrl",
+    queueAlarmName: "mockQueueAlarmName",
     eventSourceMappingUuid: "mockEventSourceMappingUuid",
     scheduleName: "mockScheduleName",
     queryParams: {
@@ -57,6 +59,11 @@ describe("avl-consumer-unsubscriber", () => {
         },
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        deleteAlarm: vi.fn(),
+        putMetricData: vi.fn(),
+    }));
+
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
         recursiveQuery: vi.fn(),
         putDynamoItem: vi.fn(),
@@ -65,6 +72,7 @@ describe("avl-consumer-unsubscriber", () => {
     const recursiveQuerySpy = vi.spyOn(dynamo, "recursiveQuery");
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
     const deleteQueueSpy = vi.spyOn(sqs, "deleteQueue");
+    const deleteAlarmSpy = vi.spyOn(cloudwatch, "deleteAlarm");
     const deleteEventSourceMappingSpy = vi.spyOn(lambda, "deleteEventSourceMapping");
     const deleteScheduleSpy = vi.spyOn(eventBridge, "deleteSchedule");
 
@@ -82,6 +90,7 @@ describe("avl-consumer-unsubscriber", () => {
 
         recursiveQuerySpy.mockResolvedValue([consumerSubscription]);
         deleteQueueSpy.mockResolvedValue({ $metadata: {} });
+        deleteAlarmSpy.mockResolvedValue({ $metadata: {} });
         deleteEventSourceMappingSpy.mockResolvedValue({ $metadata: {} });
         deleteScheduleSpy.mockResolvedValue({ $metadata: {} });
     });
@@ -164,12 +173,14 @@ describe("avl-consumer-unsubscriber", () => {
         const updatedConsumerSubscription: AvlConsumerSubscription = {
             ...consumerSubscription,
             status: "inactive",
-            queueUrl: "",
-            eventSourceMappingUuid: "",
-            scheduleName: "",
+            queueUrl: undefined,
+            queueAlarmName: undefined,
+            eventSourceMappingUuid: undefined,
+            scheduleName: undefined,
         };
 
         expect(deleteQueueSpy).toHaveBeenCalledWith({ QueueUrl: consumerSubscription.queueUrl });
+        expect(deleteAlarmSpy).toHaveBeenCalledWith(consumerSubscription.queueAlarmName);
         expect(deleteEventSourceMappingSpy).toHaveBeenCalledWith({ UUID: consumerSubscription.eventSourceMappingUuid });
         expect(deleteScheduleSpy).toHaveBeenCalledWith({ Name: consumerSubscription.scheduleName });
         expect(putDynamoItemSpy).toHaveBeenCalledWith(
@@ -182,6 +193,7 @@ describe("avl-consumer-unsubscriber", () => {
 
     it("returns a 503 when errors occur deleting AWS resources", async () => {
         deleteQueueSpy.mockRejectedValue(new Error());
+        deleteAlarmSpy.mockRejectedValue(new Error());
         deleteEventSourceMappingSpy.mockRejectedValue(new Error());
         deleteScheduleSpy.mockRejectedValue(new Error());
 
@@ -203,10 +215,15 @@ describe("avl-consumer-unsubscriber", () => {
         expect(logger.error).toHaveBeenNthCalledWith(
             2,
             expect.any(Error),
-            `Error deleting event source mapping with UUID: ${consumerSubscription.eventSourceMappingUuid}`,
+            `Error deleting alarm with name: ${consumerSubscription.queueAlarmName}`,
         );
         expect(logger.error).toHaveBeenNthCalledWith(
             3,
+            expect.any(Error),
+            `Error deleting event source mapping with UUID: ${consumerSubscription.eventSourceMappingUuid}`,
+        );
+        expect(logger.error).toHaveBeenNthCalledWith(
+            4,
             expect.any(Error),
             `Error deleting queue with URL: ${consumerSubscription.queueUrl}`,
         );

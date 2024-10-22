@@ -25,6 +25,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
         heartbeatAttempts: 0,
         lastRetrievedAvlId: 0,
         queueUrl: "https://mockQueueUrl",
+        queueAlarmName: "mockQueueAlarmName",
         eventSourceMappingUuid: "mockEventSourceMappingUuid",
         scheduleName: "mockScheduleName",
         queryParams: {
@@ -45,6 +46,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
         heartbeatAttempts: 0,
         lastRetrievedAvlId: 0,
         queueUrl: "https://mockQueueUrl",
+        queueAlarmName: "mockQueueAlarmName",
         eventSourceMappingUuid: "mockEventSourceMappingUuid",
         scheduleName: "mockScheduleName",
         queryParams: {
@@ -65,6 +67,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
         heartbeatAttempts: 0,
         lastRetrievedAvlId: 0,
         queueUrl: "https://mockQueueUrl",
+        queueAlarmName: "mockQueueAlarmName",
         eventSourceMappingUuid: "mockEventSourceMappingUuid",
         scheduleName: "mockScheduleName",
         queryParams: {
@@ -85,6 +88,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
         heartbeatAttempts: 0,
         lastRetrievedAvlId: 0,
         queueUrl: "https://mockQueueUrl",
+        queueAlarmName: "mockQueueAlarmName",
         eventSourceMappingUuid: "mockEventSourceMappingUuid",
         scheduleName: "mockScheduleName",
         queryParams: {

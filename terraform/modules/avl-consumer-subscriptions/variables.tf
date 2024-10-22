@@ -49,3 +49,11 @@ variable "db_name" {
 variable "avl_producer_subscription_table" {
   type = string
 }
+
+variable "alarm_topic_arn" {
+  type = string
+}
+
+variable "ok_topic_arn" {
+  type = string
+}

@@ -46,9 +46,10 @@ const testConsumerSubscription: AvlConsumerSubscription = {
     heartbeatAttempts: 0,
     queryParams: { subscriptionId: ["1234"] },
     lastRetrievedAvlId: 0,
-    queueUrl: "",
-    eventSourceMappingUuid: "",
-    scheduleName: "",
+    queueUrl: undefined,
+    queueAlarmName: undefined,
+    eventSourceMappingUuid: undefined,
+    scheduleName: undefined,
 };
 
 const consumerSubscriptionId = "PLAYWRIGHT_CONSUMER";
