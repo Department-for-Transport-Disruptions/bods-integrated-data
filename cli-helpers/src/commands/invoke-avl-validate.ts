@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeAvlValidate = new Command("invoke-avl-validate")
+program
     .addOption(STAGE_OPTION)
     .option("--url <url>", "Data producer url")
     .option("-u, --username <username>", "Data producer username")
@@ -28,4 +27,5 @@ export const invokeAvlValidate = new Command("invoke-avl-validate")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

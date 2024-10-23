@@ -1,7 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
-
 interface Subscription {
     id: string;
     publisherId: string;
@@ -10,7 +9,7 @@ interface Subscription {
     password: string;
 }
 
-export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl-subscriptions")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -58,4 +57,5 @@ export const rollbackMigrateAvlSubscriptions = new Command("rollback-migrate-avl
         }
 
         await writeFile("unsubscribe-unsuccessful-subscriptions.json", JSON.stringify(unsuccessfulSubscriptions));
-    });
+    })
+    .parse();

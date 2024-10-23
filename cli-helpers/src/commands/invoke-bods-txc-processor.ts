@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeBodsTxcProcessor = new Command("invoke-bods-txc-processor")
+program
     .addOption(STAGE_OPTION)
     .option("-f, --file <file>", "File to process")
     .action(async (options) => {
@@ -30,4 +29,5 @@ export const invokeBodsTxcProcessor = new Command("invoke-bods-txc-processor")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
-    });
+    })
+    .parse();

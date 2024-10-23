@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeAvlSubscriptions = new Command("invoke-avl-subscriptions")
+program
     .option("--subscriptionId <subscriptionId>", "Subscription ID")
     .addOption(STAGE_OPTION)
     .action(async (options) => {
@@ -26,4 +25,5 @@ export const invokeAvlSubscriptions = new Command("invoke-avl-subscriptions")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

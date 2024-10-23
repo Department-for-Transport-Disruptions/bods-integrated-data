@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeGtfsRtDownloader = new Command("invoke-gtfs-rt-downloader")
+program
     .addOption(STAGE_OPTION)
     .option("--download <download>", "Pass download parameter to function")
     .option("--routeId <routeId>", "Pass routeId parameter to function")
@@ -40,4 +39,5 @@ export const invokeGtfsRtDownloader = new Command("invoke-gtfs-rt-downloader")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

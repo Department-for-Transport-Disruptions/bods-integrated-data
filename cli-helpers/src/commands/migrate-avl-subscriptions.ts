@@ -1,8 +1,7 @@
 import { writeFile } from "node:fs/promises";
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import csvToJson from "convert-csv-to-json";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
-
 interface BodsSubscription {
     dataset_id: string;
     organisation_id: string;
@@ -39,7 +38,7 @@ const generateLambdaPayload = (
     };
 };
 
-export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
+program
     .addOption(STAGE_OPTION)
     .option("--file <file>", "Subscriptions CSV file name")
     .action(async (options) => {
@@ -135,4 +134,5 @@ export const migrateAvlSubscriptions = new Command("migrate-avl-subscriptions")
 
         await writeFile("unsuccessful-subscriptions.json", JSON.stringify(unsuccessfulSubscriptions));
         await writeFile("successful-subscriptions.json", JSON.stringify(successfulSubscriptions));
-    });
+    })
+    .parse();

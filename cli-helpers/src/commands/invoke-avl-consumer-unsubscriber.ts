@@ -1,8 +1,7 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-unsubscriber")
+program
     .addOption(STAGE_OPTION)
     .option("--apiKey <apiKey>", "API key")
     .option("--consumerSubscriptionId <consumerSubscriptionId>", "Consumer subscription ID")
@@ -38,4 +37,5 @@ export const invokeAvlConsumerUnsubscriber = new Command("invoke-avl-consumer-un
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

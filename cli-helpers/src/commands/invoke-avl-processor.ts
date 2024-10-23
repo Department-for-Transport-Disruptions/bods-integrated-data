@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeAvlProcessor = new Command("invoke-avl-processor")
+program
     .addOption(STAGE_OPTION)
     .option("-f, --file <file>", "File path")
     .action(async (options) => {
@@ -30,4 +29,5 @@ export const invokeAvlProcessor = new Command("invoke-avl-processor")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
-    });
+    })
+    .parse();

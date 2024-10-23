@@ -1,12 +1,13 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
-import { Command, Option } from "@commander-js/extra-typings";
+import { Option } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getDynamoDbItem, invokeLambda, withUserPrompts } from "../utils";
 import { createDynamoDbDocClient } from "../utils/awsClients";
 
 const notificationTypeChoices = ["Heartbeat Notification", "Cancellations Data"];
 
-export const invokeCancellationsDataEndpoint = new Command("invoke-cancellations-data-endpoint")
+program
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .addOption(new Option("-n, --notificationType <type>", "Notification type").choices(notificationTypeChoices))
@@ -147,4 +148,5 @@ export const invokeCancellationsDataEndpoint = new Command("invoke-cancellations
         });
 
         logger.info(`${notificationType} sent to data endpoint`);
-    });
+    })
+    .parse();

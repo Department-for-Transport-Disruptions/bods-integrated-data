@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeGtfsRtServiceAlertsDownloader = new Command("invoke-gtfs-rt-service-alerts-downloader")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +11,5 @@ export const invokeGtfsRtServiceAlertsDownloader = new Command("invoke-gtfs-rt-s
             FunctionName: `integrated-data-gtfs-rt-service-alerts-downloader-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();

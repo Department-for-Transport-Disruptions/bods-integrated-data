@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data-sender")
+program
     .addOption(STAGE_OPTION)
     .option("--apiKey <apiKey>", "API key")
     .option("--subscriptionPK <subscriptionPK>", "Consumer subscription PK")
@@ -25,4 +24,5 @@ export const invokeAvlConsumerDataSender = new Command("invoke-avl-consumer-data
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

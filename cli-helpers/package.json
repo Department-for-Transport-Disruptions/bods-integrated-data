@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Helpers for the bods-integrated-data tool",
     "scripts": {
-        "command": "npx tsx program"
+        "command": "npx tsx"
     },
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.667.0",

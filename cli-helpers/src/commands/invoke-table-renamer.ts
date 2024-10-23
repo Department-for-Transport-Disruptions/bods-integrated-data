@@ -1,7 +1,6 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
-export const invokeTableRenamer = new Command("invoke-table-renamer")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +11,5 @@ export const invokeTableRenamer = new Command("invoke-table-renamer")
             FunctionName: `integrated-data-table-renamer-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();
