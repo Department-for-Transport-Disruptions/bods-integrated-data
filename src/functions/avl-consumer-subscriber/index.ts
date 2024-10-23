@@ -45,6 +45,7 @@ const requestHeadersSchema = z.object({
 const requestParamsSchema = z.preprocess(
     Object,
     z.object({
+        name: createStringLengthValidation("name").optional(),
         boundingBox: createBoundingBoxValidation("boundingBox").optional(),
         operatorRef: createNmTokenArrayValidation("operatorRef").optional(),
         vehicleRef: createNmTokenValidation("vehicleRef").optional(),
@@ -111,6 +112,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const headers = requestHeadersSchema.parse(event.headers);
         const userId = headers["x-user-id"];
         const {
+            name,
             boundingBox,
             operatorRef,
             vehicleRef,
@@ -163,6 +165,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const consumerSubscription: AvlConsumerSubscription = {
             PK,
             SK: userId,
+            name: name || `subscription-${consumerSubscriptionId}`,
             subscriptionId: consumerSubscriptionId,
             status: "live",
             url: subscriptionRequest.ConsumerAddress,
