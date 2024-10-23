@@ -1,62 +1,73 @@
-lockfileVersion: '6.0'
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
-  '@bods-integrated-data/shared':
-    specifier: workspace:^
-    version: link:../../shared
-  fast-xml-parser:
-    specifier: ^4.4.1
-    version: 4.5.0
-  mockdate:
-    specifier: ^3.0.5
-    version: 3.0.5
-  zod:
-    specifier: ^3.23.8
-    version: 3.23.8
+importers:
 
-devDependencies:
-  '@types/aws-lambda':
-    specifier: ^8.10.110
-    version: 8.10.145
-  '@types/node':
-    specifier: ^20.11.19
-    version: 20.16.10
+  .:
+    dependencies:
+      '@bods-integrated-data/shared':
+        specifier: workspace:^
+        version: link:../../shared
+      fast-xml-parser:
+        specifier: ^4.4.1
+        version: 4.5.0
+      mockdate:
+        specifier: ^3.0.5
+        version: 3.0.5
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/aws-lambda':
+        specifier: ^8.10.110
+        version: 8.10.145
+      '@types/node':
+        specifier: ^20.11.19
+        version: 20.16.10
 
 packages:
 
-  /@types/aws-lambda@8.10.145:
+  '@types/aws-lambda@8.10.145':
     resolution: {integrity: sha512-dtByW6WiFk5W5Jfgz1VM+YPA21xMXTuSFoLYIDY0L44jDLLflVPtZkYuu3/YxpGcvjzKFBZLU+GyKjR0HOYtyw==}
-    dev: true
 
-  /@types/node@20.16.10:
+  '@types/node@20.16.10':
     resolution: {integrity: sha512-vQUKgWTjEIRFCvK6CyriPH3MZYiYlNy0fKiEYHWbcoWLEgs4opurGGKlebrTLqdSMIbXImH6XExNiIyNUv3WpA==}
-    dependencies:
-      undici-types: 6.19.8
-    dev: true
 
-  /fast-xml-parser@4.5.0:
+  fast-xml-parser@4.5.0:
     resolution: {integrity: sha512-/PlTQCI96+fZMAOLMZK4CWG1ItCbfZ/0jx7UIJFChPNrx7tcEgerUgWbeieCM9MfHInUDyK8DWYZ+YrywDJuTg==}
     hasBin: true
+
+  mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
+
+  strnum@1.0.5:
+    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
+
+  undici-types@6.19.8:
+    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
+
+  zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+
+snapshots:
+
+  '@types/aws-lambda@8.10.145': {}
+
+  '@types/node@20.16.10':
+    dependencies:
+      undici-types: 6.19.8
+
+  fast-xml-parser@4.5.0:
     dependencies:
       strnum: 1.0.5
-    dev: false
 
-  /mockdate@3.0.5:
-    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
-    dev: false
+  mockdate@3.0.5: {}
 
-  /strnum@1.0.5:
-    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
-    dev: false
+  strnum@1.0.5: {}
 
-  /undici-types@6.19.8:
-    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
-    dev: true
+  undici-types@6.19.8: {}
 
-  /zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-    dev: false
+  zod@3.23.8: {}

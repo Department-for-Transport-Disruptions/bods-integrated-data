@@ -1,101 +1,117 @@
-lockfileVersion: '6.0'
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
-  '@bods-integrated-data/shared':
-    specifier: workspace:^
-    version: link:../../shared
-  adm-zip:
-    specifier: ^0.5.10
-    version: 0.5.10
-  fflate:
-    specifier: ^0.8.2
-    version: 0.8.2
-  node-stream-zip:
-    specifier: ^1.15.0
-    version: 1.15.0
-  yauzl:
-    specifier: ^3.1.1
-    version: 3.1.1
-  zod:
-    specifier: ^3.23.8
-    version: 3.23.8
+importers:
 
-devDependencies:
-  '@types/adm-zip':
-    specifier: ^0.5.5
-    version: 0.5.5
-  '@types/aws-lambda':
-    specifier: ^8.10.110
-    version: 8.10.134
-  '@types/node':
-    specifier: ^20.11.19
-    version: 20.11.24
-  '@types/yauzl':
-    specifier: ^2.10.3
-    version: 2.10.3
+  .:
+    dependencies:
+      '@bods-integrated-data/shared':
+        specifier: workspace:^
+        version: link:../../shared
+      adm-zip:
+        specifier: ^0.5.10
+        version: 0.5.10
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.2
+      node-stream-zip:
+        specifier: ^1.15.0
+        version: 1.15.0
+      yauzl:
+        specifier: ^3.1.1
+        version: 3.1.1
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/adm-zip':
+        specifier: ^0.5.5
+        version: 0.5.5
+      '@types/aws-lambda':
+        specifier: ^8.10.110
+        version: 8.10.134
+      '@types/node':
+        specifier: ^20.11.19
+        version: 20.11.24
+      '@types/yauzl':
+        specifier: ^2.10.3
+        version: 2.10.3
 
 packages:
 
-  /@types/adm-zip@0.5.5:
+  '@types/adm-zip@0.5.5':
     resolution: {integrity: sha512-YCGstVMjc4LTY5uK9/obvxBya93axZOVOyf2GSUulADzmLhYE45u2nAssCs/fWBs1Ifq5Vat75JTPwd5XZoPJw==}
-    dependencies:
-      '@types/node': 20.11.24
-    dev: true
 
-  /@types/aws-lambda@8.10.134:
+  '@types/aws-lambda@8.10.134':
     resolution: {integrity: sha512-cfv422ivDMO+EeA3N4YcshbTHBL+5lLXe+Uz+4HXvIcsCuWvqNFpOs28ZprL8NA3qRCzt95ETiNAJDn4IcC/PA==}
-    dev: true
 
-  /@types/node@20.11.24:
+  '@types/node@20.11.24':
     resolution: {integrity: sha512-Kza43ewS3xoLgCEpQrsT+xRo/EJej1y0kVYGiLFE1NEODXGzTfwiC6tXTLMQskn1X4/Rjlh0MQUvx9W+L9long==}
-    dependencies:
-      undici-types: 5.26.5
-    dev: true
 
-  /@types/yauzl@2.10.3:
+  '@types/yauzl@2.10.3':
     resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
-    dependencies:
-      '@types/node': 20.11.24
-    dev: true
 
-  /adm-zip@0.5.10:
+  adm-zip@0.5.10:
     resolution: {integrity: sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==}
     engines: {node: '>=6.0'}
-    dev: false
 
-  /buffer-crc32@0.2.13:
+  buffer-crc32@0.2.13:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
-    dev: false
 
-  /fflate@0.8.2:
+  fflate@0.8.2:
     resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
-    dev: false
 
-  /node-stream-zip@1.15.0:
+  node-stream-zip@1.15.0:
     resolution: {integrity: sha512-LN4fydt9TqhZhThkZIVQnF9cwjU3qmUH9h78Mx/K7d3VvfRqqwthLwJEUOEL0QPZ0XQmNN7be5Ggit5+4dq3Bw==}
     engines: {node: '>=0.12.0'}
-    dev: false
 
-  /pend@1.2.0:
+  pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
-    dev: false
 
-  /undici-types@5.26.5:
+  undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-    dev: true
 
-  /yauzl@3.1.1:
+  yauzl@3.1.1:
     resolution: {integrity: sha512-MPxA7oN5cvGV0wzfkeHKF2/+Q4TkMpHSWGRy/96I4Cozljmx0ph91+Muxh6HegEtDC4GftJ8qYDE51vghFiEYA==}
     engines: {node: '>=12'}
+
+  zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+
+snapshots:
+
+  '@types/adm-zip@0.5.5':
+    dependencies:
+      '@types/node': 20.11.24
+
+  '@types/aws-lambda@8.10.134': {}
+
+  '@types/node@20.11.24':
+    dependencies:
+      undici-types: 5.26.5
+
+  '@types/yauzl@2.10.3':
+    dependencies:
+      '@types/node': 20.11.24
+
+  adm-zip@0.5.10: {}
+
+  buffer-crc32@0.2.13: {}
+
+  fflate@0.8.2: {}
+
+  node-stream-zip@1.15.0: {}
+
+  pend@1.2.0: {}
+
+  undici-types@5.26.5: {}
+
+  yauzl@3.1.1:
     dependencies:
       buffer-crc32: 0.2.13
       pend: 1.2.0
-    dev: false
 
-  /zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-    dev: false
+  zod@3.23.8: {}
