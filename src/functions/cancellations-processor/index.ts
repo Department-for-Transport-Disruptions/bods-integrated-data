@@ -88,11 +88,11 @@ export const getSituationEndTime = (situationValidityPeriods: Period[]): string 
             situationEndTime = endTime;
             hasEndTime = true;
         }
+    }
 
-        if (!hasEndTime) {
-            // End time is an optional field in the SIRI-SC spec - if it is not provided we set a default end time of 24 hours after the current time.
-            situationEndTime = situationEndTime.add(24, "hours");
-        }
+    if (!hasEndTime) {
+        // End time is an optional field in the SIRI-SC spec - if it is not provided we set a default end time of 24 hours after the current time.
+        situationEndTime = situationEndTime.add(24, "hours");
     }
 
     return situationEndTime.toISOString();
