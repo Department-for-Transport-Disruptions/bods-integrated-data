@@ -13,6 +13,7 @@ import {
     getAvlConsumerSubscription,
 } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
+import { createAlarm, putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { createSchedule } from "@bods-integrated-data/shared/eventBridge";
@@ -83,11 +84,14 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
     try {
         const {
+            STAGE,
             AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
             AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME,
             AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN,
             AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN,
             AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN,
+            ALARM_TOPIC_ARN,
+            OK_TOPIC_ARN,
         } = process.env;
 
         if (
@@ -95,10 +99,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             !AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME ||
             !AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN ||
             !AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN ||
-            !AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN
+            !AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN ||
+            (STAGE !== "local" && !ALARM_TOPIC_ARN) ||
+            (STAGE !== "local" && !OK_TOPIC_ARN)
         ) {
             throw new Error(
-                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN and AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN must be set",
+                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN, ALARM_TOPIC_ARN and OK_TOPIC_ARN must be set",
             );
         }
 
@@ -167,9 +173,10 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             requestTimestamp: subscriptionRequest.RequestTimestamp,
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
-            queueUrl: "",
-            eventSourceMappingUuid: "",
-            scheduleName: "",
+            queueUrl: undefined,
+            queueAlarmName: undefined,
+            eventSourceMappingUuid: undefined,
+            scheduleName: undefined,
             queryParams: {
                 boundingBox,
                 operatorRef,
@@ -182,8 +189,10 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             },
         };
 
+        const queueName = `consumer-sub-queue-${consumerSubscription.PK}`;
+
         const queueUrl = await createQueue({
-            QueueName: `consumer-sub-queue-${consumerSubscription.PK}`,
+            QueueName: queueName,
             Attributes: {
                 VisibilityTimeout: "60",
             },
@@ -192,6 +201,27 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const queueAttributes = await getQueueAttributes({
             QueueUrl: queueUrl,
             AttributeNames: ["QueueArn"],
+        });
+
+        const queueAlarmName = `consumer-queue-alarm-${consumerSubscription.PK}`;
+
+        await createAlarm({
+            AlarmName: queueAlarmName,
+            AlarmDescription: "Alarm when queue length exceeds 25",
+            Statistic: "Sum",
+            MetricName: "ApproximateNumberOfMessagesVisible",
+            ComparisonOperator: "GreaterThanThreshold",
+            Threshold: 25,
+            Period: 60,
+            EvaluationPeriods: 1,
+            Namespace: "AWS/SQS",
+            Dimensions: [
+                {
+                    Name: "QueueName",
+                    Value: queueName,
+                },
+            ],
+            AlarmActions: [ALARM_TOPIC_ARN || "", OK_TOPIC_ARN || ""],
         });
 
         const eventSourceMappingUuid = await createEventSourceMapping({
@@ -224,6 +254,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         });
 
         consumerSubscription.queueUrl = queueUrl;
+        consumerSubscription.queueAlarmName = queueAlarmName;
         consumerSubscription.eventSourceMappingUuid = eventSourceMappingUuid;
         consumerSubscription.scheduleName = scheduleName;
 
@@ -249,6 +280,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         if (e instanceof Error) {
             // Our AWS package versions do not support instanceof exception checks
             if (e.name === "QueueDeletedRecently") {
+                await putMetricData("custom/AvlConsumerMetrics", [
+                    {
+                        MetricName: "FailedSubscribe",
+                        Value: 1,
+                    },
+                ]);
+
                 logger.warn(e, "Queue deleted too recently when trying to resubscribe");
                 return createHttpServiceUnavailableErrorResponse(
                     "Existing subscription is still deactivating, try again later",
@@ -257,6 +295,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             }
 
             if (e.name === "TooManyRequestsException") {
+                await putMetricData("custom/AvlConsumerMetrics", [
+                    {
+                        MetricName: "FailedSubscribe",
+                        Value: 1,
+                    },
+                ]);
+
                 logger.warn(e, "Hit AWS throttle limit when trying to subscribe");
                 return createHttpTooManyRequestsErrorResponse("Too many subscribe requests, try again later", 60);
             }

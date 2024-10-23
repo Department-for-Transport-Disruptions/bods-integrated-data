@@ -1,6 +1,7 @@
 import { TooManyRequestsException } from "@aws-sdk/client-lambda";
 import { QueueDeletedRecently } from "@aws-sdk/client-sqs";
 import { AvlSubscriptionTriggerMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
+import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import * as eventBridge from "@bods-integrated-data/shared/eventBridge";
 import * as lambda from "@bods-integrated-data/shared/lambda";
@@ -24,6 +25,8 @@ const mockSendDataLambdaArn = "mockSendDataLambdaArn";
 const mockEventSourceMappingUuid = "mockEventSourceMappingUuid";
 const mockSubscriptionTriggerLambdaArn = "mockSubscriptionTriggerLambdaArn";
 const mockSubscriptionScheduleRoleArn = "mockSubscriptionScheduleRoleArn";
+const mockAlarmTopicArn = "mockAlarmTopicArn";
+const mockOkTopicArn = "mockOkTopicArn";
 
 const mockRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
 <Siri version=\"2.0\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
@@ -57,6 +60,11 @@ describe("avl-consumer-subscriber", () => {
         },
     }));
 
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        createAlarm: vi.fn(),
+        putMetricData: vi.fn(),
+    }));
+
     vi.mock("node:crypto", () => ({
         randomUUID: () => mockRandomId,
     }));
@@ -66,6 +74,7 @@ describe("avl-consumer-subscriber", () => {
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
     const createQueueSpy = vi.spyOn(sqs, "createQueue");
     const getQueueAttributesSpy = vi.spyOn(sqs, "getQueueAttributes");
+    const createAlarmSpy = vi.spyOn(cloudwatch, "createAlarm");
     const createEventSourceMappingSpy = vi.spyOn(lambda, "createEventSourceMapping");
     const createScheduleSpy = vi.spyOn(eventBridge, "createSchedule");
 
@@ -77,6 +86,8 @@ describe("avl-consumer-subscriber", () => {
         process.env.AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN = mockSendDataLambdaArn;
         process.env.AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN = mockSubscriptionTriggerLambdaArn;
         process.env.AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN = mockSubscriptionScheduleRoleArn;
+        process.env.ALARM_TOPIC_ARN = mockAlarmTopicArn;
+        process.env.OK_TOPIC_ARN = mockOkTopicArn;
 
         mockEvent = {
             headers: {
@@ -100,6 +111,7 @@ describe("avl-consumer-subscriber", () => {
         putDynamoItemSpy.mockResolvedValue();
         createQueueSpy.mockResolvedValue(mockQueueUrl);
         getQueueAttributesSpy.mockResolvedValue({ QueueArn: mockQueueArn });
+        createAlarmSpy.mockResolvedValue({ $metadata: {} });
         createEventSourceMappingSpy.mockResolvedValue(mockEventSourceMappingUuid);
         createScheduleSpy.mockResolvedValue("");
     });
@@ -114,13 +126,17 @@ describe("avl-consumer-subscriber", () => {
         "AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN",
         "AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN",
         "AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN",
+        "ALARM_TOPIC_ARN",
+        "OK_TOPIC_ARN",
     ])("returns a 500 when the required env var %s is missing", async (input) => {
         process.env[input] = "";
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
-            expect.any(Error),
+            new Error(
+                "Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME, AVL_CONSUMER_SUBSCRIPTION_DATA_SENDER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_TRIGGER_FUNCTION_ARN, AVL_CONSUMER_SUBSCRIPTION_SCHEDULE_ROLE_ARN, ALARM_TOPIC_ARN and OK_TOPIC_ARN must be set",
+            ),
             "There was a problem with the avl-consumer-subscriber endpoint",
         );
         expect(putDynamoItemSpy).not.toHaveBeenCalled();
@@ -283,9 +299,10 @@ describe("avl-consumer-subscriber", () => {
             requestTimestamp: "2024-03-11T15:20:02.093Z",
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
-            queueUrl: "",
-            eventSourceMappingUuid: "",
-            scheduleName: "",
+            queueUrl: undefined,
+            queueAlarmName: undefined,
+            eventSourceMappingUuid: undefined,
+            scheduleName: undefined,
             queryParams: {
                 subscriptionId: [mockProducerSubscriptionIds],
             },
@@ -422,6 +439,7 @@ describe("avl-consumer-subscriber", () => {
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
             queueUrl: mockQueueUrl,
+            queueAlarmName: `consumer-queue-alarm-${mockRandomId}`,
             eventSourceMappingUuid: mockEventSourceMappingUuid,
             scheduleName: `consumer-sub-schedule-${mockRandomId}`,
             queryParams: {
@@ -446,6 +464,25 @@ describe("avl-consumer-subscriber", () => {
         expect(getQueueAttributesSpy).toHaveBeenCalledWith({
             QueueUrl: mockQueueUrl,
             AttributeNames: ["QueueArn"],
+        });
+
+        expect(createAlarmSpy).toHaveBeenCalledWith({
+            AlarmName: `consumer-queue-alarm-${mockRandomId}`,
+            AlarmDescription: "Alarm when queue length exceeds 25",
+            Statistic: "Sum",
+            MetricName: "ApproximateNumberOfMessagesVisible",
+            ComparisonOperator: "GreaterThanThreshold",
+            Threshold: 25,
+            Period: 60,
+            EvaluationPeriods: 1,
+            Namespace: "AWS/SQS",
+            Dimensions: [
+                {
+                    Name: "QueueName",
+                    Value: `consumer-sub-queue-${mockRandomId}`,
+                },
+            ],
+            AlarmActions: [mockAlarmTopicArn, mockOkTopicArn],
         });
 
         expect(createEventSourceMappingSpy).toHaveBeenCalledWith({
@@ -510,6 +547,7 @@ describe("avl-consumer-subscriber", () => {
             heartbeatAttempts: 0,
             lastRetrievedAvlId: 0,
             queueUrl: mockQueueUrl,
+            queueAlarmName: `consumer-queue-alarm-${mockRandomId}`,
             eventSourceMappingUuid: mockEventSourceMappingUuid,
             scheduleName: `consumer-sub-schedule-${mockRandomId}`,
             queryParams: {

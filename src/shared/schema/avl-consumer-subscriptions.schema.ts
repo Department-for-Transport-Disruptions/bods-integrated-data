@@ -33,9 +33,10 @@ export const avlConsumerSubscriptionSchema = z.object({
     requestTimestamp: z.string(),
     heartbeatAttempts: z.number(),
     lastRetrievedAvlId: z.number(),
-    queueUrl: z.union([z.literal(""), z.string().url()]),
-    eventSourceMappingUuid: z.string(),
-    scheduleName: z.string(),
+    queueUrl: z.string().url().optional(),
+    queueAlarmName: z.string().optional(),
+    eventSourceMappingUuid: z.string().optional(),
+    scheduleName: z.string().optional(),
     queryParams: subscriptionsQueryParamsSchema,
 });
 
