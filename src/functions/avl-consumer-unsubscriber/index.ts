@@ -22,7 +22,7 @@ import { ZodError, z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 const requestHeadersSchema = z.object({
-    "x-user-id": createStringLengthValidation("x-user-id header"),
+    "x-api-key": createStringLengthValidation("x-api-key header"),
 });
 
 const requestBodySchema = z.string({
@@ -58,7 +58,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const headers = requestHeadersSchema.parse(event.headers);
-        const userId = headers["x-user-id"];
+        const apiKey = headers["x-api-key"];
         const body = requestBodySchema.parse(event.body);
         const xml = parseXml(body);
         const subscriptionId = xml.Siri.TerminateSubscriptionRequest.SubscriptionRef;
@@ -66,7 +66,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const subscription = await getAvlConsumerSubscription(
             AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
-            userId,
+            apiKey,
             subscriptionId,
         );
 

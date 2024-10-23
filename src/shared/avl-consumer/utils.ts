@@ -36,14 +36,14 @@ export const getAvlConsumerSubscriptionByPK = async (tableName: string, PK: stri
     return avlConsumerSubscriptionSchema.parse(subscription);
 };
 
-export const getAvlConsumerSubscription = async (tableName: string, userId: string, subscriptionId: string) => {
+export const getAvlConsumerSubscription = async (tableName: string, apiKey: string, subscriptionId: string) => {
     const subscriptions = await recursiveQuery<AvlConsumerSubscription>({
         TableName: tableName,
         IndexName: "subscriptionId-index",
         KeyConditionExpression: "subscriptionId = :subscriptionId AND SK = :SK",
         ExpressionAttributeValues: {
             ":subscriptionId": subscriptionId,
-            ":SK": userId,
+            ":SK": apiKey,
         },
     });
 
@@ -54,12 +54,12 @@ export const getAvlConsumerSubscription = async (tableName: string, userId: stri
     return avlConsumerSubscriptionSchema.parse(subscriptions[0]);
 };
 
-export const getAvlConsumerSubscriptions = async (tableName: string, userId: string) => {
+export const getAvlConsumerSubscriptions = async (tableName: string, apiKey: string) => {
     const subscriptions = await recursiveScan({
         TableName: tableName,
         FilterExpression: "SK = :SK",
         ExpressionAttributeValues: {
-            ":SK": userId,
+            ":SK": apiKey,
         },
     });
 

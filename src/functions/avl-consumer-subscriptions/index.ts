@@ -18,7 +18,7 @@ import { ZodError, z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 const requestHeadersSchema = z.object({
-    "x-user-id": createStringLengthValidation("x-user-id header"),
+    "x-api-key": createStringLengthValidation("x-api-key header"),
 });
 
 const requestParamsSchema = z.preprocess(
@@ -69,7 +69,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         const headers = requestHeadersSchema.parse(event.headers);
-        const userId = headers["x-user-id"];
+        const apiKey = headers["x-api-key"];
 
         const { subscriptionId } = requestParamsSchema.parse(event.queryStringParameters);
 
@@ -78,13 +78,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         if (subscriptionId) {
             const subscription = await getAvlConsumerSubscription(
                 AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME,
-                userId,
+                apiKey,
                 subscriptionId,
             );
             logger.subscriptionId = subscription.PK;
             response = mapApiAvlSubscriptionResponse(subscription);
         } else {
-            const subscriptions = await getAvlConsumerSubscriptions(AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, userId);
+            const subscriptions = await getAvlConsumerSubscriptions(AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME, apiKey);
             response = subscriptions.map(mapApiAvlSubscriptionResponse);
         }
 

@@ -13,7 +13,7 @@ const largeProducerCutOffIteration = iterationCount * LARGE_PRODUCER_PERCENTAGE;
 
 const headers = {
     "Content-Type": "text/xml",
-    "x-user-id": __ENV.USER_ID,
+    "x-api-key": __ENV.API_KEY,
 };
 
 export const options = {

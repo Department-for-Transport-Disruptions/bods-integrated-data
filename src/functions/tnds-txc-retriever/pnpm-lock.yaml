@@ -1,49 +1,58 @@
-lockfileVersion: '6.0'
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
-  '@bods-integrated-data/shared':
-    specifier: workspace:^
-    version: link:../../shared
-  basic-ftp:
-    specifier: ^5.0.5
-    version: 5.0.5
-  zod:
-    specifier: ^3.23.8
-    version: 3.23.8
+importers:
 
-devDependencies:
-  '@types/aws-lambda':
-    specifier: ^8.10.110
-    version: 8.10.134
-  '@types/node':
-    specifier: ^20.11.19
-    version: 20.11.24
+  .:
+    dependencies:
+      '@bods-integrated-data/shared':
+        specifier: workspace:^
+        version: link:../../shared
+      basic-ftp:
+        specifier: ^5.0.5
+        version: 5.0.5
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/aws-lambda':
+        specifier: ^8.10.110
+        version: 8.10.134
+      '@types/node':
+        specifier: ^20.11.19
+        version: 20.11.24
 
 packages:
 
-  /@types/aws-lambda@8.10.134:
+  '@types/aws-lambda@8.10.134':
     resolution: {integrity: sha512-cfv422ivDMO+EeA3N4YcshbTHBL+5lLXe+Uz+4HXvIcsCuWvqNFpOs28ZprL8NA3qRCzt95ETiNAJDn4IcC/PA==}
-    dev: true
 
-  /@types/node@20.11.24:
+  '@types/node@20.11.24':
     resolution: {integrity: sha512-Kza43ewS3xoLgCEpQrsT+xRo/EJej1y0kVYGiLFE1NEODXGzTfwiC6tXTLMQskn1X4/Rjlh0MQUvx9W+L9long==}
-    dependencies:
-      undici-types: 5.26.5
-    dev: true
 
-  /basic-ftp@5.0.5:
+  basic-ftp@5.0.5:
     resolution: {integrity: sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==}
     engines: {node: '>=10.0.0'}
-    dev: false
 
-  /undici-types@5.26.5:
+  undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-    dev: true
 
-  /zod@3.23.8:
+  zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-    dev: false
+
+snapshots:
+
+  '@types/aws-lambda@8.10.134': {}
+
+  '@types/node@20.11.24':
+    dependencies:
+      undici-types: 5.26.5
+
+  basic-ftp@5.0.5: {}
+
+  undici-types@5.26.5: {}
+
+  zod@3.23.8: {}

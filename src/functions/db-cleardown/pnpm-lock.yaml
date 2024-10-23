@@ -1,49 +1,58 @@
-lockfileVersion: '6.0'
+lockfileVersion: '9.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
-  '@bods-integrated-data/shared':
-    specifier: workspace:^
-    version: link:../../shared
-  kysely:
-    specifier: ^0.27.3
-    version: 0.27.3
-  zod:
-    specifier: ^3.23.8
-    version: 3.23.8
+importers:
 
-devDependencies:
-  '@types/aws-lambda':
-    specifier: ^8.10.110
-    version: 8.10.134
-  '@types/node':
-    specifier: ^20.11.19
-    version: 20.11.23
+  .:
+    dependencies:
+      '@bods-integrated-data/shared':
+        specifier: workspace:^
+        version: link:../../shared
+      kysely:
+        specifier: ^0.27.3
+        version: 0.27.3
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/aws-lambda':
+        specifier: ^8.10.110
+        version: 8.10.134
+      '@types/node':
+        specifier: ^20.11.19
+        version: 20.11.23
 
 packages:
 
-  /@types/aws-lambda@8.10.134:
+  '@types/aws-lambda@8.10.134':
     resolution: {integrity: sha512-cfv422ivDMO+EeA3N4YcshbTHBL+5lLXe+Uz+4HXvIcsCuWvqNFpOs28ZprL8NA3qRCzt95ETiNAJDn4IcC/PA==}
-    dev: true
 
-  /@types/node@20.11.23:
+  '@types/node@20.11.23':
     resolution: {integrity: sha512-ZUarKKfQuRILSNYt32FuPL20HS7XwNT7/uRwSV8tiHWfyyVwDLYZNF6DZKc2bove++pgfsXn9sUwII/OsQ82cQ==}
-    dependencies:
-      undici-types: 5.26.5
-    dev: true
 
-  /kysely@0.27.3:
+  kysely@0.27.3:
     resolution: {integrity: sha512-lG03Ru+XyOJFsjH3OMY6R/9U38IjDPfnOfDgO3ynhbDr+Dz8fak+X6L62vqu3iybQnj+lG84OttBuU9KY3L9kA==}
     engines: {node: '>=14.0.0'}
-    dev: false
 
-  /undici-types@5.26.5:
+  undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-    dev: true
 
-  /zod@3.23.8:
+  zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-    dev: false
+
+snapshots:
+
+  '@types/aws-lambda@8.10.134': {}
+
+  '@types/node@20.11.23':
+    dependencies:
+      undici-types: 5.26.5
+
+  kysely@0.27.3: {}
+
+  undici-types@5.26.5: {}
+
+  zod@3.23.8: {}
