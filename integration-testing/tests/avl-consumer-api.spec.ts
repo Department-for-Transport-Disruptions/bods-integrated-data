@@ -35,6 +35,7 @@ const testProducerSubscription: AvlSubscription = {
 const testConsumerSubscription: AvlConsumerSubscription = {
     PK: "621352ba-7fd9-47ab-b86f-38858d652951",
     SK: "1",
+    name: "consumer-sub-1",
     subscriptionId: "PLAYWRIGHT_CONSUMER",
     status: "live",
     url: "https://www.test.com",
@@ -86,7 +87,7 @@ test.describe("avl-consumer-api", () => {
 
     test("should return all siri-vm data if valid query parameters are passed", async ({ request }) => {
         const queryParams =
-            "subscriptionId=test&operatorRef=test&lineRef=test&vehicleRef=test&producerRef=test&originRef=test&destinationRef=test&boundingBox=1,2,3,4";
+            "subscriptionId=test&name=testName&operatorRef=test&lineRef=test&vehicleRef=test&producerRef=test&originRef=test&destinationRef=test&boundingBox=1,2,3,4";
         const siriVmResponse = await request.get(`${avlConsumerApiUrl(stage)}/siri-vm?${queryParams}`);
 
         expect(siriVmResponse.status()).toBe(200);

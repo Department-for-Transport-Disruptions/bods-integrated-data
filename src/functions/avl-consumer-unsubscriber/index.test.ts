@@ -17,6 +17,7 @@ const mockUserId = "mock-user-id";
 const consumerSubscription: AvlConsumerSubscription = {
     PK: mockConsumerSubscriptionId,
     SK: mockUserId,
+    name: "consumer-sub-1",
     subscriptionId: mockConsumerSubscriptionId,
     status: "live",
     url: "https://www.test.com/data",

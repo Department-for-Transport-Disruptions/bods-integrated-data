@@ -94,6 +94,7 @@ describe("avl-consumer-subscriber", () => {
                 "x-user-id": mockUserId,
             },
             queryStringParameters: {
+                name: "consumer-sub-1",
                 boundingBox: "1,2,3,4",
                 operatorRef: "a,b,c",
                 vehicleRef: "vehicle-ref",
@@ -289,6 +290,7 @@ describe("avl-consumer-subscriber", () => {
         const consumerSubscription: AvlConsumerSubscription = {
             PK: mockRandomId,
             SK: mockUserId,
+            name: "consumer-sub-1",
             subscriptionId: mockConsumerSubscriptionId,
             status: "live",
             url: "https://example.com",
@@ -428,6 +430,7 @@ describe("avl-consumer-subscriber", () => {
         const consumerSubscription: AvlConsumerSubscription = {
             PK: mockRandomId,
             SK: mockUserId,
+            name: "consumer-sub-1",
             subscriptionId: mockConsumerSubscriptionId,
             status: "live",
             url: "https://www.test.com/data",
@@ -536,6 +539,7 @@ describe("avl-consumer-subscriber", () => {
         const consumerSubscription: AvlConsumerSubscription = {
             PK: mockRandomId,
             SK: mockUserId,
+            name: "consumer-sub-1",
             subscriptionId: mockConsumerSubscriptionId,
             status: "error",
             url: "https://www.test.com/data",
@@ -578,6 +582,62 @@ describe("avl-consumer-subscriber", () => {
                 ...consumerSubscription,
                 status: "live",
             },
+        );
+    });
+
+    it("sets a default subscription name when the name query param is omitted", async () => {
+        mockEvent.queryStringParameters = {
+            subscriptionId: mockProducerSubscriptionIds,
+        };
+
+        const producerSubscription: AvlSubscription = {
+            PK: mockProducerSubscriptionIds[0],
+            description: "test-description",
+            lastAvlDataReceivedDateTime: "2024-03-11T15:20:02.093Z",
+            requestorRef: null,
+            shortDescription: "test-short-description",
+            status: "live",
+            url: "https://mock-data-producer.com/",
+            publisherId: "test-publisher-id",
+            apiKey: "mock-api-key",
+        };
+
+        recursiveScanSpy.mockResolvedValueOnce([producerSubscription]);
+
+        const response = await handler(mockEvent, mockContext, mockCallback);
+        expect(response).toEqual({
+            statusCode: 200,
+            body: "",
+        });
+
+        const consumerSubscription: AvlConsumerSubscription = {
+            PK: mockRandomId,
+            SK: mockUserId,
+            name: `subscription-${mockConsumerSubscriptionId}`,
+            subscriptionId: mockConsumerSubscriptionId,
+            status: "live",
+            url: "https://www.test.com/data",
+            requestorRef: "test",
+            updateInterval: "PT10S",
+            heartbeatInterval: "PT30S",
+            initialTerminationTime: "2034-03-11T15:20:02.093Z",
+            requestTimestamp: "2024-03-11T15:20:02.093Z",
+            heartbeatAttempts: 0,
+            lastRetrievedAvlId: 0,
+            queueUrl: mockQueueUrl,
+            queueAlarmName: `consumer-queue-alarm-${mockRandomId}`,
+            eventSourceMappingUuid: mockEventSourceMappingUuid,
+            scheduleName: `consumer-sub-schedule-${mockRandomId}`,
+            queryParams: {
+                subscriptionId: [mockProducerSubscriptionIds],
+            },
+        };
+
+        expect(putDynamoItemSpy).toHaveBeenCalledWith(
+            mockConsumerSubscriptionTable,
+            consumerSubscription.PK,
+            consumerSubscription.SK,
+            consumerSubscription,
         );
     });
 });
