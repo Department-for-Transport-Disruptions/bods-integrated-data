@@ -7,11 +7,12 @@ import {
     AvlSubscription,
     CancellationsSubscription,
     CancellationsValidationError,
+    Period,
 } from "@bods-integrated-data/shared/schema";
 import { S3EventRecord } from "aws-lambda";
 import MockDate from "mockdate";
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { processSqsRecord } from ".";
+import { afterAll, beforeEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { getSituationEndTime, processSqsRecord } from ".";
 import {
     mockSubscriptionId,
     parsedSiriSx,
@@ -278,5 +279,45 @@ describe("cancellations-processor", () => {
             "cancellations-validation-errors-table",
             expectedValidationErrors,
         );
+    });
+});
+
+describe("getSituationEndTime", () => {
+    beforeAll(() => {
+        MockDate.set("2024-07-22T12:00:00.000Z");
+    });
+
+    afterAll(() => {
+        MockDate.reset();
+    });
+
+    const mockValidityPeriods: Period[] = [
+        {
+            StartTime: "2024-11-09T13:00:00.000Z",
+            EndTime: "2024-12-24T15:00:00.000Z",
+        },
+        {
+            StartTime: "2024-11-09T13:00:00.000Z",
+        },
+        {
+            StartTime: "2024-11-23T13:00:00.000Z",
+            EndTime: "2024-11-24T15:00:00.000Z",
+        },
+        {
+            StartTime: "2024-11-23T13:00:00.000Z",
+            EndTime: "2025-11-24T15:00:00.000Z",
+        },
+    ];
+
+    it("should return 24 hours after now if no EndTime is present in a situation's ValidityPeriod", () => {
+        expect(getSituationEndTime([mockValidityPeriods[1]])).toEqual("2024-07-23T12:00:00.000Z");
+    });
+
+    it("should return a situation's ValidityPeriod EndTime if one exists", () => {
+        expect(getSituationEndTime([mockValidityPeriods[0]])).toEqual("2024-12-24T15:00:00.000Z");
+    });
+
+    it("should return the latest ValidityPeriod EndTime if a situation has multiple", () => {
+        expect(getSituationEndTime(mockValidityPeriods)).toEqual("2025-11-24T15:00:00.000Z");
     });
 });

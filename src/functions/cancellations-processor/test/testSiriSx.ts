@@ -356,7 +356,7 @@ export const parsedSiriSx: NewSituation[] = [
         producer_ref: "ATB",
         situation_number: "123",
         version: 2,
-        end_time: "2024-10-09T13:30:00+00:00",
+        end_time: "2024-10-09T13:30:00.000Z",
         situation: {
             CreationTime: "2024-10-09T11:45:00+00:00",
             ParticipantRef: "ATB",
