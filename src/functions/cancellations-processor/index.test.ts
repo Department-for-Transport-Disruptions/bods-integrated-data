@@ -11,7 +11,7 @@ import {
 } from "@bods-integrated-data/shared/schema";
 import { S3EventRecord } from "aws-lambda";
 import MockDate from "mockdate";
-import { afterAll, beforeEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { getSituationEndTime, processSqsRecord } from ".";
 import {
     mockSubscriptionId,
