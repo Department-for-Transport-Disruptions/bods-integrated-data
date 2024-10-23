@@ -1,9 +1,8 @@
 import { writeFile } from "node:fs/promises";
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import csvToJson from "convert-csv-to-json";
 import { z } from "zod";
 import { withUserPrompts } from "../utils";
-
 const agencyCsvSchema = z.object({
     agency_id: z.string(),
     agency_name: z.string(),
@@ -14,7 +13,7 @@ const agencyCsvSchema = z.object({
     agency_noc: z.string(),
 });
 
-export const convertAgencyCsvToJson = new Command("convert-agency-csv-to-json")
+program
     .option("-f, --file <file>", "Path to agencies csv file")
     .action(async (options) => {
         const { file } = await withUserPrompts(options, {
@@ -37,4 +36,5 @@ export const convertAgencyCsvToJson = new Command("convert-agency-csv-to-json")
             .sort((a, b) => (a.id < b.id ? -1 : 1));
 
         await writeFile("./agencies.json", JSON.stringify(agencies));
-    });
+    })
+    .parse();

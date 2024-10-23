@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeTndsTxcRetriever = new Command("invoke-tnds-txc-retriever")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +12,5 @@ export const invokeTndsTxcRetriever = new Command("invoke-tnds-txc-retriever")
             FunctionName: `integrated-data-tnds-txc-retriever-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();

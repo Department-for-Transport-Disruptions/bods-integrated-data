@@ -114,11 +114,8 @@ run-integration-tests-%:
 
 # CLI helpers
 
-commands:
-	cd cli-helpers && pnpm command;
-
 command-%:
-	cd cli-helpers && pnpm command $* ${FLAGS};
+	npx tsx cli-helpers/src/commands/$* ${FLAGS};
 
 # Secrets
 

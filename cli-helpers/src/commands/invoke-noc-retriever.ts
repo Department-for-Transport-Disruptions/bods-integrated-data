@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeNocRetriever = new Command("invoke-noc-retriever")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +12,5 @@ export const invokeNocRetriever = new Command("invoke-noc-retriever")
             FunctionName: `integrated-data-noc-retriever-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();

@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeNaptanRetriever = new Command("invoke-naptan-retriever")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +12,5 @@ export const invokeNaptanRetriever = new Command("invoke-naptan-retriever")
             FunctionName: `integrated-data-naptan-retriever-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();

@@ -1,9 +1,9 @@
-import { Command, Option } from "@commander-js/extra-typings";
+import { Option } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
-
 const frequencyChoices = ["10", "15", "20", "30"];
 
-export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subscriber")
+program
     .addOption(STAGE_OPTION)
     .option("--apiKey <apiKey>", "API key")
     .option("--name <name>", "Subscription name")
@@ -62,4 +62,5 @@ export const invokeAvlConsumerSubscriber = new Command("invoke-avl-consumer-subs
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

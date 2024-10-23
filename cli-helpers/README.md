@@ -4,10 +4,10 @@ CLI helpers for local development and testing.
 
 ## Usage
 
-Run a command:
+Run a command by using the command's filename:
 
 ```bash
-pnpm command <command>
+pnpm command {command-name}
 
 # for example:
 pnpm command invoke-noc-retriever
@@ -21,4 +21,4 @@ pnpm command invoke-noc-retriever --stage "local"
 
 ## Commands
 
-See `src/commands/index.ts` for a list of supported commands.
+See `src/commands` for a list of supported commands.

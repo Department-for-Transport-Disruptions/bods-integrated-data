@@ -1,11 +1,12 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-import { Command, Option } from "@commander-js/extra-typings";
+import { Option } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getDynamoDbItem, invokeLambda, withUserPrompts } from "../utils";
 import { createDynamoDbDocClient } from "../utils/awsClients";
 
 const notificationTypeChoices = ["Heartbeat Notification", "AVL Data"];
 
-export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
+program
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <id>", "Subscription ID of the data producer")
     .addOption(new Option("-n, --notificationType <type>", "Notification type").choices(notificationTypeChoices))
@@ -119,4 +120,5 @@ export const invokeAvlDataEndpoint = new Command("invoke-avl-data-endpoint")
         });
 
         logger.info(`${notificationType} sent to data endpoint`);
-    });
+    })
+    .parse();

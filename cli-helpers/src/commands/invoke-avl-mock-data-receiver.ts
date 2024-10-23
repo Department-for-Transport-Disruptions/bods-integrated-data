@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeAvlMockDataReceiver = new Command("invoke-avl-mock-data-receiver")
+program
     .addOption(STAGE_OPTION)
     .option("--body <body>", "Request body")
     .action(async (options) => {
@@ -19,4 +19,5 @@ export const invokeAvlMockDataReceiver = new Command("invoke-avl-mock-data-recei
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(invokePayload),
         });
-    });
+    })
+    .parse();

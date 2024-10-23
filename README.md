@@ -350,18 +350,14 @@ ENV_VAR_1="{A}" ENV_VAR_2="{B}" awslocal lambda invoke --function-name {FUNCTION
 Inside `./cli-helpers` are a number of CLI commands to help with development, such as invoking lambdas and provisioning
 mock data.
 
-List available commands:
+Run a command by using the command's filename:
 
 ```bash
-make commands
-```
+make command-{command-name}
 
-Run a command:
-
-```bash
-make command-{COMMAND_NAME}
 # for example:
 make command-invoke-gtfs-rt-downloader
+
 # with flags:
 make command-invoke-avl-unsubscriber FLAGS="--stage local"
 ```

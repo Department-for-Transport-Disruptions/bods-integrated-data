@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeNptgRetriever = new Command("invoke-nptg-retriever")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +12,5 @@ export const invokeNptgRetriever = new Command("invoke-nptg-retriever")
             FunctionName: `integrated-data-nptg-retriever-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();

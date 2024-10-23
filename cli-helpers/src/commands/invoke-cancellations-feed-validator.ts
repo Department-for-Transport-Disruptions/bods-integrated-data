@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeCancellationsFeedValidator = new Command("invoke-cancellations-feed-validator")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
         const { stage } = await withUserPrompts(options, {
@@ -12,4 +12,5 @@ export const invokeCancellationsFeedValidator = new Command("invoke-cancellation
             FunctionName: `integrated-data-cancellations-feed-validator-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();

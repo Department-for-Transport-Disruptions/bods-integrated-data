@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeAvlDataFeedValidator = new Command("invoke-avl-data-feed-validator")
+program
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
     .action(async (options) => {
@@ -24,4 +24,5 @@ export const invokeAvlDataFeedValidator = new Command("invoke-avl-data-feed-vali
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
-    });
+    })
+    .parse();

@@ -1,7 +1,7 @@
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeBodsFaresUnzipper = new Command("invoke-bods-fares-unzipper")
+program
     .addOption(STAGE_OPTION)
     .option("-f, --file <file>", "File to unzip")
     .action(async (options) => {
@@ -30,4 +30,5 @@ export const invokeBodsFaresUnzipper = new Command("invoke-bods-fares-unzipper")
             InvocationType: "RequestResponse",
             Payload: JSON.stringify(payload),
         });
-    });
+    })
+    .parse();

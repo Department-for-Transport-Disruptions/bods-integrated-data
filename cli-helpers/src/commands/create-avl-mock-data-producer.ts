@@ -1,8 +1,8 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
-export const createAvlMockDataProducer = new Command("create-avl-mock-data-producer")
+program
     .addOption(STAGE_OPTION)
     .option("-n, --name <name>", "Name of mock data producer")
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
@@ -30,4 +30,5 @@ export const createAvlMockDataProducer = new Command("create-avl-mock-data-produ
         });
 
         logger.info(`Mock AVL data producer created, name: ${cleanName}`);
-    });
+    })
+    .parse();

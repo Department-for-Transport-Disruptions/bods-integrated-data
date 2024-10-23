@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 import { S3Client } from "@aws-sdk/client-s3";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
-import { Command } from "commander";
+import { program } from "commander";
 import { asString, generateCsv, mkConfig } from "export-to-csv";
 import { Stats } from "fast-stats";
 import { STAGES, STAGE_OPTION, listS3Objects, listS3ObjectsByCommonPrefix, withUserPrompts } from "../utils";
@@ -99,7 +99,7 @@ const generateResultsFile = (dateString: string, frequencyResults: FrequencyResu
     logger.info(`Results written to ${filename}`);
 };
 
-export const analyseAvlFrequency = new Command("analyse-avl-frequency")
+program
     .addOption(STAGE_OPTION)
     .option("-d, --date <date>", "Date as YYYY-MM-DD")
     .action(async (options) => {
@@ -152,4 +152,5 @@ export const analyseAvlFrequency = new Command("analyse-avl-frequency")
         logger.info(`${frequencyResults.length}/${subscriptionCount} subscriptions have results to analyse`);
 
         generateResultsFile(dateOptions.dateString, frequencyResults);
-    });
+    })
+    .parse();

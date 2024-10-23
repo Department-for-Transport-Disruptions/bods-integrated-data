@@ -1,8 +1,8 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-import { Command } from "@commander-js/extra-typings";
+import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
+program
     .addOption(STAGE_OPTION)
     .option("--producerEndpoint <endpoint>", "Data producer endpoint")
     .option("-u, --username <username>", "Data producer username")
@@ -41,4 +41,5 @@ export const invokeAvlUpdateEndpoint = new Command("invoke-avl-update-endpoint")
         });
 
         logger.info(`Update subscription request for producer: ${producerEndpoint} sent to update endpoint`);
-    });
+    })
+    .parse();
