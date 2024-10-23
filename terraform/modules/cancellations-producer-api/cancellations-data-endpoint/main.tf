@@ -13,7 +13,7 @@ module "integrated_data_cancellations_data_endpoint_function" {
   source = "../../shared/lambda-function"
 
   environment      = var.environment
-  function_name    = "integrated-data-bods-cancellations-data-endpoint"
+  function_name    = "integrated-data-cancellations-data-endpoint"
   zip_path         = "${path.module}/../../../../src/functions/dist/cancellations-data-endpoint.zip"
   handler          = "index.handler"
   runtime          = "nodejs20.x"

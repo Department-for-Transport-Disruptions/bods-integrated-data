@@ -33,7 +33,7 @@ export const testSiriSxWithSinglePtSituationElement = `<?xml version="1.0" encod
                                     <OperatorRef>AKSS</OperatorRef>
                                 </Operator>
                                 <LineRef>175</LineRef>
-                                <PublishedLineName>175</PublishedLineName>
+                                <PublishedLineName>174</PublishedLineName>
                                 <DirectionRef>Inbound</DirectionRef>
                                 <OriginAimedDepartureTime>2024-07-05T14:39:00Z</OriginAimedDepartureTime>
                                 <DestinationAimedArrivalTime>2024-07-05T15:01:00Z</DestinationAimedArrivalTime>

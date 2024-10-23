@@ -30,6 +30,7 @@ const requestParamsSchema = z.preprocess(
 
 export type ApiAvlConsumerSubscription = {
     id: string;
+    name: string;
     subscriptionId: string;
     status: string;
     url: string;
@@ -44,6 +45,7 @@ export type ApiAvlConsumerSubscription = {
 export const mapApiAvlSubscriptionResponse = (subscription: AvlConsumerSubscription): ApiAvlConsumerSubscription => {
     return {
         id: subscription.PK,
+        name: subscription.name,
         subscriptionId: subscription.subscriptionId,
         status: subscription.status,
         url: subscription.url,

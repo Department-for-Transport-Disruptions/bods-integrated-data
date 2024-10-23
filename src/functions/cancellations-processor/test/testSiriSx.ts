@@ -81,7 +81,6 @@ export const testSiriSx = `<?xml version="1.0" encoding="utf-8"?>
           <Progress>closed</Progress>
           <ValidityPeriod>
             <StartTime>2024-10-09T13:00:00+00:00</StartTime>
-            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>
@@ -357,6 +356,7 @@ export const parsedSiriSx: NewSituation[] = [
         producer_ref: "ATB",
         situation_number: "123",
         version: 2,
+        end_time: "2024-10-09T13:30:00.000Z",
         situation: {
             CreationTime: "2024-10-09T11:45:00+00:00",
             ParticipantRef: "ATB",
@@ -421,6 +421,7 @@ export const parsedSiriSx: NewSituation[] = [
         producer_ref: "ATB",
         situation_number: "124",
         version: undefined,
+        end_time: "2024-07-23T12:00:00.000Z",
         situation: {
             CreationTime: "2024-10-09T11:45:00+00:00",
             ParticipantRef: "ATB",
@@ -432,7 +433,6 @@ export const parsedSiriSx: NewSituation[] = [
             ValidityPeriod: [
                 {
                     StartTime: "2024-10-09T13:00:00+00:00",
-                    EndTime: "2024-10-09T13:30:00+00:00",
                 },
             ],
             MiscellaneousReason: MiscellaneousReason.roadworks,

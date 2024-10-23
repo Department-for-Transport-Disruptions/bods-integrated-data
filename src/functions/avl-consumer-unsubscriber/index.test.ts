@@ -17,6 +17,7 @@ const mockApiKey = "mock-api-key";
 const consumerSubscription: AvlConsumerSubscription = {
     PK: mockConsumerSubscriptionId,
     SK: mockApiKey,
+    name: "consumer-sub-1",
     subscriptionId: mockConsumerSubscriptionId,
     status: "live",
     url: "https://www.test.com/data",

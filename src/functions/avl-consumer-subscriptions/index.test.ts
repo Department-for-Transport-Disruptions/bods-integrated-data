@@ -14,6 +14,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
     {
         PK: "1",
         SK: mockApiKey,
+        name: "consumer-sub-1",
         subscriptionId: "1",
         status: "live",
         url: "https://www.test.com/data",
@@ -35,6 +36,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
     {
         PK: "2",
         SK: mockApiKey,
+        name: "consumer-sub-2",
         subscriptionId: mockSubscriptionId,
         status: "inactive",
         url: "https://www.test.com/data",
@@ -56,6 +58,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
     {
         PK: "3",
         SK: mockApiKey,
+        name: "consumer-sub-3",
         subscriptionId: "3",
         status: "error",
         url: "https://www.test.com/data",
@@ -77,6 +80,7 @@ const consumerSubscriptions: AvlConsumerSubscription[] = [
     {
         PK: "4",
         SK: "mock-api-key-2",
+        name: "consumer-sub-4",
         subscriptionId: "1",
         status: "live",
         url: "https://www.test.com/data",
@@ -174,6 +178,7 @@ describe("avl-consumer-subscriptions", () => {
             const expectedResponse: ApiAvlConsumerSubscription[] = [
                 {
                     id: "1",
+                    name: "consumer-sub-1",
                     subscriptionId: "1",
                     status: "live",
                     url: "https://www.test.com/data",
@@ -188,6 +193,7 @@ describe("avl-consumer-subscriptions", () => {
                 },
                 {
                     id: "2",
+                    name: "consumer-sub-2",
                     subscriptionId: "2",
                     status: "inactive",
                     url: "https://www.test.com/data",
@@ -202,6 +208,7 @@ describe("avl-consumer-subscriptions", () => {
                 },
                 {
                     id: "3",
+                    name: "consumer-sub-3",
                     subscriptionId: "3",
                     status: "error",
                     url: "https://www.test.com/data",
@@ -232,6 +239,7 @@ describe("avl-consumer-subscriptions", () => {
     it("returns a 200 with a single subscription when passing a subscription ID param", async () => {
         const expectedResponse: ApiAvlConsumerSubscription = {
             id: "2",
+            name: "consumer-sub-2",
             subscriptionId: mockSubscriptionId,
             status: "inactive",
             url: "https://www.test.com/data",
