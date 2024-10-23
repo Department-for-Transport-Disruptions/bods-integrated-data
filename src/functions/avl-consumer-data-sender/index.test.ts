@@ -78,9 +78,10 @@ const consumerSubscription: AvlConsumerSubscription = {
     requestTimestamp: "2024-03-11T15:20:02.093Z",
     heartbeatAttempts: 0,
     lastRetrievedAvlId: 5,
-    queueUrl: "",
-    eventSourceMappingUuid: "",
-    scheduleName: "",
+    queueUrl: undefined,
+    queueAlarmName: undefined,
+    eventSourceMappingUuid: undefined,
+    scheduleName: undefined,
     queryParams: {
         boundingBox: [1, 2, 3, 4],
         operatorRef: ["a", "b", "c"],
@@ -109,6 +110,10 @@ describe("avl-consumer-subscriber", () => {
             warn: vi.fn(),
             error: vi.fn(),
         },
+    }));
+
+    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
+        putMetricData: vi.fn(),
     }));
 
     vi.mock("@bods-integrated-data/shared/dynamo", () => ({
@@ -314,9 +319,10 @@ describe("avl-consumer-subscriber", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 heartbeatAttempts: 0,
                 lastRetrievedAvlId: 0,
-                queueUrl: "",
-                eventSourceMappingUuid: "",
-                scheduleName: "",
+                queueUrl: undefined,
+                queueAlarmName: undefined,
+                eventSourceMappingUuid: undefined,
+                scheduleName: undefined,
                 queryParams: {
                     subscriptionId: ["1"],
                 },
@@ -362,9 +368,10 @@ describe("avl-consumer-subscriber", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 heartbeatAttempts: 0,
                 lastRetrievedAvlId: 0,
-                queueUrl: "",
-                eventSourceMappingUuid: "",
-                scheduleName: "",
+                queueUrl: undefined,
+                queueAlarmName: undefined,
+                eventSourceMappingUuid: undefined,
+                scheduleName: undefined,
                 queryParams: {
                     subscriptionId: ["1"],
                 },
@@ -408,9 +415,10 @@ describe("avl-consumer-subscriber", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 heartbeatAttempts: 2,
                 lastRetrievedAvlId: 0,
-                queueUrl: "",
-                eventSourceMappingUuid: "",
-                scheduleName: "",
+                queueUrl: undefined,
+                queueAlarmName: undefined,
+                eventSourceMappingUuid: undefined,
+                scheduleName: undefined,
                 queryParams: {
                     subscriptionId: ["1"],
                 },
@@ -455,9 +463,10 @@ describe("avl-consumer-subscriber", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 heartbeatAttempts: 1,
                 lastRetrievedAvlId: 0,
-                queueUrl: "",
-                eventSourceMappingUuid: "",
-                scheduleName: "",
+                queueUrl: undefined,
+                queueAlarmName: undefined,
+                eventSourceMappingUuid: undefined,
+                scheduleName: undefined,
                 queryParams: {
                     subscriptionId: ["1"],
                 },
@@ -500,9 +509,10 @@ describe("avl-consumer-subscriber", () => {
                 requestTimestamp: "2024-03-11T15:20:02.093Z",
                 heartbeatAttempts: 1,
                 lastRetrievedAvlId: 0,
-                queueUrl: "",
-                eventSourceMappingUuid: "",
-                scheduleName: "",
+                queueUrl: undefined,
+                queueAlarmName: undefined,
+                eventSourceMappingUuid: undefined,
+                scheduleName: undefined,
                 queryParams: {
                     subscriptionId: ["1"],
                 },

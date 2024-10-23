@@ -5,6 +5,7 @@ import {
 } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { generateHeartbeatNotificationXml } from "@bods-integrated-data/shared/avl/heartbeat";
 import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -109,6 +110,13 @@ const sendHeartbeat = async (subscription: AvlConsumerSubscription, consumerSubs
             if (updatedSubscription.heartbeatAttempts >= MAX_HEARTBEAT_ATTEMPTS) {
                 updatedSubscription.status = "error";
             }
+
+            await putMetricData("custom/AvlConsumerMetrics", [
+                {
+                    MetricName: "SubscriptionUnreachable",
+                    Value: 1,
+                },
+            ]);
 
             await putDynamoItem(consumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
         } else {

@@ -428,6 +428,12 @@ module "siri_consumer_api_private" {
   siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
 }
 
+# temporary moved block to prevent siri consumer api being destroyed during module move
+moved {
+  from = module.integrated_data_avl_pipeline.module.siri_vm_api_private.aws_api_gateway_rest_api.siri_vm_api
+  to   = module.siri_consumer_api_private.aws_api_gateway_rest_api.siri_consumer_api
+}
+
 # VPN
 
 module "stagecoach_vpn" {
