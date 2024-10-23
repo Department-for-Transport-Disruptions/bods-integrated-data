@@ -1,6 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
+
 program
     .addOption(STAGE_OPTION)
     .option("-n, --name <name>", "Name of mock data producer")

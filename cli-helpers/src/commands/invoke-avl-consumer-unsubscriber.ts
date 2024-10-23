@@ -1,6 +1,7 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+
 program
     .addOption(STAGE_OPTION)
     .option("--apiKey <apiKey>", "API key")

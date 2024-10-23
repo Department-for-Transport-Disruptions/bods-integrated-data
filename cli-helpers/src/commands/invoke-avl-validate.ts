@@ -1,5 +1,6 @@
 import { program } from "commander";
 import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
+
 program
     .addOption(STAGE_OPTION)
     .option("--url <url>", "Data producer url")

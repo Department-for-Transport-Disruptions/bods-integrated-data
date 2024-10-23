@@ -1,6 +1,7 @@
 import { regionCodes } from "@bods-integrated-data/shared/constants";
 import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+
 program
     .addOption(STAGE_OPTION)
     .option("-r, --region <region>", "Region to generate GTFS for")

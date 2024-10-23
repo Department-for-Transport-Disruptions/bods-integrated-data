@@ -1,5 +1,6 @@
 import { program } from "commander";
 import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+
 program
     .addOption(STAGE_OPTION)
     .option("--subscriptionId <subscriptionId>", "Data producer subscription ID")
