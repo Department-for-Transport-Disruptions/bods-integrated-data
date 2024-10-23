@@ -1,3 +1,5 @@
+import { getDate } from "@bods-integrated-data/shared/dates";
+
 export const generateMockSiriCancellation = (subscriptionId: string, currentTime: string) => `<?xml version="1.0" encoding="utf-8"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -23,8 +25,8 @@ export const generateMockSiriCancellation = (subscriptionId: string, currentTime
           </Source>
           <Progress>closed</Progress>
           <ValidityPeriod>
-            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
-            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
+            <StartTime>${currentTime}</StartTime>
+            <EndTime>${getDate(currentTime).add(24, "hours").toISOString()}</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>
@@ -68,8 +70,8 @@ export const generateMockSiriCancellation = (subscriptionId: string, currentTime
           </Source>
           <Progress>closed</Progress>
           <ValidityPeriod>
-            <StartTime>2024-10-09T13:00:00+00:00</StartTime>
-            <EndTime>2024-10-09T13:30:00+00:00</EndTime>
+            <StartTime>${currentTime}</StartTime>
+            <EndTime>${getDate(currentTime).add(24, "hours").toISOString()}</EndTime>
           </ValidityPeriod>
           <MiscellaneousReason>roadworks</MiscellaneousReason>
           <Affects>

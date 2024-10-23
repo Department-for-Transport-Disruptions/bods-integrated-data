@@ -1,9 +1,10 @@
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Command, Option } from "@commander-js/extra-typings";
 import { STAGES, STAGE_OPTION, getDynamoDbItem, invokeLambda, withUserPrompts } from "../utils";
 import { createDynamoDbDocClient } from "../utils/awsClients";
 
-const notificationTypeChoices = ["Heartbeat Notification", "AVL Data"];
+const notificationTypeChoices = ["Heartbeat Notification", "Cancellations Data"];
 
 export const invokeCancellationsDataEndpoint = new Command("invoke-cancellations-data-endpoint")
     .addOption(STAGE_OPTION)
@@ -65,7 +66,7 @@ export const invokeCancellationsDataEndpoint = new Command("invoke-cancellations
                     <Progress>open</Progress>
                     <ValidityPeriod>
                         <StartTime>2024-07-05T14:39:00Z</StartTime>
-                        <EndTime>2024-07-05T15:01:00Z</EndTime>
+                        <EndTime>${getDate(currentTime).add(24, "hours").toISOString()}</EndTime>
                     </ValidityPeriod>
                     <MiscellaneousReason>unknown</MiscellaneousReason>
                     <Affects>
