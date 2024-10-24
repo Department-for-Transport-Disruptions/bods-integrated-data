@@ -217,6 +217,42 @@ export const journeyPartsSchema = z.object({
     ),
 });
 
+export const affectedRouteSchema = z.object({
+    RouteRef: z.string().optional(),
+    Direction: z
+        .object({
+            DirectionRef: z.string(),
+            DirectionName: z.string().array().optional(),
+        })
+        .optional(),
+    Sections: z
+        .object({
+            AffectedSection: z
+                .object({
+                    SectionRef: z.string().optional(),
+                    Offset: z
+                        .object({
+                            DistanceFromStart: z.number().optional(),
+                            DistanceFromEnd: z.number().optional(),
+                        })
+                        .optional(),
+                })
+                .array(),
+        })
+        .optional(),
+    StopPoints: z
+        .object({
+            AffectedOnly: booleanStringSchema.optional(),
+            AffectedStopPoint: z.array(affectedStopPointSchema),
+        })
+        .optional(),
+    RouteLinks: z
+        .object({
+            RouteLinkRef: z.string().array(),
+        })
+        .optional(),
+});
+
 export const journeysSchema = z.object({
     AffectedVehicleJourney: z.array(
         z.object({
@@ -231,7 +267,7 @@ export const journeysSchema = z.object({
             JourneyParts: journeyPartsSchema.optional(),
             Origins: z.array(affectedStopPointSchema).optional(),
             Destinations: z.array(affectedStopPointSchema).optional(),
-            Route: z.string(),
+            Route: affectedRouteSchema.or(z.literal("").transform(() => ({}))),
             OriginAimedDepartureTime: datetimeSchema.optional(),
             DestinationAimedArrivalTime: datetimeSchema.optional(),
             OriginDisplayAtDestination: z.string().optional(),
