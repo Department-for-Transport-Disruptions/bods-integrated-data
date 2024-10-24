@@ -89,7 +89,11 @@ data "aws_iam_policy_document" "datadog_aws_integration" {
       "elasticache:DescribeReplicationGroups",
       "elasticloadbalancing:DescribeLoadBalancers",
       "elasticloadbalancing:DescribeTargetGroups",
-      "elasticloadbalancing:DescribeTrustStores"
+      "elasticloadbalancing:DescribeTrustStores",
+      "ecs:ListClusters",
+      "ecs:ListContainerInstances",
+      "ecs:ListServices",
+      "ecs:DescribeContainerInstances"
     ]
     resources = ["*"]
   }
