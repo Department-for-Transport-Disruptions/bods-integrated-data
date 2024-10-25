@@ -50,6 +50,18 @@ resource "aws_s3_bucket_versioning" "integrated_data_bods_disruptions_gtfs_rt_bu
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_bods_disruptions_gtfs_rt_bucket_lifecycle" {
+  bucket = aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.id
+  rule {
+    id = "config"
+    noncurrent_version_transition {
+      noncurrent_days = 7
+      storage_class   = "STANDARD_IA"
+    }
+    status = "Enabled"
+  }
+}
+
 module "integrated_data_bods_disruptions_retriever_function" {
   source = "../../shared/lambda-function"
 
