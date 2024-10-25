@@ -22,7 +22,7 @@ describe("cancelllations utils", () => {
     });
 
     describe("createSiriSx", () => {
-        it("creates valid siri-sx xml", () => {
+        it("creates valid siri-sx xml, even when the Route tag has no nested properties", () => {
             const timestamp = getDate();
 
             const situation: Situation = {
