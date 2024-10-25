@@ -88,7 +88,7 @@ export const createSiriSx = (situations: Situation[], requestMessageRef: string,
         },
     };
 
-    const siriSxWithoutEmptyFields = cleanDeep(siriSx, { emptyArrays: false });
+    const siriSxWithoutEmptyFields = cleanDeep(siriSx, { emptyObjects: false, emptyArrays: false });
     const verifiedObject = siriSxSchema().parse(siriSxWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriSx["Siri"]>> = {
