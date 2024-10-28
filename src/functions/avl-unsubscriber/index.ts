@@ -1,6 +1,5 @@
 import {
     createHttpNoContentResponse,
-    createHttpNotFoundErrorResponse,
     createHttpServerErrorResponse,
     createHttpUnauthorizedErrorResponse,
     createHttpValidationErrorResponse,
@@ -122,7 +121,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         if (e instanceof SubscriptionIdNotFoundError) {
             logger.error(e, "Subscription not found");
-            return createHttpNotFoundErrorResponse("Subscription not found");
+            // We return a 200 here as only BODS can access our API and in the event that a subscription exists on BODS but
+            // is not found in the IAVL service we want to return a success response so BODS can still deactivate a feed on their end.
+            return createHttpNoContentResponse();
         }
 
         if (e instanceof Error) {
