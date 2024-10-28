@@ -198,7 +198,7 @@ export const getCancellationErrorDetails = (error: ZodIssue) => {
         });
 
         name = paths.join(", ");
-        message = "Required one of";
+        message = `Required one of ${name}`;
     }
 
     return { name, message };

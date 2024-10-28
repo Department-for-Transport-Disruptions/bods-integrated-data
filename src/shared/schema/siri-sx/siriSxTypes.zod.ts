@@ -6,6 +6,7 @@ import { putMetricData } from "../../cloudwatch";
 import { logger } from "../../logger";
 import { CancellationsValidationError } from "../cancellations-validation-error.schema";
 import { datetimeSchema } from "../misc.schema";
+import { enumSchema } from "../utils";
 import {
     ArrivalBoardingActivity,
     CallStatus,
@@ -30,19 +31,19 @@ export const booleanStringSchema = z.enum(["true", "false"]).transform((value) =
 
 export const iso8601DurationSchema = z.string().regex(/^PT([0-9]+\.)?[0-9]+[HMS]$/);
 
-export const sourceTypeSchema = z.nativeEnum(SourceType);
+export const sourceTypeSchema = enumSchema(SourceType);
 
-export const progressSchema = z.nativeEnum(Progress);
+export const progressSchema = enumSchema(Progress);
 
-export const miscellaneousReasonSchema = z.nativeEnum(MiscellaneousReason);
+export const miscellaneousReasonSchema = enumSchema(MiscellaneousReason);
 
-export const personnelReasonSchema = z.nativeEnum(PersonnelReason);
+export const personnelReasonSchema = enumSchema(PersonnelReason);
 
-export const equipmentReasonSchema = z.nativeEnum(EquipmentReason);
+export const equipmentReasonSchema = enumSchema(EquipmentReason);
 
-export const environmentReasonSchema = z.nativeEnum(EnvironmentReason);
+export const environmentReasonSchema = enumSchema(EnvironmentReason);
 
-export const dayTypeSchema = z.nativeEnum(DayType);
+export const dayTypeSchema = enumSchema(DayType);
 
 export const sourceSchema = z.object({
     SourceType: sourceTypeSchema,
@@ -108,7 +109,7 @@ export const networksSchema = z.object({
         z.object({
             NetworkRef: z.string().optional(),
             NetworkName: z.string().optional(),
-            VehicleMode: z.nativeEnum(VehicleMode),
+            VehicleMode: enumSchema(VehicleMode),
             AllLines: z.literal("").optional(),
             AffectedLine: z.array(affectedLineSchema).optional(),
         }),
@@ -128,7 +129,7 @@ export const placesSchema = z.object({
 export const affectedStopPointSchema = z.object({
     StopPointRef: z.string().optional(),
     StopPointName: z.string().optional(),
-    StopPointType: z.nativeEnum(StopPointType).optional(),
+    StopPointType: enumSchema(StopPointType).optional(),
     Location: z
         .object({
             Longitude: z.number(),
@@ -138,7 +139,7 @@ export const affectedStopPointSchema = z.object({
     AffectedModes: z
         .object({
             Mode: z.object({
-                VehicleMode: z.nativeEnum(VehicleMode),
+                VehicleMode: enumSchema(VehicleMode),
             }),
         })
         .optional(),
@@ -153,7 +154,7 @@ export const callsSchema = z.object({
         affectedStopPointSchema.and(
             z.object({
                 Order: z.number().optional(),
-                CallCondition: z.nativeEnum(RoutePointType).optional(),
+                CallCondition: enumSchema(RoutePointType).optional(),
                 VehicleAtStop: booleanStringSchema.optional(),
                 VehicleLocationAtStop: z
                     .object({
@@ -169,15 +170,15 @@ export const callsSchema = z.object({
                 AimedArrivalTime: datetimeSchema.optional(),
                 ActualArrivalTime: datetimeSchema.optional(),
                 ExpectedArrivalTime: datetimeSchema.optional(),
-                ArrivalStatus: z.nativeEnum(CallStatus).optional(),
+                ArrivalStatus: enumSchema(CallStatus).optional(),
                 ArrivalPlatformName: z.string().optional(),
-                ArrivalBoardingActivity: z.nativeEnum(ArrivalBoardingActivity).optional(),
+                ArrivalBoardingActivity: enumSchema(ArrivalBoardingActivity).optional(),
                 AimedDepartureTime: datetimeSchema.optional(),
                 ActualDepartureTime: datetimeSchema.optional(),
                 ExpectedDepartureTime: datetimeSchema.optional(),
-                DepartureStatus: z.nativeEnum(CallStatus).optional(),
+                DepartureStatus: enumSchema(CallStatus).optional(),
                 DeparturePlatformName: z.string().optional(),
-                DepartureBoardingActivity: z.nativeEnum(DepartureBoardingActivity).optional(),
+                DepartureBoardingActivity: enumSchema(DepartureBoardingActivity).optional(),
                 AimedHeadwayInterval: iso8601DurationSchema.optional(),
                 ExpectedHeadwayInterval: iso8601DurationSchema.optional(),
                 AffectedInterchange: z
@@ -186,7 +187,7 @@ export const callsSchema = z.object({
                         InterchangeStopPointRef: z.string().optional(),
                         InterchangeStopPointName: z.string().optional(),
                         ConnectingVehicleJourneyRef: z.string().optional(),
-                        InterchangeStatusType: z.nativeEnum(InterchangeStatus).optional(),
+                        InterchangeStatusType: enumSchema(InterchangeStatus).optional(),
                         ConnectionLink: z.string().optional(),
                     })
                     .optional(),
@@ -202,7 +203,7 @@ export const facilitiesSchema = z.object({
             StartStopPointRef: z.string().optional(),
             EndStopPointRef: z.string().optional(),
             FacilityName: z.string().optional(),
-            FacilityStatus: z.nativeEnum(FacilityStatus).optional(),
+            FacilityStatus: enumSchema(FacilityStatus).optional(),
         }),
     ),
 });
@@ -272,7 +273,7 @@ export const journeysSchema = z.object({
             DestinationAimedArrivalTime: datetimeSchema.optional(),
             OriginDisplayAtDestination: z.string().optional(),
             DestinationDisplayAtOrigin: z.string().optional(),
-            JourneyCondition: z.nativeEnum(Condition).optional(),
+            JourneyCondition: enumSchema(Condition).optional(),
             Calls: callsSchema.optional(),
             Facilities: facilitiesSchema.optional(),
         }),
@@ -288,8 +289,8 @@ export const affectsSchema = z.object({
 });
 
 export const consequenceSchema = z.object({
-    Condition: z.nativeEnum(Condition).optional(),
-    Severity: z.nativeEnum(Severity),
+    Condition: enumSchema(Condition).optional(),
+    Severity: enumSchema(Severity),
     Affects: affectsSchema.optional(),
     Advice: z
         .object({

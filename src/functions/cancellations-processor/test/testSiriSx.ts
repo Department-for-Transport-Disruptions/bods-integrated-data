@@ -76,7 +76,7 @@ export const testSiriSx = `<?xml version="1.0" encoding="utf-8"?>
           <ParticipantRef>ATB</ParticipantRef>
           <SituationNumber>124</SituationNumber>
           <Source>
-            <SourceType>email</SourceType>
+            <SourceType>Email</SourceType>
           </Source>
           <Progress>closed</Progress>
           <ValidityPeriod>
