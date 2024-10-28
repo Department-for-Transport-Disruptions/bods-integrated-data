@@ -21,13 +21,6 @@ resource "aws_s3_bucket" "integrated_data_gtfs_timetables_bucket" {
   bucket = "integrated-data-gtfs-timetables-${var.environment}"
 }
 
-resource "aws_s3_bucket_versioning" "integrated_data_gtfs_timetables_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_gtfs_rt_bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_gtfs_timetables_bucket_lifecycle" {
   bucket = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.id
   rule {
