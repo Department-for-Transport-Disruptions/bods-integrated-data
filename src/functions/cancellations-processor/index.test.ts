@@ -244,7 +244,7 @@ describe("cancellations-processor", () => {
                 PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 timeToExist,
-                details: "Required one of",
+                details: "Required one of MiscellaneousReason, PersonnelReason, EquipmentReason, EnvironmentReason",
                 filename: record.s3.object.key,
                 name: "MiscellaneousReason, PersonnelReason, EquipmentReason, EnvironmentReason",
                 responseTimestamp: "asdf",
