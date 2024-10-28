@@ -27,7 +27,7 @@ import {
     VehicleMode,
 } from "./enums";
 
-export const booleanStringSchema = z.string().transform((value) => value === "true");
+export const booleanStringSchema = z.enum(["true", "false"]).transform((value) => value === "true");
 
 export const iso8601DurationSchema = z.string().regex(/^PT([0-9]+\.)?[0-9]+[HMS]$/);
 
