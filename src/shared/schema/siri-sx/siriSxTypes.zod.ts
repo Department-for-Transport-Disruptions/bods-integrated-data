@@ -94,7 +94,7 @@ export const operatorsSchema = z.object({
 });
 
 export const affectedLineSchema = z.object({
-    AffectedOperator: affectedOperatorSchema.optional(),
+    AffectedOperator: z.array(affectedOperatorSchema).optional(),
     LineRef: z.string(),
     PublishedLineName: z.string(),
     Direction: z
@@ -132,8 +132,8 @@ export const affectedStopPointSchema = z.object({
     StopPointType: enumSchema(StopPointType).optional(),
     Location: z
         .object({
-            Longitude: z.number(),
-            Latitude: z.number(),
+            Longitude: z.coerce.number(),
+            Latitude: z.coerce.number(),
         })
         .optional(),
     AffectedModes: z
@@ -158,8 +158,8 @@ export const callsSchema = z.object({
                 VehicleAtStop: booleanStringSchema.optional(),
                 VehicleLocationAtStop: z
                     .object({
-                        Longitude: z.number(),
-                        Latitude: z.number(),
+                        Longitude: z.coerce.number(),
+                        Latitude: z.coerce.number(),
                     })
                     .optional(),
                 TimingPoint: booleanStringSchema.optional(),
