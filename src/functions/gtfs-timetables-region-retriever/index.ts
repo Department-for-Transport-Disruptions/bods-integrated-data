@@ -36,7 +36,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             item.Key?.split(GTFS_FILE_SUFFIX)[0].toUpperCase(),
         ).filter(notEmpty);
 
-        const validRegions = makeFilteredArraySchema("GtfsTimetablesRegionRetriever", regionCodeSchema).parse(
+        const validRegions = makeFilteredArraySchema(regionCodeSchema).parse(
             regionFileNames,
         );
 

@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
-import { putMetricData } from "../cloudwatch";
 import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
 import { Avl, NewAvl, NewBodsAvl } from "../database";
 import { getDate } from "../dates";
@@ -110,7 +109,7 @@ export const vehicleActivitySchema = z.object({
         VehicleRef: z.union([z.string().regex(NM_TOKEN_REGEX), z.number()]),
         OnwardCalls: z
             .object({
-                OnwardCall: makeFilteredArraySchema("SiriVmOnwardCallsSchema", onwardCallSchema),
+                OnwardCall: makeFilteredArraySchema(onwardCallSchema),
             })
             .or(txcEmptyProperty)
             .optional(),
@@ -124,7 +123,7 @@ export type SiriVehicleActivity = z.infer<typeof vehicleActivitySchema>;
  * The purpose of this transformer is to filter out invalid AVLs
  * and return the rest of the data as valid.
  */
-const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlValidationError[]) =>
+const makeFilteredVehicleActivityArraySchema = (errors?: AvlValidationError[]) =>
     z.preprocess((input) => {
         const result = z.any().array().parse(input);
 
@@ -162,8 +161,6 @@ const makeFilteredVehicleActivityArraySchema = (namespace: string, errors?: AvlV
                         };
                     }),
                 );
-
-                putMetricData(`custom/${namespace}`, [{ MetricName: "MakeFilteredArraySchemaParseError", Value: 1 }]);
             }
 
             return parsedItem.success;
@@ -182,7 +179,7 @@ export const siriVmSchema = (errors?: AvlValidationError[]) =>
                     RequestMessageRef: normalizedStringSchema.nullish(),
                     ValidUntil: z.string().nullish(),
                     ShortestPossibleCycle: z.string().nullish(),
-                    VehicleActivity: makeFilteredVehicleActivityArraySchema("SiriVmVehicleActivitySchema", errors),
+                    VehicleActivity: makeFilteredVehicleActivityArraySchema(errors),
                 }),
             }),
         }),

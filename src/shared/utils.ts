@@ -76,7 +76,7 @@ export const getWheelchairAccessibilityFromVehicleType = (vehicleType?: VehicleT
 export const txcSelfClosingProperty = z.literal("");
 export const txcEmptyProperty = txcSelfClosingProperty.transform(() => undefined);
 
-export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, schema: T) =>
+export const makeFilteredArraySchema = <T extends ZodSchema>(schema: T) =>
     z.preprocess((input): T[] => {
         const result = z.any().array().parse(input);
 
@@ -85,7 +85,6 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, 
 
             if (!parsedItem.success) {
                 logger.warn(`Error parsing item: ${fromZodError(parsedItem.error).toString()}`);
-                putMetricData(`custom/${namespace}`, [{ MetricName: "MakeFilteredArraySchemaParseError", Value: 1 }]);
             }
 
             return parsedItem.success;
@@ -178,7 +177,6 @@ export interface CompleteSiriObject<T> {
  * @returns The termination.
  */
 export const getSiriTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
-
 
 export const checkSubscriptionIsHealthy = (
     currentTime: Dayjs,

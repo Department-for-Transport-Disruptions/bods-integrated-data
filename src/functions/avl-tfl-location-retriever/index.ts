@@ -75,6 +75,8 @@ export const handler: Handler = async (event, context) => {
         const { live_vehicles_api_key } = await getSecret<TflApiKeys>({ SecretId: tflApiArn });
         const lineIds = await getLineIds(dbClient);
         const vehicleLocations = await retrieveTflVehicleLocations(lineIds, live_vehicles_api_key);
+        //TODO validate locations against siri schema here
+        //TODO Delete makefiletered array  metric
 
         const vehicleLocationsWithTflOperatorRef = vehicleLocations.map((vehicleLocation) => {
             return {
