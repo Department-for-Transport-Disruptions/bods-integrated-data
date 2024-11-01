@@ -92,7 +92,7 @@ install-deps:
 	(cd integration-testing && pnpm i)
 
 build-functions:
-	cd src && pnpm build-all
+	cd src && rm -rf ./functions/dist && pnpm -r --if-present build:local
 
 lint-functions:
 	pnpm lint
@@ -143,8 +143,6 @@ get-bank-holiday-dates:
 
 # Naptan
 
-run-local-naptan-retriever:
-	STAGE=local BUCKET_NAME=${NAPTAN_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/naptan-retriever'; handler().catch(e => console.error(e))"
 
 run-local-naptan-uploader:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/naptan-uploader'; handler({Records:[{s3:{bucket:{name:'${NAPTAN_BUCKET_NAME}'},object:{key:'Stops.csv'}}}]}).catch(e => console.error(e))"

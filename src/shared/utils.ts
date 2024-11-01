@@ -179,17 +179,7 @@ export interface CompleteSiriObject<T> {
  */
 export const getSiriTerminationTimeOffset = (time: Dayjs) => time.add(10, "years").toISOString();
 
-/**
- * Checks if a given subscription is healthy by looking at whether any of heartbeatLastReceivedDateTime,
- * lastResubscriptionTime, serviceStartDatetime, or lastDataReceivedDateTime were in the last 90 seconds.
- *
- * Data producers are meant to send heartbeats at least every 30 seconds but this is not always the case so the extra
- * checks are intended to prevent over re-subscribing
- *
- * @param subscription The subscription object to check
- * @param currentTime The current time in DayJs
- * @returns Whether the subscription is healthy or not
- */
+
 export const checkSubscriptionIsHealthy = (
     currentTime: Dayjs,
     subscription: AvlSubscription | CancellationsSubscription,
