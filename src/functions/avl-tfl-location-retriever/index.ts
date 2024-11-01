@@ -2,7 +2,7 @@ import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
 import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
+import { siriSchemaTransformed, tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
@@ -75,8 +75,6 @@ export const handler: Handler = async (event, context) => {
         const { live_vehicles_api_key } = await getSecret<TflApiKeys>({ SecretId: tflApiArn });
         const lineIds = await getLineIds(dbClient);
         const vehicleLocations = await retrieveTflVehicleLocations(lineIds, live_vehicles_api_key);
-        //TODO validate locations against siri schema here
-        //TODO Delete makefiletered array  metric
 
         const vehicleLocationsWithTflOperatorRef = vehicleLocations.map((vehicleLocation) => {
             return {
