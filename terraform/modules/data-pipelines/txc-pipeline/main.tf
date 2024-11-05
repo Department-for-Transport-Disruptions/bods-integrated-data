@@ -21,6 +21,18 @@ resource "aws_s3_bucket" "integrated_data_gtfs_timetables_bucket" {
   bucket = "integrated-data-gtfs-timetables-${var.environment}"
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_gtfs_timetables_bucket_lifecycle" {
+  bucket = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.id
+  rule {
+    id = "config"
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "STANDARD_IA"
+    }
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket" "integrated_data_bods_txc_bucket" {
   bucket = "integrated-data-bods-txc-${var.environment}"
 }
