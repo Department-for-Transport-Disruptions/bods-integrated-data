@@ -8,7 +8,7 @@ export const NM_TOKEN_REGEX = new RegExp(`^[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX
 export const NM_TOKEN_ARRAY_REGEX = new RegExp(
     `^[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX_LENGTH}}(,[a-zA-Z0-9._:-]{1,${REQUEST_PARAM_MAX_LENGTH}})*$`,
 );
-export const SUBSCRIPTION_ID_ARRAY_REGEX = /^[0-9]+(,[0-9]+){0,4}$/;
+export const SUBSCRIPTION_ID_ARRAY_REGEX = /^[^,]+(,[^,]+){0,4}$/;
 
 export const NM_TOKEN_DISALLOWED_CHARS_REGEX = /[^a-zA-Z0-9.\-_:]/g;
 
@@ -43,7 +43,7 @@ export const createStringArrayValidation = (propertyName: string) => {
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
-        .transform((val) => val.split(",").map((b) => b.trim()))
+        .transform((value) => value.split(",").map((v) => v.trim()))
         .pipe(z.string().array());
 };
 
@@ -97,7 +97,7 @@ export const createNmTokenArrayValidation = (propertyName: string) => {
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
-        .transform((box) => box.split(",").map((b) => b.trim()))
+        .transform((value) => value.split(",").map((v) => v.trim()))
         .pipe(
             z
                 .string()
@@ -117,13 +117,13 @@ export const createSubscriptionIdArrayValidation = (propertyName: string) => {
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
-        .transform((box) => box.split(",").map((b) => b.trim()))
+        .regex(SUBSCRIPTION_ID_ARRAY_REGEX, {
+            message: `${propertyName} must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs`,
+        })
+        .transform((value) => value.split(",").map((v) => v.trim()))
         .pipe(
             z
                 .string()
-                .regex(SUBSCRIPTION_ID_ARRAY_REGEX, {
-                    message: `${propertyName} must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs`,
-                })
                 .array()
                 .max(5, {
                     message: `${propertyName} must be up to 5 IDs`,
@@ -138,7 +138,7 @@ export const createBoundingBoxValidation = (propertyName: string) => {
             invalid_type_error: `${propertyName} must be a string`,
         })
         .trim()
-        .transform((box) => box.split(",").map((b) => b.trim()))
+        .transform((value) => value.split(",").map((v) => v.trim()))
         .pipe(
             z.coerce
                 .number({

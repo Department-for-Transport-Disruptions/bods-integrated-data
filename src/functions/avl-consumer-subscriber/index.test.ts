@@ -165,7 +165,7 @@ describe("avl-consumer-subscriber", () => {
             ["subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs"],
         ],
         [
-            { subscriptionId: "asdf!" },
+            { subscriptionId: "," },
             ["subscriptionId must be a valid ID format or a comma-delimited array of valid ID formats up to five IDs"],
         ],
         [
