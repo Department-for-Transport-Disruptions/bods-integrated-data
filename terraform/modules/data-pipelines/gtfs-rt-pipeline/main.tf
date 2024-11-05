@@ -36,7 +36,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_gtfs_rt_bucket
   rule {
     id = "config"
     noncurrent_version_transition {
-      noncurrent_days = 7
+      noncurrent_days = 30
       storage_class   = "STANDARD_IA"
     }
     status = "Enabled"
