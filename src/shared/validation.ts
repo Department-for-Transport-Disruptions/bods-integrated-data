@@ -17,9 +17,12 @@ export const SIRI_VM_POPULATED_STRING_REGEX = /^[^,\[\]\{\}\?$%\^=@#;:]+$/g;
 export const SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX = /[,\[\]\{\}\?$%\^=@#;:]/g;
 
 export const createPopulatedStringValidation = (propertyName: string) => {
-    return z.coerce.string().regex(SIRI_VM_POPULATED_STRING_REGEX, {
-        message: `${propertyName} must not contain the following disallowed characters as defined by the XSD: []{}?$%^=@#;:`,
-    });
+    return z.coerce
+        .string()
+        .trim()
+        .regex(SIRI_VM_POPULATED_STRING_REGEX, {
+            message: `${propertyName} must not contain the following disallowed characters as defined by the XSD: []{}?$%^=@#;:`,
+        });
 };
 
 export const createStringLengthValidation = (propertyName: string) => {
@@ -28,6 +31,7 @@ export const createStringLengthValidation = (propertyName: string) => {
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
+        .trim()
         .regex(STRING_LENGTH_REGEX, {
             message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters`,
         });
@@ -50,11 +54,13 @@ export const createNmTokenSiriValidation = (propertyName: string, isRequired: bo
                   required_error: `${propertyName} is required`,
                   invalid_type_error: `${propertyName} must be a string`,
               })
+              .trim()
               .regex(NM_TOKEN_REGEX, {
                   message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
               })
         : z.coerce
               .string({ invalid_type_error: `${propertyName} must be a string` })
+              .trim()
               .regex(NM_TOKEN_REGEX, {
                   message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
               })
@@ -63,9 +69,12 @@ export const createNmTokenSiriValidation = (propertyName: string, isRequired: bo
 
 export const createNmTokenOrNumberSiriValidation = (propertyName: string) => {
     return z.union([
-        z.string().regex(NM_TOKEN_REGEX, {
-            message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
-        }),
+        z
+            .string()
+            .trim()
+            .regex(NM_TOKEN_REGEX, {
+                message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
+            }),
         z.number(),
     ]);
 };
@@ -76,6 +85,7 @@ export const createNmTokenValidation = (propertyName: string) => {
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
+        .trim()
         .regex(NM_TOKEN_REGEX, {
             message: `${propertyName} must be 1-${REQUEST_PARAM_MAX_LENGTH} characters and only contain letters, numbers, periods, hyphens, underscores and colons`,
         });
@@ -127,6 +137,7 @@ export const createBoundingBoxValidation = (propertyName: string) => {
             required_error: `${propertyName} is required`,
             invalid_type_error: `${propertyName} must be a string`,
         })
+        .trim()
         .transform((box) => box.split(",").map((b) => b.trim()))
         .pipe(
             z.coerce
