@@ -2,10 +2,10 @@ import { DeleteAlarmsCommand } from "@aws-sdk/client-cloudwatch";
 import { DeleteEventSourceMappingCommand } from "@aws-sdk/client-lambda";
 import { DeleteScheduleCommand } from "@aws-sdk/client-scheduler";
 import { DeleteQueueCommand } from "@aws-sdk/client-sqs";
-import { BatchWriteCommand, DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { DYNAMO_DB_MAX_BATCH_SIZE } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
-import { AvlConsumerSubscription, avlConsumerSubscriptionsSchema } from "@bods-integrated-data/shared/schema";
+import { avlConsumerSubscriptionsSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { program } from "commander";
 import { STAGES, STAGE_OPTION, recursiveScan, withUserPrompts } from "../utils";
@@ -16,33 +16,6 @@ import {
     createSchedulerClient,
     createSqsClient,
 } from "../utils/awsClients";
-
-const deleteInactiveAvlConsumerSubscriptions = async (
-    client: DynamoDBDocumentClient,
-    tableName: string,
-    subscriptions: AvlConsumerSubscription[],
-) => {
-    const itemChunks = chunkArray(subscriptions, DYNAMO_DB_MAX_BATCH_SIZE);
-
-    await Promise.all(
-        itemChunks.map((chunk) =>
-            client.send(
-                new BatchWriteCommand({
-                    RequestItems: {
-                        [tableName]: chunk.map((item) => ({
-                            DeleteRequest: {
-                                Key: {
-                                    PK: item.PK,
-                                    SK: item.SK,
-                                },
-                            },
-                        })),
-                    },
-                }),
-            ),
-        ),
-    );
-};
 
 // this script is useful for cleaning up old subscriptions such as after load testing
 program
@@ -113,7 +86,26 @@ program
         }
 
         if (inactiveSubscriptions.length) {
-            await deleteInactiveAvlConsumerSubscriptions(dynamoDbClient, tableName, inactiveSubscriptions);
+            const itemChunks = chunkArray(subscriptions, DYNAMO_DB_MAX_BATCH_SIZE);
+
+            await Promise.all(
+                itemChunks.map((chunk) =>
+                    dynamoDbClient.send(
+                        new BatchWriteCommand({
+                            RequestItems: {
+                                [tableName]: chunk.map((item) => ({
+                                    DeleteRequest: {
+                                        Key: {
+                                            PK: item.PK,
+                                            SK: item.SK,
+                                        },
+                                    },
+                                })),
+                            },
+                        }),
+                    ),
+                ),
+            );
         }
 
         dynamoDbClient.destroy();
