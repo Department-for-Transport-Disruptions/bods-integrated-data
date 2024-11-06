@@ -12,7 +12,7 @@ import {
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 import { chunkArray } from "./utils";
 
-const DYNAMO_DB_MAX_BATCH_SIZE = 25; // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/BatchWriteItemCommand/
+export const DYNAMO_DB_MAX_BATCH_SIZE = 25; // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/BatchWriteItemCommand/
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 

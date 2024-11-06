@@ -136,11 +136,6 @@ bastion-tunnel:
 get-db-credentials:
 	./scripts/get-db-credentials.sh
 
-# Dates
-
-get-bank-holiday-dates:
-	curl https://www.gov.uk/bank-holidays.json --output src/shared/uk-bank-holidays.json
-
 # Naptan
 
 run-local-naptan-retriever:

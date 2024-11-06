@@ -19,7 +19,7 @@ import {
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
 
-const cloudwatchClient = new CloudWatchClient({
+const cloudWatchClient = new CloudWatchClient({
     region: "eu-west-2",
     ...(process.env.STAGE === "local"
         ? {
@@ -50,11 +50,11 @@ const cloudwatchLogsClient = new CloudWatchLogsClient({
 });
 
 export const createAlarm = (input: PutMetricAlarmCommandInput) => {
-    return cloudwatchClient.send(new PutMetricAlarmCommand(input));
+    return cloudWatchClient.send(new PutMetricAlarmCommand(input));
 };
 
 export const deleteAlarm = (name: string) => {
-    return cloudwatchClient.send(
+    return cloudWatchClient.send(
         new DeleteAlarmsCommand({
             AlarmNames: [name],
         }),
@@ -62,7 +62,7 @@ export const deleteAlarm = (name: string) => {
 };
 
 export const putMetricData = async (namespace: string, metricData: MetricDatum[], metricDimensions?: Dimension[]) => {
-    await cloudwatchClient.send(
+    await cloudWatchClient.send(
         new PutMetricDataCommand({
             Namespace: namespace,
             MetricData: metricData,
@@ -80,7 +80,7 @@ export const getMetricStatistics = async (
     period?: number,
     metricDimensions?: Dimension[],
 ) => {
-    const data = await cloudwatchClient.send(
+    const data = await cloudWatchClient.send(
         new GetMetricStatisticsCommand({
             Namespace: namespace,
             MetricName: metricName,
