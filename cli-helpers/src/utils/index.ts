@@ -1,7 +1,13 @@
 import { InvokeCommand, InvokeCommandInputType } from "@aws-sdk/client-lambda";
 import { ListObjectsV2Command, S3Client, _Object } from "@aws-sdk/client-s3";
 import { GetSecretValueCommand, ListSecretsCommand } from "@aws-sdk/client-secrets-manager";
-import { DynamoDBDocumentClient, GetCommand, NativeAttributeValue } from "@aws-sdk/lib-dynamodb";
+import {
+    DynamoDBDocumentClient,
+    GetCommand,
+    NativeAttributeValue,
+    ScanCommand,
+    ScanCommandInput,
+} from "@aws-sdk/lib-dynamodb";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 import inquirer, { QuestionMap } from "inquirer";
@@ -161,4 +167,27 @@ export const listS3Objects = async (client: S3Client, bucketName: string, keyPre
     } while (isTruncated);
 
     return objects;
+};
+
+export const recursiveScan = async <T extends Record<string, unknown>>(
+    client: DynamoDBDocumentClient,
+    scanCommandInput: ScanCommandInput,
+): Promise<T[]> => {
+    const dbData = await client.send(new ScanCommand(scanCommandInput));
+
+    if (!dbData.Items) {
+        return [];
+    }
+
+    if (dbData.LastEvaluatedKey) {
+        return [
+            ...dbData.Items,
+            ...(await recursiveScan(client, {
+                ...scanCommandInput,
+                ExclusiveStartKey: dbData.LastEvaluatedKey,
+            })),
+        ] as T[];
+    }
+
+    return dbData.Items as T[];
 };
