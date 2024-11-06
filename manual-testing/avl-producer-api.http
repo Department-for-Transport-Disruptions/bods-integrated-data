@@ -1,0 +1,93 @@
+### Verify feed
+# @prompt dataProducerEndpoint
+# @prompt username
+# @prompt password
+PUT {{avlProducerEndpoint}}/feed/verify
+x-api-key: {{avlProducerApiKey}}
+
+{
+  "url": "{{dataProducerEndpoint}}",
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+### Create mock data producer subscription
+# @prompt publisherId
+# @prompt subscriptionId
+# @prompt description
+POST {{avlProducerEndpoint}}/subscriptions
+content-type: application/json
+x-api-key: {{avlProducerApiKey}}
+
+{
+  "subscriptionId": "{{subscriptionId}}",
+  "publisherId": "{{publisherId}}",
+  "dataProducerEndpoint": "https://example.com",
+  "username": "mock",
+  "password": "mock",
+  "description": "{{description}}",
+  "shortDescription": "mock-data-producer",
+  "requestorRef": "BODS_MOCK_PRODUCER"
+}
+
+### Create subscription
+# @prompt publisherId
+# @prompt subscriptionId
+# @prompt dataProducerEndpoint
+# @prompt username
+# @prompt password
+# @prompt description
+# @prompt shortDescription
+# @prompt requestorRef
+POST {{avlProducerEndpoint}}/subscriptions
+content-type: application/json
+x-api-key: {{avlProducerApiKey}}
+
+{
+  "publisherId": "{{publisherId}}",
+  "subscriptionId": "{{subscriptionId}}",
+  "dataProducerEndpoint": "{{dataProducerEndpoint}}",
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "description": "{{description}}",
+  "shortDescription": "{{shortDescription}}",
+  "requestorRef": "{{requestorRef}}"
+}
+
+### Update subscription
+# @prompt subscriptionId
+# @prompt dataProducerEndpoint
+# @prompt username
+# @prompt password
+# @prompt description
+# @prompt shortDescription
+POST {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}
+content-type: application/json
+x-api-key: {{avlProducerApiKey}}
+
+{
+  "dataProducerEndpoint": "{{dataProducerEndpoint}}",
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "description": "{{description}}",
+  "shortDescription": "{{shortDescription}}"
+}
+
+### Unsubscribe
+# @prompt subscriptionId
+DELETE {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}
+x-api-key: {{avlProducerApiKey}}
+
+### Validate profile
+# @prompt subscriptionId
+GET {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}/validate-profile
+x-api-key: {{avlProducerApiKey}}
+
+### List subscriptions
+GET {{avlProducerEndpoint}}/subscriptions
+x-api-key: {{avlProducerApiKey}}
+
+### List subscription
+# @prompt subscriptionId
+GET {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}
+x-api-key: {{avlProducerApiKey}}

@@ -1,0 +1,83 @@
+### Get siri-vm (all)
+GET {{siriConsumerEndpoint}}/v1/siri-vm
+
+### Get siri-vm with filters
+# @prompt subscriptionId
+# @prompt downloadTfl
+# @prompt boundingBox
+# @prompt operatorRef
+# @prompt vehicleRef
+# @prompt lineRef
+# @prompt producerRef
+# @prompt originRef
+# @prompt destinationRef
+GET {{siriConsumerEndpoint}}/v1/siri-vm?subscriptionId={{subscriptionId}}&downloadTfl={{downloadTfl}}&boundingBox={{boundingBox}}&operatorRef={{operatorRef}}&vehicleRef={{vehicleRef}}&lineRef={{lineRef}}&producerRef={{producerRef}}&originRef={{originRef}}&destinationRef={{destinationRef}}
+
+### Get siri-sx (all)
+GET {{siriConsumerEndpoint}}/v1/siri-sx
+
+### Get siri-sx with filters
+# @prompt subscriptionId
+GET {{siriConsumerEndpoint}}/v1/siri-sx?subscriptionId={{subscriptionId}}
+
+### Get stats
+GET {{siriConsumerEndpoint}}/v1/stats
+
+### Subscribe
+# @prompt apiKey
+# @prompt subscriptionId
+# @prompt producerSubscriptionIds
+# @prompt updateInterval
+POST {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions?subscriptionId={{producerSubscriptionIds}}
+content-type: application/xml
+x-api-key: {{apiKey}}
+
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd">
+  <SubscriptionRequest>
+    <RequestTimestamp>{{$datetime iso8601}}</RequestTimestamp>
+    <ConsumerAddress>{{mockDataEndpoint}}</ConsumerAddress>
+    <RequestorRef>test</RequestorRef>
+    <MessageIdentifier>{{$guid}}</MessageIdentifier>
+    <SubscriptionContext>
+      <HeartbeatInterval>PT30S</HeartbeatInterval>
+    </SubscriptionContext>
+    <VehicleMonitoringSubscriptionRequest>
+      <SubscriptionIdentifier>{{subscriptionId}}</SubscriptionIdentifier>
+      <InitialTerminationTime>2050-01-01T00:00:00.000Z</InitialTerminationTime>
+      <VehicleMonitoringRequest version="2.0">
+        <RequestTimestamp>{{$datetime iso8601}}</RequestTimestamp>
+        <VehicleMonitoringDetailLevel>normal</VehicleMonitoringDetailLevel>
+      </VehicleMonitoringRequest>
+    <UpdateInterval>{{updateInterval}}</UpdateInterval>
+    </VehicleMonitoringSubscriptionRequest>
+  </SubscriptionRequest>
+</Siri>
+
+### Unsubscribe
+# @prompt apiKey
+# @prompt subscriptionId
+DELETE {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions
+content-type: application/xml
+x-api-key: {{apiKey}}
+
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd">
+  <TerminateSubscriptionRequest>
+    <RequestTimestamp>{{$datetime iso8601}}</RequestTimestamp>
+    <RequestorRef>test</RequestorRef>
+    <MessageIdentifier>{{$guid}}</MessageIdentifier>
+    <SubscriptionRef>{{subscriptionId}}</SubscriptionRef>
+  </TerminateSubscriptionRequest>
+</Siri>
+
+### List subscriptions
+# @prompt apiKey
+GET {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions
+x-api-key: {{apiKey}}
+
+### List subscription
+# @prompt apiKey
+# @prompt subscriptionId
+GET {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions?subscriptionId={{subscriptionId}}
+x-api-key: {{apiKey}}
