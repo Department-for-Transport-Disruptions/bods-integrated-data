@@ -132,8 +132,8 @@ export const affectedStopPointSchema = z.object({
     StopPointType: enumSchema(StopPointType).optional(),
     Location: z
         .object({
-            Longitude: z.number(),
-            Latitude: z.number(),
+            Longitude: z.coerce.number(),
+            Latitude: z.coerce.number(),
         })
         .optional(),
     AffectedModes: z
@@ -153,13 +153,13 @@ export const callsSchema = z.object({
     Call: z.array(
         affectedStopPointSchema.and(
             z.object({
-                Order: z.number().optional(),
+                Order: z.coerce.number().optional(),
                 CallCondition: enumSchema(RoutePointType).optional(),
                 VehicleAtStop: booleanStringSchema.optional(),
                 VehicleLocationAtStop: z
                     .object({
-                        Longitude: z.number(),
-                        Latitude: z.number(),
+                        Longitude: z.coerce.number(),
+                        Latitude: z.coerce.number(),
                     })
                     .optional(),
                 TimingPoint: booleanStringSchema.optional(),
@@ -233,8 +233,8 @@ export const affectedRouteSchema = z.object({
                     SectionRef: z.string().optional(),
                     Offset: z
                         .object({
-                            DistanceFromStart: z.number().optional(),
-                            DistanceFromEnd: z.number().optional(),
+                            DistanceFromStart: z.coerce.number().optional(),
+                            DistanceFromEnd: z.coerce.number().optional(),
                         })
                         .optional(),
                 })
