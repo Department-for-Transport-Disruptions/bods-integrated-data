@@ -104,7 +104,6 @@ export const testSiriSx = `<?xml version="1.0" encoding="utf-8"?>
                   <StopPointName>Second</StopPointName>
                   <StopPointType>busStop</StopPointType>
                 </Destinations>
-                <Route />
               </AffectedVehicleJourney>
             </VehicleJourneys>
           </Affects>
