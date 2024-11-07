@@ -54,7 +54,7 @@ x-api-key: {{apiKey}}
   </SubscriptionRequest>
 </Siri>
 
-### Create AVL consumer subscription
+### Unsubscribe AVL consumer subscription
 # @prompt apiKey
 # @prompt subscriptionId
 DELETE {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions
