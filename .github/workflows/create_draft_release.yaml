@@ -1,0 +1,61 @@
+on:
+  workflow_dispatch:
+    inputs:
+      is_hotfix:
+        type: boolean
+        description: If true, creates a draft hotfix release
+
+name: Create Draft Release
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+
+jobs:
+  create_draft_release:
+    if: ${{ inputs.is_hotfix == false}}
+    runs-on: ubuntu-22.04
+    name: Create Draft Release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          draft: true
+
+  create_hotfix_draft_release:
+    if: ${{ inputs.is_hotfix == true}}
+    runs-on: ubuntu-22.04
+    name: Create Draft Release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Get Latest Release
+        id: latest_release
+        uses: cardinalby/git-get-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          latest: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.head_ref }}
+          name: ${{ steps.latest_release.outputs.tag_name }}-hotfix
+          body: ${{ github.event.pull_request.title }}
+          draft: true
+
