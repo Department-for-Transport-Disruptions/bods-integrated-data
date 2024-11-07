@@ -23,7 +23,7 @@ GET {{siriConsumerEndpoint}}/v1/siri-sx?subscriptionId={{subscriptionId}}
 ### Get stats
 GET {{siriConsumerEndpoint}}/v1/stats
 
-### Subscribe
+### Create consumer subscription
 # @prompt apiKey
 # @prompt subscriptionId
 # @prompt producerSubscriptionIds
@@ -54,7 +54,7 @@ x-api-key: {{apiKey}}
   </SubscriptionRequest>
 </Siri>
 
-### Unsubscribe
+### Create AVL consumer subscription
 # @prompt apiKey
 # @prompt subscriptionId
 DELETE {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions
@@ -71,12 +71,12 @@ x-api-key: {{apiKey}}
   </TerminateSubscriptionRequest>
 </Siri>
 
-### List subscriptions
+### Get all AVL consumer subscriptions
 # @prompt apiKey
 GET {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions
 x-api-key: {{apiKey}}
 
-### List subscription
+### Get AVL consumer subscription
 # @prompt apiKey
 # @prompt subscriptionId
 GET {{siriConsumerEndpoint}}/v1/siri-vm/subscriptions?subscriptionId={{subscriptionId}}

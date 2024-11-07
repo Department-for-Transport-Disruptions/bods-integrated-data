@@ -1,4 +1,4 @@
-### Create mock data producer subscription
+### Create mock cancellations producer subscription
 # @prompt publisherId
 # @prompt subscriptionId
 # @prompt description
@@ -17,7 +17,7 @@ x-api-key: {{cancellationsProducerApiKey}}
   "requestorRef": "BODS_MOCK_PRODUCER"
 }
 
-### Create subscription
+### Create cancellations producer subscription
 # @prompt publisherId
 # @prompt subscriptionId
 # @prompt dataProducerEndpoint
@@ -41,7 +41,7 @@ x-api-key: {{cancellationsProducerApiKey}}
   "requestorRef": "{{requestorRef}}"
 }
 
-### Update subscription
+### Update cancellations producer subscription
 # @prompt subscriptionId
 # @prompt dataProducerEndpoint
 # @prompt username
@@ -60,16 +60,16 @@ x-api-key: {{cancellationsProducerApiKey}}
   "shortDescription": "{{shortDescription}}"
 }
 
-### Unsubscribe
+### Unsubscribe cancellations producer subscription
 # @prompt subscriptionId
 DELETE {{cancellationsProducerEndpoint}}/subscriptions/{{subscriptionId}}
 x-api-key: {{cancellationsProducerApiKey}}
 
-### List subscriptions
+### Get all cancellations producer subscriptions
 GET {{cancellationsProducerEndpoint}}/subscriptions
 x-api-key: {{cancellationsProducerApiKey}}
 
-### List subscription
+### Get cancellations producer subscription
 # @prompt subscriptionId
 GET {{cancellationsProducerEndpoint}}/subscriptions/{{subscriptionId}}
 x-api-key: {{cancellationsProducerApiKey}}

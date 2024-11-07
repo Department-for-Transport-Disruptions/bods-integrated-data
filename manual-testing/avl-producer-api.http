@@ -1,4 +1,4 @@
-### Verify feed
+### Verify AVL producer feed
 # @prompt dataProducerEndpoint
 # @prompt username
 # @prompt password
@@ -11,7 +11,7 @@ x-api-key: {{avlProducerApiKey}}
   "password": "{{password}}"
 }
 
-### Create mock data producer subscription
+### Create mock AVL producer subscription
 # @prompt publisherId
 # @prompt subscriptionId
 # @prompt description
@@ -30,7 +30,7 @@ x-api-key: {{avlProducerApiKey}}
   "requestorRef": "BODS_MOCK_PRODUCER"
 }
 
-### Create subscription
+### Create AVL producer subscription
 # @prompt publisherId
 # @prompt subscriptionId
 # @prompt dataProducerEndpoint
@@ -54,7 +54,7 @@ x-api-key: {{avlProducerApiKey}}
   "requestorRef": "{{requestorRef}}"
 }
 
-### Update subscription
+### Update AVL producer subscription
 # @prompt subscriptionId
 # @prompt dataProducerEndpoint
 # @prompt username
@@ -73,21 +73,21 @@ x-api-key: {{avlProducerApiKey}}
   "shortDescription": "{{shortDescription}}"
 }
 
-### Unsubscribe
+### Unsubscribe AVL producer subscription
 # @prompt subscriptionId
 DELETE {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}
 x-api-key: {{avlProducerApiKey}}
 
-### Validate profile
+### Validate AVL producer profile
 # @prompt subscriptionId
 GET {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}/validate-profile
 x-api-key: {{avlProducerApiKey}}
 
-### List subscriptions
+### Get all AVL producer subscriptions
 GET {{avlProducerEndpoint}}/subscriptions
 x-api-key: {{avlProducerApiKey}}
 
-### List subscription
+### Get AVL producer subscription
 # @prompt subscriptionId
 GET {{avlProducerEndpoint}}/subscriptions/{{subscriptionId}}
 x-api-key: {{avlProducerApiKey}}
