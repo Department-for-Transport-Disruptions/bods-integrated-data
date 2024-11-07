@@ -23,7 +23,7 @@ GET {{siriConsumerEndpoint}}/v1/siri-sx?subscriptionId={{subscriptionId}}
 ### Get stats
 GET {{siriConsumerEndpoint}}/v1/stats
 
-### Create consumer subscription
+### Create AVL consumer subscription
 # @prompt apiKey
 # @prompt subscriptionId
 # @prompt producerSubscriptionIds
