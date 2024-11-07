@@ -17,6 +17,20 @@ on:
           - bods-avl-processor
           - siri-vm-generator
           - siri-sx-generator
+  workflow_call:
+    inputs:
+      stage:
+        type: environment
+        description: Environment to deploy to
+        required: true
+      branch:
+        type: string
+        description: Name of branch to deploy
+        default: main
+      task:
+        type: string
+        required: true
+        description: Task to deploy to the target environment
 
 name: Deploy ECS Task
 
