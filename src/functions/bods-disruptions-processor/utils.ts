@@ -220,7 +220,7 @@ export const getGtfsInformedIdentities = async (
                 for (const affectedLine of affectedNetwork.AffectedLine) {
                     if (affectedLine.AffectedOperator?.OperatorRef) {
                         operatorRefs.push(affectedLine.AffectedOperator.OperatorRef);
-
+                    }
                     lineRefs.push(affectedLine.LineRef);
                 }
             }
