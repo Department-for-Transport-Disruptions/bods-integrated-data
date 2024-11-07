@@ -153,7 +153,7 @@ export const callsSchema = z.object({
     Call: z.array(
         affectedStopPointSchema.and(
             z.object({
-                Order: z.number().optional(),
+                Order: z.coerce.number().optional(),
                 CallCondition: enumSchema(RoutePointType).optional(),
                 VehicleAtStop: booleanStringSchema.optional(),
                 VehicleLocationAtStop: z
@@ -233,8 +233,8 @@ export const affectedRouteSchema = z.object({
                     SectionRef: z.string().optional(),
                     Offset: z
                         .object({
-                            DistanceFromStart: z.number().optional(),
-                            DistanceFromEnd: z.number().optional(),
+                            DistanceFromStart: z.coerce.number().optional(),
+                            DistanceFromEnd: z.coerce.number().optional(),
                         })
                         .optional(),
                 })

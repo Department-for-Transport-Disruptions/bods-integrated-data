@@ -153,8 +153,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         logger.subscriptionId = PK;
 
         const producerSubscriptions = await getAvlSubscriptions(AVL_PRODUCER_SUBSCRIPTION_TABLE_NAME);
+        const producerSubscriptionIds = Array.from(new Set(subscriptionId));
 
-        for (const producerSubscriptionId of subscriptionId) {
+        for (const producerSubscriptionId of producerSubscriptionIds) {
             const subscription = producerSubscriptions.find(({ PK }) => PK === producerSubscriptionId);
 
             if (!subscription || subscription.status === "inactive") {
@@ -188,7 +189,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 producerRef,
                 originRef,
                 destinationRef,
-                subscriptionId,
+                subscriptionId: producerSubscriptionIds,
             },
         };
 
