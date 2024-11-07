@@ -94,7 +94,7 @@ export const operatorsSchema = z.object({
 });
 
 export const affectedLineSchema = z.object({
-    AffectedOperator: z.array(affectedOperatorSchema).optional(),
+    AffectedOperator: affectedOperatorSchema.optional(),
     LineRef: z.string(),
     PublishedLineName: z.string(),
     Direction: z
