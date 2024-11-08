@@ -45,7 +45,7 @@ jobs:
 
   deploy_bods_avl_processor_ecs_task:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
-    name: Deploy ECS Task to Prod - siri-sx-generator
+    name: Deploy ECS Task to Prod - bods-avl-processor
     needs: terraform_apply_prod
     with:
       environment: prod
