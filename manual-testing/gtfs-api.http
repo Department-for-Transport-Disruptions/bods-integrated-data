@@ -1,0 +1,27 @@
+### Get GTFS regions
+GET {{gtfsApiEndpoint}}/gtfs/regions
+
+### Get GTFS (all)
+GET {{gtfsApiEndpoint}}/gtfs
+
+### Get GTFS region by code
+# @prompt regionCode
+GET {{gtfsApiEndpoint}}/gtfs?regionCode={{regionCode}}
+
+### Get GTFS region by name
+# @prompt regionName
+GET {{gtfsApiEndpoint}}/gtfs?regionName={{regionName}}
+
+### Get GTFS-RT (all)
+GET {{gtfsApiEndpoint}}/gtfs-rt
+
+### Get GTFS-RT with filters
+# @prompt download
+# @prompt boundingBox
+# @prompt routeId
+# @prompt startTimeBefore
+# @prompt startTimeAfter
+GET {{gtfsApiEndpoint}}/gtfs-rt?download={{download}}&boundingBox={{boundingBox}}&routeId={{routeId}}&startTimeBefore={{startTimeBefore}}&startTimeAfter={{startTimeAfter}}
+
+### Get GTFS-RT service alerts
+GET {{gtfsApiEndpoint}}/gtfs-rt/service-alerts

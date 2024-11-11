@@ -1,0 +1,75 @@
+### Create mock cancellations producer subscription
+# @prompt publisherId
+# @prompt subscriptionId
+# @prompt description
+POST {{cancellationsProducerEndpoint}}/subscriptions
+content-type: application/json
+x-api-key: {{cancellationsProducerApiKey}}
+
+{
+  "subscriptionId": "{{subscriptionId}}",
+  "publisherId": "{{publisherId}}",
+  "dataProducerEndpoint": "https://example.com",
+  "username": "mock",
+  "password": "mock",
+  "description": "{{description}}",
+  "shortDescription": "mock-data-producer",
+  "requestorRef": "BODS_MOCK_PRODUCER"
+}
+
+### Create cancellations producer subscription
+# @prompt publisherId
+# @prompt subscriptionId
+# @prompt dataProducerEndpoint
+# @prompt username
+# @prompt password
+# @prompt description
+# @prompt shortDescription
+# @prompt requestorRef
+POST {{cancellationsProducerEndpoint}}/subscriptions
+content-type: application/json
+x-api-key: {{cancellationsProducerApiKey}}
+
+{
+  "publisherId": "{{publisherId}}",
+  "subscriptionId": "{{subscriptionId}}",
+  "dataProducerEndpoint": "{{dataProducerEndpoint}}",
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "description": "{{description}}",
+  "shortDescription": "{{shortDescription}}",
+  "requestorRef": "{{requestorRef}}"
+}
+
+### Update cancellations producer subscription
+# @prompt subscriptionId
+# @prompt dataProducerEndpoint
+# @prompt username
+# @prompt password
+# @prompt description
+# @prompt shortDescription
+POST {{cancellationsProducerEndpoint}}/subscriptions/{{subscriptionId}}
+content-type: application/json
+x-api-key: {{cancellationsProducerApiKey}}
+
+{
+  "dataProducerEndpoint": "{{dataProducerEndpoint}}",
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "description": "{{description}}",
+  "shortDescription": "{{shortDescription}}"
+}
+
+### Unsubscribe cancellations producer subscription
+# @prompt subscriptionId
+DELETE {{cancellationsProducerEndpoint}}/subscriptions/{{subscriptionId}}
+x-api-key: {{cancellationsProducerApiKey}}
+
+### Get all cancellations producer subscriptions
+GET {{cancellationsProducerEndpoint}}/subscriptions
+x-api-key: {{cancellationsProducerApiKey}}
+
+### Get cancellations producer subscription
+# @prompt subscriptionId
+GET {{cancellationsProducerEndpoint}}/subscriptions/{{subscriptionId}}
+x-api-key: {{cancellationsProducerApiKey}}
