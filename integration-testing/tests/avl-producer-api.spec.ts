@@ -1,9 +1,8 @@
 import { AvlSubscribeMessage } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { expect, test } from "@playwright/test";
-import { getDynamoItem } from "../data/dynamo";
 import { generateMockHeartbeat } from "../data/mockHeartbeat";
 import { generateMockSiriVm } from "../data/mockSiri";
-import { cleardownTestSubscription, getSecretByKey } from "./utils";
+import { deleteAvlProducerSubscription, getAvlProducerSubscription, getSecretByKey } from "../utils";
 
 const { STAGE: stage } = process.env;
 
@@ -28,30 +27,17 @@ const testSubscription: AvlSubscribeMessage = {
     publisherId: "PLAYWRIGHT",
 };
 
-const getTestSubscription = async () => {
-    const dynamoItem = await getDynamoItem(avlSubscriptionTableName, {
-        PK: testSubscription.subscriptionId,
-        SK: "SUBSCRIPTION",
-    });
-
-    if (!dynamoItem) {
-        throw new Error("Subscription not found in dynamo");
-    }
-
-    return dynamoItem;
-};
-
 test.beforeAll(async () => {
-    await cleardownTestSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
-    headers["x-api-key"] = await getSecretByKey(stage, "avl_producer_api_key");
+    await deleteAvlProducerSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
+    headers["x-api-key"] = await getSecretByKey("avl_producer_api_key");
 });
 
 test.afterAll(async () => {
-    await cleardownTestSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
+    await deleteAvlProducerSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
 });
 
 test.describe("avl-producer-api", () => {
-    test("should allow a new data producer subscription to be created", async ({ request }) => {
+    test("creates a AVL producer subscription when given valid inputs", async ({ request }) => {
         const newSubscription = await request.post(`${avlProducerApiUrl}/subscriptions`, {
             headers,
             data: testSubscription,
@@ -89,7 +75,7 @@ test.describe("avl-producer-api", () => {
         );
     });
 
-    test("should allow an existing data producer subscription to be updated", async ({ request }) => {
+    test("updates an AVL producer subscription when given valid inputs", async ({ request }) => {
         const updateSubscription = await request.put(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
             {
@@ -130,26 +116,26 @@ test.describe("avl-producer-api", () => {
         );
     });
 
-    test("should post data to data endpoint", async ({ request }) => {
+    test("posts AVL data to the data endpoint", async ({ request }) => {
         const now = new Date();
         const endDate = new Date(now);
         endDate.setMonth(now.getMonth() + 3);
         const mockTimestamp = now.toISOString();
         const mockEndTimestamp = endDate.toISOString();
 
-        const subscription = await getTestSubscription();
+        const { apiKey } = await getAvlProducerSubscription(avlSubscriptionTableName, testSubscription.subscriptionId);
         const mockHeartbeat = generateMockHeartbeat(testSubscription.subscriptionId, mockTimestamp);
         const mockSiri = generateMockSiriVm(testSubscription.subscriptionId, mockTimestamp, mockEndTimestamp);
 
         const heartbeatRequest = await request.post(
-            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}?apiKey=${subscription.apiKey}`,
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}?apiKey=${apiKey}`,
             { headers: { ...headers, "Content-Type": "text/xml" }, data: mockHeartbeat },
         );
 
         expect(heartbeatRequest.status()).toBe(200);
 
         const dataRequest = await request.post(
-            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}?apiKey=${subscription.apiKey}`,
+            `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}?apiKey=${apiKey}`,
             { headers: { ...headers, "Content-Type": "text/xml" }, data: mockSiri },
         );
 
@@ -168,7 +154,7 @@ test.describe("avl-producer-api", () => {
         expect(responseData.heartbeatLastReceivedDateTime).not.toBeNull();
     });
 
-    test("should allow a data producer subscription to be deleted", async ({ request }) => {
+    test("unsubscribes an AVL producer subscription when given valid inputs", async ({ request }) => {
         const deleteSubscription = await request.delete(
             `${avlProducerApiUrl}/subscriptions/${testSubscription.subscriptionId}`,
             { headers },

@@ -1,6 +1,6 @@
 import { AvlConsumerSubscription, AvlSubscription } from "@bods-integrated-data/shared/schema";
 import { expect, test } from "@playwright/test";
-import { cleardownTestSubscription, createTestSubscription, makeSubscriptionInactive } from "./utils";
+import { createAvlProducerSubscription, deleteAvlConsumerSubscription, deleteAvlProducerSubscription } from "../utils";
 
 const { STAGE: stage } = process.env;
 
@@ -69,23 +69,23 @@ const terminateSubscriptionRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8
             `;
 
 test.beforeAll(async () => {
-    await createTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription);
-    await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
+    await createAvlProducerSubscription(avlProducerSubscriptionTableName, testProducerSubscription);
+    await deleteAvlConsumerSubscription(avlConsumerSubscriptionTableName, testConsumerSubscription);
 });
 
 test.afterAll(async () => {
-    await cleardownTestSubscription(avlProducerSubscriptionTableName, testProducerSubscription.PK);
-    await makeSubscriptionInactive(avlConsumerSubscriptionTableName, testConsumerSubscription);
+    await deleteAvlProducerSubscription(avlProducerSubscriptionTableName, testProducerSubscription.PK);
+    await deleteAvlConsumerSubscription(avlConsumerSubscriptionTableName, testConsumerSubscription);
 });
 
 test.describe("avl-consumer-api", () => {
-    test("should return all siri-vm data if no query parameters are passed", async ({ request }) => {
+    test("returns all siri-vm data when no query parameters are passed", async ({ request }) => {
         const siriVmResponse = await request.get(`${avlConsumerApiUrl(stage)}/siri-vm`);
 
         expect(siriVmResponse.status()).toBe(200);
     });
 
-    test("should return all siri-vm data if valid query parameters are passed", async ({ request }) => {
+    test("returns all siri-vm data when valid query parameters are passed", async ({ request }) => {
         const queryParams =
             "subscriptionId=test&name=testName&operatorRef=test&lineRef=test&vehicleRef=test&producerRef=test&originRef=test&destinationRef=test&boundingBox=1,2,3,4";
         const siriVmResponse = await request.get(`${avlConsumerApiUrl(stage)}/siri-vm?${queryParams}`);
@@ -93,7 +93,7 @@ test.describe("avl-consumer-api", () => {
         expect(siriVmResponse.status()).toBe(200);
     });
 
-    test("should create a new avl consumer subscription when given valid inputs", async ({ request }) => {
+    test("creates an AVL consumer subscription when given valid inputs", async ({ request }) => {
         const subscriptionRequestBody = `<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
             <Siri version=\"2.0\\" xmlns=\"http://www.siri.org.uk/siri\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd\">
               <SubscriptionRequest>
@@ -127,7 +127,7 @@ test.describe("avl-consumer-api", () => {
         expect(subscribeResponse.status()).toBe(200);
     });
 
-    test("should throw an error when deleting an avl consumer subscription too soon after creating one", async ({
+    test("throws an error when deleting an AVL consumer subscription too soon after creating one", async ({
         request,
     }) => {
         const unsubscribeResponse = await request.delete(`${avlConsumerApiUrl(stage)}/siri-vm/subscriptions`, {
@@ -138,7 +138,7 @@ test.describe("avl-consumer-api", () => {
         expect(unsubscribeResponse.status()).toBe(503);
     });
 
-    test("should delete an avl consumer subscription when given valid inputs", async ({ request }) => {
+    test("unsubscribes an AVL consumer subscription when given valid inputs", async ({ request }) => {
         /// A wait time is added here because the event source mapping created in the subscribe endpoint takes approx.
         // 12 seconds to create. Trying to hit the unsubscribe endpoint before this time will mean the event source mapping
         // is not deleted which makes future test runs fail
