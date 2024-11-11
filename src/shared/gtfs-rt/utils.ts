@@ -215,6 +215,10 @@ export const getRouteKey = (avl: NewAvl) => {
             getOperatorRef: () => "NCTR",
             getLineRef: (lineRef) => lineRef.split("NT")[1],
         },
+        "753BDR": {
+            getOperatorRef: () => "BDRB",
+            getLineRef: (lineRef) => lineRef.split("753BDR")[1],
+        },
     };
 
     return operatorNocMap[operatorRef]
