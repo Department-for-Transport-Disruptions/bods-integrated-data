@@ -217,7 +217,7 @@ export const getRouteKey = (avl: NewAvl) => {
         },
         "753BDR": {
             getOperatorRef: () => "BDRB",
-            getLineRef: (lineRef) => lineRef.split("753BDR")[1],
+            getLineRef: (lineRef) => lineRef,
         },
     };
 
