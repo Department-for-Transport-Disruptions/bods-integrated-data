@@ -43,7 +43,7 @@ describe("avl-tfl-location-retriever", () => {
                             {
                                 producerRef: "Transport_For_London",
                                 vehicleRef: "7534",
-                                vehicleName: "BP15OMC",
+                                vehicleName: "BP15O&MC",
                                 operatorRef: "Go-Ahead",
                                 monitored: "true",
                                 longitude: 0.096946,
