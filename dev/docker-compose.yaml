@@ -39,7 +39,8 @@ services:
     environment:
       - IS_DOCKER=true
       - STAGE=local
-      - BUCKET_NAME=integrated-data-gtfs-rt-local
+      - GTFS_BUCKET_NAME=integrated-data-gtfs-rt-local
+      - SIRI_VM_BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
       - PROCESSOR_FREQUENCY_IN_SECONDS=30
       - CLEARDOWN_FREQUENCY_IN_SECONDS=60
     volumes:
