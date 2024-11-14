@@ -16,9 +16,8 @@ When using this template make sure to complete the following actions:
 
 After copying the lambda-template directory and renaming it to your function name update the following in your `package.json`:
 
-- Update name to your function's name
+- Update instances of `lamda-template` with `{YOUR_FUNCTION_DIRECTORY_NAME}`
 - Update description to describe what your function is doing
-- Update `lamda-template.zip` with `{YOUR_FUNCTION_DIRECTORY_NAME}.zip` for the `build:ci` and `build:local` scripts.
 
 ```JSON
 "name": "@bods-integrated-data/lambda-template",
@@ -52,33 +51,29 @@ pnpm i
 
 ## Create a CLI Helper
 
-In `cli-helpers/src/commands` create a `invoke-lambda-template.ts` file with the following contents, replacing `lambda-template` in the file name with the
-function name, as well as `lambda-template` and `LambdaTemplate` in the file:
+In `cli-helpers/src/commands` create a `invoke-lambda-template.ts` file with the following contents,
+replacing instances of `lambda-template` in the filename and file contents with your lambda name:
 
 ```typescript
-import { Command } from "@commander-js/extra-typings";
-import { STAGE_OPTION, invokeLambda } from "../utils";
+import { program } from "commander";
+import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
 
-export const invokeLambdaTemplate = new Command("invoke-lambda-template")
+program
     .addOption(STAGE_OPTION)
     .action(async (options) => {
-        const { stage } = options;
+        const { stage } = await withUserPrompts(options, {
+            stage: { type: "list", choices: STAGES },
+        });
 
         await invokeLambda(stage, {
             FunctionName: `integrated-data-lambda-template-${stage}`,
             InvocationType: "RequestResponse",
         });
-    });
+    })
+    .parse();
 ```
 
 Add any extra configuration to the file as necessary.
-
-Finally, export the CLI-helper in the `cli-helpers/src/commands/index.ts` file:
-
-```typescript
-// ...other exports
-export * from "./invoke-lambda-template";
-```
 
 ## Update Terraform resources
 
