@@ -20,7 +20,7 @@ jobs:
     uses: ./.github/workflows/terraform_apply.yaml
     name: Terraform Apply - Test
     with:
-      stage: test
+      stage: "test"
       terraform_version: 1.6.6
       use_artifacts: false
       ref: ${{ github.event.release.tag_name }}
@@ -31,7 +31,7 @@ jobs:
     name: Deploy ECS Task to Test- siri-vm-generator
     needs: terraform_apply_test
     with:
-      environment: test
+      environment: "test"
       branch: ${{ github.event.release.tag_name }}
       task: siri-vm-generator
 
@@ -40,7 +40,7 @@ jobs:
     name: Deploy ECS Task to Test - siri-sx-generator
     needs: terraform_apply_test
     with:
-      environment: test
+      environment: "test"
       branch: ${{ github.event.release.tag_name }}
       task: siri-sx-generator
 
@@ -49,7 +49,7 @@ jobs:
     name: Deploy ECS Task to Test - bods-avl-processor
     needs: terraform_apply_test
     with:
-      environment: test
+      environment: "test"
       branch: ${{ github.event.release.tag_name }}
       task: bods-avl-processor
 

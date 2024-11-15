@@ -20,7 +20,7 @@ on:
   workflow_call:
     inputs:
       stage:
-        type: environment
+        type: string
         description: Environment to deploy to
         required: true
       branch:

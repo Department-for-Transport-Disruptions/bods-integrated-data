@@ -1,7 +1,7 @@
 name: Release published
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
 # TODO: After testing released_published_test reinstate this
 #  release:
 #    types:
