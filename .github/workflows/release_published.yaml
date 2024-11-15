@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/terraform_apply.yaml
     name: Terraform Apply - Prod
     with:
-      stage: prod
+      stage: "prod"
       terraform_version: 1.6.6
       use_artifacts: false
       ref: ${{ github.event.release.tag_name }}
@@ -32,7 +32,7 @@ jobs:
     name: Deploy ECS Task to Prod - siri-vm-generator
     needs: terraform_apply_prod
     with:
-      environment: prod
+      environment: "prod"
       branch: ${{ github.event.release.tag_name }}
       task: siri-vm-generator
 
@@ -41,7 +41,7 @@ jobs:
     name: Deploy ECS Task to Prod - siri-sx-generator
     needs: terraform_apply_prod
     with:
-      environment: prod
+      environment: "prod"
       branch: ${{ github.event.release.tag_name }}
       task: siri-sx-generator
 
@@ -50,7 +50,7 @@ jobs:
     name: Deploy ECS Task to Prod - bods-avl-processor
     needs: terraform_apply_prod
     with:
-      environment: prod
+      environment: "prod"
       branch: ${{ github.event.release.tag_name }}
       task: bods-avl-processor
 
