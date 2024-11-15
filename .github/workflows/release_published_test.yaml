@@ -4,6 +4,8 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+
 
 
 permissions:
@@ -23,7 +25,7 @@ jobs:
       stage: "test"
       terraform_version: 1.6.6
       use_artifacts: false
-      ref: ${{ github.event.release.tag_name }}
+      ref: ${{ github.event.release.tag_name || github.ref_name }}
     secrets: inherit
 
   deploy_siri_vm_generator_ecs_task:
@@ -31,8 +33,8 @@ jobs:
     name: Deploy ECS Task to Test- siri-vm-generator
     needs: terraform_apply_test
     with:
-      environment: "test"
-      branch: ${{ github.event.release.tag_name }}
+      stage: "test"
+      branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: siri-vm-generator
 
   deploy_siri_sx_generator_ecs_task:
@@ -40,8 +42,8 @@ jobs:
     name: Deploy ECS Task to Test - siri-sx-generator
     needs: terraform_apply_test
     with:
-      environment: "test"
-      branch: ${{ github.event.release.tag_name }}
+      stage: "test"
+      branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: siri-sx-generator
 
   deploy_bods_avl_processor_ecs_task:
@@ -49,8 +51,8 @@ jobs:
     name: Deploy ECS Task to Test - bods-avl-processor
     needs: terraform_apply_test
     with:
-      environment: "test"
-      branch: ${{ github.event.release.tag_name }}
+      stage: "test"
+      branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: bods-avl-processor
 
 
