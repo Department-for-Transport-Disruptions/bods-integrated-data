@@ -268,7 +268,12 @@ export const journeysSchema = z.object({
             JourneyParts: journeyPartsSchema.optional(),
             Origins: z.array(affectedStopPointSchema).optional(),
             Destinations: z.array(affectedStopPointSchema).optional(),
-            Route: affectedRouteSchema.or(z.literal("").transform(() => ({}))),
+            Route: affectedRouteSchema.or(
+                z
+                    .literal("")
+                    .optional()
+                    .transform(() => ({})),
+            ),
             OriginAimedDepartureTime: datetimeSchema.optional(),
             DestinationAimedArrivalTime: datetimeSchema.optional(),
             OriginDisplayAtDestination: z.string().optional(),

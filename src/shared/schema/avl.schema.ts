@@ -336,7 +336,7 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         valid_until_time: validUntilTime,
         producer_ref: item.producerRef,
         vehicle_ref: item.vehicleRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-        vehicle_name: item.vehicleName,
+        vehicle_name: item.vehicleName?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         operator_ref: item.operatorRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         monitored: item.monitored,
         longitude: roundToDecimalPlaces(item.longitude, MAX_DECIMAL_PRECISION),
