@@ -3,7 +3,7 @@ on:
     inputs:
       is_hotfix:
         type: boolean
-        description: If true, creates a draft hotfix release
+        description: Release hotfix? If checked, creates a draft hotfix release
 
 name: Create Draft Release
 

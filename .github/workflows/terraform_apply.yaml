@@ -12,6 +12,10 @@ on:
       use_artifacts:
         default: true
         type: boolean
+      ref:
+        type: string
+        description: Name of branch or tag to deploy
+        default: main
     secrets:
       AWS_OIDC_ROLE:
         required: true
@@ -27,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: actions/download-artifact@v4
         if: inputs.use_artifacts
