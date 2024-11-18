@@ -90,6 +90,8 @@ module "integrated_data_txc_pipeline" {
   db_secret_arn             = "*"
   db_sg_id                  = null
   db_host                   = null
+  aws_account_id            = data.aws_caller_identity.current.account_id
+  aws_region                = data.aws_region.current.name
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = "integrated-data-aurora-output-${local.env}"
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name

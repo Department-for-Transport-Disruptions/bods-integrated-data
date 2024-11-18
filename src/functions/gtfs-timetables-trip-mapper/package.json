@@ -1,0 +1,22 @@
+{
+    "name": "@bods-integrated-data/gtfs-timetables-trip-mapper",
+    "version": "0.1.0",
+    "description": "Function for creating maps of GTFS timetable trip data for use in AVL matching",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./gtfs-timetables-trip-mapper.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/gtfs-timetables-trip-mapper.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

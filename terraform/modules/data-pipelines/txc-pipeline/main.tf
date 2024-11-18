@@ -319,3 +319,57 @@ module "integrated_data_gtfs_timetables_generator_function" {
     GTFS_BUCKET   = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.bucket
   }
 }
+
+module "integrated_data_gtfs_trip_maps_table" {
+  source = "../../shared/dynamo-table"
+
+  environment   = var.environment
+  table_name    = "integrated-data-gtfs-trip-maps-table"
+  ttl_attribute = "timeToExist"
+}
+
+module "integrated_data_gtfs_timetables_trip_mapper_function" {
+  source = "../../shared/lambda-function"
+
+  environment     = var.environment
+  function_name   = "integrated-data-gtfs-timetables-trip-mapper"
+  zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-trip-mapper.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 60
+  memory          = 1024
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+    },
+    {
+      Action = [
+        "dynamodb:BatchWriteItem"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_gtfs_trip_maps_table.table_name}"
+      ]
+    }
+  ]
+
+  env_vars = {
+    STAGE                     = var.environment
+    DB_HOST                   = var.db_host
+    DB_PORT                   = var.db_port
+    DB_SECRET_ARN             = var.db_secret_arn
+    DB_NAME                   = var.db_name
+    GTFS_TRIP_MAPS_TABLE_NAME = module.integrated_data_gtfs_trip_maps_table.table_name
+  }
+}

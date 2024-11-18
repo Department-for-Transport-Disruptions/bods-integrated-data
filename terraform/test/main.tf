@@ -163,6 +163,8 @@ module "integrated_data_txc_pipeline" {
   db_secret_arn             = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                  = module.integrated_data_aurora_db.db_sg_id
   db_host                   = module.integrated_data_aurora_db.db_host
+  aws_account_id            = data.aws_caller_identity.current.account_id
+  aws_region                = data.aws_region.current.name
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = module.integrated_data_aurora_db.s3_output_bucket_name
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
@@ -316,29 +318,30 @@ module "integrated_data_db_cleardown_function" {
 module "integrated_data_timetables_sfn" {
   source = "../modules/timetables-sfn"
 
-  environment                            = local.env
-  bods_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
-  tnds_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
-  txc_processor_function_arn             = module.integrated_data_txc_pipeline.txc_processor_function_arn
-  unzipper_function_arn                  = module.integrated_data_txc_pipeline.unzipper_function_arn
-  gtfs_timetables_generator_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
-  naptan_retriever_function_arn          = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
-  naptan_uploader_function_arn           = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
-  noc_retriever_function_arn             = module.integrated_data_noc_pipeline.noc_retriever_function_arn
-  noc_processor_function_arn             = module.integrated_data_noc_pipeline.noc_processor_function_arn
-  nptg_retriever_function_arn            = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
-  nptg_uploader_function_arn             = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
-  bank_holidays_retriever_function_arn   = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
-  db_cleardown_function_arn              = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
-  table_renamer_function_arn             = module.integrated_data_table_renamer.table_renamer_function_arn
-  tnds_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
-  bods_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
-  bods_txc_bucket_name                   = module.integrated_data_txc_pipeline.bods_txc_bucket_name
-  tnds_txc_bucket_name                   = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
-  noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
-  naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
-  nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name
-  schedule                               = "cron(0 2 * * ? *)"
+  environment                              = local.env
+  bods_txc_retriever_function_arn          = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
+  tnds_txc_retriever_function_arn          = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
+  txc_processor_function_arn               = module.integrated_data_txc_pipeline.txc_processor_function_arn
+  unzipper_function_arn                    = module.integrated_data_txc_pipeline.unzipper_function_arn
+  gtfs_timetables_generator_function_arn   = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
+  gtfs_timetables_trip_mapper_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_trip_mapper_function_arn
+  naptan_retriever_function_arn            = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
+  naptan_uploader_function_arn             = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
+  noc_retriever_function_arn               = module.integrated_data_noc_pipeline.noc_retriever_function_arn
+  noc_processor_function_arn               = module.integrated_data_noc_pipeline.noc_processor_function_arn
+  nptg_retriever_function_arn              = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
+  nptg_uploader_function_arn               = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
+  bank_holidays_retriever_function_arn     = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
+  db_cleardown_function_arn                = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
+  table_renamer_function_arn               = module.integrated_data_table_renamer.table_renamer_function_arn
+  tnds_txc_zipped_bucket_name              = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
+  bods_txc_zipped_bucket_name              = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
+  bods_txc_bucket_name                     = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tnds_txc_bucket_name                     = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
+  noc_bucket_name                          = module.integrated_data_noc_pipeline.noc_bucket_name
+  naptan_bucket_name                       = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name                         = module.integrated_data_nptg_pipeline.nptg_bucket_name
+  schedule                                 = "cron(0 2 * * ? *)"
 }
 
 module "integrated_data_gtfs_api" {
