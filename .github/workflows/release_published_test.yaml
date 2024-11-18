@@ -36,6 +36,7 @@ jobs:
       stage: "test"
       branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: siri-vm-generator
+    secrets: inherit
 
   deploy_siri_sx_generator_ecs_task:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
@@ -45,6 +46,7 @@ jobs:
       stage: "test"
       branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: siri-sx-generator
+    secrets: inherit
 
   deploy_bods_avl_processor_ecs_task:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
@@ -54,5 +56,6 @@ jobs:
       stage: "test"
       branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: bods-avl-processor
+    secrets: inherit
 
 
