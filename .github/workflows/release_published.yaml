@@ -1,11 +1,10 @@
 name: Release published
 
 on:
+  release:
+    types:
+      - published
   workflow_dispatch:
-# TODO: After testing released_published_test reinstate this
-#  release:
-#    types:
-#      - published
 
 permissions:
   id-token: write # This is required for aws oidc connection
@@ -24,34 +23,37 @@ jobs:
       stage: "prod"
       terraform_version: 1.6.6
       use_artifacts: false
-      ref: ${{ github.event.release.tag_name }}
+      ref: ${{ github.event.release.tag_name || github.ref_name }}
     secrets: inherit
 
   deploy_siri_vm_generator_ecs_task:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
-    name: Deploy ECS Task to Prod - siri-vm-generator
+    name: Deploy siri-vm-generator to Prod
     needs: terraform_apply_prod
     with:
       environment: "prod"
-      branch: ${{ github.event.release.tag_name }}
+      branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: siri-vm-generator
+    secrets: inherit
 
   deploy_siri_sx_generator_ecs_task:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
-    name: Deploy ECS Task to Prod - siri-sx-generator
+    name: Deploy siri-sx-generator to Prod
     needs: terraform_apply_prod
     with:
       environment: "prod"
-      branch: ${{ github.event.release.tag_name }}
+      branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: siri-sx-generator
+    secrets: inherit
 
   deploy_bods_avl_processor_ecs_task:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
-    name: Deploy ECS Task to Prod - bods-avl-processor
+    name: Deploy bods-avl-processor to Prod
     needs: terraform_apply_prod
     with:
       environment: "prod"
-      branch: ${{ github.event.release.tag_name }}
+      branch: ${{ github.event.release.tag_name || github.ref_name }}
       task: bods-avl-processor
+    secrets: inherit
 
 
