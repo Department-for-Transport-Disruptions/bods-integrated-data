@@ -275,7 +275,7 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
         .execute();
 };
 
-type MatchingTimetable = Awaited<ReturnType<typeof retrieveMatchableTimetableData>>[0];
+export type MatchingTimetable = Awaited<ReturnType<typeof retrieveMatchableTimetableData>>[0];
 
 export type MatchedTrip = {
     route_key: string;
@@ -408,95 +408,4 @@ export const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]
         matchedTripsWithOriginAndDestination,
         matchedTripsWithDepartureTime,
     };
-};
-
-/**
- * Attempts to match the AVL data to timetable data to obtain a route_id and trip_id. This is done
- * by creating a lookup map containing the timetable data with route and trip keys. The process is as follows:
- *
- * 1. Create a route key of the form `${operator_ref}_${line_ref}`
- * 2. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${journey_code}`
- *      a. If a duplicate trip is found, check if there is a revision with a higher value and use that
- *      b. If there is no revision for any of the duplicate trips or the highest revision number is duplicated then
- *         return no match for this check
- * 3. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${journey_code}_${origin_ref}_${destination_ref}`, this
- *    is used in case the above check still returns duplicate trips
- * 4. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${origin_ref}_${destination_ref}_${departure_time}`, this
- *    is used in case the above check still returns duplicate trips
- * 5. Cross reference the avl data against the lookup to see if there is a match
- *
- *
- * @param dbClient
- * @param avl
- * @returns Array of matched and unmatched AVL data and count of total and matched AVL
- */
-export const matchAvlToTimetables = async (dbClient: KyselyDb, avl: NewAvl[]) => {
-    const timetableData = await retrieveMatchableTimetableData(dbClient);
-    const lookup = createTimetableMatchingLookup(timetableData);
-
-    let matchedAvlCount = 0;
-    let totalAvlCount = 0;
-
-    const enrichedAvl: NewAvl[] = avl.map((item) => {
-        const routeKey = getRouteKey(item);
-
-        let matchingTrip: MatchedTrip | null = null;
-
-        if (routeKey) {
-            let potentialMatchingTrip =
-                item.direction_ref && item.dated_vehicle_journey_ref
-                    ? lookup.matchedTrips[
-                          `${routeKey}_${item.direction_ref}_${sanitiseTicketMachineJourneyCode(
-                              item.dated_vehicle_journey_ref,
-                          )}`
-                      ]
-                    : null;
-
-            if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
-                potentialMatchingTrip =
-                    item.direction_ref && item.dated_vehicle_journey_ref && item.origin_ref && item.destination_ref
-                        ? lookup.matchedTripsWithOriginAndDestination[
-                              `${routeKey}_${item.direction_ref}_${sanitiseTicketMachineJourneyCode(
-                                  item.dated_vehicle_journey_ref,
-                              )}_${item.origin_ref}_${item.destination_ref}`
-                          ]
-                        : null;
-            }
-
-            if (!potentialMatchingTrip || potentialMatchingTrip.use === false) {
-                const departureTime = item.origin_aimed_departure_time
-                    ? getDate(item.origin_aimed_departure_time).format("HHmmss")
-                    : null;
-
-                const directionRef = getDirectionRef(item.direction_ref);
-
-                potentialMatchingTrip =
-                    directionRef && item.origin_ref && item.destination_ref && departureTime
-                        ? lookup.matchedTripsWithDepartureTime[
-                              `${routeKey}_${directionRef}_${item.origin_ref}_${item.destination_ref}_${departureTime}`
-                          ]
-                        : null;
-            }
-
-            matchingTrip = potentialMatchingTrip?.use === true ? potentialMatchingTrip : null;
-        }
-
-        if (matchingTrip) {
-            matchedAvlCount++;
-        }
-
-        totalAvlCount++;
-
-        return {
-            ...item,
-            route_id: matchingTrip?.route_id,
-            trip_id: matchingTrip?.trip_id,
-            geom:
-                item.longitude && item.latitude
-                    ? sql`ST_SetSRID(ST_MakePoint(${item.longitude}, ${item.latitude}), 4326)`
-                    : null,
-        };
-    });
-
-    return { avls: removeDuplicateAvls(enrichedAvl), matchedAvlCount: matchedAvlCount, totalAvlCount: totalAvlCount };
 };

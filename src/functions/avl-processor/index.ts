@@ -78,7 +78,7 @@ const uploadValidationErrorsToDatabase = async (
     await putDynamoItems(tableName, errors);
 };
 
-const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Promise<NewAvl> => {
+export const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Promise<NewAvl> => {
     let matchingTrip: MatchedTrip | null = null;
     const routeKey = getRouteKey(avl);
 
