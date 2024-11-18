@@ -194,11 +194,6 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_host                            = module.integrated_data_aurora_db_dev.db_host
   db_reader_host                     = module.integrated_data_aurora_db_dev.db_reader_host
   cluster_id                         = module.integrated_data_ecs_cluster.cluster_id
-  bods_avl_processor_image_url       = local.secrets["bods_avl_processor_image_url"]
-  bods_avl_processor_frequency       = 120
-  bods_avl_cleardown_frequency       = 60
-  bods_avl_processor_cpu             = 1024
-  bods_avl_processor_memory          = 2048
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
   siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
