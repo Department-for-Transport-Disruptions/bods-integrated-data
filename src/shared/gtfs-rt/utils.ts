@@ -3,7 +3,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
-import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { Avl, BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
 import { logger } from "../logger";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
@@ -97,10 +97,10 @@ export const getAvlDataForGtfs = async (
 ): Promise<BodsAvl[]> => {
     try {
         let query = dbClient
-            .selectFrom("avl_bods")
+            .selectFrom("avl")
             .distinctOn(["vehicle_ref", "operator_ref"])
-            .where("avl_bods.valid_until_time", ">", sql<string>`NOW()`)
-            .selectAll("avl_bods");
+            .where("avl.valid_until_time", ">", sql<string>`NOW()`)
+            .selectAll("avl");
 
         if (routeId) {
             query = query.where(
@@ -111,19 +111,11 @@ export const getAvlDataForGtfs = async (
         }
 
         if (startTimeBefore) {
-            query = query.where(
-                "avl_bods.origin_aimed_departure_time",
-                "<",
-                sql<string>`to_timestamp(${startTimeBefore})`,
-            );
+            query = query.where("avl.origin_aimed_departure_time", "<", sql<string>`to_timestamp(${startTimeBefore})`);
         }
 
         if (startTimeAfter) {
-            query = query.where(
-                "avl_bods.origin_aimed_departure_time",
-                ">",
-                sql<string>`to_timestamp(${startTimeAfter})`,
-            );
+            query = query.where("avl.origin_aimed_departure_time", ">", sql<string>`to_timestamp(${startTimeAfter})`);
         }
 
         if (boundingBox) {
@@ -132,7 +124,7 @@ export const getAvlDataForGtfs = async (
             query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
         }
 
-        query = query.orderBy(["avl_bods.vehicle_ref", "avl_bods.operator_ref", "avl_bods.recorded_at_time desc"]);
+        query = query.orderBy(["avl.vehicle_ref", "avl.operator_ref", "avl.recorded_at_time desc"]);
 
         const avls = await query.execute();
 
@@ -151,9 +143,9 @@ export const getAvlDataForGtfs = async (
  * @param avls Array of AVLs
  * @returns Unique array of AVLs
  */
-export const removeDuplicateAvls = (avls: NewAvl[]): NewAvl[] => {
-    const avlsWithTripIdsDictionary: Record<string, NewAvl & { delete?: boolean }> = {};
-    const avlsWithoutTripIds: NewAvl[] = [];
+export const removeDuplicateAvls = <T extends Avl | NewAvl>(avls: T[]): T[] => {
+    const avlsWithTripIdsDictionary: Record<string, T & { delete?: boolean }> = {};
+    const avlsWithoutTripIds: T[] = [];
 
     for (const avl of avls) {
         if (avl.trip_id) {
@@ -285,23 +277,26 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
 
 type MatchingTimetable = Awaited<ReturnType<typeof retrieveMatchableTimetableData>>[0];
 
-type MatchedTrip = {
+export type MatchedTrip = {
+    route_key: string;
     route_id: number;
     trip_id: string;
     revision: number;
     use: boolean;
 };
 
-type MatchedTrips = Record<string, MatchedTrip | undefined | null>;
+type MatchedTrips = Record<string, MatchedTrip | null>;
 
-export const assignTripValueToLookup = (
-    tripValue: MatchedTrip | null | undefined,
+const assignTripValueToLookup = (
+    tripValue: MatchedTrip | null,
     timetable: MatchingTimetable,
     revision: number,
     routeId: number,
-) => {
+    routeKey: string,
+): MatchedTrip | null => {
     if (tripValue === undefined) {
         return {
+            route_key: routeKey,
             route_id: routeId,
             trip_id: timetable.trip_id,
             revision,
@@ -316,6 +311,7 @@ export const assignTripValueToLookup = (
 
         if (revision > tripValue.revision) {
             return {
+                route_key: routeKey,
                 route_id: routeId,
                 trip_id: timetable.trip_id,
                 revision,
@@ -334,7 +330,22 @@ export const assignTripValueToLookup = (
     return tripValue;
 };
 
-const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
+/**
+ * Attempts to match the AVL data to timetable data to obtain a route_id and trip_id. This is done
+ * by creating a lookup map containing the timetable data with route and trip keys. The process is as follows:
+ *
+ * 1. Create a route key of the form `${operator_ref}_${line_ref}`
+ * 2. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${journey_code}`
+ *      a. If a duplicate trip is found, check if there is a revision with a higher value and use that
+ *      b. If there is no revision for any of the duplicate trips or the highest revision number is duplicated then
+ *         return no match for this check
+ * 3. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${journey_code}_${origin_ref}_${destination_ref}`, this
+ *    is used in case the above check still returns duplicate trips
+ * 4. Create a map of trips with a key of the form `${route_key}_${direction_ref}_${origin_ref}_${destination_ref}_${departure_time}`, this
+ *    is used in case the above check still returns duplicate trips
+ * 5. Cross reference the avl data against the lookup to see if there is a match (wherever this function is used)
+ */
+export const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
     const matchedTrips: MatchedTrips = {};
     const matchedTripsWithOriginAndDestination: MatchedTrips = {};
     const matchedTripsWithDepartureTime: MatchedTrips = {};
@@ -362,7 +373,13 @@ const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
         const revision = item.revision_number && !Number.isNaN(item.revision_number) ? Number(item.revision_number) : 0;
 
         if (tripKey) {
-            matchedTrips[tripKey] = assignTripValueToLookup(matchedTrips[tripKey], item, revision, item.route_id);
+            matchedTrips[tripKey] = assignTripValueToLookup(
+                matchedTrips[tripKey],
+                item,
+                revision,
+                item.route_id,
+                routeKey,
+            );
         }
 
         if (tripKeyWithOriginAndDestination) {
@@ -371,6 +388,7 @@ const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
                 item,
                 revision,
                 item.route_id,
+                routeKey,
             );
         }
 
@@ -380,6 +398,7 @@ const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]) => {
                 item,
                 revision,
                 item.route_id,
+                routeKey,
             );
         }
     }
