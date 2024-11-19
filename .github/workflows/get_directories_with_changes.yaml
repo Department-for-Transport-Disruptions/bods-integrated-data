@@ -6,7 +6,14 @@ on:
       path:
         required: true
         type: string
+      directories_only:
+        required: false
+        type: boolean
+        default: false
     outputs:
+      changed_files_count:
+        description: Count of directories with changes
+        value: ${{ jobs.get_directories_with_changes.steps.changed-files.all_changed_files_count }}
       changed_directories:
         description: List of directory names with changes
         value: ${{ jobs.get_directories_with_changes.outputs.changed_directories }}
@@ -26,7 +33,7 @@ jobs:
         uses: tj-actions/changed-files@v42
         with:
           path: ${{ inputs.path }}
-          dir_names: true
+          dir_names: ${{ inputs.directories_only }}
           dir_names_max_depth: 1
           json: true
           quotepath: false
@@ -34,4 +41,4 @@ jobs:
       - name: Set output in matrix format
         if: steps.changed-files.outputs.all_changed_files_count != 0
         id: set-output
-        run: echo "changed_directories={\"dir\":${{ steps.changed-files.outputs.all_changed_files }}}" >> "$GITHUB_OUTPUT"
+        run: echo "changed_directories=${{ steps.changed-files.outputs.all_changed_files }}" >> "$GITHUB_OUTPUT"
