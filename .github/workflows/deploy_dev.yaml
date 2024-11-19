@@ -48,7 +48,7 @@ jobs:
     needs:
       - check_for_function_changes
       - zip_functions
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    if: ${{ always() && !cancelled() && needs.zip_functions.result == 'success' }}
     with:
       stage: "dev"
       terraform_version: 1.6.6
@@ -60,7 +60,8 @@ jobs:
     name: Deploy ECS tasks
     if: ${{ needs.check_for_task_changes.outputs.changed_directories }}
     strategy:
-      matrix: ${{fromJson(needs.check_for_task_changes.outputs.changed_directories)}}
+      matrix:
+        dir: ${{ fromJson(needs.check_for_task_changes.outputs.changed_directories) }}
     needs:
       - check_for_task_changes
       - terraform_apply
