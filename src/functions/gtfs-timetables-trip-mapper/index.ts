@@ -63,7 +63,7 @@ export const handler: Handler = async (event, context) => {
         }
 
         for (const tripKey of Object.keys(matchedTripsWithOriginAndDestination)) {
-            const matchedTrip = matchedTrips[tripKey];
+            const matchedTrip = matchedTripsWithOriginAndDestination[tripKey];
 
             if (matchedTrip) {
                 gtfsMatchedTrips.push(mapMatchingTrip(tripKey, 2, matchedTrip, timeToExist));
@@ -71,7 +71,7 @@ export const handler: Handler = async (event, context) => {
         }
 
         for (const tripKey of Object.keys(matchedTripsWithDepartureTime)) {
-            const matchedTrip = matchedTrips[tripKey];
+            const matchedTrip = matchedTripsWithDepartureTime[tripKey];
 
             if (matchedTrip) {
                 gtfsMatchedTrips.push(mapMatchingTrip(tripKey, 3, matchedTrip, timeToExist));
