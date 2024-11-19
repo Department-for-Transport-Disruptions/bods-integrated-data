@@ -17,7 +17,7 @@ env:
 jobs:
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Check for lambda function changes
+    name: Get list of updated functions
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"

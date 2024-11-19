@@ -16,7 +16,7 @@ env:
 jobs:
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Check for lambda function changes
+    name: Get list of updated functions
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/functions"

@@ -60,7 +60,7 @@ jobs:
 
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Check for lambda function changes
+    name: Get list of updated functions
     needs:
       - lint_and_test_functions
     with:
