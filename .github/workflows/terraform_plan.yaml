@@ -72,7 +72,8 @@ jobs:
     name: Zip updated functions
     if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
-      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+      matrix:
+        dir: ${{ fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - check_for_function_changes
     with:
