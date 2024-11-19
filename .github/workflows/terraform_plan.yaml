@@ -80,7 +80,7 @@ jobs:
     if: ${{ needs.check_for_function_changes.outputs.changed_files_count != 0 || needs.check_for_shared_code_changes.outputs.changed_files_count != 0 }}
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.check_for_shared_code_changes.outputs.changed_files_count != 0 && $(ls -d src/functions/*/ | jq -R | jq -s) || needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ fromJson(needs.check_for_shared_code_changes.outputs.changed_files_count != 0 && $(ls -d ./src/functions/*/ | jq -R | jq -s) || needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - check_for_function_changes
       - check_for_shared_code_changes
