@@ -6,14 +6,10 @@ on:
       path:
         required: true
         type: string
-      directories_only:
-        required: false
-        type: boolean
-        default: false
+      shared_code_path:
+        required: true
+        type: string
     outputs:
-      changed_files_count:
-        description: Count of directories with changes
-        value: ${{ jobs.get_directories_with_changes.steps.changed-files.all_changed_files_count }}
       changed_directories:
         description: List of directory names with changes
         value: ${{ jobs.get_directories_with_changes.outputs.changed_directories }}
@@ -23,7 +19,8 @@ jobs:
     name: Get directories with updated files
     runs-on: ubuntu-22.04
     outputs:
-      changed_directories: ${{ steps.set-output.outputs.changed_directories }}
+      changed_directories: ${{ steps.set-output-changed-directories.outputs.changed_directories }}
+      changed_directories_for_shared_code: ${{ steps.set-output-changed-directories.outputs.changed_directories_for_shared_code }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,12 +30,25 @@ jobs:
         uses: tj-actions/changed-files@v42
         with:
           path: ${{ inputs.path }}
-          dir_names: ${{ inputs.directories_only }}
           dir_names_max_depth: 1
           json: true
           quotepath: false
 
-      - name: Set output in matrix format
-        if: steps.changed-files.outputs.all_changed_files_count != 0
-        id: set-output
+      - name: Get changed files for shared code
+        id: changed-files-shared-code
+        uses: tj-actions/changed-files@v42
+        with:
+          path: ${{ inputs.shared_code_path }}
+          dir_names_max_depth: 1
+          json: true
+          quotepath: false
+
+      - name: Set output of changed directories for shared code
+        if: steps.changed-files-shared-code.outputs.all_changed_files_count != 0
+        id: set-output-shared-code-directories
+        run: echo "changed_directories_for_shared_code=$(ls -d ${{ inputs.path }}/*/ | jq -R | jq -s)" >> "$GITHUB_OUTPUT"
+
+      - name: Set output of changed directories
+        if: steps.changed-files.outputs.all_changed_files_count != 0 || steps.changed-files-shared-code.outputs.all_changed_files_count != 0
+        id: set-output-changed-directories
         run: echo "changed_directories=${{ steps.changed-files.outputs.all_changed_files }}" >> "$GITHUB_OUTPUT"

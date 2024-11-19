@@ -20,14 +20,7 @@ jobs:
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/functions"
-      directories_only: true
-
-  check_for_shared_code_changes:
-    uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Check for shared code changes
-    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
-    with:
-      path: "./src/shared"
+      shared_code_path: "./src/shared"
 
   check_for_task_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
@@ -35,17 +28,16 @@ jobs:
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/tasks"
+      shared_code_path: "./src/shared"
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
     name: Zip updated functions
-    if: ${{ needs.check_for_function_changes.outputs.changed_files_count != 0 || needs.check_for_shared_code_changes.outputs.changed_files_count != 0 }}
+    if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
-      matrix:
-        dir: ${{ fromJson(needs.check_for_shared_code_changes.outputs.changed_files_count != 0 && $(ls -d ./src/functions/*/ | jq -R | jq -s) || needs.check_for_function_changes.outputs.changed_directories) }}
+      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
     needs:
       - check_for_function_changes
-      - check_for_shared_code_changes
     with:
       function_dir: ${{ matrix.dir }}
 
@@ -54,9 +46,8 @@ jobs:
     name: Terraform Apply Dev
     needs:
       - check_for_function_changes
-      - check_for_shared_code_changes
       - zip_functions
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' && needs.check_for_shared_code_changes.result == 'success' }}
+    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
     with:
       stage: "dev"
       terraform_version: 1.6.6
@@ -66,12 +57,10 @@ jobs:
   deploy_ecs_tasks:
     uses: ./.github/workflows/deploy_ecs_manual.yaml
     name: Deploy ECS tasks
-    if: ${{ needs.check_for_task_changes.outputs.changed_files_count != 0 || needs.check_for_shared_code_changes.outputs.changed_files_count != 0 }}
+    if: ${{ needs.check_for_task_changes.outputs.changed_directories }}
     strategy:
-      matrix:
-        dir: ${{ fromJson(needs.check_for_shared_code_changes.outputs.changed_files_count != 0 && $(ls -d ./src/tasks/*/ | jq -R | jq -s) || needs.check_for_task_changes.outputs.changed_directories) }}
+      matrix: ${{fromJson(needs.check_for_task_changes.outputs.changed_directories)}}
     needs:
-      - check_for_shared_code_changes
       - check_for_task_changes
       - terraform_apply
     with:
