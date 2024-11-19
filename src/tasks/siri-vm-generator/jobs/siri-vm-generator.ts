@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { removeDuplicateAvls } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { z } from "zod";
 
@@ -24,9 +23,8 @@ void (async () => {
 
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
-        const sanitsedAvls = removeDuplicateAvls(avls);
 
-        await generateSiriVmAndUploadToS3(sanitsedAvls, requestMessageRef, bucketName);
+        await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName);
 
         performance.mark("siri-vm-generator-end");
 

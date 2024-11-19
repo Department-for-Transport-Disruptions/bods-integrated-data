@@ -3,7 +3,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
-import { Avl, BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
 import { logger } from "../logger";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
@@ -136,32 +136,6 @@ export const getAvlDataForGtfs = async (
 
         throw e;
     }
-};
-
-/**
- * Removes duplicates from an array of AVLs based on the trip ID. AVLs with missing trip IDs are ignored.
- * @param avls Array of AVLs
- * @returns Unique array of AVLs
- */
-export const removeDuplicateAvls = <T extends Avl | NewAvl>(avls: T[]): T[] => {
-    const avlsWithTripIdsDictionary: Record<string, T & { delete?: boolean }> = {};
-    const avlsWithoutTripIds: T[] = [];
-
-    for (const avl of avls) {
-        if (avl.trip_id) {
-            if (avlsWithTripIdsDictionary[avl.trip_id]) {
-                avlsWithTripIdsDictionary[avl.trip_id].delete = true;
-            } else {
-                avlsWithTripIdsDictionary[avl.trip_id] = avl;
-            }
-        } else {
-            avlsWithoutTripIds.push(avl);
-        }
-    }
-
-    const avlsWithTripIds = Object.values(avlsWithTripIdsDictionary).filter((avl) => !avl.delete);
-
-    return [...avlsWithTripIds, ...avlsWithoutTripIds];
 };
 
 export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
