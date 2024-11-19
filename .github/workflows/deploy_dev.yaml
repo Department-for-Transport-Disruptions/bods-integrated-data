@@ -16,7 +16,7 @@ env:
 jobs:
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Get list of updated functions
+    name: Check for lambda function changes
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/functions"
@@ -24,14 +24,14 @@ jobs:
 
   check_for_shared_code_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Get list of updated functions
+    name: Check for shared code changes
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/shared"
 
   check_for_task_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
-    name: Get list of updated functions
+    name: Check for ECS task changes
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/tasks"
