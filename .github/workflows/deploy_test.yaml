@@ -56,6 +56,21 @@ jobs:
       use_artifacts: true
     secrets: inherit
 
+  deploy_ecs_tasks:
+    uses: ./.github/workflows/deploy_ecs_manual.yaml
+    name: Deploy ECS tasks
+    if: ${{ needs.check_for_task_changes.outputs.changed_files_count != 0 }}
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.check_for_task_changes.outputs.changed_directories) }}
+    needs:
+      - check_for_task_changes
+      - terraform_apply
+    with:
+      stage: "test"
+      task: ${{ matrix.dir }}
+    secrets: inherit
+
   run_integration_tests:
     uses: ./.github/workflows/run_integration_tests.yaml
     name: Run Integration Tests - Test
