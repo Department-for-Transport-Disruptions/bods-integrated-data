@@ -16,7 +16,7 @@ When using this template make sure to complete the following actions:
 
 After copying the lambda-template directory and renaming it to your function name update the following in your `package.json`:
 
-- Update instances of `lamda-template` with `{YOUR_FUNCTION_DIRECTORY_NAME}`
+- Update instances of `lambda-template` with `{YOUR_FUNCTION_DIRECTORY_NAME}`
 - Update description to describe what your function is doing
 
 ```JSON

@@ -156,6 +156,8 @@ export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => 
 };
 
 export const generateGtfsRtAndUploadToS3 = async (gtfsRtBucketName: string, avl: Avl[], saveJson?: boolean) => {
+    logger.info("Generating GTFS-RT...");
+
     const entities = avl.map(mapAvlToGtfsEntity);
     const gtfsRtFeed = generateGtfsRtFeed(entities);
 
@@ -176,6 +178,8 @@ export const generateGtfsRtAndUploadToS3 = async (gtfsRtBucketName: string, avl:
             Body: JSON.stringify(decodedJson),
         });
     }
+
+    logger.info("GTFS-RT generated and uploaded to S3");
 };
 
 /**

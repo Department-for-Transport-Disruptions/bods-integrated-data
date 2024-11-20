@@ -188,13 +188,9 @@ export const processSqsRecord = async (
 export const handler: SQSHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const {
-        AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName,
-        AVL_VALIDATION_ERROR_TABLE_NAME: avlValidationErrorTableName,
-        GTFS_TRIP_MAPS_TABLE_NAME,
-    } = process.env;
+    const { AVL_SUBSCRIPTION_TABLE_NAME, AVL_VALIDATION_ERROR_TABLE_NAME, GTFS_TRIP_MAPS_TABLE_NAME } = process.env;
 
-    if (!avlSubscriptionTableName || !avlValidationErrorTableName || !GTFS_TRIP_MAPS_TABLE_NAME) {
+    if (!AVL_SUBSCRIPTION_TABLE_NAME || !AVL_VALIDATION_ERROR_TABLE_NAME || !GTFS_TRIP_MAPS_TABLE_NAME) {
         throw new Error(
             "Missing env vars: AVL_SUBSCRIPTION_TABLE_NAME, AVL_VALIDATION_ERROR_TABLE_NAME and GTFS_TRIP_MAPS_TABLE_NAME must be set.",
         );
@@ -212,8 +208,8 @@ export const handler: SQSHandler = async (event, context) => {
                         processSqsRecord(
                             s3Record,
                             dbClient,
-                            avlSubscriptionTableName,
-                            avlValidationErrorTableName,
+                            AVL_SUBSCRIPTION_TABLE_NAME,
+                            AVL_VALIDATION_ERROR_TABLE_NAME,
                             GTFS_TRIP_MAPS_TABLE_NAME,
                         ),
                     ),

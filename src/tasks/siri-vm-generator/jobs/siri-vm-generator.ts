@@ -25,11 +25,10 @@ void (async () => {
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
 
-        logger.info("Generating SIRI-VM...");
-        await generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME);
-
-        logger.info("Generating GTFS-RT...");
-        await generateGtfsRtAndUploadToS3(GTFS_RT_BUCKET_NAME, avls, SAVE_JSON === "true");
+        await Promise.all([
+            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME),
+            generateGtfsRtAndUploadToS3(GTFS_RT_BUCKET_NAME, avls, SAVE_JSON === "true"),
+        ]);
 
         performance.mark("siri-vm-generator-end");
 
