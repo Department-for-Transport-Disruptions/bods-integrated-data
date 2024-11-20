@@ -14,9 +14,8 @@ let dbClient: KyselyDb;
 type GtfsTripMap = {
     PK: string;
     SK: string;
-    tripId?: string;
-    routeId?: number;
-    revision?: number;
+    tripId: string;
+    routeId: number;
     timeToExist: number;
 };
 
@@ -30,7 +29,6 @@ const mapMatchingTrip = (
     SK: `${tripKey}#${priority}`,
     tripId: matchedTrip.trip_id,
     routeId: matchedTrip.route_id,
-    revision: matchedTrip.revision,
     timeToExist,
 });
 
@@ -57,7 +55,7 @@ export const handler: Handler = async (event, context) => {
         for (const tripKey of Object.keys(matchedTrips)) {
             const matchedTrip = matchedTrips[tripKey];
 
-            if (matchedTrip) {
+            if (matchedTrip?.use) {
                 gtfsMatchedTrips.push(mapMatchingTrip(tripKey, 1, matchedTrip, timeToExist));
             }
         }
@@ -65,7 +63,7 @@ export const handler: Handler = async (event, context) => {
         for (const tripKey of Object.keys(matchedTripsWithOriginAndDestination)) {
             const matchedTrip = matchedTripsWithOriginAndDestination[tripKey];
 
-            if (matchedTrip) {
+            if (matchedTrip?.use) {
                 gtfsMatchedTrips.push(mapMatchingTrip(tripKey, 2, matchedTrip, timeToExist));
             }
         }
@@ -73,7 +71,7 @@ export const handler: Handler = async (event, context) => {
         for (const tripKey of Object.keys(matchedTripsWithDepartureTime)) {
             const matchedTrip = matchedTripsWithDepartureTime[tripKey];
 
-            if (matchedTrip) {
+            if (matchedTrip?.use) {
                 gtfsMatchedTrips.push(mapMatchingTrip(tripKey, 3, matchedTrip, timeToExist));
             }
         }
