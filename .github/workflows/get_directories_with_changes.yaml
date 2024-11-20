@@ -29,6 +29,7 @@ jobs:
         uses: tj-actions/changed-files@v42
         with:
           path: ${{ inputs.path }}
+          dir_names: true
           dir_names_max_depth: 1
           json: true
           quotepath: false
