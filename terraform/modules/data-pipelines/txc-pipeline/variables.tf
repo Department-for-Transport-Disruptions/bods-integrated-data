@@ -37,6 +37,16 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
+variable "aws_account_id" {
+  type        = string
+  description = "AWS account id"
+}
+
+variable "aws_region" {
+  type        = string
+  description = "AWS region"
+}
+
 variable "tnds_ftp_credentials" {
   type        = map(string)
   description = "TNDS FTP credentials"

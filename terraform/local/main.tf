@@ -90,6 +90,8 @@ module "integrated_data_txc_pipeline" {
   db_secret_arn             = "*"
   db_sg_id                  = null
   db_host                   = null
+  aws_account_id            = data.aws_caller_identity.current.account_id
+  aws_region                = data.aws_region.current.name
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = "integrated-data-aurora-output-${local.env}"
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
@@ -113,11 +115,6 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_host                            = null
   db_reader_host                     = null
   cluster_id                         = ""
-  bods_avl_processor_cpu             = 1024
-  bods_avl_processor_memory          = 2048
-  bods_avl_processor_image_url       = "bods-avl-processor:latest"
-  bods_avl_cleardown_frequency       = 120
-  bods_avl_processor_frequency       = 240
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
   siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
@@ -163,6 +160,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 240
   avl_cleardown_frequency                     = 120
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
+  gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
 }
 
 module "integrated_data_avl_subscription_table" {

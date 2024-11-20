@@ -12,6 +12,7 @@ AVL_SIRI_VM_DOWNLOADER_INPUT="{}"
 AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
+GTFS_TRIP_MAPS_TABLE_NAME="integrated-data-gtfs-trip-maps-local"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
@@ -29,7 +30,7 @@ CANCELLATIONS_SUBSCRIPTION_TABLE_NAME="integrated-data-cancellations-subscriptio
 
 # Dev
 
-setup: install-deps build-functions docker-build-bods-avl-processor docker-build-siri-vm-generator docker-build-siri-sx-generator dev-containers-up create-local-env migrate-local-db-to-latest
+setup: install-deps build-functions docker-build-siri-vm-generator docker-build-siri-sx-generator dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add pnpm && \
@@ -183,6 +184,9 @@ run-local-tnds-txc-processor:
 run-local-gtfs-timetables-generator:
 	STAGE=local OUTPUT_BUCKET=${AURORA_OUTPUT_BUCKET_NAME} GTFS_BUCKET=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-timetables-generator'; handler().catch(e => console.error(e))"
 
+run-local-gtfs-timetables-trip-mapper:
+	STAGE=local GTFS_TRIP_MAPS_TABLE_NAME=${GTFS_TRIP_MAPS_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-timetables-trip-mapper'; handler().then(console.log).catch(console.error)"
+
 run-local-gtfs-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-downloader'; handler().then((response) => console.log(response)).catch(e => console.error(e))"
 
@@ -202,7 +206,7 @@ run-local-avl-data-endpoint:
 	STAGE=local SUBSCRIPTION_ID=${SUBSCRIPTION_ID} FILE="${FILE}" BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} npx tsx -e "import {handler} from './src/functions/avl-data-endpoint'; handler({body: '$(shell cat ${FILE} | sed -e 's/\"/\\"/g')', pathParameters: { subscriptionId:'${SUBSCRIPTION_ID}'}}).catch(e => console.error(e))"
 
 run-local-avl-processor:
-	STAGE=local AVL_SUBSCRIPTION_TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_VALIDATION_ERROR_TABLE_NAME=${AVL_VALIDATION_ERROR_TABLE_NAME} FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
+	STAGE=local AVL_SUBSCRIPTION_TABLE_NAME=${AVL_SUBSCRIPTION_TABLE_NAME} AVL_VALIDATION_ERROR_TABLE_NAME=${AVL_VALIDATION_ERROR_TABLE_NAME} GTFS_TRIP_MAPS_TABLE_NAME=${GTFS_TRIP_MAPS_TABLE_NAME} FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/avl-processor'; handler({Records:[{body:'{\"Records\":[{\"s3\":{\"bucket\":{\"name\":\"${AVL_UNPROCESSED_SIRI_BUCKET_NAME}\"},\"object\":{\"key\":\"${FILE}\"}}}]}'}]}).catch(e => console.error(e))"
 
 run-local-avl-retriever:
 	STAGE=local TARGET_BUCKET_NAME=${AVL_UNPROCESSED_SIRI_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/avl-retriever'; handler().catch(e => console.error(e))"

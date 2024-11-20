@@ -13,3 +13,7 @@ output "gtfs_rt_service_alerts_downloader_lambda_name" {
 output "gtfs_rt_service_alerts_downloader_invoke_arn" {
   value = module.integrated_data_gtfs_rt_service_alerts_downloader_function.invoke_arn
 }
+
+output "gtfs_rt_bucket_name" {
+  value = aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
+}

@@ -88,24 +88,22 @@ program
         if (inactiveSubscriptions.length) {
             const itemChunks = chunkArray(subscriptions, DYNAMO_DB_MAX_BATCH_SIZE);
 
-            await Promise.all(
-                itemChunks.map((chunk) =>
-                    dynamoDbClient.send(
-                        new BatchWriteCommand({
-                            RequestItems: {
-                                [tableName]: chunk.map((item) => ({
-                                    DeleteRequest: {
-                                        Key: {
-                                            PK: item.PK,
-                                            SK: item.SK,
-                                        },
+            for await (const chunk of itemChunks) {
+                await dynamoDbClient.send(
+                    new BatchWriteCommand({
+                        RequestItems: {
+                            [tableName]: chunk.map((item) => ({
+                                DeleteRequest: {
+                                    Key: {
+                                        PK: item.PK,
+                                        SK: item.SK,
                                     },
-                                })),
-                            },
-                        }),
-                    ),
-                ),
-            );
+                                },
+                            })),
+                        },
+                    }),
+                );
+            }
         }
 
         dynamoDbClient.destroy();

@@ -1,8 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
+import { getDynamoItem, putDynamoItems } from "@bods-integrated-data/shared/dynamo";
+import {
+    MatchedTrip,
+    getDirectionRef,
+    getRouteKey,
+    sanitiseTicketMachineJourneyCode,
+} from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
@@ -72,11 +78,62 @@ const uploadValidationErrorsToDatabase = async (
     await putDynamoItems(tableName, errors);
 };
 
+export const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Promise<NewAvl> => {
+    let matchingTrip: MatchedTrip | null = null;
+    const routeKey = getRouteKey(avl);
+
+    if (!routeKey) {
+        return avl;
+    }
+
+    if (avl.direction_ref && avl.dated_vehicle_journey_ref) {
+        const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
+        const tripKey = `${routeKey}_${avl.direction_ref}_${sanitisedTicketMachineJourneyCode}`;
+
+        matchingTrip = await getDynamoItem<MatchedTrip>(tableName, {
+            PK: routeKey,
+            SK: `${tripKey}#1`,
+        });
+    }
+
+    if (!matchingTrip && avl.direction_ref && avl.dated_vehicle_journey_ref && avl.origin_ref && avl.destination_ref) {
+        const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
+        const tripKey = `${routeKey}_${avl.direction_ref}_${sanitisedTicketMachineJourneyCode}_${avl.origin_ref}_${avl.destination_ref}`;
+
+        matchingTrip = await getDynamoItem<MatchedTrip>(tableName, {
+            PK: routeKey,
+            SK: `${tripKey}#2`,
+        });
+    }
+
+    if (!matchingTrip && avl.direction_ref && avl.origin_aimed_departure_time) {
+        const departureTime = getDate(avl.origin_aimed_departure_time).format("HHmmss");
+        const directionRef = getDirectionRef(avl.direction_ref);
+        const tripKey = `${routeKey}_${directionRef}_${avl.origin_ref}_${avl.destination_ref}_${departureTime}`;
+
+        matchingTrip = await getDynamoItem<MatchedTrip>(tableName, {
+            PK: routeKey,
+            SK: `${tripKey}#3`,
+        });
+    }
+
+    if (!matchingTrip) {
+        return avl;
+    }
+
+    return {
+        ...avl,
+        route_id: matchingTrip.route_id,
+        trip_id: matchingTrip.trip_id,
+    };
+};
+
 export const processSqsRecord = async (
     record: S3EventRecord,
     dbClient: KyselyDb,
     avlSubscriptionTableName: string,
     avlValidationErrorTableName: string,
+    gtfsTripMapsTableName: string,
 ) => {
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
@@ -113,7 +170,9 @@ export const processSqsRecord = async (
                 );
             }
 
-            await insertAvls(dbClient, avls, subscriptionId);
+            const enrichedAvls = await Promise.all(avls.map((avl) => addMatchingTripToAvl(gtfsTripMapsTableName, avl)));
+
+            await insertAvls(dbClient, enrichedAvls, subscriptionId);
 
             logger.info("AVL processed successfully", {
                 subscriptionId,
@@ -129,14 +188,11 @@ export const processSqsRecord = async (
 export const handler: SQSHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const {
-        AVL_SUBSCRIPTION_TABLE_NAME: avlSubscriptionTableName,
-        AVL_VALIDATION_ERROR_TABLE_NAME: avlValidationErrorTableName,
-    } = process.env;
+    const { AVL_SUBSCRIPTION_TABLE_NAME, AVL_VALIDATION_ERROR_TABLE_NAME, GTFS_TRIP_MAPS_TABLE_NAME } = process.env;
 
-    if (!avlSubscriptionTableName || !avlValidationErrorTableName) {
+    if (!AVL_SUBSCRIPTION_TABLE_NAME || !AVL_VALIDATION_ERROR_TABLE_NAME || !GTFS_TRIP_MAPS_TABLE_NAME) {
         throw new Error(
-            "Missing env vars: AVL_SUBSCRIPTION_TABLE_NAME and AVL_VALIDATION_ERROR_TABLE_NAME must be set.",
+            "Missing env vars: AVL_SUBSCRIPTION_TABLE_NAME, AVL_VALIDATION_ERROR_TABLE_NAME and GTFS_TRIP_MAPS_TABLE_NAME must be set.",
         );
     }
 
@@ -149,7 +205,13 @@ export const handler: SQSHandler = async (event, context) => {
             event.Records.map((record) =>
                 Promise.all(
                     (JSON.parse(record.body) as S3Event).Records.map((s3Record) =>
-                        processSqsRecord(s3Record, dbClient, avlSubscriptionTableName, avlValidationErrorTableName),
+                        processSqsRecord(
+                            s3Record,
+                            dbClient,
+                            AVL_SUBSCRIPTION_TABLE_NAME,
+                            AVL_VALIDATION_ERROR_TABLE_NAME,
+                            GTFS_TRIP_MAPS_TABLE_NAME,
+                        ),
                     ),
                 ),
             ),

@@ -1,14 +1,15 @@
 import * as crypto from "node:crypto";
 import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
-import { KyselyDb } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NewAvl } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
+import { MatchedTrip } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { S3EventRecord } from "aws-lambda";
 import MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { processSqsRecord } from ".";
+import { addMatchingTripToAvl, processSqsRecord } from ".";
 import {
     expectedPutMetricDataCallForFilteredArrayParseError,
     mockItemId,
@@ -81,6 +82,10 @@ describe("avl-processor", () => {
         },
     };
 
+    const mockAvlSubscriptionTableName = "avl-subscription-table";
+    const mockAvlValidationErrorsTableName = "avl-validation-errors-table";
+    const mockGtfsTripMapsTableName = "gtfs-trip-maps-table";
+
     beforeAll(() => {
         process.env.STAGE = "dev";
     });
@@ -139,8 +144,9 @@ describe("avl-processor", () => {
             await processSqsRecord(
                 record as S3EventRecord,
                 dbClient as unknown as KyselyDb,
-                "table-name",
-                "avl-validation-errors-table",
+                mockAvlSubscriptionTableName,
+                mockAvlValidationErrorsTableName,
+                mockGtfsTripMapsTableName,
             );
 
             expect(uuidSpy).toHaveBeenCalledOnce();
@@ -171,8 +177,9 @@ describe("avl-processor", () => {
         await processSqsRecord(
             record as S3EventRecord,
             dbClient as unknown as KyselyDb,
-            "table-name",
-            "avl-validation-errors-table",
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
         );
 
         expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls);
@@ -195,8 +202,9 @@ describe("avl-processor", () => {
         await processSqsRecord(
             record as S3EventRecord,
             dbClient as unknown as KyselyDb,
-            "table-name",
-            "avl-validation-errors-table",
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
         );
 
         expect(uuidSpy).toHaveBeenCalledOnce();
@@ -212,8 +220,9 @@ describe("avl-processor", () => {
         await processSqsRecord(
             record as S3EventRecord,
             dbClient as unknown as KyselyDb,
-            "table-name",
-            "avl-validation-errors-table",
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
         );
 
         expect(valuesMock).not.toHaveBeenCalled();
@@ -227,8 +236,9 @@ describe("avl-processor", () => {
         await processSqsRecord(
             record as S3EventRecord,
             dbClient as unknown as KyselyDb,
-            "table-name",
-            "avl-validation-errors-table",
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
         );
 
         expect(valuesMock).not.toHaveBeenCalled();
@@ -259,8 +269,9 @@ describe("avl-processor", () => {
         await processSqsRecord(
             record as S3EventRecord,
             dbClient as unknown as KyselyDb,
-            "table-name",
-            "avl-validation-errors-table",
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
         );
 
         /**
@@ -414,7 +425,7 @@ describe("avl-processor", () => {
                 timeToExist,
             },
         ];
-        expect(putDynamoItemsSpy).toHaveBeenCalledWith("avl-validation-errors-table", expectedValidationErrors);
+        expect(putDynamoItemsSpy).toHaveBeenCalledWith(mockAvlValidationErrorsTableName, expectedValidationErrors);
     });
 
     it("should throw an error when the subscription is not active", async () => {
@@ -435,13 +446,93 @@ describe("avl-processor", () => {
             processSqsRecord(
                 record as S3EventRecord,
                 dbClient as unknown as KyselyDb,
-                "table-name",
-                "avl-validation-errors-table",
+                mockAvlSubscriptionTableName,
+                mockAvlValidationErrorsTableName,
+                mockGtfsTripMapsTableName,
             ),
         ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} because it is inactive`);
 
         expect(valuesMock).not.toHaveBeenCalled();
 
         expect(putMetricDataSpy).not.toHaveBeenCalledOnce();
+    });
+
+    describe("addMatchingTripToAvl", () => {
+        it("correctly matches AVL data to timetable data", async () => {
+            const avl: Partial<NewAvl> = {
+                operator_ref: "NOC1",
+                line_ref: "R1",
+                dated_vehicle_journey_ref: "tmjc1",
+                direction_ref: "outbound",
+                longitude: -1.123,
+                latitude: 51.123,
+            };
+
+            const mockMatchingTrip: MatchedTrip = {
+                route_key: "routeKey",
+                route_id: 1,
+                trip_id: "1",
+                revision: 0,
+                use: true,
+            };
+            getDynamoItemSpy.mockResolvedValue(mockMatchingTrip);
+
+            const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(matchedAvl).toEqual({
+                ...avl,
+                route_id: 1,
+                trip_id: "1",
+            });
+        });
+
+        it("correctly matches AVL data with a NOC in the operatorNocMap to timetable data", async () => {
+            const avl: Partial<NewAvl> = {
+                operator_ref: "NT",
+                line_ref: "NTR1",
+                dated_vehicle_journey_ref: "tmjc1",
+                direction_ref: "outbound",
+                longitude: -1.123,
+                latitude: 51.123,
+            };
+
+            const mockMatchingTrip: MatchedTrip = {
+                route_key: "routeKey",
+                route_id: 1,
+                trip_id: "1",
+                revision: 0,
+                use: true,
+            };
+            getDynamoItemSpy.mockResolvedValue(mockMatchingTrip);
+
+            const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(matchedAvl).toEqual({
+                ...avl,
+                route_id: 1,
+                trip_id: "1",
+            });
+        });
+
+        it("does not set route_id when matching route found but no matching trip", async () => {
+            const avl: Partial<NewAvl> = {
+                operator_ref: "NOC1",
+                line_ref: "R1",
+                dated_vehicle_journey_ref: "invalid",
+                direction_ref: "1",
+                longitude: -1.123,
+                latitude: 51.123,
+            };
+
+            getDynamoItemSpy.mockResolvedValue(null);
+
+            const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(matchedAvl).toEqual({
+                ...avl,
+                route_id: undefined,
+                trip_id: undefined,
+            });
+        });
     });
 });

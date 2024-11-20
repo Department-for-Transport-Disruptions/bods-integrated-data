@@ -113,3 +113,8 @@ variable "avl_validation_error_table_name" {
   type        = string
   description = "AVL validation error table name"
 }
+
+variable "gtfs_rt_bucket_name" {
+  type        = string
+  description = "GTFS-RT bucket name"
+}

@@ -477,6 +477,8 @@ export const generateSiriVmAndUploadToS3 = async (
     bucketName: string,
     lintSiri = true,
 ) => {
+    logger.info("Generating SIRI-VM...");
+
     if (lintSiri && !commandExistsSync("xmllint")) {
         throw new Error("xmllint not available");
     }
@@ -512,6 +514,8 @@ export const generateSiriVmAndUploadToS3 = async (
             Body: siriVmTfl,
         }),
     ]);
+
+    logger.info("SIRI-VM generated and uploaded to S3");
 };
 
 export const getAvlErrorDetails = (error: ZodIssue) => {
