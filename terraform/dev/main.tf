@@ -162,6 +162,8 @@ module "integrated_data_txc_pipeline" {
   db_secret_arn             = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id                  = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                   = module.integrated_data_aurora_db_dev.db_host
+  aws_account_id            = data.aws_caller_identity.current.account_id
+  aws_region                = data.aws_region.current.name
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = module.integrated_data_aurora_db_dev.s3_output_bucket_name
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
@@ -192,11 +194,6 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_host                            = module.integrated_data_aurora_db_dev.db_host
   db_reader_host                     = module.integrated_data_aurora_db_dev.db_reader_host
   cluster_id                         = module.integrated_data_ecs_cluster.cluster_id
-  bods_avl_processor_image_url       = local.secrets["bods_avl_processor_image_url"]
-  bods_avl_processor_frequency       = 120
-  bods_avl_cleardown_frequency       = 60
-  bods_avl_processor_cpu             = 1024
-  bods_avl_processor_memory          = 2048
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
   siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
@@ -229,6 +226,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 120
   avl_cleardown_frequency                     = 60
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
+  gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -315,28 +313,29 @@ module "integrated_data_disruptions_pipeline" {
 module "integrated_data_timetables_sfn" {
   source = "../modules/timetables-sfn"
 
-  environment                            = local.env
-  bods_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
-  tnds_txc_retriever_function_arn        = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
-  txc_processor_function_arn             = module.integrated_data_txc_pipeline.txc_processor_function_arn
-  unzipper_function_arn                  = module.integrated_data_txc_pipeline.unzipper_function_arn
-  gtfs_timetables_generator_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
-  naptan_retriever_function_arn          = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
-  naptan_uploader_function_arn           = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
-  noc_retriever_function_arn             = module.integrated_data_noc_pipeline.noc_retriever_function_arn
-  noc_processor_function_arn             = module.integrated_data_noc_pipeline.noc_processor_function_arn
-  nptg_retriever_function_arn            = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
-  nptg_uploader_function_arn             = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
-  bank_holidays_retriever_function_arn   = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
-  db_cleardown_function_arn              = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
-  table_renamer_function_arn             = module.integrated_data_table_renamer.table_renamer_function_arn
-  tnds_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
-  bods_txc_zipped_bucket_name            = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
-  bods_txc_bucket_name                   = module.integrated_data_txc_pipeline.bods_txc_bucket_name
-  tnds_txc_bucket_name                   = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
-  noc_bucket_name                        = module.integrated_data_noc_pipeline.noc_bucket_name
-  naptan_bucket_name                     = module.integrated_data_naptan_pipeline.naptan_bucket_name
-  nptg_bucket_name                       = module.integrated_data_nptg_pipeline.nptg_bucket_name
+  environment                              = local.env
+  bods_txc_retriever_function_arn          = module.integrated_data_txc_pipeline.bods_txc_retriever_function_arn
+  tnds_txc_retriever_function_arn          = module.integrated_data_txc_pipeline.tnds_txc_retriever_function_arn
+  txc_processor_function_arn               = module.integrated_data_txc_pipeline.txc_processor_function_arn
+  unzipper_function_arn                    = module.integrated_data_txc_pipeline.unzipper_function_arn
+  gtfs_timetables_generator_function_arn   = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
+  gtfs_timetables_trip_mapper_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_trip_mapper_function_arn
+  naptan_retriever_function_arn            = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
+  naptan_uploader_function_arn             = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn
+  noc_retriever_function_arn               = module.integrated_data_noc_pipeline.noc_retriever_function_arn
+  noc_processor_function_arn               = module.integrated_data_noc_pipeline.noc_processor_function_arn
+  nptg_retriever_function_arn              = module.integrated_data_nptg_pipeline.nptg_retriever_function_arn
+  nptg_uploader_function_arn               = module.integrated_data_nptg_pipeline.nptg_uploader_function_arn
+  bank_holidays_retriever_function_arn     = module.integrated_data_bank_holidays_pipeline.bank_holidays_retriever_function_arn
+  db_cleardown_function_arn                = module.integrated_data_db_cleardown_function.db_cleardown_function_arn
+  table_renamer_function_arn               = module.integrated_data_table_renamer.table_renamer_function_arn
+  tnds_txc_zipped_bucket_name              = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
+  bods_txc_zipped_bucket_name              = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
+  bods_txc_bucket_name                     = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tnds_txc_bucket_name                     = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
+  noc_bucket_name                          = module.integrated_data_noc_pipeline.noc_bucket_name
+  naptan_bucket_name                       = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name                         = module.integrated_data_nptg_pipeline.nptg_bucket_name
 }
 
 module "integrated_data_gtfs_api" {

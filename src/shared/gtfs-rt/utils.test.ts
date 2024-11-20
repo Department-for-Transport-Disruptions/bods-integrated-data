@@ -1,7 +1,7 @@
 import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { KyselyDb, NewAvl } from "../database";
-import { matchAvlToTimetables, removeDuplicateAvls, sanitiseTicketMachineJourneyCode } from "./utils";
+import { NewAvl } from "../database";
+import { MatchingTimetable, createTimetableMatchingLookup, sanitiseTicketMachineJourneyCode } from "./utils";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
@@ -580,82 +580,15 @@ describe("utils", () => {
         expect(result).toEqual(expected);
     });
 
-    describe("removeDuplicateAvls", () => {
-        it("removes duplicate AVLs", () => {
-            const avls: Partial<NewAvl>[] = [
-                {
-                    id: 0,
-                    trip_id: "1",
-                },
-                {
-                    id: 1,
-                    trip_id: "2",
-                },
-                {
-                    id: 2,
-                    trip_id: "2",
-                },
-            ];
-
-            const expectedAvls: Partial<NewAvl>[] = [
-                {
-                    id: 0,
-                    trip_id: "1",
-                },
-            ];
-
-            const result = removeDuplicateAvls(avls as NewAvl[]);
-            expect(result).toEqual(expectedAvls);
-        });
-
-        it("ignores AVLs that have missing trip IDs", () => {
-            const avls: Partial<NewAvl>[] = [
-                {
-                    id: 0,
-                    trip_id: "",
-                },
-                {
-                    id: 1,
-                    trip_id: "",
-                },
-                {
-                    id: 2,
-                    trip_id: null,
-                },
-                {
-                    id: 3,
-                    trip_id: null,
-                },
-                {
-                    id: 4,
-                    trip_id: undefined,
-                },
-                {
-                    id: 5,
-                    trip_id: undefined,
-                },
-            ];
-
-            const result = removeDuplicateAvls(avls as NewAvl[]);
-            expect(result).toEqual(avls);
-        });
-    });
-
     describe("sanitiseTicketMachineJourneyCode", () => {
         it("removes colons from a string", () => {
             expect(sanitiseTicketMachineJourneyCode("test:string")).toBe("teststring");
         });
     });
 
-    describe("matchAvlToTimetables", () => {
-        const mocks = vi.hoisted(() => ({
-            executeMock: vi.fn(),
-        }));
-
-        let dbClientMock: KyselyDb;
-
-        beforeEach(() => {
-            mocks.executeMock.mockResolvedValue([
+    describe("createTimetableMatchingLookup", () => {
+        it("creates trip maps for timetable data", async () => {
+            const timetableData: MatchingTimetable[] = [
                 {
                     direction: "outbound",
                     noc: "NOC1",
@@ -663,6 +596,10 @@ describe("utils", () => {
                     route_short_name: "R1",
                     ticket_machine_journey_code: "tmjc1",
                     trip_id: "1",
+                    origin_stop_ref: "origin_1",
+                    destination_stop_ref: "destination_1",
+                    departure_time: "",
+                    revision_number: "0",
                 },
                 {
                     direction: "inbound",
@@ -671,382 +608,219 @@ describe("utils", () => {
                     route_short_name: "R2",
                     ticket_machine_journey_code: "tmjc2",
                     trip_id: "2",
-                },
-            ]);
-
-            dbClientMock = {
-                selectFrom: vi.fn().mockReturnThis(),
-                select: vi.fn().mockReturnThis(),
-                innerJoin: vi.fn().mockReturnThis(),
-                leftJoin: vi.fn().mockReturnThis(),
-                where: vi.fn().mockReturnThis(),
-                execute: mocks.executeMock,
-            } as unknown as KyselyDb;
-        });
-
-        it("correctly matches AVL data to timetable data", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NOC1",
-                    line_ref: "R1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
+                    origin_stop_ref: "origin_2",
+                    destination_stop_ref: "destination_2",
+                    departure_time: "",
+                    revision_number: "1",
                 },
                 {
-                    operator_ref: "NOC2",
-                    line_ref: "R2",
-                    dated_vehicle_journey_ref: "tmjc2",
-                    direction_ref: "inbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
+                    direction: "inbound",
+                    noc: "NOC2",
+                    route_id: 3,
+                    route_short_name: "R3",
+                    ticket_machine_journey_code: "tmjc3",
+                    trip_id: "3",
+                    origin_stop_ref: "origin_3",
+                    destination_stop_ref: "destination_3",
+                    departure_time: "2024-06-10T19:00:00+00:00",
+                    revision_number: "1",
                 },
             ];
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
+            expect(result).toEqual({
+                matchedTrips: {
+                    NOC1_R1_outbound_tmjc1: {
+                        revision: 0,
                         route_id: 1,
+                        route_key: "NOC1_R1",
                         trip_id: "1",
+                        use: true,
                     },
-                    {
-                        ...avl[1],
-                        geom: {},
+                    NOC2_R2_inbound_tmjc2: {
+                        revision: 1,
                         route_id: 2,
+                        route_key: "NOC2_R2",
                         trip_id: "2",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 2,
-                totalAvlCount: 2,
-            });
-        });
-
-        it("correctly matches AVL data with a NOC in the operatorNocMap to timetable data", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
+                    NOC2_R3_inbound_tmjc3: {
+                        revision: 1,
+                        route_id: 3,
+                        route_key: "NOC2_R3",
+                        trip_id: "3",
+                        use: true,
+                    },
                 },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip",
+                matchedTripsWithDepartureTime: {
+                    NOC2_R3_inbound_origin_3_destination_3_060406: {
+                        revision: 1,
+                        route_id: 3,
+                        route_key: "NOC2_R3",
+                        trip_id: "3",
+                        use: true,
+                    },
                 },
-            ]);
-
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
+                matchedTripsWithOriginAndDestination: {
+                    NOC1_R1_outbound_tmjc1_origin_1_destination_1: {
+                        revision: 0,
                         route_id: 1,
-                        trip_id: "nctr_trip",
+                        route_key: "NOC1_R1",
+                        trip_id: "1",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
-            });
-        });
-
-        it("does not set route_id when matching route found but no matching trip", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NOC1",
-                    line_ref: "R1",
-                    dated_vehicle_journey_ref: "invalid",
-                    direction_ref: "1",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                },
-            ];
-
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
+                    NOC2_R2_inbound_tmjc2_origin_2_destination_2: {
+                        revision: 1,
+                        route_id: 2,
+                        route_key: "NOC2_R2",
+                        trip_id: "2",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
-            });
-        });
-
-        it("returns no matching data if no matching route found", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NOC1",
-                    line_ref: "R2",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                },
-            ];
-
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
+                    NOC2_R3_inbound_tmjc3_origin_3_destination_3: {
+                        revision: 1,
+                        route_id: 3,
+                        route_key: "NOC2_R3",
+                        trip_id: "3",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
-            });
-        });
-
-        it("returns no match if multiple possible trip ids are found for a single location", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
                 },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip2",
-                },
-            ]);
-
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
-                    },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
             });
         });
 
         it("returns match with latest revision if multiple matching trips with revisions", async () => {
-            const avl: Partial<NewAvl>[] = [
+            const timetableData: MatchingTimetable[] = [
                 {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "1",
+                    origin_stop_ref: "origin_1",
+                    destination_stop_ref: "destination_1",
+                    departure_time: "",
+                    revision_number: "0",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "2",
+                    origin_stop_ref: "origin_1",
+                    destination_stop_ref: "destination_1",
+                    departure_time: "",
+                    revision_number: "1",
                 },
             ];
 
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip",
-                    revision_number: "1",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip2",
-                    revision_number: "2",
-                },
-            ]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
+            expect(result).toEqual({
+                matchedTrips: {
+                    NOC1_R1_outbound_tmjc1: {
+                        revision: 1,
                         route_id: 1,
-                        trip_id: "nctr_trip2",
+                        route_key: "NOC1_R1",
+                        trip_id: "2",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
+                },
+                matchedTripsWithDepartureTime: {},
+                matchedTripsWithOriginAndDestination: {
+                    NOC1_R1_outbound_tmjc1_origin_1_destination_1: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NOC1_R1",
+                        trip_id: "2",
+                        use: true,
+                    },
+                },
             });
         });
 
         it("returns no match if multiple possible trips and any do not have a revision", async () => {
-            const avl: Partial<NewAvl>[] = [
+            const timetableData: MatchingTimetable[] = [
                 {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "1",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
+                    revision_number: "0",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "2",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
+                    revision_number: "",
                 },
             ];
 
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip",
-                    revision_number: "1",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip2",
-                    revision_number: "2",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip3",
-                },
-            ]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
-                    },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
+            expect(result).toEqual({
+                matchedTrips: {
+                    NOC1_R1_outbound_tmjc1: null,
+                },
+                matchedTripsWithDepartureTime: {},
+                matchedTripsWithOriginAndDestination: {},
             });
         });
 
         it("returns no match if multiple possible trips and 2 share the highest revision number", async () => {
-            const avl: Partial<NewAvl>[] = [
+            const timetableData: MatchingTimetable[] = [
                 {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "1",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
+                    revision_number: "0",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NOC1",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "2",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
+                    revision_number: "0",
                 },
             ];
 
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip",
-                    revision_number: "1",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip2",
-                    revision_number: "2",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip3",
-                    revision_number: "2",
-                },
-            ]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
-                    },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
+            expect(result).toEqual({
+                matchedTrips: {
+                    NOC1_R1_outbound_tmjc1: null,
+                },
+                matchedTripsWithDepartureTime: {},
+                matchedTripsWithOriginAndDestination: {},
             });
         });
 
         it("returns a match if multiple possible trips are found for initial matching attempt but a single match is found with origin/destination checks", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
-                },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
+            const timetableData: MatchingTimetable[] = [
                 {
                     direction: "outbound",
                     noc: "NCTR",
@@ -1054,6 +828,74 @@ describe("utils", () => {
                     route_short_name: "R1",
                     ticket_machine_journey_code: "tmjc1",
                     trip_id: "nctr_trip",
+                    revision_number: "1",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip2",
+                    revision_number: "2",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                    departure_time: "",
+                },
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip3",
+                    revision_number: "2",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
+                },
+            ];
+
+            const result = createTimetableMatchingLookup(timetableData);
+
+            expect(result).toEqual({
+                matchedTrips: {
+                    NCTR_R1_outbound_tmjc1: {
+                        revision: 2,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip2",
+                        use: false,
+                    },
+                },
+                matchedTripsWithDepartureTime: {},
+                matchedTripsWithOriginAndDestination: {
+                    NCTR_R1_outbound_tmjc1_abc123_xyz123: {
+                        revision: 2,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip2",
+                        use: true,
+                    },
+                },
+            });
+        });
+
+        it("returns no match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks", async () => {
+            const timetableData: MatchingTimetable[] = [
+                {
+                    direction: "outbound",
+                    noc: "NCTR",
+                    route_id: 1,
+                    route_short_name: "R1",
+                    ticket_machine_journey_code: "tmjc1",
+                    trip_id: "nctr_trip",
+                    origin_stop_ref: "",
+                    destination_stop_ref: "",
+                    departure_time: "",
                     revision_number: "1",
                 },
                 {
@@ -1063,9 +905,10 @@ describe("utils", () => {
                     route_short_name: "R1",
                     ticket_machine_journey_code: "tmjc1",
                     trip_id: "nctr_trip2",
-                    revision_number: "2",
                     origin_stop_ref: "abc123",
                     destination_stop_ref: "xyz123",
+                    departure_time: "",
+                    revision_number: "1",
                 },
                 {
                     direction: "outbound",
@@ -1074,102 +917,40 @@ describe("utils", () => {
                     route_short_name: "R1",
                     ticket_machine_journey_code: "tmjc1",
                     trip_id: "nctr_trip3",
-                    revision_number: "2",
-                },
-            ]);
-
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: 1,
-                        trip_id: "nctr_trip2",
-                    },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
-            });
-        });
-
-        it("returns no match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
+                    origin_stop_ref: "abc123",
+                    destination_stop_ref: "xyz123",
+                    departure_time: "",
+                    revision_number: "1",
                 },
             ];
 
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip2",
-                    origin_stop_ref: "abc123",
-                    destination_stop_ref: "xyz123",
-                },
-                {
-                    direction: "outbound",
-                    noc: "NCTR",
-                    route_id: 1,
-                    route_short_name: "R1",
-                    ticket_machine_journey_code: "tmjc1",
-                    trip_id: "nctr_trip3",
-                    origin_stop_ref: "abc123",
-                    destination_stop_ref: "xyz123",
-                },
-            ]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
+            expect(result).toEqual({
+                matchedTrips: {
+                    NCTR_R1_outbound_tmjc1: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: false,
                     },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
+                },
+                matchedTripsWithDepartureTime: {},
+                matchedTripsWithOriginAndDestination: {
+                    NCTR_R1_outbound_tmjc1_abc123_xyz123: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip2",
+                        use: false,
+                    },
+                },
             });
         });
 
         it("returns a match if multiple possible trips are found for initial matching attempt and multiple matches found with origin/destination checks but one has a higher version", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: "tmjc1",
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
-                },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
+            const timetableData: MatchingTimetable[] = [
                 {
                     direction: "outbound",
                     noc: "NCTR",
@@ -1180,6 +961,7 @@ describe("utils", () => {
                     revision_number: "5",
                     origin_stop_ref: "abc123",
                     destination_stop_ref: "xyz123",
+                    departure_time: "",
                 },
                 {
                     direction: "outbound",
@@ -1191,6 +973,7 @@ describe("utils", () => {
                     revision_number: "2",
                     origin_stop_ref: "abc123",
                     destination_stop_ref: "xyz123",
+                    departure_time: "",
                 },
                 {
                     direction: "outbound",
@@ -1201,41 +984,39 @@ describe("utils", () => {
                     trip_id: "nctr_trip3",
                     origin_stop_ref: "123abc",
                     destination_stop_ref: "123xyz",
+                    departure_time: "",
+                    revision_number: "",
                 },
-            ]);
+            ];
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
+            expect(result).toEqual({
+                matchedTrips: {
+                    NCTR_R1_outbound_tmjc1: null,
+                },
+                matchedTripsWithDepartureTime: {},
+                matchedTripsWithOriginAndDestination: {
+                    NCTR_R1_outbound_tmjc1_123abc_123xyz: {
+                        revision: 0,
                         route_id: 1,
-                        trip_id: "nctr_trip",
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip3",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
+                    NCTR_R1_outbound_tmjc1_abc123_xyz123: {
+                        revision: 5,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: true,
+                    },
+                },
             });
         });
 
         it("returns match using departure time if no match found with previous checks", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: null,
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_aimed_departure_time: "2024-06-10T19:00:00+00:00",
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
-                },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
+            const timetableData: MatchingTimetable[] = [
                 {
                     direction: "outbound",
                     noc: "NCTR",
@@ -1248,40 +1029,43 @@ describe("utils", () => {
                     destination_stop_ref: "xyz123",
                     departure_time: "19:00:00+00",
                 },
-            ]);
+            ];
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
+            expect(result).toEqual({
+                matchedTrips: {
+                    NCTR_R1_outbound_tmjc1: {
+                        revision: 1,
                         route_id: 1,
+                        route_key: "NCTR_R1",
                         trip_id: "nctr_trip",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
+                },
+                matchedTripsWithDepartureTime: {
+                    NCTR_R1_outbound_abc123_xyz123_190000: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: true,
+                    },
+                },
+                matchedTripsWithOriginAndDestination: {
+                    NCTR_R1_outbound_tmjc1_abc123_xyz123: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: true,
+                    },
+                },
             });
         });
 
         it("returns no match if multiple possible trips found using departure time", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: null,
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_aimed_departure_time: "2024-06-10T19:00:00+00:00",
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
-                },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
+            const timetableData: MatchingTimetable[] = [
                 {
                     direction: "outbound",
                     noc: "NCTR",
@@ -1306,40 +1090,43 @@ describe("utils", () => {
                     destination_stop_ref: "xyz123",
                     departure_time: "19:00:00+00",
                 },
-            ]);
+            ];
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: undefined,
-                        trip_id: undefined,
+            expect(result).toEqual({
+                matchedTrips: {
+                    NCTR_R1_outbound_tmjc1: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: false,
                     },
-                ],
-                matchedAvlCount: 0,
-                totalAvlCount: 1,
+                },
+                matchedTripsWithDepartureTime: {
+                    NCTR_R1_outbound_abc123_xyz123_190000: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: false,
+                    },
+                },
+                matchedTripsWithOriginAndDestination: {
+                    NCTR_R1_outbound_tmjc1_abc123_xyz123: {
+                        revision: 1,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip",
+                        use: false,
+                    },
+                },
             });
         });
 
         it("returns match using departure time if multiple possible trips found but one has a higher version number", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "NT",
-                    line_ref: "NTR1",
-                    dated_vehicle_journey_ref: null,
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_aimed_departure_time: "2024-06-10T19:00:00+00:00",
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
-                },
-            ];
-
-            mocks.executeMock.mockResolvedValue([
+            const timetableData: MatchingTimetable[] = [
                 {
                     direction: "outbound",
                     noc: "NCTR",
@@ -1364,67 +1151,38 @@ describe("utils", () => {
                     destination_stop_ref: "xyz123",
                     departure_time: "19:00:00+00",
                 },
-            ]);
-
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
-                        route_id: 1,
-                        trip_id: "nctr_trip2",
-                    },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
-            });
-        });
-
-        it("returns a match for TFLO AVL data", async () => {
-            const avl: Partial<NewAvl>[] = [
-                {
-                    operator_ref: "TFLO",
-                    line_ref: "LINE1",
-                    published_line_name: "R3",
-                    dated_vehicle_journey_ref: null,
-                    direction_ref: "outbound",
-                    longitude: -1.123,
-                    latitude: 51.123,
-                    origin_aimed_departure_time: "2024-06-10T19:00:00+00:00",
-                    origin_ref: "abc123",
-                    destination_ref: "xyz123",
-                },
             ];
 
-            mocks.executeMock.mockResolvedValue([
-                {
-                    direction: "outbound",
-                    noc: "METR",
-                    route_id: 1,
-                    route_short_name: "R3",
-                    trip_id: "trip1",
-                    revision_number: "1",
-                    origin_stop_ref: "abc123",
-                    destination_stop_ref: "xyz123",
-                    departure_time: "19:00:00+00",
-                },
-            ]);
+            const result = createTimetableMatchingLookup(timetableData);
 
-            const matchedAvl = await matchAvlToTimetables(dbClientMock, avl as NewAvl[]);
-
-            expect(matchedAvl).toEqual({
-                avls: [
-                    {
-                        ...avl[0],
-                        geom: {},
+            expect(result).toEqual({
+                matchedTrips: {
+                    NCTR_R1_outbound_tmjc1: {
+                        revision: 2,
                         route_id: 1,
-                        trip_id: "trip1",
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip2",
+                        use: true,
                     },
-                ],
-                matchedAvlCount: 1,
-                totalAvlCount: 1,
+                },
+                matchedTripsWithDepartureTime: {
+                    NCTR_R1_outbound_abc123_xyz123_190000: {
+                        revision: 2,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip2",
+                        use: true,
+                    },
+                },
+                matchedTripsWithOriginAndDestination: {
+                    NCTR_R1_outbound_tmjc1_abc123_xyz123: {
+                        revision: 2,
+                        route_id: 1,
+                        route_key: "NCTR_R1",
+                        trip_id: "nctr_trip2",
+                        use: true,
+                    },
+                },
             });
         });
     });

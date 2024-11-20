@@ -385,7 +385,11 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
           "value" : var.db_secret_arn
         },
         {
-          "name" : "BUCKET_NAME",
+          "name" : "GTFS_RT_BUCKET_NAME",
+          "value" : var.gtfs_rt_bucket_name
+        },
+        {
+          "name" : "SIRI_VM_BUCKET_NAME",
           "value" : aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
         },
         {
