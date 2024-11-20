@@ -247,6 +247,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 10
   avl_cleardown_frequency                     = 30
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
+  gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
 }
 
 module "integrated_data_mock_data_producer_api" {

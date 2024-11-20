@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { generateGtfsRtAndUploadToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { z } from "zod";
 
@@ -15,16 +16,20 @@ void (async () => {
     try {
         logger.info("Starting SIRI-VM file generator");
 
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON } = process.env;
 
-        if (!bucketName) {
-            throw new Error("Missing env vars - BUCKET_NAME must be set");
+        if (!GTFS_RT_BUCKET_NAME || !SIRI_VM_BUCKET_NAME) {
+            throw new Error("Missing env vars - GTFS_RT_BUCKET_NAME and SIRI_VM_BUCKET_NAME must be set");
         }
 
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
 
-        await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName);
+        logger.info("Generating SIRI-VM...");
+        await generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME);
+
+        logger.info("Generating GTFS-RT...");
+        await generateGtfsRtAndUploadToS3(GTFS_RT_BUCKET_NAME, avls, SAVE_JSON === "true");
 
         performance.mark("siri-vm-generator-end");
 

@@ -3,9 +3,10 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
-import { BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { Avl, BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
 import { logger } from "../logger";
+import { putS3Object } from "../s3";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
@@ -27,7 +28,7 @@ export const getOccupancyStatus = (occupancy: string): transit_realtime.VehicleP
     }
 };
 
-export const mapAvlToGtfsEntity = (avl: NewAvl): transit_realtime.IFeedEntity => {
+export const mapAvlToGtfsEntity = (avl: Avl | NewAvl): transit_realtime.IFeedEntity => {
     let routeId = "";
     let tripId = "";
     let startDate = null;
@@ -152,6 +153,29 @@ export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => 
     const data = feed.finish();
 
     return data;
+};
+
+export const generateGtfsRtAndUploadToS3 = async (gtfsRtBucketName: string, avl: Avl[], saveJson?: boolean) => {
+    const entities = avl.map(mapAvlToGtfsEntity);
+    const gtfsRtFeed = generateGtfsRtFeed(entities);
+
+    await putS3Object({
+        Bucket: gtfsRtBucketName,
+        Key: "gtfs-rt.bin",
+        ContentType: "application/octet-stream",
+        Body: gtfsRtFeed,
+    });
+
+    if (saveJson) {
+        const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
+
+        await putS3Object({
+            Bucket: gtfsRtBucketName,
+            Key: "gtfs-rt.json",
+            ContentType: "application/json",
+            Body: JSON.stringify(decodedJson),
+        });
+    }
 };
 
 /**
