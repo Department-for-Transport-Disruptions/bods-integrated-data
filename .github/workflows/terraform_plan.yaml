@@ -65,13 +65,15 @@ jobs:
       - lint_and_test_functions
     with:
       path: "./src/functions"
+      shared_code_path: "./src/shared"
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
     name: Zip updated functions
     if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
-      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+      matrix:
+        dir: ${{ fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - check_for_function_changes
     with:
@@ -83,7 +85,7 @@ jobs:
     needs:
       - check_for_function_changes
       - zip_functions
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' && needs.zip_functions.result == 'success' }}
     environment: "dev"
     defaults:
       run:

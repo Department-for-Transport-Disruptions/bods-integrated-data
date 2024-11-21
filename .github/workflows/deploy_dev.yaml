@@ -20,13 +20,23 @@ jobs:
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/functions"
+      shared_code_path: "./src/shared"
+
+  check_for_task_changes:
+    uses: ./.github/workflows/get_directories_with_changes.yaml
+    name: Check for ECS task changes
+    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
+    with:
+      path: "./src/tasks"
+      shared_code_path: "./src/shared"
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
     name: Zip updated functions
     if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
-      matrix: ${{fromJson(needs.check_for_function_changes.outputs.changed_directories)}}
+      matrix:
+        dir: ${{ fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - check_for_function_changes
     with:
@@ -38,14 +48,29 @@ jobs:
     needs:
       - check_for_function_changes
       - zip_functions
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' && needs.zip_functions.result == 'success' }}
     with:
       stage: "dev"
       terraform_version: 1.6.6
       use_artifacts: true
     secrets: inherit
 
-  run_integration_test:
+  deploy_ecs_tasks:
+    uses: ./.github/workflows/deploy_ecs_manual.yaml
+    name: Deploy ECS tasks
+    if: ${{ needs.check_for_task_changes.outputs.changed_directories }}
+    strategy:
+      matrix:
+        dir: ${{ fromJson(needs.check_for_task_changes.outputs.changed_directories) }}
+    needs:
+      - check_for_task_changes
+      - terraform_apply
+    with:
+      stage: "dev"
+      task: ${{ matrix.dir }}
+    secrets: inherit
+
+  run_integration_tests:
     uses: ./.github/workflows/run_integration_tests.yaml
     name: Run Integration Tests - Dev
     needs:

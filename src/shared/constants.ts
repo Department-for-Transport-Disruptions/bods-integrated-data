@@ -1,4 +1,6 @@
-// Max decimal precision in JavaScript before scientific notation kicks in
+/**
+ * Max decimal precision in JavaScript before scientific notation kicks in
+ */
 export const MAX_DECIMAL_PRECISION = 6;
 
 export const GTFS_FILE_SUFFIX = "_gtfs";
