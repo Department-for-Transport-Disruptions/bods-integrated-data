@@ -395,7 +395,7 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
         },
         {
           "name" : "SAVE_JSON",
-          "value" : var.save_json
+          "value" : tostring(var.save_json)
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",
