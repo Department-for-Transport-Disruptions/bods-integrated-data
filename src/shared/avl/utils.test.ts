@@ -4,6 +4,7 @@ import { Avl } from "../database";
 import { getDate } from "../dates";
 import * as s3 from "../s3";
 import { SiriVehicleActivity } from "../schema";
+import * as sns from "../sns";
 import {
     GENERATED_SIRI_VM_FILE_PATH,
     GENERATED_SIRI_VM_TFL_FILE_PATH,
@@ -123,13 +124,23 @@ const mockAvl: Avl[] = [
 ];
 
 describe("utils", () => {
+    const hoisted = vi.hoisted(() => ({
+        s3PutMock: vi.fn().mockResolvedValue({
+            VersionId: undefined,
+        }),
+    }));
+
     MockDate.set("2024-02-26T14:36:11+00:00");
     const requestMessageRef = "acde070d-8c4c-4f0d-9d8a-162843c10333";
     const responseTime = getDate();
 
     describe("generateSiriVmAndUploadToS3", () => {
         vi.mock("../s3", () => ({
-            putS3Object: vi.fn(),
+            putS3Object: hoisted.s3PutMock,
+        }));
+
+        vi.mock("../sns", () => ({
+            publishToSnsTopic: vi.fn(),
         }));
 
         vi.mock("../cloudwatch", () => ({
@@ -141,7 +152,7 @@ describe("utils", () => {
         });
 
         it("should convert valid avl data from the database into SIRI-VM and upload to S3", async () => {
-            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", false);
+            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", "test-sns", false);
 
             expect(s3.putS3Object).toHaveBeenCalledTimes(2);
             expect(s3.putS3Object).toHaveBeenNthCalledWith(1, {
@@ -156,6 +167,22 @@ describe("utils", () => {
                 ContentType: "application/xml",
                 Body: mockSiriVmTflResult,
             });
+
+            expect(sns.publishToSnsTopic).not.toHaveBeenCalled();
+        });
+
+        it("should publish to SNS topic if version returned by PutObject", async () => {
+            hoisted.s3PutMock.mockResolvedValue({
+                VersionId: "123",
+            });
+
+            await generateSiriVmAndUploadToS3(mockAvl, requestMessageRef, "test-bucket", "test-sns", false);
+
+            expect(sns.publishToSnsTopic).toHaveBeenCalledWith(
+                "test-sns",
+                '{"bucket":"test-bucket","key":"SIRI-VM.xml","versionId":"123"}',
+                "SIRIVM",
+            );
         });
     });
 

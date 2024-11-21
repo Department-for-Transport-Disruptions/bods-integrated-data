@@ -16,17 +16,19 @@ void (async () => {
     try {
         logger.info("Starting SIRI-VM file generator");
 
-        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON } = process.env;
+        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON, SIRI_VM_SNS_TOPIC_ARN } = process.env;
 
-        if (!GTFS_RT_BUCKET_NAME || !SIRI_VM_BUCKET_NAME) {
-            throw new Error("Missing env vars - GTFS_RT_BUCKET_NAME and SIRI_VM_BUCKET_NAME must be set");
+        if (!GTFS_RT_BUCKET_NAME || !SIRI_VM_BUCKET_NAME || !SIRI_VM_SNS_TOPIC_ARN) {
+            throw new Error(
+                "Missing env vars - GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME and SIRI_VM_SNS_TOPIC_ARN must be set",
+            );
         }
 
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
 
         await Promise.all([
-            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME),
+            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN),
             generateGtfsRtAndUploadToS3(GTFS_RT_BUCKET_NAME, avls, SAVE_JSON === "true"),
         ]);
 

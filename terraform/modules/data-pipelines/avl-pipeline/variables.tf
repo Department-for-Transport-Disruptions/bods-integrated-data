@@ -128,3 +128,8 @@ variable "save_json" {
   type        = bool
   description = "Whether or not to save the GTFS-RT as JSON as well"
 }
+
+variable "abods_account_ids" {
+  type        = list(string)
+  description = "List of ABODS account IDs to allow access to SIRI-VM bucket"
+}
