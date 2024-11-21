@@ -264,7 +264,8 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
         "Effect" : "Allow",
         "Action" : "s3:PutObject",
         "Resource" : [
-          "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*"
+          "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*",
+          "${var.gtfs_rt_bucket_arn}/*"
         ]
       },
       {
@@ -391,6 +392,10 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
         {
           "name" : "SIRI_VM_BUCKET_NAME",
           "value" : aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+        },
+        {
+          "name" : "SAVE_JSON",
+          "value" : var.save_json
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",
