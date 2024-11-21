@@ -25,7 +25,6 @@ jobs:
   check_for_task_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Check for ECS task changes
-    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       path: "./src/tasks"
       shared_code_path: "./src/shared"

@@ -17,6 +17,8 @@ import {
     createSqsClient,
 } from "../utils/awsClients";
 
+const ALARM_NAMES_MAX_BATCH_SIZE = 100;
+
 // this script is useful for cleaning up old subscriptions such as after load testing
 program
     .addOption(STAGE_OPTION)
@@ -80,8 +82,12 @@ program
             logger.info(`Deleting ${subscriptionsWithQueueAlarms.length} lingering alarms`);
             const cloudWatchClient = createCloudWatchClient(stage);
             const alarmNames = subscriptionsWithQueueAlarms.map((s) => s.queueAlarmName) as string[];
+            const itemChunks = chunkArray(alarmNames, ALARM_NAMES_MAX_BATCH_SIZE);
 
-            await cloudWatchClient.send(new DeleteAlarmsCommand({ AlarmNames: alarmNames }));
+            for await (const chunk of itemChunks) {
+                await cloudWatchClient.send(new DeleteAlarmsCommand({ AlarmNames: chunk }));
+            }
+
             cloudWatchClient.destroy();
         }
 

@@ -17,3 +17,7 @@ output "gtfs_rt_service_alerts_downloader_invoke_arn" {
 output "gtfs_rt_bucket_name" {
   value = aws_s3_bucket.integrated_data_gtfs_rt_bucket.bucket
 }
+
+output "gtfs_rt_bucket_arn" {
+  value = aws_s3_bucket.integrated_data_gtfs_rt_bucket.arn
+}

@@ -118,3 +118,13 @@ variable "gtfs_rt_bucket_name" {
   type        = string
   description = "GTFS-RT bucket name"
 }
+
+variable "gtfs_rt_bucket_arn" {
+  type        = string
+  description = "GTFS-RT bucket ARN"
+}
+
+variable "save_json" {
+  type        = bool
+  description = "Whether or not to save the GTFS-RT as JSON as well"
+}
