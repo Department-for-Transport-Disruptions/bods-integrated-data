@@ -15,16 +15,18 @@ void (async () => {
     try {
         logger.info("Starting SIRI-VM file generator");
 
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN } = process.env;
 
-        if (!bucketName) {
-            throw new Error("Missing env vars - BUCKET_NAME must be set");
+        if (!SIRI_VM_BUCKET_NAME || !SIRI_VM_SNS_TOPIC_ARN) {
+            throw new Error("Missing env vars - SIRI_VM_BUCKET_NAME and SIRI_VM_SNS_TOPIC_ARN must be set");
         }
 
         const requestMessageRef = randomUUID();
         const avls = await getAvlDataForSiriVm(dbClient);
 
-        await generateSiriVmAndUploadToS3(avls, requestMessageRef, bucketName);
+        await Promise.all([
+            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN),
+        ]);
 
         performance.mark("siri-vm-generator-end");
 

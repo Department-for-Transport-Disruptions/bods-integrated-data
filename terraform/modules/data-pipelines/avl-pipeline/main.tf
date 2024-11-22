@@ -209,6 +209,59 @@ resource "aws_s3_bucket_versioning" "integrated_data_avl_siri_vm_bucket_versioni
   }
 }
 
+data "aws_iam_policy_document" "integrated_data_avl_bucket_allow_abods_policy" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = var.abods_account_ids
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/SIRI-VM.xml",
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "integrated_data_avl_siri_vm_bucket_policy" {
+  bucket = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.id
+  policy = data.aws_iam_policy_document.integrated_data_avl_bucket_allow_abods_policy.json
+}
+
+resource "aws_sns_topic" "integrated_data_avl_sirivm_sns_topic" {
+  name                        = "integrated-data-siri-vm-topic-${var.environment}.fifo"
+  fifo_topic                  = true
+  content_based_deduplication = true
+}
+
+data "aws_iam_policy_document" "integrated_data_avl_sirivm_sns_policy" {
+  statement {
+    sid = "AllowABODSSubscribe"
+    principals {
+      type = "AWS"
+      identifiers = [
+        for id in var.abods_account_ids :
+        "arn:aws:iam::${id}:root"
+      ]
+    }
+
+    effect = "Allow"
+    actions = [
+      "sns:Subscribe",
+    ]
+    resources = [aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn]
+  }
+}
+
+resource "aws_sns_topic_policy" "integrated_data_avl_sirivm_sns_topic_policy" {
+  arn    = aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
+  policy = data.aws_iam_policy_document.integrated_data_avl_sirivm_sns_policy.json
+}
+
 resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
   count = var.environment != "local" ? 1 : 0
 
@@ -278,6 +331,11 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
         "Effect" : "Allow",
         "Action" : "cloudwatch:PutMetricData",
         "Resource" : "*"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "sns:Publish",
+        "Resource" : "${aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn}"
       }
     ]
   })
@@ -385,8 +443,12 @@ resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
           "value" : var.db_secret_arn
         },
         {
-          "name" : "BUCKET_NAME",
+          "name" : "SIRI_VM_BUCKET_NAME",
           "value" : aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+        },
+        {
+          "name" : "SIRI_VM_SNS_TOPIC_ARN",
+          "value" : aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
         },
         {
           "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",

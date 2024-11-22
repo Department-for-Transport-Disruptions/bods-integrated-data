@@ -250,6 +250,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_frequency                 = 10
   avl_cleardown_frequency                     = 30
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
+  abods_account_ids                           = local.secrets["abods_account_ids"]
 }
 
 module "integrated_data_mock_data_producer_api" {

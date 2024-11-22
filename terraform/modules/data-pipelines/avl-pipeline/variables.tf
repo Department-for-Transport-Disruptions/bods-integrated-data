@@ -113,3 +113,8 @@ variable "avl_validation_error_table_name" {
   type        = string
   description = "AVL validation error table name"
 }
+
+variable "abods_account_ids" {
+  type        = list(string)
+  description = "List of ABODS account IDs to allow access to SIRI-VM bucket"
+}
