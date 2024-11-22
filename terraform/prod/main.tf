@@ -242,10 +242,10 @@ module "integrated_data_avl_pipeline" {
   aws_account_id                              = data.aws_caller_identity.current.account_id
   aws_region                                  = data.aws_region.current.name
   siri_vm_generator_image_url                 = local.secrets["siri_vm_generator_image_url"]
-  siri_vm_generator_cpu                       = 2048
-  siri_vm_generator_memory                    = 4096
+  siri_vm_generator_cpu                       = 8192
+  siri_vm_generator_memory                    = 16384
   siri_vm_generator_frequency                 = 10
-  avl_cleardown_frequency                     = 30
+  avl_cleardown_frequency                     = 86400
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
   gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
   gtfs_rt_bucket_arn                          = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_arn

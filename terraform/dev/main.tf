@@ -224,7 +224,7 @@ module "integrated_data_avl_pipeline" {
   siri_vm_generator_cpu                       = 1024
   siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 120
-  avl_cleardown_frequency                     = 60
+  avl_cleardown_frequency                     = 86400
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
   gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
   gtfs_rt_bucket_arn                          = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_arn
