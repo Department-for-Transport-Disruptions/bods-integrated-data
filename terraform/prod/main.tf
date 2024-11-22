@@ -250,6 +250,7 @@ module "integrated_data_avl_pipeline" {
   gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
   gtfs_rt_bucket_arn                          = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_arn
   save_json                                   = false
+  abods_account_ids                           = local.secrets["abods_account_ids"]
 }
 
 module "integrated_data_mock_data_producer_api" {

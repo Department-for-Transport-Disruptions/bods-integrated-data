@@ -16,6 +16,7 @@ import { putS3Object } from "../s3";
 import { SiriVM, SiriVehicleActivity, siriVmSchema } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
+import { publishToSnsTopic } from "../sns";
 import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriDatetime, runXmlLint } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
@@ -459,7 +460,10 @@ const createAndValidateSiri = async (
             await runXmlLint(siriVm);
         } catch (e) {
             await putMetricData("custom/SiriVmGenerator", [
-                { MetricName: isTfl ? "TfLValidationError" : "ValidationError", Value: 1 },
+                {
+                    MetricName: isTfl ? "TfLValidationError" : "ValidationError",
+                    Value: 1,
+                },
             ]);
 
             logger.error(e);
@@ -475,6 +479,7 @@ export const generateSiriVmAndUploadToS3 = async (
     avls: Avl[],
     requestMessageRef: string,
     bucketName: string,
+    snsTopicArn: string,
     lintSiri = true,
 ) => {
     logger.info("Generating SIRI-VM...");
@@ -500,7 +505,7 @@ export const generateSiriVmAndUploadToS3 = async (
         ),
     ]);
 
-    await Promise.all([
+    const [siriVmPutResponse, _] = await Promise.all([
         putS3Object({
             Bucket: bucketName,
             Key: GENERATED_SIRI_VM_FILE_PATH,
@@ -515,11 +520,26 @@ export const generateSiriVmAndUploadToS3 = async (
         }),
     ]);
 
+    if (siriVmPutResponse.VersionId) {
+        await publishToSnsTopic(
+            snsTopicArn,
+            JSON.stringify({
+                bucket: bucketName,
+                key: GENERATED_SIRI_VM_FILE_PATH,
+                versionId: siriVmPutResponse.VersionId,
+            }),
+            "SIRIVM",
+        );
+    }
+
     logger.info("SIRI-VM generated and uploaded to S3");
 };
 
 export const getAvlErrorDetails = (error: ZodIssue) => {
-    const validationError = fromZodIssue(error, { prefix: null, includePath: false });
+    const validationError = fromZodIssue(error, {
+        prefix: null,
+        includePath: false,
+    });
     const { path } = validationError.details[0];
     const name = path.join(".");
     const propertyName = path[path.length - 1];
