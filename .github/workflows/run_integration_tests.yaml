@@ -22,7 +22,7 @@ permissions:
   contents: read # This is required for actions/checkout
 
 env:
-  AWS_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
   HUSKY: 0
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHub-OIDC-TERRAFORM
 
       - name: Install dependencies
