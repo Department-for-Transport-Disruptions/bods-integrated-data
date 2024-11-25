@@ -29,10 +29,8 @@ jobs:
   integration_test:
     runs-on: ubuntu-latest
     name: Run integration tests
-    environment: ${{ inputs.stage }}
     env:
       STAGE: ${{ inputs.stage }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

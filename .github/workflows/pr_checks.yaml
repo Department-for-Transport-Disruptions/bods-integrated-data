@@ -90,7 +90,6 @@ jobs:
       - check_for_function_changes
       - zip_functions
     if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
-    environment: dev
     defaults:
       run:
         working-directory: ./terraform
