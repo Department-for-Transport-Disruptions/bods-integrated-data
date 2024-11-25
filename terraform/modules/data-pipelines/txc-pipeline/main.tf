@@ -337,7 +337,7 @@ module "integrated_data_gtfs_timetables_trip_mapper_function" {
   handler         = "index.handler"
   runtime         = "nodejs20.x"
   timeout         = 900
-  memory          = 6144
+  memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
