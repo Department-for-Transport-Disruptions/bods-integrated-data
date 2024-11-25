@@ -3,15 +3,13 @@ on:
     inputs:
       is_hotfix:
         type: boolean
-        description: Release hotfix? If checked, creates a draft hotfix release
-
-name: Create Draft Release
+        description: Create as hotfix draft release
 
 jobs:
   create_draft_release:
     if: ${{ inputs.is_hotfix == false}}
-    runs-on: ubuntu-22.04
-    name: Create Draft Release
+    runs-on: ubuntu-latest
+    name: Create draft release
     permissions:
       contents: write
 
@@ -22,7 +20,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
@@ -32,13 +30,13 @@ jobs:
 
   create_hotfix_draft_release:
     if: ${{ inputs.is_hotfix == true}}
-    runs-on: ubuntu-22.04
-    name: Create Draft Release
+    runs-on: ubuntu-latest
+    name: Create hotfix draft release
     permissions:
       contents: write
 
     steps:
-      - name: Get Latest Release
+      - name: Get Latest release
         id: latest_release
         uses: cardinalby/git-get-release-action@v1
         env:
@@ -46,11 +44,10 @@ jobs:
         with:
           latest: true
 
-      - name: Create release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.head_ref }}
           name: ${{ steps.latest_release.outputs.tag_name }}-hotfix
           body: ${{ github.event.pull_request.title }}
           draft: true
-

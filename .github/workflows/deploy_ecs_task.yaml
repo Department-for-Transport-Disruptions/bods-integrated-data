@@ -1,0 +1,98 @@
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        type: environment
+        required: true
+      branch:
+        type: string
+        default: main
+      task_name:
+        type: choice
+        required: true
+        options:
+          - siri-vm-generator
+          - siri-sx-generator
+  workflow_call:
+    inputs:
+      stage:
+        type: string
+        required: true
+      branch:
+        type: string
+        default: main
+      task_name:
+        type: string
+        required: true
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout.
+
+env:
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  HUSKY: 0
+
+jobs:
+  deploy_ecs:
+    runs-on: ubuntu-latest
+    name: Deploy ECS task ${{ inputs.task_name }} (${{ inputs.stage }})
+    env:
+      STAGE: ${{ inputs.stage }}
+    environment: ${{ inputs.stage }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+          aws-region: "eu-west-2"
+          role-session-name: GitHub-OIDC-Shared-Services
+
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get image tag
+        id: image_tag
+        run: |
+          echo "image=${{ steps.login_ecr.outputs.registry }}/${{ inputs.task_name }}:$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./src
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.image_tag.outputs.image }}
+          build-args: servicePath=${{ inputs.task_name }}
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition integrated-data-${{ inputs.task_name }} --query taskDefinition > task-definition.json
+
+      - name: Update ECS task definition with new version
+        id: task_def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ inputs.task_name }}
+          image: ${{ steps.image_tag.outputs.image }}
+
+      - name: Deploy ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task_def.outputs.task-definition }}
+          service: "integrated-data-${{ inputs.task_name }}-service-${{ inputs.stage }}"
+          cluster: "integrated-data-ecs-cluster-${{ inputs.stage }}"
+          wait-for-service-stability: true

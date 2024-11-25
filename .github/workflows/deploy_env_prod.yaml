@@ -1,0 +1,16 @@
+on:
+  release:
+    types:
+      - published
+
+env:
+  TERRAFORM_VERSION: 1.6.6
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  HUSKY: 0
+
+jobs:
+  deploy_prod:
+    uses: ./.github/workflows/deploy_code.yaml
+    with:
+      stage: prod
+    secrets: inherit

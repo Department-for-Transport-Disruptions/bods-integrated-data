@@ -1,0 +1,26 @@
+on:
+  push:
+    branches:
+      - main
+
+env:
+  TERRAFORM_VERSION: 1.6.6
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  HUSKY: 0
+
+jobs:
+  deploy_test:
+    uses: ./.github/workflows/deploy_code.yaml
+    with:
+      stage: test
+    secrets: inherit
+
+  run_integration_tests:
+    uses: ./.github/workflows/run_integration_tests.yaml
+    name: Run integration tests
+    needs:
+      - deploy
+    if: ${{ always() && !cancelled() && needs.deploy.result == 'success' }}
+    with:
+      stage: test
+    secrets: inherit
