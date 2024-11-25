@@ -109,7 +109,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
           role-session-name: GitHub-OIDC-TERRAFORM
 
       - name: Cache Terraform tflint plugin
