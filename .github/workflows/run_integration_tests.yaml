@@ -21,10 +21,6 @@ permissions:
   id-token: write # This is required for aws oidc connection
   contents: read # This is required for actions/checkout
 
-env:
-  AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-  HUSKY: 0
-
 jobs:
   integration_test:
     runs-on: ubuntu-latest

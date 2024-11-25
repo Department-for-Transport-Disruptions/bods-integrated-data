@@ -26,8 +26,6 @@ permissions:
 
 env:
   TERRAFORM_VERSION: 1.6.6
-  AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-  HUSKY: 0
 
 jobs:
   check_for_function_changes:

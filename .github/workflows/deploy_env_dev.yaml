@@ -2,11 +2,6 @@ on:
   pull_request_review:
     types: [submitted]
 
-env:
-  TERRAFORM_VERSION: 1.6.6
-  AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-  HUSKY: 0
-
 jobs:
   deploy:
     uses: ./.github/workflows/deploy_code.yaml

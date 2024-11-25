@@ -8,7 +8,6 @@ permissions:
 
 env:
   TERRAFORM_VERSION: 1.6.6
-  AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
   HUSKY: 0
   TZ: "Europe/London"
 
@@ -95,7 +94,7 @@ jobs:
         working-directory: ./terraform
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    environment: ${{ inputs.stage }}
+    environment: dev
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

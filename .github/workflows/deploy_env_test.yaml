@@ -3,11 +3,6 @@ on:
     branches:
       - main
 
-env:
-  TERRAFORM_VERSION: 1.6.6
-  AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-  HUSKY: 0
-
 jobs:
   deploy_test:
     uses: ./.github/workflows/deploy_code.yaml
