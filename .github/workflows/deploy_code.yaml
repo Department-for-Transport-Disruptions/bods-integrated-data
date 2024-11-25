@@ -13,10 +13,12 @@ on:
     inputs:
       stage:
         type: choice
+        description: Stage
         required: true
         options:
           - dev
           - test
+          - prod
 
 permissions:
   id-token: write # This is required for aws oidc connection
@@ -48,12 +50,14 @@ jobs:
       function_dir: ${{ matrix.dir }}
 
   deploy_functions_and_infrastructure:
+    runs-on: ubuntu-latest
     name: Deploy functions and infrastructure
+    env:
+      STAGE: ${{ inputs.stage }}
     environment: ${{ inputs.stage }}
     needs:
       - check_for_function_changes
       - zip_functions
-    secrets: inherit
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -98,6 +102,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+          aws-region: eu-west-2
           role-session-name: GitHub-OIDC-TERRAFORM
 
       - name: Setup Terraform

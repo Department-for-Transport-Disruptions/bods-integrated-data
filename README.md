@@ -42,7 +42,7 @@ for more information about BODS.
 - [CICD](#cicd)
   - [Workflow](#workflow)
   - [Environments](#environments)
-  - [Deploying changes locally](#deploying-changes-locally)
+  - [Manually deploying changes](#manually-deploying-changes)
 
 ## Dependencies
 
@@ -454,16 +454,36 @@ depending on whether the runtime environment is an AWS lambda.
 
 ### Workflow
 
-On PR creation:
+When a PR is created or updated:
 
-- Terraform plan generation (saved as a comment to the PR)
-- Terraform linting
-- Lambda functions linting and unit testing
+- Lint PR title
+- Lint code
+- Run unit tests
+- Run a TF plan
 
-On PR approval:
+When a PR is approved:
 
-- Terraform apply
-- Lambda functions build and deploy (only those with changes)
+- Deploy (dev)
+- Run integration tests (dev)
+
+when a PR is merged to main:
+
+- Deploy (test)
+- Run integration tests (test)
+
+When a draft release is created (manually, in Github):
+
+- GitHub draft release created with automated change notes
+
+When a draft release is published:
+
+- Deploy (prod)
+
+Workflows that permit manual dispatch:
+
+- Create draft release
+- Deploy (any env)
+- Run integration tests
 
 ### Environments
 
@@ -472,11 +492,11 @@ On PR approval:
 | `local`     | Local environment used with localstack                   |
 | `dev`       | Deployed environment used for dev testing                |
 | `test`      | Deployed environment used for UAT and automation testing |
-| `prod`      | Not used yet                                             |
+| `prod`      | Deployed environment used for dev production             |
 
-### Deploying changes locally
+### Manually deploying changes
 
-Deploying manually is possible. First initialise Terraform:
+Deploying manually is possible, but discouraged. First initialise Terraform:
 
 ```bash
 # replace {ENV} with a known environment
