@@ -68,9 +68,12 @@ module "integrated_data_avl_processor_function" {
       ]
     },
     {
-      Action   = ["dynamodb:GetItem"],
-      Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}"
+      Action = ["dynamodb:GetItem"],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.avl_subscription_table_name}",
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.gtfs_trip_maps_table_name}",
+      ]
     },
     {
       Action   = ["dynamodb:BatchWriteItem"],
@@ -87,6 +90,7 @@ module "integrated_data_avl_processor_function" {
     DB_NAME                         = var.db_name
     AVL_SUBSCRIPTION_TABLE_NAME     = var.avl_subscription_table_name
     AVL_VALIDATION_ERROR_TABLE_NAME = var.avl_validation_error_table_name
+    GTFS_TRIP_MAPS_TABLE_NAME       = var.gtfs_trip_maps_table_name
   }
 }
 
