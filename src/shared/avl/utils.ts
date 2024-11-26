@@ -177,6 +177,8 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                             bearing: eb.ref("excluded.bearing"),
                             onward_calls: eb.ref("excluded.onward_calls"),
                             driver_ref: eb.ref("excluded.driver_ref"),
+                            route_id: eb.ref("excluded.route_id"),
+                            trip_id: eb.ref("excluded.trip_id"),
                         }))
                         .whereRef("excluded.recorded_at_time", ">", "avl.recorded_at_time"),
                 )
