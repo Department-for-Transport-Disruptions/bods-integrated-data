@@ -3,7 +3,7 @@ import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
-import { MatchedTrip } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { GtfsTripMap } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { AvlSubscription } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { S3EventRecord } from "aws-lambda";
@@ -468,16 +468,21 @@ describe("avl-processor", () => {
                 latitude: 51.123,
             };
 
-            const mockMatchingTrip: MatchedTrip = {
-                route_key: "routeKey",
-                route_id: 1,
-                trip_id: "1",
-                revision: 0,
-                use: true,
+            const mockMatchingTrip: GtfsTripMap = {
+                PK: "routeKey",
+                SK: "NOC1_R1_outbound_tmjc1#1",
+                routeId: 1,
+                tripId: "1",
+                timeToExist: 0,
             };
             getDynamoItemSpy.mockResolvedValue(mockMatchingTrip);
 
             const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(getDynamoItemSpy).toHaveBeenCalledWith(mockGtfsTripMapsTableName, {
+                PK: "NOC1_R1",
+                SK: "NOC1_R1_outbound_tmjc1#1",
+            });
 
             expect(matchedAvl).toEqual({
                 ...avl,
@@ -496,16 +501,21 @@ describe("avl-processor", () => {
                 latitude: 51.123,
             };
 
-            const mockMatchingTrip: MatchedTrip = {
-                route_key: "routeKey",
-                route_id: 1,
-                trip_id: "1",
-                revision: 0,
-                use: true,
+            const mockMatchingTrip: GtfsTripMap = {
+                PK: "NCTR_R1",
+                SK: "NCTR_R1_outbound_tmjc1#1",
+                routeId: 1,
+                tripId: "1",
+                timeToExist: 0,
             };
             getDynamoItemSpy.mockResolvedValue(mockMatchingTrip);
 
             const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(getDynamoItemSpy).toHaveBeenCalledWith(mockGtfsTripMapsTableName, {
+                PK: "NCTR_R1",
+                SK: "NCTR_R1_outbound_tmjc1#1",
+            });
 
             expect(matchedAvl).toEqual({
                 ...avl,
