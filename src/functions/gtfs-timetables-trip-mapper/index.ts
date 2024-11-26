@@ -2,6 +2,7 @@ import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/databa
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import {
+    GtfsTripMap,
     MatchedTrip,
     createTimetableMatchingLookup,
     retrieveMatchableTimetableData,
@@ -10,14 +11,6 @@ import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/l
 import { Handler } from "aws-lambda";
 
 let dbClient: KyselyDb;
-
-type GtfsTripMap = {
-    PK: string;
-    SK: string;
-    tripId: string;
-    routeId: number;
-    timeToExist: number;
-};
 
 const mapMatchingTrip = (
     tripKey: string,
