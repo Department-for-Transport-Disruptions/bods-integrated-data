@@ -4,7 +4,7 @@ import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/share
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import {
-    MatchedTrip,
+    GtfsTripMap,
     getDirectionRef,
     getRouteKey,
     sanitiseTicketMachineJourneyCode,
@@ -79,39 +79,44 @@ const uploadValidationErrorsToDatabase = async (
 };
 
 export const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Promise<NewAvl> => {
-    let matchingTrip: MatchedTrip | null = null;
+    const directionRef = getDirectionRef(avl.direction_ref);
+
+    if (!directionRef) {
+        return avl;
+    }
+
+    let matchingTrip: GtfsTripMap | null = null;
     const routeKey = getRouteKey(avl);
 
     if (!routeKey) {
         return avl;
     }
 
-    if (avl.direction_ref && avl.dated_vehicle_journey_ref) {
+    if (avl.dated_vehicle_journey_ref) {
         const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
-        const tripKey = `${routeKey}_${avl.direction_ref}_${sanitisedTicketMachineJourneyCode}`;
+        const tripKey = `${routeKey}_${directionRef}_${sanitisedTicketMachineJourneyCode}`;
 
-        matchingTrip = await getDynamoItem<MatchedTrip>(tableName, {
+        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
             PK: routeKey,
             SK: `${tripKey}#1`,
         });
     }
 
-    if (!matchingTrip && avl.direction_ref && avl.dated_vehicle_journey_ref && avl.origin_ref && avl.destination_ref) {
+    if (!matchingTrip && avl.dated_vehicle_journey_ref && avl.origin_ref && avl.destination_ref) {
         const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
-        const tripKey = `${routeKey}_${avl.direction_ref}_${sanitisedTicketMachineJourneyCode}_${avl.origin_ref}_${avl.destination_ref}`;
+        const tripKey = `${routeKey}_${directionRef}_${sanitisedTicketMachineJourneyCode}_${avl.origin_ref}_${avl.destination_ref}`;
 
-        matchingTrip = await getDynamoItem<MatchedTrip>(tableName, {
+        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
             PK: routeKey,
             SK: `${tripKey}#2`,
         });
     }
 
-    if (!matchingTrip && avl.direction_ref && avl.origin_aimed_departure_time) {
+    if (!matchingTrip && avl.origin_aimed_departure_time) {
         const departureTime = getDate(avl.origin_aimed_departure_time).format("HHmmss");
-        const directionRef = getDirectionRef(avl.direction_ref);
         const tripKey = `${routeKey}_${directionRef}_${avl.origin_ref}_${avl.destination_ref}_${departureTime}`;
 
-        matchingTrip = await getDynamoItem<MatchedTrip>(tableName, {
+        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
             PK: routeKey,
             SK: `${tripKey}#3`,
         });
@@ -123,8 +128,8 @@ export const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Prom
 
     return {
         ...avl,
-        route_id: matchingTrip.route_id,
-        trip_id: matchingTrip.trip_id,
+        route_id: matchingTrip.routeId,
+        trip_id: matchingTrip.tripId,
     };
 };
 

@@ -285,6 +285,14 @@ export type MatchedTrip = {
 
 type MatchedTrips = Record<string, MatchedTrip | null>;
 
+export type GtfsTripMap = {
+    PK: string;
+    SK: string;
+    tripId: string;
+    routeId: number;
+    timeToExist: number;
+};
+
 const assignTripValueToLookup = (
     tripValue: MatchedTrip | null,
     timetable: MatchingTimetable,
