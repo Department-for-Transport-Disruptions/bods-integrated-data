@@ -368,7 +368,8 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         direction_ref: item.directionRef.toString(),
         origin_name: item.originName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
         origin_ref: item.originRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-        origin_aimed_departure_time: originAimedDepartureTime,
+        origin_aimed_departure_time:
+            item.originAimedDepartureTime || item.originAimedDepartureTime === 0 ? originAimedDepartureTime : null,
         destination_name: item.destinationName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
         destination_ref: item.destinationRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         vehicle_journey_ref: item.vehicleJourneyRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
