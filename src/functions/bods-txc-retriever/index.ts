@@ -9,10 +9,13 @@ import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
-const getBodsDataAndUploadToS3 = async (txcZippedBucketName: string, txcBucketName: string, prefix: string) => {
-    logger.info("Starting retrieval of BODS data");
-
-    const response = await axios.get<Stream>("https://data.bus-data.dft.gov.uk/timetable/download/bulk_archive", {
+const getBodsDataAndUploadToS3 = async (
+    downloadUrl: string,
+    txcZippedBucketName: string,
+    txcBucketName: string,
+    prefix: string,
+) => {
+    const response = await axios.get<Stream>(downloadUrl, {
         responseType: "stream",
     });
 
@@ -62,7 +65,22 @@ export const handler: Handler = async (event, context) => {
         logger.info("Starting retrieval of BODS TXC data");
 
         const prefix = getDate().format("YYYYMMDD");
-        await getBodsDataAndUploadToS3(txcZippedBucketName, txcBucketName, prefix);
+
+        logger.info("Starting retrieval of BODS bus data");
+        await getBodsDataAndUploadToS3(
+            "https://data.bus-data.dft.gov.uk/timetable/download/bulk_archive",
+            txcZippedBucketName,
+            txcBucketName,
+            prefix,
+        );
+
+        logger.info("Starting retrieval of BODS coach data");
+        await getBodsDataAndUploadToS3(
+            "https://coach.bus-data.dft.gov.uk/TxC-2.4.zip",
+            txcZippedBucketName,
+            txcBucketName,
+            prefix,
+        );
 
         logger.info("BODS TXC retrieval complete");
 

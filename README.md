@@ -245,7 +245,7 @@ TNDS data is behind authorisation. First find the AWS ARN of the secret that con
 aws secretsmanager list-secrets
 ```
 
-Then copy the `ARN` for the secret with the description "Integrated data tnds ftp credentials - dev".
+Then copy the `ARN` for the secret called "tnds_ftp".
 
 Download all TNDS data into the localstack container with this ARN:
 
