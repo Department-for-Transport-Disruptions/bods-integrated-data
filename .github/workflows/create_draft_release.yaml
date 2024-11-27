@@ -20,7 +20,6 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix: ${{ inputs.is_hotfix && 'hotfix-v' || 'v' }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
