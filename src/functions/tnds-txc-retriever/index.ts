@@ -18,9 +18,6 @@ interface FtpCredentials {
 const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Array>> => {
     const downloadedFiles: Map<string, Uint8Array> = new Map();
     const allFiles = await client.list();
-    for (const file of allFiles) {
-        logger.info(`File found: ${file.name}`);
-    }
     const zipFiles = allFiles.filter(
         /**
          * The NCSD.zip file, which represents coach data, is excluded because coach data is now retrieved from BODS.
