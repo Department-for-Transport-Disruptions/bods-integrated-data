@@ -43,6 +43,7 @@ services:
       - SIRI_VM_BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
       - PROCESSOR_FREQUENCY_IN_SECONDS=30
       - CLEARDOWN_FREQUENCY_IN_SECONDS=60
+      - SIRI_VM_SNS_TOPIC_ARN=test
     volumes:
       - ./:/app/data
     networks:
