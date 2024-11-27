@@ -10,26 +10,17 @@ name: Create Draft Release
 jobs:
   create_draft_release:
     runs-on: ubuntu-22.04
-    name: Create Hotfix Draft Release
+    name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
       contents: write
 
     steps:
-      - name: Set Tag Prefix
-        id: set_tag_prefix
-        run: |
-          if [[ "${{ inputs.is_hotfix }}" == 'true' ]]; then
-            echo "tag_prefix=hotfix-v" >> $GITHUB_ENV
-          else
-            echo "tag_prefix=v" >> $GITHUB_ENV
-          fi
-
       - name: Bump version and push tag
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix: ${{ env.tag_prefix }}
+          tag_prefix: ${{ inputs.is_hotfix && 'hotfix-v' || 'v' }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -38,4 +29,3 @@ jobs:
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
           draft: true
-
