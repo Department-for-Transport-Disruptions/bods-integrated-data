@@ -9,9 +9,8 @@ name: Create Draft Release
 
 jobs:
   create_draft_release:
-    if: ${{ inputs.is_hotfix == false}}
     runs-on: ubuntu-22.04
-    name: Create Draft Release
+    name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
       contents: write
 
@@ -21,6 +20,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: ${{ inputs.is_hotfix && 'hotfix-v' || 'v' }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -29,28 +29,3 @@ jobs:
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
           draft: true
-
-  create_hotfix_draft_release:
-    if: ${{ inputs.is_hotfix == true}}
-    runs-on: ubuntu-22.04
-    name: Create Draft Release
-    permissions:
-      contents: write
-
-    steps:
-      - name: Get Latest Release
-        id: latest_release
-        uses: cardinalby/git-get-release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          latest: true
-
-      - name: Create release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.head_ref }}
-          name: ${{ steps.latest_release.outputs.tag_name }}-hotfix
-          body: ${{ github.event.pull_request.title }}
-          draft: true
-
