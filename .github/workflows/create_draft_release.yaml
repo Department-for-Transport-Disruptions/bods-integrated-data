@@ -20,6 +20,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          append_to_pre_release_tag: ${{ inputs.is_hotfix && 'hotfix' || undefined }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
