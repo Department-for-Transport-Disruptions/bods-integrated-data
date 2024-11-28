@@ -15,6 +15,11 @@ export const handler: S3Handler = async (event, context) => {
         object: { key },
     } = event.Records[0].s3;
 
+    if (!key.endsWith(".zip")) {
+        logger.info("Ignoring non-zip file");
+        return;
+    }
+
     try {
         const { UNZIPPED_BODS_BUCKET_NAME: unzippedBodsBucketName, UNZIPPED_TNDS_BUCKET_NAME: unzippedTndsBucketName } =
             process.env;
