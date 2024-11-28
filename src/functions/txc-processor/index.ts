@@ -297,6 +297,11 @@ export const handler: S3Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(stage === "local"));
     const record = event.Records[0];
 
+    if (!record.s3.object.key.endsWith(".xml")) {
+        logger.info("Ignoring non-xml file");
+        return;
+    }
+
     try {
         logger.info("Retrieving bank holidays JSON");
         const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);

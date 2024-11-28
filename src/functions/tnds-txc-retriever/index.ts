@@ -18,7 +18,13 @@ interface FtpCredentials {
 const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Array>> => {
     const downloadedFiles: Map<string, Uint8Array> = new Map();
     const allFiles = await client.list();
-    const zipFiles = allFiles.filter((file) => file.name.includes(".zip"));
+    const zipFiles = allFiles.filter(
+        /**
+         * The NCSD.zip file, which represents coach data, is excluded because coach data is now retrieved from BODS.
+         * CSV files containing useful meta information have been temporarily included because we want to analyse them during the coach data integration work.
+         */
+        (file) => (file.name.includes(".zip") && file.name !== "NCSD.zip") || file.name.includes(".csv"),
+    );
 
     for (const file of zipFiles) {
         const chunks: Buffer[] = [];
@@ -38,7 +44,13 @@ const getZipFilesFromFTP = async (client: Client): Promise<Map<string, Uint8Arra
 
 const uploadZipFilesToS3 = async (files: Map<string, Uint8Array>, bucket: string, prefix: string) => {
     for (const [fileName, content] of files.entries()) {
-        const upload = startS3Upload(bucket, `${prefix}/${fileName}`, content, "application/zip");
+        const contentType = fileName.endsWith(".zip")
+            ? "application/zip"
+            : fileName.endsWith(".zip")
+              ? "text/csv"
+              : "text/plain";
+
+        const upload = startS3Upload(bucket, `${prefix}/${fileName}`, content, contentType);
         await upload.done();
     }
 };
