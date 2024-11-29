@@ -26,12 +26,13 @@ jobs:
         id: push_tag
         uses: rickstaa/action-create-tag@v1.7.2
         with:
-          tag: v${{steps.get_version.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{steps.get_version.outputs.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{steps.get_version.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
-          name: v${{steps.get_version.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
+          tag_name: v${{steps.get_version.outputs.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
+          name: Release v${{steps.get_version.outputs.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
           body: ${{ steps.get_version.outputs.changelog }}
           draft: true
