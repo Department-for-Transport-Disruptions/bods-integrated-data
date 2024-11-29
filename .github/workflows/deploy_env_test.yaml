@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy_test:
+  deploy:
     uses: ./.github/workflows/deploy_code.yaml
     with:
       stage: test
