@@ -9,16 +9,6 @@ on:
     secrets:
       AWS_OIDC_ROLE:
         required: true
-  workflow_dispatch:
-    inputs:
-      stage:
-        type: choice
-        description: Stage
-        required: true
-        options:
-          - dev
-          - test
-          - prod
 
 permissions:
   id-token: write # This is required for aws oidc connection
