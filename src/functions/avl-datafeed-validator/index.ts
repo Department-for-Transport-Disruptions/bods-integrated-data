@@ -10,7 +10,9 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     AvlValidationError,
-    AvlValidationReportBody, AvlValidationReportError, AvlValidationReportSummary,
+    AvlValidationReportBody,
+    AvlValidationReportError,
+    AvlValidationReportSummary,
 } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
@@ -52,7 +54,10 @@ export const getTotalAvlsProcessed = async (subscriptionId: string, avlProcessor
     return avlProcessedCount;
 };
 
-const generateValidationSummary = (errors: AvlValidationError[], totalProcessed: number): AvlValidationReportSummary => {
+const generateValidationSummary = (
+    errors: AvlValidationError[],
+    totalProcessed: number,
+): AvlValidationReportSummary => {
     const criticalCount = errors.filter((e) => e.level === "CRITICAL").length;
     const nonCriticalCount = errors.filter((e) => e.level === "NON-CRITICAL").length;
 
@@ -116,8 +121,7 @@ const generateReportBody = async (
 
     if (errorData.length > 0) {
         reportBody.validation_summary = generateValidationSummary(errorData, totalProcessed);
-        reportBody.errors = generateResults(errorData, subscriptionId)
-
+        reportBody.errors = generateResults(errorData, subscriptionId);
     }
 
     return reportBody;
