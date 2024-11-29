@@ -1,0 +1,22 @@
+on:
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy_code.yaml
+    if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
+    with:
+      stage: dev
+    secrets: inherit
+
+  run_integration_tests:
+    uses: ./.github/workflows/run_integration_tests.yaml
+    name: Run integration tests
+    needs:
+      - deploy
+    if: ${{ always() && !cancelled() && needs.deploy.result == 'success' }}
+    with:
+      stage: dev
+    secrets: inherit

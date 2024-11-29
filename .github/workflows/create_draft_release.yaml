@@ -3,13 +3,11 @@ on:
     inputs:
       is_hotfix:
         type: boolean
-        description: Release hotfix? If checked, creates a draft hotfix release
-
-name: Create Draft Release
+        description: Create as hotfix draft release
 
 jobs:
   create_draft_release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
       contents: write
@@ -32,7 +30,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ steps.get_version.outputs.nextStrict }}${{ inputs.is_hotfix && '-hotfix' || '' }}
 
-      - name: Create release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}

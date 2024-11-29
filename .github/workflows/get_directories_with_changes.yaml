@@ -1,5 +1,3 @@
-name: Check for directory changes
-
 on:
   workflow_call:
     inputs:
@@ -11,20 +9,19 @@ on:
         type: string
     outputs:
       changed_directories:
-        description: List of directory names with changes
         value: ${{ jobs.get_directories_with_changes.outputs.changed_directories }}
 
 jobs:
   get_directories_with_changes:
-    name: Get directories with updated files
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    name: Get directories with changed files
     outputs:
       changed_directories: ${{ steps.set-output-changed-directories.outputs.changed_directories }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get changed files
+      - name: Get changed directories
         id: changed-files
         uses: tj-actions/changed-files@v42
         with:

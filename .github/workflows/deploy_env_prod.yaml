@@ -1,0 +1,12 @@
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  deploy_prod:
+    uses: ./.github/workflows/deploy_code.yaml
+    with:
+      stage: prod
+    secrets: inherit

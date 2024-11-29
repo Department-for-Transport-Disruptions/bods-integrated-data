@@ -1,8 +1,6 @@
 on:
   pull_request:
 
-name: Terraform Plan
-
 permissions:
   id-token: write # This is required for aws oidc connection
   contents: read # This is required for actions/checkout
@@ -10,52 +8,57 @@ permissions:
 
 env:
   TERRAFORM_VERSION: 1.6.6
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
   HUSKY: 0
   TZ: "Europe/London"
 
 jobs:
-  lint_and_test_functions:
-    runs-on: ubuntu-22.04
-    name: Lint and Test Functions
+  lint-pr-title:
+    name: Lint PR title
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint_and_test_functions:
+    runs-on: ubuntu-latest
+    name: Lint code and run unit tests
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
 
-      - uses: pnpm/action-setup@v3
-        name: Install pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
           version: 9
           run_install: false
 
       - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install Deps
+      - name: Install dependencies
         run: make install-deps
 
-      - name: Typescript Build
+      - name: Run Typescript build
         run: make check-types
 
-      - name: Lint Functions
+      - name: Lint code
         run: make lint-functions
 
-      - name: Test Functions
+      - name: Run unit test
         run: make test-functions
 
   check_for_function_changes:
@@ -80,23 +83,24 @@ jobs:
       function_dir: ${{ matrix.dir }}
 
   terraform_plan:
-    runs-on: ubuntu-22.04
-    name: Terraform Plan
+    runs-on: ubuntu-latest
+    name: Terraform plan
     needs:
       - check_for_function_changes
       - zip_functions
     if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
-    environment: "dev"
     defaults:
       run:
         working-directory: ./terraform
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    environment: dev
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - name: Download zipped functions
+        uses: actions/download-artifact@v4
         with:
           path: ./src/functions/dist
           merge-multiple: true
@@ -105,11 +109,11 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
-          aws-region: "eu-west-2"
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
           role-session-name: GitHub-OIDC-TERRAFORM
 
-      - uses: actions/cache@v4
-        name: Cache plugin dir
+      - name: Cache Terraform tflint plugin
+        uses: actions/cache@v4
         with:
           path: ~/.tflint.d/plugins
           key: dev-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
@@ -119,8 +123,7 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      - name: Terraform fmt
-        id: fmt
+      - name: Run Terraform fmt
         run: terraform fmt -check -recursive
 
       - name: Setup TFLint
@@ -132,22 +135,18 @@ jobs:
         run: tflint --init
 
       - name: Run TFLint
-        id: tflint
         run: tflint --recursive --config "$(pwd)/.tflint.hcl" -f compact --minimum-failure-severity=warning
 
-      - name: Terraform Init
-        id: init
+      - name: Terraform init
         run: terraform -chdir=dev init
 
-      - name: Terraform Validate
-        id: validate
+      - name: Terraform validate
         run: terraform -chdir=dev validate -no-color
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform -chdir=dev plan -input=false -no-color -out .planfile
+      - name: Terraform plan
+        run: terraform -chdir=dev plan -lock-timeout=5m -input=false -no-color -out .planfile
 
-      - name: Post PR comment
+      - name: Post PR comment with Terraform plan
         uses: borchero/terraform-plan-comment@v1
         with:
           token: ${{ github.token }}

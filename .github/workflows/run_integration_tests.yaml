@@ -1,5 +1,3 @@
-name: Run integration tests
-
 on:
   workflow_call:
     inputs:
@@ -9,20 +7,32 @@ on:
     secrets:
       AWS_OIDC_ROLE:
         required: true
+  workflow_dispatch:
+    inputs:
+      stage:
+        type: choice
+        description: Stage
+        required: true
+        options:
+          - dev
+          - test
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout
 
 jobs:
   integration_test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Run integration tests
-    environment: ${{ inputs.stage }}
     env:
       STAGE: ${{ inputs.stage }}
-
+    environment: ${{ inputs.stage }}
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
@@ -34,15 +44,13 @@ jobs:
           run_install: false
 
       - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('integration-testing/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
@@ -50,16 +58,19 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
-          aws-region: "eu-west-2"
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
           role-session-name: GitHub-OIDC-TERRAFORM
 
-      - name: Run Playwright tests
-        run: |
-          cd ./integration-testing
-          pnpm i
-          pnpm run test
+      - name: Install dependencies
+        working-directory: ./integration-testing
+        run: pnpm install
 
-      - uses: actions/upload-artifact@v4
+      - name: Run integration tests
+        working-directory: ./integration-testing
+        run: pnpm test
+
+      - name: Upload integration test report
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report

@@ -40,9 +40,10 @@ for more information about BODS.
 - [Testing](#testing)
 - [Logging](#logging)
 - [CICD](#cicd)
-  - [Workflow](#workflow)
   - [Environments](#environments)
-  - [Deploying changes locally](#deploying-changes-locally)
+  - [Workflow](#workflow)
+  - [Performing a hotfix](#performing-a-hotfix)
+  - [Manually deploying changes](#manually-deploying-changes)
 
 ## Dependencies
 
@@ -452,19 +453,6 @@ depending on whether the runtime environment is an AWS lambda.
 
 ## CICD
 
-### Workflow
-
-On PR creation:
-
-- Terraform plan generation (saved as a comment to the PR)
-- Terraform linting
-- Lambda functions linting and unit testing
-
-On PR approval:
-
-- Terraform apply
-- Lambda functions build and deploy (only those with changes)
-
 ### Environments
 
 | Environment | Notes                                                    |
@@ -472,11 +460,53 @@ On PR approval:
 | `local`     | Local environment used with localstack                   |
 | `dev`       | Deployed environment used for dev testing                |
 | `test`      | Deployed environment used for UAT and automation testing |
-| `prod`      | Not used yet                                             |
+| `prod`      | Deployed environment used for production                 |
 
-### Deploying changes locally
+### Workflow
 
-Deploying manually is possible. First initialise Terraform:
+When a PR is created or updated:
+
+- Lint PR title
+- Lint code
+- Run unit tests
+- Run a TF plan
+
+When a PR is approved:
+
+- Deploy (dev)
+- Run integration tests (dev)
+
+when a PR is merged to main:
+
+- Deploy (test)
+- Run integration tests (test)
+
+When the create draft release workflow is manually triggered:
+
+- GitHub draft release is created
+
+When a draft release is published:
+
+- Deploy (prod)
+
+Workflows that permit manual dispatch:
+
+- Create draft release
+- Deploy (any env)
+- Run integration tests
+
+### Performing a hotfix
+
+1. Branch off from the latest release tag
+2. Create and commit necessary changes
+3. Test the changes, e.g. run the deploy (test) workflow with the branch
+4. Run the create draft release workflow, selecting the branch and checking the hotfix option
+5. Amend any details in the draft release and publish when ready (triggers a prod deployment)
+6. After deployment, raise a PR for the branch to bring the changes back into main
+
+### Manually deploying changes
+
+Deploying manually is possible, but discouraged. First initialise Terraform:
 
 ```bash
 # replace {ENV} with a known environment

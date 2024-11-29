@@ -1,5 +1,3 @@
-name: Zip function
-
 on:
   workflow_call:
     inputs:
@@ -9,46 +7,45 @@ on:
 
 jobs:
   zip_function:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Zip function
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
 
-      - uses: pnpm/action-setup@v3
-        name: Install pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
           version: 9
           run_install: false
 
       - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Build changed functions
-        run: |
-          cd ./src/functions/${{ inputs.function_dir }}
-          if [[ -f package.json ]]
-          then
-            pnpm i
-            pnpm run build:ci
-          fi
+      - name: Install dependencies
+        working-directory: ./src/functions/${{ inputs.function_dir }}
+        run: pnpm install
 
-      - uses: actions/upload-artifact@v4
+      - name: Run integration tests
+        working-directory: ./src/functions/${{ inputs.function_dir }}
+        run: pnpm build:ci
+
+      - name: Upload function zip
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ${{ inputs.function_dir }}
           path: ./src/functions/${{ inputs.function_dir }}/dist/${{ inputs.function_dir }}.zip
