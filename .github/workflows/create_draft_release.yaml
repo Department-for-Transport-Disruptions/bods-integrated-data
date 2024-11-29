@@ -30,7 +30,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v${{ steps.semver.outputs.next }}${{ inputs.is_hotfix && '-hotfix' || '' }}
+          custom_tag: v${{ steps.semver.outputs.nextStrict }}${{ inputs.is_hotfix && '-hotfix' || '' }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
