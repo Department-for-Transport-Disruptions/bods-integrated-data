@@ -40,8 +40,9 @@ for more information about BODS.
 - [Testing](#testing)
 - [Logging](#logging)
 - [CICD](#cicd)
-  - [Workflow](#workflow)
   - [Environments](#environments)
+  - [Workflow](#workflow)
+  - [Performing a hotfix](#performing-a-hotfix)
   - [Manually deploying changes](#manually-deploying-changes)
 
 ## Dependencies
@@ -452,6 +453,15 @@ depending on whether the runtime environment is an AWS lambda.
 
 ## CICD
 
+### Environments
+
+| Environment | Notes                                                    |
+| ----------- | -------------------------------------------------------- |
+| `local`     | Local environment used with localstack                   |
+| `dev`       | Deployed environment used for dev testing                |
+| `test`      | Deployed environment used for UAT and automation testing |
+| `prod`      | Deployed environment used for production                 |
+
 ### Workflow
 
 When a PR is created or updated:
@@ -471,9 +481,9 @@ when a PR is merged to main:
 - Deploy (test)
 - Run integration tests (test)
 
-When a draft release is created (manually, in Github):
+When the create draft release workflow is manually triggered:
 
-- GitHub draft release created with automated change notes
+- GitHub draft release is created
 
 When a draft release is published:
 
@@ -485,14 +495,14 @@ Workflows that permit manual dispatch:
 - Deploy (any env)
 - Run integration tests
 
-### Environments
+### Performing a hotfix
 
-| Environment | Notes                                                    |
-| ----------- | -------------------------------------------------------- |
-| `local`     | Local environment used with localstack                   |
-| `dev`       | Deployed environment used for dev testing                |
-| `test`      | Deployed environment used for UAT and automation testing |
-| `prod`      | Deployed environment used for dev production             |
+1. Branch off from the latest release tag
+2. Create and commit necessary changes
+3. Test the changes, e.g. run the deploy (test) workflow with the branch
+4. Run the create draft release workflow, selecting the branch and checking the hotfix option
+5. Amend any details in the draft release and publish when ready (triggers a prod deployment)
+6. After deployment, raise a PR for the branch to bring the changes back into main
 
 ### Manually deploying changes
 
