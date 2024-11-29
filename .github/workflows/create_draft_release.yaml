@@ -15,24 +15,28 @@ jobs:
       contents: write
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Next Version
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ github.ref_name }}
+          branch: main
+
       - name: Bump version
-        id: get_version
+        id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v${{ steps.semver.outputs.next }}${{ inputs.is_hotfix && '-hotfix' || '' }}
           dry_run: true
-
-      - name: Push tag
-        id: push_tag
-        uses: rickstaa/action-create-tag@v1.7.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: v${{steps.get_version.outputs.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{steps.get_version.outputs.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
-          name: Release v${{steps.get_version.outputs.new_version}}${{ inputs.is_hotfix && '-hotfix' || '' }}
-          body: ${{ steps.get_version.outputs.changelog }}
+          tag_name: v${{steps.tag_version.outputs.new_tag}}
+          name: Release v${{ steps.semver.outputs.next }}${{ inputs.is_hotfix && '-hotfix' || '' }}
+          body: ${{ steps.tag_version.outputs.changelog }}
           draft: true
