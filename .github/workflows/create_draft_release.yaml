@@ -22,8 +22,8 @@ jobs:
         id: semver
         uses: ietf-tools/semver-action@v1
         with:
-          token: ${{ github.ref_name }}
-          branch: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref_name }}
 
       - name: Bump version
         id: tag_version
@@ -31,7 +31,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ steps.semver.outputs.next }}${{ inputs.is_hotfix && '-hotfix' || '' }}
-          dry_run: true
 
       - name: Create release
         uses: softprops/action-gh-release@v2
