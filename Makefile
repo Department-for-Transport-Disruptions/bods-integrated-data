@@ -131,11 +131,13 @@ migrate-local-db-to-latest:
 rollback-last-local-db-migration:
 	STAGE=local ROLLBACK=true npx tsx -e "import {handler} from './src/functions/db-migrator'; handler().catch(e => console.error(e))"
 
+get-db-credentials:
+	./scripts/get-db-credentials.sh
+
 bastion-tunnel:
 	./scripts/bastion-tunnel.sh
 
-get-db-credentials:
-	./scripts/get-db-credentials.sh
+make bastion-tunnel-with-password: get-db-credentials bastion-tunnel
 
 # Naptan
 

@@ -7,18 +7,28 @@ on:
 
 jobs:
   create_draft_release:
-    if: ${{ inputs.is_hotfix == false}}
     runs-on: ubuntu-latest
-    name: Create draft release
+    name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
       contents: write
 
     steps:
-      - name: Bump version and push tag
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Next Release Version
+        id: get_version
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref_name }}
+
+      - name: Bump version
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.get_version.outputs.nextStrict }}${{ inputs.is_hotfix && '-hotfix' || '' }}
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -26,28 +36,4 @@ jobs:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
-          draft: true
-
-  create_hotfix_draft_release:
-    if: ${{ inputs.is_hotfix == true}}
-    runs-on: ubuntu-latest
-    name: Create hotfix draft release
-    permissions:
-      contents: write
-
-    steps:
-      - name: Get Latest release
-        id: latest_release
-        uses: cardinalby/git-get-release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          latest: true
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.head_ref }}
-          name: ${{ steps.latest_release.outputs.tag_name }}-hotfix
-          body: ${{ github.event.pull_request.title }}
           draft: true
