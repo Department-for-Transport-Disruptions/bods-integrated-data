@@ -22,6 +22,9 @@ jobs:
   get_functions_and_tasks:
     runs-on: ubuntu-latest
     name: Get functions and tasks
+    outputs:
+      all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
+      all_ecs_tasks: ${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
