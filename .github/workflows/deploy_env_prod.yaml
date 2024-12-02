@@ -13,5 +13,5 @@ jobs:
     uses: ./.github/workflows/deploy_code.yaml
     with:
       stage: prod
-      deploy_all_functions: github.event_name == 'workflow_dispatch'
+      deploy_all_functions: ${{ github.event_name == 'workflow_dispatch' }}
     secrets: inherit
