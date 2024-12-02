@@ -6,6 +6,9 @@ on:
       stage:
         required: true
         type: string
+      deploy_all_functions:
+        required: true
+        type: boolean
 
 permissions:
   id-token: write # This is required for aws oidc connection
@@ -15,9 +18,19 @@ env:
   TERRAFORM_VERSION: 1.6.6
 
 jobs:
+  get_list_of_functions:
+    runs-on: ubuntu-latest
+    name: Get list of functions
+    if: ${{ inputs.deploy_all_functions }}
+    steps:
+      - name: Get list of functions
+        id: get_ecs_tasks
+        run: echo "all_functions=\"$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
+
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
+    if: ${{ !inputs.deploy_all_functions }}
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"
@@ -28,7 +41,7 @@ jobs:
     if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ fromJson(needs.get_list_of_functions.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - check_for_function_changes
     with:
@@ -43,6 +56,7 @@ jobs:
     needs:
       - check_for_function_changes
       - zip_functions
+    if: ${{ always() && !cancelled() && (needs.get_list_of_functions.result == 'success' || needs.check_for_function_changes.result == 'success') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

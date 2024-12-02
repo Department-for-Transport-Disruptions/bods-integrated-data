@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/deploy_code.yaml
     with:
       stage: test
+      deploy_all_functions: github.event_name == 'workflow_dispatch'
     secrets: inherit
 
   run_integration_tests:

@@ -13,6 +13,7 @@ jobs:
     if: (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch'
     with:
       stage: dev
+      deploy_all_functions: github.event_name == 'workflow_dispatch'
     secrets: inherit
 
   run_integration_tests:
