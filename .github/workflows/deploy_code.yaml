@@ -59,7 +59,7 @@ jobs:
       - name: echo outputs
         run: |
           echo "all_functions=${{ needs.get_functions_and_tasks.outputs.all_functions }}"
-          echo "all_ecs_tasks=${{ needs.check_for_function_changes.outputs.all_ecs_tasks }}"
+          echo "all_ecs_tasks=${{ needs.get_functions_and_tasks.outputs.all_ecs_tasks }}"
           echo "matrix_dir_without_fromJson=${{ inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories }}"
 
   zip_functions:
@@ -68,7 +68,7 @@ jobs:
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ fromJson(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
