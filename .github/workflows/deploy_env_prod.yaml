@@ -4,6 +4,10 @@ on:
       - published
   workflow_dispatch:
 
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout
+
 jobs:
   deploy_prod:
     uses: ./.github/workflows/deploy_code.yaml
