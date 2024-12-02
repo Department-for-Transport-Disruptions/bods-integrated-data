@@ -4,9 +4,6 @@ on:
       stage:
         required: true
         type: string
-    secrets:
-      AWS_OIDC_ROLE:
-        required: true
   workflow_dispatch:
     inputs:
       stage:
