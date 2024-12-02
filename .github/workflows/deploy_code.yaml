@@ -35,7 +35,7 @@ jobs:
 
       - name: Get list of ECS tasks
         id: get_list_of_ecs_tasks
-        run: echo "all_ecs_tasks=\"$(cd ./src/tasks && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed "s/\"/'/g")\"" >> "$GITHUB_OUTPUT"
+        run: echo "all_ecs_tasks=\"$(cd ./src/tasks && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
 
       - name: echo outputs
         run: |
@@ -68,8 +68,8 @@ jobs:
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        # dir: ${{ inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_ecs_tasks || fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
-        dir: ${{ fromJson('["mock-data-receiver"]') }}
+        dir: ${{ fromJson(needs.get_functions_and_tasks.outputs.all_functions) }}
+        # dir: ${{ fromJson('["mock-data-receiver"]') }}
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
