@@ -23,6 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Get functions and tasks
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Get list of functions
         run: echo "all_functions=\"$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
 
