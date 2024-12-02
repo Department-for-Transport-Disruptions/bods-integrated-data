@@ -1,3 +1,5 @@
+name: Get directories with changes (called workflow)
+
 on:
   workflow_call:
     inputs:

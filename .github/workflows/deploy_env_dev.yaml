@@ -1,3 +1,5 @@
+name: Deploy (dev)
+
 on:
   pull_request_review:
     types: [submitted]

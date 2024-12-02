@@ -1,3 +1,6 @@
+name: Deploy ECS task
+run-name: Deploy ECS task (${{ inputs.stage }}, ${{ inputs.task_name }})
+
 on:
   workflow_dispatch:
     inputs:

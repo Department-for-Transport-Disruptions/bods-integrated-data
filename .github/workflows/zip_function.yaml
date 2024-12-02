@@ -1,3 +1,5 @@
+name: Zip function (called workflow)
+
 on:
   workflow_call:
     inputs:

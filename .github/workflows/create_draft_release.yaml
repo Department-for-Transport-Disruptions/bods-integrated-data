@@ -1,3 +1,5 @@
+name: Create draft release
+
 on:
   workflow_dispatch:
     inputs:

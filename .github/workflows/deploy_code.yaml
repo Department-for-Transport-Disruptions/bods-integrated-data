@@ -1,3 +1,4 @@
+name: Deploy code (called workflow)
 run-name: Deploy (${{ inputs.stage }})
 
 on:
@@ -21,7 +22,6 @@ jobs:
   get_functions_and_tasks:
     runs-on: ubuntu-latest
     name: Get functions and tasks
-    if: ${{ inputs.deploy_all_functions }}
     steps:
       - name: Get list of functions
         run: echo "all_functions=\"$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
@@ -32,7 +32,6 @@ jobs:
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
-    if: ${{ !inputs.deploy_all_functions }}
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"
@@ -40,10 +39,10 @@ jobs:
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
     name: Zip updated functions
-    if: ${{ needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories }}
+    if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ fromJson(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
