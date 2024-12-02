@@ -32,6 +32,11 @@ jobs:
       - name: Get list of ECS tasks
         run: echo "all_ecs_tasks=\"$(cd ./src/tasks && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
 
+      - name: echo outputs
+        run: |
+          echo "all_functions=${{ steps.get_functions_and_tasks.outputs.all_functions }}"
+          echo "all_ecs_tasks=${{ steps.get_functions_and_tasks.outputs.all_ecs_tasks }}"
+
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
@@ -45,7 +50,7 @@ jobs:
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ fromJson(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ inputs.deploy_all_functions && fromJson(needs.get_functions_and_tasks.outputs.all_functions) || fromJson(needs.check_for_function_changes.outputs.changed_directories)) }}
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
