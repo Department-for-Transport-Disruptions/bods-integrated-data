@@ -31,7 +31,7 @@ jobs:
 
       - name: Get list of functions
         id: get_list_of_functions
-        run: echo "all_functions=$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')" >> "$GITHUB_OUTPUT"
+        run: echo "all_functions='$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')'" >> "$GITHUB_OUTPUT"
 
       - name: Get list of ECS tasks
         id: get_list_of_ecs_tasks
