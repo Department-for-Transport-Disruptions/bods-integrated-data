@@ -68,7 +68,8 @@ jobs:
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_ecs_tasks || fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
+        # dir: ${{ inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_ecs_tasks || fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: [ "mock-data-receiver" ]
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
