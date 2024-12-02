@@ -43,6 +43,7 @@ jobs:
       matrix:
         dir: ${{ fromJson(needs.get_list_of_functions.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
+      - get_list_of_functions
       - check_for_function_changes
     with:
       function_dir: ${{ matrix.dir }}
@@ -54,6 +55,7 @@ jobs:
       STAGE: ${{ inputs.stage }}
     environment: ${{ inputs.stage }}
     needs:
+      - get_list_of_functions
       - check_for_function_changes
       - zip_functions
     if: ${{ always() && !cancelled() && (needs.get_list_of_functions.result == 'success' || needs.check_for_function_changes.result == 'success') }}
