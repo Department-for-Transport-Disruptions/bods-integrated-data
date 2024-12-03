@@ -43,7 +43,6 @@ jobs:
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
-    if: ${{ !inputs.deploy_all_functions }}
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"
