@@ -45,7 +45,7 @@ jobs:
       - name: Set output of changed directories for shared code
         if: steps.changed-files-shared-code.outputs.all_changed_files_count != 0
         id: set-output-shared-code-directories
-        run: echo "changed_directories_for_shared_code=\"$(cd ${{ inputs.path }} && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
+        run: echo "changed_directories_for_shared_code=$(cd ${{ inputs.path }} && ls -d */ | sed 's#/##' | jq -R | jq -sc)" >> "$GITHUB_OUTPUT"
 
       - name: Set output of changed directories
         if: steps.changed-files.outputs.all_changed_files_count != 0 || steps.changed-files-shared-code.outputs.all_changed_files_count != 0
