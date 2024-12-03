@@ -109,7 +109,7 @@ jobs:
   deploy_ecs_tasks:
     uses: ./.github/workflows/deploy_ecs_task.yaml
     name: Deploy ECS tasks
-    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
+    if: ${{ always() && !cancelled() && needs.get_functions_and_tasks.result == 'success' }}
     strategy:
       matrix:
         dir: ${{ fromJSON(needs.get_functions_and_tasks.outputs.all_ecs_tasks) }}
