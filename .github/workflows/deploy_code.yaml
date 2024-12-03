@@ -63,6 +63,7 @@ jobs:
   deploy_functions_and_infrastructure:
     runs-on: ubuntu-24.04
     name: Deploy functions and infrastructure
+    if: ${{ always() && !cancelled() && needs.check_for_function_changes.result == 'success' }}
     env:
       STAGE: ${{ inputs.stage }}
     environment: ${{ inputs.stage }}
