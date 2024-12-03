@@ -97,7 +97,6 @@ jobs:
         run: terraform -chdir=terraform/${{ inputs.stage }} init
 
       - name: Terraform plan
-        id: plan
         run: terraform -chdir=terraform/${{ inputs.stage }} plan -lock-timeout=5m -input=false -no-color -out .planfile
 
       - name: Terraform apply
