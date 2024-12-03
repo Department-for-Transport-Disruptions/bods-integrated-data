@@ -110,6 +110,7 @@ jobs:
       matrix:
         dir: ${{ fromJSON(needs.get_functions_and_tasks.outputs.all_ecs_tasks) }}
     needs:
+      - get_functions_and_tasks
       - deploy_functions_and_infrastructure
     with:
       stage: ${{ inputs.stage }}

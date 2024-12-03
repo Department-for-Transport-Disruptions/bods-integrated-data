@@ -27,6 +27,9 @@ on:
       task_name:
         type: string
         required: true
+    secrets:
+      AWS_OIDC_ROLE_SHARED_SERVICES:
+        required: true
 
 permissions:
   id-token: write # This is required for aws oidc connection
