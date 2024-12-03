@@ -24,8 +24,8 @@ jobs:
     name: Get functions and tasks
     outputs:
       all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
-      all_functions2: ${{ steps.get_list_of_functions.outputs.all_functions2 }}
-      all_functions3: ${{ steps.get_list_of_functions.outputs.all_functions3 }}
+      all_functions2: ${{ steps.get_list_of_functions2.outputs.all_functions2 }}
+      all_functions3: ${{ steps.get_list_of_functions3.outputs.all_functions3 }}
       all_ecs_tasks: ${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}
     steps:
       - name: Checkout code
@@ -37,7 +37,7 @@ jobs:
 
       - name: Get list of functions2
         id: get_list_of_functions2
-        run: echo "all_functions2=$(cd ./src/functions && ls -d mock*/ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')" >> "$GITHUB_OUTPUT"
+        run: echo "all_functions2=$(cd ./src/functions && ls -d mock*/ | sed 's#/##' | jq -R | jq -sc)" >> "$GITHUB_OUTPUT"
 
       - name: Get list of functions 3
         id: get_list_of_functions3
