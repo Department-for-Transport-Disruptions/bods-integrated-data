@@ -15,7 +15,7 @@ on:
 
 jobs:
   get_directories_with_changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Get directories with changed files
     outputs:
       changed_directories: ${{ steps.set-output-changed-directories.outputs.changed_directories }}

@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   deploy_ecs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Deploy ECS task ${{ inputs.task_name }} (${{ inputs.stage }})
     env:
       STAGE: ${{ inputs.stage }}
