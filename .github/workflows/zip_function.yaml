@@ -9,8 +9,8 @@ on:
 
 jobs:
   zip_function:
-    runs-on: ubuntu-latest
-    name: Zip function
+    runs-on: ubuntu-24.04
+    name: Zip function (${{ inputs.function_dir }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

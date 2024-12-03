@@ -16,14 +16,14 @@ env:
 jobs:
   lint-pr-title:
     name: Lint PR title
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   lint_and_test_functions:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Lint code and run unit tests
     steps:
       - name: Checkout code
@@ -74,18 +74,18 @@ jobs:
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
-    name: Zip updated functions
+    name: Zip functions
     if: ${{ needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ fromJSON(needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - check_for_function_changes
     with:
       function_dir: ${{ matrix.dir }}
 
   terraform_plan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Terraform plan
     needs:
       - check_for_function_changes

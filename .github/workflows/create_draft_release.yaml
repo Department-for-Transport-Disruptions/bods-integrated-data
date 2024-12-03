@@ -9,7 +9,7 @@ on:
 
 jobs:
   create_draft_release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
       contents: write

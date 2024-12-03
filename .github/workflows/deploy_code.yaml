@@ -1,3 +1,6 @@
+# When a manual deployment occurs, deploy_all_functions is set to true and the get_functions_and_tasks job creates a list of all functions to zip and deploy.
+# Otherwise, the deploy_all_functions is set to false and the check_for_function_changes job creates a list of changed functions to zip and deploy.
+
 name: Deploy code (called workflow)
 run-name: Deploy (${{ inputs.stage }})
 
@@ -20,39 +23,38 @@ env:
 
 jobs:
   get_functions_and_tasks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Get functions and tasks
+    outputs:
+      all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
+      all_ecs_tasks: ${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Get list of functions
         id: get_list_of_functions
-        run: echo "all_functions=\"$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
+        run: echo "all_functions=$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc)" >> "$GITHUB_OUTPUT"
 
       - name: Get list of ECS tasks
         id: get_list_of_ecs_tasks
-        run: echo "all_ecs_tasks=\"$(cd ./src/tasks && ls -d */ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
-
-      - name: echo outputs
-        run: |
-          echo "all_functions=${{ steps.get_list_of_functions.outputs.all_functions }}"
-          echo "all_ecs_tasks=${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}"
+        run: echo "all_ecs_tasks=$(cd ./src/tasks && ls -d */ | sed 's#/##' | jq -R | jq -sc)" >> "$GITHUB_OUTPUT"
 
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
+    if: ${{ !inputs.deploy_all_functions }}
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
-    name: Zip updated functions
+    name: Zip functions
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ inputs.deploy_all_functions && fromJson(needs.get_functions_and_tasks.outputs.all_functions) || fromJson(needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ fromJSON(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
@@ -60,7 +62,7 @@ jobs:
       function_dir: ${{ matrix.dir }}
 
   deploy_functions_and_infrastructure:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Deploy functions and infrastructure
     env:
       STAGE: ${{ inputs.stage }}
@@ -110,8 +112,9 @@ jobs:
     name: Deploy ECS tasks
     strategy:
       matrix:
-        dir: ${{ fromJson(needs.get_functions_and_tasks.outputs.all_ecs_tasks) }}
+        dir: ${{ fromJSON(needs.get_functions_and_tasks.outputs.all_ecs_tasks) }}
     needs:
+      - get_functions_and_tasks
       - deploy_functions_and_infrastructure
     with:
       stage: ${{ inputs.stage }}
