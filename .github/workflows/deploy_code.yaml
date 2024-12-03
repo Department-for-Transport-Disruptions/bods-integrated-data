@@ -32,7 +32,7 @@ jobs:
 
       - name: Get list of functions
         id: get_list_of_functions
-        run: echo "all_functions=$(cd ./src/functions && ls -d mock*/ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')" >> "$GITHUB_OUTPUT"
+        run: echo "all_functions=\"$(cd ./src/functions && ls -d mock*/ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
 
       - name: Get list of functions 2
         id: get_list_of_functions2
