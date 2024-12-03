@@ -100,7 +100,6 @@ jobs:
         run: terraform -chdir=terraform/${{ inputs.stage }} plan -lock-timeout=5m -input=false -no-color -out .planfile
 
       - name: Terraform apply
-        if: steps.plan.outcome == 'success'
         run: terraform -chdir=terraform/${{ inputs.stage }} apply -lock-timeout=5m -input=false -no-color .planfile
 
       - name: Run database migrations
