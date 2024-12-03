@@ -23,7 +23,6 @@ jobs:
     name: Run integration tests
     needs:
       - deploy
-    if: ${{ always() && !cancelled() && needs.deploy.result == 'success' }}
     with:
       stage: dev
     secrets: inherit
