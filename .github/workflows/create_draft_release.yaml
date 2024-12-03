@@ -25,6 +25,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}${{ inputs.is_hotfix && ' (hotfix)' || '' }}
+          name: ${{ steps.tag_version.outputs.new_tag }}${{ inputs.is_hotfix && ' (hotfix)' || '' }}
           body: ${{ steps.tag_version.outputs.changelog }}
           draft: true
