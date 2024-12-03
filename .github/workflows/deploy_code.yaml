@@ -24,6 +24,7 @@ jobs:
     name: Get functions and tasks
     outputs:
       all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
+      all_functions2: ${{ steps.get_list_of_functions.outputs.all_functions2 }}
       all_ecs_tasks: ${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}
     steps:
       - name: Checkout code
@@ -31,7 +32,11 @@ jobs:
 
       - name: Get list of functions
         id: get_list_of_functions
-        run: echo "all_functions=\"$(cd ./src/functions && ls -d mock*/ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')\"" >> "$GITHUB_OUTPUT"
+        run: echo "all_functions=$(cd ./src/functions && ls -d mock*/ | sed 's#/##' | jq -R | jq -sc | sed 's/"/\\"/g')" >> "$GITHUB_OUTPUT"
+
+      - name: Get list of functions 2
+        id: get_list_of_functions2
+        run: echo "all_functions2=[\"mock-data-producer-send-data\",\"mock-data-producer-send-heartbeat\",\"mock-data-producer-subscribe\",\"mock-data-receiver\"]" >> "$GITHUB_OUTPUT"
 
       - name: Get list of ECS tasks
         id: get_list_of_ecs_tasks
@@ -40,6 +45,7 @@ jobs:
       - name: echo outputs
         run: |
           echo "all_functions=${{ steps.get_list_of_functions.outputs.all_functions }}"
+          echo "all_functions2=${{ steps.get_list_of_functions.outputs.all_functions2 }}"
           echo "all_ecs_tasks=${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}"
 
   check_for_function_changes:
@@ -59,9 +65,11 @@ jobs:
       - name: echo outputs
         run: |
           echo "all_functions=${{ needs.get_functions_and_tasks.outputs.all_functions }}"
+          echo "all_functions2=${{ needs.get_functions_and_tasks.outputs.all_functions2 }}"
           echo "all_ecs_tasks=${{ needs.get_functions_and_tasks.outputs.all_ecs_tasks }}"
           echo "matrix_dir_without_fromJson=${{ inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories }}"
-          echo "matrix_dir_with_fromJson=${{ fromJson(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}"
+          echo "matrix_dir_with_fromJson=${{ fromJSON(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}"
+          echo "matrix_dir_with_fromJson2=${{ fromJSON(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions2 || needs.check_for_function_changes.outputs.changed_directories) }}"
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
@@ -69,7 +77,7 @@ jobs:
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
-        dir: ${{ fromJson(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
+        dir: ${{ fromJSON(inputs.deploy_all_functions && needs.get_functions_and_tasks.outputs.all_functions || needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
       - get_functions_and_tasks
       - check_for_function_changes
