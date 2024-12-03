@@ -1,3 +1,6 @@
+# When a manual deployment occurs, deploy_all_functions is set to true and the get_functions_and_tasks job creates a list of all functions to zip and deploy.
+# Otherwise, the deploy_all_functions is set to false and the check_for_function_changes job creates a list of changed functions to zip and deploy.
+
 name: Deploy code (called workflow)
 run-name: Deploy (${{ inputs.stage }})
 
@@ -40,6 +43,7 @@ jobs:
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
     name: Get list of updated functions
+    if: ${{ !inputs.deploy_all_functions }}
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"
