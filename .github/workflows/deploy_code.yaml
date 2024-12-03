@@ -46,7 +46,7 @@ jobs:
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
-    name: Zip updated functions
+    name: Zip functions
     if: ${{ inputs.deploy_all_functions || needs.check_for_function_changes.outputs.changed_directories }}
     strategy:
       matrix:
