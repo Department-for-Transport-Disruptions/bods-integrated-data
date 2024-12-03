@@ -57,5 +57,5 @@ export const mockNoErrorsResponse = {
         non_critical_score: 1.0,
         vehicle_activity_count: 2,
     },
-    errors: {},
+    errors: [],
 };

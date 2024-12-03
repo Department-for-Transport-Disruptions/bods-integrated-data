@@ -8,7 +8,12 @@ import { getAvlSubscription, getAvlSubscriptionErrorData } from "@bods-integrate
 import { runLogInsightsQuery } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
+import {
+    AvlValidationError,
+    AvlValidationReportBody,
+    AvlValidationReportError,
+    AvlValidationReportSummary,
+} from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { createStringLengthValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
@@ -49,7 +54,10 @@ export const getTotalAvlsProcessed = async (subscriptionId: string, avlProcessor
     return avlProcessedCount;
 };
 
-const generateValidationSummary = (errors: AvlValidationError[], totalProcessed: number) => {
+const generateValidationSummary = (
+    errors: AvlValidationError[],
+    totalProcessed: number,
+): AvlValidationReportSummary => {
     const criticalCount = errors.filter((e) => e.level === "CRITICAL").length;
     const nonCriticalCount = errors.filter((e) => e.level === "NON-CRITICAL").length;
 
@@ -63,7 +71,7 @@ const generateValidationSummary = (errors: AvlValidationError[], totalProcessed:
     };
 };
 
-const generateResults = (errors: AvlValidationError[], subscriptionId: string) => {
+const generateResults = (errors: AvlValidationError[], subscriptionId: string): AvlValidationReportError[] => {
     const errorsFormatted = errors.map((error) => ({
         level: error.level,
         details: error.details,
@@ -97,7 +105,7 @@ const generateReportBody = async (
 ) => {
     const totalProcessed = await getTotalAvlsProcessed(subscriptionId, avlProcessorLogGroupName);
 
-    const reportBody = {
+    const reportBody: AvlValidationReportBody = {
         feed_id: subscriptionId,
         packet_count: totalProcessed,
         validation_summary: {
@@ -108,7 +116,7 @@ const generateReportBody = async (
             non_critical_score: 1.0,
             vehicle_activity_count: totalProcessed,
         },
-        errors: {},
+        errors: [],
     };
 
     if (errorData.length > 0) {
