@@ -36,7 +36,7 @@ jobs:
 
       - name: Get list of functions 2
         id: get_list_of_functions2
-        run: echo "all_functions2='[\"mock-data-producer-send-data\",\"mock-data-producer-send-heartbeat\",\"mock-data-producer-subscribe\",\"mock-data-receiver\"]'" >> "$GITHUB_OUTPUT"
+        run: echo "all_functions2=\"[\"mock-data-producer-send-data\",\"mock-data-producer-send-heartbeat\",\"mock-data-producer-subscribe\",\"mock-data-receiver\"]\"" >> "$GITHUB_OUTPUT"
 
       - name: Get list of ECS tasks
         id: get_list_of_ecs_tasks
