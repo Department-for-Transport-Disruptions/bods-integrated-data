@@ -295,7 +295,7 @@ export const affectsSchema = z.object({
 
 export const consequenceSchema = z.object({
     Condition: enumSchema(Condition).optional(),
-    Severity: enumSchema(Severity),
+    Severity: enumSchema(Severity).default(Severity.unknown),
     Affects: affectsSchema.optional(),
     Advice: z
         .object({
