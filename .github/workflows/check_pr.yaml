@@ -72,6 +72,14 @@ jobs:
       path: "./src/functions"
       shared_code_path: "./src/shared"
 
+  echo_outputs:
+    runs-on: ubuntu-24.04
+    name: Echo outputs
+    needs: check_for_function_changes
+    steps:
+      - name: Echo outputs
+        run: echo "changed_directories=${{ needs.check_for_function_changes.outputs.changed_directories }}"
+
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml
     name: Zip functions
@@ -80,6 +88,7 @@ jobs:
       matrix:
         dir: ${{ fromJSON(needs.check_for_function_changes.outputs.changed_directories) }}
     needs:
+      - echo_outputs
       - check_for_function_changes
     with:
       function_dir: ${{ matrix.dir }}
