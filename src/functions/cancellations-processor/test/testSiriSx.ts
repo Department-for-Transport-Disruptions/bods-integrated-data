@@ -67,7 +67,6 @@ export const testSiriSx = `<?xml version="1.0" encoding="utf-8"?>
           <Consequences>
             <Consequence>
               <Condition>cancelled</Condition>
-              <Severity>severe</Severity>
             </Consequence>
           </Consequences>
         </PtSituationElement>
@@ -177,7 +176,6 @@ export const testSiriSxWithInvalidSituationsOnly = `<?xml version="1.0" encoding
           <Consequences>
             <Consequence>
               <Condition>cancelled</Condition>
-              <Severity>severe</Severity>
             </Consequence>
           </Consequences>
         </PtSituationElement>
@@ -407,7 +405,7 @@ export const parsedSiriSx: NewSituation[] = [
                 Consequence: [
                     {
                         Condition: Condition.cancelled,
-                        Severity: Severity.severe,
+                        Severity: Severity.unknown,
                     },
                 ],
             },
