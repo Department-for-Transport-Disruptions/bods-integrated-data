@@ -1,4 +1,4 @@
-module "integrated_data_avl_subscription_table" {
+module "integrated_data_tnds_analysis_table" {
   source = "../shared/dynamo-table"
 
   environment = var.environment

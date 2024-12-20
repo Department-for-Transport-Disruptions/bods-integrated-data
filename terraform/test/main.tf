@@ -458,3 +458,9 @@ module "integrated_data_avl_datadog" {
   recovery        = {}
   opt_out         = []
 }
+
+module "integrated_data_tnds_analyser" {
+  source = "../modules/tnds-analyser"
+
+  environment = local.env
+}
