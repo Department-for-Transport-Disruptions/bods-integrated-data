@@ -1,0 +1,22 @@
+{
+    "name": "@bods-integrated-data/tnds-reporter",
+    "version": "0.1.0",
+    "description": "Generates a CSV report of the TNDS analysis results",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tnds-reporter.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tnds-reporter.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "zod": "3.23.8"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

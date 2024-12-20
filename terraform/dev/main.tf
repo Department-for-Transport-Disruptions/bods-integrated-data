@@ -456,3 +456,10 @@ module "siri_consumer_api_public" {
   siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
   siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
 }
+
+
+module "integrated_data_tnds_analyser" {
+  source = "../modules/tnds-analyser"
+
+  environment = local.env
+}
