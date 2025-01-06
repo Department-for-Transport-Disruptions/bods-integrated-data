@@ -124,3 +124,24 @@ export const recursiveQuery = async <T extends Record<string, unknown>>(
 
     return dbData.Items as T[];
 };
+
+export const deleteDynamoItems = async <T extends Record<string, unknown>>(tableName: string, items: T[]) => {
+    const itemChunks = chunkArray(items, DYNAMO_DB_MAX_BATCH_SIZE);
+
+    for await (const chunk of itemChunks) {
+        await dynamoDbDocClient.send(
+            new BatchWriteCommand({
+                RequestItems: {
+                    [tableName]: chunk.map((item) => ({
+                        DeleteRequest: {
+                            Key: {
+                                PK: item.PK,
+                                SK: item.SK,
+                            },
+                        },
+                    })),
+                },
+            }),
+        );
+    }
+};

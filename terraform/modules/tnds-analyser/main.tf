@@ -9,6 +9,23 @@ resource "aws_s3_bucket" "integrated_data_tnds_analysis_bucket" {
   bucket = "integrated-data-tnds-analysis-${var.environment}"
 }
 
+module "integrated_data_tnds_analysis_cleardown_function" {
+  source = "../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-tnds-analysis-cleardown"
+  zip_path      = "${path.module}/../../../src/functions/dist/tnds-analysis-cleardown.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 60
+  memory        = 128
+
+  env_vars = {
+    STAGE                    = var.environment
+    TNDS_ANALYSIS_TABLE_NAME = module.integrated_data_tnds_analysis_table.table_name
+  }
+}
+
 module "integrated_data_tnds_analyser_function" {
   source = "../shared/lambda-function"
 
@@ -21,7 +38,8 @@ module "integrated_data_tnds_analyser_function" {
   memory        = 4096
 
   env_vars = {
-    STAGE = var.environment
+    STAGE                    = var.environment
+    TNDS_ANALYSIS_TABLE_NAME = module.integrated_data_tnds_analysis_table.table_name
   }
 }
 
@@ -37,6 +55,7 @@ module "integrated_data_tnds_reporter_function" {
   memory        = 512
 
   env_vars = {
-    STAGE = var.environment
+    STAGE                    = var.environment
+    TNDS_ANALYSIS_TABLE_NAME = module.integrated_data_tnds_analysis_table.table_name
   }
 }
