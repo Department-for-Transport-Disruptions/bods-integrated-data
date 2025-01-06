@@ -12,3 +12,7 @@ variable "aws_region" {
   type        = string
   description = "AWS region"
 }
+
+variable "tnds_txc_bucket_name" {
+  type = string
+}

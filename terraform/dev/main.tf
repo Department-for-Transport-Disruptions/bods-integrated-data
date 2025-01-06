@@ -461,7 +461,8 @@ module "siri_consumer_api_public" {
 module "integrated_data_tnds_analyser" {
   source = "../modules/tnds-analyser"
 
-  environment    = local.env
-  aws_account_id = data.aws_caller_identity.current.account_id
-  aws_region     = data.aws_region.current.name
+  environment          = local.env
+  aws_account_id       = data.aws_caller_identity.current.account_id
+  aws_region           = data.aws_region.current.name
+  tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
 }
