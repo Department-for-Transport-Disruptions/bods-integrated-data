@@ -1,5 +1,5 @@
 module "integrated_data_tnds_analysis_table" {
-    source = "../shared/dynamo-table"
+  source = "../shared/dynamo-table"
 
   environment = var.environment
   table_name  = "integrated-data-tnds-analysis-table"
@@ -21,7 +21,7 @@ module "integrated_data_tnds_analyser_function" {
   memory        = 4096
 
   env_vars = {
-    STAGE = var.environment
+    STAGE      = var.environment
     TABLE_NAME = module.integrated_data_tnds_analysis_table.table_name
   }
 }
