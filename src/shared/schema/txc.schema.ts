@@ -340,3 +340,5 @@ export const txcSchema = z.object({
         StopPoints: castToObject(stopPointsSchema.optional()),
     }),
 });
+
+export type TxcSchema = z.infer<typeof txcSchema>;

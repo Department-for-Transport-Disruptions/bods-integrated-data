@@ -13,7 +13,9 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "zod": "3.23.8"
+        "fast-xml-parser": "^4.5.1",
+        "zod": "3.23.8",
+        "zod-validation-error": "^3.3.0"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
