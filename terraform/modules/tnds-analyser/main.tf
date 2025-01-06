@@ -36,7 +36,7 @@ module "integrated_data_tnds_analysis_cleardown_function" {
 
   permissions = [
     {
-      Action   = ["dynamodb:GetItem", "dynamodb:BatchWriteItem"],
+      Action   = ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_tnds_analysis_table.table_name}"
     }

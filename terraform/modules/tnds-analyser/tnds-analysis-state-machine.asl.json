@@ -21,7 +21,8 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "Get TNDS TXC Object Keys"
+      "Next": "Get TNDS TXC Object Keys",
+      "OutputPath": "$.Payload"
     },
     "Get TNDS TXC Object Keys": {
       "Type": "Map",
