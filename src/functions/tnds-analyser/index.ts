@@ -43,13 +43,13 @@ const dummyObservation: Observation[] = [
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TABLE_NAME: tableName } = process.env;
+    const { STAGE: stage, TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName } = process.env;
 
-    if (!tableName) {
-        throw new Error("Missing env vars - TABLE_NAME must be set");
+    if (!stage || !tndsAnalysisTableName) {
+        throw new Error("Missing env vars - STAGE and TNDS_ANALYSIS_TABLE_NAME must be set");
     }
 
     logger.info("tnds-analyser stub function");
 
-    await putDynamoItems(tableName, dummyObservation);
+    await putDynamoItems(tndsAnalysisTableName, dummyObservation);
 };
