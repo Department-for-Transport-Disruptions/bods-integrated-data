@@ -1,0 +1,56 @@
+import { randomUUID } from "node:crypto";
+import { TxcSchema } from "@bods-integrated-data/shared/schema";
+import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+
+export default (filename: string, data: Partial<TxcSchema>): Observation[] => {
+    const observations: Observation[] = [];
+    const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
+
+    if (vehicleJourneys) {
+        for (const vehicleJourney of vehicleJourneys) {
+            if (!vehicleJourney.Operational?.Block?.BlockNumber) {
+                let serviceCode = "n/a";
+                let lineName = "n/a";
+                let direction = "";
+                const departureTime = vehicleJourney.DepartureTime || "unknown departure time";
+                const services = data.TransXChange?.Services;
+
+                if (services) {
+                    const service = services.Service?.find(
+                        (service) => service.ServiceCode === vehicleJourney.ServiceRef,
+                    );
+
+                    if (service) {
+                        serviceCode = service.ServiceCode;
+                        const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
+
+                        if (line) {
+                            lineName = line.LineName;
+                        }
+
+                        const journeyPattern = service.StandardService.JourneyPattern.find(
+                            (journeyPattern) => journeyPattern["@_id"] === vehicleJourney.JourneyPatternRef,
+                        );
+
+                        if (journeyPattern?.Direction) {
+                            direction = `${journeyPattern.Direction} `;
+                        }
+                    }
+                }
+
+                observations.push({
+                    PK: filename,
+                    SK: randomUUID(),
+                    importance: "advisory",
+                    category: "journey",
+                    observation: "Missing bus working number",
+                    registrationNumber: serviceCode,
+                    service: lineName,
+                    details: `The (${departureTime}) ${direction}journey has not been assigned a bus working number (i.e. block number).`,
+                });
+            }
+        }
+    }
+
+    return observations;
+};

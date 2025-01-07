@@ -12,5 +12,6 @@ export const observationType = [
     "Incorrect stop type",
     "Missing journey code",
     "Duplicate journey code",
+    "Missing bus working number",
     "Serviced organisation out of date",
 ] as const;
