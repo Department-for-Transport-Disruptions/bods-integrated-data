@@ -279,6 +279,7 @@ export type TxcAnnotatedStopPointRef = z.infer<typeof annotatedStopPointRefSchem
 
 export const servicedOrganisationSchema = z.object({
     OrganisationCode: z.string().optional(),
+    Name: z.string().optional(),
     WorkingDays: z
         .object({
             DateRange: dateRange.array(),

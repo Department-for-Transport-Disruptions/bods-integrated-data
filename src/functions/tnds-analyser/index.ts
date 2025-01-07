@@ -11,6 +11,7 @@ import { fromZodError } from "zod-validation-error";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
+import checkForServicedOrganisationOutOfDate from "./checks/checkForServicedOrganisationOutOfDate";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -57,16 +58,19 @@ export const handler: Handler = async (event, context) => {
     }
 
     const record = event.Records[0];
-    const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
+    const filename = record.s3.object.key;
+    const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
 
-    const missingJourneyCodeObservations = checkForMissingJourneyCodes(record.s3.object.key, txcData);
-    const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(record.s3.object.key, txcData);
-    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(record.s3.object.key, txcData);
+    const missingJourneyCodeObservations = checkForMissingJourneyCodes(filename, txcData);
+    const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
+    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
+    const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
 
     const observations: Observation[] = [
         ...missingJourneyCodeObservations,
         ...duplicateJourneyCodeObservations,
         ...missingBusWorkingNumberObservations,
+        ...servicedOrganisationsOutOfDateObservations,
     ];
 
     if (observations.length) {

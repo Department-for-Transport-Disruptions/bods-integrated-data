@@ -27,6 +27,9 @@ importers:
       '@types/node':
         specifier: ^20.11.19
         version: 20.17.10
+      mockdate:
+        specifier: ^3.0.5
+        version: 3.0.5
 
 packages:
 
@@ -39,6 +42,9 @@ packages:
   fast-xml-parser@4.5.1:
     resolution: {integrity: sha512-y655CeyUQ+jj7KBbYMc4FG01V8ZQqjN+gDYGJ50RtfsUB8iG9AmwmwoAgeKLJdmueKKMrH1RJ7yXHTSoczdv5w==}
     hasBin: true
+
+  mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
 
   strnum@1.0.5:
     resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
@@ -66,6 +72,8 @@ snapshots:
   fast-xml-parser@4.5.1:
     dependencies:
       strnum: 1.0.5
+
+  mockdate@3.0.5: {}
 
   strnum@1.0.5: {}
 
