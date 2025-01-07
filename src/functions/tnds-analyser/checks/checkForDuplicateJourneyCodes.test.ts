@@ -1,6 +1,11 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
-import { describe, expect, it } from "vitest";
+import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { describe, expect, it, vi } from "vitest";
 import checkForDuplicateJourneyCodes from "./checkForDuplicateJourneyCodes";
+
+vi.mock("node:crypto", () => ({
+    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
+}));
 
 describe("checkForDuplicateJourneyCodes", () => {
     it("should return an empty array if there are no vehicle journeys", () => {
@@ -111,11 +116,11 @@ describe("checkForDuplicateJourneyCodes", () => {
         } as Partial<TxcSchema>;
 
         const result = checkForDuplicateJourneyCodes("testfile.xml", data);
-        expect(result).toEqual([
+        expect(result).toEqual<Observation[]>([
             {
                 PK: "testfile.xml",
-                SK: expect.any(String),
-                importance: "critical",
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",
                 registrationNumber: "service1",
@@ -124,8 +129,8 @@ describe("checkForDuplicateJourneyCodes", () => {
             },
             {
                 PK: "testfile.xml",
-                SK: expect.any(String),
-                importance: "critical",
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",
                 registrationNumber: "service1",
