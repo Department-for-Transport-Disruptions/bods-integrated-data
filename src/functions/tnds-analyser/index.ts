@@ -1,3 +1,4 @@
+import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -12,30 +13,6 @@ import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingN
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
 
 z.setErrorMap(errorMapWithDataLogging);
-
-const txcArrayProperties = [
-    "ServicedOrganisation",
-    "AnnotatedStopPointRef",
-    "StopPoint",
-    "RouteSectionRef",
-    "RouteSection",
-    "Route",
-    "RouteLink",
-    "JourneyPatternSection",
-    "JourneyPatternSectionRefs",
-    "Operator",
-    "Garage",
-    "Service",
-    "Line",
-    "Track",
-    "JourneyPattern",
-    "JourneyPatternTimingLink",
-    "VehicleJourney",
-    "VehicleJourneyTimingLink",
-    "OtherPublicHoliday",
-    "DateRange",
-    "ServicedOrganisationRef",
-];
 
 const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({

@@ -98,6 +98,30 @@ export const REGIONS: Record<
     },
 };
 
+export const txcArrayProperties = [
+    "ServicedOrganisation",
+    "AnnotatedStopPointRef",
+    "StopPoint",
+    "RouteSectionRef",
+    "RouteSection",
+    "Route",
+    "RouteLink",
+    "JourneyPatternSection",
+    "JourneyPatternSectionRefs",
+    "Operator",
+    "Garage",
+    "Service",
+    "Line",
+    "Track",
+    "JourneyPattern",
+    "JourneyPatternTimingLink",
+    "VehicleJourney",
+    "VehicleJourneyTimingLink",
+    "OtherPublicHoliday",
+    "DateRange",
+    "ServicedOrganisationRef",
+];
+
 export const tflOperatorRef = "TFLO";
 export const subscriptionStatuses = ["live", "error", "inactive"] as const;
 export const avlValidationErrorLevels = ["CRITICAL", "NON-CRITICAL"] as const;

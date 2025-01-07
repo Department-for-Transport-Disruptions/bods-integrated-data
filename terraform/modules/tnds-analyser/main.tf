@@ -113,7 +113,7 @@ module "integrated_data_tnds_reporter_function" {
 }
 
 resource "aws_iam_role" "integrated_data_tnds_analysis_sfn_role" {
-  name = "integrated-data-tnds_analysis-sfn-role-${var.environment}"
+  name = "integrated-data-tnds-analysis-sfn-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
