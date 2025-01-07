@@ -341,4 +341,4 @@ export const txcSchema = z.object({
     }),
 });
 
-export type Txc = z.infer<typeof txcSchema>;
+export type TxcSchema = z.infer<typeof txcSchema>;

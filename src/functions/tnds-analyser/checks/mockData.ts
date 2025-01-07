@@ -1,7 +1,7 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { Txc } from "@bods-integrated-data/shared/schema";
+import { TxcSchema } from "@bods-integrated-data/shared/schema";
 
-export const mockValidData: Txc = {
+export const mockValidData: TxcSchema = {
     TransXChange: {
         Operators: {
             Operator: [
@@ -199,7 +199,7 @@ export const mockValidData: Txc = {
     },
 };
 
-export const mockInvalidData: Txc = {
+export const mockInvalidData: TxcSchema = {
     TransXChange: {
         Operators: {
             Operator: [
