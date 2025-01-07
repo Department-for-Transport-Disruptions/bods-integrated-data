@@ -7,6 +7,7 @@ import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -81,8 +82,9 @@ export const handler: Handler = async (event, context) => {
     const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
     const missingJourneyCodeObservations = checkForMissingJourneyCodes(record.s3.object.key, txcData);
+    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(record.s3.object.key, txcData);
 
-    const observations: Observation[] = [...missingJourneyCodeObservations];
+    const observations: Observation[] = [...missingJourneyCodeObservations, ...missingBusWorkingNumberObservations];
 
     if (observations.length) {
         await putDynamoItems(tndsAnalysisTableName, observations);
