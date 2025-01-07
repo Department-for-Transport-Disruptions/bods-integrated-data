@@ -1,44 +1,72 @@
-import { randomUUID } from "node:crypto";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
+import { txcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { Handler } from "aws-lambda";
+import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
+import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
 
 z.setErrorMap(errorMapWithDataLogging);
 
-const dummyObservation: Observation[] = [
-    {
-        PK: "20240502/EA/cambs_A2BR_114_20114_.xml",
-        SK: randomUUID(),
-        importance: "critical",
-        category: "timing",
-        observation: "No timing point for more than 15 minutes",
-        registrationNumber: "registrationNumber",
-        service: "TEST",
-        details: "detailed description of observation",
-    },
-    {
-        PK: "20240502/EA/cambs_A2BR_114_20114_.xml",
-        SK: randomUUID(),
-        importance: "critical",
-        category: "journey",
-        observation: "Missing journey code",
-        registrationNumber: "registrationNumber",
-        service: "TEST",
-        details: "detailed description of observation",
-    },
-    {
-        PK: "20240502/EA/cambs_A2BR_114_20114_.xml",
-        SK: randomUUID(),
-        importance: "critical",
-        category: "stop",
-        observation: "Incorrect stop type",
-        registrationNumber: "registrationNumber",
-        service: "TEST",
-        details: "detailed description of observation",
-    },
+const txcArrayProperties = [
+    "ServicedOrganisation",
+    "AnnotatedStopPointRef",
+    "StopPoint",
+    "RouteSectionRef",
+    "RouteSection",
+    "Route",
+    "RouteLink",
+    "JourneyPatternSection",
+    "JourneyPatternSectionRefs",
+    "Operator",
+    "Garage",
+    "Service",
+    "Line",
+    "Track",
+    "JourneyPattern",
+    "JourneyPatternTimingLink",
+    "VehicleJourney",
+    "VehicleJourneyTimingLink",
+    "OtherPublicHoliday",
+    "DateRange",
+    "ServicedOrganisationRef",
 ];
+
+const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
+    const file = await getS3Object({
+        Bucket: bucketName,
+        Key: objectKey,
+    });
+
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: false,
+        parseTagValue: false,
+        isArray: (tagName) => txcArrayProperties.includes(tagName),
+    });
+
+    const xml = await file.Body?.transformToString();
+
+    if (!xml) {
+        throw new Error("No xml data");
+    }
+
+    const parsedTxc = parser.parse(xml) as Record<string, unknown>;
+
+    const txcJson = txcSchema.deepPartial().safeParse(parsedTxc);
+
+    if (!txcJson.success) {
+        const validationError = fromZodError(txcJson.error);
+        logger.error(validationError.toString());
+
+        throw validationError;
+    }
+
+    return txcJson.data;
+};
 
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
@@ -49,7 +77,14 @@ export const handler: Handler = async (event, context) => {
         throw new Error("Missing env vars - STAGE and TNDS_ANALYSIS_TABLE_NAME must be set");
     }
 
-    logger.info("tnds-analyser stub function");
+    const record = event.Records[0];
+    const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
 
-    await putDynamoItems(tndsAnalysisTableName, dummyObservation);
+    const missingJourneyCodeObservations = checkForMissingJourneyCodes(record.s3.object.key, txcData);
+
+    const observations: Observation[] = [...missingJourneyCodeObservations];
+
+    if (observations.length) {
+        await putDynamoItems(tndsAnalysisTableName, observations);
+    }
 };
