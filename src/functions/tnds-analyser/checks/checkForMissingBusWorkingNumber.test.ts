@@ -6,11 +6,9 @@ vi.mock("node:crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
 
-describe("TNDS Analyser Checks", () => {
+describe("checkForMissingBusWorkingNumber", () => {
     const filename = "test-file";
-
-    describe("checkForMissingBusWorkingNumber", () => {
-        it("should return an observation if a vehicle journey is missing a bus working number", () => {});
+    it("should return an observation if a vehicle journey is missing a bus working number", () => {
         const expectedObservation = [
             {
                 PK: filename,
