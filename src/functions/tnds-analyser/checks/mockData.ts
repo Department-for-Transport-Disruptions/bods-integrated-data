@@ -58,12 +58,33 @@ export const mockValidData: TxcSchema = {
                                 WaitTime: "00:02",
                             },
                             To: {
-                                Activity: "dropOff",
+                                Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP2",
                                 TimingStatus: "scheduled",
                                 WaitTime: "00:03",
                             },
                             RunTime: "00:10",
+                        },
+                    ],
+                },
+                {
+                    "@_id": "JPS2",
+                    JourneyPatternTimingLink: [
+                        {
+                            "@_id": "JPTL2",
+                            From: {
+                                Activity: "pickUpAndSetDown",
+                                StopPointRef: "SP3",
+                                TimingStatus: "scheduled",
+                                WaitTime: "00:01",
+                            },
+                            To: {
+                                Activity: "setDown",
+                                StopPointRef: "SP4",
+                                TimingStatus: "scheduled",
+                                WaitTime: "00:02",
+                            },
+                            RunTime: "00:08",
                         },
                     ],
                 },
@@ -106,7 +127,7 @@ export const mockValidData: TxcSchema = {
                                 "@_id": "JP1",
                                 DestinationDisplay: "Central Station",
                                 RouteRef: "R1",
-                                JourneyPatternSectionRefs: ["JPS1"],
+                                JourneyPatternSectionRefs: ["JPS1", "JPS2"],
                                 Direction: "outbound",
                             },
                         ],
@@ -180,12 +201,32 @@ export const mockValidData: TxcSchema = {
                         Longitude: -1.123,
                     },
                 },
+                {
+                    StopPointRef: "SP2",
+                    CommonName: "Stop 2",
+                    Location: {
+                        Latitude: 51.123,
+                        Longitude: -1.123,
+                    },
+                },
             ],
             StopPoint: [
                 {
                     AtcoCode: "ATCO1",
                     Descriptor: {
                         CommonName: "Stop 1",
+                    },
+                    Place: {
+                        Location: {
+                            Latitude: 51.123,
+                            Longitude: -1.123,
+                        },
+                    },
+                },
+                {
+                    AtcoCode: "ATCO2",
+                    Descriptor: {
+                        CommonName: "Stop 2",
                     },
                     Place: {
                         Location: {
@@ -250,18 +291,39 @@ export const mockInvalidData: TxcSchema = {
                         {
                             "@_id": "JPTL1",
                             From: {
-                                Activity: "pickUp",
+                                Activity: "setDown",
                                 StopPointRef: "SP1",
                                 TimingStatus: "scheduled",
                                 WaitTime: "00:02",
                             },
                             To: {
-                                Activity: "dropOff",
-                                StopPointRef: "SP2",
+                                Activity: "pickUpAndSetDown",
+                                StopPointRef: "SP11",
                                 TimingStatus: "scheduled",
                                 WaitTime: "00:03",
                             },
                             RunTime: "00:10",
+                        },
+                    ],
+                },
+                {
+                    "@_id": "JPS2",
+                    JourneyPatternTimingLink: [
+                        {
+                            "@_id": "JPTL2",
+                            From: {
+                                Activity: "pickUpAndSetDown",
+                                StopPointRef: "SP3",
+                                TimingStatus: "scheduled",
+                                WaitTime: "00:01",
+                            },
+                            To: {
+                                Activity: "pickUp",
+                                StopPointRef: "SP2",
+                                TimingStatus: "scheduled",
+                                WaitTime: "00:02",
+                            },
+                            RunTime: "00:08",
                         },
                     ],
                 },
@@ -304,7 +366,7 @@ export const mockInvalidData: TxcSchema = {
                                 "@_id": "JP1",
                                 DestinationDisplay: "Central Station",
                                 RouteRef: "R1",
-                                JourneyPatternSectionRefs: ["JPS1"],
+                                JourneyPatternSectionRefs: ["JPS1", "JPS2"],
                                 Direction: "outbound",
                             },
                         ],
@@ -375,12 +437,32 @@ export const mockInvalidData: TxcSchema = {
                         Longitude: -1.123,
                     },
                 },
+                {
+                    StopPointRef: "SP2",
+                    CommonName: "Stop 2",
+                    Location: {
+                        Latitude: 51.123,
+                        Longitude: -1.123,
+                    },
+                },
             ],
             StopPoint: [
                 {
                     AtcoCode: "ATCO1",
                     Descriptor: {
                         CommonName: "Stop 1",
+                    },
+                    Place: {
+                        Location: {
+                            Latitude: 51.123,
+                            Longitude: -1.123,
+                        },
+                    },
+                },
+                {
+                    AtcoCode: "ATCO2",
+                    Descriptor: {
+                        CommonName: "Stop 2",
                     },
                     Place: {
                         Location: {

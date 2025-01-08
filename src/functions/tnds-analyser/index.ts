@@ -7,6 +7,7 @@ import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
@@ -85,11 +86,16 @@ export const handler: Handler = async (event, context) => {
     const missingJourneyCodeObservations = checkForMissingJourneyCodes(record.s3.object.key, txcData);
     const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(record.s3.object.key, txcData);
     const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(record.s3.object.key, txcData);
+    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(
+        record.s3.object.key,
+        txcData,
+    );
 
     const observations: Observation[] = [
         ...missingJourneyCodeObservations,
         ...duplicateJourneyCodeObservations,
         ...missingBusWorkingNumberObservations,
+        ...firstStopAndLastStopActivitiesObservations,
     ];
 
     if (observations.length) {
