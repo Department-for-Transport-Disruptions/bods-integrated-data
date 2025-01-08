@@ -31,7 +31,7 @@ export default (
                     importance: "advisory",
                     details: `The ${stop.commonName} (${stop.stopPointRef}) stop is not registered with NaPTAN. Please check the ATCO code is correct or contact your local authority to register this stop with NaPTAN.`,
                 });
-            } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef ?? "")) {
+            } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef)) {
                 observations.push({
                     registrationNumber: "n/a",
                     service: "n/a",
