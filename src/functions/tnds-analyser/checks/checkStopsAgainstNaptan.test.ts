@@ -49,6 +49,10 @@ describe("checkForMissingBusWorkingNumber", () => {
                 atcoCode: "SP1",
                 stopType: "BCT",
             },
+            {
+                atcoCode: "SP2",
+                stopType: "BCT",
+            },
         ];
 
         expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
