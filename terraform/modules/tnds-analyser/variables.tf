@@ -16,3 +16,7 @@ variable "aws_region" {
 variable "tnds_txc_bucket_name" {
   type = string
 }
+
+variable "naptan_bucket_name" {
+  type = string
+}

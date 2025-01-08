@@ -465,4 +465,5 @@ module "integrated_data_tnds_analyser" {
   aws_account_id       = data.aws_caller_identity.current.account_id
   aws_region           = data.aws_region.current.name
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
+  naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
 }

@@ -19,3 +19,5 @@ export const observationType = [
 export const allowedLastStopActivity = ["setDown", "setDownDriverRequest", "pickUpAndSetDown"];
 
 export const allowedFirstStopActivity = ["pickUp", "pickUpDriverRequest", "pickUpAndSetDown"];
+
+export const allowedStopTypes = ["BCT", "BCQ", "BCS", "BCE", "BST"];
