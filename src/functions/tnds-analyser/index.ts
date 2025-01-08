@@ -49,6 +49,12 @@ export const handler: Handler = async (event, context) => {
 
     const record = event.Records[0];
     const filename = record.s3.object.key;
+
+    if (!filename.endsWith(".xml")) {
+        logger.info("Ignoring non-xml file");
+        return;
+    }
+
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
 
     const missingJourneyCodeObservations = checkForMissingJourneyCodes(filename, txcData);
