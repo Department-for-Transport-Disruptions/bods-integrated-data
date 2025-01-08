@@ -139,7 +139,7 @@ resource "aws_iam_role" "integrated_data_tnds_analysis_sfn_role" {
 }
 
 resource "aws_sfn_state_machine" "integrated_data_tnds_analysis_sfn" {
-  name     = "integrated-data-tnds_analysis-sfn-${var.environment}"
+  name     = "integrated-data-tnds-analysis-sfn-${var.environment}"
   role_arn = aws_iam_role.integrated_data_tnds_analysis_sfn_role.arn
   definition = templatefile("${path.module}/tnds-analysis-state-machine.asl.json", {
     tnds_analysis_cleardown_function_arn = module.integrated_data_tnds_analysis_cleardown_function.function_arn,
@@ -150,7 +150,7 @@ resource "aws_sfn_state_machine" "integrated_data_tnds_analysis_sfn" {
 }
 
 resource "aws_iam_policy" "integrated_data_tnds_analysis_sfn_policy" {
-  name = "integrated-data-tnds_analysis-sfn-policy-${var.environment}"
+  name = "integrated-data-tnds-analysis-sfn-policy-${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
