@@ -10,12 +10,11 @@ import { XMLParser } from "fast-xml-parser";
 import { parse } from "papaparse";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
 import checkForServicedOrganisationOutOfDate from "./checks/checkForServicedOrganisationOutOfDate";
-import checkForIncorrectStopTypes from "./checks/checkStopsAgainstNaptan";
+import checkStopsAgainstNaptan from "./checks/checkStopsAgainstNaptan";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -114,10 +113,10 @@ const getAndParseNaptanFile = async (naptanBucketName: string) => {
         },
     }) as { data: NaptanStop[] };
 
-    return data.map((stop) => ({
-        atcoCode: stop.atco_code,
-        stopType: stop.stop_type,
-    }));
+    return data.reduce((acc: Record<string, string | null>, stop) => {
+        acc[stop.atco_code] = stop.stop_type;
+        return acc;
+    }, {});
 };
 
 export const handler: Handler = async (event, context) => {
@@ -139,16 +138,14 @@ export const handler: Handler = async (event, context) => {
     const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
     const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
     const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
-    const stopCheckObservations = checkForIncorrectStopTypes(filename, txcData, naptanStops);
-    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
+    const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
 
     const observations: Observation[] = [
         ...missingJourneyCodeObservations,
         ...duplicateJourneyCodeObservations,
         ...missingBusWorkingNumberObservations,
         ...servicedOrganisationsOutOfDateObservations,
-        ...stopCheckObservations,
-        ...firstStopAndLastStopActivitiesObservations,
+        ...naptanStopCheckObservations,
     ];
 
     if (observations.length) {

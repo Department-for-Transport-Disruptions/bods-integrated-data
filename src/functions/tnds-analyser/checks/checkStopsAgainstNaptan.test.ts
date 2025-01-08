@@ -7,16 +7,13 @@ vi.mock("node:crypto", () => ({
     randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
 }));
 
-describe("checkForMissingBusWorkingNumber", () => {
+describe("checkStopsAgainstNaptan", () => {
     const filename = "test-file";
 
     it("should return an observation if a vehicle journey is missing a bus working number", () => {
-        const naptanData = [
-            {
-                atcoCode: "SP1",
-                stopType: "WRONG",
-            },
-        ];
+        const naptanData = {
+            SP1: "WRONG",
+        };
         expect(checkStopsAgainstNaptan(filename, mockInvalidData, naptanData)).toEqual<Observation[]>([
             {
                 PK: filename,
@@ -44,16 +41,10 @@ describe("checkForMissingBusWorkingNumber", () => {
     });
 
     it("should return an empty array if stops have to correct stop type and exist in NaPTAN", () => {
-        const naptanData = [
-            {
-                atcoCode: "SP1",
-                stopType: "BCT",
-            },
-            {
-                atcoCode: "SP2",
-                stopType: "BCT",
-            },
-        ];
+        const naptanData = {
+            SP1: "BCT",
+            SP2: "BCT",
+        };
 
         expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
     });
