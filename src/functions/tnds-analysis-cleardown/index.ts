@@ -9,10 +9,10 @@ z.setErrorMap(errorMapWithDataLogging);
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { STAGE, TNDS_ANALYSIS_TABLE_NAME } = process.env;
+    const { TNDS_ANALYSIS_TABLE_NAME } = process.env;
 
-    if (!STAGE || !TNDS_ANALYSIS_TABLE_NAME) {
-        throw new Error("Missing env vars - STAGE and TNDS_ANALYSIS_TABLE_NAME must be set");
+    if (!TNDS_ANALYSIS_TABLE_NAME) {
+        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME must be set");
     }
 
     const tableItems = await recursiveScan({ TableName: TNDS_ANALYSIS_TABLE_NAME });

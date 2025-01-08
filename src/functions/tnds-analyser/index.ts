@@ -50,10 +50,10 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { STAGE: stage, TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName } = process.env;
+    const { TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName } = process.env;
 
-    if (!stage || !tndsAnalysisTableName) {
-        throw new Error("Missing env vars - STAGE and TNDS_ANALYSIS_TABLE_NAME must be set");
+    if (!tndsAnalysisTableName) {
+        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME must be set");
     }
 
     const record = event.Records[0];
