@@ -1,13 +1,13 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
-import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
-import MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("tnds-reporter", () => {
+    const mockEvent = { prefix: "20250108" };
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
@@ -22,14 +22,6 @@ describe("tnds-reporter", () => {
             error: vi.fn(),
         },
     }));
-
-    beforeAll(() => {
-        MockDate.set("2025-01-08T00:00:00.000Z");
-    });
-
-    afterAll(() => {
-        MockDate.reset();
-    });
 
     beforeEach(() => {
         vi.clearAllMocks();
