@@ -375,6 +375,14 @@ export const mockInvalidData: TxcSchema = {
                         Longitude: -1.123,
                     },
                 },
+                {
+                    StopPointRef: "SP2",
+                    CommonName: "Stop 2",
+                    Location: {
+                        Latitude: 51.123,
+                        Longitude: -1.123,
+                    },
+                },
             ],
             StopPoint: [
                 {

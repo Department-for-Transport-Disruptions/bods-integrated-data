@@ -77,6 +77,7 @@ module "integrated_data_tnds_analyser_function" {
   env_vars = {
     STAGE                    = var.environment
     TNDS_ANALYSIS_TABLE_NAME = module.integrated_data_tnds_analysis_table.table_name
+    NAPTAN_BUCKET_NAME       = var.naptan_bucket_name
   }
 }
 

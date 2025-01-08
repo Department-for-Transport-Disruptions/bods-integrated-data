@@ -15,3 +15,5 @@ export const observationType = [
     "Missing bus working number",
     "Serviced organisation out of date",
 ] as const;
+
+export const allowedStopTypes = ["BCT", "BCQ", "BCS", "BCE", "BST"];
