@@ -20,9 +20,8 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
         "@types/node": "^20.11.19",
-        "mockdate": "^3.0.5",
-        "type-fest": "^4.31.0",
         "@types/papaparse": "^5.3.14",
-        "mockdate": "^3.0.5"
+        "mockdate": "^3.0.5",
+        "type-fest": "^4.31.0"
     }
 }

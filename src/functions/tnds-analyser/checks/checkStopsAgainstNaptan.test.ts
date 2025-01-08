@@ -10,7 +10,7 @@ vi.mock("node:crypto", () => ({
 describe("checkStopsAgainstNaptan", () => {
     const filename = "test-file";
 
-    it("should return an observation if a vehicle journey is missing a bus working number", () => {
+    it("should return an observation if stop does not exist in NaPTAN or had incorrect stop type", () => {
         const naptanData = {
             SP1: "WRONG",
         };
@@ -44,6 +44,30 @@ describe("checkStopsAgainstNaptan", () => {
         const naptanData = {
             SP1: "BCT",
             SP2: "BCT",
+        };
+
+        expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
+    });
+
+    it("should return an empty array if there are no stops listed in TxC", () => {
+        const naptanData = {
+            SP1: "BCT",
+            SP2: "BCT",
+        };
+
+        expect(
+            checkStopsAgainstNaptan(
+                filename,
+                { TransXChange: { ...mockValidData.TransXChange, StopPoints: undefined } },
+                naptanData,
+            ),
+        ).toEqual([]);
+    });
+
+    it("should return an empty array if stop exists in NaPTAN but there is no stop type in NaPTAN", () => {
+        const naptanData = {
+            SP1: null,
+            SP2: null,
         };
 
         expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
