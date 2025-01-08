@@ -310,6 +310,8 @@ const journeyPatternSectionsSchema = z.object({
     JourneyPatternSection: journeyPatternSectionSchema.array().optional(),
 });
 
+export type JourneyPatternSections = z.infer<typeof journeyPatternSectionsSchema>;
+
 const servicedOrganisationsSchema = z.object({
     ServicedOrganisation: servicedOrganisationSchema.array().optional(),
 });
