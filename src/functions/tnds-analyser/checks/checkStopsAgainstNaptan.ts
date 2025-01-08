@@ -18,7 +18,9 @@ export default (
 
     if (txcStops.length) {
         for (const stop of txcStops) {
-            if (naptanStops[stop.stopPointRef] === undefined) {
+            const naptanStopRef = naptanStops[stop.stopPointRef];
+
+            if (naptanStopRef === undefined) {
                 observations.push({
                     registrationNumber: "n/a",
                     service: "n/a",
@@ -29,7 +31,7 @@ export default (
                     importance: "advisory",
                     details: `The ${stop.commonName} (${stop.stopPointRef}) stop is not registered with NaPTAN. Please check the ATCO code is correct or contact your local authority to register this stop with NaPTAN.`,
                 });
-            } else if (!allowedStopTypes.includes(naptanStops[stop.stopPointRef] ?? "")) {
+            } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef ?? "")) {
                 observations.push({
                     registrationNumber: "n/a",
                     service: "n/a",

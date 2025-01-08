@@ -7,8 +7,8 @@ import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { PartialDeep } from "type-fest";
 import { parse } from "papaparse";
+import { PartialDeep } from "type-fest";
 import { z } from "zod";
 import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
@@ -136,7 +136,7 @@ export const handler: Handler = async (event, context) => {
     const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
     const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
     const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
-        const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
+    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
     const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
 
     const observations: Observation[] = [
@@ -145,7 +145,7 @@ export const handler: Handler = async (event, context) => {
         ...missingBusWorkingNumberObservations,
         ...servicedOrganisationsOutOfDateObservations,
         ...naptanStopCheckObservations,
-            ...firstStopAndLastStopActivitiesObservations,
+        ...firstStopAndLastStopActivitiesObservations,
     ];
 
     if (observations.length) {
