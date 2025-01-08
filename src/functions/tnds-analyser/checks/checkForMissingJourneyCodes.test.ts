@@ -1,5 +1,6 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { PartialDeep } from "type-fest";
 import { describe, expect, it, vi } from "vitest";
 import checkForMissingJourneyCodes from "./checkForMissingJourneyCodes";
 
@@ -9,7 +10,7 @@ vi.mock("node:crypto", () => ({
 
 describe("checkForMissingJourneyCodes", () => {
     it("should return an empty array if there are no vehicle journeys", () => {
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 VehicleJourneys: {
                     VehicleJourney: [],
@@ -22,7 +23,7 @@ describe("checkForMissingJourneyCodes", () => {
     });
 
     it("should return an empty array if there are no missing vehicle journey codes", () => {
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 VehicleJourneys: {
                     VehicleJourney: [
@@ -37,14 +38,14 @@ describe("checkForMissingJourneyCodes", () => {
                     ],
                 },
             },
-        } as Partial<TxcSchema>;
+        } as PartialDeep<TxcSchema>;
 
         const result = checkForMissingJourneyCodes("testfile.xml", data);
         expect(result).toEqual([]);
     });
 
     it("should return observations for missing vehicle journey codes", () => {
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 VehicleJourneys: {
                     VehicleJourney: [
@@ -90,7 +91,7 @@ describe("checkForMissingJourneyCodes", () => {
                     ],
                 },
             },
-        } as Partial<TxcSchema>;
+        } as PartialDeep<TxcSchema>;
 
         const result = checkForMissingJourneyCodes("testfile.xml", data);
         expect(result).toEqual<Observation[]>([

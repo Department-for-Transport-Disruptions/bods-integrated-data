@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { PartialDeep } from "type-fest";
 
-export default (filename: string, data: Partial<TxcSchema>): Observation[] => {
+export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
     const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
 

@@ -3,13 +3,14 @@ import { NaptanStop } from "@bods-integrated-data/shared/database";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { txcSchema } from "@bods-integrated-data/shared/schema";
+import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { PartialDeep } from "type-fest";
 import { parse } from "papaparse";
 import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
+import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
@@ -39,18 +40,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
         throw new Error("No xml data");
     }
 
-    const parsedTxc = parser.parse(xml) as Record<string, unknown>;
-
-    const txcJson = txcSchema.deepPartial().safeParse(parsedTxc);
-
-    if (!txcJson.success) {
-        const validationError = fromZodError(txcJson.error);
-        logger.error(validationError.toString());
-
-        throw validationError;
-    }
-
-    return txcJson.data;
+    return parser.parse(xml) as PartialDeep<TxcSchema>;
 };
 
 const getAndParseNaptanFile = async (naptanBucketName: string) => {
@@ -132,6 +122,12 @@ export const handler: Handler = async (event, context) => {
 
     const record = event.Records[0];
     const filename = record.s3.object.key;
+
+    if (!filename.endsWith(".xml")) {
+        logger.info("Ignoring non-xml file");
+        return;
+    }
+
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
 
     naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
@@ -140,6 +136,7 @@ export const handler: Handler = async (event, context) => {
     const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
     const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
     const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
+        const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
     const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
 
     const observations: Observation[] = [
@@ -148,6 +145,7 @@ export const handler: Handler = async (event, context) => {
         ...missingBusWorkingNumberObservations,
         ...servicedOrganisationsOutOfDateObservations,
         ...naptanStopCheckObservations,
+            ...firstStopAndLastStopActivitiesObservations,
     ];
 
     if (observations.length) {

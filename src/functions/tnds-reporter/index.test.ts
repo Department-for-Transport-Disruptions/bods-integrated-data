@@ -1,13 +1,13 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
-import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
-import MockDate from "mockdate";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("tnds-reporter", () => {
+    const mockEvent = { prefix: "20250108" };
     const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
@@ -22,14 +22,6 @@ describe("tnds-reporter", () => {
             error: vi.fn(),
         },
     }));
-
-    beforeAll(() => {
-        MockDate.set("2025-01-08T00:00:00.000Z");
-    });
-
-    afterAll(() => {
-        MockDate.reset();
-    });
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -72,7 +64,7 @@ describe("tnds-reporter", () => {
             },
         ];
 
-        const csvContent = `\ufefffilename,importance,category,observation,registrationNumber,service,details\r
+        const csvContent = `filename,importance,category,observation,registrationNumber,service,details\r
 file1,critical,journey,Duplicate journey code,reg1,service1,details1\r
 file2,advisory,dataset,Serviced organisation out of date,reg2,service2,details2\r
 `;
@@ -91,7 +83,7 @@ file2,advisory,dataset,Serviced organisation out of date,reg2,service2,details2\
     });
 
     it("creates an empty report when there are no observations", async () => {
-        const csvContent = "\ufefffilename,importance,category,observation,registrationNumber,service,details\r\n";
+        const csvContent = "filename,importance,category,observation,registrationNumber,service,details\r\n";
         recursiveScanSpy.mockResolvedValueOnce(undefined as unknown as Observation[]);
 
         await handler(mockEvent, mockContext, mockCallback);

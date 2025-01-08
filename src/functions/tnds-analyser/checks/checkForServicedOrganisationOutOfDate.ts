@@ -2,8 +2,9 @@ import { randomUUID } from "node:crypto";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { PartialDeep } from "type-fest";
 
-export default (filename: string, data: Partial<TxcSchema>): Observation[] => {
+export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
     const services = data.TransXChange?.Services?.Service;
 
@@ -24,9 +25,9 @@ export default (filename: string, data: Partial<TxcSchema>): Observation[] => {
                     if (dateRanges) {
                         const sortedEndDates = dateRanges.map(([, endDate]) => endDate).sort((a, b) => a.diff(b));
                         const latestEndDate = sortedEndDates[sortedEndDates.length - 1];
-                        const now = getDate();
+                        const today = getDate().startOf("day");
 
-                        if (latestEndDate.isBefore(now)) {
+                        if (latestEndDate.isBefore(today)) {
                             const serviceName = servicedOrganisation.Name || "unknown";
                             const endDate = latestEndDate.format("YYYY-MM-DD");
 

@@ -65,7 +65,6 @@
         }
       },
       "MaxConcurrency": 50,
-      "ToleratedFailureCount": 10,
       "ResultPath": null,
       "Next": "Generate TNDS Report"
     },
@@ -75,7 +74,9 @@
       "OutputPath": "$.Payload",
       "Parameters": {
         "FunctionName": "${tnds_reporter_function_arn}:$LATEST",
-        "Payload": {}
+        "Payload": {
+          "prefix.$": "$.prefix"
+        }
       },
       "Retry": [
         {
