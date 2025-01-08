@@ -2,6 +2,7 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import MockDate from "mockdate";
+import { PartialDeep } from "type-fest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import checkForServicedOrganisationOutOfDate from "./checkForServicedOrganisationOutOfDate";
 
@@ -19,7 +20,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     });
 
     it("should return an empty array if there are no services", () => {
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
                     Service: [],
@@ -33,7 +34,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
 
     it("should return an empty array if there are no serviced organisation references", () => {
         const now = getDate();
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
                     Service: [
@@ -66,7 +67,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                     ],
                 },
             },
-        } as Partial<TxcSchema>;
+        } as PartialDeep<TxcSchema>;
 
         const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
         expect(result).toEqual([]);
@@ -74,7 +75,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
 
     it("should return an empty array if the serviced organisation is up to date", () => {
         const now = getDate();
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
                     Service: [
@@ -107,7 +108,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                     ],
                 },
             },
-        } as Partial<TxcSchema>;
+        } as PartialDeep<TxcSchema>;
 
         const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
         expect(result).toEqual([]);
@@ -115,7 +116,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
 
     it("should return an observation if the serviced organisation is out of date", () => {
         const now = getDate();
-        const data: Partial<TxcSchema> = {
+        const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
                     Service: [
@@ -169,7 +170,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                     ],
                 },
             },
-        } as Partial<TxcSchema>;
+        } as PartialDeep<TxcSchema>;
 
         const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
         expect(result).toEqual<Observation[]>([

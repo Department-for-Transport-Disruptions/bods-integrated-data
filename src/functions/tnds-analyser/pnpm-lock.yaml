@@ -17,9 +17,6 @@ importers:
       zod:
         specifier: 3.23.8
         version: 3.23.8
-      zod-validation-error:
-        specifier: ^3.3.0
-        version: 3.4.0(zod@3.23.8)
     devDependencies:
       '@types/aws-lambda':
         specifier: ^8.10.110
@@ -30,6 +27,9 @@ importers:
       mockdate:
         specifier: ^3.0.5
         version: 3.0.5
+      type-fest:
+        specifier: ^4.31.0
+        version: 4.31.0
 
 packages:
 
@@ -49,14 +49,12 @@ packages:
   strnum@1.0.5:
     resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
 
+  type-fest@4.31.0:
+    resolution: {integrity: sha512-yCxltHW07Nkhv/1F6wWBr8kz+5BGMfP+RbRSYFnegVb0qV/UMT0G0ElBloPVerqn4M2ZV80Ir1FtCcYv1cT6vQ==}
+    engines: {node: '>=16'}
+
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
-
-  zod-validation-error@3.4.0:
-    resolution: {integrity: sha512-ZOPR9SVY6Pb2qqO5XHt+MkkTRxGXb4EVtnjc9JpXUOtUB1T9Ru7mZOT361AN3MsetVe7R0a1KZshJDZdgp9miQ==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      zod: ^3.18.0
 
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
@@ -77,10 +75,8 @@ snapshots:
 
   strnum@1.0.5: {}
 
-  undici-types@6.19.8: {}
+  type-fest@4.31.0: {}
 
-  zod-validation-error@3.4.0(zod@3.23.8):
-    dependencies:
-      zod: 3.23.8
+  undici-types@6.19.8: {}
 
   zod@3.23.8: {}

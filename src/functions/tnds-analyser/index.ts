@@ -2,12 +2,12 @@ import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { txcSchema } from "@bods-integrated-data/shared/schema";
+import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import { PartialDeep } from "type-fest";
 import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
 import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
@@ -35,18 +35,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
         throw new Error("No xml data");
     }
 
-    const parsedTxc = parser.parse(xml) as Record<string, unknown>;
-
-    const txcJson = txcSchema.deepPartial().safeParse(parsedTxc);
-
-    if (!txcJson.success) {
-        const validationError = fromZodError(txcJson.error);
-        logger.error(validationError.toString());
-
-        throw validationError;
-    }
-
-    return txcJson.data;
+    return parser.parse(xml) as PartialDeep<TxcSchema>;
 };
 
 export const handler: Handler = async (event, context) => {
