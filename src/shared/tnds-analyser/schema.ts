@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-    allowedFirstStopActivity,
-    allowedLastStopActivity,
-    observationCategory,
-    observationImportance,
-    observationType,
-} from "./constants";
+import { observationCategory, observationImportance, observationType } from "./constants";
 
 export const observationSchema = z.object({
     PK: z.string(),
@@ -19,11 +13,3 @@ export const observationSchema = z.object({
 });
 
 export type Observation = z.infer<typeof observationSchema>;
-
-const allowedLastStopActivitySchema = z.enum(allowedLastStopActivity);
-
-export type AllowedLastStopActivity = z.infer<typeof allowedLastStopActivitySchema>;
-
-const allowedFirstStopActivitySchema = z.enum(allowedFirstStopActivity);
-
-export type AllowedFirstStopActivity = z.infer<typeof allowedFirstStopActivitySchema>;

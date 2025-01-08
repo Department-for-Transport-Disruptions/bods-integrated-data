@@ -4,11 +4,7 @@ import {
     allowedFirstStopActivity,
     allowedLastStopActivity,
 } from "@bods-integrated-data/shared/tnds-analyser/constants";
-import {
-    AllowedFirstStopActivity,
-    AllowedLastStopActivity,
-    Observation,
-} from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 
 const checkFirstStopIsSetDownOnly = (
     journeyPattern: JourneyPattern,
@@ -26,7 +22,7 @@ const checkFirstStopIsSetDownOnly = (
         const firstStopPointRef = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.StopPointRef;
 
         return {
-            firstStopIsSetDownOnly: !allowedFirstStopActivity.includes(firstStopActivity as AllowedFirstStopActivity),
+            firstStopIsSetDownOnly: !allowedFirstStopActivity.includes(firstStopActivity ?? ""),
             firstStopPointRef: firstStopPointRef,
         };
     }
@@ -54,7 +50,7 @@ const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatter
             ].To?.StopPointRef;
 
         return {
-            lastStopIsPickUpOnly: !allowedLastStopActivity.includes(lastStopActivity as AllowedLastStopActivity),
+            lastStopIsPickUpOnly: !allowedLastStopActivity.includes(lastStopActivity ?? ""),
             lastStopPointRef: lastStopPointRef,
         };
     }

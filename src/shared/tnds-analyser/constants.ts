@@ -16,6 +16,6 @@ export const observationType = [
     "Serviced organisation out of date",
 ] as const;
 
-export const allowedLastStopActivity = ["setDown", "setDownDriverRequest", "pickUpAndSetDown"] as const;
+export const allowedLastStopActivity = ["setDown", "setDownDriverRequest", "pickUpAndSetDown"];
 
-export const allowedFirstStopActivity = ["pickUp", "pickUpDriverRequest", "pickUpAndSetDown"] as const;
+export const allowedFirstStopActivity = ["pickUp", "pickUpDriverRequest", "pickUpAndSetDown"];
