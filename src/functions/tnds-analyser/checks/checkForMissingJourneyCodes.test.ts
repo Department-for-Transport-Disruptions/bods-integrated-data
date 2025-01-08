@@ -1,6 +1,11 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
-import { describe, expect, it } from "vitest";
+import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { describe, expect, it, vi } from "vitest";
 import checkForMissingJourneyCodes from "./checkForMissingJourneyCodes";
+
+vi.mock("node:crypto", () => ({
+    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
+}));
 
 describe("checkForMissingJourneyCodes", () => {
     it("should return an empty array if there are no vehicle journeys", () => {
@@ -88,10 +93,10 @@ describe("checkForMissingJourneyCodes", () => {
         } as Partial<TxcSchema>;
 
         const result = checkForMissingJourneyCodes("testfile.xml", data);
-        expect(result).toEqual([
+        expect(result).toEqual<Observation[]>([
             {
                 PK: "testfile.xml",
-                SK: expect.any(String),
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
@@ -101,7 +106,7 @@ describe("checkForMissingJourneyCodes", () => {
             },
             {
                 PK: "testfile.xml",
-                SK: expect.any(String),
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",

@@ -13,3 +13,5 @@ export const observationSchema = z.object({
 });
 
 export type Observation = z.infer<typeof observationSchema>;
+
+export const observationsSchema = z.array(observationSchema);

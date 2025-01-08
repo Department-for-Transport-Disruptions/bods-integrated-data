@@ -40,7 +40,7 @@ export default (filename: string, data: Partial<TxcSchema>): Observation[] => {
                     observations.push({
                         PK: filename,
                         SK: randomUUID(),
-                        importance: "critical",
+                        importance: "advisory",
                         category: "journey",
                         observation: "Duplicate journey code",
                         registrationNumber: serviceCode,

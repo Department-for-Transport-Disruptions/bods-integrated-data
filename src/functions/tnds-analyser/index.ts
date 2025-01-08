@@ -1,3 +1,4 @@
+import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -11,32 +12,9 @@ import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastS
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
+import checkForServicedOrganisationOutOfDate from "./checks/checkForServicedOrganisationOutOfDate";
 
 z.setErrorMap(errorMapWithDataLogging);
-
-const txcArrayProperties = [
-    "ServicedOrganisation",
-    "AnnotatedStopPointRef",
-    "StopPoint",
-    "RouteSectionRef",
-    "RouteSection",
-    "Route",
-    "RouteLink",
-    "JourneyPatternSection",
-    "JourneyPatternSectionRefs",
-    "Operator",
-    "Garage",
-    "Service",
-    "Line",
-    "Track",
-    "JourneyPattern",
-    "JourneyPatternTimingLink",
-    "VehicleJourney",
-    "VehicleJourneyTimingLink",
-    "OtherPublicHoliday",
-    "DateRange",
-    "ServicedOrganisationRef",
-];
 
 const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
@@ -74,27 +52,27 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { STAGE: stage, TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName } = process.env;
+    const { TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName } = process.env;
 
-    if (!stage || !tndsAnalysisTableName) {
-        throw new Error("Missing env vars - STAGE and TNDS_ANALYSIS_TABLE_NAME must be set");
+    if (!tndsAnalysisTableName) {
+        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME must be set");
     }
 
     const record = event.Records[0];
-    const txcData = await getAndParseTxcData(record.s3.bucket.name, record.s3.object.key);
+    const filename = record.s3.object.key;
+    const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
 
-    const missingJourneyCodeObservations = checkForMissingJourneyCodes(record.s3.object.key, txcData);
-    const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(record.s3.object.key, txcData);
-    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(record.s3.object.key, txcData);
-    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(
-        record.s3.object.key,
-        txcData,
-    );
+    const missingJourneyCodeObservations = checkForMissingJourneyCodes(filename, txcData);
+    const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
+    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
+    const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
+    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
 
     const observations: Observation[] = [
         ...missingJourneyCodeObservations,
         ...duplicateJourneyCodeObservations,
         ...missingBusWorkingNumberObservations,
+        ...servicedOrganisationsOutOfDateObservations,
         ...firstStopAndLastStopActivitiesObservations,
     ];
 
