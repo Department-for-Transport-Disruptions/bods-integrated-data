@@ -72,7 +72,7 @@ describe("tnds-reporter", () => {
             },
         ];
 
-        const csvContent = `\ufefffilename,importance,category,observation,registrationNumber,service,details\r
+        const csvContent = `filename,importance,category,observation,registrationNumber,service,details\r
 file1,critical,journey,Duplicate journey code,reg1,service1,details1\r
 file2,advisory,dataset,Serviced organisation out of date,reg2,service2,details2\r
 `;
@@ -91,7 +91,7 @@ file2,advisory,dataset,Serviced organisation out of date,reg2,service2,details2\
     });
 
     it("creates an empty report when there are no observations", async () => {
-        const csvContent = "\ufefffilename,importance,category,observation,registrationNumber,service,details\r\n";
+        const csvContent = "filename,importance,category,observation,registrationNumber,service,details\r\n";
         recursiveScanSpy.mockResolvedValueOnce(undefined as unknown as Observation[]);
 
         await handler(mockEvent, mockContext, mockCallback);

@@ -54,7 +54,7 @@ export const handler: Handler = async (event, context) => {
         "details",
     ];
 
-    let csvContent = `\ufeff${csvHeaders.join(",")}\r\n`;
+    let csvContent = `${csvHeaders.join(",")}\r\n`;
 
     if (csvRows.length) {
         csvContent += `${csvRows.map((row) => Object.values(row).join(",")).join("\r\n")}\r\n`;
