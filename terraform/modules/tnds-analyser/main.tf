@@ -93,7 +93,7 @@ module "integrated_data_tnds_reporter_function" {
 
   permissions = [
     {
-      Action   = ["dynamodb:GetItem"],
+      Action   = ["dynamodb:Scan"],
       Effect   = "Allow",
       Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_tnds_analysis_table.table_name}"
     },
@@ -107,8 +107,9 @@ module "integrated_data_tnds_reporter_function" {
   ]
 
   env_vars = {
-    STAGE                    = var.environment
-    TNDS_ANALYSIS_TABLE_NAME = module.integrated_data_tnds_analysis_table.table_name
+    STAGE                     = var.environment
+    TNDS_ANALYSIS_TABLE_NAME  = module.integrated_data_tnds_analysis_table.table_name
+    TNDS_ANALYSIS_BUCKET_NAME = aws_s3_bucket.integrated_data_tnds_analysis_bucket.id
   }
 }
 
