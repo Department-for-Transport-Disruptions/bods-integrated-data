@@ -18,6 +18,8 @@ import checkStopsAgainstNaptan from "./checks/checkStopsAgainstNaptan";
 
 z.setErrorMap(errorMapWithDataLogging);
 
+let naptanStops: Record<string, string | null> = {};
+
 const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
         Bucket: bucketName,
@@ -132,7 +134,7 @@ export const handler: Handler = async (event, context) => {
     const filename = record.s3.object.key;
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
 
-    const naptanStops = await getAndParseNaptanFile(naptanBucketName);
+    naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
 
     const missingJourneyCodeObservations = checkForMissingJourneyCodes(filename, txcData);
     const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
