@@ -33,7 +33,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     });
 
     it("should return an empty array if there are no serviced organisation references", () => {
-        const now = getDate();
+        const today = getDate().startOf("day");
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
@@ -59,8 +59,8 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             Name: "Test Organisation 1",
                             WorkingDays: {
                                 DateRange: [
-                                    [now.subtract(2, "day"), now.add(1, "day")],
-                                    [now.subtract(1, "day"), now.add(2, "day")],
+                                    [today.subtract(2, "day"), today.add(1, "day")],
+                                    [today.subtract(1, "day"), today.add(2, "day")],
                                 ],
                             },
                         },
@@ -74,7 +74,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     });
 
     it("should return an empty array if the serviced organisation is up to date", () => {
-        const now = getDate();
+        const today = getDate().startOf("day");
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
@@ -100,8 +100,8 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             Name: "Test Organisation 1",
                             WorkingDays: {
                                 DateRange: [
-                                    [now.subtract(2, "day"), now.add(1, "day")],
-                                    [now.subtract(1, "day"), now.add(2, "day")],
+                                    [today.subtract(2, "day"), today.add(1, "day")],
+                                    [today.subtract(1, "day"), today.add(2, "day")],
                                 ],
                             },
                         },
@@ -115,7 +115,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     });
 
     it("should return an observation if the serviced organisation is out of date", () => {
-        const now = getDate();
+        const today = getDate().startOf("day");
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
@@ -153,8 +153,8 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             Name: "Test Organisation 1",
                             WorkingDays: {
                                 DateRange: [
-                                    [now.subtract(20, "day"), now.subtract(1, "day")],
-                                    [now.subtract(10, "day"), now.subtract(9, "day")],
+                                    [today.subtract(20, "day"), today.subtract(1, "day")],
+                                    [today.subtract(10, "day"), today.subtract(9, "day")],
                                 ],
                             },
                         },
@@ -162,8 +162,8 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             OrganisationCode: "servicedOrg2",
                             WorkingDays: {
                                 DateRange: [
-                                    [now.subtract(20, "day"), now.subtract(2, "day")],
-                                    [now.subtract(10, "day"), now.subtract(9, "day")],
+                                    [today.subtract(20, "day"), today.subtract(2, "day")],
+                                    [today.subtract(10, "day"), today.subtract(9, "day")],
                                 ],
                             },
                         },
