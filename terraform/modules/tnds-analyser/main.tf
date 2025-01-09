@@ -56,8 +56,8 @@ module "integrated_data_tnds_analyser_function" {
   zip_path      = "${path.module}/../../../src/functions/dist/tnds-analyser.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 900
-  memory        = 4096
+  timeout       = 60
+  memory        = 2048
 
   permissions = [
     {
@@ -89,8 +89,8 @@ module "integrated_data_tnds_reporter_function" {
   zip_path      = "${path.module}/../../../src/functions/dist/tnds-reporter.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 60
-  memory        = 512
+  timeout       = 900
+  memory        = 4096
 
   permissions = [
     {
