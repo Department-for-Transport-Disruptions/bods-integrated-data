@@ -1,8 +1,7 @@
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { PartialDeep } from "type-fest";
 
-export const mockValidData: TxcSchema = {
+export const mockValidData: PartialDeep<TxcSchema> = {
     TransXChange: {
         Operators: {
             Operator: [
@@ -96,10 +95,10 @@ export const mockValidData: TxcSchema = {
                 {
                     OrganisationCode: "ORG1",
                     WorkingDays: {
-                        DateRange: [[getDate("2023-01-01"), getDate("2023-12-31")]],
+                        DateRange: [{ EndDate: "2023-01-01" }, { EndDate: "2023-12-31" }],
                     },
                     Holidays: {
-                        DateRange: [[getDate("2023-12-25"), getDate("2023-12-26")]],
+                        DateRange: [{ EndDate: "2023-12-25" }, { EndDate: "2023-12-26" }],
                     },
                 },
             ],
@@ -247,7 +246,7 @@ export const mockValidData: TxcSchema = {
             ],
         },
     },
-};
+} as unknown as PartialDeep<TxcSchema>;
 
 export const mockInvalidData: PartialDeep<TxcSchema> = {
     TransXChange: {
@@ -343,10 +342,10 @@ export const mockInvalidData: PartialDeep<TxcSchema> = {
                 {
                     OrganisationCode: "ORG1",
                     WorkingDays: {
-                        DateRange: [[getDate("2023-01-01"), getDate("2023-12-31")]],
+                        DateRange: [{ EndDate: "2023-01-01" }, { EndDate: "2023-12-31" }],
                     },
                     Holidays: {
-                        DateRange: [[getDate("2023-12-25"), getDate("2023-12-26")]],
+                        DateRange: [{ EndDate: "2023-12-25" }, { EndDate: "2023-12-26" }],
                     },
                 },
             ],
@@ -483,4 +482,4 @@ export const mockInvalidData: PartialDeep<TxcSchema> = {
             ],
         },
     },
-};
+} as unknown as PartialDeep<TxcSchema>;

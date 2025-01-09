@@ -23,7 +23,11 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                     const dateRanges = servicedOrganisation?.WorkingDays?.DateRange;
 
                     if (dateRanges) {
-                        const sortedEndDates = dateRanges.map(([, endDate]) => endDate).sort((a, b) => a.diff(b));
+                        // A typecast is needed because the TxcSchema transforms the DateRange, which we don't want
+                        const sortedEndDates = (dateRanges as unknown as { EndDate?: string }[])
+                            .filter((dateRange) => dateRange.EndDate)
+                            .map((dateRange) => getDate(dateRange.EndDate))
+                            .sort((a, b) => a.diff(b));
                         const latestEndDate = sortedEndDates[sortedEndDates.length - 1];
                         const today = getDate().startOf("day");
 

@@ -1,4 +1,3 @@
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import MockDate from "mockdate";
@@ -33,7 +32,6 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     });
 
     it("should return an empty array if there are no serviced organisation references", () => {
-        const today = getDate().startOf("day");
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
@@ -58,23 +56,19 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             OrganisationCode: "servicedOrg2",
                             Name: "Test Organisation 1",
                             WorkingDays: {
-                                DateRange: [
-                                    [today.subtract(2, "day"), today.add(1, "day")],
-                                    [today.subtract(1, "day"), today.add(2, "day")],
-                                ],
+                                DateRange: [{ EndDate: "2025-01-08" }, { EndDate: "2025-01-09" }],
                             },
                         },
                     ],
                 },
             },
-        } as PartialDeep<TxcSchema>;
+        } as unknown as PartialDeep<TxcSchema>;
 
         const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
         expect(result).toEqual([]);
     });
 
     it("should return an empty array if the serviced organisation is up to date", () => {
-        const today = getDate().startOf("day");
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
@@ -99,23 +93,19 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             OrganisationCode: "servicedOrg1",
                             Name: "Test Organisation 1",
                             WorkingDays: {
-                                DateRange: [
-                                    [today.subtract(2, "day"), today.add(1, "day")],
-                                    [today.subtract(1, "day"), today.add(2, "day")],
-                                ],
+                                DateRange: [{ EndDate: "2025-01-08" }, { EndDate: "2025-01-09" }],
                             },
                         },
                     ],
                 },
             },
-        } as PartialDeep<TxcSchema>;
+        } as unknown as PartialDeep<TxcSchema>;
 
         const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
         expect(result).toEqual([]);
     });
 
     it("should return an observation if the serviced organisation is out of date", () => {
-        const today = getDate().startOf("day");
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 Services: {
@@ -152,25 +142,19 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             OrganisationCode: "servicedOrg1",
                             Name: "Test Organisation 1",
                             WorkingDays: {
-                                DateRange: [
-                                    [today.subtract(20, "day"), today.subtract(1, "day")],
-                                    [today.subtract(10, "day"), today.subtract(9, "day")],
-                                ],
+                                DateRange: [{ EndDate: "2025-01-06" }, { EndDate: "2025-01-05" }],
                             },
                         },
                         {
                             OrganisationCode: "servicedOrg2",
                             WorkingDays: {
-                                DateRange: [
-                                    [today.subtract(20, "day"), today.subtract(2, "day")],
-                                    [today.subtract(10, "day"), today.subtract(9, "day")],
-                                ],
+                                DateRange: [{ EndDate: "2025-01-05" }, { EndDate: "2025-01-04" }],
                             },
                         },
                     ],
                 },
             },
-        } as PartialDeep<TxcSchema>;
+        } as unknown as PartialDeep<TxcSchema>;
 
         const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
         expect(result).toEqual<Observation[]>([
