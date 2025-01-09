@@ -8,19 +8,6 @@
       "Parameters": {
         "FunctionName": "${tnds_analysis_cleardown_function_arn}:$LATEST"
       },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
       "Next": "Get TNDS TXC Object Keys",
       "OutputPath": "$.Payload"
     },
@@ -64,7 +51,7 @@
           "Prefix.$": "$.prefix"
         }
       },
-      "MaxConcurrency": 50,
+      "MaxConcurrency": 5,
       "ResultPath": null,
       "Next": "Generate TNDS Report"
     },
@@ -78,19 +65,6 @@
           "prefix.$": "$.prefix"
         }
       },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
       "End": true
     }
   }
