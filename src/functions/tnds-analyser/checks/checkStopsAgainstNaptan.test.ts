@@ -44,6 +44,7 @@ describe("checkStopsAgainstNaptan", () => {
         const naptanData = {
             SP1: "BCT",
             SP2: "BCT",
+            SP4: "BCT",
         };
 
         expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
@@ -53,6 +54,7 @@ describe("checkStopsAgainstNaptan", () => {
         const naptanData = {
             SP1: "BCT",
             SP2: "BCT",
+            SP4: "BCT",
         };
 
         expect(
@@ -68,6 +70,7 @@ describe("checkStopsAgainstNaptan", () => {
         const naptanData = {
             SP1: null,
             SP2: null,
+            SP4: "BCT",
         };
 
         expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);

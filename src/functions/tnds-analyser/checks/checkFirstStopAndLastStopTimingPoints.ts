@@ -1,13 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { JourneyPattern, JourneyPatternSections, TxcSchema } from "@bods-integrated-data/shared/schema";
-import {
-    allowedFirstStopActivity,
-    allowedLastStopActivity,
-} from "@bods-integrated-data/shared/tnds-analyser/constants";
+import { allowedTimingPointValues } from "@bods-integrated-data/shared/tnds-analyser/constants";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
 
-const checkFirstStopIsSetDownOnly = (
+const checkFirstStopIsTimingPoint = (
     journeyPattern: JourneyPattern,
     journeyPatternSections: JourneyPatternSections,
 ) => {
@@ -18,20 +15,20 @@ const checkFirstStopIsSetDownOnly = (
     );
 
     if (firstJourneyPatternSection) {
-        const firstStopActivity = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.Activity;
+        const firstStopTimingStatus = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.TimingStatus;
 
         const firstStopPointRef = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.StopPointRef;
 
         return {
-            firstStopIsSetDownOnly: !allowedFirstStopActivity.includes(firstStopActivity ?? ""),
+            firstStopIsTimingPoint: allowedTimingPointValues.includes(firstStopTimingStatus ?? ""),
             firstStopPointRef: firstStopPointRef,
         };
     }
 
-    return { firstStopIsSetDownOnly: true, firstStopPointRef: undefined };
+    return { firstStopIsTimingPoint: false, firstStopPointRef: undefined };
 };
 
-const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatternSections: JourneyPatternSections) => {
+const checkLastStopIsTimingPoint = (journeyPattern: JourneyPattern, journeyPatternSections: JourneyPatternSections) => {
     const lastSectionRef =
         journeyPattern.JourneyPatternSectionRefs[journeyPattern.JourneyPatternSectionRefs.length - 1];
 
@@ -40,10 +37,10 @@ const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatter
     );
 
     if (lastJourneyPatternSection) {
-        const lastStopActivity =
+        const lastStopTimingStatus =
             lastJourneyPatternSection.JourneyPatternTimingLink[
                 lastJourneyPatternSection.JourneyPatternTimingLink.length - 1
-            ].To?.Activity;
+            ].To?.TimingStatus;
 
         const lastStopPointRef =
             lastJourneyPatternSection.JourneyPatternTimingLink[
@@ -51,12 +48,12 @@ const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatter
             ].To?.StopPointRef;
 
         return {
-            lastStopIsPickUpOnly: !allowedLastStopActivity.includes(lastStopActivity ?? ""),
+            lastStopIsTimingPoint: allowedTimingPointValues.includes(lastStopTimingStatus ?? ""),
             lastStopPointRef: lastStopPointRef,
         };
     }
 
-    return { lastStopIsPickUpOnly: true, lastStopPointRef: undefined };
+    return { lastStopIsTimingPoint: false, lastStopPointRef: undefined };
 };
 
 export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
@@ -103,12 +100,12 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                             journeyPattern?.JourneyPatternSectionRefs &&
                             journeyPattern?.JourneyPatternSectionRefs.length > 0
                         ) {
-                            const { firstStopIsSetDownOnly, firstStopPointRef } = checkFirstStopIsSetDownOnly(
+                            const { firstStopIsTimingPoint, firstStopPointRef } = checkFirstStopIsTimingPoint(
                                 journeyPattern,
                                 journeyPatternSections,
                             );
 
-                            if (firstStopIsSetDownOnly) {
+                            if (!firstStopIsTimingPoint) {
                                 if (firstStopPointRef) {
                                     const firstStopPoint = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
                                         (stopPoint) => stopPoint.StopPointRef === firstStopPointRef,
@@ -121,21 +118,21 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                                 observations.push({
                                     PK: filename,
                                     SK: randomUUID(),
-                                    importance: "advisory",
-                                    category: "stop",
-                                    observation: "First stop is set down only",
+                                    importance: "critical",
+                                    category: "timing",
+                                    observation: "First stop is not a timing point",
                                     registrationNumber: serviceCode,
                                     service: lineName,
-                                    details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction}journey is incorrectly set to set down passengers.`,
+                                    details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction}journey is not set as a timing point.`,
                                 });
                             }
 
-                            const { lastStopIsPickUpOnly, lastStopPointRef } = checkLastStopIsPickUpOnly(
+                            const { lastStopIsTimingPoint, lastStopPointRef } = checkLastStopIsTimingPoint(
                                 journeyPattern,
                                 journeyPatternSections,
                             );
 
-                            if (lastStopIsPickUpOnly) {
+                            if (!lastStopIsTimingPoint) {
                                 if (lastStopPointRef) {
                                     const lastStopPoint = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
                                         (stopPoint) => stopPoint.StopPointRef === lastStopPointRef,
@@ -148,12 +145,12 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                                 observations.push({
                                     PK: filename,
                                     SK: randomUUID(),
-                                    importance: "advisory",
-                                    category: "stop",
-                                    observation: "Last stop is pick up only",
+                                    importance: "critical",
+                                    category: "timing",
+                                    observation: "Last stop is not a timing point",
                                     registrationNumber: serviceCode,
                                     service: lineName,
-                                    details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction}journey is incorrectly set to pick up passengers.`,
+                                    details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction}journey is not set as a timing point.`,
                                 });
                             }
                         }

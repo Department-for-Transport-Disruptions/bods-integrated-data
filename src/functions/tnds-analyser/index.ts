@@ -11,6 +11,7 @@ import { parse } from "papaparse";
 import { PartialDeep } from "type-fest";
 import { z } from "zod";
 import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
+import checkFirstStopAndLastStopTimingPoints from "./checks/checkFirstStopAndLastStopTimingPoints";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
@@ -138,6 +139,7 @@ export const handler: Handler = async (event, context) => {
     const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
     const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
     const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
+    const firstStopAndLastStopTimingPoints = checkFirstStopAndLastStopTimingPoints(filename, txcData);
 
     const observations: Observation[] = [
         ...missingJourneyCodeObservations,
@@ -146,6 +148,7 @@ export const handler: Handler = async (event, context) => {
         ...servicedOrganisationsOutOfDateObservations,
         ...naptanStopCheckObservations,
         ...firstStopAndLastStopActivitiesObservations,
+        ...firstStopAndLastStopTimingPoints,
     ];
 
     if (observations.length) {
