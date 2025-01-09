@@ -18,7 +18,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
         MockDate.reset();
     });
 
-    it("should return an empty array if there are no services", () => {
+    it("should return an empty array if there are no serviced organisations", () => {
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 ServicedOrganisations: {
