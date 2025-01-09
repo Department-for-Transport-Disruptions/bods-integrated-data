@@ -21,3 +21,4 @@ export const allowedLastStopActivity = ["setDown", "setDownDriverRequest", "pick
 export const allowedFirstStopActivity = ["pickUp", "pickUpDriverRequest", "pickUpAndSetDown"];
 
 export const allowedStopTypes = ["BCT", "BCQ", "BCS", "BCE", "BST"];
+export const allowedTimingPointValues = ["PTP", "PrincipalTimingPoint"];

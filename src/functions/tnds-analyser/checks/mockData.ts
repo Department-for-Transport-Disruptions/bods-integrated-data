@@ -54,13 +54,13 @@ export const mockValidData: TxcSchema = {
                             From: {
                                 Activity: "pickUp",
                                 StopPointRef: "SP1",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "PTP",
                                 WaitTime: "00:02",
                             },
                             To: {
                                 Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP2",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "PTP",
                                 WaitTime: "00:03",
                             },
                             RunTime: "00:10",
@@ -75,13 +75,13 @@ export const mockValidData: TxcSchema = {
                             From: {
                                 Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP3",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "PTP",
                                 WaitTime: "00:01",
                             },
                             To: {
                                 Activity: "setDown",
                                 StopPointRef: "SP4",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "PTP",
                                 WaitTime: "00:02",
                             },
                             RunTime: "00:08",
@@ -209,6 +209,14 @@ export const mockValidData: TxcSchema = {
                         Longitude: -1.123,
                     },
                 },
+                {
+                    StopPointRef: "SP4",
+                    CommonName: "Stop 4",
+                    Location: {
+                        Latitude: 51.123,
+                        Longitude: -1.123,
+                    },
+                },
             ],
             StopPoint: [
                 {
@@ -293,13 +301,13 @@ export const mockInvalidData: TxcSchema = {
                             From: {
                                 Activity: "setDown",
                                 StopPointRef: "SP1",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "wrong",
                                 WaitTime: "00:02",
                             },
                             To: {
                                 Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP11",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "wrong",
                                 WaitTime: "00:03",
                             },
                             RunTime: "00:10",
@@ -314,13 +322,13 @@ export const mockInvalidData: TxcSchema = {
                             From: {
                                 Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP3",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "wrong",
                                 WaitTime: "00:01",
                             },
                             To: {
                                 Activity: "pickUp",
                                 StopPointRef: "SP2",
-                                TimingStatus: "scheduled",
+                                TimingStatus: "wrong",
                                 WaitTime: "00:02",
                             },
                             RunTime: "00:08",
