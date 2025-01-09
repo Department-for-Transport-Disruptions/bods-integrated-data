@@ -1,3 +1,5 @@
+import { TxcSchema } from "@bods-integrated-data/shared/schema";
+import { PartialDeep } from "type-fest";
 import { describe, expect, it, vi } from "vitest";
 import checkFirstStopAndLastStopActivities from "./checkFirstStopAndLastStopActivities";
 import { mockInvalidData, mockValidData } from "./mockData";
@@ -149,6 +151,92 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     },
                 },
             }),
+        ).toEqual(expectedObservation);
+    });
+
+    it("should return observations if first stop and last stop have incorrect activity and departure time cannot be determined", () => {
+        const expectedObservation = [
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "stop",
+                details:
+                    "The first stop (Stop 1) on the unknown departure time outbound journey is incorrectly set to set down passengers.",
+                importance: "advisory",
+                observation: "First stop is set down only",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "stop",
+                details:
+                    "The last stop (Stop 2) on the unknown departure time outbound journey is incorrectly set to pick up passengers.",
+                importance: "advisory",
+                observation: "Last stop is pick up only",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+        ];
+        expect(
+            checkFirstStopAndLastStopActivities(filename, {
+                TransXChange: {
+                    ...mockInvalidData.TransXChange,
+                    VehicleJourneys: {
+                        VehicleJourney: [
+                            {
+                                "@_RevisionNumber": "1",
+                                VehicleJourneyCode: "VJ12345",
+                                DestinationDisplay: "Central Station",
+                                Frequency: {
+                                    EndTime: "18:00",
+                                    Interval: {
+                                        ScheduledFrequency: "15",
+                                    },
+                                },
+                                Operational: {
+                                    TicketMachine: {
+                                        TicketMachineServiceCode: "TM123",
+                                        JourneyCode: "JC123",
+                                    },
+                                    VehicleType: {
+                                        WheelchairAccessible: true,
+                                        VehicleEquipment: {
+                                            WheelchairEquipment: {
+                                                NumberOfWheelchairAreas: 2,
+                                            },
+                                        },
+                                    },
+                                },
+                                ServiceRef: "SVC1",
+                                LineRef: "L1",
+                                JourneyPatternRef: "JP1",
+                                VehicleJourneyRef: "VJR123",
+                                VehicleJourneyTimingLink: [
+                                    {
+                                        "@_id": "VJTL123",
+                                        JourneyPatternTimingLinkRef: "JPTL1",
+                                        From: {
+                                            Activity: "pickUp",
+                                            StopPointRef: "SP1",
+                                            TimingStatus: "scheduled",
+                                            WaitTime: "00:02",
+                                        },
+                                        To: {
+                                            Activity: "dropOff",
+                                            StopPointRef: "SP2",
+                                            TimingStatus: "scheduled",
+                                            WaitTime: "00:03",
+                                        },
+                                        RunTime: "00:10",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            } as PartialDeep<TxcSchema>),
         ).toEqual(expectedObservation);
     });
 });

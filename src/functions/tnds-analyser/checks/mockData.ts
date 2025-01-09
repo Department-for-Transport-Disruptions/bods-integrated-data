@@ -1,5 +1,6 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
+import { PartialDeep } from "type-fest";
 
 export const mockValidData: TxcSchema = {
     TransXChange: {
@@ -248,7 +249,7 @@ export const mockValidData: TxcSchema = {
     },
 };
 
-export const mockInvalidData: TxcSchema = {
+export const mockInvalidData: PartialDeep<TxcSchema> = {
     TransXChange: {
         Operators: {
             Operator: [
