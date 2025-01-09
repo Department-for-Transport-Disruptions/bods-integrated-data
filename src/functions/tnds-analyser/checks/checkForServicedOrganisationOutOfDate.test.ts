@@ -21,8 +21,8 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     it("should return an empty array if there are no services", () => {
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
-                Services: {
-                    Service: [],
+                ServicedOrganisations: {
+                    ServicedOrganisation: [],
                 },
             },
         };
