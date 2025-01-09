@@ -31,62 +31,9 @@ describe("checkForServicedOrganisationOutOfDate", () => {
         expect(result).toEqual([]);
     });
 
-    it("should return an empty array if there are no serviced organisation references", () => {
-        const data: PartialDeep<TxcSchema> = {
-            TransXChange: {
-                Services: {
-                    Service: [
-                        {
-                            ServiceCode: "service1",
-                            OperatingProfile: {
-                                ServicedOrganisationDayType: {
-                                    DaysOfOperation: {
-                                        WorkingDays: {
-                                            ServicedOrganisationRef: ["servicedOrg1"],
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    ],
-                },
-                ServicedOrganisations: {
-                    ServicedOrganisation: [
-                        {
-                            OrganisationCode: "servicedOrg2",
-                            Name: "Test Organisation 1",
-                            WorkingDays: {
-                                DateRange: [{ EndDate: "2025-01-08" }, { EndDate: "2025-01-09" }],
-                            },
-                        },
-                    ],
-                },
-            },
-        } as unknown as PartialDeep<TxcSchema>;
-
-        const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
-        expect(result).toEqual([]);
-    });
-
     it("should return an empty array if the serviced organisation is up to date", () => {
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
-                Services: {
-                    Service: [
-                        {
-                            ServiceCode: "service1",
-                            OperatingProfile: {
-                                ServicedOrganisationDayType: {
-                                    DaysOfOperation: {
-                                        WorkingDays: {
-                                            ServicedOrganisationRef: ["servicedOrg1"],
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    ],
-                },
                 ServicedOrganisations: {
                     ServicedOrganisation: [
                         {
@@ -108,34 +55,6 @@ describe("checkForServicedOrganisationOutOfDate", () => {
     it("should return an observation if the serviced organisation is out of date", () => {
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
-                Services: {
-                    Service: [
-                        {
-                            ServiceCode: "service1",
-                            OperatingProfile: {
-                                ServicedOrganisationDayType: {
-                                    DaysOfOperation: {
-                                        WorkingDays: {
-                                            ServicedOrganisationRef: ["servicedOrg1"],
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        {
-                            ServiceCode: "service2",
-                            OperatingProfile: {
-                                ServicedOrganisationDayType: {
-                                    DaysOfOperation: {
-                                        WorkingDays: {
-                                            ServicedOrganisationRef: ["servicedOrg2"],
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    ],
-                },
                 ServicedOrganisations: {
                     ServicedOrganisation: [
                         {
@@ -146,7 +65,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                             },
                         },
                         {
-                            OrganisationCode: "servicedOrg2",
+                            OrganisationCode: "",
                             WorkingDays: {
                                 DateRange: [{ EndDate: "2025-01-05" }, { EndDate: "2025-01-04" }],
                             },
@@ -164,7 +83,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
-                registrationNumber: "service1",
+                registrationNumber: "n/a",
                 service: "n/a",
                 details:
                     "The Working Days for Serviced Organisation Test Organisation 1 (servicedOrg1) has expired on 2025-01-06. Please update the dates for this Serviced Organisation.",
@@ -175,10 +94,10 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
-                registrationNumber: "service2",
+                registrationNumber: "n/a",
                 service: "n/a",
                 details:
-                    "The Working Days for Serviced Organisation unknown (servicedOrg2) has expired on 2025-01-05. Please update the dates for this Serviced Organisation.",
+                    "The Working Days for Serviced Organisation unknown name (unknown code) has expired on 2025-01-05. Please update the dates for this Serviced Organisation.",
             },
         ]);
     });
