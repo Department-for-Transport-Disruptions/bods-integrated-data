@@ -13,6 +13,7 @@ import { z } from "zod";
 import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkFirstStopAndLastStopTimingPoints from "./checks/checkFirstStopAndLastStopTimingPoints";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
+import checkForDuplicateJourneys from "./checks/checkForDuplicateJourneys";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
 import checkForServicedOrganisationOutOfDate from "./checks/checkForServicedOrganisationOutOfDate";
@@ -130,25 +131,17 @@ export const handler: Handler = async (event, context) => {
     }
 
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
-
     naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
 
-    const missingJourneyCodeObservations = checkForMissingJourneyCodes(filename, txcData);
-    const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
-    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
-    const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
-    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
-    const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
-    const firstStopAndLastStopTimingPoints = checkFirstStopAndLastStopTimingPoints(filename, txcData);
-
     const observations: Observation[] = [
-        ...missingJourneyCodeObservations,
-        ...duplicateJourneyCodeObservations,
-        ...missingBusWorkingNumberObservations,
-        ...servicedOrganisationsOutOfDateObservations,
-        ...naptanStopCheckObservations,
-        ...firstStopAndLastStopActivitiesObservations,
-        ...firstStopAndLastStopTimingPoints,
+        ...checkForMissingJourneyCodes(filename, txcData),
+        ...checkForDuplicateJourneyCodes(filename, txcData),
+        ...checkForDuplicateJourneys(filename, txcData),
+        ...checkForMissingBusWorkingNumber(filename, txcData),
+        ...checkForServicedOrganisationOutOfDate(filename, txcData),
+        ...checkFirstStopAndLastStopActivities(filename, txcData),
+        ...checkStopsAgainstNaptan(filename, txcData, naptanStops),
+        ...checkFirstStopAndLastStopTimingPoints(filename, txcData),
     ];
 
     if (observations.length) {
