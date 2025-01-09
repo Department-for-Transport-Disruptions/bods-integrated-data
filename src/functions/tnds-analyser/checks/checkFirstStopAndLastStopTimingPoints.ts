@@ -25,7 +25,7 @@ const checkFirstStopIsTimingPoint = (
         };
     }
 
-    return { firstStopIsTimingPoint: true, firstStopPointRef: undefined };
+    return { firstStopIsTimingPoint: false, firstStopPointRef: undefined };
 };
 
 const checkLastStopIsTimingPoint = (journeyPattern: JourneyPattern, journeyPatternSections: JourneyPatternSections) => {
@@ -53,7 +53,7 @@ const checkLastStopIsTimingPoint = (journeyPattern: JourneyPattern, journeyPatte
         };
     }
 
-    return { lastStopIsTimingPoint: true, lastStopPointRef: undefined };
+    return { lastStopIsTimingPoint: false, lastStopPointRef: undefined };
 };
 
 export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {

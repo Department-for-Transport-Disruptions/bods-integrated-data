@@ -114,7 +114,29 @@ describe("checkFirstStopAndLastTimingPoints", () => {
         ).toEqual(expectedObservation);
     });
 
-    it("should return an empty array if a first stop and last stop have correct activity", () => {
+    it("should return observations if a journey does not have a journey pattern to determine timing points from", () => {
+        const expectedObservation = [
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "timing",
+                details: "The first stop (n/a) on the 08:00 outbound journey is not set as a timing point.",
+                importance: "critical",
+                observation: "First stop is not a timing point",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "timing",
+                details: "The last stop (n/a) on the 08:00 outbound journey is not set as a timing point.",
+                importance: "critical",
+                observation: "Last stop is not a timing point",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+        ];
         expect(
             checkFirstStopAndLastStopTimingPoints(filename, {
                 TransXChange: {
@@ -124,6 +146,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                     },
                 },
             }),
-        ).toEqual([]);
+        ).toEqual(expectedObservation);
     });
 });

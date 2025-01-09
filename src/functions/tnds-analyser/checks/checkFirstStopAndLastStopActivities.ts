@@ -28,7 +28,7 @@ const checkFirstStopIsSetDownOnly = (
         };
     }
 
-    return { firstStopIsSetDownOnly: false, firstStopPointRef: undefined };
+    return { firstStopIsSetDownOnly: true, firstStopPointRef: undefined };
 };
 
 const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatternSections: JourneyPatternSections) => {
@@ -56,7 +56,7 @@ const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatter
         };
     }
 
-    return { lastStopIsPickUpOnly: false, lastStopPointRef: undefined };
+    return { lastStopIsPickUpOnly: true, lastStopPointRef: undefined };
 };
 
 export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {

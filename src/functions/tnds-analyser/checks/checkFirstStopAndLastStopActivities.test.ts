@@ -39,4 +39,116 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return an empty array if a first stop and last stop have correct activity", () => {
         expect(checkFirstStopAndLastStopActivities(filename, mockValidData)).toEqual([]);
     });
+
+    it("should return an empty array if first and last stop do not have any activity properties", () => {
+        const expectedObservation = [
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "stop",
+                details:
+                    "The first stop (Stop 1) on the 08:00 outbound journey is incorrectly set to set down passengers.",
+                importance: "advisory",
+                observation: "First stop is set down only",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "stop",
+                details:
+                    "The last stop (Stop 4) on the 08:00 outbound journey is incorrectly set to pick up passengers.",
+                importance: "advisory",
+                observation: "Last stop is pick up only",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+        ];
+        expect(
+            checkFirstStopAndLastStopActivities(filename, {
+                TransXChange: {
+                    ...mockValidData.TransXChange,
+                    JourneyPatternSections: {
+                        JourneyPatternSection: [
+                            {
+                                "@_id": "JPS1",
+                                JourneyPatternTimingLink: [
+                                    {
+                                        "@_id": "JPTL1",
+                                        From: {
+                                            StopPointRef: "SP1",
+                                            WaitTime: "00:02",
+                                        },
+                                        To: {
+                                            Activity: "pickUpAndSetDown",
+                                            StopPointRef: "SP2",
+                                            TimingStatus: "PTP",
+                                            WaitTime: "00:03",
+                                        },
+                                        RunTime: "00:10",
+                                    },
+                                ],
+                            },
+                            {
+                                "@_id": "JPS2",
+                                JourneyPatternTimingLink: [
+                                    {
+                                        "@_id": "JPTL2",
+                                        From: {
+                                            Activity: "pickUpAndSetDown",
+                                            StopPointRef: "SP3",
+                                            TimingStatus: "PTP",
+                                            WaitTime: "00:01",
+                                        },
+                                        To: {
+                                            StopPointRef: "SP4",
+                                            WaitTime: "00:02",
+                                        },
+                                        RunTime: "00:08",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            }),
+        ).toEqual(expectedObservation);
+    });
+
+    it("should return observations if a journey does not have a journey pattern to determine stop activities from", () => {
+        const expectedObservation = [
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "stop",
+                details:
+                    "The first stop (n/a) on the 08:00 outbound journey is incorrectly set to set down passengers.",
+                importance: "advisory",
+                observation: "First stop is set down only",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+            {
+                PK: filename,
+                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                category: "stop",
+                details: "The last stop (n/a) on the 08:00 outbound journey is incorrectly set to pick up passengers.",
+                importance: "advisory",
+                observation: "Last stop is pick up only",
+                registrationNumber: "SVC1",
+                service: "Line 1",
+            },
+        ];
+        expect(
+            checkFirstStopAndLastStopActivities(filename, {
+                TransXChange: {
+                    ...mockValidData.TransXChange,
+                    JourneyPatternSections: {
+                        JourneyPatternSection: undefined,
+                    },
+                },
+            }),
+        ).toEqual(expectedObservation);
+    });
 });
