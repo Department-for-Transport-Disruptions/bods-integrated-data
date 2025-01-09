@@ -31,7 +31,7 @@ module "integrated_data_tnds_analysis_cleardown_function" {
   zip_path      = "${path.module}/../../../src/functions/dist/tnds-analysis-cleardown.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 60
+  timeout       = 900
   memory        = 128
 
   permissions = [
@@ -70,7 +70,7 @@ module "integrated_data_tnds_analyser_function" {
         "s3:GetObject",
       ],
       Effect   = "Allow",
-      Resource = "arn:aws:s3:::${var.tnds_txc_bucket_name}/*"
+      Resource = ["arn:aws:s3:::${var.tnds_txc_bucket_name}/*", "arn:aws:s3:::${var.naptan_bucket_name}/*"]
     }
   ]
 
