@@ -20,7 +20,7 @@ import checkStopsAgainstNaptan from "./checks/checkStopsAgainstNaptan";
 
 z.setErrorMap(errorMapWithDataLogging);
 
-let naptanStops: Record<string, string | null> = {};
+let naptanStops: Record<string, string | null>;
 
 const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
