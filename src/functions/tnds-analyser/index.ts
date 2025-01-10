@@ -29,18 +29,18 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
         Key: objectKey,
     });
 
+    const xml = await file.Body?.transformToString();
+
+    if (!xml) {
+        throw new Error("No xml data");
+    }
+
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
         isArray: (tagName) => txcArrayProperties.includes(tagName),
     });
-
-    const xml = await file.Body?.transformToString();
-
-    if (!xml) {
-        throw new Error("No xml data");
-    }
 
     return parser.parse(xml) as PartialDeep<TxcSchema>;
 };
@@ -134,17 +134,22 @@ export const handler: Handler = async (event, context) => {
     naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
 
     const observations: Observation[] = [
-        ...checkForMissingJourneyCodes(filename, txcData),
-        ...checkForDuplicateJourneyCodes(filename, txcData),
-        ...checkForDuplicateJourneys(filename, txcData),
-        ...checkForMissingBusWorkingNumber(filename, txcData),
-        ...checkForServicedOrganisationOutOfDate(filename, txcData),
-        ...checkFirstStopAndLastStopActivities(filename, txcData),
-        ...checkStopsAgainstNaptan(filename, txcData, naptanStops),
-        ...checkFirstStopAndLastStopTimingPoints(filename, txcData),
+        ...checkForMissingJourneyCodes(txcData),
+        ...checkForDuplicateJourneyCodes(txcData),
+        ...checkForDuplicateJourneys(txcData),
+        ...checkForMissingBusWorkingNumber(txcData),
+        ...checkForServicedOrganisationOutOfDate(txcData),
+        ...checkFirstStopAndLastStopActivities(txcData),
+        ...checkStopsAgainstNaptan(txcData, naptanStops),
+        ...checkFirstStopAndLastStopTimingPoints(txcData),
     ];
 
     if (observations.length) {
+        for (let i = 0; i < observations.length; i++) {
+            observations[i].PK = filename;
+            observations[i].SK = i.toString();
+        }
+
         await putDynamoItems(tndsAnalysisTableName, observations);
     }
 };

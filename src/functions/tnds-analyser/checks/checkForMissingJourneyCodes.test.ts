@@ -1,12 +1,8 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkForMissingJourneyCodes from "./checkForMissingJourneyCodes";
-
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
 
 describe("checkForMissingJourneyCodes", () => {
     it("should return an empty array if there are no vehicle journeys", () => {
@@ -18,7 +14,7 @@ describe("checkForMissingJourneyCodes", () => {
             },
         };
 
-        const result = checkForMissingJourneyCodes("testfile.xml", data);
+        const result = checkForMissingJourneyCodes(data);
         expect(result).toEqual([]);
     });
 
@@ -40,7 +36,7 @@ describe("checkForMissingJourneyCodes", () => {
             },
         } as PartialDeep<TxcSchema>;
 
-        const result = checkForMissingJourneyCodes("testfile.xml", data);
+        const result = checkForMissingJourneyCodes(data);
         expect(result).toEqual([]);
     });
 
@@ -93,11 +89,11 @@ describe("checkForMissingJourneyCodes", () => {
             },
         } as PartialDeep<TxcSchema>;
 
-        const result = checkForMissingJourneyCodes("testfile.xml", data);
+        const result = checkForMissingJourneyCodes(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
@@ -106,8 +102,8 @@ describe("checkForMissingJourneyCodes", () => {
                 details: "The (08:00) outbound journey is missing a journey code.",
             },
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",

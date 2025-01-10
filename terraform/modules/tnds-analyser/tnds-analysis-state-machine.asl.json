@@ -8,6 +8,15 @@
       "Parameters": {
         "FunctionName": "${tnds_analysis_cleardown_function_arn}:$LATEST"
       },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3
+        }
+      ],
       "Next": "Get TNDS TXC Object Keys",
       "OutputPath": "$.Payload"
     },
@@ -40,6 +49,17 @@
                 ]
               }
             },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "States.ALL"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 3,
+                "BackoffRate": 2,
+                "JitterStrategy": "FULL"
+              }
+            ],
             "End": true
           }
         }
@@ -51,7 +71,7 @@
           "Prefix.$": "$.prefix"
         }
       },
-      "MaxConcurrency": 5,
+      "MaxConcurrency": 10,
       "ResultPath": null,
       "Next": "Generate TNDS Report"
     },

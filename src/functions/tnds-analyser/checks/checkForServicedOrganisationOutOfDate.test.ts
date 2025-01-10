@@ -2,12 +2,8 @@ import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import MockDate from "mockdate";
 import { PartialDeep } from "type-fest";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import checkForServicedOrganisationOutOfDate from "./checkForServicedOrganisationOutOfDate";
-
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
 
 describe("checkForServicedOrganisationOutOfDate", () => {
     beforeAll(() => {
@@ -27,7 +23,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             },
         };
 
-        const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
+        const result = checkForServicedOrganisationOutOfDate(data);
         expect(result).toEqual([]);
     });
 
@@ -48,7 +44,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             },
         } as unknown as PartialDeep<TxcSchema>;
 
-        const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
+        const result = checkForServicedOrganisationOutOfDate(data);
         expect(result).toEqual([]);
     });
 
@@ -75,11 +71,11 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             },
         } as unknown as PartialDeep<TxcSchema>;
 
-        const result = checkForServicedOrganisationOutOfDate("testfile.xml", data);
+        const result = checkForServicedOrganisationOutOfDate(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
@@ -89,8 +85,8 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                     "The Working Days for Serviced Organisation Test Organisation 1 (servicedOrg1) has expired on 2025-01-06. Please update the dates for this Serviced Organisation.",
             },
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",

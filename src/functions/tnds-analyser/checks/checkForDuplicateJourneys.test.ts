@@ -1,12 +1,8 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkForDuplicateJourneys from "./checkForDuplicateJourneys";
-
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
 
 describe("checkForDuplicateJourneys", () => {
     it("should return an empty array if there are no vehicle journeys", () => {
@@ -18,7 +14,7 @@ describe("checkForDuplicateJourneys", () => {
             },
         };
 
-        const result = checkForDuplicateJourneys("testfile.xml", data);
+        const result = checkForDuplicateJourneys(data);
         expect(result).toEqual([]);
     });
 
@@ -108,7 +104,7 @@ describe("checkForDuplicateJourneys", () => {
             },
         } as PartialDeep<TxcSchema>;
 
-        const result = checkForDuplicateJourneys("testfile.xml", data);
+        const result = checkForDuplicateJourneys(data);
         expect(result).toEqual([]);
     });
 
@@ -198,11 +194,11 @@ describe("checkForDuplicateJourneys", () => {
             },
         } as PartialDeep<TxcSchema>;
 
-        const result = checkForDuplicateJourneys("testfile.xml", data);
+        const result = checkForDuplicateJourneys(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey",
