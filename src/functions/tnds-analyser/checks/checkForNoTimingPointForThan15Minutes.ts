@@ -62,12 +62,12 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                 let accumulatedTimeWithoutATimingPoint = 0;
 
                                 for (const timingLink of timingLinksForJourney) {
-                                    const runTimeDuration = getDuration(timingLink.RunTime || "PT0S").asMinutes();
-                                    const waitTimeDuration = getDuration(timingLink.To?.WaitTime || "PT0S").asMinutes();
+                                    const runTimeDuration = getDuration(timingLink.RunTime || "PT0S").asSeconds();
+                                    const waitTimeDuration = getDuration(timingLink.To?.WaitTime || "PT0S").asSeconds();
 
                                     const currentStopDepartureTime = previousStop.departureTime
-                                        .add(runTimeDuration, "minutes")
-                                        .add(waitTimeDuration, "minutes");
+                                        .add(runTimeDuration, "seconds")
+                                        .add(waitTimeDuration, "seconds");
 
                                     const currentStop = {
                                         departureTime: currentStopDepartureTime,
@@ -81,7 +81,7 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                         ? 0
                                         : accumulatedTimeWithoutATimingPoint + runTimeDuration + waitTimeDuration;
 
-                                    if (accumulatedTimeWithoutATimingPoint > 15) {
+                                    if (accumulatedTimeWithoutATimingPoint > 900) {
                                         observations.push({
                                             PK: "",
                                             SK: "",

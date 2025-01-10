@@ -3,7 +3,7 @@ import checkForNoTimingPointForThan15Minutes from "./checkForNoTimingPointForTha
 import { mockValidData } from "./mockData";
 
 describe("checkForNoTimingPointForMoreThan15Minutes", () => {
-    it("should record observations if there is not timing point for more than 15 minutes for a given vehicle journey", () => {
+    it("should record observations if there are any consecutive timing points more than 15 minutes apart for a given vehicle journey", () => {
         const expectedObservations = [
             {
                 PK: "",
@@ -113,7 +113,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
             }),
         ).toEqual(expectedObservations);
     });
-    it("should record no observations if there are timing points at least every 15 minutes for a given vehicle journey", () => {
+    it("should record no observations if there are no consecutive timing points more than 15 minutes apart for a given vehicle journey", () => {
         expect(checkForNoTimingPointForThan15Minutes(mockValidData)).toEqual([]);
     });
 
