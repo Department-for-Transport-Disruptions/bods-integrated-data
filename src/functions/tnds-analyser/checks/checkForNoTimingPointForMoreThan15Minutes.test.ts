@@ -3,7 +3,6 @@ import checkForNoTimingPointForThan15Minutes from "./checkForNoTimingPointForTha
 import { mockValidData } from "./mockData";
 
 describe("checkForNoTimingPointForMoreThan15Minutes", () => {
-    const filename = "test-file";
     it("should record observations if there is not timing point for more than 15 minutes for a given vehicle journey", () => {
         const expectedObservations = [
             {
@@ -30,7 +29,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
             },
         ];
         expect(
-            checkForNoTimingPointForThan15Minutes(filename, {
+            checkForNoTimingPointForThan15Minutes({
                 TransXChange: {
                     ...mockValidData.TransXChange,
                     JourneyPatternSections: {
@@ -115,7 +114,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
         ).toEqual(expectedObservations);
     });
     it("should record no observations if there are timing points at least every 15 minutes for a given vehicle journey", () => {
-        expect(checkForNoTimingPointForThan15Minutes(filename, mockValidData)).toEqual([]);
+        expect(checkForNoTimingPointForThan15Minutes(mockValidData)).toEqual([]);
     });
 
     it.each([
@@ -214,12 +213,12 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
             [],
         ],
     ])("should handle missing timing statuses: %o", (txcData, expectedObservation) => {
-        expect(checkForNoTimingPointForThan15Minutes(filename, txcData)).toEqual(expectedObservation);
+        expect(checkForNoTimingPointForThan15Minutes(txcData)).toEqual(expectedObservation);
     });
 
     it("should handle missing run times", () => {
         expect(
-            checkForNoTimingPointForThan15Minutes(filename, {
+            checkForNoTimingPointForThan15Minutes({
                 TransXChange: {
                     ...mockValidData.TransXChange,
                     JourneyPatternSections: {
