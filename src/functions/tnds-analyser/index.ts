@@ -16,6 +16,7 @@ import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCode
 import checkForDuplicateJourneys from "./checks/checkForDuplicateJourneys";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
+import checkForNoTimingPointForThan15Minutes from "./checks/checkForNoTimingPointForThan15Minutes";
 import checkForServicedOrganisationOutOfDate from "./checks/checkForServicedOrganisationOutOfDate";
 import checkStopsAgainstNaptan from "./checks/checkStopsAgainstNaptan";
 
@@ -142,6 +143,7 @@ export const handler: Handler = async (event, context) => {
         ...checkFirstStopAndLastStopActivities(txcData),
         ...checkStopsAgainstNaptan(txcData, naptanStops),
         ...checkFirstStopAndLastStopTimingPoints(txcData),
+        ...checkForNoTimingPointForThan15Minutes(txcData),
     ];
 
     if (observations.length) {

@@ -60,10 +60,26 @@ export const mockValidData: PartialDeep<TxcSchema> = {
                             To: {
                                 Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP2",
-                                TimingStatus: "PTP",
-                                WaitTime: "00:03",
+                                TimingStatus: "OTH",
+                                WaitTime: "PT0M0S",
                             },
-                            RunTime: "00:10",
+                            RunTime: "PT0M0S",
+                        },
+                        {
+                            "@_id": "JPTL1",
+                            From: {
+                                Activity: "pickUpAndSetDown",
+                                StopPointRef: "SP2",
+                                TimingStatus: "OTH",
+                                WaitTime: "PT0M0S",
+                            },
+                            To: {
+                                Activity: "pickUpAndSetDown",
+                                StopPointRef: "SP3",
+                                TimingStatus: "OTH",
+                                WaitTime: "PT5M0S",
+                            },
+                            RunTime: "PT5M0S",
                         },
                     ],
                 },
@@ -75,16 +91,15 @@ export const mockValidData: PartialDeep<TxcSchema> = {
                             From: {
                                 Activity: "pickUpAndSetDown",
                                 StopPointRef: "SP3",
-                                TimingStatus: "PTP",
-                                WaitTime: "00:01",
+                                TimingStatus: "OTH",
+                                WaitTime: "PT5M0S",
                             },
                             To: {
                                 Activity: "setDown",
                                 StopPointRef: "SP4",
                                 TimingStatus: "PTP",
-                                WaitTime: "00:02",
                             },
-                            RunTime: "00:08",
+                            RunTime: "PT10M0S",
                         },
                     ],
                 },
@@ -140,7 +155,7 @@ export const mockValidData: PartialDeep<TxcSchema> = {
                 {
                     "@_RevisionNumber": "1",
                     VehicleJourneyCode: "VJ12345",
-                    DepartureTime: "08:00",
+                    DepartureTime: "08:00:00",
                     DestinationDisplay: "Central Station",
                     Frequency: {
                         EndTime: "18:00",
@@ -387,7 +402,7 @@ export const mockInvalidData: PartialDeep<TxcSchema> = {
                 {
                     "@_RevisionNumber": "1",
                     VehicleJourneyCode: "VJ12345",
-                    DepartureTime: "08:00",
+                    DepartureTime: "08:00:00",
                     DestinationDisplay: "Central Station",
                     Frequency: {
                         EndTime: "18:00",
