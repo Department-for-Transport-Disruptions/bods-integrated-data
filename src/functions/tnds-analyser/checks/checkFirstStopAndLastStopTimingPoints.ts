@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { JourneyPattern, JourneyPatternSections, TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedTimingPointValues } from "@bods-integrated-data/shared/tnds-analyser/constants";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
@@ -56,9 +55,9 @@ const checkLastStopIsTimingPoint = (journeyPattern: JourneyPattern, journeyPatte
     return { lastStopIsTimingPoint: false, lastStopPointRef: undefined };
 };
 
-export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
+export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
-    const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
+    const vehicleJourneys = txcData.TransXChange?.VehicleJourneys?.VehicleJourney;
 
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
@@ -72,8 +71,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
             const journeyPatternRef = vehicleJourney.JourneyPatternRef;
 
             if (journeyPatternRef) {
-                const services = data.TransXChange?.Services;
-                const journeyPatternSections = data.TransXChange?.JourneyPatternSections;
+                const services = txcData.TransXChange?.Services;
+                const journeyPatternSections = txcData.TransXChange?.JourneyPatternSections;
 
                 if (services && journeyPatternSections) {
                     const service = services.Service?.find(
@@ -107,17 +106,18 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
 
                             if (!firstStopIsTimingPoint) {
                                 if (firstStopPointRef) {
-                                    const firstStopPoint = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
-                                        (stopPoint) => stopPoint.StopPointRef === firstStopPointRef,
-                                    );
+                                    const firstStopPoint =
+                                        txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
+                                            (stopPoint) => stopPoint.StopPointRef === firstStopPointRef,
+                                        );
                                     if (firstStopPoint) {
                                         firstStopCommonName = firstStopPoint.CommonName;
                                     }
                                 }
 
                                 observations.push({
-                                    PK: filename,
-                                    SK: randomUUID(),
+                                    PK: "",
+                                    SK: "",
                                     importance: "critical",
                                     category: "timing",
                                     observation: "First stop is not a timing point",
@@ -134,7 +134,7 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
 
                             if (!lastStopIsTimingPoint) {
                                 if (lastStopPointRef) {
-                                    const lastStopPoint = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
+                                    const lastStopPoint = txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
                                         (stopPoint) => stopPoint.StopPointRef === lastStopPointRef,
                                     );
                                     if (lastStopPoint) {
@@ -143,8 +143,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                                 }
 
                                 observations.push({
-                                    PK: filename,
-                                    SK: randomUUID(),
+                                    PK: "",
+                                    SK: "",
                                     importance: "critical",
                                     category: "timing",
                                     observation: "Last stop is not a timing point",

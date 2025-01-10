@@ -1,17 +1,12 @@
-import { randomUUID } from "node:crypto";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedStopTypes } from "@bods-integrated-data/shared/tnds-analyser/constants";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 
-export default (
-    filename: string,
-    data: Partial<TxcSchema>,
-    naptanStops: Record<string, string | null>,
-): Observation[] => {
+export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string | null>): Observation[] => {
     const observations: Observation[] = [];
 
     const txcStops =
-        data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.map((stop) => ({
+        txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.map((stop) => ({
             stopPointRef: stop.StopPointRef,
             commonName: stop.CommonName,
         })) || [];
@@ -22,10 +17,10 @@ export default (
 
             if (naptanStopRef === undefined) {
                 observations.push({
+                    PK: "",
+                    SK: "",
                     registrationNumber: "n/a",
                     service: "n/a",
-                    PK: filename,
-                    SK: randomUUID(),
                     observation: "Stop not found in NaPTAN",
                     category: "stop",
                     importance: "advisory",
@@ -33,10 +28,10 @@ export default (
                 });
             } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef)) {
                 observations.push({
+                    PK: "",
+                    SK: "",
                     registrationNumber: "n/a",
                     service: "n/a",
-                    PK: filename,
-                    SK: randomUUID(),
                     observation: "Incorrect stop type",
                     category: "stop",
                     importance: "critical",

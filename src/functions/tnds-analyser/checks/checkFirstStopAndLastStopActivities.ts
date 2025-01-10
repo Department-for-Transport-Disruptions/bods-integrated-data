@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { JourneyPattern, JourneyPatternSections, TxcSchema } from "@bods-integrated-data/shared/schema";
 import {
     allowedFirstStopActivity,
@@ -59,9 +58,9 @@ const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatter
     return { lastStopIsPickUpOnly: true, lastStopPointRef: undefined };
 };
 
-export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
+export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
-    const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
+    const vehicleJourneys = txcData.TransXChange?.VehicleJourneys?.VehicleJourney;
 
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
@@ -75,8 +74,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
             const journeyPatternRef = vehicleJourney.JourneyPatternRef;
 
             if (journeyPatternRef) {
-                const services = data.TransXChange?.Services;
-                const journeyPatternSections = data.TransXChange?.JourneyPatternSections;
+                const services = txcData.TransXChange?.Services;
+                const journeyPatternSections = txcData.TransXChange?.JourneyPatternSections;
 
                 if (services && journeyPatternSections) {
                     const service = services.Service?.find(
@@ -110,17 +109,18 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
 
                             if (firstStopIsSetDownOnly) {
                                 if (firstStopPointRef) {
-                                    const firstStopPoint = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
-                                        (stopPoint) => stopPoint.StopPointRef === firstStopPointRef,
-                                    );
+                                    const firstStopPoint =
+                                        txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
+                                            (stopPoint) => stopPoint.StopPointRef === firstStopPointRef,
+                                        );
                                     if (firstStopPoint) {
                                         firstStopCommonName = firstStopPoint.CommonName;
                                     }
                                 }
 
                                 observations.push({
-                                    PK: filename,
-                                    SK: randomUUID(),
+                                    PK: "",
+                                    SK: "",
                                     importance: "advisory",
                                     category: "stop",
                                     observation: "First stop is set down only",
@@ -137,7 +137,7 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
 
                             if (lastStopIsPickUpOnly) {
                                 if (lastStopPointRef) {
-                                    const lastStopPoint = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
+                                    const lastStopPoint = txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
                                         (stopPoint) => stopPoint.StopPointRef === lastStopPointRef,
                                     );
                                     if (lastStopPoint) {
@@ -146,8 +146,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                                 }
 
                                 observations.push({
-                                    PK: filename,
-                                    SK: randomUUID(),
+                                    PK: "",
+                                    SK: "",
                                     importance: "advisory",
                                     category: "stop",
                                     observation: "Last stop is pick up only",

@@ -11,14 +11,10 @@
       "Retry": [
         {
           "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
+            "States.ALL"
           ],
           "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
+          "MaxAttempts": 3
         }
       ],
       "Next": "Get TNDS TXC Object Keys",
@@ -53,6 +49,17 @@
                 ]
               }
             },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "States.ALL"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 3,
+                "BackoffRate": 2,
+                "JitterStrategy": "FULL"
+              }
+            ],
             "End": true
           }
         }
@@ -64,7 +71,7 @@
           "Prefix.$": "$.prefix"
         }
       },
-      "MaxConcurrency": 50,
+      "MaxConcurrency": 10,
       "ResultPath": null,
       "Next": "Generate TNDS Report"
     },
@@ -78,19 +85,6 @@
           "prefix.$": "$.prefix"
         }
       },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
       "End": true
     }
   }

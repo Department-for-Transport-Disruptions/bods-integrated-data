@@ -1,20 +1,15 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { PartialDeep } from "type-fest";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkFirstStopAndLastStopTimingPoints from "./checkFirstStopAndLastStopTimingPoints";
 import { mockInvalidData, mockValidData } from "./mockData";
 
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
-
 describe("checkFirstStopAndLastTimingPoints", () => {
-    const filename = "test-file";
     it("should return observations if first stop and last stop are not timing points", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details: "The first stop (Stop 1) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -23,8 +18,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details: "The last stop (Stop 2) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -33,18 +28,18 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
         ];
-        expect(checkFirstStopAndLastStopTimingPoints(filename, mockInvalidData)).toEqual(expectedObservation);
+        expect(checkFirstStopAndLastStopTimingPoints(mockInvalidData)).toEqual(expectedObservation);
     });
 
     it("should return an empty array if first stop and last stop have correct activity", () => {
-        expect(checkFirstStopAndLastStopTimingPoints(filename, mockValidData)).toEqual([]);
+        expect(checkFirstStopAndLastStopTimingPoints(mockValidData)).toEqual([]);
     });
 
     it("should return observations if first stop and last stop do not have a timing status", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details: "The first stop (Stop 1) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -53,8 +48,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details: "The last stop (Stop 4) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -64,7 +59,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
             },
         ];
         expect(
-            checkFirstStopAndLastStopTimingPoints(filename, {
+            checkFirstStopAndLastStopTimingPoints({
                 TransXChange: {
                     ...mockValidData.TransXChange,
                     JourneyPatternSections: {
@@ -119,8 +114,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
     it("should return observations if a journey does not have a journey pattern to determine timing points from", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details: "The first stop (n/a) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -129,8 +124,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details: "The last stop (n/a) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -140,7 +135,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
             },
         ];
         expect(
-            checkFirstStopAndLastStopTimingPoints(filename, {
+            checkFirstStopAndLastStopTimingPoints({
                 TransXChange: {
                     ...mockValidData.TransXChange,
                     JourneyPatternSections: {
@@ -154,8 +149,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
     it("should return observations if first stop and last stop have incorrect timing points and departure time cannot be determined", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details:
                     "The first stop (Stop 1) on the unknown departure time outbound journey is not set as a timing point.",
@@ -165,8 +160,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details:
                     "The last stop (Stop 2) on the unknown departure time outbound journey is not set as a timing point.",
@@ -177,7 +172,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
             },
         ];
         expect(
-            checkFirstStopAndLastStopTimingPoints(filename, {
+            checkFirstStopAndLastStopTimingPoints({
                 TransXChange: {
                     ...mockInvalidData.TransXChange,
                     VehicleJourneys: {

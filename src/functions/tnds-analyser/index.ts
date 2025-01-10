@@ -13,6 +13,7 @@ import { z } from "zod";
 import checkFirstStopAndLastStopActivities from "./checks/checkFirstStopAndLastStopActivities";
 import checkFirstStopAndLastStopTimingPoints from "./checks/checkFirstStopAndLastStopTimingPoints";
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
+import checkForDuplicateJourneys from "./checks/checkForDuplicateJourneys";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
 import checkForNoTimingPointForThan15Minutes from "./checks/checkForNoTimingPointForThan15Minutes";
@@ -21,7 +22,7 @@ import checkStopsAgainstNaptan from "./checks/checkStopsAgainstNaptan";
 
 z.setErrorMap(errorMapWithDataLogging);
 
-let naptanStops: Record<string, string | null> = {};
+let naptanStops: Record<string, string | null>;
 
 const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
@@ -29,18 +30,18 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
         Key: objectKey,
     });
 
+    const xml = await file.Body?.transformToString();
+
+    if (!xml) {
+        throw new Error("No xml data");
+    }
+
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
         isArray: (tagName) => txcArrayProperties.includes(tagName),
     });
-
-    const xml = await file.Body?.transformToString();
-
-    if (!xml) {
-        throw new Error("No xml data");
-    }
 
     return parser.parse(xml) as PartialDeep<TxcSchema>;
 };
@@ -131,30 +132,26 @@ export const handler: Handler = async (event, context) => {
     }
 
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
-
     naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
 
-    const missingJourneyCodeObservations = checkForMissingJourneyCodes(filename, txcData);
-    const duplicateJourneyCodeObservations = checkForDuplicateJourneyCodes(filename, txcData);
-    const missingBusWorkingNumberObservations = checkForMissingBusWorkingNumber(filename, txcData);
-    const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
-    const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
-    const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
-    const firstStopAndLastStopTimingPointsObservations = checkFirstStopAndLastStopTimingPoints(filename, txcData);
-    const noTimingPointForMoreThan15MinutesObservations = checkForNoTimingPointForThan15Minutes(txcData);
-
     const observations: Observation[] = [
-        ...missingJourneyCodeObservations,
-        ...duplicateJourneyCodeObservations,
-        ...missingBusWorkingNumberObservations,
-        ...servicedOrganisationsOutOfDateObservations,
-        ...naptanStopCheckObservations,
-        ...firstStopAndLastStopActivitiesObservations,
-        ...firstStopAndLastStopTimingPointsObservations,
-        ...noTimingPointForMoreThan15MinutesObservations,
+        ...checkForMissingJourneyCodes(txcData),
+        ...checkForDuplicateJourneyCodes(txcData),
+        ...checkForDuplicateJourneys(txcData),
+        ...checkForMissingBusWorkingNumber(txcData),
+        ...checkForServicedOrganisationOutOfDate(txcData),
+        ...checkFirstStopAndLastStopActivities(txcData),
+        ...checkStopsAgainstNaptan(txcData, naptanStops),
+        ...checkFirstStopAndLastStopTimingPoints(txcData),
+        ...checkForNoTimingPointForThan15Minutes(txcData)
     ];
 
     if (observations.length) {
+        for (let i = 0; i < observations.length; i++) {
+            observations[i].PK = filename;
+            observations[i].SK = i.toString();
+        }
+
         await putDynamoItems(tndsAnalysisTableName, observations);
     }
 };

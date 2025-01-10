@@ -3,7 +3,7 @@ import { observationCategory, observationImportance, observationType } from "./c
 
 export const observationSchema = z.object({
     PK: z.string(),
-    SK: z.string().uuid(),
+    SK: z.string(),
     importance: z.enum(observationImportance),
     category: z.enum(observationCategory),
     observation: z.enum(observationType),

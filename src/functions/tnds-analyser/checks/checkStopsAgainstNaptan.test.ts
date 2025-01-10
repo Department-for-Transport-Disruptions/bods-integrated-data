@@ -1,23 +1,17 @@
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkStopsAgainstNaptan from "./checkStopsAgainstNaptan";
 import { mockInvalidData, mockValidData } from "./mockData";
 
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
-
 describe("checkStopsAgainstNaptan", () => {
-    const filename = "test-file";
-
     it("should return an observation if stop does not exist in NaPTAN or had incorrect stop type", () => {
         const naptanData = {
             SP1: "WRONG",
         };
-        expect(checkStopsAgainstNaptan(filename, mockInvalidData, naptanData)).toEqual<Observation[]>([
+        expect(checkStopsAgainstNaptan(mockInvalidData, naptanData)).toEqual<Observation[]>([
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The Stop 1 (SP1) stop is registered as stop type WRONG with NaPTAN. Expected bus stop types are BCT,BCQ,BCS,BCE,BST.",
@@ -27,8 +21,8 @@ describe("checkStopsAgainstNaptan", () => {
                 service: "n/a",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The Stop 2 (SP2) stop is not registered with NaPTAN. Please check the ATCO code is correct or contact your local authority to register this stop with NaPTAN.",
@@ -47,7 +41,7 @@ describe("checkStopsAgainstNaptan", () => {
             SP4: "BCT",
         };
 
-        expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
+        expect(checkStopsAgainstNaptan(mockValidData, naptanData)).toEqual([]);
     });
 
     it("should return an empty array if there are no stops listed in TxC", () => {
@@ -59,7 +53,6 @@ describe("checkStopsAgainstNaptan", () => {
 
         expect(
             checkStopsAgainstNaptan(
-                filename,
                 { TransXChange: { ...mockValidData.TransXChange, StopPoints: undefined } },
                 naptanData,
             ),
@@ -73,6 +66,6 @@ describe("checkStopsAgainstNaptan", () => {
             SP4: "BCT",
         };
 
-        expect(checkStopsAgainstNaptan(filename, mockValidData, naptanData)).toEqual([]);
+        expect(checkStopsAgainstNaptan(mockValidData, naptanData)).toEqual([]);
     });
 });

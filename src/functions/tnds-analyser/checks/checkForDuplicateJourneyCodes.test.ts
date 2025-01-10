@@ -1,12 +1,8 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkForDuplicateJourneyCodes from "./checkForDuplicateJourneyCodes";
-
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
 
 describe("checkForDuplicateJourneyCodes", () => {
     it("should return an empty array if there are no vehicle journeys", () => {
@@ -18,7 +14,7 @@ describe("checkForDuplicateJourneyCodes", () => {
             },
         };
 
-        const result = checkForDuplicateJourneyCodes("testfile.xml", data);
+        const result = checkForDuplicateJourneyCodes(data);
         expect(result).toEqual([]);
     });
 
@@ -57,7 +53,7 @@ describe("checkForDuplicateJourneyCodes", () => {
             },
         } as PartialDeep<TxcSchema>;
 
-        const result = checkForDuplicateJourneyCodes("testfile.xml", data);
+        const result = checkForDuplicateJourneyCodes(data);
         expect(result).toEqual([]);
     });
 
@@ -116,11 +112,11 @@ describe("checkForDuplicateJourneyCodes", () => {
             },
         } as PartialDeep<TxcSchema>;
 
-        const result = checkForDuplicateJourneyCodes("testfile.xml", data);
+        const result = checkForDuplicateJourneyCodes(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",
@@ -129,8 +125,8 @@ describe("checkForDuplicateJourneyCodes", () => {
                 details: "The Journey Code (VJ1) is found in more than one vehicle journey.",
             },
             {
-                PK: "testfile.xml",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",

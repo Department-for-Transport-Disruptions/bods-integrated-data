@@ -1,20 +1,15 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { PartialDeep } from "type-fest";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkFirstStopAndLastStopActivities from "./checkFirstStopAndLastStopActivities";
 import { mockInvalidData, mockValidData } from "./mockData";
 
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
-
 describe("checkFirstStopAndLastStopActivities", () => {
-    const filename = "test-file";
     it("should return observations if first stop and last stop have incorrect activity", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The first stop (Stop 1) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
@@ -24,8 +19,8 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The last stop (Stop 2) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
@@ -35,18 +30,18 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
         ];
-        expect(checkFirstStopAndLastStopActivities(filename, mockInvalidData)).toEqual(expectedObservation);
+        expect(checkFirstStopAndLastStopActivities(mockInvalidData)).toEqual(expectedObservation);
     });
 
     it("should return an empty array if a first stop and last stop have correct activity", () => {
-        expect(checkFirstStopAndLastStopActivities(filename, mockValidData)).toEqual([]);
+        expect(checkFirstStopAndLastStopActivities(mockValidData)).toEqual([]);
     });
 
     it("should return an empty array if first and last stop do not have any activity properties", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The first stop (Stop 1) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
@@ -56,8 +51,8 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The last stop (Stop 4) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
@@ -68,7 +63,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
             },
         ];
         expect(
-            checkFirstStopAndLastStopActivities(filename, {
+            checkFirstStopAndLastStopActivities({
                 TransXChange: {
                     ...mockValidData.TransXChange,
                     JourneyPatternSections: {
@@ -121,8 +116,8 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return observations if a journey does not have a journey pattern to determine stop activities from", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The first stop (n/a) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
@@ -132,8 +127,8 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The last stop (n/a) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
@@ -144,7 +139,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
             },
         ];
         expect(
-            checkFirstStopAndLastStopActivities(filename, {
+            checkFirstStopAndLastStopActivities({
                 TransXChange: {
                     ...mockValidData.TransXChange,
                     JourneyPatternSections: {
@@ -158,8 +153,8 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return observations if first stop and last stop have incorrect activity and departure time cannot be determined", () => {
         const expectedObservation = [
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The first stop (Stop 1) on the unknown departure time outbound journey is incorrectly set to set down passengers.",
@@ -169,8 +164,8 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: filename,
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "stop",
                 details:
                     "The last stop (Stop 2) on the unknown departure time outbound journey is incorrectly set to pick up passengers.",
@@ -181,7 +176,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
             },
         ];
         expect(
-            checkFirstStopAndLastStopActivities(filename, {
+            checkFirstStopAndLastStopActivities({
                 TransXChange: {
                     ...mockInvalidData.TransXChange,
                     VehicleJourneys: {
