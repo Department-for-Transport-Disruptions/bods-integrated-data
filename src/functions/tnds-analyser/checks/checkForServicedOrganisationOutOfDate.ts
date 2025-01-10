@@ -1,12 +1,11 @@
-import { randomUUID } from "node:crypto";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
 
-export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
+export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
-    const servicedOrganisations = data.TransXChange?.ServicedOrganisations?.ServicedOrganisation;
+    const servicedOrganisations = txcData.TransXChange?.ServicedOrganisations?.ServicedOrganisation;
 
     if (servicedOrganisations) {
         for (const servicedOrganisation of servicedOrganisations) {
@@ -28,8 +27,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                     const endDate = latestEndDate.format("YYYY-MM-DD");
 
                     observations.push({
-                        PK: filename,
-                        SK: randomUUID(),
+                        PK: "",
+                        SK: "",
                         importance: "advisory",
                         category: "dataset",
                         observation: "Serviced organisation out of date",

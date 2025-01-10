@@ -32,7 +32,7 @@ module "integrated_data_tnds_analysis_cleardown_function" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 900
-  memory        = 128
+  memory        = 1024
 
   permissions = [
     {

@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
 
-export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
+export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
-    const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
+    const vehicleJourneys = txcData.TransXChange?.VehicleJourneys?.VehicleJourney;
 
     if (vehicleJourneys) {
         const vehicleJourneyCodes: string[] = [];
@@ -21,7 +20,7 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
 
                     let serviceCode = "n/a";
                     let lineName = "n/a";
-                    const services = data.TransXChange?.Services;
+                    const services = txcData.TransXChange?.Services;
 
                     if (services) {
                         const service = services.Service?.find(
@@ -39,8 +38,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                     }
 
                     observations.push({
-                        PK: filename,
-                        SK: randomUUID(),
+                        PK: "",
+                        SK: "",
                         importance: "advisory",
                         category: "journey",
                         observation: "Duplicate journey code",

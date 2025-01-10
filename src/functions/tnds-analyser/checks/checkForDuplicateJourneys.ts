@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { OperatingProfile, TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import hash from "object-hash";
@@ -10,9 +9,9 @@ type VehicleJourneyMapping = {
     OperatingProfile: OperatingProfile;
 };
 
-export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
+export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
-    const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
+    const vehicleJourneys = txcData.TransXChange?.VehicleJourneys?.VehicleJourney;
 
     if (vehicleJourneys) {
         const vehicleJourneyHashes: string[] = [];
@@ -21,7 +20,7 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
         for (const vehicleJourney of vehicleJourneys) {
             let serviceCode = "n/a";
             let lineName = "n/a";
-            const services = data.TransXChange?.Services;
+            const services = txcData.TransXChange?.Services;
 
             if (services) {
                 const service = services.Service?.find((service) => service.ServiceCode === vehicleJourney.ServiceRef);
@@ -57,8 +56,8 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                                 duplicateVehicleJourneyHashes.push(vehicleJourneyHash);
 
                                 observations.push({
-                                    PK: filename,
-                                    SK: randomUUID(),
+                                    PK: "",
+                                    SK: "",
                                     importance: "advisory",
                                     category: "journey",
                                     observation: "Duplicate journey",
