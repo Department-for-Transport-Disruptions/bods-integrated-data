@@ -143,7 +143,7 @@ export const handler: Handler = async (event, context) => {
         ...checkFirstStopAndLastStopActivities(txcData),
         ...checkStopsAgainstNaptan(txcData, naptanStops),
         ...checkFirstStopAndLastStopTimingPoints(txcData),
-        ...checkForNoTimingPointForThan15Minutes(txcData)
+        ...checkForNoTimingPointForThan15Minutes(txcData),
     ];
 
     if (observations.length) {
