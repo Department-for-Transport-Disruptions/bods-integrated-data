@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
 import { getDuration, getLocalTime } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedTimingPointValues } from "@bods-integrated-data/shared/tnds-analyser/constants";
 import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { PartialDeep } from "type-fest";
 
-export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] => {
+export default (data: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
     const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
 
@@ -55,48 +54,59 @@ export default (filename: string, data: PartialDeep<TxcSchema>): Observation[] =
                                 ).flatMap((section) => section.JourneyPatternTimingLink);
 
                             if (timingLinksForJourney && timingLinksForJourney.length > 0) {
-                                let previousStopDepartureTime = departureTime;
-                                let previousStopCommonName = timingLinksForJourney[0]?.From?.StopPointRef;
-                                let previousStopPointRef = timingLinksForJourney[0].From?.StopPointRef;
+                                const previousStop = {
+                                    departureTime,
+                                    commonName: timingLinksForJourney[0]?.From?.StopPointRef,
+                                    stopPointRef: timingLinksForJourney[0]?.From?.StopPointRef,
+                                };
                                 let accumulatedTimeWithoutATimingPoint = 0;
 
                                 for (const timingLink of timingLinksForJourney) {
                                     const runTimeDuration = getDuration(timingLink.RunTime || "PT0S").asMinutes();
-                                    const currentStopDepartureTime = previousStopDepartureTime.add(
-                                        runTimeDuration,
-                                        "minutes",
-                                    );
+                                    const waitTimeDuration = getDuration(timingLink.To?.WaitTime || "PT0S").asMinutes();
 
-                                    const currentStopCommonName = timingLink.To?.StopPointRef;
-                                    const currentStopPointRef = timingLink.To?.StopPointRef;
+                                    const currentStopDepartureTime = previousStop.departureTime
+                                        .add(runTimeDuration, "minutes")
+                                        .add(waitTimeDuration, "minutes");
+
+                                    const currentStop = {
+                                        departureTime: currentStopDepartureTime,
+                                        commonName: timingLink.To?.StopPointRef,
+                                        stopPointRef: timingLink.To?.StopPointRef,
+                                    };
+
                                     accumulatedTimeWithoutATimingPoint = allowedTimingPointValues.includes(
                                         timingLink.To?.TimingStatus ?? "",
                                     )
                                         ? 0
-                                        : accumulatedTimeWithoutATimingPoint + runTimeDuration;
+                                        : accumulatedTimeWithoutATimingPoint + runTimeDuration + waitTimeDuration;
 
                                     if (accumulatedTimeWithoutATimingPoint > 15) {
                                         observations.push({
-                                            PK: filename,
-                                            SK: randomUUID(),
+                                            PK: "",
+                                            SK: "",
                                             importance: "advisory",
                                             category: "timing",
                                             observation: "No timing point for more than 15 minutes",
                                             registrationNumber: serviceCode,
                                             service: lineName,
-                                            details: `The link between the ${previousStopDepartureTime.format(
+                                            details: `The link between the ${previousStop.departureTime.format(
                                                 "HH:mm:ss",
-                                            )} ${previousStopCommonName} (${previousStopPointRef}) and ${currentStopDepartureTime.format(
-                                                "HH:mm:ss",
-                                            )} ${currentStopCommonName} (${currentStopPointRef}) timing point stops on the ${departureTime.format(
+                                            )} ${previousStop.commonName} (${
+                                                previousStop.stopPointRef
+                                            }) and ${currentStopDepartureTime.format("HH:mm:ss")} ${
+                                                currentStop.commonName
+                                            } (${
+                                                currentStop.stopPointRef
+                                            }) timing point stops on the ${departureTime.format(
                                                 "HH:mm:ss",
                                             )} ${direction}journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.`,
                                         });
                                     }
 
-                                    previousStopDepartureTime = currentStopDepartureTime;
-                                    previousStopPointRef = currentStopPointRef;
-                                    previousStopCommonName = currentStopCommonName;
+                                    previousStop.departureTime = currentStop.departureTime;
+                                    previousStop.stopPointRef = currentStop.stopPointRef;
+                                    previousStop.commonName = currentStop.commonName;
                                 }
                             }
                         }

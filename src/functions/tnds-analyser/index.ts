@@ -15,6 +15,7 @@ import checkFirstStopAndLastStopTimingPoints from "./checks/checkFirstStopAndLas
 import checkForDuplicateJourneyCodes from "./checks/checkForDuplicateJourneyCodes";
 import checkForMissingBusWorkingNumber from "./checks/checkForMissingBusWorkingNumber";
 import checkForMissingJourneyCodes from "./checks/checkForMissingJourneyCodes";
+import checkForNoTimingPointForThan15Minutes from "./checks/checkForNoTimingPointForThan15Minutes";
 import checkForServicedOrganisationOutOfDate from "./checks/checkForServicedOrganisationOutOfDate";
 import checkStopsAgainstNaptan from "./checks/checkStopsAgainstNaptan";
 
@@ -139,7 +140,8 @@ export const handler: Handler = async (event, context) => {
     const servicedOrganisationsOutOfDateObservations = checkForServicedOrganisationOutOfDate(filename, txcData);
     const firstStopAndLastStopActivitiesObservations = checkFirstStopAndLastStopActivities(filename, txcData);
     const naptanStopCheckObservations = checkStopsAgainstNaptan(filename, txcData, naptanStops);
-    const firstStopAndLastStopTimingPoints = checkFirstStopAndLastStopTimingPoints(filename, txcData);
+    const firstStopAndLastStopTimingPointsObservations = checkFirstStopAndLastStopTimingPoints(filename, txcData);
+    const noTimingPointForMoreThan15MinutesObservations = checkForNoTimingPointForThan15Minutes(txcData);
 
     const observations: Observation[] = [
         ...missingJourneyCodeObservations,
@@ -148,7 +150,8 @@ export const handler: Handler = async (event, context) => {
         ...servicedOrganisationsOutOfDateObservations,
         ...naptanStopCheckObservations,
         ...firstStopAndLastStopActivitiesObservations,
-        ...firstStopAndLastStopTimingPoints,
+        ...firstStopAndLastStopTimingPointsObservations,
+        ...noTimingPointForMoreThan15MinutesObservations,
     ];
 
     if (observations.length) {

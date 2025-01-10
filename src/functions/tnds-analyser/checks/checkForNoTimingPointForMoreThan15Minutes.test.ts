@@ -1,17 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import checkForNoTimingPointForThan15Minutes from "./checkForNoTimingPointForThan15Minutes";
 import { mockValidData } from "./mockData";
 
-vi.mock("node:crypto", () => ({
-    randomUUID: () => "5965q7gh-5428-43e2-a75c-1782a48637d5",
-}));
 describe("checkForNoTimingPointForMoreThan15Minutes", () => {
     const filename = "test-file";
     it("should record observations if there is not timing point for more than 15 minutes for a given vehicle journey", () => {
         const expectedObservations = [
             {
-                PK: "test-file",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details:
                     "The link between the 08:00:00 SP2 (SP2) and 08:20:00 SP3 (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
@@ -21,8 +18,8 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                 service: "Line 1",
             },
             {
-                PK: "test-file",
-                SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                PK: "",
+                SK: "",
                 category: "timing",
                 details:
                     "The link between the 08:40:00 SP4 (SP4) and 09:00:00 SP5 (SP5) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
@@ -52,6 +49,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                                             Activity: "pickUpAndSetDown",
                                             StopPointRef: "SP2",
                                             TimingStatus: "OTH",
+                                            WaitTime: "PT0M0S",
                                         },
                                         RunTime: "PT0M0S",
                                     },
@@ -61,13 +59,15 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                                             Activity: "pickUpAndSetDown",
                                             StopPointRef: "SP2",
                                             TimingStatus: "OTH",
+                                            WaitTime: "PT0M0S",
                                         },
                                         To: {
                                             Activity: "pickUpAndSetDown",
                                             StopPointRef: "SP3",
                                             TimingStatus: "OTH",
+                                            WaitTime: "PT10M0S",
                                         },
-                                        RunTime: "PT20M0S",
+                                        RunTime: "PT10M0S",
                                     },
                                 ],
                             },
@@ -80,14 +80,15 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                                             Activity: "pickUpAndSetDown",
                                             StopPointRef: "SP3",
                                             TimingStatus: "OTH",
-                                            WaitTime: "00:03",
+                                            WaitTime: "PT10M0S",
                                         },
                                         To: {
                                             Activity: "setDown",
                                             StopPointRef: "SP4",
                                             TimingStatus: "PTP",
+                                            WaitTime: "PT10M0S",
                                         },
-                                        RunTime: "PT20M0S",
+                                        RunTime: "PT10M0S",
                                     },
                                     {
                                         "@_id": "JPTL2-1",
@@ -95,13 +96,15 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                                             Activity: "setDown",
                                             StopPointRef: "SP4",
                                             TimingStatus: "PTP",
+                                            WaitTime: "PT10M0S",
                                         },
                                         To: {
                                             Activity: "setDown",
                                             StopPointRef: "SP5",
                                             TimingStatus: "OTH",
+                                            WaitTime: "PT10M0S",
                                         },
-                                        RunTime: "PT20M0S",
+                                        RunTime: "PT10M0S",
                                     },
                                 ],
                             },
@@ -157,8 +160,8 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
             },
             [
                 {
-                    PK: "test-file",
-                    SK: "5965q7gh-5428-43e2-a75c-1782a48637d5",
+                    PK: "",
+                    SK: "",
                     category: "timing",
                     details:
                         "The link between the 08:00:00 SP2 (SP2) and 08:20:00 SP3 (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
@@ -212,5 +215,50 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
         ],
     ])("should handle missing timing statuses: %o", (txcData, expectedObservation) => {
         expect(checkForNoTimingPointForThan15Minutes(filename, txcData)).toEqual(expectedObservation);
+    });
+
+    it("should handle missing run times", () => {
+        expect(
+            checkForNoTimingPointForThan15Minutes(filename, {
+                TransXChange: {
+                    ...mockValidData.TransXChange,
+                    JourneyPatternSections: {
+                        JourneyPatternSection: [
+                            {
+                                "@_id": "JPS1",
+                                JourneyPatternTimingLink: [
+                                    {
+                                        "@_id": "JPTL1",
+                                        From: {
+                                            Activity: "pickUp",
+                                            StopPointRef: "SP1",
+                                            TimingStatus: "PTP",
+                                        },
+                                        To: {
+                                            Activity: "pickUpAndSetDown",
+                                            StopPointRef: "SP2",
+                                            TimingStatus: "OTH",
+                                        },
+                                    },
+                                    {
+                                        "@_id": "JPTL1",
+                                        From: {
+                                            Activity: "pickUpAndSetDown",
+                                            StopPointRef: "SP2",
+                                            TimingStatus: "OTH",
+                                        },
+                                        To: {
+                                            Activity: "pickUpAndSetDown",
+                                            StopPointRef: "SP3",
+                                            TimingStatus: "OTH",
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            }),
+        ).toEqual([]);
     });
 });
