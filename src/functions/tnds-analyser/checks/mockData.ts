@@ -402,7 +402,7 @@ export const mockInvalidData: PartialDeep<TxcSchema> = {
                 {
                     "@_RevisionNumber": "1",
                     VehicleJourneyCode: "VJ12345",
-                    DepartureTime: "08:00",
+                    DepartureTime: "08:00:00",
                     DestinationDisplay: "Central Station",
                     Frequency: {
                         EndTime: "18:00",

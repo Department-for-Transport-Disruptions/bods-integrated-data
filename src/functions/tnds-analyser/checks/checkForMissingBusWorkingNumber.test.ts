@@ -19,7 +19,8 @@ describe("checkForMissingBusWorkingNumber", () => {
                 observation: "Missing bus working number",
                 registrationNumber: "SVC1",
                 service: "Line 1",
-                details: "The (08:00) outbound journey has not been assigned a bus working number (i.e. block number).",
+                details:
+                    "The (08:00:00) outbound journey has not been assigned a bus working number (i.e. block number).",
             },
         ]);
     });
