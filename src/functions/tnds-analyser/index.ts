@@ -158,7 +158,7 @@ export const handler: Handler = async (event, context) => {
 
     // Even though the observation table is cleared beforehand in the step function,
     // it's worth having DynamoDB clear old entries to speed up the clear down process
-    const timeToExist = getDate().add(6, "hours").unix();
+    const timeToExist = getDate().add(18, "hours").unix();
 
     for (let i = 0; i < observations.length; i++) {
         observations[i].PK = filename;
