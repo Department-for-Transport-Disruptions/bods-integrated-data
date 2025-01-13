@@ -8,6 +8,14 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
     const observations: Observation[] = [];
     const vehicleJourneys = data.TransXChange?.VehicleJourneys?.VehicleJourney;
 
+    const txcStops = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.reduce(
+        (acc: Record<string, string | null>, stop) => {
+            acc[stop.StopPointRef] = stop.CommonName;
+            return acc;
+        },
+        {},
+    );
+
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
             let serviceCode = "n/a";
@@ -56,7 +64,9 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                             if (timingLinksForJourney && timingLinksForJourney.length > 0) {
                                 const previousStop = {
                                     departureTime,
-                                    commonName: timingLinksForJourney[0]?.From?.StopPointRef,
+                                    commonName: txcStops
+                                        ? txcStops[timingLinksForJourney[0]?.From?.StopPointRef ?? ""] ?? "n/a"
+                                        : "n/a",
                                     stopPointRef: timingLinksForJourney[0]?.From?.StopPointRef,
                                 };
                                 let accumulatedTimeWithoutATimingPoint = 0;
@@ -71,7 +81,9 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
 
                                     const currentStop = {
                                         departureTime: currentStopDepartureTime,
-                                        commonName: timingLink.To?.StopPointRef,
+                                        commonName: txcStops
+                                            ? txcStops[timingLink.To?.StopPointRef ?? ""] ?? "n/a"
+                                            : "n/a",
                                         stopPointRef: timingLink.To?.StopPointRef,
                                     };
 
