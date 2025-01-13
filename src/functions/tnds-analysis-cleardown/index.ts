@@ -12,7 +12,7 @@ export const handler: Handler = async (event, context) => {
     const { TNDS_OBSERVATION_TABLE_NAME } = process.env;
 
     if (!TNDS_OBSERVATION_TABLE_NAME) {
-        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME must be set");
+        throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME must be set");
     }
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
