@@ -85,6 +85,10 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                         observations.push({
                                             PK: "",
                                             SK: "",
+                                            timeToExist: 0,
+                                            dataSource: "",
+                                            noc: "",
+                                            region: "",
                                             importance: "advisory",
                                             category: "timing",
                                             observation: "No timing point for more than 15 minutes",

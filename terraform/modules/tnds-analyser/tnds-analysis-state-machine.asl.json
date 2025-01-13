@@ -35,6 +35,7 @@
             "Parameters": {
               "FunctionName": "${tnds_analyser_function_arn}:$LATEST",
               "Payload": {
+                "dataSource": "tnds",
                 "Records": [
                   {
                     "s3": {
@@ -68,7 +69,7 @@
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
           "Bucket": "${tnds_txc_bucket_name}",
-          "Prefix.$": "$.prefix"
+          "Prefix.$": "$.date"
         }
       },
       "MaxConcurrency": 10,
@@ -82,7 +83,7 @@
       "Parameters": {
         "FunctionName": "${tnds_reporter_function_arn}:$LATEST",
         "Payload": {
-          "prefix.$": "$.prefix"
+          "date.$": "$.date"
         }
       },
       "End": true

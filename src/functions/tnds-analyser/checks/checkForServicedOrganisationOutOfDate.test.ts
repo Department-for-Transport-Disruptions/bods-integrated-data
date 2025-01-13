@@ -76,6 +76,10 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
@@ -87,6 +91,10 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",

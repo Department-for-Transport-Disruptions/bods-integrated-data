@@ -94,6 +94,10 @@ describe("checkForMissingJourneyCodes", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
@@ -104,6 +108,10 @@ describe("checkForMissingJourneyCodes", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",

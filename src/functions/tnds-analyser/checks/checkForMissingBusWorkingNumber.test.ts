@@ -9,6 +9,10 @@ describe("checkForMissingBusWorkingNumber", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Missing bus working number",

@@ -12,6 +12,10 @@ describe("checkStopsAgainstNaptan", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 category: "stop",
                 details:
                     "The Stop 1 (SP1) stop is registered as stop type WRONG with NaPTAN. Expected bus stop types are BCT,BCQ,BCS,BCE,BST.",
@@ -23,6 +27,10 @@ describe("checkStopsAgainstNaptan", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 category: "stop",
                 details:
                     "The Stop 2 (SP2) stop is not registered with NaPTAN. Please check the ATCO code is correct or contact your local authority to register this stop with NaPTAN.",

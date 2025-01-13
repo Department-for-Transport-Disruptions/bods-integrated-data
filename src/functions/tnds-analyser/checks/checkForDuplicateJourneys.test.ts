@@ -199,6 +199,10 @@ describe("checkForDuplicateJourneys", () => {
             {
                 PK: "",
                 SK: "",
+                timeToExist: 0,
+                dataSource: "",
+                noc: "",
+                region: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey",

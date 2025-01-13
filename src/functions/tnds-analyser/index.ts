@@ -1,5 +1,6 @@
 import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { NaptanStop } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -117,10 +118,10 @@ const getAndParseNaptanFile = async (naptanBucketName: string) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName, NAPTAN_BUCKET_NAME: naptanBucketName } = process.env;
+    const { TNDS_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME } = process.env;
 
-    if (!tndsAnalysisTableName || !naptanBucketName) {
-        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME and NAPTAN_BUCKET_NAME must be set");
+    if (!TNDS_OBSERVATION_TABLE_NAME || !NAPTAN_BUCKET_NAME) {
+        throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME and NAPTAN_BUCKET_NAME must be set");
     }
 
     const record = event.Records[0];
@@ -132,7 +133,7 @@ export const handler: Handler = async (event, context) => {
     }
 
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
-    naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
+    naptanStops = naptanStops || (await getAndParseNaptanFile(NAPTAN_BUCKET_NAME));
 
     const observations: Observation[] = [
         ...checkForMissingJourneyCodes(txcData),
@@ -146,12 +147,17 @@ export const handler: Handler = async (event, context) => {
         ...checkForNoTimingPointForThan15Minutes(txcData),
     ];
 
-    if (observations.length) {
-        for (let i = 0; i < observations.length; i++) {
-            observations[i].PK = filename;
-            observations[i].SK = i.toString();
-        }
+    // Even though the observation table is cleared beforehand in the step function,
+    // it's worth having DynamoDB clear old entries to speed up the clear down process
+    const timeToExist = getDate().add(6, "hours").unix();
 
-        await putDynamoItems(tndsAnalysisTableName, observations);
+    for (let i = 0; i < observations.length; i++) {
+        observations[i].PK = filename;
+        observations[i].SK = i.toString();
+        observations[i].timeToExist = timeToExist;
+    }
+
+    if (observations.length) {
+        await putDynamoItems(TNDS_OBSERVATION_TABLE_NAME, observations);
     }
 };
