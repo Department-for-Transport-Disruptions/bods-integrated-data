@@ -1,7 +1,7 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { DynamoDbObservation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
@@ -59,7 +59,7 @@ describe("tnds-reporter", () => {
     });
 
     it("creates a report and uploads it to S3", async () => {
-        const mockObservations: Observation[] = [
+        const mockObservations: DynamoDbObservation[] = [
             {
                 PK: "test-PK-1",
                 SK: "test-SK-1",
@@ -169,7 +169,7 @@ describe("tnds-reporter", () => {
     });
 
     it("aborts the report upload when an unexpected error occurs", async () => {
-        const mockObservations: Observation[] = [
+        const mockObservations: DynamoDbObservation[] = [
             {
                 PK: "test-PK-1",
                 SK: "test-SK-1",

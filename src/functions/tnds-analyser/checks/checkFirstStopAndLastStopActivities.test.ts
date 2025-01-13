@@ -9,12 +9,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return observations if first stop and last stop have incorrect activity", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The first stop (Stop 1) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
@@ -24,12 +18,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The last stop (Stop 2) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
@@ -49,12 +37,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return an empty array if first and last stop do not have any activity properties", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The first stop (Stop 1) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
@@ -64,12 +46,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The last stop (Stop 4) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
@@ -133,12 +109,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return observations if a journey does not have a journey pattern to determine stop activities from", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The first stop (n/a) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
@@ -148,12 +118,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The last stop (n/a) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
@@ -178,12 +142,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
     it("should return observations if first stop and last stop have incorrect activity and departure time cannot be determined", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The first stop (Stop 1) on the unknown departure time outbound journey is incorrectly set to set down passengers.",
@@ -193,12 +151,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "stop",
                 details:
                     "The last stop (Stop 2) on the unknown departure time outbound journey is incorrectly set to pick up passengers.",

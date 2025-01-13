@@ -9,12 +9,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
     it("should return observations if first stop and last stop are not timing points", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details: "The first stop (Stop 1) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -23,12 +17,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details: "The last stop (Stop 2) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -47,12 +35,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
     it("should return observations if first stop and last stop do not have a timing status", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details: "The first stop (Stop 1) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -61,12 +43,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details: "The last stop (Stop 4) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -131,12 +107,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
     it("should return observations if a journey does not have a journey pattern to determine timing points from", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details: "The first stop (n/a) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -145,12 +115,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details: "The last stop (n/a) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
@@ -174,12 +138,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
     it("should return observations if first stop and last stop have incorrect timing points and departure time cannot be determined", () => {
         const expectedObservation: Observation[] = [
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details:
                     "The first stop (Stop 1) on the unknown departure time outbound journey is not set as a timing point.",
@@ -189,12 +147,6 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 category: "timing",
                 details:
                     "The last stop (Stop 2) on the unknown departure time outbound journey is not set as a timing point.",

@@ -2,12 +2,6 @@ import { z } from "zod";
 import { observationCategory, observationImportance, observationType } from "./constants";
 
 export const observationSchema = z.object({
-    PK: z.string(),
-    SK: z.string(),
-    timeToExist: z.number(),
-    dataSource: z.string(),
-    noc: z.string(),
-    region: z.string(),
     importance: z.enum(observationImportance),
     category: z.enum(observationCategory),
     observation: z.enum(observationType),
@@ -17,6 +11,19 @@ export const observationSchema = z.object({
 });
 
 export type Observation = z.infer<typeof observationSchema>;
+
+export const dynamoDbObservationSchema = observationSchema.and(
+    z.object({
+        PK: z.string(),
+        SK: z.string(),
+        timeToExist: z.number(),
+        dataSource: z.string(),
+        noc: z.string(),
+        region: z.string(),
+    }),
+);
+
+export type DynamoDbObservation = z.infer<typeof dynamoDbObservationSchema>;
 
 export const observationSummarySchema = z.object({
     File: z.string(),

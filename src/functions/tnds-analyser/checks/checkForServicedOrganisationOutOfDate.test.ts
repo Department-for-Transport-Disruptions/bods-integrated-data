@@ -74,12 +74,6 @@ describe("checkForServicedOrganisationOutOfDate", () => {
         const result = checkForServicedOrganisationOutOfDate(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
@@ -89,12 +83,6 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                     "The Working Days for Serviced Organisation Test Organisation 1 (servicedOrg1) has expired on 2025-01-06. Please update the dates for this Serviced Organisation.",
             },
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",

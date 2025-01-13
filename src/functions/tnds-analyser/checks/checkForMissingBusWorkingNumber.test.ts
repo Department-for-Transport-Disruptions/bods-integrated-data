@@ -7,12 +7,6 @@ describe("checkForMissingBusWorkingNumber", () => {
     it("should return an observation if a vehicle journey is missing a bus working number", () => {
         expect(checkForMissingBusWorkingNumber(mockInvalidData)).toEqual<Observation[]>([
             {
-                PK: "",
-                SK: "",
-                timeToExist: 0,
-                dataSource: "",
-                noc: "",
-                region: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Missing bus working number",

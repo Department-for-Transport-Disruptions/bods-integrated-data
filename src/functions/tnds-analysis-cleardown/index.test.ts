@@ -1,6 +1,6 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { DynamoDbObservation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
@@ -22,7 +22,7 @@ describe("tnds-reporter", () => {
     });
 
     it("clears down the dynamo table", async () => {
-        const mockObservations: Observation[] = [
+        const mockObservations: DynamoDbObservation[] = [
             {
                 PK: "test-PK-1",
                 SK: "test-SK-1",

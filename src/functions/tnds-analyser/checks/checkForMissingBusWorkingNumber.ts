@@ -39,12 +39,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                 }
 
                 observations.push({
-                    PK: "",
-                    SK: "",
-                    timeToExist: 0,
-                    dataSource: "",
-                    noc: "",
-                    region: "",
                     importance: "advisory",
                     category: "journey",
                     observation: "Missing bus working number",

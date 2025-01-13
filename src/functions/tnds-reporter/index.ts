@@ -4,7 +4,7 @@ import { scanDynamo } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
 import { observationType } from "@bods-integrated-data/shared/tnds-analyser/constants";
-import { observationSchema } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { dynamoDbObservationSchema } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import archiver from "archiver";
 import { Handler } from "aws-lambda";
 import { z } from "zod";
@@ -113,7 +113,7 @@ export const handler: Handler = async (event, context) => {
         if (dynamoScanOutput.Items) {
             for (const item of dynamoScanOutput.Items) {
                 try {
-                    const observation = observationSchema.parse(item);
+                    const observation = dynamoDbObservationSchema.parse(item);
                     const dataSource = observation.dataSource;
                     const file = observation.PK;
                     const observationType = observation.observation;

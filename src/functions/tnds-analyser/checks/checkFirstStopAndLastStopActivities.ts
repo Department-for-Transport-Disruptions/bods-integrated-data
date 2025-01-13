@@ -119,12 +119,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 }
 
                                 observations.push({
-                                    PK: "",
-                                    SK: "",
-                                    timeToExist: 0,
-                                    dataSource: "",
-                                    noc: "",
-                                    region: "",
                                     importance: "advisory",
                                     category: "stop",
                                     observation: "First stop is set down only",
@@ -150,12 +144,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 }
 
                                 observations.push({
-                                    PK: "",
-                                    SK: "",
-                                    timeToExist: 0,
-                                    dataSource: "",
-                                    noc: "",
-                                    region: "",
                                     importance: "advisory",
                                     category: "stop",
                                     observation: "Last stop is pick up only",

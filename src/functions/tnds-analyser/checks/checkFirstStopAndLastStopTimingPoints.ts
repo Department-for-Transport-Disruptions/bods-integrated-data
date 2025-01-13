@@ -116,12 +116,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 }
 
                                 observations.push({
-                                    PK: "",
-                                    SK: "",
-                                    timeToExist: 0,
-                                    dataSource: "",
-                                    noc: "",
-                                    region: "",
                                     importance: "critical",
                                     category: "timing",
                                     observation: "First stop is not a timing point",
@@ -147,12 +141,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 }
 
                                 observations.push({
-                                    PK: "",
-                                    SK: "",
-                                    timeToExist: 0,
-                                    dataSource: "",
-                                    noc: "",
-                                    region: "",
                                     importance: "critical",
                                     category: "timing",
                                     observation: "Last stop is not a timing point",

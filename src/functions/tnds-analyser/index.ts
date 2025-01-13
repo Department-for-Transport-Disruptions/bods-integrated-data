@@ -5,7 +5,7 @@ import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
-import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { DynamoDbObservation, Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { parse } from "papaparse";
@@ -161,16 +161,17 @@ export const handler: Handler = async (event, context) => {
     // it's worth having DynamoDB clear old entries to speed up the clear down process
     const timeToExist = getDate().add(18, "hours").unix();
 
-    for (let i = 0; i < observations.length; i++) {
-        observations[i].PK = filename;
-        observations[i].SK = i.toString();
-        observations[i].timeToExist = timeToExist;
-        observations[i].noc = noc;
-        observations[i].region = region;
-        observations[i].dataSource = dataSource;
-    }
+    const dynamoDbObservations: DynamoDbObservation[] = observations.map((observation, i) => ({
+        PK: filename,
+        SK: i.toString(),
+        timeToExist: timeToExist,
+        noc: noc,
+        region: region,
+        dataSource: dataSource,
+        ...observation,
+    }));
 
     if (observations.length) {
-        await putDynamoItems(TNDS_OBSERVATION_TABLE_NAME, observations);
+        await putDynamoItems(TNDS_OBSERVATION_TABLE_NAME, dynamoDbObservations);
     }
 };

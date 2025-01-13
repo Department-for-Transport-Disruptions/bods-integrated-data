@@ -83,12 +83,6 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
 
                                     if (accumulatedTimeWithoutATimingPoint > 900) {
                                         observations.push({
-                                            PK: "",
-                                            SK: "",
-                                            timeToExist: 0,
-                                            dataSource: "",
-                                            noc: "",
-                                            region: "",
                                             importance: "advisory",
                                             category: "timing",
                                             observation: "No timing point for more than 15 minutes",
