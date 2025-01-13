@@ -197,8 +197,6 @@ describe("checkForDuplicateJourneys", () => {
         const result = checkForDuplicateJourneys(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "",
-                SK: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey",

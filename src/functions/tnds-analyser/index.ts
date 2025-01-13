@@ -1,10 +1,11 @@
 import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { NaptanStop } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
-import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { DynamoDbObservation, Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { parse } from "papaparse";
@@ -117,14 +118,16 @@ const getAndParseNaptanFile = async (naptanBucketName: string) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TNDS_ANALYSIS_TABLE_NAME: tndsAnalysisTableName, NAPTAN_BUCKET_NAME: naptanBucketName } = process.env;
+    const { TNDS_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME } = process.env;
 
-    if (!tndsAnalysisTableName || !naptanBucketName) {
-        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME and NAPTAN_BUCKET_NAME must be set");
+    if (!TNDS_OBSERVATION_TABLE_NAME || !NAPTAN_BUCKET_NAME) {
+        throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME and NAPTAN_BUCKET_NAME must be set");
     }
 
     const record = event.Records[0];
     const filename = record.s3.object.key;
+    const dataSource = record.s3.bucket.name.includes("-tnds-") ? "tnds" : "bods";
+    const region = filename.split("/")[1]; // only works for TNDS files
 
     if (!filename.endsWith(".xml")) {
         logger.info("Ignoring non-xml file");
@@ -132,7 +135,7 @@ export const handler: Handler = async (event, context) => {
     }
 
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
-    naptanStops = naptanStops || (await getAndParseNaptanFile(naptanBucketName));
+    naptanStops = naptanStops || (await getAndParseNaptanFile(NAPTAN_BUCKET_NAME));
 
     const observations: Observation[] = [
         ...checkForMissingJourneyCodes(txcData),
@@ -146,12 +149,29 @@ export const handler: Handler = async (event, context) => {
         ...checkForNoTimingPointForThan15Minutes(txcData),
     ];
 
-    if (observations.length) {
-        for (let i = 0; i < observations.length; i++) {
-            observations[i].PK = filename;
-            observations[i].SK = i.toString();
-        }
+    let noc = "unknown";
 
-        await putDynamoItems(tndsAnalysisTableName, observations);
+    const operators = txcData.TransXChange?.Operators?.Operator;
+
+    if (operators) {
+        noc = operators[0].OperatorCode || "unknown";
+    }
+
+    // Even though the observation table is cleared beforehand in the step function,
+    // it's worth having DynamoDB clear old entries to speed up the clear down process
+    const timeToExist = getDate().add(18, "hours").unix();
+
+    const dynamoDbObservations: DynamoDbObservation[] = observations.map((observation, i) => ({
+        PK: filename,
+        SK: i.toString(),
+        timeToExist: timeToExist,
+        noc: noc,
+        region: region,
+        dataSource: dataSource,
+        ...observation,
+    }));
+
+    if (observations.length) {
+        await putDynamoItems(TNDS_OBSERVATION_TABLE_NAME, dynamoDbObservations);
     }
 };

@@ -17,8 +17,6 @@ export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string 
 
             if (naptanStopRef === undefined) {
                 observations.push({
-                    PK: "",
-                    SK: "",
                     registrationNumber: "n/a",
                     service: "n/a",
                     observation: "Stop not found in NaPTAN",
@@ -28,8 +26,6 @@ export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string 
                 });
             } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef)) {
                 observations.push({
-                    PK: "",
-                    SK: "",
                     registrationNumber: "n/a",
                     service: "n/a",
                     observation: "Incorrect stop type",

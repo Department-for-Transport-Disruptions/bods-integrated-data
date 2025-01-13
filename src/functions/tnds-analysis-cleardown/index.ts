@@ -1,6 +1,6 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { deleteDynamoItems, recursiveScan } from "@bods-integrated-data/shared/dynamo";
-import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
+import { deleteDynamoItems, scanDynamo } from "@bods-integrated-data/shared/dynamo";
+import { errorMapWithDataLogging, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
 import { z } from "zod";
 
@@ -9,22 +9,27 @@ z.setErrorMap(errorMapWithDataLogging);
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TNDS_ANALYSIS_TABLE_NAME } = process.env;
+    const { TNDS_OBSERVATION_TABLE_NAME } = process.env;
 
-    if (!TNDS_ANALYSIS_TABLE_NAME) {
-        throw new Error("Missing env vars - TNDS_ANALYSIS_TABLE_NAME must be set");
+    if (!TNDS_OBSERVATION_TABLE_NAME) {
+        throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME must be set");
     }
 
-    const tableItems = await recursiveScan({ TableName: TNDS_ANALYSIS_TABLE_NAME });
-    logger.info(`Deleting ${tableItems.length} items`);
+    let dynamoScanStartKey: Record<string, string> | undefined = undefined;
 
-    if (tableItems.length) {
-        await deleteDynamoItems(TNDS_ANALYSIS_TABLE_NAME, tableItems);
-    }
+    do {
+        const dynamoScanOutput = await scanDynamo({
+            TableName: TNDS_OBSERVATION_TABLE_NAME,
+            ExclusiveStartKey: dynamoScanStartKey,
+        });
+        dynamoScanStartKey = dynamoScanOutput.LastEvaluatedKey;
 
-    const prefix = getDate().format("YYYYMMDD");
+        if (dynamoScanOutput.Items) {
+            await deleteDynamoItems(TNDS_OBSERVATION_TABLE_NAME, dynamoScanOutput.Items);
+        }
+    } while (dynamoScanStartKey);
 
     return {
-        prefix,
+        date: getDate().format("YYYYMMDD"),
     };
 };

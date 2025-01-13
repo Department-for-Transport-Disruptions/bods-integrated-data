@@ -27,8 +27,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     const endDate = latestEndDate.format("YYYY-MM-DD");
 
                     observations.push({
-                        PK: "",
-                        SK: "",
                         importance: "advisory",
                         category: "dataset",
                         observation: "Serviced organisation out of date",

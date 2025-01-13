@@ -56,8 +56,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 duplicateVehicleJourneyHashes.push(vehicleJourneyHash);
 
                                 observations.push({
-                                    PK: "",
-                                    SK: "",
                                     importance: "advisory",
                                     category: "journey",
                                     observation: "Duplicate journey",

@@ -1,13 +1,14 @@
+import { TxcSchema } from "@bods-integrated-data/shared/schema";
+import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { PartialDeep } from "type-fest";
 import { describe, expect, it } from "vitest";
 import checkForNoTimingPointForThan15Minutes from "./checkForNoTimingPointForThan15Minutes";
 import { mockValidData } from "./mockData";
 
 describe("checkForNoTimingPointForMoreThan15Minutes", () => {
     it("should record observations if there are any consecutive timing points more than 15 minutes apart for a given vehicle journey", () => {
-        const expectedObservations = [
+        const expectedObservations: Observation[] = [
             {
-                PK: "",
-                SK: "",
                 category: "timing",
                 details:
                     "The link between the 08:00:00 Stop 2 (SP2) and 08:20:00 n/a (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
@@ -17,8 +18,6 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                 service: "Line 1",
             },
             {
-                PK: "",
-                SK: "",
                 category: "timing",
                 details:
                     "The link between the 08:40:00 Stop 4 (SP4) and 09:00:00 n/a (SP5) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
@@ -117,7 +116,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
         expect(checkForNoTimingPointForThan15Minutes(mockValidData)).toEqual([]);
     });
 
-    it.each([
+    it.each<[PartialDeep<TxcSchema>, Observation[]]>([
         [
             {
                 TransXChange: {
@@ -159,8 +158,6 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
             },
             [
                 {
-                    PK: "",
-                    SK: "",
                     category: "timing",
                     details:
                         "The link between the 08:00:00 Stop 2 (SP2) and 08:20:00 n/a (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",

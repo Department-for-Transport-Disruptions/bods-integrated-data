@@ -1,17 +1,35 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { putS3Object } from "@bods-integrated-data/shared/s3";
-import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { DynamoDbObservation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("tnds-reporter", () => {
-    const mockEvent = { prefix: "20250108" };
-    const recursiveScanSpy = vi.spyOn(dynamo, "recursiveScan");
+    const mockEvent = { date: "20250108" };
+    const scanDynamoMock = vi.spyOn(dynamo, "scanDynamo");
+
+    const mocks = vi.hoisted(() => {
+        return {
+            abortMock: vi.fn(),
+            appendMock: vi.fn(),
+            startS3Upload: vi.fn(),
+        };
+    });
+
+    vi.mock("archiver", () => ({
+        default: vi.fn().mockImplementation(() => ({
+            abort: mocks.abortMock,
+            append: mocks.appendMock,
+            finalize: vi.fn(),
+            pipe: vi.fn(),
+        })),
+    }));
 
     vi.mock("@bods-integrated-data/shared/s3", () => ({
-        putS3Object: vi.fn(),
+        startS3Upload: mocks.startS3Upload.mockReturnValue({
+            done: () => Promise.resolve(),
+        }),
     }));
 
     vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
@@ -25,75 +43,160 @@ describe("tnds-reporter", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        process.env.TNDS_ANALYSIS_TABLE_NAME = "test-table";
+        process.env.TNDS_OBSERVATION_TABLE_NAME = "test-table";
         process.env.TNDS_ANALYSIS_BUCKET_NAME = "test-bucket";
     });
 
     it.each([
-        [{ TNDS_ANALYSIS_TABLE_NAME: "", TNDS_ANALYSIS_BUCKET_NAME: "test-bucket" }],
-        [{ TNDS_ANALYSIS_TABLE_NAME: "test-table", TNDS_ANALYSIS_BUCKET_NAME: "" }],
+        [{ TNDS_OBSERVATION_TABLE_NAME: "", TNDS_ANALYSIS_BUCKET_NAME: "test-bucket" }],
+        [{ TNDS_OBSERVATION_TABLE_NAME: "test-table", TNDS_ANALYSIS_BUCKET_NAME: "" }],
     ])("throws an error when the required env vars are missing", async (env) => {
         process.env = env;
 
         await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
-            "Missing env vars - TNDS_ANALYSIS_TABLE_NAME and TNDS_ANALYSIS_BUCKET_NAME must be set",
+            "Missing env vars - TNDS_OBSERVATION_TABLE_NAME and TNDS_ANALYSIS_BUCKET_NAME must be set",
         );
     });
 
     it("creates a report and uploads it to S3", async () => {
-        const mockObservations: Observation[] = [
+        const mockObservations: DynamoDbObservation[] = [
             {
-                PK: "file1",
-                SK: "a5764857-ae35-34dc-8f25-a9c9e73aa898",
+                PK: "test-PK-1",
+                SK: "test-SK-1",
+                timeToExist: 0,
+                dataSource: "test-dataSource-1",
+                noc: "test-noc-1",
+                region: "test-region-1",
                 importance: "critical",
-                category: "journey",
-                observation: "Duplicate journey code",
-                registrationNumber: "reg1",
-                service: "service1",
-                details: "details1",
+                category: "dataset",
+                observation: "Duplicate journey",
+                registrationNumber: "test-registrationNumber-1",
+                service: "test-service-1",
+                details: "test-details-1",
             },
             {
-                PK: "file2",
-                SK: "a5764857-ae35-34dc-8f25-a9c9e73aa899",
+                PK: "test-PK-1",
+                SK: "test-SK-2",
+                timeToExist: 0,
+                dataSource: "test-dataSource-2",
+                noc: "test-noc-2",
+                region: "test-region-2",
                 importance: "advisory",
                 category: "dataset",
-                observation: "Serviced organisation out of date",
-                registrationNumber: "reg2",
-                service: "service2",
-                details: "details2",
+                observation: "First stop is not a timing point",
+                registrationNumber: "test-registrationNumber-2",
+                service: "test-service-2",
+                details: "test-details-2",
+            },
+            {
+                PK: "test-PK-1",
+                SK: "test-SK-3",
+                timeToExist: 0,
+                dataSource: "test-dataSource-2",
+                noc: "test-noc-2",
+                region: "test-region-2",
+                importance: "advisory",
+                category: "dataset",
+                observation: "First stop is not a timing point",
+                registrationNumber: "test-registrationNumber-2",
+                service: "test-service-2",
+                details: "test-details-2",
             },
         ];
 
-        const csvContent = `filename,importance,category,observation,registrationNumber,service,details\r
-file1,critical,journey,Duplicate journey code,reg1,service1,details1\r
-file2,advisory,dataset,Serviced organisation out of date,reg2,service2,details2\r
-`;
+        scanDynamoMock.mockResolvedValueOnce({ Items: mockObservations } as unknown as Awaited<
+            ReturnType<typeof dynamo.scanDynamo>
+        >);
 
-        recursiveScanSpy.mockResolvedValueOnce(mockObservations);
+        const observationSummariesByDataSourceCsvContent =
+            "Dataset Date,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-dataSource-1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0\r\n08/01/2025,test-dataSource-2,2,0,2,0,2,0,0,0,0,0,0,0,0,0,0\r\n";
+
+        const observationSummariesByFileCsvContent =
+            "Dataset Date,Region,File,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,3,1,2,0,2,0,0,0,0,0,0,0,1,0,0\r\n";
+
+        const observationByObservationTypeCsvContent1 =
+            "Dataset Date,Region,File,National Operator Code,Line Name,Quantity\r\n08/01/2025,test-region-1,test-PK-1,test-noc-1,test-registrationNumber-1,1\r\n";
+
+        const observationByObservationTypeCsvContent2 =
+            "Dataset Date,Region,File,National Operator Code,Line Name,Quantity\r\n08/01/2025,test-region-2,test-PK-1,test-noc-2,test-registrationNumber-2,2\r\n";
 
         await handler(mockEvent, mockContext, mockCallback);
 
-        expect(logger.info).toHaveBeenCalledWith("Creating report with 2 observations");
-        expect(putS3Object).toHaveBeenCalledWith({
-            Bucket: "test-bucket",
-            Key: "20250108.csv",
-            ContentType: "text/csv",
-            Body: csvContent,
+        expect(mocks.startS3Upload).toHaveBeenCalledWith(
+            "test-bucket",
+            "20250108.zip",
+            expect.anything(),
+            "application/zip",
+        );
+
+        expect(mocks.appendMock).toHaveBeenCalledTimes(4);
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(1, observationSummariesByDataSourceCsvContent, {
+            name: "observationSummariesByDataSource.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(2, observationSummariesByFileCsvContent, {
+            name: "observationSummariesByFile.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(3, observationByObservationTypeCsvContent1, {
+            name: "observationSummariesByObservationType/Duplicate journey.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(4, observationByObservationTypeCsvContent2, {
+            name: "observationSummariesByObservationType/First stop is not a timing point.csv",
         });
     });
 
-    it("creates an empty report when there are no observations", async () => {
-        const csvContent = "filename,importance,category,observation,registrationNumber,service,details\r\n";
-        recursiveScanSpy.mockResolvedValueOnce(undefined as unknown as Observation[]);
+    it("doesn't create a report when there are no observation summaries", async () => {
+        scanDynamoMock.mockResolvedValueOnce({} as Awaited<ReturnType<typeof dynamo.scanDynamo>>);
+        await handler(mockEvent, mockContext, mockCallback);
+        expect(mocks.abortMock).not.toHaveBeenCalled();
+        expect(mocks.startS3Upload).toHaveBeenCalled();
+    });
+
+    it("silently logs an error when an observation cannot be parsed from DynamoDB", async () => {
+        const mockObservations = [
+            {
+                PK: "test-PK-1",
+                SK: "test-SK-1",
+            },
+        ];
+
+        scanDynamoMock.mockResolvedValueOnce({ Items: mockObservations } as unknown as Awaited<
+            ReturnType<typeof dynamo.scanDynamo>
+        >);
 
         await handler(mockEvent, mockContext, mockCallback);
 
-        expect(logger.info).toHaveBeenCalledWith("Creating report with 0 observations");
-        expect(putS3Object).toHaveBeenCalledWith({
-            Bucket: "test-bucket",
-            Key: "20250108.csv",
-            ContentType: "text/csv",
-            Body: csvContent,
+        expect(logger.error).toHaveBeenCalledWith(expect.anything(), "Error parsing dynamo item");
+    });
+
+    it("aborts the report upload when an unexpected error occurs", async () => {
+        const mockObservations: DynamoDbObservation[] = [
+            {
+                PK: "test-PK-1",
+                SK: "test-SK-1",
+                timeToExist: 0,
+                dataSource: "test-dataSource-1",
+                noc: "test-noc-1",
+                region: "test-region-1",
+                importance: "critical",
+                category: "dataset",
+                observation: "Duplicate journey",
+                registrationNumber: "test-registrationNumber-1",
+                service: "test-service-1",
+                details: "test-details-1",
+            },
+        ];
+
+        scanDynamoMock.mockResolvedValueOnce({ Items: mockObservations } as unknown as Awaited<
+            ReturnType<typeof dynamo.scanDynamo>
+        >);
+
+        mocks.appendMock.mockImplementationOnce(() => {
+            throw new Error("Unexpected error");
         });
+
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("Unexpected error");
+
+        expect(mocks.abortMock).toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalledWith(expect.anything(), "Error creating and uploading zip file");
     });
 });

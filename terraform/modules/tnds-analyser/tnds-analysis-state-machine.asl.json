@@ -14,7 +14,7 @@
             "States.ALL"
           ],
           "IntervalSeconds": 1,
-          "MaxAttempts": 3
+          "MaxAttempts": 5
         }
       ],
       "Next": "Get TNDS TXC Object Keys",
@@ -68,7 +68,7 @@
         "Resource": "arn:aws:states:::s3:listObjectsV2",
         "Parameters": {
           "Bucket": "${tnds_txc_bucket_name}",
-          "Prefix.$": "$.prefix"
+          "Prefix.$": "$.date"
         }
       },
       "MaxConcurrency": 10,
@@ -82,7 +82,7 @@
       "Parameters": {
         "FunctionName": "${tnds_reporter_function_arn}:$LATEST",
         "Payload": {
-          "prefix.$": "$.prefix"
+          "date.$": "$.date"
         }
       },
       "End": true

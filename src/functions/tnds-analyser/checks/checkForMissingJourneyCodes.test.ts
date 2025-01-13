@@ -92,8 +92,6 @@ describe("checkForMissingJourneyCodes", () => {
         const result = checkForMissingJourneyCodes(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "",
-                SK: "",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
@@ -102,8 +100,6 @@ describe("checkForMissingJourneyCodes", () => {
                 details: "The (08:00) outbound journey is missing a journey code.",
             },
             {
-                PK: "",
-                SK: "",
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",

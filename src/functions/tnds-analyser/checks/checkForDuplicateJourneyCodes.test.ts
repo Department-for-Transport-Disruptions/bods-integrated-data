@@ -115,8 +115,6 @@ describe("checkForDuplicateJourneyCodes", () => {
         const result = checkForDuplicateJourneyCodes(data);
         expect(result).toEqual<Observation[]>([
             {
-                PK: "",
-                SK: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",
@@ -125,8 +123,6 @@ describe("checkForDuplicateJourneyCodes", () => {
                 details: "The Journey Code (VJ1) is found in more than one vehicle journey.",
             },
             {
-                PK: "",
-                SK: "",
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",

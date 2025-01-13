@@ -39,8 +39,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                 }
 
                 observations.push({
-                    PK: "",
-                    SK: "",
                     importance: "advisory",
                     category: "journey",
                     observation: "Missing bus working number",
