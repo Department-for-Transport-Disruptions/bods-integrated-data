@@ -87,18 +87,18 @@ export const handler: Handler = async (event, context) => {
         (typeof observationType)[number],
         Record<string, ObservationSummaryByObservationType>
     > = {
-        "No timing point for more than 15 minutes": {},
-        "First stop is not a timing point": {},
-        "Last stop is not a timing point": {},
-        "Last stop is pick up only": {},
-        "First stop is set down only": {},
-        "Stop not found in NaPTAN": {},
-        "Incorrect stop type": {},
-        "Missing journey code": {},
         "Duplicate journey code": {},
         "Duplicate journey": {},
+        "First stop is not a timing point": {},
+        "First stop is set down only": {},
+        "Incorrect stop type": {},
+        "Last stop is not a timing point": {},
+        "Last stop is pick up only": {},
         "Missing bus working number": {},
+        "Missing journey code": {},
+        "No timing point for more than 15 minutes": {},
         "Serviced organisation out of date": {},
+        "Stop not found in NaPTAN": {},
     };
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
