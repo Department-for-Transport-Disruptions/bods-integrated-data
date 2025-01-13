@@ -8,6 +8,7 @@ import {
     QueryCommandInput,
     ScanCommand,
     ScanCommandInput,
+    ScanCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 import { chunkArray } from "./utils";
@@ -79,6 +80,10 @@ export const getDynamoItem = async <T extends Record<string, unknown>>(
     );
 
     return data.Item ? (data.Item as T) : null;
+};
+
+export const scanDynamo = async (scanCommandInput: ScanCommandInput): Promise<ScanCommandOutput> => {
+    return await dynamoDbDocClient.send(new ScanCommand(scanCommandInput));
 };
 
 export const recursiveScan = async <T extends Record<string, unknown>>(
