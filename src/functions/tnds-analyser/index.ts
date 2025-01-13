@@ -126,6 +126,7 @@ export const handler: Handler = async (event, context) => {
 
     const record = event.Records[0];
     const filename = record.s3.object.key;
+    const dataSource = record.s3.bucket.name.includes("-tnds-") ? "tnds" : "bods";
     const region = filename.split("/")[1]; // only works for TNDS files
 
     if (!filename.endsWith(".xml")) {
@@ -166,7 +167,7 @@ export const handler: Handler = async (event, context) => {
         observations[i].timeToExist = timeToExist;
         observations[i].noc = noc;
         observations[i].region = region;
-        observations[i].dataSource = event.dataSource;
+        observations[i].dataSource = dataSource;
     }
 
     if (observations.length) {

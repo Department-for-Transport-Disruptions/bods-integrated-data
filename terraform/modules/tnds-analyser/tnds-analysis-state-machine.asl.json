@@ -35,7 +35,6 @@
             "Parameters": {
               "FunctionName": "${tnds_analyser_function_arn}:$LATEST",
               "Payload": {
-                "dataSource": "tnds",
                 "Records": [
                   {
                     "s3": {
