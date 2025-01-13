@@ -126,6 +126,7 @@ export const handler: Handler = async (event, context) => {
 
     const record = event.Records[0];
     const filename = record.s3.object.key;
+    const region = filename.split("/")[1]; // only works for TNDS files
 
     if (!filename.endsWith(".xml")) {
         logger.info("Ignoring non-xml file");
@@ -147,6 +148,14 @@ export const handler: Handler = async (event, context) => {
         ...checkForNoTimingPointForThan15Minutes(txcData),
     ];
 
+    let noc = "unknown";
+
+    const operators = txcData.TransXChange?.Operators?.Operator;
+
+    if (operators) {
+        noc = operators[0].OperatorCode || "unknown";
+    }
+
     // Even though the observation table is cleared beforehand in the step function,
     // it's worth having DynamoDB clear old entries to speed up the clear down process
     const timeToExist = getDate().add(6, "hours").unix();
@@ -155,6 +164,8 @@ export const handler: Handler = async (event, context) => {
         observations[i].PK = filename;
         observations[i].SK = i.toString();
         observations[i].timeToExist = timeToExist;
+        observations[i].noc = noc;
+        observations[i].region = region;
     }
 
     if (observations.length) {
