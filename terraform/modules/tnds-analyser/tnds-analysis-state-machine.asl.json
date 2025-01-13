@@ -14,7 +14,7 @@
             "States.ALL"
           ],
           "IntervalSeconds": 1,
-          "MaxAttempts": 3
+          "MaxAttempts": 5
         }
       ],
       "Next": "Get TNDS TXC Object Keys",

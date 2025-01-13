@@ -166,6 +166,7 @@ export const handler: Handler = async (event, context) => {
         observations[i].timeToExist = timeToExist;
         observations[i].noc = noc;
         observations[i].region = region;
+        observations[i].dataSource = event.dataSource;
     }
 
     if (observations.length) {
