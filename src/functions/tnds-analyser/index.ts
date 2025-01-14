@@ -118,7 +118,7 @@ const getAndParseNaptanFile = async (naptanBucketName: string) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TNDS_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME } = process.env;
+    const { TNDS_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME, GENERATE_ADVISORY_OBSERVATION_DETAIL } = process.env;
 
     if (!TNDS_OBSERVATION_TABLE_NAME || !NAPTAN_BUCKET_NAME) {
         throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME and NAPTAN_BUCKET_NAME must be set");
@@ -169,6 +169,7 @@ export const handler: Handler = async (event, context) => {
         region: region,
         dataSource: dataSource,
         ...observation,
+        details: GENERATE_ADVISORY_OBSERVATION_DETAIL ? observation.details : undefined,
     }));
 
     if (observations.length) {

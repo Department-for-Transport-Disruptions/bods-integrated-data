@@ -6,7 +6,7 @@ export const observationSchema = z.object({
     category: z.enum(observationCategory),
     observation: z.enum(observationType),
     service: z.string(),
-    details: z.string(),
+    details: z.string().optional(),
 });
 
 export type Observation = z.infer<typeof observationSchema>;

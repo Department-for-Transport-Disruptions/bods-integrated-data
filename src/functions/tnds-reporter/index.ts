@@ -188,7 +188,7 @@ export const handler: Handler = async (event, context) => {
                             Region: observation.region,
                             File: file,
                             "National Operator Code": observation.noc,
-                            "Line Name": observation.registrationNumber,
+                            "Line Name": observation.service,
                             Quantity: 0,
                         };
                     }
