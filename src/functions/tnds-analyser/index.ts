@@ -1,6 +1,5 @@
 import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { NaptanStop } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -157,14 +156,9 @@ export const handler: Handler = async (event, context) => {
         noc = operators[0].OperatorCode || "unknown";
     }
 
-    // Even though the observation table is cleared beforehand in the step function,
-    // it's worth having DynamoDB clear old entries to speed up the clear down process
-    const timeToExist = getDate().add(18, "hours").unix();
-
     const dynamoDbObservations: DynamoDbObservation[] = observations.map((observation, i) => ({
         PK: filename,
         SK: i.toString(),
-        timeToExist: timeToExist,
         noc: noc,
         region: region,
         dataSource: dataSource,

@@ -16,7 +16,6 @@ export const dynamoDbObservationSchema = observationSchema.and(
     z.object({
         PK: z.string(),
         SK: z.string(),
-        timeToExist: z.number(),
         dataSource: z.string(),
         noc: z.string(),
         region: z.string(),
