@@ -117,7 +117,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 }
 
                                 observations.push({
-                                    importance: "advisory",
+                                    importance: "critical",
                                     category: "stop",
                                     observation: "First stop is set down only",
                                     service: lineName,
@@ -141,7 +141,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 }
 
                                 observations.push({
-                                    importance: "advisory",
+                                    importance: "critical",
                                     category: "stop",
                                     observation: "Last stop is pick up only",
                                     service: lineName,
