@@ -77,7 +77,6 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
-                registrationNumber: "n/a",
                 service: "n/a",
                 details:
                     "The Working Days for Serviced Organisation Test Organisation 1 (servicedOrg1) has expired on 2025-01-06. Please update the dates for this Serviced Organisation.",
@@ -86,7 +85,6 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                 importance: "advisory",
                 category: "dataset",
                 observation: "Serviced organisation out of date",
-                registrationNumber: "n/a",
                 service: "n/a",
                 details:
                     "The Working Days for Serviced Organisation unknown name (unknown code) has expired on 2025-01-05. Please update the dates for this Serviced Organisation.",

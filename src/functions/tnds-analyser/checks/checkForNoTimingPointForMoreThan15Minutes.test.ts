@@ -14,7 +14,6 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                     "The link between the 08:00:00 Stop 2 (SP2) and 08:20:00 n/a (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
                 importance: "advisory",
                 observation: "No timing point for more than 15 minutes",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
             {
@@ -23,7 +22,6 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                     "The link between the 08:40:00 Stop 4 (SP4) and 09:00:00 n/a (SP5) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
                 importance: "advisory",
                 observation: "No timing point for more than 15 minutes",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
         ];
@@ -163,7 +161,6 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                         "The link between the 08:00:00 Stop 2 (SP2) and 08:20:00 n/a (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
                     importance: "advisory",
                     observation: "No timing point for more than 15 minutes",
-                    registrationNumber: "SVC1",
                     service: "Line 1",
                 },
             ],

@@ -18,7 +18,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                 ) {
                     duplicateVehicleJourneyCodes.push(vehicleJourney.VehicleJourneyCode);
 
-                    let serviceCode = "n/a";
                     let lineName = "n/a";
                     const services = txcData.TransXChange?.Services;
 
@@ -28,7 +27,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         );
 
                         if (service) {
-                            serviceCode = service.ServiceCode;
                             const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                             if (line) {
@@ -41,7 +39,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         importance: "advisory",
                         category: "journey",
                         observation: "Duplicate journey code",
-                        registrationNumber: serviceCode,
                         service: lineName,
                         details: `The Journey Code (${vehicleJourney.VehicleJourneyCode}) is found in more than one vehicle journey.`,
                     });

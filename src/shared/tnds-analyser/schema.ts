@@ -5,7 +5,6 @@ export const observationSchema = z.object({
     importance: z.enum(observationImportance),
     category: z.enum(observationCategory),
     observation: z.enum(observationType),
-    registrationNumber: z.string(),
     service: z.string(),
     details: z.string(),
 });

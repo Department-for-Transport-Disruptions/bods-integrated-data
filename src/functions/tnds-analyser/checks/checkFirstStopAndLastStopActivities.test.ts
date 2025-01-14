@@ -14,7 +14,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The first stop (Stop 1) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
                 importance: "advisory",
                 observation: "First stop is set down only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
             {
@@ -23,7 +22,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The last stop (Stop 2) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
                 importance: "advisory",
                 observation: "Last stop is pick up only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
         ];
@@ -42,7 +40,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The first stop (Stop 1) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
                 importance: "advisory",
                 observation: "First stop is set down only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
             {
@@ -51,7 +48,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The last stop (Stop 4) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
                 importance: "advisory",
                 observation: "Last stop is pick up only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
         ];
@@ -114,7 +110,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The first stop (n/a) on the 08:00:00 outbound journey is incorrectly set to set down passengers.",
                 importance: "advisory",
                 observation: "First stop is set down only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
             {
@@ -123,7 +118,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The last stop (n/a) on the 08:00:00 outbound journey is incorrectly set to pick up passengers.",
                 importance: "advisory",
                 observation: "Last stop is pick up only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
         ];
@@ -147,7 +141,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The first stop (Stop 1) on the unknown departure time outbound journey is incorrectly set to set down passengers.",
                 importance: "advisory",
                 observation: "First stop is set down only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
             {
@@ -156,7 +149,6 @@ describe("checkFirstStopAndLastStopActivities", () => {
                     "The last stop (Stop 2) on the unknown departure time outbound journey is incorrectly set to pick up passengers.",
                 importance: "advisory",
                 observation: "Last stop is pick up only",
-                registrationNumber: "SVC1",
                 service: "Line 1",
             },
         ];
