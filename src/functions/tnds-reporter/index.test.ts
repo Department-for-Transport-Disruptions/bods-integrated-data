@@ -63,7 +63,6 @@ describe("tnds-reporter", () => {
             {
                 PK: "test-PK-1",
                 SK: "test-SK-1",
-                timeToExist: 0,
                 dataSource: "test-dataSource-1",
                 noc: "test-noc-1",
                 region: "test-region-1",
@@ -79,7 +78,6 @@ describe("tnds-reporter", () => {
             {
                 PK: "test-PK-1",
                 SK: "test-SK-2",
-                timeToExist: 0,
                 dataSource: "test-dataSource-2",
                 noc: "test-noc-2",
                 region: "test-region-2",
@@ -92,7 +90,6 @@ describe("tnds-reporter", () => {
             {
                 PK: "test-PK-1",
                 SK: "test-SK-3",
-                timeToExist: 0,
                 dataSource: "test-dataSource-2",
                 noc: "test-noc-2",
                 region: "test-region-2",
@@ -179,7 +176,6 @@ describe("tnds-reporter", () => {
             {
                 PK: "test-PK-1",
                 SK: "test-SK-1",
-                timeToExist: 0,
                 dataSource: "test-dataSource-1",
                 noc: "test-noc-1",
                 region: "test-region-1",
