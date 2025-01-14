@@ -12,12 +12,8 @@ terraform {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-module "integrated_data_tnds_observation_table" {
-  source = "../shared/dynamo-table"
-
-  environment   = var.environment
-  table_name    = "integrated-data-tnds-observation-table"
-  ttl_attribute = "timeToExist"
+locals {
+  tnds_observation_table_name = "integrated-data-tnds-observation-table-${var.environment}"
 }
 
 resource "aws_s3_bucket" "integrated_data_tnds_analysis_bucket" {
@@ -37,15 +33,15 @@ module "integrated_data_tnds_analysis_cleardown_function" {
 
   permissions = [
     {
-      Action   = ["dynamodb:Scan", "dynamodb:BatchWriteItem"],
+      Action   = ["dynamodb:CreateTable", "dynamodb:DeleteTable", "dynamodb:DescribeTable"],
       Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_tnds_observation_table.table_name}"
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${local.tnds_observation_table_name}"
     }
   ]
 
   env_vars = {
     STAGE                       = var.environment
-    TNDS_OBSERVATION_TABLE_NAME = module.integrated_data_tnds_observation_table.table_name
+    TNDS_OBSERVATION_TABLE_NAME = local.tnds_observation_table_name
   }
 }
 
@@ -64,7 +60,7 @@ module "integrated_data_tnds_analyser_function" {
     {
       Action   = ["dynamodb:BatchWriteItem"],
       Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_tnds_observation_table.table_name}"
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${local.tnds_observation_table_name}"
     },
     {
       Action = [
@@ -77,7 +73,7 @@ module "integrated_data_tnds_analyser_function" {
 
   env_vars = {
     STAGE                       = var.environment
-    TNDS_OBSERVATION_TABLE_NAME = module.integrated_data_tnds_observation_table.table_name
+    TNDS_OBSERVATION_TABLE_NAME = local.tnds_observation_table_name
     NAPTAN_BUCKET_NAME          = var.naptan_bucket_name
   }
 }
@@ -97,7 +93,7 @@ module "integrated_data_tnds_reporter_function" {
     {
       Action   = ["dynamodb:Scan"],
       Effect   = "Allow",
-      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${module.integrated_data_tnds_observation_table.table_name}"
+      Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${local.tnds_observation_table_name}"
     },
     {
       Action = [
@@ -110,7 +106,7 @@ module "integrated_data_tnds_reporter_function" {
 
   env_vars = {
     STAGE                       = var.environment
-    TNDS_OBSERVATION_TABLE_NAME = module.integrated_data_tnds_observation_table.table_name
+    TNDS_OBSERVATION_TABLE_NAME = local.tnds_observation_table_name
     TNDS_ANALYSIS_BUCKET_NAME   = aws_s3_bucket.integrated_data_tnds_analysis_bucket.id
   }
 }

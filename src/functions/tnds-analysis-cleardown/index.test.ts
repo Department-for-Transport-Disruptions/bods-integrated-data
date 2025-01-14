@@ -1,16 +1,33 @@
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { DynamoDbObservation } from "@bods-integrated-data/shared/tnds-analyser/schema";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import MockDate from "mockdate";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 
 describe("tnds-reporter", () => {
-    const scanDynamoMock = vi.spyOn(dynamo, "scanDynamo");
-    const deleteDynamoItemsMock = vi.spyOn(dynamo, "deleteDynamoItems");
+    const deleteTableMock = vi.spyOn(dynamo, "deleteTable");
+    const createTableMock = vi.spyOn(dynamo, "createTable");
+    const waitUntilTableExistsMock = vi.spyOn(dynamo, "waitUntilTableExists");
+    const waitUntilTableNotExistsMock = vi.spyOn(dynamo, "waitUntilTableNotExists");
+
+    beforeAll(() => {
+        MockDate.set("2025-01-07T00:00:00.000Z");
+    });
+
+    afterAll(() => {
+        MockDate.reset();
+    });
 
     beforeEach(() => {
         vi.clearAllMocks();
         process.env.TNDS_OBSERVATION_TABLE_NAME = "test-table";
+
+        waitUntilTableExistsMock.mockResolvedValue({ state: "SUCCESS" } as Awaited<
+            ReturnType<typeof dynamo.waitUntilTableExists>
+        >);
+        waitUntilTableNotExistsMock.mockResolvedValue({ state: "SUCCESS" } as Awaited<
+            ReturnType<typeof dynamo.waitUntilTableNotExists>
+        >);
     });
 
     it("throws an error when the required env vars are missing", async () => {
@@ -21,65 +38,43 @@ describe("tnds-reporter", () => {
         );
     });
 
-    it("clears down the dynamo table", async () => {
-        const mockObservations: DynamoDbObservation[] = [
-            {
-                PK: "test-PK-1",
-                SK: "test-SK-1",
-                dataSource: "test-dataSource-1",
-                noc: "test-noc-1",
-                region: "test-region-1",
-                importance: "critical",
-                category: "dataset",
-                observation: "Duplicate journey",
-                service: "test-service-1",
-                details: "test-details-1",
-            },
-            {
-                PK: "test-PK-1",
-                SK: "test-SK-2",
-                dataSource: "test-dataSource-2",
-                noc: "test-noc-2",
-                region: "test-region-2",
-                importance: "advisory",
-                category: "dataset",
-                observation: "First stop is not a timing point",
-                service: "test-service-2",
-                details: "test-details-2",
-            },
-            {
-                PK: "test-PK-1",
-                SK: "test-SK-3",
-                dataSource: "test-dataSource-2",
-                noc: "test-noc-2",
-                region: "test-region-2",
-                importance: "advisory",
-                category: "dataset",
-                observation: "First stop is not a timing point",
-                service: "test-service-2",
-                details: "test-details-2",
-            },
-        ];
+    it("deletes and recreates the dynamo table", async () => {
+        deleteTableMock.mockResolvedValueOnce({ $metadata: {} });
+        createTableMock.mockResolvedValueOnce({ $metadata: {} });
 
-        scanDynamoMock.mockResolvedValueOnce({ Items: mockObservations } as unknown as Awaited<
-            ReturnType<typeof dynamo.scanDynamo>
-        >);
+        const response = await handler(mockEvent, mockContext, mockCallback);
 
-        deleteDynamoItemsMock.mockResolvedValueOnce();
-
-        await handler(mockEvent, mockContext, mockCallback);
-
-        expect(deleteDynamoItemsMock).toHaveBeenCalledTimes(1);
-        expect(deleteDynamoItemsMock).toHaveBeenCalledWith("test-table", mockObservations);
+        expect(deleteTableMock).toHaveBeenCalled();
+        expect(waitUntilTableNotExistsMock).toHaveBeenCalled();
+        expect(createTableMock).toHaveBeenCalled();
+        expect(waitUntilTableExistsMock).toHaveBeenCalled();
+        expect(response).toEqual({ date: "20250107" });
     });
 
-    it("doesn't clear down the table if it has no items", async () => {
-        scanDynamoMock.mockResolvedValueOnce({} as Awaited<ReturnType<typeof dynamo.scanDynamo>>);
-
-        deleteDynamoItemsMock.mockResolvedValueOnce();
+    it("doesn't throw an error when deleting a non-existent table that returns a not found exception", async () => {
+        deleteTableMock.mockRejectedValueOnce({ name: "ResourceNotFoundException" });
+        createTableMock.mockResolvedValueOnce({ $metadata: {} });
 
         await handler(mockEvent, mockContext, mockCallback);
 
-        expect(deleteDynamoItemsMock).not.toHaveBeenCalled();
+        expect(createTableMock).toHaveBeenCalled();
+    });
+
+    it("throws an error when deleting a non-existent table that returns an exception other than a not found exception", async () => {
+        deleteTableMock.mockRejectedValueOnce(new Error("Some other exception"));
+        createTableMock.mockResolvedValueOnce({ $metadata: {} });
+
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("Some other exception");
+
+        expect(waitUntilTableNotExistsMock).not.toHaveBeenCalled();
+        expect(createTableMock).not.toHaveBeenCalled();
+    });
+
+    it("overrides the date with the one from the event if set", async () => {
+        deleteTableMock.mockResolvedValueOnce({ $metadata: {} });
+        createTableMock.mockResolvedValueOnce({ $metadata: {} });
+
+        const response = await handler({ date: "20250114" }, mockContext, mockCallback);
+        expect(response).toEqual({ date: "20250114" });
     });
 });

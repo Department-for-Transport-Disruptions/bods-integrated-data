@@ -1,8 +1,8 @@
 {
   "Comment": "Analyse today's TNDS data and generate a CSV report",
-  "StartAt": "Clear Down Table",
+  "StartAt": "Create Observation Table",
   "States": {
-    "Clear Down Table": {
+    "Create Observation Table": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "Parameters": {

@@ -1,5 +1,10 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { deleteDynamoItems, scanDynamo } from "@bods-integrated-data/shared/dynamo";
+import {
+    createTable,
+    deleteTable,
+    waitUntilTableExists,
+    waitUntilTableNotExists,
+} from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
 import { z } from "zod";
@@ -15,21 +20,31 @@ export const handler: Handler = async (event, context) => {
         throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME must be set");
     }
 
-    let dynamoScanStartKey: Record<string, string> | undefined = undefined;
-
-    do {
-        const dynamoScanOutput = await scanDynamo({
-            TableName: TNDS_OBSERVATION_TABLE_NAME,
-            ExclusiveStartKey: dynamoScanStartKey,
-        });
-        dynamoScanStartKey = dynamoScanOutput.LastEvaluatedKey;
-
-        if (dynamoScanOutput.Items) {
-            await deleteDynamoItems(TNDS_OBSERVATION_TABLE_NAME, dynamoScanOutput.Items);
+    try {
+        await deleteTable({ TableName: TNDS_OBSERVATION_TABLE_NAME });
+        await waitUntilTableNotExists(TNDS_OBSERVATION_TABLE_NAME);
+    } catch (error) {
+        if (error instanceof Error && error.name !== "ResourceNotFoundException") {
+            throw error;
         }
-    } while (dynamoScanStartKey);
+    }
+
+    await createTable({
+        TableName: TNDS_OBSERVATION_TABLE_NAME,
+        AttributeDefinitions: [
+            { AttributeName: "PK", AttributeType: "S" },
+            { AttributeName: "SK", AttributeType: "S" },
+        ],
+        KeySchema: [
+            { AttributeName: "PK", KeyType: "HASH" },
+            { AttributeName: "SK", KeyType: "RANGE" },
+        ],
+        BillingMode: "PAY_PER_REQUEST",
+    });
+
+    await waitUntilTableExists(TNDS_OBSERVATION_TABLE_NAME);
 
     return {
-        date: getDate().format("YYYYMMDD"),
+        date: event?.date || getDate().format("YYYYMMDD"),
     };
 };
