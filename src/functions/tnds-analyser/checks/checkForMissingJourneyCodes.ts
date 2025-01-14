@@ -11,7 +11,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
             if (!vehicleJourney.VehicleJourneyCode) {
                 let serviceCode = "n/a";
                 let lineName = "n/a";
-                let direction = "";
+                let direction = "unknown direction";
                 const departureTime = vehicleJourney.DepartureTime || "unknown departure time";
                 const services = txcData.TransXChange?.Services;
 
@@ -33,7 +33,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         );
 
                         if (journeyPattern?.Direction) {
-                            direction = `${journeyPattern.Direction} `;
+                            direction = journeyPattern.Direction;
                         }
                     }
                 }
@@ -44,7 +44,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     observation: "Missing journey code",
                     registrationNumber: serviceCode,
                     service: lineName,
-                    details: `The (${departureTime}) ${direction}journey is missing a journey code.`,
+                    details: `The (${departureTime}) ${direction} journey is missing a journey code.`,
+                    extraColumns: {
+                        "Departure Time": departureTime,
+                        Direction: direction,
+                    },
                 });
             }
         }

@@ -11,7 +11,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
             if (!vehicleJourney.Operational?.Block?.BlockNumber) {
                 let serviceCode = "n/a";
                 let lineName = "n/a";
-                let direction = "";
+                let direction = "unknown direction";
                 const departureTime = vehicleJourney.DepartureTime || "unknown departure time";
                 const services = txcData.TransXChange?.Services;
 
@@ -33,7 +33,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         );
 
                         if (journeyPattern?.Direction) {
-                            direction = `${journeyPattern.Direction} `;
+                            direction = journeyPattern.Direction;
                         }
                     }
                 }
@@ -44,7 +44,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     observation: "Missing bus working number",
                     registrationNumber: serviceCode,
                     service: lineName,
-                    details: `The (${departureTime}) ${direction}journey has not been assigned a bus working number (i.e. block number).`,
+                    details: `The (${departureTime}) ${direction} journey has not been assigned a bus working number (i.e. block number).`,
                 });
             }
         }

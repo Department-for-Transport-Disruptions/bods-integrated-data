@@ -3,7 +3,6 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { scanDynamo } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { startS3Upload } from "@bods-integrated-data/shared/s3";
-import { observationType } from "@bods-integrated-data/shared/tnds-analyser/constants";
 import { dynamoDbObservationSchema } from "@bods-integrated-data/shared/tnds-analyser/schema";
 import archiver from "archiver";
 import { Handler } from "aws-lambda";
@@ -67,7 +66,13 @@ const createCsv = <T extends Record<string, U>, U>(data: T[]) => {
         return null;
     }
 
-    return `${Object.keys(data[0]).join(",")}\r\n${data.map((row) => Object.values(row).join(",")).join("\r\n")}\r\n`;
+    const dataRows = data.map((row) =>
+        Object.values(row)
+            .map((value) => (typeof value === "string" ? value.replaceAll(",", "") : value))
+            .join(","),
+    );
+
+    return `${Object.keys(data[0]).join(",")}\r\n${dataRows.join("\r\n")}\r\n`;
 };
 
 export const handler: Handler = async (event, context) => {
@@ -83,23 +88,11 @@ export const handler: Handler = async (event, context) => {
     const formattedDate = getDate(date).format("DD/MM/YYYY");
     const observationByDataSourceMap: Record<string, ObservationSummaryByDataSource> = {};
     const observationByFileMap: Record<string, ObservationSummaryByFile> = {};
-    const observationByObservationTypesMap: Record<
-        (typeof observationType)[number],
+    const observationByObservationTypesMap: Record<string, Record<string, ObservationSummaryByObservationType>> = {};
+    const criticalObservationByObservationTypesMap: Record<
+        string,
         Record<string, ObservationSummaryByObservationType>
-    > = {
-        "Duplicate journey code": {},
-        "Duplicate journey": {},
-        "First stop is not a timing point": {},
-        "First stop is set down only": {},
-        "Incorrect stop type": {},
-        "Last stop is not a timing point": {},
-        "Last stop is pick up only": {},
-        "Missing bus working number": {},
-        "Missing journey code": {},
-        "No timing point for more than 15 minutes": {},
-        "Serviced organisation out of date": {},
-        "Stop not found in NaPTAN": {},
-    };
+    > = {};
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
 
@@ -115,7 +108,8 @@ export const handler: Handler = async (event, context) => {
                 try {
                     const observation = dynamoDbObservationSchema.parse(item);
                     const dataSource = observation.dataSource;
-                    const file = observation.PK;
+                    const filepath = observation.PK;
+                    const filename = filepath.substring(filepath.indexOf("/") + 1);
                     const observationType = observation.observation;
 
                     if (!observationByDataSourceMap[dataSource]) {
@@ -149,11 +143,11 @@ export const handler: Handler = async (event, context) => {
                         observationByDataSourceMap[dataSource]["Advisory observations"]++;
                     }
 
-                    if (!observationByFileMap[file]) {
-                        observationByFileMap[file] = {
+                    if (!observationByFileMap[filepath]) {
+                        observationByFileMap[filepath] = {
                             "Dataset Date": formattedDate,
                             Region: observation.region,
-                            File: file,
+                            File: filename,
                             "Data Source": dataSource,
                             "Total observations": 0,
                             "Critical observations": 0,
@@ -173,27 +167,49 @@ export const handler: Handler = async (event, context) => {
                         };
                     }
 
-                    observationByFileMap[file]["Total observations"]++;
-                    observationByFileMap[file][observationType]++;
+                    observationByFileMap[filepath]["Total observations"]++;
+                    observationByFileMap[filepath][observationType]++;
 
                     if (observation.importance === "critical") {
-                        observationByFileMap[file]["Critical observations"]++;
+                        observationByFileMap[filepath]["Critical observations"]++;
                     } else {
-                        observationByFileMap[file]["Advisory observations"]++;
+                        observationByFileMap[filepath]["Advisory observations"]++;
                     }
 
-                    if (!observationByObservationTypesMap[observationType][file]) {
-                        observationByObservationTypesMap[observationType][file] = {
+                    if (!observationByObservationTypesMap[observationType]) {
+                        observationByObservationTypesMap[observationType] = {};
+                    }
+
+                    if (!observationByObservationTypesMap[observationType][filepath]) {
+                        observationByObservationTypesMap[observationType][filepath] = {
                             "Dataset Date": formattedDate,
                             Region: observation.region,
-                            File: file,
+                            File: filename,
                             "National Operator Code": observation.noc,
-                            "Line Name": observation.registrationNumber,
+                            "Line Name": observation.service,
                             Quantity: 0,
                         };
                     }
 
-                    observationByObservationTypesMap[observationType][file].Quantity++;
+                    observationByObservationTypesMap[observationType][filepath].Quantity++;
+
+                    if (observation.importance === "critical") {
+                        if (!criticalObservationByObservationTypesMap[observationType]) {
+                            criticalObservationByObservationTypesMap[observationType] = {};
+                        }
+
+                        const observationKey = `${observation.PK}#${observation.SK}`;
+
+                        criticalObservationByObservationTypesMap[observationType][observationKey] = {
+                            "Dataset Date": formattedDate,
+                            Region: observation.region,
+                            File: filename,
+                            "National Operator Code": observation.noc,
+                            "Line Name": observation.service,
+                            Quantity: 1,
+                            ...observation.extraColumns,
+                        };
+                    }
                 } catch (error) {
                     logger.error(error, "Error parsing dynamo item");
                 }
@@ -211,13 +227,13 @@ export const handler: Handler = async (event, context) => {
         const observationByDataSourceItemsCsv = createCsv(Object.values(observationByDataSourceMap));
 
         if (observationByDataSourceItemsCsv) {
-            archive.append(observationByDataSourceItemsCsv, { name: "observationSummariesByDataSource.csv" });
+            archive.append(observationByDataSourceItemsCsv, { name: `${date}/observationSummariesByDataSource.csv` });
         }
 
         const observationByFileItemsCsv = createCsv(Object.values(observationByFileMap));
 
         if (observationByFileItemsCsv) {
-            archive.append(observationByFileItemsCsv, { name: "observationSummariesByFile.csv" });
+            archive.append(observationByFileItemsCsv, { name: `${date}/observationSummariesByFile.csv` });
         }
 
         for (const [observationType, observationByObservationTypeMap] of Object.entries(
@@ -227,7 +243,19 @@ export const handler: Handler = async (event, context) => {
 
             if (observationByObservationTypeCsv) {
                 archive.append(observationByObservationTypeCsv, {
-                    name: `observationSummariesByObservationType/${observationType}.csv`,
+                    name: `${date}/observationSummariesByObservationType/${observationType}.csv`,
+                });
+            }
+        }
+
+        for (const [observationType, observationByObservationTypeMap] of Object.entries(
+            criticalObservationByObservationTypesMap,
+        )) {
+            const observationByObservationTypeCsv = createCsv(Object.values(observationByObservationTypeMap));
+
+            if (observationByObservationTypeCsv) {
+                archive.append(observationByObservationTypeCsv, {
+                    name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
                 });
             }
         }

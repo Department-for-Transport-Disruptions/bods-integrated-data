@@ -17,6 +17,10 @@ describe("checkStopsAgainstNaptan", () => {
                 observation: "Incorrect stop type",
                 registrationNumber: "n/a",
                 service: "n/a",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Stop Point Ref": "SP1",
+                },
             },
             {
                 category: "stop",
@@ -26,6 +30,10 @@ describe("checkStopsAgainstNaptan", () => {
                 observation: "Stop not found in NaPTAN",
                 registrationNumber: "n/a",
                 service: "n/a",
+                extraColumns: {
+                    "Stop Name": "Stop 2",
+                    "Stop Point Ref": "SP2",
+                },
             },
         ]);
     });
