@@ -9,7 +9,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
             if (!vehicleJourney.VehicleJourneyCode) {
-                let serviceCode = "n/a";
                 let lineName = "n/a";
                 let direction = "unknown direction";
                 const departureTime = vehicleJourney.DepartureTime || "unknown departure time";
@@ -21,7 +20,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     );
 
                     if (service) {
-                        serviceCode = service.ServiceCode;
                         const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                         if (line) {
@@ -42,7 +40,6 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     importance: "critical",
                     category: "journey",
                     observation: "Missing journey code",
-                    registrationNumber: serviceCode,
                     service: lineName,
                     details: `The (${departureTime}) ${direction} journey is missing a journey code.`,
                     extraColumns: {

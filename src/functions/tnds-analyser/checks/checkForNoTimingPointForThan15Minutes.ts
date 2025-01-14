@@ -18,7 +18,6 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
 
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
-            let serviceCode = "n/a";
             let lineName = "n/a";
             let direction = "unknown direction";
 
@@ -35,7 +34,6 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                     );
 
                     if (service) {
-                        serviceCode = service.ServiceCode;
                         const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                         if (line) {
@@ -98,7 +96,6 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                             importance: "advisory",
                                             category: "timing",
                                             observation: "No timing point for more than 15 minutes",
-                                            registrationNumber: serviceCode,
                                             service: lineName,
                                             details: `The link between the ${previousStop.departureTime.format(
                                                 "HH:mm:ss",

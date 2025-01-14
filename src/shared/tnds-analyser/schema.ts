@@ -5,9 +5,8 @@ export const observationSchema = z.object({
     importance: z.enum(observationImportance),
     category: z.enum(observationCategory),
     observation: z.enum(observationType),
-    registrationNumber: z.string(),
     service: z.string(),
-    details: z.string(),
+    details: z.string().optional(),
     extraColumns: z.record(z.string(), z.string()).optional(),
 });
 
@@ -17,7 +16,6 @@ export const dynamoDbObservationSchema = observationSchema.and(
     z.object({
         PK: z.string(),
         SK: z.string(),
-        timeToExist: z.number(),
         dataSource: z.string(),
         noc: z.string(),
         region: z.string(),

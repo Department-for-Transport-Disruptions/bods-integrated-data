@@ -200,7 +200,6 @@ describe("checkForDuplicateJourneys", () => {
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey",
-                registrationNumber: "service1",
                 service: "Line 1",
                 details:
                     "The journey (with code VJ2) has the same departure time, route and operating profile as another journey.",

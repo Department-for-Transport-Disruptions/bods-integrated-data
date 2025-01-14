@@ -10,7 +10,6 @@ describe("checkForMissingBusWorkingNumber", () => {
                 importance: "advisory",
                 category: "journey",
                 observation: "Missing bus working number",
-                registrationNumber: "SVC1",
                 service: "Line 1",
                 details:
                     "The (08:00:00) outbound journey has not been assigned a bus working number (i.e. block number).",

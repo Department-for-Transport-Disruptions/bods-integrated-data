@@ -1,6 +1,5 @@
 import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { NaptanStop } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -118,7 +117,7 @@ const getAndParseNaptanFile = async (naptanBucketName: string) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TNDS_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME } = process.env;
+    const { TNDS_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME, GENERATE_ADVISORY_OBSERVATION_DETAIL } = process.env;
 
     if (!TNDS_OBSERVATION_TABLE_NAME || !NAPTAN_BUCKET_NAME) {
         throw new Error("Missing env vars - TNDS_OBSERVATION_TABLE_NAME and NAPTAN_BUCKET_NAME must be set");
@@ -157,18 +156,14 @@ export const handler: Handler = async (event, context) => {
         noc = operators[0].OperatorCode || "unknown";
     }
 
-    // Even though the observation table is cleared beforehand in the step function,
-    // it's worth having DynamoDB clear old entries to speed up the clear down process
-    const timeToExist = getDate().add(18, "hours").unix();
-
     const dynamoDbObservations: DynamoDbObservation[] = observations.map((observation, i) => ({
         PK: filename,
         SK: i.toString(),
-        timeToExist: timeToExist,
         noc: noc,
         region: region,
         dataSource: dataSource,
         ...observation,
+        details: GENERATE_ADVISORY_OBSERVATION_DETAIL ? observation.details : undefined,
     }));
 
     if (observations.length) {

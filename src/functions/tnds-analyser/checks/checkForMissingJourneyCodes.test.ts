@@ -95,7 +95,6 @@ describe("checkForMissingJourneyCodes", () => {
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
-                registrationNumber: "service1",
                 service: "Line 1",
                 details: "The (08:00) outbound journey is missing a journey code.",
                 extraColumns: {
@@ -107,7 +106,6 @@ describe("checkForMissingJourneyCodes", () => {
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
-                registrationNumber: "service1",
                 service: "Line 1",
                 details: "The (unknown departure time) unknown direction journey is missing a journey code.",
                 extraColumns: {
