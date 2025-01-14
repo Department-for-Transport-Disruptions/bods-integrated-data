@@ -71,7 +71,7 @@
           "Prefix.$": "$.date"
         }
       },
-      "MaxConcurrency": 10,
+      "MaxConcurrency": 30,
       "ResultPath": null,
       "Next": "Generate TNDS Report"
     },

@@ -15,6 +15,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "timing",
@@ -23,6 +28,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 2",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(checkFirstStopAndLastStopTimingPoints(mockInvalidData)).toEqual(expectedObservation);
@@ -41,6 +51,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "timing",
@@ -49,6 +64,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 4",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(
@@ -113,6 +133,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "n/a",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "timing",
@@ -121,6 +146,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "n/a",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(
@@ -145,6 +175,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Departure time": "unknown departure time",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "timing",
@@ -154,6 +189,11 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 registrationNumber: "SVC1",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 2",
+                    "Departure time": "unknown departure time",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(

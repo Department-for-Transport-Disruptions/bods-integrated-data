@@ -66,7 +66,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
         for (const vehicleJourney of vehicleJourneys) {
             let serviceCode = "n/a";
             let lineName = "n/a";
-            let direction = "";
+            let direction = "unknown direction";
             let lastStopCommonName = "n/a";
             let firstStopCommonName = "n/a";
 
@@ -95,7 +95,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         );
 
                         if (journeyPattern?.Direction) {
-                            direction = `${journeyPattern.Direction} `;
+                            direction = journeyPattern.Direction;
                         }
 
                         if (
@@ -124,7 +124,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "First stop is set down only",
                                     registrationNumber: serviceCode,
                                     service: lineName,
-                                    details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction}journey is incorrectly set to set down passengers.`,
+                                    details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction} journey is incorrectly set to set down passengers.`,
                                 });
                             }
 
@@ -149,7 +149,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "Last stop is pick up only",
                                     registrationNumber: serviceCode,
                                     service: lineName,
-                                    details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction}journey is incorrectly set to pick up passengers.`,
+                                    details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction} journey is incorrectly set to pick up passengers.`,
                                 });
                             }
                         }
