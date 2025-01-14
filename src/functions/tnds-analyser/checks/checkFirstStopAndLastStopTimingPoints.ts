@@ -62,7 +62,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
             let lineName = "n/a";
-            let direction = "";
+            let direction = "unknown direction";
             let lastStopCommonName = "n/a";
             let firstStopCommonName = "n/a";
 
@@ -90,7 +90,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         );
 
                         if (journeyPattern?.Direction) {
-                            direction = `${journeyPattern.Direction} `;
+                            direction = journeyPattern.Direction;
                         }
 
                         if (
@@ -118,7 +118,12 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     category: "timing",
                                     observation: "First stop is not a timing point",
                                     service: lineName,
-                                    details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction}journey is not set as a timing point.`,
+                                    details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction} journey is not set as a timing point.`,
+                                    extraColumns: {
+                                        "Stop Name": firstStopCommonName,
+                                        "Departure time": departureTime,
+                                        Direction: direction,
+                                    },
                                 });
                             }
 
@@ -142,7 +147,12 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     category: "timing",
                                     observation: "Last stop is not a timing point",
                                     service: lineName,
-                                    details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction}journey is not set as a timing point.`,
+                                    details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction} journey is not set as a timing point.`,
+                                    extraColumns: {
+                                        "Stop Name": lastStopCommonName,
+                                        "Departure time": departureTime,
+                                        Direction: direction,
+                                    },
                                 });
                             }
                         }

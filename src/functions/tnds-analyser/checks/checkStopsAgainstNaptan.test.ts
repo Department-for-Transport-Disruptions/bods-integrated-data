@@ -16,6 +16,10 @@ describe("checkStopsAgainstNaptan", () => {
                 importance: "critical",
                 observation: "Incorrect stop type",
                 service: "n/a",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Stop Point Ref": "SP1",
+                },
             },
             {
                 category: "stop",
@@ -24,6 +28,10 @@ describe("checkStopsAgainstNaptan", () => {
                 importance: "advisory",
                 observation: "Stop not found in NaPTAN",
                 service: "n/a",
+                extraColumns: {
+                    "Stop Name": "Stop 2",
+                    "Stop Point Ref": "SP2",
+                },
             },
         ]);
     });

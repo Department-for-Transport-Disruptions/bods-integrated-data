@@ -97,13 +97,21 @@ describe("checkForMissingJourneyCodes", () => {
                 observation: "Missing journey code",
                 service: "Line 1",
                 details: "The (08:00) outbound journey is missing a journey code.",
+                extraColumns: {
+                    "Departure Time": "08:00",
+                    Direction: "outbound",
+                },
             },
             {
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
                 service: "Line 1",
-                details: "The (unknown departure time) journey is missing a journey code.",
+                details: "The (unknown departure time) unknown direction journey is missing a journey code.",
+                extraColumns: {
+                    "Departure Time": "unknown departure time",
+                    Direction: "unknown direction",
+                },
             },
         ]);
     });

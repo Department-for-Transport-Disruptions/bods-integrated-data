@@ -19,7 +19,7 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
             let lineName = "n/a";
-            let direction = "";
+            let direction = "unknown direction";
 
             const departureTime = getLocalTime(vehicleJourney.DepartureTime);
             const journeyPatternRef = vehicleJourney.JourneyPatternRef;
@@ -45,7 +45,7 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                         );
 
                         if (journeyPattern?.Direction) {
-                            direction = `${journeyPattern.Direction} `;
+                            direction = journeyPattern.Direction;
                         }
 
                         if (
@@ -107,7 +107,7 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                                 currentStop.stopPointRef
                                             }) timing point stops on the ${departureTime.format(
                                                 "HH:mm:ss",
-                                            )} ${direction}journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.`,
+                                            )} ${direction} journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.`,
                                         });
                                     }
 

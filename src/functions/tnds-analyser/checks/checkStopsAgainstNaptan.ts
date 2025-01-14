@@ -22,6 +22,10 @@ export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string 
                     category: "stop",
                     importance: "advisory",
                     details: `The ${stop.commonName} (${stop.stopPointRef}) stop is not registered with NaPTAN. Please check the ATCO code is correct or contact your local authority to register this stop with NaPTAN.`,
+                    extraColumns: {
+                        "Stop Name": stop.commonName,
+                        "Stop Point Ref": stop.stopPointRef,
+                    },
                 });
             } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef)) {
                 observations.push({
@@ -32,6 +36,10 @@ export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string 
                     details: `The ${stop.commonName} (${stop.stopPointRef}) stop is registered as stop type ${
                         naptanStops[stop.stopPointRef]
                     } with NaPTAN. Expected bus stop types are ${allowedStopTypes.toString()}.`,
+                    extraColumns: {
+                        "Stop Name": stop.commonName,
+                        "Stop Point Ref": stop.stopPointRef,
+                    },
                 });
             }
         }

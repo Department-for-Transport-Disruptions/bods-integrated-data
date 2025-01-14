@@ -7,6 +7,7 @@ export const observationSchema = z.object({
     observation: z.enum(observationType),
     service: z.string(),
     details: z.string().optional(),
+    extraColumns: z.record(z.string(), z.string()).optional(),
 });
 
 export type Observation = z.infer<typeof observationSchema>;
