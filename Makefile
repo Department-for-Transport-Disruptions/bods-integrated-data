@@ -95,6 +95,9 @@ install-deps:
 build-functions:
 	cd src && pnpm build-all
 
+build-function-%:
+	cd src/functions/$* && pnpm build:local
+
 lint-functions:
 	pnpm lint
 

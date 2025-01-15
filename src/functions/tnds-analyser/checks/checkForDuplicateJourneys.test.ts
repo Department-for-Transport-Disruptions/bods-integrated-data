@@ -115,7 +115,7 @@ describe("checkForDuplicateJourneys", () => {
                     VehicleJourney: [
                         {
                             VehicleJourneyCode: "VJ1",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                             JourneyPatternRef: "JP1",
                             DepartureTime: "08:00",
@@ -130,7 +130,7 @@ describe("checkForDuplicateJourneys", () => {
                         },
                         {
                             VehicleJourneyCode: "VJ2",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                             JourneyPatternRef: "JP1",
                             DepartureTime: "08:00",
@@ -145,7 +145,7 @@ describe("checkForDuplicateJourneys", () => {
                         },
                         {
                             VehicleJourneyCode: "VJ3",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                             VehicleJourneyRef: "JP3",
                             DepartureTime: "08:00",
@@ -155,7 +155,7 @@ describe("checkForDuplicateJourneys", () => {
                 Services: {
                     Service: [
                         {
-                            ServiceCode: "service1",
+                            ServiceCode: "SVC1",
                             Lines: {
                                 Line: [
                                     {
@@ -200,7 +200,8 @@ describe("checkForDuplicateJourneys", () => {
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 details:
                     "The journey (with code VJ2) has the same departure time, route and operating profile as another journey.",
             },

@@ -47,18 +47,18 @@ describe("checkForMissingJourneyCodes", () => {
                     VehicleJourney: [
                         {
                             VehicleJourneyCode: "",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                             DepartureTime: "08:00",
                             JourneyPatternRef: "JP1",
                         },
                         {
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                         {
                             VehicleJourneyCode: "VJ2",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                     ],
@@ -66,7 +66,7 @@ describe("checkForMissingJourneyCodes", () => {
                 Services: {
                     Service: [
                         {
-                            ServiceCode: "service1",
+                            ServiceCode: "SVC1",
                             Lines: {
                                 Line: [
                                     {
@@ -95,7 +95,8 @@ describe("checkForMissingJourneyCodes", () => {
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 details: "The (08:00) outbound journey is missing a journey code.",
                 extraColumns: {
                     "Departure Time": "08:00",
@@ -106,7 +107,8 @@ describe("checkForMissingJourneyCodes", () => {
                 importance: "critical",
                 category: "journey",
                 observation: "Missing journey code",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 details: "The (unknown departure time) unknown direction journey is missing a journey code.",
                 extraColumns: {
                     "Departure Time": "unknown departure time",

@@ -15,7 +15,8 @@ describe("checkStopsAgainstNaptan", () => {
                     "The Stop 1 (SP1) stop is registered as stop type WRONG with NaPTAN. Expected bus stop types are BCT,BCQ,BCS,BCE,BST.",
                 importance: "critical",
                 observation: "Incorrect stop type",
-                service: "n/a",
+                serviceCode: "n/a",
+                lineName: "n/a",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Stop Point Ref": "SP1",
@@ -27,7 +28,8 @@ describe("checkStopsAgainstNaptan", () => {
                     "The Stop 2 (SP2) stop is not registered with NaPTAN. Please check the ATCO code is correct or contact your local authority to register this stop with NaPTAN.",
                 importance: "advisory",
                 observation: "Stop not found in NaPTAN",
-                service: "n/a",
+                serviceCode: "n/a",
+                lineName: "n/a",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Stop Point Ref": "SP2",

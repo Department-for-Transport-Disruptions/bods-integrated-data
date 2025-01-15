@@ -56,7 +56,9 @@ type ObservationSummaryByObservationType = {
     "Dataset Date": string;
     Region: string;
     File: string;
+    "Data Source": string;
     "National Operator Code": string;
+    "Service Code": string;
     "Line Name": string;
     Quantity: number;
 };
@@ -185,8 +187,10 @@ export const handler: Handler = async (event, context) => {
                             "Dataset Date": formattedDate,
                             Region: observation.region,
                             File: filename,
+                            "Data Source": dataSource,
                             "National Operator Code": observation.noc,
-                            "Line Name": observation.service,
+                            "Service Code": observation.serviceCode,
+                            "Line Name": observation.lineName,
                             Quantity: 0,
                         };
                     }
@@ -204,8 +208,10 @@ export const handler: Handler = async (event, context) => {
                             "Dataset Date": formattedDate,
                             Region: observation.region,
                             File: filename,
+                            "Data Source": dataSource,
                             "National Operator Code": observation.noc,
-                            "Line Name": observation.service,
+                            "Service Code": observation.serviceCode,
+                            "Line Name": observation.lineName,
                             Quantity: 1,
                             ...observation.extraColumns,
                         };
@@ -218,6 +224,10 @@ export const handler: Handler = async (event, context) => {
     } while (dynamoScanStartKey);
 
     const archive = archiver("zip", {});
+
+    archive.on("error", (error) => {
+        logger.error(error, "Error creating zip file");
+    });
 
     try {
         const passThrough = new PassThrough();
@@ -260,7 +270,7 @@ export const handler: Handler = async (event, context) => {
             }
         }
 
-        await archive.finalize();
+        archive.finalize();
         await s3Upload.done();
     } catch (error) {
         archive.abort();
