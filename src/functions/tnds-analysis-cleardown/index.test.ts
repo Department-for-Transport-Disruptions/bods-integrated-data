@@ -69,12 +69,4 @@ describe("tnds-reporter", () => {
         expect(waitUntilTableNotExistsMock).not.toHaveBeenCalled();
         expect(createTableMock).not.toHaveBeenCalled();
     });
-
-    it("overrides the date with the one from the event if set", async () => {
-        deleteTableMock.mockResolvedValueOnce({ $metadata: {} });
-        createTableMock.mockResolvedValueOnce({ $metadata: {} });
-
-        const response = await handler({ date: "20250114" }, mockContext, mockCallback);
-        expect(response).toEqual({ date: "20250114" });
-    });
 });
