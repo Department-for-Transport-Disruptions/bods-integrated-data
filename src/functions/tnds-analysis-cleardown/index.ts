@@ -45,6 +45,6 @@ export const handler: Handler = async (event, context) => {
     await waitUntilTableExists(TNDS_OBSERVATION_TABLE_NAME);
 
     return {
-        date: event?.date || getDate().format("YYYYMMDD"),
+        date: getDate().format("YYYYMMDD"),
     };
 };
