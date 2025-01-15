@@ -8,17 +8,63 @@
       "Parameters": {
         "FunctionName": "${tnds_analysis_cleardown_function_arn}:$LATEST"
       },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 5
-        }
-      ],
-      "Next": "Get TNDS TXC Object Keys",
+      "Next": "Get BODS TXC Object Keys",
       "OutputPath": "$.Payload"
+    },
+    "Get BODS TXC Object Keys": {
+      "Type": "Map",
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "DISTRIBUTED",
+          "ExecutionType": "STANDARD"
+        },
+        "StartAt": "Process BODS TXC",
+        "States": {
+          "Process BODS TXC": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+              "FunctionName": "${tnds_analyser_function_arn}:$LATEST",
+              "Payload": {
+                "Records": [
+                  {
+                    "s3": {
+                      "bucket": {
+                        "name": "${bods_txc_bucket_name}"
+                      },
+                      "object": {
+                        "key.$": "$.Key"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "States.ALL"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 3,
+                "BackoffRate": 2,
+                "JitterStrategy": "FULL"
+              }
+            ],
+            "End": true
+          }
+        }
+      },
+      "ItemReader": {
+        "Resource": "arn:aws:states:::s3:listObjectsV2",
+        "Parameters": {
+          "Bucket": "${bods_txc_bucket_name}",
+          "Prefix.$": "$.date"
+        }
+      },
+      "MaxConcurrency": 30,
+      "ResultPath": null,
+      "Next": "Get TNDS TXC Object Keys"
     },
     "Get TNDS TXC Object Keys": {
       "Type": "Map",
