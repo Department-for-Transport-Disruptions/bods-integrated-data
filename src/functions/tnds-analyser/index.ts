@@ -46,7 +46,7 @@ const getAndParseTxcData = async (bucketName: string, objectKey: string) => {
     return parser.parse(xml) as PartialDeep<TxcSchema>;
 };
 
-const getNapstanStopData = async (nptgBucketName: string, naptanBucketName: string) => {
+const getNaptanStopData = async (nptgBucketName: string, naptanBucketName: string) => {
     const [nptgFile, naptanStopsFile] = await Promise.all([
         getS3Object({ Bucket: nptgBucketName, Key: "NPTG.xml" }),
         getS3Object({ Bucket: naptanBucketName, Key: "Stops.csv" }),
@@ -182,7 +182,7 @@ export const handler: Handler = async (event, context) => {
     }
 
     const txcData = await getAndParseTxcData(record.s3.bucket.name, filename);
-    naptanStopMap = naptanStopMap || (await getNapstanStopData(NPTG_BUCKET_NAME, NAPTAN_BUCKET_NAME));
+    naptanStopMap = naptanStopMap || (await getNaptanStopData(NPTG_BUCKET_NAME, NAPTAN_BUCKET_NAME));
 
     const observations: Observation[] = [
         ...checkForMissingJourneyCodes(txcData),
