@@ -15,6 +15,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "First stop is set down only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "stop",
@@ -23,6 +28,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "Last stop is pick up only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 2",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(checkFirstStopAndLastStopActivities(mockInvalidData)).toEqual(expectedObservation);
@@ -41,6 +51,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "First stop is set down only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "stop",
@@ -49,6 +64,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "Last stop is pick up only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 4",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(
@@ -111,6 +131,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "First stop is set down only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "n/a",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "stop",
@@ -119,6 +144,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "Last stop is pick up only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "n/a",
+                    "Departure time": "08:00:00",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(
@@ -142,6 +172,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "First stop is set down only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 1",
+                    "Departure time": "unknown departure time",
+                    Direction: "outbound",
+                },
             },
             {
                 category: "stop",
@@ -150,6 +185,11 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 importance: "critical",
                 observation: "Last stop is pick up only",
                 service: "Line 1",
+                extraColumns: {
+                    "Stop Name": "Stop 2",
+                    "Departure time": "unknown departure time",
+                    Direction: "outbound",
+                },
             },
         ];
         expect(

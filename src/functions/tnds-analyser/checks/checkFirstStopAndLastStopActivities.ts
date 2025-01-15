@@ -122,6 +122,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "First stop is set down only",
                                     service: lineName,
                                     details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction} journey is incorrectly set to set down passengers.`,
+                                    extraColumns: {
+                                        "Stop Name": firstStopCommonName,
+                                        "Departure time": departureTime,
+                                        Direction: direction,
+                                    },
                                 });
                             }
 
@@ -146,6 +151,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "Last stop is pick up only",
                                     service: lineName,
                                     details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction} journey is incorrectly set to pick up passengers.`,
+                                    extraColumns: {
+                                        "Stop Name": lastStopCommonName,
+                                        "Departure time": departureTime,
+                                        Direction: direction,
+                                    },
                                 });
                             }
                         }
