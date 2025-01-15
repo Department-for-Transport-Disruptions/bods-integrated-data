@@ -467,4 +467,5 @@ module "integrated_data_tnds_analyser" {
   aws_region           = data.aws_region.current.name
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
 }

@@ -20,3 +20,7 @@ variable "tnds_txc_bucket_name" {
 variable "naptan_bucket_name" {
   type = string
 }
+
+variable "nptg_bucket_name" {
+  type = string
+}

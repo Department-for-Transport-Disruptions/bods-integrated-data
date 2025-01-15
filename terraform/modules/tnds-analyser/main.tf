@@ -28,8 +28,8 @@ module "integrated_data_tnds_analysis_cleardown_function" {
   zip_path      = "${path.module}/../../../src/functions/dist/tnds-analysis-cleardown.zip"
   handler       = "index.handler"
   runtime       = "nodejs20.x"
-  timeout       = 900
-  memory        = 1024
+  timeout       = 60
+  memory        = 256
 
   permissions = [
     {
@@ -54,7 +54,7 @@ module "integrated_data_tnds_analyser_function" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 60
-  memory        = 2048
+  memory        = 8192
 
   permissions = [
     {
@@ -66,8 +66,11 @@ module "integrated_data_tnds_analyser_function" {
       Action = [
         "s3:GetObject",
       ],
-      Effect   = "Allow",
-      Resource = ["arn:aws:s3:::${var.tnds_txc_bucket_name}/*", "arn:aws:s3:::${var.naptan_bucket_name}/*"]
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:s3:::${var.tnds_txc_bucket_name}/*", "arn:aws:s3:::${var.naptan_bucket_name}/*",
+        "arn:aws:s3:::${var.tnds_txc_bucket_name}/*", "arn:aws:s3:::${var.nptg_bucket_name}/*",
+      ]
     }
   ]
 
@@ -75,6 +78,7 @@ module "integrated_data_tnds_analyser_function" {
     STAGE                       = var.environment
     TNDS_OBSERVATION_TABLE_NAME = local.tnds_observation_table_name
     NAPTAN_BUCKET_NAME          = var.naptan_bucket_name
+    NPTG_BUCKET_NAME            = var.nptg_bucket_name
   }
 }
 

@@ -46,3 +46,5 @@ export const observationSummarySchema = z.object({
 });
 
 export type ObservationSummary = z.infer<typeof observationSummarySchema>;
+
+export type NaptanStopMap = Record<string, { stopType?: string | null; regions: string[] }>;
