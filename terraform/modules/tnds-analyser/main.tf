@@ -54,7 +54,7 @@ module "integrated_data_tnds_analyser_function" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 60
-  memory        = 8192
+  memory        = 4096
 
   permissions = [
     {
@@ -93,7 +93,7 @@ module "integrated_data_tnds_reporter_function" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 900
-  memory        = 8192
+  memory        = 4096
 
   permissions = [
     {
