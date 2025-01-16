@@ -46,7 +46,7 @@
                   "States.ALL"
                 ],
                 "IntervalSeconds": 1,
-                "MaxAttempts": 3,
+                "MaxAttempts": 5,
                 "BackoffRate": 2,
                 "JitterStrategy": "FULL"
               }
@@ -62,7 +62,7 @@
           "Prefix.$": "$.date"
         }
       },
-      "MaxConcurrency": 30,
+      "MaxConcurrency": 40,
       "ResultPath": null,
       "Next": "Get TNDS TXC Object Keys"
     },
@@ -117,7 +117,7 @@
           "Prefix.$": "$.date"
         }
       },
-      "MaxConcurrency": 30,
+      "MaxConcurrency": 40,
       "ResultPath": null,
       "Next": "Generate TNDS Report"
     },

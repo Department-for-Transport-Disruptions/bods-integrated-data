@@ -122,7 +122,7 @@ describe("tnds-reporter", () => {
             "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2,2\r\n";
 
         const observationByObservationTypeCsvContent3 =
-            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,1,test-extra-column-1\r\n";
+            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,test-extra-column-1\r\n";
 
         await handler(mockEvent, mockContext, mockCallback);
 

@@ -63,6 +63,16 @@ type ObservationSummaryByObservationType = {
     Quantity: number;
 };
 
+type CriticalObservationByObservationType = {
+    "Dataset Date": string;
+    Region: string;
+    File: string;
+    "Data Source": string;
+    "National Operator Code": string;
+    "Service Code": string;
+    "Line Name": string;
+};
+
 const createCsv = <T extends Record<string, U>, U>(data: T[]) => {
     if (!data.length) {
         return null;
@@ -93,7 +103,7 @@ export const handler: Handler = async (event, context) => {
     const observationByObservationTypesMap: Record<string, Record<string, ObservationSummaryByObservationType>> = {};
     const criticalObservationByObservationTypesMap: Record<
         string,
-        Record<string, ObservationSummaryByObservationType>
+        Record<string, CriticalObservationByObservationType>
     > = {};
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
@@ -212,7 +222,6 @@ export const handler: Handler = async (event, context) => {
                             "National Operator Code": observation.noc,
                             "Service Code": observation.serviceCode,
                             "Line Name": observation.lineName,
-                            Quantity: 1,
                             ...observation.extraColumns,
                         };
                     }

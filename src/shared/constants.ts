@@ -122,6 +122,8 @@ export const txcArrayProperties = [
     "ServicedOrganisationRef",
 ];
 
+export const nptgArrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];
+
 export const tflOperatorRef = "TFLO";
 export const subscriptionStatuses = ["live", "error", "inactive"] as const;
 export const avlValidationErrorLevels = ["CRITICAL", "NON-CRITICAL"] as const;
