@@ -459,8 +459,8 @@ module "integrated_data_avl_datadog" {
   opt_out         = []
 }
 
-module "integrated_data_tnds_analyser" {
-  source = "../modules/tnds-analyser"
+module "integrated_data_txc_analysis" {
+  source = "../modules/txc-analysis"
 
   environment          = local.env
   aws_account_id       = data.aws_caller_identity.current.account_id
