@@ -56,9 +56,21 @@ type ObservationSummaryByObservationType = {
     "Dataset Date": string;
     Region: string;
     File: string;
+    "Data Source": string;
     "National Operator Code": string;
+    "Service Code": string;
     "Line Name": string;
     Quantity: number;
+};
+
+type CriticalObservationByObservationType = {
+    "Dataset Date": string;
+    Region: string;
+    File: string;
+    "Data Source": string;
+    "National Operator Code": string;
+    "Service Code": string;
+    "Line Name": string;
 };
 
 const createCsv = <T extends Record<string, U>, U>(data: T[]) => {
@@ -91,7 +103,7 @@ export const handler: Handler = async (event, context) => {
     const observationByObservationTypesMap: Record<string, Record<string, ObservationSummaryByObservationType>> = {};
     const criticalObservationByObservationTypesMap: Record<
         string,
-        Record<string, ObservationSummaryByObservationType>
+        Record<string, CriticalObservationByObservationType>
     > = {};
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
@@ -185,8 +197,10 @@ export const handler: Handler = async (event, context) => {
                             "Dataset Date": formattedDate,
                             Region: observation.region,
                             File: filename,
+                            "Data Source": dataSource,
                             "National Operator Code": observation.noc,
-                            "Line Name": observation.service,
+                            "Service Code": observation.serviceCode,
+                            "Line Name": observation.lineName,
                             Quantity: 0,
                         };
                     }
@@ -204,9 +218,10 @@ export const handler: Handler = async (event, context) => {
                             "Dataset Date": formattedDate,
                             Region: observation.region,
                             File: filename,
+                            "Data Source": dataSource,
                             "National Operator Code": observation.noc,
-                            "Line Name": observation.service,
-                            Quantity: 1,
+                            "Service Code": observation.serviceCode,
+                            "Line Name": observation.lineName,
                             ...observation.extraColumns,
                         };
                     }
@@ -218,6 +233,10 @@ export const handler: Handler = async (event, context) => {
     } while (dynamoScanStartKey);
 
     const archive = archiver("zip", {});
+
+    archive.on("error", (error) => {
+        logger.error(error, "Error creating zip file");
+    });
 
     try {
         const passThrough = new PassThrough();
@@ -260,7 +279,7 @@ export const handler: Handler = async (event, context) => {
             }
         }
 
-        await archive.finalize();
+        archive.finalize();
         await s3Upload.done();
     } catch (error) {
         archive.abort();

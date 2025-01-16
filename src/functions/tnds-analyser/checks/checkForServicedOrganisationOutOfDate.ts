@@ -30,7 +30,8 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         importance: "advisory",
                         category: "dataset",
                         observation: "Serviced organisation out of date",
-                        service: "n/a",
+                        serviceCode: "n/a",
+                        lineName: "n/a",
                         details: `The Working Days for Serviced Organisation ${serviceName} (${organisationCode}) has expired on ${endDate}. Please update the dates for this Serviced Organisation.`,
                     });
                 }

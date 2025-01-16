@@ -64,32 +64,32 @@ describe("checkForDuplicateJourneyCodes", () => {
                     VehicleJourney: [
                         {
                             VehicleJourneyCode: "VJ1",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                         {
                             VehicleJourneyCode: "VJ1",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                         {
                             VehicleJourneyCode: "VJ1",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                         {
                             VehicleJourneyCode: "VJ2",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                         {
                             VehicleJourneyCode: "VJ2",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                         {
                             VehicleJourneyCode: "VJ3",
-                            ServiceRef: "service1",
+                            ServiceRef: "SVC1",
                             LineRef: "line1",
                         },
                     ],
@@ -97,7 +97,7 @@ describe("checkForDuplicateJourneyCodes", () => {
                 Services: {
                     Service: [
                         {
-                            ServiceCode: "service1",
+                            ServiceCode: "SVC1",
                             Lines: {
                                 Line: [
                                     {
@@ -118,14 +118,16 @@ describe("checkForDuplicateJourneyCodes", () => {
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 details: "The Journey Code (VJ1) is found in more than one vehicle journey.",
             },
             {
                 importance: "advisory",
                 category: "journey",
                 observation: "Duplicate journey code",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 details: "The Journey Code (VJ2) is found in more than one vehicle journey.",
             },
         ]);

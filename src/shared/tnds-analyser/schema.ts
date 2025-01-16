@@ -5,7 +5,8 @@ export const observationSchema = z.object({
     importance: z.enum(observationImportance),
     category: z.enum(observationCategory),
     observation: z.enum(observationType),
-    service: z.string(),
+    serviceCode: z.string(),
+    lineName: z.string(),
     details: z.string().optional(),
     extraColumns: z.record(z.string(), z.string()).optional(),
 });
@@ -45,3 +46,5 @@ export const observationSummarySchema = z.object({
 });
 
 export type ObservationSummary = z.infer<typeof observationSummarySchema>;
+
+export type NaptanStopMap = Record<string, { stopType?: string | null; regions: string[] }>;

@@ -13,7 +13,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 details: "The first stop (Stop 1) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "First stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "08:00:00",
@@ -25,7 +26,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 details: "The last stop (Stop 2) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "Last stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Departure time": "08:00:00",
@@ -47,7 +49,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 details: "The first stop (Stop 1) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "First stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "08:00:00",
@@ -59,7 +62,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 details: "The last stop (Stop 4) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "Last stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "Stop 4",
                     "Departure time": "08:00:00",
@@ -127,7 +131,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 details: "The first stop (n/a) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "First stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "n/a",
                     "Departure time": "08:00:00",
@@ -139,7 +144,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 details: "The last stop (n/a) on the 08:00:00 outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "Last stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "n/a",
                     "Departure time": "08:00:00",
@@ -167,7 +173,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                     "The first stop (Stop 1) on the unknown departure time outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "First stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "unknown departure time",
@@ -180,7 +187,8 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                     "The last stop (Stop 2) on the unknown departure time outbound journey is not set as a timing point.",
                 importance: "critical",
                 observation: "Last stop is not a timing point",
-                service: "Line 1",
+                serviceCode: "SVC1",
+                lineName: "Line 1",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Departure time": "unknown departure time",

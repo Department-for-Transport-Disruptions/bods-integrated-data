@@ -61,6 +61,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
+            let serviceCode = "n/a";
             let lineName = "n/a";
             let direction = "unknown direction";
             let lastStopCommonName = "n/a";
@@ -79,6 +80,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     );
 
                     if (service) {
+                        serviceCode = service.ServiceCode;
                         const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                         if (line) {
@@ -117,7 +119,8 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     importance: "critical",
                                     category: "timing",
                                     observation: "First stop is not a timing point",
-                                    service: lineName,
+                                    serviceCode,
+                                    lineName,
                                     details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction} journey is not set as a timing point.`,
                                     extraColumns: {
                                         "Stop Name": firstStopCommonName,
@@ -146,7 +149,8 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     importance: "critical",
                                     category: "timing",
                                     observation: "Last stop is not a timing point",
-                                    service: lineName,
+                                    serviceCode,
+                                    lineName,
                                     details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction} journey is not set as a timing point.`,
                                     extraColumns: {
                                         "Stop Name": lastStopCommonName,

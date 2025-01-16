@@ -465,6 +465,8 @@ module "integrated_data_tnds_analyser" {
   environment          = local.env
   aws_account_id       = data.aws_caller_identity.current.account_id
   aws_region           = data.aws_region.current.name
+  bods_txc_bucket_name = module.integrated_data_txc_pipeline.bods_txc_bucket_name
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
 }

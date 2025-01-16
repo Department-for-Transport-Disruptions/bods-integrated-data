@@ -22,6 +22,7 @@ describe("tnds-reporter", () => {
             abort: mocks.abortMock,
             append: mocks.appendMock,
             finalize: vi.fn(),
+            on: vi.fn(),
             pipe: vi.fn(),
         })),
     }));
@@ -69,7 +70,8 @@ describe("tnds-reporter", () => {
                 importance: "critical",
                 category: "dataset",
                 observation: "Duplicate journey",
-                service: "test-service-1",
+                serviceCode: "test-service-1",
+                lineName: "test-line-1",
                 details: "test-details-1",
                 extraColumns: {
                     "Extra Column": "test-extra-column-1",
@@ -84,7 +86,8 @@ describe("tnds-reporter", () => {
                 importance: "advisory",
                 category: "dataset",
                 observation: "First stop is not a timing point",
-                service: "test-service-2",
+                serviceCode: "test-service-2",
+                lineName: "test-line-2",
                 details: "test-details-2",
             },
             {
@@ -96,7 +99,8 @@ describe("tnds-reporter", () => {
                 importance: "advisory",
                 category: "dataset",
                 observation: "First stop is not a timing point",
-                service: "test-service-2",
+                serviceCode: "test-service-2",
+                lineName: "test-line-3",
                 details: "test-details-2",
             },
         ];
@@ -112,13 +116,13 @@ describe("tnds-reporter", () => {
             "Dataset Date,Region,File,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,3,1,2,0,2,0,0,0,0,0,0,0,1,0,0\r\n";
 
         const observationByObservationTypeCsvContent1 =
-            "Dataset Date,Region,File,National Operator Code,Line Name,Quantity\r\n08/01/2025,test-region-1,test-PK-1,test-noc-1,test-service-1,1\r\n";
+            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,1\r\n";
 
         const observationByObservationTypeCsvContent2 =
-            "Dataset Date,Region,File,National Operator Code,Line Name,Quantity\r\n08/01/2025,test-region-2,test-PK-1,test-noc-2,test-service-2,2\r\n";
+            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2,2\r\n";
 
         const observationByObservationTypeCsvContent3 =
-            "Dataset Date,Region,File,National Operator Code,Line Name,Quantity,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-noc-1,test-service-1,1,test-extra-column-1\r\n";
+            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,test-extra-column-1\r\n";
 
         await handler(mockEvent, mockContext, mockCallback);
 
@@ -182,7 +186,8 @@ describe("tnds-reporter", () => {
                 importance: "critical",
                 category: "dataset",
                 observation: "Duplicate journey",
-                service: "test-service-1",
+                serviceCode: "test-service-1",
+                lineName: "test-line-1",
                 details: "test-details-1",
             },
         ];

@@ -1,8 +1,8 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedStopTypes } from "@bods-integrated-data/shared/tnds-analyser/constants";
-import { Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
+import { NaptanStopMap, Observation } from "@bods-integrated-data/shared/tnds-analyser/schema";
 
-export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string | null>): Observation[] => {
+export default (txcData: Partial<TxcSchema>, naptanStopMap: NaptanStopMap): Observation[] => {
     const observations: Observation[] = [];
 
     const txcStops =
@@ -13,11 +13,13 @@ export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string 
 
     if (txcStops.length) {
         for (const stop of txcStops) {
-            const naptanStopRef = naptanStops[stop.stopPointRef];
+            const naptanStopRef = naptanStopMap[stop.stopPointRef];
+            const stopType = naptanStopRef?.stopType;
 
-            if (naptanStopRef === undefined) {
+            if (stopType === undefined) {
                 observations.push({
-                    service: "n/a",
+                    serviceCode: "n/a",
+                    lineName: "n/a",
                     observation: "Stop not found in NaPTAN",
                     category: "stop",
                     importance: "advisory",
@@ -27,15 +29,16 @@ export default (txcData: Partial<TxcSchema>, naptanStops: Record<string, string 
                         "Stop Point Ref": stop.stopPointRef,
                     },
                 });
-            } else if (naptanStopRef && !allowedStopTypes.includes(naptanStopRef)) {
+            } else if (stopType && !allowedStopTypes.includes(stopType)) {
                 observations.push({
-                    service: "n/a",
+                    serviceCode: "n/a",
+                    lineName: "n/a",
                     observation: "Incorrect stop type",
                     category: "stop",
                     importance: "critical",
-                    details: `The ${stop.commonName} (${stop.stopPointRef}) stop is registered as stop type ${
-                        naptanStops[stop.stopPointRef]
-                    } with NaPTAN. Expected bus stop types are ${allowedStopTypes.toString()}.`,
+                    details: `The ${stop.commonName} (${
+                        stop.stopPointRef
+                    }) stop is registered as stop type ${stopType} with NaPTAN. Expected bus stop types are ${allowedStopTypes.toString()}.`,
                     extraColumns: {
                         "Stop Name": stop.commonName,
                         "Stop Point Ref": stop.stopPointRef,

@@ -18,6 +18,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
         const duplicateVehicleJourneyHashes: string[] = [];
 
         for (const vehicleJourney of vehicleJourneys) {
+            let serviceCode = "n/a";
             let lineName = "n/a";
             const services = txcData.TransXChange?.Services;
 
@@ -26,6 +27,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                 const operatingProfile = vehicleJourney.OperatingProfile || service?.OperatingProfile;
 
                 if (service && operatingProfile) {
+                    serviceCode = service.ServiceCode;
                     const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                     if (line) {
@@ -57,7 +59,8 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     importance: "advisory",
                                     category: "journey",
                                     observation: "Duplicate journey",
-                                    service: lineName,
+                                    serviceCode,
+                                    lineName,
                                     details: `The journey (with code ${vehicleJourney.VehicleJourneyCode}) has the same departure time, route and operating profile as another journey.`,
                                 });
                             }

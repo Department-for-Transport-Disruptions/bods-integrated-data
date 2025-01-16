@@ -1,3 +1,4 @@
+import { nptgArrayProperties } from "@bods-integrated-data/shared/constants";
 import {
     KyselyDb,
     NewNptgAdminArea,
@@ -18,8 +19,6 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const arrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];
-
 const getAndParseData = async (bucket: string, key: string) => {
     const file = await getS3Object({
         Bucket: bucket,
@@ -30,7 +29,7 @@ const getAndParseData = async (bucket: string, key: string) => {
         allowBooleanAttributes: true,
         ignoreAttributes: true,
         parseTagValue: false,
-        isArray: (tagName) => arrayProperties.includes(tagName),
+        isArray: (tagName) => nptgArrayProperties.includes(tagName),
     });
 
     const xml = await file.Body?.transformToString();
