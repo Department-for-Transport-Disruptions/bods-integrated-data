@@ -17,9 +17,9 @@ import {
     heartbeatNotificationSchema,
 } from "@bods-integrated-data/shared/schema";
 import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError, isApiGatewayEvent } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
+import { ALBEvent, ALBHandler, APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";
 
@@ -88,7 +88,10 @@ const parseXml = (xml: string) => {
     return parser.parse(xml);
 };
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, context: Context) => {
+export const handler: APIGatewayProxyHandler & ALBHandler = async (
+    event: APIGatewayProxyEvent | ALBEvent,
+    context: Context,
+) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
@@ -98,7 +101,17 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
             throw new Error("Missing env vars - BUCKET_NAME and TABLE_NAME must be set");
         }
 
-        const parameters = stage === "local" ? event.queryStringParameters : event.pathParameters;
+        let pathParams = null;
+
+        if (stage !== "local") {
+            pathParams = isApiGatewayEvent(event)
+                ? event.pathParameters
+                : {
+                      subscriptionId: event.path.split("/cancellations/")[1],
+                  };
+        }
+
+        const parameters = stage === "local" ? event.queryStringParameters : pathParams;
 
         const { subscriptionId } = requestParamsSchema.parse(parameters);
 

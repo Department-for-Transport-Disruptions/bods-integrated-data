@@ -19,7 +19,7 @@ import {
     CancellationsSubscription,
     cancellationsSubscribeMessageSchema,
 } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
-import { SubscriptionIdNotFoundError, generateApiKey } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError, generateApiKey, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { AxiosError } from "axios";
@@ -43,6 +43,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             TABLE_NAME: tableName,
             STAGE: stage,
             DATA_ENDPOINT: dataEndpoint,
+            INTERNAL_DATA_ENDPOINT: internalDataEndpoint,
             CANCELLATIONS_PRODUCER_API_KEY_ARN: cancellationsProducerApiKeyArn,
             MOCK_PRODUCER_SUBSCRIBE_ENDPOINT: mockProducerSubscribeEndpoint,
         } = process.env;
@@ -82,6 +83,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
 
+        const isInternal = isPrivateAddress(cancellationsSubscribeMessage.dataProducerEndpoint);
+
+        if (isInternal && !internalDataEndpoint) {
+            throw new Error("No internal data endpoint set for internal data producer endpoint");
+        }
+
         const currentTime = getDate().toISOString();
 
         const subscriptionDetails: Omit<CancellationsSubscription, "PK" | "status"> = {
@@ -105,7 +112,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 cancellationsSubscribeMessage.username,
                 cancellationsSubscribeMessage.password,
                 tableName,
-                dataEndpoint,
+                isInternal && internalDataEndpoint ? `http://${internalDataEndpoint}` : dataEndpoint,
+                isInternal,
                 mockProducerSubscribeEndpoint,
             );
         } catch (e) {

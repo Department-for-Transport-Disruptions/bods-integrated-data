@@ -13,3 +13,7 @@ output "errors_table_name" {
 output "data_endpoint_function_url" {
   value = aws_lambda_function_url.cancellations_data_endpoint_function_url.function_url
 }
+
+output "data_endpoint_function_name" {
+  value = module.cancellations_data_endpoint.function_name
+}

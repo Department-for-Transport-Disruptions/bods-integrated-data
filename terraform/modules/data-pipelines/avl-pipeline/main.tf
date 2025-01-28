@@ -256,6 +256,7 @@ data "aws_iam_policy_document" "integrated_data_avl_sirivm_sns_policy" {
     effect = "Allow"
     actions = [
       "sns:Subscribe",
+      "sns:ListSubscriptionsByTopic"
     ]
     resources = [aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn]
   }

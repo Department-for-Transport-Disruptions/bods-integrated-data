@@ -145,6 +145,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     password: string,
     tableName: string,
     dataEndpoint: string,
+    isInternal = false,
     mockProducerSubscribeEndpoint?: string,
 ) => {
     const requestTime = getDate();
@@ -161,6 +162,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         dataEndpoint,
         subscriptionDetails.requestorRef ?? null,
         subscriptionDetails.apiKey,
+        isInternal,
     );
 
     const url =
@@ -171,7 +173,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
         headers: {
             "Content-Type": "text/xml",
-            Authorization: createAuthorizationHeader(username, password),
+            ...(!isInternal ? { Authorization: createAuthorizationHeader(username, password) } : {}),
         },
     });
 

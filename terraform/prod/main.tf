@@ -280,7 +280,7 @@ module "integrated_data_avl_data_producer_api" {
   subnet_ids                      = module.integrated_data_vpc.private_subnet_ids
   avl_producer_api_key            = local.secrets["avl_producer_api_key"]
   avl_error_table_name            = module.integrated_data_avl_validation_error_table.table_name
-  internal_data_endpoint          = local.secrets["internal_avl_ingestion_nlb_ip"]
+  internal_data_endpoint          = local.secrets["internal_data_ingestion_nlb_ip"]
   mock_data_producer_api_endpoint = module.integrated_data_mock_data_producer_api.endpoint
 }
 
@@ -406,6 +406,7 @@ module "integrated_data_cancellations_data_producer_api" {
   subnet_ids                         = module.integrated_data_vpc.private_subnet_ids
   mock_data_producer_api_endpoint    = module.integrated_data_mock_data_producer_api.endpoint
   cancellations_raw_siri_bucket_name = module.integrated_data_cancellations_pipeline.cancellations_raw_siri_bucket_name
+  internal_data_endpoint             = local.secrets["internal_data_ingestion_nlb_ip"]
 }
 
 module "siri_consumer_api_private" {
@@ -450,17 +451,23 @@ module "stagecoach_vpn" {
   private_route_table_ids = module.integrated_data_vpc.private_route_table_ids
 }
 
-# Internal AVL Ingestion
+# Internal Data Ingestion
 
-module "internal_avl_ingestion" {
-  source = "../modules/data-pipelines/internal-avl-ingestion"
+module "internal_data_ingestion" {
+  source = "../modules/data-pipelines/internal-data-ingestion"
 
-  environment                 = local.env
-  vpc_id                      = module.integrated_data_vpc.vpc_id
-  lb_subnet_ids               = module.integrated_data_vpc.private_subnet_ids
-  external_ip_range           = local.secrets["stagecoach_destination_cidr_block"]
-  data_endpoint_function_name = module.integrated_data_avl_data_producer_api.avl_data_endpoint_function_name
-  nlb_ip_address              = local.secrets["internal_avl_ingestion_nlb_ip"]
+  environment                               = local.env
+  vpc_id                                    = module.integrated_data_vpc.vpc_id
+  lb_subnet_ids                             = module.integrated_data_vpc.private_subnet_ids
+  external_ip_range                         = local.secrets["stagecoach_destination_cidr_block"]
+  avl_data_endpoint_function_name           = module.integrated_data_avl_data_producer_api.avl_data_endpoint_function_name
+  cancellations_data_endpoint_function_name = module.integrated_data_cancellations_data_producer_api.data_endpoint_function_name
+  nlb_ip_address                            = local.secrets["internal_data_ingestion_nlb_ip"]
+}
+
+moved {
+  from = module.internal_avl_ingestion
+  to   = module.internal_data_ingestion
 }
 
 locals {
