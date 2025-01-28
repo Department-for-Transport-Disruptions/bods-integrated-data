@@ -1,4 +1,10 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import dynamo, {
+    CreateTableCommand,
+    CreateTableCommandInput,
+    DeleteTableCommand,
+    DeleteTableCommandInput,
+    DynamoDBClient,
+} from "@aws-sdk/client-dynamodb";
 import {
     BatchWriteCommand,
     DynamoDBDocumentClient,
@@ -8,6 +14,7 @@ import {
     QueryCommandInput,
     ScanCommand,
     ScanCommandInput,
+    ScanCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 import { chunkArray } from "./utils";
@@ -16,20 +23,20 @@ export const DYNAMO_DB_MAX_BATCH_SIZE = 25; // https://docs.aws.amazon.com/AWSJa
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 
-const dynamoDbDocClient = DynamoDBDocumentClient.from(
-    new DynamoDBClient({
-        region: "eu-west-2",
-        ...(process.env.STAGE === "local"
-            ? {
-                  endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
-                  credentials: {
-                      accessKeyId: "DUMMY",
-                      secretAccessKey: "DUMMY",
-                  },
-              }
-            : {}),
-    }),
-);
+const dynamoDbClient = new DynamoDBClient({
+    region: "eu-west-2",
+    ...(process.env.STAGE === "local"
+        ? {
+              endpoint: localStackHost ? `http://${localStackHost}:4566` : "http://localhost:4566",
+              credentials: {
+                  accessKeyId: "DUMMY",
+                  secretAccessKey: "DUMMY",
+              },
+          }
+        : {}),
+});
+
+const dynamoDbDocClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
 export const putDynamoItem = async <T extends Record<string, unknown>>(
     tableName: string,
@@ -81,6 +88,10 @@ export const getDynamoItem = async <T extends Record<string, unknown>>(
     return data.Item ? (data.Item as T) : null;
 };
 
+export const scanDynamo = async (scanCommandInput: ScanCommandInput): Promise<ScanCommandOutput> => {
+    return await dynamoDbDocClient.send(new ScanCommand(scanCommandInput));
+};
+
 export const recursiveScan = async <T extends Record<string, unknown>>(
     scanCommandInput: ScanCommandInput,
 ): Promise<T[]> => {
@@ -123,4 +134,20 @@ export const recursiveQuery = async <T extends Record<string, unknown>>(
     }
 
     return dbData.Items as T[];
+};
+
+export const createTable = async (input: CreateTableCommandInput) => {
+    return dynamoDbClient.send(new CreateTableCommand(input));
+};
+
+export const deleteTable = async (input: DeleteTableCommandInput) => {
+    return dynamoDbClient.send(new DeleteTableCommand(input));
+};
+
+export const waitUntilTableExists = async (tableName: string) => {
+    return dynamo.waitUntilTableExists({ client: dynamoDbClient, maxWaitTime: 60 }, { TableName: tableName });
+};
+
+export const waitUntilTableNotExists = async (tableName: string) => {
+    return dynamo.waitUntilTableNotExists({ client: dynamoDbClient, maxWaitTime: 60 }, { TableName: tableName });
 };

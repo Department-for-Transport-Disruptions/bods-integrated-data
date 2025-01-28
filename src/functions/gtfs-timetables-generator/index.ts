@@ -92,8 +92,7 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
             }
         }
 
-        void archive.finalize();
-
+        archive.finalize();
         await upload.done();
     } catch (e) {
         archive.abort();
