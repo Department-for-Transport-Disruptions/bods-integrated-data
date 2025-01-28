@@ -104,6 +104,7 @@ describe("cancellations-subscriber", () => {
             mockAvlSubscribeMessage.password,
             "test-dynamo-table",
             "https://www.test.com/data",
+            false,
             "",
         );
     });
@@ -279,6 +280,7 @@ describe("cancellations-subscriber", () => {
             mockAvlSubscribeMessage.password,
             "test-dynamo-table",
             "https://www.test.com/data",
+            false,
             "",
         );
     });
@@ -350,6 +352,7 @@ describe("cancellations-subscriber", () => {
             mockAvlSubscribeMessage.password,
             "test-dynamo-table",
             "https://www.test.com/data",
+            false,
             "",
         );
     });

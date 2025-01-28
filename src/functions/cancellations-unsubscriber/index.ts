@@ -14,7 +14,7 @@ import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods
 import { CancellationsSubscription } from "@bods-integrated-data/shared/schema/cancellations-subscribe.schema";
 import { deleteParameters } from "@bods-integrated-data/shared/ssm";
 import { sendTerminateSubscriptionRequest } from "@bods-integrated-data/shared/unsubscribe";
-import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
+import { SubscriptionIdNotFoundError, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import {
     InvalidApiKeyError,
     InvalidXmlError,
@@ -71,7 +71,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             apiKey: subscription.apiKey,
         };
         try {
-            await sendTerminateSubscriptionRequest("cancellations", subscriptionId, subscriptionDetail, false);
+            await sendTerminateSubscriptionRequest(
+                "cancellations",
+                subscriptionId,
+                subscriptionDetail,
+                isPrivateAddress(subscription.url),
+            );
         } catch (e) {
             await putMetricData("custom/CancellationsMetrics", [
                 {

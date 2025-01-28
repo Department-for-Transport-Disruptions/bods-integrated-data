@@ -61,6 +61,7 @@ module "cancellations_subscriber" {
   mock_data_producer_subscribe_endpoint = (var.environment == "local" ?
     var.mock_data_producer_subscribe_function_url :
   "${var.mock_data_producer_api_endpoint}/subscriptions")
+  internal_data_endpoint = var.internal_data_endpoint
 }
 
 resource "aws_lambda_function_url" "cancellations_subscribe_endpoint_function_url" {

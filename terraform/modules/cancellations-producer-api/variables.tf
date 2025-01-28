@@ -56,3 +56,9 @@ variable "cancellations_raw_siri_bucket_name" {
   description = "Bucket Name for raw SIRI-SX data"
 }
 
+variable "internal_data_endpoint" {
+  type     = string
+  nullable = true
+  default  = null
+}
+

@@ -14,7 +14,7 @@ env:
   TZ: "Europe/London"
 
 jobs:
-  lint-pr-title:
+  lint_pr_title:
     name: Lint PR title
     runs-on: ubuntu-24.04
     steps:

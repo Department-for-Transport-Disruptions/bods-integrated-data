@@ -42,3 +42,9 @@ variable "cancellations_data_endpoint" {
   type        = string
   description = "HTTP API endpoint URL for the Cancellations Producer /data endpoint"
 }
+
+variable "internal_data_endpoint" {
+  type     = string
+  nullable = true
+  default  = null
+}
