@@ -94,7 +94,7 @@ jobs:
           image: ${{ steps.image_tag.outputs.image }}
 
       - name: Deploy ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task_def.outputs.task-definition }}
           service: "integrated-data-${{ inputs.task_name }}-service-${{ inputs.stage }}"
