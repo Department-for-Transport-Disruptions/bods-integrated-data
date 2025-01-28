@@ -279,6 +279,7 @@ export type TxcAnnotatedStopPointRef = z.infer<typeof annotatedStopPointRefSchem
 
 export const servicedOrganisationSchema = z.object({
     OrganisationCode: z.string().optional(),
+    Name: z.string().optional(),
     WorkingDays: z
         .object({
             DateRange: dateRange.array(),
@@ -308,6 +309,8 @@ const routesSchema = z.object({
 const journeyPatternSectionsSchema = z.object({
     JourneyPatternSection: journeyPatternSectionSchema.array().optional(),
 });
+
+export type JourneyPatternSections = z.infer<typeof journeyPatternSectionsSchema>;
 
 const servicedOrganisationsSchema = z.object({
     ServicedOrganisation: servicedOrganisationSchema.array().optional(),
@@ -340,3 +343,5 @@ export const txcSchema = z.object({
         StopPoints: castToObject(stopPointsSchema.optional()),
     }),
 });
+
+export type TxcSchema = z.infer<typeof txcSchema>;

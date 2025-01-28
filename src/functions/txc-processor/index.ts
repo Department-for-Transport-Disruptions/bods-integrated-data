@@ -1,3 +1,4 @@
+import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
 import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -37,30 +38,6 @@ import {
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
-
-const txcArrayProperties = [
-    "ServicedOrganisation",
-    "AnnotatedStopPointRef",
-    "StopPoint",
-    "RouteSectionRef",
-    "RouteSection",
-    "Route",
-    "RouteLink",
-    "JourneyPatternSection",
-    "JourneyPatternSectionRefs",
-    "Operator",
-    "Garage",
-    "Service",
-    "Line",
-    "Track",
-    "JourneyPattern",
-    "JourneyPatternTimingLink",
-    "VehicleJourney",
-    "VehicleJourneyTimingLink",
-    "OtherPublicHoliday",
-    "DateRange",
-    "ServicedOrganisationRef",
-];
 
 const getBankHolidaysJson = async (bucket: string) => {
     const file = await getS3Object({
