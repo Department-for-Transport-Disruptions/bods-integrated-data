@@ -3,7 +3,7 @@ import MockDate from "mockdate";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { VehicleJourneyMapping } from "../types";
 import * as databaseFunctions from "./database";
-import { processTrips } from "./trips";
+import { getGtfsDirectionId, processTrips } from "./trips";
 
 describe("trips", () => {
     MockDate.set("2024-02-10");
@@ -83,7 +83,7 @@ describe("trips", () => {
                 vehicle_journey_code: "8",
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
-                direction: "inbound",
+                direction: "1",
                 departure_time: "00:00:00z",
             },
             {
@@ -172,5 +172,19 @@ describe("trips", () => {
     it("doesn't insert trips into the database when the vehicle journey mapping is empty", async () => {
         await processTrips(dbClient, [], "");
         expect(insertTripsMock).not.toHaveBeenCalled();
+    });
+
+    describe("getGtfsDirectionId", () => {
+        it.each([
+            ["outbound", "0"],
+            ["inbound", "1"],
+            ["clockwise", "0"],
+            ["antiClockwise", "1"],
+            ["unknown", ""],
+            ["", ""],
+            [undefined, ""],
+        ])("correctly maps the journey pattern direction %s to GTFS direction ID %s", (input, expected) => {
+            expect(getGtfsDirectionId(input)).toEqual(expected);
+        });
     });
 });

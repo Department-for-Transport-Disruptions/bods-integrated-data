@@ -5,6 +5,18 @@ import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integ
 import { VehicleJourneyMapping } from "../types";
 import { insertTrips } from "./database";
 
+export const getGtfsDirectionId = (direction?: string) => {
+    if (direction === "outbound" || direction === "clockwise") {
+        return "0";
+    }
+
+    if (direction === "inbound" || direction === "antiClockwise") {
+        return "1";
+    }
+
+    return "";
+};
+
 export const processTrips = async (
     dbClient: KyselyDb,
     vehicleJourneyMappings: VehicleJourneyMapping[],
@@ -34,7 +46,7 @@ export const processTrips = async (
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
                 ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
                 file_path: filePath,
-                direction: journeyPattern?.Direction || "",
+                direction: getGtfsDirectionId(journeyPattern?.Direction),
                 revision_number: vehicleJourney["@_RevisionNumber"],
                 departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
             };
