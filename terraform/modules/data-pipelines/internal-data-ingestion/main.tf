@@ -116,7 +116,7 @@ resource "aws_lambda_permission" "internal_cancellations_data_endpoint_alb_tg_pe
   action        = "lambda:InvokeFunction"
   function_name = var.cancellations_data_endpoint_function_name
   principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_lb_target_group.internal_avl_ingestion_alb_tg.arn
+  source_arn    = aws_lb_target_group.internal_cancellations_ingestion_alb_tg.arn
 }
 
 resource "aws_lb_target_group_attachment" "internal_avl_ingestion_alb_tg_attachment" {
