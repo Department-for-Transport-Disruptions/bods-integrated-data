@@ -141,6 +141,10 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             return createHttpNotFoundErrorResponse("Subscription is inactive");
         }
 
+        if (xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation) {
+            logger.info(`Received VehicleActivityCancellation in feed: ${subscriptionId}`);
+        }
+
         if (
             xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery &&
             (!xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity ||
