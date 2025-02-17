@@ -155,25 +155,22 @@ export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => 
     return data;
 };
 
-export const generateGtfsRtAndUploadToS3 = async (gtfsRtBucketName: string, avl: Avl[], saveJson?: boolean) => {
-    logger.info("Generating GTFS-RT...");
-
-    const entities = avl.map(mapAvlToGtfsEntity);
-    const gtfsRtFeed = generateGtfsRtFeed(entities);
+export const uploadGtfsRtToS3 = async (bucketName: string, filename: string, data: Uint8Array, saveJson?: boolean) => {
+    logger.info(`Uploading GTFS-RT to S3 bucket ${bucketName}`);
 
     await putS3Object({
-        Bucket: gtfsRtBucketName,
-        Key: "gtfs-rt.bin",
+        Bucket: bucketName,
+        Key: `${filename}.bin`,
         ContentType: "application/octet-stream",
-        Body: gtfsRtFeed,
+        Body: data,
     });
 
     if (saveJson) {
         const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
 
         await putS3Object({
-            Bucket: gtfsRtBucketName,
-            Key: "gtfs-rt.json",
+            Bucket: bucketName,
+            Key: `${filename}.json`,
             ContentType: "application/json",
             Body: JSON.stringify(decodedJson),
         });

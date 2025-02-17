@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { generateGtfsRtFeed } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { generateGtfsRtFeed, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { getS3Object, putS3Object } from "@bods-integrated-data/shared/s3";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { PtSituationElement, siriSxSchema } from "@bods-integrated-data/shared/schema";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Handler } from "aws-lambda";
@@ -112,34 +112,6 @@ const mapPtSituationsToGtfsAlertEntities = async (
     return Promise.all(promises);
 };
 
-const uploadGtfsRtToS3 = async (bucketName: string, data: Uint8Array, saveJson: boolean) => {
-    try {
-        await putS3Object({
-            Bucket: bucketName,
-            Key: "gtfs-rt-service-alerts.bin",
-            ContentType: "application/octet-stream",
-            Body: data,
-        });
-
-        if (saveJson) {
-            const decodedJson = transit_realtime.FeedMessage.decode(data);
-
-            await putS3Object({
-                Bucket: bucketName,
-                Key: "gtfs-rt-service-alerts.json",
-                ContentType: "application/json",
-                Body: JSON.stringify(decodedJson),
-            });
-        }
-    } catch (e) {
-        if (e instanceof Error) {
-            logger.error(e, "There was a problem uploading GTFS-RT service alerts data to S3");
-        }
-
-        throw e;
-    }
-};
-
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
@@ -163,7 +135,7 @@ export const handler: S3Handler = async (event, context) => {
         );
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
-        await uploadGtfsRtToS3(bucketName, gtfsRtFeed, saveJson === "true");
+        await uploadGtfsRtToS3(bucketName, "gtfs-rt-service-alerts", gtfsRtFeed, saveJson === "true");
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the disruptions processor");
