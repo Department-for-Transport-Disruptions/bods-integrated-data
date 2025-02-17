@@ -12,7 +12,8 @@
         "@types/node": "^20.11.19",
         "@types/pg": "^8.11.0",
         "@types/unzipper": "^0.10.9",
-        "mockdate": "^3.0.5"
+        "mockdate": "^3.0.5",
+        "protobufjs-cli": "^1.1.3"
     },
     "dependencies": {
         "@aws-sdk/client-cloudwatch": "^3.682.0",
@@ -33,16 +34,19 @@
         "command-exists": "^1.2.9",
         "dayjs": "^1.11.10",
         "fast-xml-parser": "^4.5.0",
-        "gtfs-realtime-bindings": "^1.1.1",
         "kysely": "^0.27.3",
         "pg": "^8.11.3",
         "pino": "^9.1.0",
         "pino-lambda": "^4.4.0",
+        "protobufjs": "^7.4.0",
         "unzipper": "^0.10.14",
         "zod": "^3.23.8",
         "zod-validation-error": "^3.3.0"
     },
     "scripts": {
-        "test": "vitest run"
+        "postinstall": "pnpm download-gtfs-rt-proto && pnpm compile-gtfs-rt",
+        "test": "vitest run",
+        "download-gtfs-rt-proto": "curl -L -s --create-dirs 'https://github.com/google/transit/raw/master/gtfs-realtime/proto/gtfs-realtime.proto' --output gtfs-realtime/gtfs-realtime.proto",
+        "compile-gtfs-rt": "pbjs gtfs-realtime/gtfs-realtime.proto -t static-module -w es6 --keep-case -o gtfs-realtime/index.js && pbts -o gtfs-realtime/index.d.ts gtfs-realtime/index.js"
     }
 }

@@ -1,6 +1,6 @@
-import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewAvl } from "../database";
+import { transit_realtime } from "../gtfs-realtime";
 import { MatchingTimetable, createTimetableMatchingLookup, sanitiseTicketMachineJourneyCode } from "./utils";
 import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
@@ -86,7 +86,7 @@ describe("utils", () => {
             const expected: transit_realtime.IFeedEntity = {
                 id: "mock-uuid",
                 vehicle: {
-                    occupancyStatus: null,
+                    occupancy_status: null,
                     position: {
                         bearing: 0,
                         latitude: 2,
@@ -97,11 +97,11 @@ describe("utils", () => {
                         label: null,
                     },
                     trip: {
-                        routeId: "",
-                        tripId: "",
-                        startDate: null,
-                        startTime: null,
-                        scheduleRelationship: null,
+                        route_id: "",
+                        trip_id: "",
+                        start_date: null,
+                        start_time: null,
+                        schedule_relationship: null,
                     },
                     timestamp: 0,
                 },
@@ -164,7 +164,7 @@ describe("utils", () => {
             const expected: transit_realtime.IFeedEntity = {
                 id: "mock-uuid",
                 vehicle: {
-                    occupancyStatus: OccupancyStatus.FULL,
+                    occupancy_status: OccupancyStatus.FULL,
                     position: {
                         bearing: null,
                         latitude: 2,
@@ -175,11 +175,11 @@ describe("utils", () => {
                         label: null,
                     },
                     trip: {
-                        routeId: "",
-                        tripId: "",
-                        startDate: null,
-                        startTime: null,
-                        scheduleRelationship: null,
+                        route_id: "",
+                        trip_id: "",
+                        start_date: null,
+                        start_time: null,
+                        schedule_relationship: null,
                     },
                     timestamp: 0,
                 },
@@ -242,7 +242,7 @@ describe("utils", () => {
             const expected: transit_realtime.IFeedEntity = {
                 id: "mock-uuid",
                 vehicle: {
-                    occupancyStatus: null,
+                    occupancy_status: null,
                     position: {
                         bearing: 1,
                         latitude: 2,
@@ -253,11 +253,11 @@ describe("utils", () => {
                         label: null,
                     },
                     trip: {
-                        routeId: "",
-                        tripId: "",
-                        startDate: null,
-                        startTime: null,
-                        scheduleRelationship: null,
+                        route_id: "",
+                        trip_id: "",
+                        start_date: null,
+                        start_time: null,
+                        schedule_relationship: null,
                     },
                     timestamp: 0,
                 },
@@ -320,7 +320,7 @@ describe("utils", () => {
             const expected: transit_realtime.IFeedEntity = {
                 id: "mock-uuid",
                 vehicle: {
-                    occupancyStatus: null,
+                    occupancy_status: null,
                     position: {
                         bearing: null,
                         latitude: 2,
@@ -331,11 +331,11 @@ describe("utils", () => {
                         label: "AB12CDE",
                     },
                     trip: {
-                        routeId: "",
-                        tripId: "",
-                        startDate: null,
-                        startTime: null,
-                        scheduleRelationship: null,
+                        route_id: "",
+                        trip_id: "",
+                        start_date: null,
+                        start_time: null,
+                        schedule_relationship: null,
                     },
                     timestamp: 0,
                 },
@@ -398,7 +398,7 @@ describe("utils", () => {
             const expected: transit_realtime.IFeedEntity = {
                 id: "mock-uuid",
                 vehicle: {
-                    occupancyStatus: null,
+                    occupancy_status: null,
                     position: {
                         bearing: null,
                         latitude: 2,
@@ -409,11 +409,11 @@ describe("utils", () => {
                         label: null,
                     },
                     trip: {
-                        routeId: "4",
-                        tripId: "",
-                        startDate: null,
-                        startTime: null,
-                        scheduleRelationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
+                        route_id: "4",
+                        trip_id: "",
+                        start_date: null,
+                        start_time: null,
+                        schedule_relationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
                     },
                     timestamp: 0,
                 },
@@ -476,7 +476,7 @@ describe("utils", () => {
             const expected: transit_realtime.IFeedEntity = {
                 id: "mock-uuid",
                 vehicle: {
-                    occupancyStatus: null,
+                    occupancy_status: null,
                     position: {
                         bearing: null,
                         latitude: 2,
@@ -487,11 +487,11 @@ describe("utils", () => {
                         label: null,
                     },
                     trip: {
-                        routeId: "4",
-                        tripId: "5",
-                        startDate: null,
-                        startTime: null,
-                        scheduleRelationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
+                        route_id: "4",
+                        trip_id: "5",
+                        start_date: null,
+                        start_time: null,
+                        schedule_relationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
                     },
                     timestamp: 0,
                 },
@@ -555,7 +555,7 @@ describe("utils", () => {
         const expected: transit_realtime.IFeedEntity = {
             id: "mock-uuid",
             vehicle: {
-                occupancyStatus: null,
+                occupancy_status: null,
                 position: {
                     bearing: 1,
                     latitude: 2,
@@ -566,11 +566,11 @@ describe("utils", () => {
                     label: null,
                 },
                 trip: {
-                    routeId: "4",
-                    tripId: "",
-                    startDate: "20240101",
-                    startTime: "09:30:45",
-                    scheduleRelationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
+                    route_id: "4",
+                    trip_id: "",
+                    start_date: "20240101",
+                    start_time: "09:30:45",
+                    schedule_relationship: transit_realtime.TripDescriptor.ScheduleRelationship.SCHEDULED,
                 },
                 timestamp: 0,
             },

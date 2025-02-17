@@ -1,7 +1,7 @@
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
+import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
-import { transit_realtime } from "gtfs-realtime-bindings";
 
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;
 
@@ -234,7 +234,7 @@ export const getGtfsInformedIdentities = async (
     for (const agency of agencies) {
         if (agency) {
             identities.push({
-                agencyId: agency.id.toString(),
+                agency_id: agency.id.toString(),
             });
         }
     }
@@ -242,9 +242,9 @@ export const getGtfsInformedIdentities = async (
     for (const route of routes) {
         if (route) {
             identities.push({
-                agencyId: route.agency_id.toString(),
-                routeId: route.id.toString(),
-                routeType: route.route_type,
+                agency_id: route.agency_id.toString(),
+                route_id: route.id.toString(),
+                route_type: route.route_type,
             });
         }
     }
@@ -253,7 +253,7 @@ export const getGtfsInformedIdentities = async (
         for (const affectedStopPoint of consequence.Affects.StopPoints.AffectedStopPoint) {
             if (affectedStopPoint.StopPointRef) {
                 identities.push({
-                    stopId: affectedStopPoint.StopPointRef,
+                    stop_id: affectedStopPoint.StopPointRef,
                 });
             }
         }

@@ -1,6 +1,6 @@
+import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
 import { Condition, Severity, VehicleMode } from "@bods-integrated-data/shared/schema/siri-sx/enums";
-import { transit_realtime } from "gtfs-realtime-bindings";
 import { describe, expect, it } from "vitest";
 import { getGtfsActivePeriods, getGtfsCause, getGtfsEffect, getGtfsSeverityLevel } from "./utils";
 

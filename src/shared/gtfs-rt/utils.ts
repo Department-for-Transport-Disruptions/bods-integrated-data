@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { transit_realtime } from "gtfs-realtime-bindings";
 import { sql } from "kysely";
 import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
 import { Avl, BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
+import { transit_realtime } from "../gtfs-realtime";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
@@ -55,7 +55,7 @@ export const mapAvlToGtfsEntity = (avl: Avl | NewAvl): transit_realtime.IFeedEnt
     return {
         id: randomUUID(),
         vehicle: {
-            occupancyStatus: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
+            occupancy_status: avl.occupancy ? getOccupancyStatus(avl.occupancy) : null,
             position: {
                 bearing: avl.bearing,
                 latitude: avl.latitude,
@@ -66,11 +66,11 @@ export const mapAvlToGtfsEntity = (avl: Avl | NewAvl): transit_realtime.IFeedEnt
                 label: isValidRegistrationNumber ? avl.vehicle_ref : null,
             },
             trip: {
-                routeId,
-                tripId,
-                startDate,
-                startTime,
-                scheduleRelationship,
+                route_id: routeId,
+                trip_id: tripId,
+                start_date: startDate,
+                start_time: startTime,
+                schedule_relationship: scheduleRelationship,
             },
             timestamp: getDate(avl.recorded_at_time).unix(),
         },
@@ -139,20 +139,23 @@ export const getAvlDataForGtfs = async (
     }
 };
 
-export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]) => {
+export const generateGtfsRtFeed = (entities: transit_realtime.IFeedEntity[]): Uint8Array => {
     const message = {
         header: {
-            gtfsRealtimeVersion: "2.0",
+            gtfs_realtime_version: "2.0",
             incrementality: transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
             timestamp: getDate().unix(),
-        },
+        } satisfies transit_realtime.IFeedHeader,
         entity: entities,
     };
 
-    const feed = transit_realtime.FeedMessage.encode(message);
-    const data = feed.finish();
+    const verifyError = transit_realtime.FeedMessage.verify(message);
 
-    return data;
+    if (verifyError) {
+        logger.error(`Error verifying GTFS-RT message: ${verifyError}`);
+    }
+
+    return transit_realtime.FeedMessage.encode(message).finish();
 };
 
 export const uploadGtfsRtToS3 = async (bucketName: string, filename: string, data: Uint8Array, saveJson?: boolean) => {
@@ -166,7 +169,7 @@ export const uploadGtfsRtToS3 = async (bucketName: string, filename: string, dat
     });
 
     if (saveJson) {
-        const decodedJson = transit_realtime.FeedMessage.decode(gtfsRtFeed);
+        const decodedJson = transit_realtime.FeedMessage.decode(data);
 
         await putS3Object({
             Bucket: bucketName,

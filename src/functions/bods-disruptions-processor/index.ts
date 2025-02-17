@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
 import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { generateGtfsRtFeed, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -9,7 +10,6 @@ import { PtSituationElement, siriSxSchema } from "@bods-integrated-data/shared/s
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import { transit_realtime } from "gtfs-realtime-bindings";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
@@ -69,10 +69,9 @@ const mapPtSituationsToGtfsAlertEntities = async (
             const entity: transit_realtime.IFeedEntity = {
                 id: randomUUID(),
                 alert: {
-                    activePeriod: getGtfsActivePeriods(ptSituation),
-                    informedEntity: await getGtfsInformedIdentities(dbClient, consequence),
+                    active_period: getGtfsActivePeriods(ptSituation),
+                    informed_entity: await getGtfsInformedIdentities(dbClient, consequence),
                     cause: getGtfsCause(ptSituation),
-                    // @ts-ignore allow experimental property (not available in the gtfs-realtime-bindings library yet)
                     cause_detail: {
                         translation: [
                             {
@@ -81,7 +80,6 @@ const mapPtSituationsToGtfsAlertEntities = async (
                         ],
                     },
                     effect: getGtfsEffect(consequence),
-                    // @ts-ignore allow experimental property (not available in the gtfs-realtime-bindings library yet)
                     effect_detail: {
                         translation: [
                             {
@@ -94,14 +92,21 @@ const mapPtSituationsToGtfsAlertEntities = async (
                             text: link.Uri,
                         })),
                     },
-                    headerText: {
+                    header_text: {
                         translation: [
                             {
                                 text: ptSituation.Summary || "",
                             },
                         ],
                     },
-                    severityLevel: getGtfsSeverityLevel(consequence.Severity),
+                    description_text: {
+                        translation: [
+                            {
+                                text: ptSituation.Description || "",
+                            },
+                        ],
+                    },
+                    severity_level: getGtfsSeverityLevel(consequence.Severity),
                 },
             };
 
