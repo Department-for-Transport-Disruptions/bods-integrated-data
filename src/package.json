@@ -3,7 +3,9 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "prepare": "echo hello world",
+        "prepare": "pnpm download-gtfs-rt-proto && pnpm generate-gtfs-rt-module",
+        "download-gtfs-rt-proto": "curl -L -s --create-dirs 'https://github.com/google/transit/raw/master/gtfs-realtime/proto/gtfs-realtime.proto' --output shared/gtfs-realtime/gtfs-realtime.proto",
+        "generate-gtfs-rt-module": "pbjs shared/gtfs-realtime/gtfs-realtime.proto -t static-module -w es6 --keep-case -o shared/gtfs-realtime/index.js && pbts -o shared/gtfs-realtime/index.d.ts shared/gtfs-realtime/index.js",
         "build-all": "rm -rf ./functions/dist && pnpm -r --if-present build:local",
         "test:ci": "vitest run",
         "test": "vitest",
