@@ -2,7 +2,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewAvl } from "../database";
 import { MatchingTimetable, createTimetableMatchingLookup, sanitiseTicketMachineJourneyCode } from "./utils";
-import { getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
+import { getDirectionRef, getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
     const mockBucketName = "mock-bucket";
@@ -18,6 +18,24 @@ describe("utils", () => {
 
     afterEach(() => {
         vi.resetAllMocks();
+    });
+
+    describe("getDirectionRef", () => {
+        it.each([
+            ["0", ""],
+            ["1", "0"],
+            ["2", "1"],
+            ["3", ""],
+            ["outbound", "0"],
+            ["inbound", "1"],
+            ["clockwise", "0"],
+            ["antiClockwise", "1"],
+            ["unknown", ""],
+            ["", ""],
+            [undefined, ""],
+        ])("correctly maps the journey pattern direction %s to GTFS direction ID %s", (input, expected) => {
+            expect(getDirectionRef(input)).toEqual(expected);
+        });
     });
 
     describe("getOccupancyStatus", () => {
