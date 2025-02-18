@@ -44,9 +44,10 @@
         "zod-validation-error": "^3.3.0"
     },
     "scripts": {
-        "postinstall": "pnpm download-gtfs-rt-proto && pnpm compile-gtfs-rt",
+        "postinstall": "pnpm download-gtfs-rt-proto && pnpm generate-gtfs-rt-module",
         "test": "vitest run",
         "download-gtfs-rt-proto": "curl -L -s --create-dirs 'https://github.com/google/transit/raw/master/gtfs-realtime/proto/gtfs-realtime.proto' --output gtfs-realtime/gtfs-realtime.proto",
-        "compile-gtfs-rt": "pbjs gtfs-realtime/gtfs-realtime.proto -t static-module -w es6 --keep-case -o gtfs-realtime/index.js && [[ -z $CI ]] && pbts -o gtfs-realtime/index.d.ts gtfs-realtime/index.js"
+        "generate-gtfs-rt-module": "pbjs gtfs-realtime/gtfs-realtime.proto -t static-module -w es6 --keep-case -o gtfs-realtime/index.js",
+        "generate-gtfs-rt-types": "[[ -z $CI ]] && pbts -o gtfs-realtime/index.d.ts gtfs-realtime/index.js"
     }
 }
