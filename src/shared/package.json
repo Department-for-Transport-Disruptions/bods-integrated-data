@@ -44,7 +44,7 @@
         "zod-validation-error": "^3.3.0"
     },
     "scripts": {
-        "postinstall": "curl -L -s --create-dirs 'https://github.com/google/transit/raw/master/gtfs-realtime/proto/gtfs-realtime.proto' --output gtfs-realtime/gtfs-realtime.proto",
+        "postinstall": "echo hey there",
         "test": "vitest run",
         "download-gtfs-rt-proto": "curl -L -s --create-dirs 'https://github.com/google/transit/raw/master/gtfs-realtime/proto/gtfs-realtime.proto' --output gtfs-realtime/gtfs-realtime.proto",
         "generate-gtfs-rt-module": "pbjs gtfs-realtime/gtfs-realtime.proto -t static-module -w es6 --keep-case -o gtfs-realtime/index.js",
