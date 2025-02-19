@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
+import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { getDynamoItem, putDynamoItems } from "@bods-integrated-data/shared/dynamo";
@@ -177,7 +178,24 @@ export const processSqsRecord = async (
 
             const enrichedAvls = await Promise.all(avls.map((avl) => addMatchingTripToAvl(gtfsTripMapsTableName, avl)));
 
-            await insertAvls(dbClient, enrichedAvls, subscriptionId);
+            const totalAvlCount = enrichedAvls.length;
+
+            if (totalAvlCount > 0) {
+                const matchedAvlCount = enrichedAvls.filter((avl) => avl.route_id && avl.trip_id).length;
+
+                await putMetricData("custom/BODSAVLProcessor", [
+                    {
+                        MetricName: "MatchedAVL",
+                        Value: matchedAvlCount,
+                    },
+                    {
+                        MetricName: "TotalAVL",
+                        Value: totalAvlCount,
+                    },
+                ]);
+
+                await insertAvls(dbClient, enrichedAvls, subscriptionId);
+            }
 
             logger.info("AVL processed successfully", {
                 subscriptionId,

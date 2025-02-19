@@ -150,8 +150,18 @@ describe("avl-processor", () => {
             );
 
             expect(uuidSpy).toHaveBeenCalledOnce();
-
             expect(valuesMock).toBeCalledWith(parsedSiri);
+            expect(putMetricDataSpy).toHaveBeenCalledTimes(1);
+            expect(putMetricDataSpy).toHaveBeenNthCalledWith(1, "custom/BODSAVLProcessor", [
+                {
+                    MetricName: "MatchedAVL",
+                    Value: 0,
+                },
+                {
+                    MetricName: "TotalAVL",
+                    Value: 2,
+                },
+            ]);
         },
     );
 
