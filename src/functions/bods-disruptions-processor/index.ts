@@ -18,6 +18,7 @@ import {
     getGtfsEffect,
     getGtfsInformedIdentities,
     getGtfsSeverityLevel,
+    getRouteMap,
 } from "./utils";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -56,21 +57,20 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
     return parseResult.data;
 };
 
-const mapPtSituationsToGtfsAlertEntities = async (
-    dbClient: KyselyDb,
-    ptSituations: PtSituationElement[],
-): Promise<transit_realtime.IFeedEntity[]> => {
-    const promises = ptSituations.flatMap((ptSituation) => {
+const mapPtSituationsToGtfsAlertEntities = async (dbClient: KyselyDb, ptSituations: PtSituationElement[]) => {
+    const routeMap = await getRouteMap(dbClient, ptSituations);
+
+    return ptSituations.flatMap((ptSituation) => {
         if (!ptSituation.Consequences) {
             return [];
         }
 
-        return ptSituation.Consequences.Consequence.map(async (consequence) => {
+        return ptSituation.Consequences.Consequence.map((consequence) => {
             const entity: transit_realtime.IFeedEntity = {
                 id: randomUUID(),
                 alert: {
                     active_period: getGtfsActivePeriods(ptSituation),
-                    informed_entity: await getGtfsInformedIdentities(dbClient, consequence),
+                    informed_entity: getGtfsInformedIdentities(consequence, routeMap),
                     cause: getGtfsCause(ptSituation),
                     cause_detail: {
                         translation: [
@@ -113,8 +113,6 @@ const mapPtSituationsToGtfsAlertEntities = async (
             return entity;
         });
     });
-
-    return Promise.all(promises);
 };
 
 export const handler: S3Handler = async (event, context) => {
