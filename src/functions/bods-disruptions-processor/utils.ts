@@ -229,7 +229,7 @@ export const getGtfsInformedIdentities = async (
     }
 
     const agencies = await Promise.all(operatorRefs.map((operatorRef) => getAgency(dbClient, operatorRef)));
-    const routes = await Promise.all(operatorRefs.map((lineRef) => getRoute(dbClient, lineRef)));
+    const routes = await Promise.all(lineRefs.map((lineRef) => getRoute(dbClient, lineRef)));
 
     for (const agency of agencies) {
         if (agency) {
