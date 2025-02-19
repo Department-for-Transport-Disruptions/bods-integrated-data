@@ -1,21 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
 import { getLocalTime } from "@bods-integrated-data/shared/dates";
+import { getDirectionRef } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { VehicleJourneyMapping } from "../types";
 import { insertTrips } from "./database";
-
-export const getGtfsDirectionId = (direction?: string) => {
-    if (direction === "outbound" || direction === "clockwise") {
-        return "0";
-    }
-
-    if (direction === "inbound" || direction === "antiClockwise") {
-        return "1";
-    }
-
-    return "";
-};
 
 export const processTrips = async (
     dbClient: KyselyDb,
@@ -46,7 +35,7 @@ export const processTrips = async (
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
                 ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
                 file_path: filePath,
-                direction: getGtfsDirectionId(journeyPattern?.Direction),
+                direction: getDirectionRef(journeyPattern?.Direction),
                 revision_number: vehicleJourney["@_RevisionNumber"],
                 departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
             };
