@@ -470,7 +470,7 @@ describe("avl-processor", () => {
 
             const mockMatchingTrip: GtfsTripMap = {
                 PK: "routeKey",
-                SK: "NOC1_R1_outbound_tmjc1#1",
+                SK: "NOC1_R1_0_tmjc1#1",
                 routeId: 1,
                 tripId: "1",
                 timeToExist: 0,
@@ -481,7 +481,7 @@ describe("avl-processor", () => {
 
             expect(getDynamoItemSpy).toHaveBeenCalledWith(mockGtfsTripMapsTableName, {
                 PK: "NOC1_R1",
-                SK: "NOC1_R1_outbound_tmjc1#1",
+                SK: "NOC1_R1_0_tmjc1#1",
             });
 
             expect(matchedAvl).toEqual({
@@ -496,14 +496,14 @@ describe("avl-processor", () => {
                 operator_ref: "NT",
                 line_ref: "NTR1",
                 dated_vehicle_journey_ref: "tmjc1",
-                direction_ref: "outbound",
+                direction_ref: "inbound",
                 longitude: -1.123,
                 latitude: 51.123,
             };
 
             const mockMatchingTrip: GtfsTripMap = {
                 PK: "NCTR_R1",
-                SK: "NCTR_R1_outbound_tmjc1#1",
+                SK: "NCTR_R1_1_tmjc1#1",
                 routeId: 1,
                 tripId: "1",
                 timeToExist: 0,
@@ -514,7 +514,7 @@ describe("avl-processor", () => {
 
             expect(getDynamoItemSpy).toHaveBeenCalledWith(mockGtfsTripMapsTableName, {
                 PK: "NCTR_R1",
-                SK: "NCTR_R1_outbound_tmjc1#1",
+                SK: "NCTR_R1_1_tmjc1#1",
             });
 
             expect(matchedAvl).toEqual({
