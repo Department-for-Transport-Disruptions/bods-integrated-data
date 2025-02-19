@@ -44,6 +44,7 @@ for more information about BODS.
   - [Workflow](#workflow)
   - [Performing a hotfix](#performing-a-hotfix)
   - [Manually deploying changes](#manually-deploying-changes)
+- [Codegen Modules](#codegen-modules)
 
 ## Dependencies
 
@@ -528,3 +529,9 @@ To deploy lambda functions, first build the functions before applying:
 make install-deps build-functions
 make tf-apply-{ENV}
 ```
+
+## Codegen Modules
+
+The GTFS realtime bindings module is pre-generated upon project install because other gtfs npm packages do not provide both
+a combination of up-to-date bindings or Typescript definitions. The bindings are located in `src/shared/gtfs-realtime`.
+For more information, see: <https://gtfs.org/documentation/realtime/language-bindings/overview/>.
