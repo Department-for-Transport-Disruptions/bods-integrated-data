@@ -211,6 +211,10 @@ export const getAgencyMap = async (dbClient: KyselyDb, ptSituations: PtSituation
         }
     }
 
+    if (operatorRefs.size === 0) {
+        return {};
+    }
+
     const agencies = await getAgencies(dbClient, Array.from(operatorRefs));
     const agencyMap: Record<string, transit_realtime.IEntitySelector> = {};
 
@@ -244,6 +248,10 @@ export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationE
                 }
             }
         }
+    }
+
+    if (lineRefs.size === 0) {
+        return {};
     }
 
     const routes = await getRoutes(dbClient, Array.from(lineRefs));
