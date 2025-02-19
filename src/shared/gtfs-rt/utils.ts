@@ -220,16 +220,16 @@ export const getRouteKey = (avl: NewAvl) => {
 
 export const sanitiseTicketMachineJourneyCode = (input: string) => input.replace(":", "");
 
-export const getDirectionRef = (direction: string) => {
-    if (direction === "1") {
-        return "outbound";
+export const getDirectionRef = (direction?: string) => {
+    if (direction === "1" || direction === "outbound" || direction === "clockwise") {
+        return "0";
     }
 
-    if (direction === "2") {
-        return "inbound";
+    if (direction === "2" || direction === "inbound" || direction === "antiClockwise") {
+        return "1";
     }
 
-    return direction;
+    return "";
 };
 
 export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
