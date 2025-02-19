@@ -289,6 +289,36 @@ describe("utils", () => {
             const agencyMap = await getAgencyMap(dbClient, ptSituationElements);
             expect(agencyMap).toEqual(expectedAgencyMap);
         });
+
+        it("returns an empty map when no agencies are matched in the database", async () => {
+            getAgenciesMock.mockResolvedValueOnce([]);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Operators: {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                            {
+                                                OperatorRef: "o2",
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const agencyMap = await getAgencyMap(dbClient, ptSituationElements);
+            expect(agencyMap).toEqual({});
+        });
     });
 
     describe("getRouteMap", () => {
@@ -359,6 +389,44 @@ describe("utils", () => {
 
             const routeMap = await getRouteMap(dbClient, ptSituationElements);
             expect(routeMap).toEqual(expectedRouteMap);
+        });
+
+        it("returns an empty map when no routes are matched in the database", async () => {
+            getRoutesMock.mockResolvedValueOnce([]);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Networks: {
+                                        AffectedNetwork: [
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r1",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r2",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const routeMap = await getRouteMap(dbClient, ptSituationElements);
+            expect(routeMap).toEqual({});
         });
     });
 
@@ -595,6 +663,54 @@ describe("utils", () => {
             } as Consequence;
 
             const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual([]);
+        });
+
+        it("returns no informed identities when the consequence affects all operators but no agencies are matched in the database", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Operators: {
+                        AffectedOperator: [
+                            {
+                                OperatorRef: "o1",
+                            },
+                            {
+                                OperatorRef: "o2",
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, {}, routeMap);
+            expect(informedIdentities).toEqual([]);
+        });
+
+        it("returns no informed identities when the consequence has lines but no routes are matched in the database", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r1",
+                                    },
+                                ],
+                            },
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r2",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, {});
             expect(informedIdentities).toEqual([]);
         });
     });
