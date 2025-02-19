@@ -1,8 +1,18 @@
+import { Agency, KyselyDb, Route, RouteType } from "@bods-integrated-data/shared/database";
 import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
 import { Condition, Severity, VehicleMode } from "@bods-integrated-data/shared/schema/siri-sx/enums";
-import { describe, expect, it } from "vitest";
-import { getGtfsActivePeriods, getGtfsCause, getGtfsEffect, getGtfsSeverityLevel } from "./utils";
+import { describe, expect, it, vi } from "vitest";
+import * as databaseFunctions from "./database";
+import {
+    getAgencyMap,
+    getGtfsActivePeriods,
+    getGtfsCause,
+    getGtfsEffect,
+    getGtfsInformedIdentities,
+    getGtfsSeverityLevel,
+    getRouteMap,
+} from "./utils";
 
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;
 
@@ -223,6 +233,485 @@ describe("utils", () => {
             ];
             const result = getGtfsActivePeriods(input);
             expect(result).toEqual(expected);
+        });
+    });
+
+    describe("getAgencyMap", () => {
+        let dbClient: KyselyDb;
+        const getAgenciesMock = vi.spyOn(databaseFunctions, "getAgencies");
+
+        it("creates a route map for a given list of line refs", async () => {
+            const mockAgencies: Agency[] = [
+                {
+                    id: 1,
+                    noc: "o1",
+                },
+                {
+                    id: 2,
+                    noc: "o2",
+                },
+            ] as Agency[];
+
+            getAgenciesMock.mockResolvedValueOnce(mockAgencies);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Operators: {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                            {
+                                                OperatorRef: "o2",
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const expectedAgencyMap: Record<string, transit_realtime.IEntitySelector> = {
+                o1: {
+                    agency_id: "1",
+                },
+                o2: {
+                    agency_id: "2",
+                },
+            };
+
+            const agencyMap = await getAgencyMap(dbClient, ptSituationElements);
+            expect(agencyMap).toEqual(expectedAgencyMap);
+        });
+
+        it("returns an empty map when no agencies are matched in the database", async () => {
+            getAgenciesMock.mockResolvedValueOnce([]);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Operators: {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                            {
+                                                OperatorRef: "o2",
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const agencyMap = await getAgencyMap(dbClient, ptSituationElements);
+            expect(agencyMap).toEqual({});
+        });
+    });
+
+    describe("getRouteMap", () => {
+        let dbClient: KyselyDb;
+        const getRoutesMock = vi.spyOn(databaseFunctions, "getRoutes");
+
+        it("creates a route map for a given list of line refs", async () => {
+            const mockRoutes: Route[] = [
+                {
+                    id: 1,
+                    line_id: "r1",
+                    agency_id: 10,
+                    route_type: RouteType.Bus,
+                },
+                {
+                    id: 2,
+                    line_id: "r2",
+                    agency_id: 20,
+                    route_type: RouteType.Bus,
+                },
+            ] as Route[];
+
+            getRoutesMock.mockResolvedValueOnce(mockRoutes);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Networks: {
+                                        AffectedNetwork: [
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r1",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r2",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const expectedRouteMap: Record<string, transit_realtime.IEntitySelector> = {
+                r1: {
+                    agency_id: "10",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                },
+                r2: {
+                    agency_id: "20",
+                    route_id: "2",
+                    route_type: RouteType.Bus,
+                },
+            };
+
+            const routeMap = await getRouteMap(dbClient, ptSituationElements);
+            expect(routeMap).toEqual(expectedRouteMap);
+        });
+
+        it("returns an empty map when no routes are matched in the database", async () => {
+            getRoutesMock.mockResolvedValueOnce([]);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Networks: {
+                                        AffectedNetwork: [
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r1",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r2",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const routeMap = await getRouteMap(dbClient, ptSituationElements);
+            expect(routeMap).toEqual({});
+        });
+    });
+
+    describe("getGtfsInformedIdentities", () => {
+        const agencyMap: Record<string, transit_realtime.IEntitySelector> = {
+            o1: {
+                agency_id: "10",
+            },
+            o2: {
+                agency_id: "20",
+            },
+        };
+
+        const routeMap: Record<string, transit_realtime.IEntitySelector> = {
+            r1: {
+                agency_id: "10",
+                route_id: "1",
+                route_type: RouteType.Bus,
+            },
+            r2: {
+                agency_id: "20",
+                route_id: "2",
+                route_type: RouteType.Bus,
+            },
+        };
+
+        it("returns informed identities with only agency_id when the consequence affects all operators", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Operators: {
+                        AffectedOperator: [
+                            {
+                                OperatorRef: "o1",
+                            },
+                            {
+                                OperatorRef: "o2",
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const expectedInformedIdentities: transit_realtime.IEntitySelector[] = [
+                {
+                    agency_id: "10",
+                },
+                {
+                    agency_id: "20",
+                },
+            ];
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual(expectedInformedIdentities);
+        });
+
+        it("returns informed identities with only agency_id, route_id and route_type when the consequence has no affected stops", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r1",
+                                    },
+                                ],
+                            },
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r2",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const expectedInformedIdentities: transit_realtime.IEntitySelector[] = [
+                {
+                    agency_id: "10",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                },
+                {
+                    agency_id: "20",
+                    route_id: "2",
+                    route_type: RouteType.Bus,
+                },
+            ];
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual(expectedInformedIdentities);
+        });
+
+        it("returns informed identities with agency_id, route_id, route_type and stop_id when the consequence has affected lines and stops", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r1",
+                                    },
+                                ],
+                            },
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r2",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    StopPoints: {
+                        AffectedStopPoint: [
+                            {
+                                StopPointRef: "1",
+                            },
+                            {
+                                StopPointRef: "2",
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const expectedInformedIdentities: transit_realtime.IEntitySelector[] = [
+                {
+                    agency_id: "10",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                    stop_id: "1",
+                },
+                {
+                    agency_id: "10",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                    stop_id: "2",
+                },
+                {
+                    agency_id: "20",
+                    route_id: "2",
+                    route_type: RouteType.Bus,
+                    stop_id: "1",
+                },
+                {
+                    agency_id: "20",
+                    route_id: "2",
+                    route_type: RouteType.Bus,
+                    stop_id: "2",
+                },
+            ];
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual(expectedInformedIdentities);
+        });
+
+        it("returns informed identities with only stop_id when the consequence affects all lines", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AllLines: "",
+                            },
+                        ],
+                    },
+                    StopPoints: {
+                        AffectedStopPoint: [
+                            {
+                                StopPointRef: "1",
+                            },
+                            {
+                                StopPointRef: "2",
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const expectedInformedIdentities: transit_realtime.IEntitySelector[] = [
+                {
+                    stop_id: "1",
+                },
+                {
+                    stop_id: "2",
+                },
+            ];
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual(expectedInformedIdentities);
+        });
+
+        it("returns informed identities with only stop_id when the consequence has no affected lines", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    StopPoints: {
+                        AffectedStopPoint: [
+                            {
+                                StopPointRef: "1",
+                            },
+                            {
+                                StopPointRef: "2",
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const expectedInformedIdentities: transit_realtime.IEntitySelector[] = [
+                {
+                    stop_id: "1",
+                },
+                {
+                    stop_id: "2",
+                },
+            ];
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual(expectedInformedIdentities);
+        });
+
+        it("returns no informed identities when the consequence affects a whole network", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Operators: {
+                        AllOperators: "",
+                    },
+                },
+            } as Consequence;
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual([]);
+        });
+
+        it("returns no informed identities when the consequence affects all operators but no agencies are matched in the database", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Operators: {
+                        AffectedOperator: [
+                            {
+                                OperatorRef: "o1",
+                            },
+                            {
+                                OperatorRef: "o2",
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, {}, routeMap);
+            expect(informedIdentities).toEqual([]);
+        });
+
+        it("returns no informed identities when the consequence has lines but no routes are matched in the database", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r1",
+                                    },
+                                ],
+                            },
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r2",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, {});
+            expect(informedIdentities).toEqual([]);
         });
     });
 });
