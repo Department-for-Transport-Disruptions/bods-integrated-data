@@ -101,7 +101,7 @@ module "integrated_data_bods_disruptions_processor_function" {
   handler         = "index.handler"
   runtime         = "nodejs20.x"
   timeout         = 60
-  memory          = 256
+  memory          = 1024
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
