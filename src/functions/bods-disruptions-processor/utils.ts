@@ -2,7 +2,7 @@ import { KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
-import { getRoutes } from "./database";
+import { getAgencies, getRoutes } from "./database";
 
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;
 
@@ -193,6 +193,37 @@ export const getGtfsActivePeriods = (ptSituation: PtSituationElement): transit_r
 };
 
 /**
+ * Takes a list of situations and returns a collated map of operator refs with their
+ * corresponding agency_id values from the database.
+ */
+export const getAgencyMap = async (dbClient: KyselyDb, ptSituations: PtSituationElement[]) => {
+    const operatorRefs = new Set<string>();
+
+    for (const ptSituation of ptSituations) {
+        if (ptSituation.Consequences?.Consequence) {
+            for (const consequence of ptSituation.Consequences.Consequence) {
+                if (consequence.Affects?.Operators?.AffectedOperator) {
+                    for (const affectedOperator of consequence.Affects.Operators.AffectedOperator) {
+                        operatorRefs.add(affectedOperator.OperatorRef);
+                    }
+                }
+            }
+        }
+    }
+
+    const agencies = await getAgencies(dbClient, Array.from(operatorRefs));
+    const agencyMap: Record<string, transit_realtime.IEntitySelector> = {};
+
+    for (const agency of agencies) {
+        agencyMap[agency.noc] = {
+            agency_id: agency.id.toString(),
+        };
+    }
+
+    return agencyMap;
+};
+
+/**
  * Takes a list of situations and returns a collated map of line refs with their
  * corresponding route_id and agency_id values from the database.
  */
@@ -230,21 +261,32 @@ export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationE
 };
 
 /**
- * Informed identities are created with a combination of agency_id, route_id, route_type,
- * and stop_id depending on the information available about lines and stops in a consequence.
+ * Informed identities are created with a combination of agency_id, route_id, route_type, and
+ * stop_id depending on the information available about operators, lines and stops in a consequence.
  * The possible variations:
- * 1. lines and stops = identities with agency_id, route_id, stop_id
+ * 1. operators only = identities with agency_id
  * 2. lines only = identities with agency_id, route_id
  * 3. stops only = identities with stop_id
- * Note that network-wide consequences (no lines or stops) are discarded because GTFS service
+ * 1. lines and stops = identities with agency_id, route_id, stop_id
+ *
+ * Note that network-wide consequences (no operators, lines or stops) are discarded because GTFS service
  * alerts do not allow a network to be restricted to a geography (typically used in siri-sx).
  */
 export const getGtfsInformedIdentities = (
     consequence: Consequence,
+    agencyMap: Record<string, transit_realtime.IEntitySelector>,
     routeMap: Record<string, transit_realtime.IEntitySelector>,
 ) => {
     const informedIdentities: transit_realtime.IEntitySelector[] = [];
+    const operatorRefs = new Set<string>();
     const lineRefs = new Set<string>();
+    const stopPointRefs = new Set<string>();
+
+    if (consequence.Affects?.Operators?.AffectedOperator) {
+        for (const affectedOperator of consequence.Affects.Operators.AffectedOperator) {
+            operatorRefs.add(affectedOperator.OperatorRef);
+        }
+    }
 
     if (consequence.Affects?.Networks?.AffectedNetwork) {
         for (const affectedNetwork of consequence.Affects.Networks.AffectedNetwork) {
@@ -256,30 +298,23 @@ export const getGtfsInformedIdentities = (
         }
     }
 
-    const consequenceHasLines = lineRefs.size > 0;
-
     if (consequence.Affects?.StopPoints?.AffectedStopPoint) {
         for (const affectedStopPoint of consequence.Affects.StopPoints.AffectedStopPoint) {
-            const stopPointRef = affectedStopPoint.StopPointRef;
+            if (affectedStopPoint.StopPointRef) {
+                stopPointRefs.add(affectedStopPoint.StopPointRef);
+            }
+        }
+    }
 
-            if (consequenceHasLines) {
-                for (const lineRef of lineRefs) {
-                    if (routeMap[lineRef]) {
-                        informedIdentities.push({
-                            agency_id: routeMap[lineRef].agency_id,
-                            route_id: routeMap[lineRef].route_id,
-                            route_type: routeMap[lineRef].route_type,
-                            stop_id: stopPointRef,
-                        });
-                    }
-                }
-            } else {
+    if (operatorRefs.size > 0 && lineRefs.size === 0 && stopPointRefs.size === 0) {
+        for (const operatorRef of operatorRefs) {
+            if (agencyMap[operatorRef]) {
                 informedIdentities.push({
-                    stop_id: stopPointRef,
+                    agency_id: agencyMap[operatorRef].agency_id,
                 });
             }
         }
-    } else {
+    } else if (lineRefs.size > 0 && stopPointRefs.size === 0) {
         for (const lineRef of lineRefs) {
             if (routeMap[lineRef]) {
                 informedIdentities.push({
@@ -288,6 +323,25 @@ export const getGtfsInformedIdentities = (
                     route_type: routeMap[lineRef].route_type,
                 });
             }
+        }
+    } else if (lineRefs.size > 0 && stopPointRefs.size > 0) {
+        for (const lineRef of lineRefs) {
+            if (routeMap[lineRef]) {
+                for (const stopPointRef of stopPointRefs) {
+                    informedIdentities.push({
+                        agency_id: routeMap[lineRef].agency_id,
+                        route_id: routeMap[lineRef].route_id,
+                        route_type: routeMap[lineRef].route_type,
+                        stop_id: stopPointRef,
+                    });
+                }
+            }
+        }
+    } else if (stopPointRefs.size > 0) {
+        for (const stopPointRef of stopPointRefs) {
+            informedIdentities.push({
+                stop_id: stopPointRef,
+            });
         }
     }
 

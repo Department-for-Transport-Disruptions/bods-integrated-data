@@ -13,6 +13,7 @@ import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
+    getAgencyMap,
     getGtfsActivePeriods,
     getGtfsCause,
     getGtfsEffect,
@@ -58,6 +59,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
 };
 
 const mapPtSituationsToGtfsAlertEntities = async (dbClient: KyselyDb, ptSituations: PtSituationElement[]) => {
+    const agencyMap = await getAgencyMap(dbClient, ptSituations);
     const routeMap = await getRouteMap(dbClient, ptSituations);
 
     return ptSituations.flatMap((ptSituation) => {
@@ -70,7 +72,7 @@ const mapPtSituationsToGtfsAlertEntities = async (dbClient: KyselyDb, ptSituatio
                 id: randomUUID(),
                 alert: {
                     active_period: getGtfsActivePeriods(ptSituation),
-                    informed_entity: getGtfsInformedIdentities(consequence, routeMap),
+                    informed_entity: getGtfsInformedIdentities(consequence, agencyMap, routeMap),
                     cause: getGtfsCause(ptSituation),
                     cause_detail: {
                         translation: [
