@@ -1,5 +1,4 @@
 import * as crypto from "node:crypto";
-import * as cloudwatch from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, NewAvl } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
@@ -11,7 +10,6 @@ import MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { addMatchingTripToAvl, processSqsRecord } from ".";
 import {
-    expectedPutMetricDataCallForFilteredArrayParseError,
     mockItemId,
     mockSubscriptionId,
     parsedSiri,
@@ -34,10 +32,6 @@ describe("avl-processor", () => {
         randomUUID: vi.fn(),
     }));
 
-    vi.mock("@bods-integrated-data/shared/cloudwatch", () => ({
-        putMetricData: vi.fn(),
-    }));
-
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object,
@@ -52,7 +46,6 @@ describe("avl-processor", () => {
     const uuidSpy = vi.spyOn(crypto, "randomUUID");
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
     const putDynamoItemsSpy = vi.spyOn(dynamo, "putDynamoItems");
-    const putMetricDataSpy = vi.spyOn(cloudwatch, "putMetricData");
 
     const valuesMock = vi.fn().mockReturnValue({
         execute: vi.fn().mockResolvedValue(""),
@@ -151,17 +144,6 @@ describe("avl-processor", () => {
 
             expect(uuidSpy).toHaveBeenCalledOnce();
             expect(valuesMock).toBeCalledWith(parsedSiri);
-            expect(putMetricDataSpy).toHaveBeenCalledTimes(1);
-            expect(putMetricDataSpy).toHaveBeenNthCalledWith(1, "custom/BODSAVLProcessor", [
-                {
-                    MetricName: "MatchedAVL",
-                    Value: 0,
-                },
-                {
-                    MetricName: "TotalAVL",
-                    Value: 2,
-                },
-            ]);
         },
     );
 
@@ -252,23 +234,6 @@ describe("avl-processor", () => {
         );
 
         expect(valuesMock).not.toHaveBeenCalled();
-
-        expect(putMetricDataSpy).toHaveBeenCalledTimes(3);
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            1,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            2,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            3,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
     });
 
     it("uploads validation errors to dynamoDB when processing invalid data", async () => {
@@ -463,8 +428,6 @@ describe("avl-processor", () => {
         ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} because it is inactive`);
 
         expect(valuesMock).not.toHaveBeenCalled();
-
-        expect(putMetricDataSpy).not.toHaveBeenCalledOnce();
     });
 
     describe("addMatchingTripToAvl", () => {
