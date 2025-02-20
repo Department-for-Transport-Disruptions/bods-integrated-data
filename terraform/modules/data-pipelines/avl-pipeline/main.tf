@@ -175,7 +175,7 @@ module "avl_tfl_location_retriever_sfn" {
   step_function_name                  = "integrated-data-avl-tfl-location-retriever"
   source                              = "./tfl-location-retriever-sfn"
   environment                         = var.environment
-  invoke_every_seconds                = 10
+  invoke_every_seconds                = var.tfl_location_retriever_invoke_every_seconds
   depends_on                          = [module.integrated_data_avl_tfl_location_retriever_function, module.integrated_data_avl_tfl_line_id_retriever_function]
   aws_account_id                      = var.aws_account_id
   aws_region                          = var.aws_region
