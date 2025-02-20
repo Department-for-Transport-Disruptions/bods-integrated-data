@@ -1,0 +1,92 @@
+{
+  "Comment": "Step Function to retrieve TfL Location data every 10 seconds",
+  "StartAt": "Pass",
+  "States": {
+    "Pass": {
+      "Type": "Pass",
+      "Next": "Map - Time Interval",
+      "Result": {
+        "invokes_per_minute": ${jsonencode(invokes_per_minute)}
+      }
+    },
+    "Map - Time Interval": {
+      "Type": "Map",
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "TfL Line ID Retriever",
+        "States": {
+          "TfL Line ID Retriever": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+              "FunctionName": "${tfl_line_id_retriever_function_arn}:$LATEST"
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "Lambda.ServiceException",
+                  "Lambda.AWSLambdaException",
+                  "Lambda.SdkClientException",
+                  "Lambda.TooManyRequestsException"
+                ],
+                "IntervalSeconds": 1,
+                "MaxAttempts": 3,
+                "BackoffRate": 2,
+                "JitterStrategy": "FULL"
+              }
+            ],
+            "Next": "Map - Tfl Lines"
+          },
+          "Map - Tfl Lines": {
+            "Type": "Map",
+            "ItemProcessor": {
+              "ProcessorConfig": {
+                "Mode": "INLINE"
+              },
+              "StartAt": "TfL Location Retriever",
+              "States": {
+                "TfL Location Retriever": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::lambda:invoke",
+                  "OutputPath": "$.Payload",
+                  "Parameters": {
+                    "FunctionName": "${tfl_location_retriever_function_arn}:$LATEST",
+                    "Payload.$": "$"
+                  },
+                  "Retry": [
+                    {
+                      "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                      ],
+                      "IntervalSeconds": 1,
+                      "MaxAttempts": 3,
+                      "BackoffRate": 2,
+                      "JitterStrategy": "FULL"
+                    }
+                  ],
+                  "End": true
+                }
+              }
+            },
+            "Next": "Wait"
+          },
+          "Wait": {
+            "Type": "Wait",
+            "Seconds": ${invoke_every_seconds},
+            "End": true
+          }
+        }
+      },
+      "End": true,
+      "MaxConcurrency": 1,
+      "ItemsPath": "$.invokes_per_minute"
+    }
+  },
+  "TimeoutSeconds": 120
+}

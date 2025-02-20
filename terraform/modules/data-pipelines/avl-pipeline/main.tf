@@ -113,26 +113,6 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
-
-  permissions = [
-    {
-      Action = [
-        "secretsmanager:GetSecretValue",
-      ],
-      Effect = "Allow",
-      Resource = [
-        var.db_secret_arn
-      ]
-    }
-  ]
-
-  env_vars = {
-    STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-  }
 }
 
 resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
@@ -191,13 +171,16 @@ module "integrated_data_avl_tfl_location_retriever_function" {
 }
 
 module "avl_tfl_location_retriever_sfn" {
-  count                = var.environment == "local" ? 0 : 1
-  step_function_name   = "integrated-data-avl-tfl-location-retriever"
-  source               = "../../shared/lambda-trigger-sfn"
-  environment          = var.environment
-  function_arn         = module.integrated_data_avl_tfl_location_retriever_function.function_arn
-  invoke_every_seconds = var.tfl_location_retriever_invoke_every_seconds
-  depends_on           = [module.integrated_data_avl_tfl_location_retriever_function]
+  count                               = var.environment == "local" ? 0 : 1
+  step_function_name                  = "integrated-data-avl-tfl-location-retriever"
+  source                              = "./tfl-location-retriever-sfn"
+  environment                         = var.environment
+  invoke_every_seconds                = 10
+  depends_on                          = [module.integrated_data_avl_tfl_location_retriever_function, module.integrated_data_avl_tfl_line_id_retriever_function]
+  aws_account_id                      = var.aws_account_id
+  aws_region                          = var.aws_region
+  tfl_line_id_retriever_function_arn  = module.integrated_data_avl_tfl_line_id_retriever_function.function_arn
+  tfl_location_retriever_function_arn = module.integrated_data_avl_tfl_location_retriever_function.function_arn
 }
 
 resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
