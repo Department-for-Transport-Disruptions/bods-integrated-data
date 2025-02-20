@@ -1,6 +1,7 @@
 import { insertAvls } from "@bods-integrated-data/shared/avl/utils";
 import { tflOperatorRef } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { addMatchingTripToAvl } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
@@ -14,12 +15,11 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const getLineIds = async (dbClient: KyselyDb) => {
-    const lineIds = await dbClient.selectFrom("tfl_line").selectAll().execute();
-    return lineIds.map((lineId) => lineId.id);
-};
-
-export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: string): Promise<NewAvl[]> => {
+export const retrieveTflVehicleLocations = async (
+    lineIds: string[],
+    tflApiKey: string,
+    gtfsTripMapsTableName: string,
+): Promise<NewAvl[]> => {
     const lineIdChunks = chunkArray(lineIds, 20);
 
     const requests = lineIdChunks.map(async (lineIdChunk) => {
@@ -43,19 +43,26 @@ export const retrieveTflVehicleLocations = async (lineIds: string[], tflApiKey: 
     const responses = await Promise.all(requests);
     const vehicleLocations = responses.flatMap((response) => response.lines.flatMap((line) => line.vehicles));
 
-    return vehicleLocations.flatMap<NewAvl>((vehicleLocation) => {
-        const parseResult = tflVehicleLocationSchemaTransformed.safeParse(vehicleLocation);
+    return (
+        await Promise.all(
+            vehicleLocations.map(async (vehicleLocation) => {
+                const parseResult = tflVehicleLocationSchemaTransformed.safeParse(vehicleLocation);
 
-        if (!parseResult.success) {
-            logger.warn(
-                `Invalid TfL vehicle location with vehicle ref: ${vehicleLocation.vehicleRef}`,
-                parseResult.error.format(),
-            );
-            return [];
-        }
+                if (!parseResult.success) {
+                    logger.warn(
+                        `Invalid TfL vehicle location with vehicle ref: ${vehicleLocation.vehicleRef}`,
+                        parseResult.error.format(),
+                    );
+                    return [];
+                }
 
-        return [parseResult.data];
-    });
+                return await addMatchingTripToAvl(gtfsTripMapsTableName, {
+                    ...parseResult.data,
+                    operator_ref: tflOperatorRef,
+                });
+            }),
+        )
+    ).flat();
 };
 
 export const handler: Handler = async (event, context) => {
@@ -66,26 +73,22 @@ export const handler: Handler = async (event, context) => {
     try {
         logger.info("Starting TfL location retriever");
 
-        const { TFL_API_ARN: tflApiArn } = process.env;
+        const { TFL_API_ARN: tflApiArn, GTFS_TRIP_MAPS_TABLE_NAME: gtfsTripMapsTableName } = process.env;
 
-        if (!tflApiArn) {
-            throw new Error("Missing env vars - TFL_API_ARN must be set");
+        if (!tflApiArn || !gtfsTripMapsTableName) {
+            throw new Error("Missing env vars - TFL_API_ARN and GTFS_TRIP_MAPS_TABLE_NAME must be set");
         }
 
         const { live_vehicles_api_key } = await getSecret<TflApiKeys>({ SecretId: tflApiArn });
-        const lineIds = await getLineIds(dbClient);
-        const vehicleLocations = await retrieveTflVehicleLocations(lineIds, live_vehicles_api_key);
+        const vehicleLocations = await retrieveTflVehicleLocations(
+            event.lineIds,
+            live_vehicles_api_key,
+            gtfsTripMapsTableName,
+        );
 
-        const vehicleLocationsWithTflOperatorRef = vehicleLocations.map((vehicleLocation) => {
-            return {
-                ...vehicleLocation,
-                operator_ref: tflOperatorRef,
-            };
-        });
+        await insertAvls(dbClient, vehicleLocations, "");
 
-        await insertAvls(dbClient, vehicleLocationsWithTflOperatorRef, "");
-
-        logger.info("TfL location retriever successful");
+        logger.info(`TfL location retriever successful, retrieved ${vehicleLocations.length} vehicle locations`);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the TfL location retriever");

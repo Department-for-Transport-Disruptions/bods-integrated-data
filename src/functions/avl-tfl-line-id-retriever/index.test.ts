@@ -61,7 +61,7 @@ describe("getLineIds", () => {
             status: 200,
         } as AxiosResponse);
 
-        expect(await getLineIds()).toEqual([{ id: "1" }, { id: "100" }]);
+        expect(await getLineIds()).toEqual(["1", "100"]);
     });
 
     it("should return an empty array if empty response is returned from API", async () => {

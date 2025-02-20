@@ -1,14 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, NewAvl, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { getDynamoItem, putDynamoItems } from "@bods-integrated-data/shared/dynamo";
-import {
-    GtfsTripMap,
-    getDirectionRef,
-    getRouteKey,
-    sanitiseTicketMachineJourneyCode,
-} from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
+import { addMatchingTripToAvl } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
@@ -76,61 +71,6 @@ const uploadValidationErrorsToDatabase = async (
     }
 
     await putDynamoItems(tableName, errors);
-};
-
-export const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Promise<NewAvl> => {
-    const directionRef = getDirectionRef(avl.direction_ref);
-
-    if (!directionRef) {
-        return avl;
-    }
-
-    let matchingTrip: GtfsTripMap | null = null;
-    const routeKey = getRouteKey(avl);
-
-    if (!routeKey) {
-        return avl;
-    }
-
-    if (avl.dated_vehicle_journey_ref) {
-        const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
-        const tripKey = `${routeKey}_${directionRef}_${sanitisedTicketMachineJourneyCode}`;
-
-        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
-            PK: routeKey,
-            SK: `${tripKey}#1`,
-        });
-    }
-
-    if (!matchingTrip && avl.dated_vehicle_journey_ref && avl.origin_ref && avl.destination_ref) {
-        const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
-        const tripKey = `${routeKey}_${directionRef}_${sanitisedTicketMachineJourneyCode}_${avl.origin_ref}_${avl.destination_ref}`;
-
-        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
-            PK: routeKey,
-            SK: `${tripKey}#2`,
-        });
-    }
-
-    if (!matchingTrip && avl.origin_aimed_departure_time) {
-        const departureTime = getDate(avl.origin_aimed_departure_time).format("HHmmss");
-        const tripKey = `${routeKey}_${directionRef}_${avl.origin_ref}_${avl.destination_ref}_${departureTime}`;
-
-        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
-            PK: routeKey,
-            SK: `${tripKey}#3`,
-        });
-    }
-
-    if (!matchingTrip) {
-        return avl;
-    }
-
-    return {
-        ...avl,
-        route_id: matchingTrip.routeId,
-        trip_id: matchingTrip.tripId,
-    };
 };
 
 export const processSqsRecord = async (
