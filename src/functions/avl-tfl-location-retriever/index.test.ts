@@ -18,13 +18,18 @@ describe("avl-tfl-location-retriever", () => {
         },
     }));
 
+    vi.mock("@bods-integrated-data/shared/gtfs-rt/utils", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/gtfs-rt/utils")>()),
+        addMatchingTripToAvl: vi.fn().mockImplementation((_table, avl) => ({ ...avl, route_id: 1, trip_id: "123" })),
+    }));
+
     beforeEach(() => {
         MockDate.set("2024-05-21T12:53:24.000Z");
     });
 
     afterEach(() => {
-        vi.resetAllMocks();
         MockDate.reset();
+        axiosGetMock.mockReset();
     });
 
     describe("retrieveTflVehicleLocations", () => {
@@ -44,7 +49,7 @@ describe("avl-tfl-location-retriever", () => {
                                 producerRef: "Transport_For_London",
                                 vehicleRef: "7534",
                                 vehicleName: "BP15O&MC",
-                                operatorRef: "Go-Ahead",
+                                operatorRef: "TFLO",
                                 monitored: "true",
                                 longitude: 0.096946,
                                 latitude: 51.522804,
@@ -73,7 +78,7 @@ describe("avl-tfl-location-retriever", () => {
             axiosGetMock.mockResolvedValue({ data: apiResponse });
 
             const lineIds = Array<string>(input).fill("");
-            const vehicleLocations = await retrieveTflVehicleLocations(lineIds, "");
+            const vehicleLocations = await retrieveTflVehicleLocations(lineIds, "", "gtfsTripMapTable");
 
             expect(axiosGetMock).toHaveBeenCalledTimes(expected);
             expect(vehicleLocations).toHaveLength(expected);
@@ -82,7 +87,7 @@ describe("avl-tfl-location-retriever", () => {
         it("sets the HTTP request headers and URL correctly", async () => {
             axiosGetMock.mockResolvedValue({ data: { lines: [] } });
 
-            await retrieveTflVehicleLocations(["1", "2"], "asdf");
+            await retrieveTflVehicleLocations(["1", "2"], "asdf", "gtfsTripMapTable");
 
             expect(axiosGetMock).toHaveBeenCalledWith("https://api.tfl.gov.uk/RealTimeVehicleLocation/Lines/1,2", {
                 headers: { app_key: "asdf" },
@@ -92,7 +97,7 @@ describe("avl-tfl-location-retriever", () => {
         it("returns a default empty response when a request error occurs", async () => {
             axiosGetMock.mockRejectedValue(new Error());
 
-            const vehicleLocations = await retrieveTflVehicleLocations(["1", "2"], "asdf");
+            const vehicleLocations = await retrieveTflVehicleLocations(["1", "2"], "asdf", "gtfsTripMapTable");
 
             expect(vehicleLocations).toEqual([]);
 
@@ -112,7 +117,7 @@ describe("avl-tfl-location-retriever", () => {
                                 producerRef: "Transport_For_London",
                                 vehicleRef: "7534$",
                                 vehicleName: "BP15OMC",
-                                operatorRef: "Go-Ahead$",
+                                operatorRef: "TFLO",
                                 monitored: "true",
                                 longitude: 0.096946,
                                 latitude: 51.522804,
@@ -146,7 +151,7 @@ describe("avl-tfl-location-retriever", () => {
                     producer_ref: "Transport_For_London",
                     vehicle_ref: "7534",
                     vehicle_name: "BP15OMC",
-                    operator_ref: "Go-Ahead",
+                    operator_ref: "TFLO",
                     monitored: "true",
                     longitude: 0.096946,
                     latitude: 51.522804,
@@ -172,11 +177,13 @@ describe("avl-tfl-location-retriever", () => {
                     load: undefined,
                     passenger_count: undefined,
                     schedule_deviation: undefined,
+                    route_id: 1,
+                    trip_id: "123",
                 },
             ];
 
             axiosGetMock.mockResolvedValue({ data: apiResponse });
-            const vehicleLocations = await retrieveTflVehicleLocations(["1"], "");
+            const vehicleLocations = await retrieveTflVehicleLocations(["1"], "", "gtfsTripMapTable");
 
             expect(vehicleLocations).toEqual(expectedVehicleActivities);
         });

@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewAvl } from "../database";
+import * as dynamo from "../dynamo";
 import { transit_realtime } from "../gtfs-realtime";
-import { MatchingTimetable, createTimetableMatchingLookup, sanitiseTicketMachineJourneyCode } from "./utils";
+import {
+    GtfsTripMap,
+    MatchingTimetable,
+    addMatchingTripToAvl,
+    createTimetableMatchingLookup,
+    sanitiseTicketMachineJourneyCode,
+} from "./utils";
 import { getDirectionRef, getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
@@ -1201,6 +1208,102 @@ describe("utils", () => {
                         use: true,
                     },
                 },
+            });
+        });
+    });
+
+    describe("addMatchingTripToAvl", () => {
+        vi.mock("@bods-integrated-data/shared/dynamo", () => ({
+            getDynamoItem: vi.fn(),
+        }));
+
+        const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
+        const mockGtfsTripMapsTableName = "gtfs-trip-maps-table";
+
+        it("correctly matches AVL data to timetable data", async () => {
+            const avl: Partial<NewAvl> = {
+                operator_ref: "NOC1",
+                line_ref: "R1",
+                dated_vehicle_journey_ref: "tmjc1",
+                direction_ref: "outbound",
+                longitude: -1.123,
+                latitude: 51.123,
+            };
+
+            const mockMatchingTrip: GtfsTripMap = {
+                PK: "routeKey",
+                SK: "NOC1_R1_0_tmjc1#1",
+                routeId: 1,
+                tripId: "1",
+                timeToExist: 0,
+            };
+            getDynamoItemSpy.mockResolvedValue(mockMatchingTrip);
+
+            const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(getDynamoItemSpy).toHaveBeenCalledWith(mockGtfsTripMapsTableName, {
+                PK: "NOC1_R1",
+                SK: "NOC1_R1_0_tmjc1#1",
+            });
+
+            expect(matchedAvl).toEqual({
+                ...avl,
+                route_id: 1,
+                trip_id: "1",
+            });
+        });
+
+        it("correctly matches AVL data with a NOC in the operatorNocMap to timetable data", async () => {
+            const avl: Partial<NewAvl> = {
+                operator_ref: "NT",
+                line_ref: "NTR1",
+                dated_vehicle_journey_ref: "tmjc1",
+                direction_ref: "inbound",
+                longitude: -1.123,
+                latitude: 51.123,
+            };
+
+            const mockMatchingTrip: GtfsTripMap = {
+                PK: "NCTR_R1",
+                SK: "NCTR_R1_1_tmjc1#1",
+                routeId: 1,
+                tripId: "1",
+                timeToExist: 0,
+            };
+            getDynamoItemSpy.mockResolvedValue(mockMatchingTrip);
+
+            const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(getDynamoItemSpy).toHaveBeenCalledWith(mockGtfsTripMapsTableName, {
+                PK: "NCTR_R1",
+                SK: "NCTR_R1_1_tmjc1#1",
+            });
+
+            expect(matchedAvl).toEqual({
+                ...avl,
+                route_id: 1,
+                trip_id: "1",
+            });
+        });
+
+        it("does not set route_id when matching route found but no matching trip", async () => {
+            const avl: Partial<NewAvl> = {
+                operator_ref: "NOC1",
+                line_ref: "R1",
+                dated_vehicle_journey_ref: "invalid",
+                direction_ref: "1",
+                longitude: -1.123,
+                latitude: 51.123,
+            };
+
+            getDynamoItemSpy.mockResolvedValue(null);
+
+            const matchedAvl = await addMatchingTripToAvl(mockGtfsTripMapsTableName, avl as NewAvl);
+
+            expect(matchedAvl).toEqual({
+                ...avl,
+                route_id: undefined,
+                trip_id: undefined,
             });
         });
     });
