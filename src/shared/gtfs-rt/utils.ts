@@ -4,6 +4,7 @@ import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
 import { Avl, BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
+import { getDynamoItem } from "../dynamo";
 import { transit_realtime } from "../gtfs-realtime";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
@@ -365,7 +366,7 @@ export const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]
                 : null;
 
         const tripKeyWithOriginAndDestination =
-            item.origin_stop_ref && item.destination_stop_ref
+            tripKey && item.origin_stop_ref && item.destination_stop_ref
                 ? `${tripKey}_${item.origin_stop_ref}_${item.destination_stop_ref}`
                 : null;
 
@@ -413,5 +414,60 @@ export const createTimetableMatchingLookup = (timetableData: MatchingTimetable[]
         matchedTrips,
         matchedTripsWithOriginAndDestination,
         matchedTripsWithDepartureTime,
+    };
+};
+
+export const addMatchingTripToAvl = async (tableName: string, avl: NewAvl): Promise<NewAvl> => {
+    const directionRef = getDirectionRef(avl.direction_ref);
+
+    if (!directionRef) {
+        return avl;
+    }
+
+    let matchingTrip: GtfsTripMap | null = null;
+    const routeKey = getRouteKey(avl);
+
+    if (!routeKey) {
+        return avl;
+    }
+
+    if (avl.dated_vehicle_journey_ref) {
+        const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
+        const tripKey = `${routeKey}_${directionRef}_${sanitisedTicketMachineJourneyCode}`;
+
+        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
+            PK: routeKey,
+            SK: `${tripKey}#1`,
+        });
+    }
+
+    if (!matchingTrip && avl.dated_vehicle_journey_ref && avl.origin_ref && avl.destination_ref) {
+        const sanitisedTicketMachineJourneyCode = sanitiseTicketMachineJourneyCode(avl.dated_vehicle_journey_ref);
+        const tripKey = `${routeKey}_${directionRef}_${sanitisedTicketMachineJourneyCode}_${avl.origin_ref}_${avl.destination_ref}`;
+
+        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
+            PK: routeKey,
+            SK: `${tripKey}#2`,
+        });
+    }
+
+    if (!matchingTrip && avl.origin_ref && avl.destination_ref && avl.origin_aimed_departure_time) {
+        const departureTime = getDate(avl.origin_aimed_departure_time).format("HHmmss");
+        const tripKey = `${routeKey}_${directionRef}_${avl.origin_ref}_${avl.destination_ref}_${departureTime}`;
+
+        matchingTrip = await getDynamoItem<GtfsTripMap>(tableName, {
+            PK: routeKey,
+            SK: `${tripKey}#3`,
+        });
+    }
+
+    if (!matchingTrip) {
+        return avl;
+    }
+
+    return {
+        ...avl,
+        route_id: matchingTrip.routeId,
+        trip_id: matchingTrip.tripId,
     };
 };
