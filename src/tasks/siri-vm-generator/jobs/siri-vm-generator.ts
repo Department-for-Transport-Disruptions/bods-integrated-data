@@ -34,8 +34,6 @@ void (async () => {
             uploadGtfsRtToS3(GTFS_RT_BUCKET_NAME, "gtfs-rt", gtfsRtFeed, SAVE_JSON === "true"),
         ]);
 
-
-
         performance.mark("siri-vm-generator-end");
 
         const time = performance.measure("siri-vm-generator", "siri-vm-generator-start", "siri-vm-generator-end");
@@ -46,7 +44,7 @@ void (async () => {
         await putMetricData("custom/SiriVmGenerator", [
             { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
             { MetricName: "MatchedAvl", Value: matchedAvlCount },
-            { MetricName: "TotalAvl", Value: totalAvlCount }
+            { MetricName: "TotalAvl", Value: totalAvlCount },
         ]);
 
         logger.info("Successfully uploaded SIRI-VM data to S3");
