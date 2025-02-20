@@ -588,3 +588,19 @@ export const parsedSiriWithOnwardCalls: NewAvl[] = [
             '[{"stop_point_ref":"STOP123","aimed_arrival_time":"2024-05-09T09:30:00+00:00","expected_arrival_time":"2024-05-09T09:30:00+00:00","aimed_departure_time":"2024-05-09T09:30:00+00:00","expected_departure_time":"2024-05-09T09:30:00+00:00"},{"stop_point_ref":"STOP456","aimed_arrival_time":"2024-05-09T09:30:00+00:00","expected_arrival_time":"2024-05-09T09:30:00+00:00","aimed_departure_time":"2024-05-09T09:30:00+00:00","expected_departure_time":"2024-05-09T09:30:00+00:00"}]',
     },
 ] as NewAvl[];
+
+export const expectedPutMetricDataCallForFilteredArrayParseError = {
+    namespace: "custom/SiriVmVehicleActivitySchema",
+    metricData: [
+        {
+            MetricName: "MakeFilteredArraySchemaParseError",
+            Value: 1,
+        },
+    ],
+    metricDimensions: [
+        {
+            Name: "SubscriptionId",
+            Value: "123",
+        },
+    ],
+};
