@@ -109,31 +109,10 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
   memory          = 512
   runtime         = "nodejs20.x"
   timeout         = 30
-  schedule        = "cron(0 2 * * ? *)"
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
-
-  permissions = [
-    {
-      Action = [
-        "secretsmanager:GetSecretValue",
-      ],
-      Effect = "Allow",
-      Resource = [
-        var.db_secret_arn
-      ]
-    }
-  ]
-
-  env_vars = {
-    STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-  }
 }
 
 resource "aws_secretsmanager_secret" "tfl_api_keys_secret" {
@@ -170,27 +149,38 @@ module "integrated_data_avl_tfl_location_retriever_function" {
         var.db_secret_arn,
         aws_secretsmanager_secret.tfl_api_keys_secret.arn
       ]
-    }
+    },
+    {
+      Action = ["dynamodb:GetItem"],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${var.gtfs_trip_maps_table_name}"
+      ]
+    },
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-    TFL_API_ARN   = aws_secretsmanager_secret.tfl_api_keys_secret.arn
+    STAGE                     = var.environment
+    DB_HOST                   = var.db_host
+    DB_PORT                   = var.db_port
+    DB_SECRET_ARN             = var.db_secret_arn
+    DB_NAME                   = var.db_name
+    TFL_API_ARN               = aws_secretsmanager_secret.tfl_api_keys_secret.arn
+    GTFS_TRIP_MAPS_TABLE_NAME = var.gtfs_trip_maps_table_name
   }
 }
 
 module "avl_tfl_location_retriever_sfn" {
-  count                = var.environment == "local" ? 0 : 1
-  step_function_name   = "integrated-data-avl-tfl-location-retriever"
-  source               = "../../shared/lambda-trigger-sfn"
-  environment          = var.environment
-  function_arn         = module.integrated_data_avl_tfl_location_retriever_function.function_arn
-  invoke_every_seconds = var.tfl_location_retriever_invoke_every_seconds
-  depends_on           = [module.integrated_data_avl_tfl_location_retriever_function]
+  count                               = var.environment == "local" ? 0 : 1
+  step_function_name                  = "integrated-data-avl-tfl-location-retriever"
+  source                              = "./tfl-location-retriever-sfn"
+  environment                         = var.environment
+  invoke_every_seconds                = var.tfl_location_retriever_invoke_every_seconds
+  depends_on                          = [module.integrated_data_avl_tfl_location_retriever_function, module.integrated_data_avl_tfl_line_id_retriever_function]
+  aws_account_id                      = var.aws_account_id
+  aws_region                          = var.aws_region
+  tfl_line_id_retriever_function_arn  = module.integrated_data_avl_tfl_line_id_retriever_function.function_arn
+  tfl_location_retriever_function_arn = module.integrated_data_avl_tfl_location_retriever_function.function_arn
 }
 
 resource "aws_s3_bucket" "integrated_data_avl_siri_vm_bucket" {
