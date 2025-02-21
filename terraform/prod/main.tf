@@ -412,24 +412,32 @@ module "integrated_data_cancellations_data_producer_api" {
 module "siri_consumer_api_private" {
   source = "../modules/siri-consumer-api"
 
-  environment                              = local.env
-  aws_region                               = data.aws_region.current.name
-  account_id                               = data.aws_caller_identity.current.account_id
-  api_name                                 = "integrated-data-siri-consumer-api-private"
-  private                                  = true
-  external_vpces                           = local.secrets["external_vpces_for_siri_consumer_api"]
-  siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
-  siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
-  siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
-  siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
-  avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
-  avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
-  avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
-  avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
-  avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
-  avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
-  siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
-  siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
+  environment                                   = local.env
+  aws_region                                    = data.aws_region.current.name
+  account_id                                    = data.aws_caller_identity.current.account_id
+  api_name                                      = "integrated-data-siri-consumer-api-private"
+  private                                       = true
+  external_vpces                                = local.secrets["external_vpces_for_siri_consumer_api"]
+  siri_vm_downloader_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
+  siri_vm_downloader_function_name              = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
+  siri_vm_stats_invoke_arn                      = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
+  siri_vm_stats_function_name                   = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
+  avl_consumer_subscriber_invoke_arn            = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
+  avl_consumer_subscriber_function_name         = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
+  avl_consumer_unsubscriber_invoke_arn          = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
+  avl_consumer_unsubscriber_function_name       = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
+  avl_consumer_subscriptions_invoke_arn         = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
+  avl_consumer_subscriptions_function_name      = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
+  siri_sx_downloader_invoke_arn                 = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
+  siri_sx_downloader_function_name              = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
+  gtfs_downloader_invoke_arn                    = module.integrated_data_gtfs_downloader.gtfs_downloader_invoke_arn
+  gtfs_downloader_lambda_name                   = module.integrated_data_gtfs_downloader.gtfs_downloader_lambda_name
+  gtfs_region_retriever_invoke_arn              = module.integrated_data_gtfs_downloader.gtfs_region_retriever_invoke_arn
+  gtfs_region_retriever_lambda_name             = module.integrated_data_gtfs_downloader.gtfs_region_retriever_lambda_name
+  gtfs_rt_downloader_invoke_arn                 = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_invoke_arn
+  gtfs_rt_downloader_lambda_name                = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_downloader_lambda_name
+  gtfs_rt_service_alerts_downloader_invoke_arn  = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_service_alerts_downloader_invoke_arn
+  gtfs_rt_service_alerts_downloader_lambda_name = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_service_alerts_downloader_lambda_name
 }
 
 # temporary moved block to prevent siri consumer api being destroyed during module move

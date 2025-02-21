@@ -9,7 +9,6 @@ describe("gtfs-downloader-endpoint", () => {
     const mocks = vi.hoisted(() => {
         return {
             getS3Object: vi.fn(),
-            getPresignedUrl: vi.fn(),
             execute: vi.fn(),
             destroy: vi.fn(),
             mockDbClient: {
@@ -23,7 +22,6 @@ describe("gtfs-downloader-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object,
-        getPresignedUrl: mocks.getPresignedUrl,
     }));
 
     vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
@@ -71,12 +69,7 @@ describe("gtfs-downloader-endpoint", () => {
         it("returns a 200 with GTFS-RT in-place", async () => {
             mocks.getS3Object.mockResolvedValue({ Body: { transformToString: () => Promise.resolve("test") } });
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test",
-                isBase64Encoded: true,
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toBe("test");
 
             expect(mocks.getS3Object).toHaveBeenCalledWith({ Bucket: mockBucketName, Key: "gtfs-rt.bin" });
             expect(logger.error).not.toHaveBeenCalled();
@@ -84,61 +77,6 @@ describe("gtfs-downloader-endpoint", () => {
 
         it("returns a 500 when no GTFS-RT data can be found", async () => {
             mocks.getS3Object.mockResolvedValueOnce({ Body: undefined });
-
-            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
-
-            expect(logger.error).toHaveBeenCalledWith(
-                expect.any(Error),
-                "There was a problem with the GTFS-RT downloader endpoint",
-            );
-        });
-    });
-
-    describe("downloading GTFS-RT", () => {
-        it("returns a 302 with a GTFS-RT download link when the download query param is true", async () => {
-            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs-rt.json?hello=world`;
-            mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
-
-            mockEvent.queryStringParameters = {
-                download: "true",
-            };
-
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 302,
-                headers: {
-                    Location: mockPresignedUrl,
-                },
-                body: "",
-            });
-
-            expect(mocks.getPresignedUrl).toHaveBeenCalledWith({ Bucket: mockBucketName, Key: "gtfs-rt.bin" }, 3600);
-            expect(logger.error).not.toHaveBeenCalled();
-        });
-
-        it("returns the GTFS-RT data in-place when the download query param is not true", async () => {
-            mocks.getS3Object.mockResolvedValue({ Body: { transformToString: () => Promise.resolve("test") } });
-
-            mockEvent.queryStringParameters = {
-                download: "random",
-            };
-
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test",
-                isBase64Encoded: true,
-            });
-
-            expect(mocks.getS3Object).toHaveBeenCalledWith({ Bucket: mockBucketName, Key: "gtfs-rt.bin" });
-            expect(logger.error).not.toHaveBeenCalled();
-        });
-
-        it("returns a 500 when a download link cannot be generated", async () => {
-            mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
-
-            mockEvent.queryStringParameters = {
-                download: "true",
-            };
 
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 
@@ -186,11 +124,10 @@ describe("gtfs-downloader-endpoint", () => {
             [{ startTimeAfter: "asdf123!@£" }, ["startTimeAfter must be a number"]],
         ])("returns a 400 when the %o query param fails validation", async (params, expectedErrors) => {
             mockEvent.queryStringParameters = params;
-            const response = await handler(mockEvent, mockContext, mockCallback);
-            expect(response).toEqual({
-                statusCode: 400,
-                body: JSON.stringify({ errors: expectedErrors }),
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
+                `[400]: Invalid request - ${expectedErrors.join(", ")}`,
+            );
+
             expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
             expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
         });
@@ -203,12 +140,7 @@ describe("gtfs-downloader-endpoint", () => {
                 routeId: "1",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test-base64",
-                isBase64Encoded: true,
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
@@ -228,12 +160,7 @@ describe("gtfs-downloader-endpoint", () => {
                 routeId: "1,2, 3",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test-base64",
-                isBase64Encoded: true,
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
@@ -253,12 +180,7 @@ describe("gtfs-downloader-endpoint", () => {
                 startTimeBefore: "123",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test-base64",
-                isBase64Encoded: true,
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
@@ -278,12 +200,7 @@ describe("gtfs-downloader-endpoint", () => {
                 startTimeAfter: "123",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test-base64",
-                isBase64Encoded: true,
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
@@ -303,12 +220,7 @@ describe("gtfs-downloader-endpoint", () => {
                 boundingBox: "1,2,3,4",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
-                statusCode: 200,
-                headers: { "Content-Type": "application/octet-stream" },
-                body: "test-base64",
-                isBase64Encoded: true,
-            });
+            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toBe("test-base64");
 
             expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
