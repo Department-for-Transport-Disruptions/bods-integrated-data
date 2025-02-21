@@ -38,8 +38,13 @@ void (async () => {
 
         const time = performance.measure("siri-vm-generator", "siri-vm-generator-start", "siri-vm-generator-end");
 
+        const totalAvlCount = avls.length;
+        const matchedAvlCount = avls.filter((avl) => avl.route_id && avl.trip_id).length;
+
         await putMetricData("custom/SiriVmGenerator", [
             { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
+            { MetricName: "MatchedAvl", Value: matchedAvlCount },
+            { MetricName: "TotalAvl", Value: totalAvlCount },
         ]);
 
         logger.info("Successfully uploaded SIRI-VM data to S3");
