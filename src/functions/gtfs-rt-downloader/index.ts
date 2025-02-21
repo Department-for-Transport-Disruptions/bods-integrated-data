@@ -8,14 +8,10 @@ import {
     mapAvlToGtfsEntity,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { getPresignedUrl, getS3Object } from "@bods-integrated-data/shared/s3";
+import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import {
-    createBoundingBoxValidation,
-    createNmTokenArrayValidation,
-    createStringLengthValidation,
-} from "@bods-integrated-data/shared/validation";
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { createBoundingBoxValidation, createNmTokenArrayValidation } from "@bods-integrated-data/shared/validation";
+import { APIGatewayProxyEventV2, Handler } from "aws-lambda";
 import { ZodError, z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -25,7 +21,6 @@ let dbClient: KyselyDb;
 const requestParamsSchema = z.preprocess(
     Object,
     z.object({
-        download: createStringLengthValidation("download").toLowerCase().optional(),
         boundingBox: createBoundingBoxValidation("boundingBox").optional(),
         routeId: createNmTokenArrayValidation("routeId").optional(),
         startTimeBefore: z.coerce.number({ message: "startTimeBefore must be a number" }).optional(),
@@ -34,7 +29,6 @@ const requestParamsSchema = z.preprocess(
 );
 
 const putMetrics = async (
-    download: string | undefined,
     routeId: string[] | undefined,
     startTimeAfter: number | undefined,
     startTimeBefore: number | undefined,
@@ -49,7 +43,6 @@ const putMetrics = async (
             },
         ],
         [
-            { name: "download", set: !!download },
             { name: "routeId", set: !!routeId?.length },
             { name: "startTimeAfter", set: !!startTimeAfter },
             { name: "startTimeBefore", set: !!startTimeBefore },
@@ -67,7 +60,13 @@ const putMetrics = async (
     );
 };
 
-export const handler: APIGatewayProxyHandler = async (event, context) => {
+const isApiGatewayV2Event = (event: unknown | APIGatewayProxyEventV2): event is APIGatewayProxyEventV2 =>
+    (event as APIGatewayProxyEventV2).version !== undefined;
+
+export const handler: Handler = async (
+    event: { queryStringParameters: Record<string, string> } | APIGatewayProxyEventV2,
+    context,
+) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
@@ -78,11 +77,11 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
-        const { download, routeId, startTimeBefore, startTimeAfter, boundingBox } = requestParamsSchema.parse(
+        const { routeId, startTimeBefore, startTimeAfter, boundingBox } = requestParamsSchema.parse(
             event.queryStringParameters,
         );
 
-        await putMetrics(download, routeId, startTimeAfter, startTimeBefore, boundingBox);
+        await putMetrics(routeId, startTimeAfter, startTimeBefore, boundingBox);
 
         if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
             dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
@@ -99,12 +98,16 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 const gtfsRtFeed = generateGtfsRtFeed(entities);
                 const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
 
-                return {
-                    statusCode: 200,
-                    headers: { "Content-Type": "application/octet-stream" },
-                    body: base64GtfsRtFeed,
-                    isBase64Encoded: true,
-                };
+                if (isApiGatewayV2Event(event)) {
+                    return {
+                        statusCode: 200,
+                        headers: { "Content-Type": "application/x-protobuf" },
+                        body: base64GtfsRtFeed,
+                        isBase64Encoded: true,
+                    };
+                }
+
+                return base64GtfsRtFeed;
             } catch (e) {
                 if (e instanceof Error) {
                     logger.error(e, "There was an error retrieving the route data");
@@ -112,18 +115,6 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
                 throw e;
             }
-        }
-
-        if (download === "true") {
-            const presignedUrl = await getPresignedUrl({ Bucket: bucketName, Key: key }, 3600);
-
-            return {
-                statusCode: 302,
-                headers: {
-                    Location: presignedUrl,
-                },
-                body: "",
-            };
         }
 
         const data = await getS3Object({ Bucket: bucketName, Key: key });
@@ -134,23 +125,35 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         const encodedBody = await data.Body.transformToString("base64");
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "application/octet-stream" },
-            body: encodedBody,
-            isBase64Encoded: true,
-        };
+        if (isApiGatewayV2Event(event)) {
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "application/x-protobuf" },
+                body: encodedBody,
+                isBase64Encoded: true,
+            };
+        }
+
+        return encodedBody;
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");
-            return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
+
+            if (isApiGatewayV2Event(event)) {
+                return createHttpValidationErrorResponse(e.errors.map((error) => error.message));
+            }
+            throw new Error(`[400]: Invalid request - ${e.errors.map((error) => error.message).join(", ")}`);
         }
 
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the GTFS-RT downloader endpoint");
         }
 
-        return createHttpServerErrorResponse();
+        if (isApiGatewayV2Event(event)) {
+            return createHttpServerErrorResponse();
+        }
+
+        throw new Error("[500]: An unexpected error occurred");
     }
 };
 
