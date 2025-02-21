@@ -41,7 +41,9 @@ void (async () => {
         const totalAvlCount = avls.length;
         const matchedAvlCount = avls.filter((avl) => avl.route_id && avl.trip_id).length;
         const tflTotalAvlCount = avls.filter((avl) => avl.operator_ref === "TFLO").length;
-        const tflMatchedAvlCount = avls.filter((avl) => avl.operator_ref === "TFLO" && avl.route_id && avl.trip_id).length;
+        const tflMatchedAvlCount = avls.filter(
+            (avl) => avl.operator_ref === "TFLO" && avl.route_id && avl.trip_id,
+        ).length;
 
         await putMetricData("custom/SiriVmGenerator", [
             { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
