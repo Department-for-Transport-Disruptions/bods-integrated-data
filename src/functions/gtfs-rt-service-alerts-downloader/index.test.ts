@@ -1,5 +1,4 @@
 import { logger } from "@bods-integrated-data/shared/logger";
-import { APIGatewayProxyEvent } from "aws-lambda";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from ".";
 
@@ -7,7 +6,6 @@ describe("gtfs-downloader-endpoint", () => {
     const mocks = vi.hoisted(() => {
         return {
             getS3Object: vi.fn(),
-            getPresignedUrl: vi.fn(),
             execute: vi.fn(),
             destroy: vi.fn(),
             mockDbClient: {
@@ -19,11 +17,9 @@ describe("gtfs-downloader-endpoint", () => {
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
         getS3Object: mocks.getS3Object,
-        getPresignedUrl: mocks.getPresignedUrl,
     }));
 
     const mockBucketName = "mock-bucket";
-    let mockRequest: APIGatewayProxyEvent;
 
     vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/logger")>()),
@@ -36,7 +32,6 @@ describe("gtfs-downloader-endpoint", () => {
 
     beforeEach(() => {
         process.env.BUCKET_NAME = mockBucketName;
-        mockRequest = {} as APIGatewayProxyEvent;
     });
 
     afterEach(() => {
@@ -46,7 +41,7 @@ describe("gtfs-downloader-endpoint", () => {
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
         process.env.BUCKET_NAME = "";
 
-        await expect(handler()).rejects.toThrow("An unexpected error occurred");
+        await expect(handler({})).rejects.toThrow("An unexpected error occurred");
 
         expect(logger.error).toHaveBeenCalledWith(
             expect.any(Error),
@@ -55,37 +50,22 @@ describe("gtfs-downloader-endpoint", () => {
     });
 
     describe("downloading GTFS-RT", () => {
-        it("returns a 302 with a GTFS-RT download link when the download query param is true", async () => {
-            const mockPresignedUrl = `https://${mockBucketName}.s3.eu-west-2.amazonaws.com/gtfs-rt-service-alerts.json?hello=world`;
-            mocks.getPresignedUrl.mockResolvedValueOnce(mockPresignedUrl);
+        it("retrieves file from s3", async () => {
+            mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => "123" } });
 
-            mockRequest.queryStringParameters = {
-                download: "true",
-            };
+            await expect(handler({})).resolves.toBe("123");
 
-            await expect(handler()).resolves.toEqual({
-                statusCode: 302,
-                headers: {
-                    Location: mockPresignedUrl,
-                },
-                body: "",
+            expect(mocks.getS3Object).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: "gtfs-rt-service-alerts.bin",
             });
-
-            expect(mocks.getPresignedUrl).toHaveBeenCalledWith(
-                { Bucket: mockBucketName, Key: "gtfs-rt-service-alerts.bin" },
-                3600,
-            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
-        it("returns a 500 when a download link cannot be generated", async () => {
-            mocks.getPresignedUrl.mockRejectedValueOnce(new Error());
+        it("returns a 500 when error received from S3", async () => {
+            mocks.getS3Object.mockRejectedValueOnce(new Error());
 
-            mockRequest.queryStringParameters = {
-                download: "true",
-            };
-
-            await expect(handler()).rejects.toThrow("An unexpected error occurred");
+            await expect(handler({})).rejects.toThrow("An unexpected error occurred");
 
             expect(logger.error).toHaveBeenCalledWith(
                 expect.any(Error),

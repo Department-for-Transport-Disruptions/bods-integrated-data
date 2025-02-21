@@ -235,7 +235,6 @@ export const getDirectionRef = (direction?: string) => {
 
 export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
     const currentDate = getDate();
-    const currentDateIso = currentDate.toISOString();
     const currentDay = daysOfWeek[getDate().day()];
 
     return await dbClient
@@ -245,8 +244,8 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
         .innerJoin("calendar", (join) =>
             join
                 .onRef("calendar.id", "=", "trip.service_id")
-                .on("calendar.start_date", "<=", currentDateIso)
-                .on("calendar.end_date", ">", currentDateIso),
+                .on("calendar.start_date", "<=", currentDate.format(DEFAULT_DATE_FORMAT))
+                .on("calendar.end_date", ">=", currentDate.format(DEFAULT_DATE_FORMAT)),
         )
         .leftJoin("calendar_date", (join) =>
             join
