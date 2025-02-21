@@ -2,7 +2,7 @@ import { Agency, KyselyDb, Route, RouteType } from "@bods-integrated-data/shared
 import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
 import { Condition, Severity, VehicleMode } from "@bods-integrated-data/shared/schema/siri-sx/enums";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import {
     getAgencyMap,
@@ -240,6 +240,10 @@ describe("utils", () => {
         let dbClient: KyselyDb;
         const getAgenciesMock = vi.spyOn(databaseFunctions, "getAgencies");
 
+        afterEach(() => {
+            vi.resetAllMocks();
+        });
+
         it("creates a route map for a given list of line refs", async () => {
             const mockAgencies: Agency[] = [
                 {
@@ -350,6 +354,10 @@ describe("utils", () => {
     describe("getRouteMap", () => {
         let dbClient: KyselyDb;
         const getRoutesMock = vi.spyOn(databaseFunctions, "getRoutes");
+
+        afterEach(() => {
+            vi.resetAllMocks();
+        });
 
         it("creates a route map for a given list of line refs", async () => {
             const mockRoutes: Route[] = [
