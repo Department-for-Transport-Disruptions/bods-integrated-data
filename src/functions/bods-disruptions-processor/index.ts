@@ -32,18 +32,18 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
         Key: objectKey,
     });
 
+    const xml = await file.Body?.transformToString();
+
+    if (!xml) {
+        throw new InvalidXmlError("No xml");
+    }
+
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
         parseTagValue: false,
         isArray: (tagName) => siriSxArrayProperties.includes(tagName),
     });
-
-    const xml = await file.Body?.transformToString();
-
-    if (!xml) {
-        throw new InvalidXmlError("No xml");
-    }
 
     const parsedXml = parser.parse(xml);
     const parseResult = siriSxSchema().safeParse(parsedXml);
