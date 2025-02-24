@@ -363,13 +363,13 @@ describe("utils", () => {
             const mockRoutes: Route[] = [
                 {
                     id: 1,
-                    line_id: "r1",
+                    route_short_name: "r1",
                     agency_id: 10,
                     route_type: RouteType.Bus,
                 },
                 {
                     id: 2,
-                    line_id: "r2",
+                    route_short_name: "r2",
                     agency_id: 20,
                     route_type: RouteType.Bus,
                 },
@@ -429,13 +429,13 @@ describe("utils", () => {
             const mockRoutes: Route[] = [
                 {
                     id: 1,
-                    line_id: "r1",
+                    route_short_name: "r1",
                     agency_id: 10,
                     route_type: RouteType.Bus,
                 },
                 {
                     id: 2,
-                    line_id: "r2",
+                    route_short_name: "r2",
                     agency_id: 20,
                     route_type: RouteType.Bus,
                 },

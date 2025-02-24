@@ -258,7 +258,7 @@ export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationE
     const routeMap: Record<string, transit_realtime.IEntitySelector> = {};
 
     for (const route of routes) {
-        routeMap[route.line_id] = {
+        routeMap[route.route_short_name] = {
             agency_id: route.agency_id.toString(),
             route_id: route.id.toString(),
             route_type: route.route_type,
