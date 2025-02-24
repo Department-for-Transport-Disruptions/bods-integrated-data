@@ -67,12 +67,19 @@ const mapPtSituationsToGtfsAlertEntities = async (dbClient: KyselyDb, ptSituatio
             return [];
         }
 
-        return ptSituation.Consequences.Consequence.map((consequence) => {
+        return ptSituation.Consequences.Consequence.flatMap((consequence) => {
+            const informedEntities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+
+            // Omit entities that cannot be mapped to at least one agency/route/stop ID
+            if (informedEntities.length === 0) {
+                return [];
+            }
+
             const entity: transit_realtime.IFeedEntity = {
                 id: randomUUID(),
                 alert: {
                     active_period: getGtfsActivePeriods(ptSituation),
-                    informed_entity: getGtfsInformedIdentities(consequence, agencyMap, routeMap),
+                    informed_entity: informedEntities,
                     cause: getGtfsCause(ptSituation),
                     cause_detail: {
                         translation: [
