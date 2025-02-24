@@ -45,7 +45,7 @@ export const retrieveTflVehicleLocations = async (
 
     return (
         await Promise.all(
-            vehicleLocations.map(async (vehicleLocation) => {
+            vehicleLocations.map((vehicleLocation) => {
                 const parseResult = tflVehicleLocationSchemaTransformed.safeParse(vehicleLocation);
 
                 if (!parseResult.success) {
@@ -56,7 +56,7 @@ export const retrieveTflVehicleLocations = async (
                     return [];
                 }
 
-                return await addMatchingTripToAvl(gtfsTripMapsTableName, {
+                return addMatchingTripToAvl(gtfsTripMapsTableName, {
                     ...parseResult.data,
                     operator_ref: tflOperatorRef,
                 });
