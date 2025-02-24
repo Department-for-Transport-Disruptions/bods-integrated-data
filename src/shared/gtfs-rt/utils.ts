@@ -98,11 +98,7 @@ export const getAvlDataForGtfs = async (
     boundingBox?: number[],
 ): Promise<BodsAvl[]> => {
     try {
-        let query = dbClient
-            .selectFrom("avl")
-            .distinctOn(["vehicle_ref", "operator_ref"])
-            .where("avl.valid_until_time", ">", sql<string>`NOW()`)
-            .selectAll("avl");
+        let query = dbClient.selectFrom("avl").distinctOn(["vehicle_ref", "operator_ref"]).selectAll("avl");
 
         if (routeId) {
             query = query.where(
