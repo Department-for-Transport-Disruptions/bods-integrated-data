@@ -125,6 +125,14 @@ resource "aws_lambda_function" "function" {
   runtime     = var.runtime
   timeout     = var.timeout
   memory_size = var.memory
+  dynamic "ephemeral_storage" {
+    for_each = var.ephemeral_storage != null ? [1] : []
+
+    content {
+      size = var.ephemeral_storage
+    }
+
+  }
 
   reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
 

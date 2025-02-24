@@ -177,7 +177,10 @@ resource "aws_api_gateway_deployment" "siri_consumer_api_deployment" {
       jsonencode(aws_api_gateway_integration.gtfs_downloader_integration),
       jsonencode(aws_api_gateway_integration.gtfs_region_retriever_integration),
       jsonencode(aws_api_gateway_integration.gtfs_rt_downloader_integration),
+      jsonencode(aws_api_gateway_integration_response.gtfs_rt_downloader_200_integration_response),
+      jsonencode(aws_api_gateway_integration_response.gtfs_rt_downloader_400_integration_response),
       jsonencode(aws_api_gateway_integration.gtfs_rt_service_alerts_downloader_integration),
+      jsonencode(aws_api_gateway_integration_response.gtfs_rt_service_alerts_downloader_integration_response),
       jsonencode(aws_api_gateway_rest_api.siri_consumer_api.body),
       var.private ? jsonencode(data.aws_iam_policy_document.siri_consumer_api_policy[0]) : jsonencode("")
     ])))
@@ -609,7 +612,8 @@ resource "aws_api_gateway_integration_response" "gtfs_rt_downloader_200_integrat
   content_handling = "CONVERT_TO_BINARY"
 
   response_parameters = {
-    "method.response.header.Content-Type" = "'application/x-protobuf'"
+    "method.response.header.Content-Type"     = "'application/x-protobuf'"
+    "method.response.header.Content-Encoding" = "'gzip'"
   }
 
   depends_on = [aws_api_gateway_integration.gtfs_rt_downloader_integration]
@@ -632,7 +636,7 @@ resource "aws_api_gateway_integration_response" "gtfs_rt_downloader_400_integrat
 EOF
   }
 
-  depends_on = [aws_api_gateway_integration.gtfs_rt_downloader_integration]
+  depends_on = [aws_api_gateway_integration.gtfs_rt_downloader_integration, aws_api_gateway_method_response.gtfs_rt_downloader_200_method_response, aws_api_gateway_method_response.gtfs_rt_downloader_400_method_response]
 }
 
 resource "aws_api_gateway_method_response" "gtfs_rt_downloader_200_method_response" {
@@ -642,7 +646,8 @@ resource "aws_api_gateway_method_response" "gtfs_rt_downloader_200_method_respon
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Content-Type" = false
+    "method.response.header.Content-Type"     = false
+    "method.response.header.Content-Encoding" = false
   }
 }
 
@@ -727,10 +732,11 @@ resource "aws_api_gateway_integration_response" "gtfs_rt_service_alerts_download
   content_handling = "CONVERT_TO_BINARY"
 
   response_parameters = {
-    "method.response.header.Content-Type" = "'application/x-protobuf'"
+    "method.response.header.Content-Type"     = "'application/x-protobuf'"
+    "method.response.header.Content-Encoding" = "'gzip'"
   }
 
-  depends_on = [aws_api_gateway_integration.gtfs_rt_service_alerts_downloader_integration]
+  depends_on = [aws_api_gateway_integration.gtfs_rt_service_alerts_downloader_integration, aws_api_gateway_method_response.gtfs_rt_service_alerts_downloader_method_response]
 }
 
 resource "aws_api_gateway_method_response" "gtfs_rt_service_alerts_downloader_method_response" {
@@ -740,7 +746,8 @@ resource "aws_api_gateway_method_response" "gtfs_rt_service_alerts_downloader_me
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Content-Type" = false
+    "method.response.header.Content-Type"     = false
+    "method.response.header.Content-Encoding" = false
   }
 }
 

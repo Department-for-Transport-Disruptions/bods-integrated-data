@@ -251,6 +251,8 @@ resource "aws_db_proxy_endpoint" "integrated_data_rds_proxy_reader_endpoint" {
   vpc_subnet_ids         = var.db_subnet_ids
   vpc_security_group_ids = [aws_security_group.integrated_data_db_sg.id]
   target_role            = "READ_ONLY"
+
+  depends_on = [aws_rds_cluster_instance.integrated_data_postgres_db_read_replica_instance[0]]
 }
 
 resource "aws_route53_record" "integrated_data_db_cname_record" {

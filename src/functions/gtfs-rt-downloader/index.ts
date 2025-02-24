@@ -1,17 +1,14 @@
+import { gzipSync } from "node:zlib";
 import { createHttpServerErrorResponse, createHttpValidationErrorResponse } from "@bods-integrated-data/shared/api";
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import {
-    base64Encode,
-    generateGtfsRtFeed,
-    getAvlDataForGtfs,
-    mapAvlToGtfsEntity,
-} from "@bods-integrated-data/shared/gtfs-rt/utils";
+import {} from "@bods-integrated-data/shared/dates";
+import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { notEmpty } from "@bods-integrated-data/shared/utils";
+import { FileCache } from "@bods-integrated-data/shared/utils";
 import { createBoundingBoxValidation, createNmTokenArrayValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEventV2, Handler } from "aws-lambda";
+import { hasher } from "node-object-hash";
 import { ZodError, z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -28,40 +25,10 @@ const requestParamsSchema = z.preprocess(
     }),
 );
 
-const putMetrics = async (
-    routeId: string[] | undefined,
-    startTimeAfter: number | undefined,
-    startTimeBefore: number | undefined,
-    boundingBox: number[] | undefined,
-) => {
-    await putMetricData(
-        "custom/GTFSRTDownloader",
-        [
-            {
-                MetricName: "Invocations",
-                Value: 1,
-            },
-        ],
-        [
-            { name: "routeId", set: !!routeId?.length },
-            { name: "startTimeAfter", set: !!startTimeAfter },
-            { name: "startTimeBefore", set: !!startTimeBefore },
-            { name: "boundingBox", set: !!boundingBox?.length },
-        ]
-            .map((item) =>
-                item.set
-                    ? {
-                          Name: "QueryParam",
-                          Value: item.name,
-                      }
-                    : undefined,
-            )
-            .filter(notEmpty),
-    );
-};
-
 const isApiGatewayV2Event = (event: unknown | APIGatewayProxyEventV2): event is APIGatewayProxyEventV2 =>
     (event as APIGatewayProxyEventV2).version !== undefined;
+
+const CACHE_DIR = "/tmp/cache";
 
 export const handler: Handler = async (
     event: { queryStringParameters: Record<string, string> } | APIGatewayProxyEventV2,
@@ -70,20 +37,37 @@ export const handler: Handler = async (
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { BUCKET_NAME: bucketName, ENABLE_CACHE: enableCache = "true" } = process.env;
         const key = "gtfs-rt.bin";
 
         if (!bucketName) {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
-        const { routeId, startTimeBefore, startTimeAfter, boundingBox } = requestParamsSchema.parse(
-            event.queryStringParameters,
-        );
+        const queryParams = requestParamsSchema.parse(event.queryStringParameters);
 
-        await putMetrics(routeId, startTimeAfter, startTimeBefore, boundingBox);
+        const { routeId, startTimeBefore, startTimeAfter, boundingBox } = queryParams;
 
         if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
+            const keyHash = hasher().hash(queryParams);
+
+            const cache = enableCache === "true" ? new FileCache(CACHE_DIR, 5, 4) : null;
+
+            const cachedResponse = cache ? await cache.get(keyHash) : null;
+
+            if (cachedResponse) {
+                if (isApiGatewayV2Event(event)) {
+                    return {
+                        statusCode: 200,
+                        headers: { "Content-Type": "application/x-protobuf", "Content-Encoding": "gzip" },
+                        body: cachedResponse,
+                        isBase64Encoded: true,
+                    };
+                }
+
+                return cachedResponse;
+            }
+
             dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
             try {
@@ -96,18 +80,23 @@ export const handler: Handler = async (
                 );
                 const entities = avlData.map(mapAvlToGtfsEntity);
                 const gtfsRtFeed = generateGtfsRtFeed(entities);
-                const base64GtfsRtFeed = base64Encode(gtfsRtFeed);
+
+                const gtfs = gzipSync(gtfsRtFeed, {
+                    level: 2,
+                }).toString("base64");
+
+                cache && (await cache.set(keyHash, gtfs));
 
                 if (isApiGatewayV2Event(event)) {
                     return {
                         statusCode: 200,
-                        headers: { "Content-Type": "application/x-protobuf" },
-                        body: base64GtfsRtFeed,
+                        headers: { "Content-Type": "application/x-protobuf", "Content-Encoding": "gzip" },
+                        body: gtfs,
                         isBase64Encoded: true,
                     };
                 }
 
-                return base64GtfsRtFeed;
+                return gtfs;
             } catch (e) {
                 if (e instanceof Error) {
                     logger.error(e, "There was an error retrieving the route data");
@@ -123,18 +112,22 @@ export const handler: Handler = async (
             throw new Error("Unable to retrieve GTFS-RT data");
         }
 
-        const encodedBody = await data.Body.transformToString("base64");
+        const body = await data.Body.transformToByteArray();
+
+        const gtfs = gzipSync(body, {
+            level: 2,
+        }).toString("base64");
 
         if (isApiGatewayV2Event(event)) {
             return {
                 statusCode: 200,
-                headers: { "Content-Type": "application/x-protobuf" },
-                body: encodedBody,
+                headers: { "Content-Type": "application/x-protobuf", "Content-Encoding": "gzip" },
+                body: gtfs,
                 isBase64Encoded: true,
             };
         }
 
-        return encodedBody;
+        return gtfs;
     } catch (e) {
         if (e instanceof ZodError) {
             logger.warn(e, "Invalid request");

@@ -1,3 +1,4 @@
+import { gzipSync } from "node:zlib";
 import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
@@ -22,18 +23,22 @@ export const handler = async (event: unknown | APIGatewayProxyEventV2) => {
         if (!data.Body) {
             throw new Error("Unable to retrieve GTFS-RT service alerts data");
         }
-        const encodedBody = await data.Body.transformToString("base64");
+        const body = await data.Body.transformToByteArray();
+
+        const gtfs = gzipSync(body, {
+            level: 2,
+        }).toString("base64");
 
         if (isApiGatewayV2Event(event)) {
             return {
                 statusCode: 200,
-                headers: { "Content-Type": "application/x-protobuf" },
-                body: encodedBody,
+                headers: { "Content-Type": "application/x-protobuf", "Content-Encoding": "gzip" },
+                body: gtfs,
                 isBase64Encoded: true,
             };
         }
 
-        return encodedBody;
+        return gtfs;
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the GTFS-RT service alerts downloader endpoint");

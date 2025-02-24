@@ -1,13 +1,15 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import { Dayjs } from "dayjs";
+import { outputFile, pathExists, readJson, readdir, stat } from "fs-extra";
 import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
-import { getDate, isDateAfter } from "./dates";
+import { getDate, getDateFromUnix, isDateAfter } from "./dates";
 import { logger } from "./logger";
 import { CancellationsSubscription, VehicleType } from "./schema";
 import { AvlSubscription } from "./schema/avl-subscribe.schema";
@@ -260,3 +262,64 @@ export const runXmlLint = async (xml: string) => {
         throw new Error();
     }
 };
+
+export class FileCache {
+    private dir: string;
+    private ttlInSeconds: number;
+    private maxCacheSizeInGb?: number;
+
+    constructor(dir: string, ttlInSeconds: number, maxCacheSizeInGb?: number) {
+        this.dir = dir;
+        this.ttlInSeconds = ttlInSeconds;
+        this.maxCacheSizeInGb = maxCacheSizeInGb;
+    }
+
+    async getDirSize() {
+        const dirExists = await pathExists(this.dir);
+
+        if (!dirExists) {
+            return 0;
+        }
+
+        const cacheFiles = await readdir(this.dir, { recursive: true });
+        const stats = cacheFiles.map((file) => stat(path.join(this.dir, file.toString())));
+
+        return (await Promise.all(stats)).reduce((accumulator, { size }) => accumulator + size, 0);
+    }
+
+    async set(key: string, value: string) {
+        const dirSize = await this.getDirSize();
+
+        logger.debug(`Cache size: ${dirSize}`);
+
+        if (
+            this.maxCacheSizeInGb &&
+            dirSize + Buffer.byteLength(value, "utf8") > this.maxCacheSizeInGb * 1024 * 1024 * 1024
+        ) {
+            logger.warn(`Max cache size reached, cache size: ${dirSize}`);
+            return null;
+        }
+
+        await outputFile(
+            `${this.dir}/${key}`,
+            JSON.stringify({ value, expiresAt: getDate().add(this.ttlInSeconds, "seconds").unix() }),
+        );
+    }
+
+    async get(key: string) {
+        const path = `${this.dir}/${key}`;
+        const fileExists = await pathExists(path);
+
+        if (!fileExists) {
+            return null;
+        }
+
+        const data = await readJson(path, { throws: false });
+
+        if (getDateFromUnix(data.expiresAt).isBefore(getDate())) {
+            return null;
+        }
+
+        return data.value as string;
+    }
+}

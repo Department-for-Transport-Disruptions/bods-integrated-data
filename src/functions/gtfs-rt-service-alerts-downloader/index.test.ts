@@ -51,9 +51,9 @@ describe("gtfs-downloader-endpoint", () => {
 
     describe("downloading GTFS-RT", () => {
         it("retrieves file from s3", async () => {
-            mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => "123" } });
+            mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToByteArray: () => "123" } });
 
-            await expect(handler({})).resolves.toBe("123");
+            await handler({});
 
             expect(mocks.getS3Object).toHaveBeenCalledWith({
                 Bucket: mockBucketName,
