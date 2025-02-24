@@ -5,5 +5,5 @@ export const getAgencies = (dbClient: KyselyDb, nocs: string[]) => {
 };
 
 export const getRoutes = (dbClient: KyselyDb, lineIds: string[]) => {
-    return dbClient.selectFrom("route").selectAll().where("line_id", "in", lineIds).execute();
+    return dbClient.selectFrom("route").selectAll().where("route_short_name", "in", lineIds).execute();
 };
