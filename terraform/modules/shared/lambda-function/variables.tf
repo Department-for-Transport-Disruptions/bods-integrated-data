@@ -40,6 +40,12 @@ variable "memory" {
   nullable = false
 }
 
+variable "ephemeral_storage" {
+  type     = number
+  nullable = true
+  default  = null
+}
+
 variable "env_vars" {
   type        = map(string)
   nullable    = true

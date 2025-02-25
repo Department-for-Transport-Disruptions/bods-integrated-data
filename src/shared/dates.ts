@@ -37,6 +37,8 @@ dayjs.tz.setDefault("Europe/London");
 
 export const getDate = (input?: Parameters<typeof dayjs.utc>[0]) => dayjs.utc(input);
 
+export const getDateFromUnix = (input: number) => dayjs.unix(input);
+
 export type BankHolidayName =
     | "New Year’s Day"
     | "2nd January"

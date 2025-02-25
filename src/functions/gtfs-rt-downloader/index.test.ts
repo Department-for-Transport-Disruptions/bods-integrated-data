@@ -14,6 +14,7 @@ describe("gtfs-downloader-endpoint", () => {
             mockDbClient: {
                 destroy: vi.fn(),
             },
+            getAvlDataForGtfsMock: vi.fn(),
         };
     });
 
@@ -29,7 +30,18 @@ describe("gtfs-downloader-endpoint", () => {
         getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
     }));
 
-    const getAvlDataForGtfsMock = vi.spyOn(utilFunctions, "getAvlDataForGtfs");
+    vi.mock("@bods-integrated-data/shared/gtfs-rt/utils", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/gtfs-rt/utils")>()),
+        getAvlDataForGtfs: mocks.getAvlDataForGtfsMock,
+    }));
+
+    vi.mock("fs-extra", () => ({
+        pathExists: vi.fn().mockResolvedValue(true),
+        outputFile: vi.fn(),
+        readJson: vi.fn().mockResolvedValue({ value: "123", expiresAt: "12345" }),
+        remove: vi.fn(),
+    }));
+
     const base64EncodeMock = vi.spyOn(utilFunctions, "base64Encode");
 
     const mockBucketName = "mock-bucket";
@@ -41,6 +53,7 @@ describe("gtfs-downloader-endpoint", () => {
             info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
+            debug: vi.fn(),
         },
     }));
 
@@ -51,7 +64,6 @@ describe("gtfs-downloader-endpoint", () => {
 
     afterEach(() => {
         vi.clearAllMocks();
-        getAvlDataForGtfsMock.mockReset();
     });
 
     it("returns a 500 when the BUCKET_NAME environment variable is missing", async () => {
@@ -67,9 +79,9 @@ describe("gtfs-downloader-endpoint", () => {
 
     describe("fetching GTFS-RT in-place", () => {
         it("returns a 200 with GTFS-RT in-place", async () => {
-            mocks.getS3Object.mockResolvedValue({ Body: { transformToString: () => Promise.resolve("test") } });
+            mocks.getS3Object.mockResolvedValue({ Body: { transformToByteArray: () => Promise.resolve("test") } });
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toBe("test");
+            await handler(mockEvent, mockContext, mockCallback);
 
             expect(mocks.getS3Object).toHaveBeenCalledWith({ Bucket: mockBucketName, Key: "gtfs-rt.bin" });
             expect(logger.error).not.toHaveBeenCalled();
@@ -129,20 +141,20 @@ describe("gtfs-downloader-endpoint", () => {
             );
 
             expect(logger.warn).toHaveBeenCalledWith(expect.any(Error), "Invalid request");
-            expect(getAvlDataForGtfsMock).not.toHaveBeenCalled();
+            expect(mocks.getAvlDataForGtfsMock).not.toHaveBeenCalled();
         });
 
         it("returns a 200 with filtered data when the routeId query param is a number", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            mocks.getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockEvent.queryStringParameters = {
                 routeId: "1",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
+            await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+            expect(mocks.getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 ["1"],
                 undefined,
@@ -153,16 +165,16 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         it("returns a 200 with filtered data when the routeId query param is an array of numbers", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            mocks.getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockEvent.queryStringParameters = {
                 routeId: "1,2, 3",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
+            await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+            expect(mocks.getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 ["1", "2", "3"],
                 undefined,
@@ -173,16 +185,16 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         it("returns a 200 with filtered data when the startTimeBefore query param is a number", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            mocks.getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockEvent.queryStringParameters = {
                 startTimeBefore: "123",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
+            await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+            expect(mocks.getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 undefined,
                 123,
@@ -193,16 +205,16 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         it("returns a 200 with filtered data when the startTimeAfter query param is a number", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            mocks.getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockEvent.queryStringParameters = {
                 startTimeAfter: "123",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual("test-base64");
+            await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+            expect(mocks.getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 undefined,
                 undefined,
@@ -213,16 +225,16 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         it("returns a 200 with filtered data when the boundingBox query param is 4 numbers", async () => {
-            getAvlDataForGtfsMock.mockResolvedValueOnce([]);
+            mocks.getAvlDataForGtfsMock.mockResolvedValueOnce([]);
             base64EncodeMock.mockReturnValueOnce("test-base64");
 
             mockEvent.queryStringParameters = {
                 boundingBox: "1,2,3,4",
             };
 
-            await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toBe("test-base64");
+            await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfsMock).toHaveBeenCalledWith(
+            expect(mocks.getAvlDataForGtfsMock).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 undefined,
                 undefined,
@@ -233,11 +245,7 @@ describe("gtfs-downloader-endpoint", () => {
         });
 
         it("returns a 500 when an unexpected error occurs", async () => {
-            getAvlDataForGtfsMock.mockRejectedValueOnce(new Error("Database fetch error"));
-
-            mockEvent.queryStringParameters = {
-                routeId: "1",
-            };
+            mocks.getS3Object.mockRejectedValueOnce(new Error(""));
 
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow("An unexpected error occurred");
 

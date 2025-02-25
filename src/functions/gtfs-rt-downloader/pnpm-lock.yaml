@@ -11,6 +11,9 @@ importers:
       '@bods-integrated-data/shared':
         specifier: workspace:^
         version: link:../../shared
+      node-object-hash:
+        specifier: ^3.0.0
+        version: 3.1.1
       zod:
         specifier: ^3.23.8
         version: 3.23.8
@@ -33,6 +36,10 @@ packages:
   '@types/node@20.11.25':
     resolution: {integrity: sha512-TBHyJxk2b7HceLVGFcpAUjsa5zIdsPWlR6XHfyGzd0SFu+/NFgQgMAl96MSDZgQDvJAvV6BKsFOrt6zIL09JDw==}
 
+  node-object-hash@3.1.1:
+    resolution: {integrity: sha512-A32kRGjXtwQ+uSa3GrXiCl8HVFY0Jy6IiKFO7UjagAKSaOOrruxB2Qf/w7TP5QtNfB3uOiHTu3cjhp8k/C0PCg==}
+    engines: {node: '>=16', pnpm: '>=8'}
+
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
@@ -52,6 +59,8 @@ snapshots:
   '@types/node@20.11.25':
     dependencies:
       undici-types: 5.26.5
+
+  node-object-hash@3.1.1: {}
 
   undici-types@5.26.5: {}
 
