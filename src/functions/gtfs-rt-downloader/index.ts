@@ -1,7 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { createHttpServerErrorResponse, createHttpValidationErrorResponse } from "@bods-integrated-data/shared/api";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import {} from "@bods-integrated-data/shared/dates";
 import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
