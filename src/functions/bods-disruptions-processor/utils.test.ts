@@ -5,6 +5,8 @@ import { Condition, Severity, VehicleMode } from "@bods-integrated-data/shared/s
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import {
+    AgencyMap,
+    RouteMap,
     getAgencyMap,
     getGtfsActivePeriods,
     getGtfsCause,
@@ -17,6 +19,8 @@ import {
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;
 
 describe("utils", () => {
+    const dbClient = undefined as unknown as KyselyDb;
+
     describe("getGtfsCause", () => {
         it.each([
             [{ MiscellaneousReason: "accident" }, Cause.ACCIDENT],
@@ -101,6 +105,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                        ],
                                         LineRef: "1",
                                         PublishedLineName: "",
                                     },
@@ -237,14 +246,13 @@ describe("utils", () => {
     });
 
     describe("getAgencyMap", () => {
-        let dbClient: KyselyDb;
         const getAgenciesMock = vi.spyOn(databaseFunctions, "getAgencies");
 
         afterEach(() => {
             vi.resetAllMocks();
         });
 
-        it("creates a route map for a given list of line refs", async () => {
+        it("creates an agency map for a given list of line refs", async () => {
             const mockAgencies: Agency[] = [
                 {
                     id: 1,
@@ -281,7 +289,7 @@ describe("utils", () => {
                 },
             ] as PtSituationElement[];
 
-            const expectedAgencyMap: Record<string, transit_realtime.IEntitySelector> = {
+            const expectedAgencyMap: AgencyMap = {
                 o1: {
                     agency_id: "1",
                 },
@@ -352,7 +360,17 @@ describe("utils", () => {
     });
 
     describe("getRouteMap", () => {
-        let dbClient: KyselyDb;
+        const agencyMap: AgencyMap = {
+            o1: {
+                agency_id: "10",
+            },
+            o2: {
+                agency_id: "20",
+            },
+            o3: {
+                agency_id: "30",
+            },
+        };
         const getRoutesMock = vi.spyOn(databaseFunctions, "getRoutes");
 
         afterEach(() => {
@@ -388,6 +406,11 @@ describe("utils", () => {
                                             {
                                                 AffectedLine: [
                                                     {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o1",
+                                                            },
+                                                        ],
                                                         LineRef: "r1",
                                                     },
                                                 ],
@@ -395,6 +418,11 @@ describe("utils", () => {
                                             {
                                                 AffectedLine: [
                                                     {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o2",
+                                                            },
+                                                        ],
                                                         LineRef: "r2",
                                                     },
                                                 ],
@@ -408,20 +436,24 @@ describe("utils", () => {
                 },
             ] as PtSituationElement[];
 
-            const expectedRouteMap: Record<string, transit_realtime.IEntitySelector> = {
+            const expectedRouteMap: RouteMap = {
                 r1: {
-                    agency_id: "10",
-                    route_id: "1",
-                    route_type: RouteType.Bus,
+                    "10": {
+                        agency_id: "10",
+                        route_id: "1",
+                        route_type: RouteType.Bus,
+                    },
                 },
                 r2: {
-                    agency_id: "20",
-                    route_id: "2",
-                    route_type: RouteType.Bus,
+                    "20": {
+                        agency_id: "20",
+                        route_id: "2",
+                        route_type: RouteType.Bus,
+                    },
                 },
             };
 
-            const routeMap = await getRouteMap(dbClient, ptSituationElements);
+            const routeMap = await getRouteMap(dbClient, agencyMap, ptSituationElements);
             expect(routeMap).toEqual(expectedRouteMap);
         });
 
@@ -451,7 +483,7 @@ describe("utils", () => {
                 },
             ] as PtSituationElement[];
 
-            const routeMap = await getRouteMap(dbClient, ptSituationElements);
+            const routeMap = await getRouteMap(dbClient, agencyMap, ptSituationElements);
             expect(routeMap).toEqual({});
         });
 
@@ -469,6 +501,74 @@ describe("utils", () => {
                                             {
                                                 AffectedLine: [
                                                     {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o1",
+                                                            },
+                                                        ],
+                                                        LineRef: "r1",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o2",
+                                                            },
+                                                        ],
+                                                        LineRef: "r2",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const routeMap = await getRouteMap(dbClient, agencyMap, ptSituationElements);
+            expect(routeMap).toEqual({});
+        });
+
+        it("returns an empty map when the affected line has no affected operator", async () => {
+            const mockRoutes: Route[] = [
+                {
+                    id: 1,
+                    route_short_name: "r1",
+                    agency_id: 10,
+                    route_type: RouteType.Bus,
+                },
+                {
+                    id: 2,
+                    route_short_name: "r2",
+                    agency_id: 20,
+                    route_type: RouteType.Bus,
+                },
+            ] as Route[];
+
+            getRoutesMock.mockResolvedValueOnce(mockRoutes);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Networks: {
+                                        AffectedNetwork: [
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o1",
+                                                            },
+                                                        ],
                                                         LineRef: "r1",
                                                     },
                                                 ],
@@ -489,31 +589,147 @@ describe("utils", () => {
                 },
             ] as PtSituationElement[];
 
-            const routeMap = await getRouteMap(dbClient, ptSituationElements);
-            expect(routeMap).toEqual({});
+            const expectedRouteMap: RouteMap = {
+                r1: {
+                    "10": {
+                        agency_id: "10",
+                        route_id: "1",
+                        route_type: RouteType.Bus,
+                    },
+                },
+            };
+
+            const routeMap = await getRouteMap(dbClient, agencyMap, ptSituationElements);
+            expect(routeMap).toEqual(expectedRouteMap);
+        });
+
+        it("returns an empty map when the affected line has multiple affected operators", async () => {
+            const mockRoutes: Route[] = [
+                {
+                    id: 1,
+                    route_short_name: "r1",
+                    agency_id: 10,
+                    route_type: RouteType.Bus,
+                },
+                {
+                    id: 2,
+                    route_short_name: "r2",
+                    agency_id: 20,
+                    route_type: RouteType.Bus,
+                },
+                {
+                    id: 3,
+                    route_short_name: "r1",
+                    agency_id: 30,
+                    route_type: RouteType.Bus,
+                },
+            ] as Route[];
+
+            getRoutesMock.mockResolvedValueOnce(mockRoutes);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Networks: {
+                                        AffectedNetwork: [
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o1",
+                                                            },
+                                                            {
+                                                                OperatorRef: "o3",
+                                                            },
+                                                        ],
+                                                        LineRef: "r1",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o2",
+                                                            },
+                                                        ],
+                                                        LineRef: "r2",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const expectedRouteMap: RouteMap = {
+                r1: {
+                    "10": {
+                        agency_id: "10",
+                        route_id: "1",
+                        route_type: RouteType.Bus,
+                    },
+                    "30": {
+                        agency_id: "30",
+                        route_id: "3",
+                        route_type: RouteType.Bus,
+                    },
+                },
+                r2: {
+                    "20": {
+                        agency_id: "20",
+                        route_id: "2",
+                        route_type: RouteType.Bus,
+                    },
+                },
+            };
+
+            const routeMap = await getRouteMap(dbClient, agencyMap, ptSituationElements);
+            expect(routeMap).toEqual(expectedRouteMap);
         });
     });
 
     describe("getGtfsInformedIdentities", () => {
-        const agencyMap: Record<string, transit_realtime.IEntitySelector> = {
+        const agencyMap: AgencyMap = {
             o1: {
                 agency_id: "10",
             },
             o2: {
                 agency_id: "20",
             },
+            o3: {
+                agency_id: "30",
+            },
         };
 
-        const routeMap: Record<string, transit_realtime.IEntitySelector> = {
+        const routeMap: RouteMap = {
             r1: {
-                agency_id: "10",
-                route_id: "1",
-                route_type: RouteType.Bus,
+                "10": {
+                    agency_id: "10",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                },
+                "30": {
+                    agency_id: "20",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                },
             },
             r2: {
-                agency_id: "20",
-                route_id: "2",
-                route_type: RouteType.Bus,
+                "20": {
+                    agency_id: "20",
+                    route_id: "2",
+                    route_type: RouteType.Bus,
+                },
             },
         };
 
@@ -554,6 +770,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                        ],
                                         LineRef: "r1",
                                     },
                                 ],
@@ -561,6 +782,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o2",
+                                            },
+                                        ],
                                         LineRef: "r2",
                                     },
                                 ],
@@ -595,6 +821,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                        ],
                                         LineRef: "r1",
                                     },
                                 ],
@@ -602,6 +833,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o2",
+                                            },
+                                        ],
                                         LineRef: "r2",
                                     },
                                 ],
@@ -758,6 +994,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                        ],
                                         LineRef: "r1",
                                     },
                                 ],
@@ -765,6 +1006,11 @@ describe("utils", () => {
                             {
                                 AffectedLine: [
                                     {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o2",
+                                            },
+                                        ],
                                         LineRef: "r2",
                                     },
                                 ],
@@ -776,6 +1022,69 @@ describe("utils", () => {
 
             const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, {});
             expect(informedIdentities).toEqual([]);
+        });
+
+        it("returns no informed identities when the affected line has no affected operator", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AffectedLine: [
+                                    {
+                                        LineRef: "r1",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual([]);
+        });
+
+        it("returns informed identities with multiple operators for the same line", () => {
+            const consequence: Consequence = {
+                Affects: {
+                    Networks: {
+                        AffectedNetwork: [
+                            {
+                                AffectedLine: [
+                                    {
+                                        AffectedOperator: [
+                                            {
+                                                OperatorRef: "o1",
+                                            },
+                                            {
+                                                OperatorRef: "o3",
+                                            },
+                                        ],
+                                        LineRef: "r1",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            } as Consequence;
+
+            const expectedInformedIdentities: transit_realtime.IEntitySelector[] = [
+                {
+                    agency_id: "10",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                },
+                {
+                    agency_id: "30",
+                    route_id: "1",
+                    route_type: RouteType.Bus,
+                },
+            ];
+
+            const informedIdentities = getGtfsInformedIdentities(consequence, agencyMap, routeMap);
+            expect(informedIdentities).toEqual(expectedInformedIdentities);
         });
     });
 });

@@ -4,6 +4,11 @@ export const getAgencies = (dbClient: KyselyDb, nocs: string[]) => {
     return dbClient.selectFrom("agency").selectAll().where("noc", "in", nocs).execute();
 };
 
-export const getRoutes = (dbClient: KyselyDb, lineIds: string[]) => {
-    return dbClient.selectFrom("route").selectAll().where("route_short_name", "in", lineIds).execute();
+export const getRoutes = (dbClient: KyselyDb, lineRefs: string[]) => {
+    return dbClient
+        .selectFrom("route")
+        .selectAll()
+        .where("route_short_name", "in", lineRefs)
+        .orderBy("id desc")
+        .execute();
 };

@@ -60,7 +60,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
 
 const mapPtSituationsToGtfsAlertEntities = async (dbClient: KyselyDb, ptSituations: PtSituationElement[]) => {
     const agencyMap = await getAgencyMap(dbClient, ptSituations);
-    const routeMap = await getRouteMap(dbClient, ptSituations);
+    const routeMap = await getRouteMap(dbClient, agencyMap, ptSituations);
 
     return ptSituations.flatMap((ptSituation) => {
         if (!ptSituation.Consequences) {
