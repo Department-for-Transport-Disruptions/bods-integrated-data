@@ -603,7 +603,7 @@ describe("utils", () => {
             expect(routeMap).toEqual(expectedRouteMap);
         });
 
-        it("returns an empty map when the affected line has multiple affected operators", async () => {
+        it("returns a route map when the affected line has multiple affected operators", async () => {
             const mockRoutes: Route[] = [
                 {
                     id: 1,
