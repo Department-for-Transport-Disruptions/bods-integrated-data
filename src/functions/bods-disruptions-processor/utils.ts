@@ -4,6 +4,25 @@ import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { Consequence, PtSituationElement } from "@bods-integrated-data/shared/schema";
 import { getAgencies, getRoutes } from "./database";
 
+export type AgencyMap = Record<
+    string,
+    {
+        agency_id: string;
+    }
+>;
+
+export type RouteMap = Record<
+    string,
+    Record<
+        string,
+        {
+            agency_id: string;
+            route_id: string;
+            route_type: number;
+        }
+    >
+>;
+
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;
 
 const environmentReasonAliases = {
@@ -207,6 +226,20 @@ export const getAgencyMap = async (dbClient: KyselyDb, ptSituations: PtSituation
                         operatorRefs.add(affectedOperator.OperatorRef);
                     }
                 }
+
+                if (consequence.Affects?.Networks?.AffectedNetwork) {
+                    for (const affectedNetwork of consequence.Affects.Networks.AffectedNetwork) {
+                        if (affectedNetwork.AffectedLine) {
+                            for (const affectedLine of affectedNetwork.AffectedLine) {
+                                if (affectedLine.AffectedOperator) {
+                                    for (const affectedOperator of affectedLine.AffectedOperator) {
+                                        operatorRefs.add(affectedOperator.OperatorRef);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -216,7 +249,7 @@ export const getAgencyMap = async (dbClient: KyselyDb, ptSituations: PtSituation
     }
 
     const agencies = await getAgencies(dbClient, Array.from(operatorRefs));
-    const agencyMap: Record<string, transit_realtime.IEntitySelector> = {};
+    const agencyMap: AgencyMap = {};
 
     for (const agency of agencies) {
         agencyMap[agency.noc] = {
@@ -231,8 +264,8 @@ export const getAgencyMap = async (dbClient: KyselyDb, ptSituations: PtSituation
  * Takes a list of situations and returns a collated map of line refs with their
  * corresponding route_id and agency_id values from the database.
  */
-export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationElement[]) => {
-    const lineRefs = new Set<string>();
+export const getRouteMap = async (dbClient: KyselyDb, agencyMap: AgencyMap, ptSituations: PtSituationElement[]) => {
+    const lineRefAgencyIdsMap: Record<string, Set<string>> = {};
 
     for (const ptSituation of ptSituations) {
         if (ptSituation.Consequences?.Consequence) {
@@ -241,7 +274,20 @@ export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationE
                     for (const affectedNetwork of consequence.Affects.Networks.AffectedNetwork) {
                         if (affectedNetwork.AffectedLine) {
                             for (const affectedLine of affectedNetwork.AffectedLine) {
-                                lineRefs.add(affectedLine.LineRef);
+                                const lineRef = affectedLine.LineRef;
+                                const affectedOperators = affectedLine.AffectedOperator || [];
+
+                                if (!lineRefAgencyIdsMap[lineRef]) {
+                                    lineRefAgencyIdsMap[lineRef] = new Set();
+                                }
+
+                                for (const affectedOperator of affectedOperators) {
+                                    const agency = agencyMap[affectedOperator.OperatorRef];
+
+                                    if (affectedOperator.OperatorRef && agency) {
+                                        lineRefAgencyIdsMap[lineRef].add(agency.agency_id);
+                                    }
+                                }
                             }
                         }
                     }
@@ -250,19 +296,32 @@ export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationE
         }
     }
 
-    if (lineRefs.size === 0) {
+    const lineRefs = Object.keys(lineRefAgencyIdsMap);
+
+    if (lineRefs.length === 0) {
         return {};
     }
 
-    const routes = await getRoutes(dbClient, Array.from(lineRefs));
-    const routeMap: Record<string, transit_realtime.IEntitySelector> = {};
+    const routes = await getRoutes(dbClient, lineRefs);
+    const routeMap: RouteMap = {};
 
     for (const route of routes) {
-        routeMap[route.route_short_name] = {
-            agency_id: route.agency_id.toString(),
-            route_id: route.id.toString(),
-            route_type: route.route_type,
-        };
+        const agencyIds = lineRefAgencyIdsMap[route.route_short_name];
+        const agencyId = route.agency_id.toString();
+
+        if (agencyIds.has(agencyId)) {
+            if (!routeMap[route.route_short_name]) {
+                routeMap[route.route_short_name] = {};
+            }
+
+            if (!routeMap[route.route_short_name][agencyId]) {
+                routeMap[route.route_short_name][agencyId] = {
+                    agency_id: agencyId,
+                    route_id: route.id.toString(),
+                    route_type: route.route_type,
+                };
+            }
+        }
     }
 
     return routeMap;
@@ -280,14 +339,10 @@ export const getRouteMap = async (dbClient: KyselyDb, ptSituations: PtSituationE
  * Note that network-wide consequences (no operators, lines or stops) are discarded because GTFS service
  * alerts do not allow a network to be restricted to a geography (typically used in siri-sx).
  */
-export const getGtfsInformedIdentities = (
-    consequence: Consequence,
-    agencyMap: Record<string, transit_realtime.IEntitySelector>,
-    routeMap: Record<string, transit_realtime.IEntitySelector>,
-) => {
+export const getGtfsInformedIdentities = (consequence: Consequence, agencyMap: AgencyMap, routeMap: RouteMap) => {
     const informedIdentities: transit_realtime.IEntitySelector[] = [];
     const operatorRefs = new Set<string>();
-    const lineRefs = new Set<string>();
+    const lineRefsWithOperatorRefs = new Set<string>();
     const stopPointRefs = new Set<string>();
 
     if (consequence.Affects?.Operators?.AffectedOperator) {
@@ -300,7 +355,18 @@ export const getGtfsInformedIdentities = (
         for (const affectedNetwork of consequence.Affects.Networks.AffectedNetwork) {
             if (affectedNetwork.AffectedLine) {
                 for (const affectedLine of affectedNetwork.AffectedLine) {
-                    lineRefs.add(affectedLine.LineRef);
+                    const lineRef = affectedLine.LineRef;
+                    const affectedOperators = affectedLine.AffectedOperator || [];
+
+                    for (const affectedOperator of affectedOperators) {
+                        operatorRefs.add(affectedOperator.OperatorRef);
+                    }
+
+                    const agencyIds = affectedOperators
+                        .map((operator) => agencyMap[operator.OperatorRef].agency_id)
+                        .filter(Boolean);
+                    const lineRefHash = `${lineRef}:${agencyIds.join(",")}`;
+                    lineRefsWithOperatorRefs.add(lineRefHash);
                 }
             }
         }
@@ -314,7 +380,7 @@ export const getGtfsInformedIdentities = (
         }
     }
 
-    if (operatorRefs.size > 0 && lineRefs.size === 0 && stopPointRefs.size === 0) {
+    if (operatorRefs.size > 0 && lineRefsWithOperatorRefs.size === 0 && stopPointRefs.size === 0) {
         for (const operatorRef of operatorRefs) {
             if (agencyMap[operatorRef]) {
                 informedIdentities.push({
@@ -322,26 +388,42 @@ export const getGtfsInformedIdentities = (
                 });
             }
         }
-    } else if (lineRefs.size > 0 && stopPointRefs.size === 0) {
-        for (const lineRef of lineRefs) {
+    } else if (lineRefsWithOperatorRefs.size > 0 && stopPointRefs.size === 0) {
+        for (const lineRefHash of lineRefsWithOperatorRefs) {
+            const [lineRef, agencyIds] = lineRefHash.split(":");
+
             if (routeMap[lineRef]) {
-                informedIdentities.push({
-                    agency_id: routeMap[lineRef].agency_id,
-                    route_id: routeMap[lineRef].route_id,
-                    route_type: routeMap[lineRef].route_type,
-                });
+                for (const agencyId of agencyIds.split(",")) {
+                    const route = routeMap[lineRef][agencyId];
+
+                    if (route) {
+                        informedIdentities.push({
+                            agency_id: agencyId,
+                            route_id: route.route_id,
+                            route_type: route.route_type,
+                        });
+                    }
+                }
             }
         }
-    } else if (lineRefs.size > 0 && stopPointRefs.size > 0) {
-        for (const lineRef of lineRefs) {
+    } else if (lineRefsWithOperatorRefs.size > 0 && stopPointRefs.size > 0) {
+        for (const lineRefHash of lineRefsWithOperatorRefs) {
+            const [lineRef, agencyIds] = lineRefHash.split(":");
+
             if (routeMap[lineRef]) {
-                for (const stopPointRef of stopPointRefs) {
-                    informedIdentities.push({
-                        agency_id: routeMap[lineRef].agency_id,
-                        route_id: routeMap[lineRef].route_id,
-                        route_type: routeMap[lineRef].route_type,
-                        stop_id: stopPointRef,
-                    });
+                for (const agencyId of agencyIds.split(",")) {
+                    for (const stopPointRef of stopPointRefs) {
+                        const route = routeMap[lineRef][agencyId];
+
+                        if (route) {
+                            informedIdentities.push({
+                                agency_id: agencyId,
+                                route_id: route.route_id,
+                                route_type: route.route_type,
+                                stop_id: stopPointRef,
+                            });
+                        }
+                    }
                 }
             }
         }
