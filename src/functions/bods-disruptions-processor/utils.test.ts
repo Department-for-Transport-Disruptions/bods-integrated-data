@@ -457,7 +457,7 @@ describe("utils", () => {
             expect(routeMap).toEqual(expectedRouteMap);
         });
 
-        it("returns an empty map when there are no line refs", async () => {
+        it("returns an empty map when there are no agencies", async () => {
             const mockRoutes: Route[] = [
                 {
                     id: 1,
@@ -484,6 +484,64 @@ describe("utils", () => {
             ] as PtSituationElement[];
 
             const routeMap = await getRouteMap(dbClient, agencyMap, ptSituationElements);
+            expect(routeMap).toEqual({});
+        });
+
+        it("returns an empty map when there are no line refs", async () => {
+            const mockRoutes: Route[] = [
+                {
+                    id: 1,
+                    route_short_name: "r1",
+                    agency_id: 10,
+                    route_type: RouteType.Bus,
+                },
+                {
+                    id: 2,
+                    route_short_name: "r2",
+                    agency_id: 20,
+                    route_type: RouteType.Bus,
+                },
+            ] as Route[];
+
+            getRoutesMock.mockResolvedValueOnce(mockRoutes);
+
+            const ptSituationElements: PtSituationElement[] = [
+                {
+                    Consequences: {
+                        Consequence: [
+                            {
+                                Affects: {
+                                    Networks: {
+                                        AffectedNetwork: [
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        AffectedOperator: [
+                                                            {
+                                                                OperatorRef: "o1",
+                                                            },
+                                                        ],
+                                                        LineRef: "r1",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                AffectedLine: [
+                                                    {
+                                                        LineRef: "r2",
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            ] as PtSituationElement[];
+
+            const routeMap = await getRouteMap(dbClient, {}, ptSituationElements);
             expect(routeMap).toEqual({});
         });
 
