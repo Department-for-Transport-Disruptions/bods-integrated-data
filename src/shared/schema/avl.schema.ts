@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
 import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
-import { Avl, NewAvl, NewBodsAvl } from "../database";
+import { Avl, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { logger } from "../logger";
 import {
@@ -261,32 +261,6 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
             };
         });
     });
-
-export const siriBodsSchemaTransformed = siriVmSchema().transform<NewBodsAvl[]>((item) => {
-    return item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map((vehicleActivity) => ({
-        response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
-        producer_ref: item.Siri.ServiceDelivery.ProducerRef.toString(),
-        recorded_at_time: vehicleActivity.RecordedAtTime,
-        valid_until_time: vehicleActivity.ValidUntilTime,
-        line_ref: vehicleActivity.MonitoredVehicleJourney.LineRef ?? null,
-        direction_ref: vehicleActivity.MonitoredVehicleJourney.DirectionRef.toString() ?? null,
-        occupancy: vehicleActivity.MonitoredVehicleJourney.Occupancy ?? null,
-        operator_ref: vehicleActivity.MonitoredVehicleJourney.OperatorRef,
-        data_frame_ref:
-            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DataFrameRef.toString() ?? null,
-        dated_vehicle_journey_ref:
-            vehicleActivity.MonitoredVehicleJourney.FramedVehicleJourneyRef?.DatedVehicleJourneyRef.toString() ?? null,
-        vehicle_ref: vehicleActivity.MonitoredVehicleJourney.VehicleRef.toString(),
-        longitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Longitude,
-        latitude: vehicleActivity.MonitoredVehicleJourney.VehicleLocation.Latitude,
-        bearing: vehicleActivity.MonitoredVehicleJourney.Bearing ?? null,
-        published_line_name: vehicleActivity.MonitoredVehicleJourney.PublishedLineName ?? null,
-        origin_ref: vehicleActivity.MonitoredVehicleJourney.OriginRef ?? null,
-        origin_aimed_departure_time: vehicleActivity.MonitoredVehicleJourney.OriginAimedDepartureTime ?? null,
-        destination_ref: vehicleActivity.MonitoredVehicleJourney.DestinationRef ?? null,
-        block_ref: vehicleActivity.MonitoredVehicleJourney.BlockRef ?? null,
-    }));
-});
 
 export const tflVehicleLocationSchema = z.object({
     producerRef: z.string(),
