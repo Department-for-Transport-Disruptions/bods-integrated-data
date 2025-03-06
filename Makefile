@@ -202,6 +202,9 @@ run-local-gtfs-rt-generator:
 run-local-gtfs-rt-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler(${GTFS_RT_DOWNLOADER_INPUT}).then(r => console.log(r)).catch(e => console.error(e))"
 
+run-local-gtfs-routes-migrator:
+  STAGE=local npx tsx -e "import {handler} from './src/functions/gtfs-routes-migrator'; handler().then(console.log).catch(console.error)"
+
 # AVL
 
 run-local-avl-subscriber:
