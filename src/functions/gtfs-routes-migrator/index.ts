@@ -21,13 +21,26 @@ type CsvRoute = {
     route_type: number;
 };
 
-// type MigrationTables = {
-//     route_migration: GtfsRouteTable;
-//     trip_migration: GtfsTripTable;
-// };
+type DbAgencyNocMap = Record<string, Agency>;
+
+type DbRouteNocLineNameMap = Record<
+    string,
+    {
+        route: Route;
+        isMatched: boolean;
+    }
+>;
+
+type NewRouteMap = Record<
+    number,
+    {
+        route: Route;
+        existingRouteId?: number;
+    }
+>;
 
 const regionNames = [
-    "england",
+    // "england", // ignored since it encompasses all other regions except scotland and wales
     "east_anglia",
     "east_midlands",
     "london",
@@ -40,6 +53,20 @@ const regionNames = [
     "west_midlands",
     "yorkshire",
 ] as const;
+
+const regionCodeMap: Record<(typeof regionNames)[number], string> = {
+    east_anglia: "EA",
+    east_midlands: "EM",
+    london: "L",
+    north_east: "NE",
+    north_west: "NW",
+    scotland: "S",
+    south_east: "SE",
+    south_west: "SW",
+    wales: "W",
+    west_midlands: "WM",
+    yorkshire: "Y",
+};
 
 type RegionName = (typeof regionNames)[number];
 
@@ -70,9 +97,9 @@ const getGtfsData = async (regionName: RegionName) => {
 };
 
 const getNewRoutes = async (
-    dbAgencyNocMap: Record<string, Agency>,
-    dbRouteNocLineNameMap: Record<string, Route>,
     regionName: RegionName,
+    dbAgencyNocMap: DbAgencyNocMap,
+    dbRouteNocLineNameRegionMap: DbRouteNocLineNameMap,
 ) => {
     const data = await getGtfsData(regionName);
 
@@ -86,9 +113,13 @@ const getNewRoutes = async (
         csvAgencyMap[agency.agency_id] = agency.agency_noc;
     }
 
-    const newRoutes: Route[] = [];
+    const newRoutes: {
+        route: Route;
+        existingRouteId?: number;
+    }[] = [];
     const invalidAgencyIds = new Set<string>();
     const unknownAgencyIds = new Set<string>();
+    const regionCode = regionCodeMap[regionName];
 
     for (const route of csvRoutes) {
         const noc = csvAgencyMap[route.agency_id];
@@ -99,31 +130,38 @@ const getNewRoutes = async (
         }
 
         const nocLineName = `${noc}${route.route_short_name}`;
-        const existingRoute = dbRouteNocLineNameMap[nocLineName];
+        const nocLineNameRegion = `${nocLineName}${regionCode}`;
+        const existingRoute =
+            dbRouteNocLineNameRegionMap[nocLineNameRegion] || dbRouteNocLineNameRegionMap[nocLineName];
 
         if (existingRoute) {
+            existingRoute.isMatched = true;
             newRoutes.push({
-                ...existingRoute,
-                id: route.route_id,
+                route: {
+                    ...existingRoute.route,
+                    id: route.route_id,
+                },
+                existingRouteId: existingRoute.route.id,
             });
         } else {
             const existingAgency = dbAgencyNocMap[noc];
 
             if (!existingAgency) {
-                // todo: can we add new agencies and their routes instead of ignoring the routes?
                 unknownAgencyIds.add(route.agency_id);
                 continue;
             }
 
             newRoutes.push({
-                id: route.route_id,
-                agency_id: dbAgencyNocMap[noc].id,
-                route_short_name: route.route_short_name,
-                route_long_name: route.route_long_name,
-                route_type: route.route_type,
-                line_id: `?-${randomUUID()}`, // cannot be inferred
-                data_source: "bods", // cannot be inferred
-                noc_line_name: nocLineName,
+                route: {
+                    id: route.route_id,
+                    agency_id: dbAgencyNocMap[noc].id,
+                    route_short_name: route.route_short_name,
+                    route_long_name: route.route_long_name,
+                    route_type: route.route_type,
+                    line_id: `?-${randomUUID()}`, // cannot be inferred
+                    data_source: "bods", // cannot be inferred
+                    noc_line_name: nocLineName,
+                },
             });
         }
     }
@@ -154,60 +192,186 @@ export const handler: Handler = async (event, context) => {
         );
 
         const dbAgencies = await dbClient.selectFrom("agency").selectAll().execute();
-        const dbAgencyNocMap: Record<string, Agency> = {};
+        const dbRoutes = await dbClient.selectFrom("route").selectAll().execute();
+        const dbTrips = await dbClient.selectFrom("trip").selectAll().execute();
+        const dbRoutesAcrossMultipleRegions = (
+            await sql<Route & { region_code: string }>`
+WITH q1 AS (
+    SELECT agency_id, noc_line_name, COUNT(*) as route_count
+    FROM route
+    WHERE route_type IN (3, 200)
+    GROUP BY agency_id, noc_line_name
+    ORDER BY route_count DESC
+),
+q2 AS (
+    SELECT noc_line_name FROM q1 WHERE route_count > 1
+),
+q3 AS (
+  SELECT * FROM route WHERE noc_line_name IN (SELECT noc_line_name FROM q2)
+)
+SELECT DISTINCT route.id, route.agency_id, route.route_short_name, route.route_long_name, route.noc_line_name, stop.region_code FROM route
+JOIN trip ON trip.route_id = route.id
+JOIN stop_time ON stop_time.trip_id = trip.id
+JOIN stop ON stop.id = stop_time.stop_id
+AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
+        ).rows;
+
+        const dbAgencyNocMap: DbAgencyNocMap = {};
+        const dbRouteNocLineNameRegionMap: DbRouteNocLineNameMap = {};
+        const newRoutesMap: NewRouteMap = {};
+        const allInvalidAgencyIds = new Set<string>();
+        const allUnknownAgencyIds = new Set<string>();
+        let highestNewRouteId = 0;
+        let lowestNonMigratedRouteId = Number.MAX_SAFE_INTEGER;
+        let newRouteInMultipleRegionsCount = 0;
 
         for (const agency of dbAgencies) {
             dbAgencyNocMap[agency.noc] = agency;
         }
 
-        const dbRoutes = await dbClient.selectFrom("route").selectAll().execute();
-        const dbRouteNocLineNameMap: Record<string, Route> = {};
+        for (const route of dbRoutesAcrossMultipleRegions) {
+            const nocLineNameRegion = `${route.noc_line_name}${route.region_code}`;
 
-        for (const route of dbRoutes) {
-            dbRouteNocLineNameMap[route.noc_line_name] = route;
+            dbRouteNocLineNameRegionMap[nocLineNameRegion] = {
+                route,
+                isMatched: false,
+            };
         }
 
-        let allInvalidAgencyIds = new Set<string>();
-        let allUnknownAgencyIds = new Set<string>();
-        const allNewRoutes: Record<string, Route> = {};
+        for (const route of dbRoutes) {
+            dbRouteNocLineNameRegionMap[route.noc_line_name] = {
+                route,
+                isMatched: false,
+            };
+        }
 
         for await (const regionName of regionNames) {
             logger.info(`Getting GTFS data for region: ${regionName}`);
 
             const { newRoutes, invalidAgencyIds, unknownAgencyIds } = await getNewRoutes(
-                dbAgencyNocMap,
-                dbRouteNocLineNameMap,
                 regionName,
+                dbAgencyNocMap,
+                dbRouteNocLineNameRegionMap,
             );
 
-            allInvalidAgencyIds = new Set<string>([...allInvalidAgencyIds, ...invalidAgencyIds]);
-            allUnknownAgencyIds = new Set<string>([...allUnknownAgencyIds, ...unknownAgencyIds]);
+            for (const { route, existingRouteId } of newRoutes) {
+                if (newRoutesMap[route.id]) {
+                    newRouteInMultipleRegionsCount++;
+                } else {
+                    newRoutesMap[route.id] = {
+                        route,
+                        existingRouteId,
+                    };
 
-            for (const route of newRoutes) {
-                if (!allNewRoutes[route.id]) {
-                    allNewRoutes[route.id] = route;
+                    if (route.id > highestNewRouteId) {
+                        highestNewRouteId = route.id;
+                    }
+                }
+            }
+
+            for (const invalidAgencyId of invalidAgencyIds) {
+                allInvalidAgencyIds.add(invalidAgencyId);
+            }
+
+            for (const unknownAgencyId of unknownAgencyIds) {
+                allUnknownAgencyIds.add(unknownAgencyId);
+            }
+        }
+
+        const nonMigratedRouteMap: Record<number, Route> = {};
+
+        for (const routeKey in dbRouteNocLineNameRegionMap) {
+            const route = dbRouteNocLineNameRegionMap[routeKey];
+
+            if (!route.isMatched) {
+                nonMigratedRouteMap[route.route.id] = route.route;
+
+                if (route.route.id < lowestNonMigratedRouteId) {
+                    lowestNonMigratedRouteId = route.route.id;
                 }
             }
         }
 
-        // todo: we should also be insert all the existing DB routes that have not been matched
-        const newRoutesSorted = Object.values(allNewRoutes).sort((a, b) => a.id - b.id);
-        logger.info(`Inserting ${newRoutesSorted.length} new routes`);
+        const nonMigratedRouteIdIncrement = highestNewRouteId - lowestNonMigratedRouteId + 1;
 
-        const insertChunks = chunkArray(newRoutesSorted, 3000);
+        if (nonMigratedRouteIdIncrement > 0) {
+            for (const routeKey in nonMigratedRouteMap) {
+                nonMigratedRouteMap[routeKey].id += nonMigratedRouteIdIncrement;
+            }
+        }
 
-        for await (const chunk of insertChunks) {
+        const newRoutes = Object.values(newRoutesMap);
+        const newRouteByExistingRouteIdMap: Record<number, Route> = {};
+
+        for (const { route, existingRouteId } of newRoutes) {
+            if (existingRouteId) {
+                newRouteByExistingRouteIdMap[existingRouteId] = route;
+            }
+        }
+
+        let affectedTripCount = 0;
+
+        for (const trip of dbTrips) {
+            const nonMigratedRoute = nonMigratedRouteMap[trip.route_id];
+
+            if (nonMigratedRoute) {
+                trip.route_id = nonMigratedRoute.id;
+                affectedTripCount++;
+            } else {
+                const newRoute = newRouteByExistingRouteIdMap[trip.route_id];
+
+                if (newRoute) {
+                    trip.route_id = newRoute.id;
+                    affectedTripCount++;
+                }
+            }
+        }
+
+        const nonMigratedRoutes = Object.values(nonMigratedRouteMap);
+        const routesToInsert = [...newRoutes.map(({ route }) => route), ...nonMigratedRoutes]
+            .sort((a, b) => a.id - b.id)
+            // necessary to remove the region_code from the DB route fetch
+            .map<Route>((route) => ({
+                id: route.id,
+                agency_id: route.agency_id,
+                route_short_name: route.route_short_name,
+                route_long_name: route.route_long_name,
+                route_type: route.route_type,
+                line_id: route.line_id,
+                data_source: route.data_source,
+                noc_line_name: route.noc_line_name,
+            }));
+
+        logger.info(
+            `Inserting ${routesToInsert.length} routes (${newRoutes.length} new, ${nonMigratedRoutes.length} non-migrated)`,
+        );
+        logger.info(`Number of new routes in multiple regions: ${newRouteInMultipleRegionsCount}`);
+
+        const routeChunks = chunkArray(routesToInsert, 3000);
+
+        for await (const chunk of routeChunks) {
             await dbClient
-                // todo: update typings
-                // @ts-ignore temporary ts-ignore until the table is added to the typings
+                // todo: once the migration is tested, the routes table will be truncated and the new routes will be inserted
+                // @ts-ignore temporary ts-ignore until the migration is tested
                 .insertInto("route_migration")
                 .values(chunk)
                 .onConflict((oc) => oc.doNothing())
                 .execute();
         }
 
-        // todo: update trips table with route ids
-        // todo: once we're happy with the migration rules, move the route_migration and trip_migration tables to the route and trip tables as the final step
+        logger.info(`Inserting ${dbTrips.length} trips (${affectedTripCount} affected)`);
+
+        const tripChunks = chunkArray(dbTrips, 3000);
+
+        for await (const chunk of tripChunks) {
+            await dbClient
+                // todo: once the migration is tested, the routes table will be truncated and the new routes will be inserted
+                // @ts-ignore temporary ts-ignore until the migration is tested
+                .insertInto("trip_migration")
+                .values(chunk)
+                .onConflict((oc) => oc.doNothing())
+                .execute();
+        }
 
         if (allInvalidAgencyIds.size) {
             logger.warn(
