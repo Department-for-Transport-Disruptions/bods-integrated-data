@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
 import tflMapping from "../data/tflRouteToNocMapping.json";
-import { Avl, BodsAvl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { Avl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
 import { getDate, getDateWithCustomFormat } from "../dates";
 import { getDynamoItem } from "../dynamo";
 import { transit_realtime } from "../gtfs-realtime";
@@ -96,7 +96,7 @@ export const getAvlDataForGtfs = async (
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: number[],
-): Promise<BodsAvl[]> => {
+): Promise<Avl[]> => {
     try {
         let query = dbClient.selectFrom("avl").distinctOn(["vehicle_ref", "operator_ref"]).selectAll("avl");
 

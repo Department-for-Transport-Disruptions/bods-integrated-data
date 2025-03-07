@@ -485,3 +485,14 @@ module "integrated_data_txc_analysis" {
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
 }
+
+module "integrated_data_gtfs_routes_migrator" {
+  source = "../modules/gtfs-routes-migrator"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+}
