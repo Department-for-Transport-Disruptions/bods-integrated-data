@@ -139,8 +139,12 @@ export const insertRoutes = (dbClient: KyselyDb, routes: NewRoute[]) => {
         .values(routes)
         .onConflict((oc) =>
             oc.column("line_id").doUpdateSet((eb) => ({
+                agency_id: eb.ref("excluded.agency_id"),
                 route_short_name: eb.ref("excluded.route_short_name"),
+                route_long_name: eb.ref("excluded.route_long_name"),
                 route_type: eb.ref("excluded.route_type"),
+                data_source: eb.ref("excluded.data_source"),
+                noc_line_name: eb.ref("excluded.noc_line_name"),
             })),
         )
         .returningAll()
