@@ -41,7 +41,7 @@ describe("checkStopsAgainstNaptan", () => {
         ]);
     });
 
-    it("should return an empty array if stops have to correct stop type and exist in NaPTAN", () => {
+    it("should return an empty array if stops have to correct stop type and exist in NaPTAN regardless of casing", () => {
         const naptanStopMap: NaptanStopMap = {
             SP1: {
                 stopType: "BCT",

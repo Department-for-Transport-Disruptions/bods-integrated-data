@@ -226,7 +226,7 @@ export const mockValidData: PartialDeep<TxcSchema> = {
                     },
                 },
                 {
-                    StopPointRef: "SP4",
+                    StopPointRef: "Sp4",
                     CommonName: "Stop 4",
                     Location: {
                         Latitude: 51.123,
