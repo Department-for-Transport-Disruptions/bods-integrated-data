@@ -39,7 +39,7 @@ export const generateCancellationsSubscriptionRequestXml = (
                 RequestTimestamp: currentTimestamp,
                 ConsumerAddress: !isInternal
                     ? `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`
-                    : `${dataEndpoint}/${subscriptionId}`,
+                    : `${dataEndpoint}/cancellations/${subscriptionId}`,
                 RequestorRef: requestorRef ?? "BODS",
                 MessageIdentifier: messageIdentifier,
                 SubscriptionContext: {
@@ -53,8 +53,8 @@ export const generateCancellationsSubscriptionRequestXml = (
                         RequestTimestamp: currentTimestamp,
                         "@_version": "2.0",
                     },
+                    IncrementalUpdates: true,
                 },
-                IncrementalUpdates: true,
             },
         },
     };

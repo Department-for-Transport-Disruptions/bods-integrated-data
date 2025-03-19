@@ -70,8 +70,8 @@ export const cancellationsSubscriptionRequestSchema = z.object({
                     RequestTimestamp: z.string(),
                     "@_version": z.string().nullish(),
                 }),
+                IncrementalUpdates: z.literal(true),
             }),
-            IncrementalUpdates: z.literal(true),
         }),
     }),
 });
