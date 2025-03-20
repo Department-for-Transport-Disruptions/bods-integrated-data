@@ -132,7 +132,7 @@ export const getNaptanStopData = async (nptgBucketName: string, naptanBucketName
             const adminAreaCode = row.administrative_area_code;
             const regionCodes = adminAreaCode ? adminAreaCodes[adminAreaCode] : [];
 
-            naptanStopMap[row.atco_code] = {
+            naptanStopMap[row.atco_code.toUpperCase()] = {
                 stopType: row.stop_type || null,
                 regions: regionCodes,
             };
