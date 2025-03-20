@@ -120,6 +120,7 @@ export const txcArrayProperties = [
     "OtherPublicHoliday",
     "DateRange",
     "ServicedOrganisationRef",
+    "WorkingDays",
 ];
 
 export const nptgArrayProperties = ["AdministrativeArea", "NptgLocality", "Region"];

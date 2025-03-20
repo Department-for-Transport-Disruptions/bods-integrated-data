@@ -23,6 +23,7 @@ const servicedOperationDayTypeSchema = z.object({
         .object({
             ServicedOrganisationRef: z.string().array(),
         })
+        .array()
         .optional(),
     Holidays: z
         .object({
@@ -284,6 +285,7 @@ export const servicedOrganisationSchema = z.object({
         .object({
             DateRange: dateRange.array(),
         })
+        .array()
         .optional(),
     Holidays: z
         .object({
