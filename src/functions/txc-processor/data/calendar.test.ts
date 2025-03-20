@@ -225,28 +225,36 @@ describe("calendar", () => {
             const servicedOrganisation = processServicedOrganisation(
                 {
                     DaysOfOperation: {
-                        WorkingDays: {
-                            ServicedOrganisationRef: ["123"],
-                        },
+                        WorkingDays: [
+                            {
+                                ServicedOrganisationRef: ["123"],
+                            },
+                        ],
                     },
                     DaysOfNonOperation: {
-                        WorkingDays: {
-                            ServicedOrganisationRef: ["abc"],
-                        },
+                        WorkingDays: [
+                            {
+                                ServicedOrganisationRef: ["abc"],
+                            },
+                        ],
                     },
                 },
                 [
                     {
                         OrganisationCode: "123",
-                        WorkingDays: {
-                            DateRange: [[getDate("2024-04-01"), getDate("2024-04-02"), getDate("2024-04-03")]],
-                        },
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-04-01"), getDate("2024-04-02"), getDate("2024-04-03")]],
+                            },
+                        ],
                     },
                     {
                         OrganisationCode: "abc",
-                        WorkingDays: {
-                            DateRange: [[getDate("2024-03-04"), getDate("2024-04-01")]],
-                        },
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-03-04"), getDate("2024-04-01")]],
+                            },
+                        ],
                     },
                 ],
                 {
@@ -271,9 +279,11 @@ describe("calendar", () => {
                         },
                     },
                     DaysOfNonOperation: {
-                        WorkingDays: {
-                            ServicedOrganisationRef: ["abc"],
-                        },
+                        WorkingDays: [
+                            {
+                                ServicedOrganisationRef: ["abc"],
+                            },
+                        ],
                         Holidays: {
                             ServicedOrganisationRef: ["xyz"],
                         },
@@ -316,17 +326,21 @@ describe("calendar", () => {
             const servicedOrganisation = processServicedOrganisation(
                 {
                     DaysOfOperation: {
-                        WorkingDays: {
-                            ServicedOrganisationRef: ["123"],
-                        },
+                        WorkingDays: [
+                            {
+                                ServicedOrganisationRef: ["123"],
+                            },
+                        ],
                     },
                 },
                 [
                     {
                         OrganisationCode: "abc",
-                        WorkingDays: {
-                            DateRange: [[getDate("2024-04-01")]],
-                        },
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-04-01")]],
+                            },
+                        ],
                     },
                 ],
                 {
@@ -468,9 +482,11 @@ describe("calendar", () => {
                     },
                     ServicedOrganisationDayType: {
                         DaysOfOperation: {
-                            WorkingDays: {
-                                ServicedOrganisationRef: ["123"],
-                            },
+                            WorkingDays: [
+                                {
+                                    ServicedOrganisationRef: ["123"],
+                                },
+                            ],
                         },
                     },
                 },
@@ -481,9 +497,11 @@ describe("calendar", () => {
                 [
                     {
                         OrganisationCode: "123",
-                        WorkingDays: {
-                            DateRange: [[getDate("2024-04-07")]],
-                        },
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-04-07")]],
+                            },
+                        ],
                     },
                 ],
             );
@@ -522,9 +540,11 @@ describe("calendar", () => {
                     },
                     ServicedOrganisationDayType: {
                         DaysOfOperation: {
-                            WorkingDays: {
-                                ServicedOrganisationRef: ["123"],
-                            },
+                            WorkingDays: [
+                                {
+                                    ServicedOrganisationRef: ["123"],
+                                },
+                            ],
                         },
                     },
                 },
@@ -535,9 +555,11 @@ describe("calendar", () => {
                 [
                     {
                         OrganisationCode: "123",
-                        WorkingDays: {
-                            DateRange: [[getDate("2024-04-07")]],
-                        },
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-04-07")]],
+                            },
+                        ],
                     },
                 ],
             );

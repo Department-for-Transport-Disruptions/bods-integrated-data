@@ -16,7 +16,8 @@ const checkFirstStopIsTimingPoint = (
     if (firstJourneyPatternSection) {
         const firstStopTimingStatus = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.TimingStatus;
 
-        const firstStopPointRef = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.StopPointRef;
+        const firstStopPointRef =
+            firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.StopPointRef?.toUpperCase();
 
         return {
             firstStopIsTimingPoint: allowedTimingPointValues.includes(firstStopTimingStatus ?? ""),
@@ -44,7 +45,7 @@ const checkLastStopIsTimingPoint = (journeyPattern: JourneyPattern, journeyPatte
         const lastStopPointRef =
             lastJourneyPatternSection.JourneyPatternTimingLink[
                 lastJourneyPatternSection.JourneyPatternTimingLink.length - 1
-            ].To?.StopPointRef;
+            ].To?.StopPointRef?.toUpperCase();
 
         return {
             lastStopIsTimingPoint: allowedTimingPointValues.includes(lastStopTimingStatus ?? ""),
@@ -108,7 +109,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 if (firstStopPointRef) {
                                     const firstStopPoint =
                                         txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
-                                            (stopPoint) => stopPoint.StopPointRef === firstStopPointRef,
+                                            (stopPoint) => stopPoint.StopPointRef.toUpperCase() === firstStopPointRef,
                                         );
                                     if (firstStopPoint) {
                                         firstStopCommonName = firstStopPoint.CommonName;
@@ -138,7 +139,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                             if (!lastStopIsTimingPoint) {
                                 if (lastStopPointRef) {
                                     const lastStopPoint = txcData.TransXChange?.StopPoints?.AnnotatedStopPointRef?.find(
-                                        (stopPoint) => stopPoint.StopPointRef === lastStopPointRef,
+                                        (stopPoint) => stopPoint.StopPointRef.toUpperCase() === lastStopPointRef,
                                     );
                                     if (lastStopPoint) {
                                         lastStopCommonName = lastStopPoint.CommonName;

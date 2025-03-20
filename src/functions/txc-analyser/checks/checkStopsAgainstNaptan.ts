@@ -13,7 +13,7 @@ export default (txcData: Partial<TxcSchema>, naptanStopMap: NaptanStopMap): Obse
 
     if (txcStops.length) {
         for (const stop of txcStops) {
-            const naptanStopRef = naptanStopMap[stop.stopPointRef];
+            const naptanStopRef = naptanStopMap[stop.stopPointRef.toUpperCase()];
             const stopType = naptanStopRef?.stopType;
 
             if (stopType === undefined) {

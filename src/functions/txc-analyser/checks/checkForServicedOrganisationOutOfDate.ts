@@ -10,30 +10,35 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     if (servicedOrganisations) {
         for (const servicedOrganisation of servicedOrganisations) {
             const organisationCode = servicedOrganisation.OrganisationCode || "unknown code";
-            const dateRanges = servicedOrganisation?.WorkingDays?.DateRange;
+            const workingDays = servicedOrganisation?.WorkingDays;
 
-            if (dateRanges) {
-                // A typecast is needed because the TxcSchema transforms the DateRange, which we don't want
-                const sortedEndDates = (dateRanges as unknown as { EndDate?: string }[])
-                    .filter((dateRange) => dateRange.EndDate)
-                    .map((dateRange) => getDate(dateRange.EndDate))
-                    .sort((a, b) => a.diff(b));
+            if (workingDays) {
+                for (const workingDay of workingDays) {
+                    const dateRanges = workingDay.DateRange;
+                    if (dateRanges) {
+                        // A typecast is needed because the TxcSchema transforms the DateRange, which we don't want
+                        const sortedEndDates = (dateRanges as unknown as { EndDate?: string }[])
+                            .filter((dateRange) => dateRange.EndDate)
+                            .map((dateRange) => getDate(dateRange.EndDate))
+                            .sort((a, b) => a.diff(b));
 
-                const latestEndDate = sortedEndDates[sortedEndDates.length - 1];
-                const today = getDate().startOf("day");
+                        const latestEndDate = sortedEndDates[sortedEndDates.length - 1];
+                        const today = getDate().startOf("day");
 
-                if (latestEndDate.isBefore(today)) {
-                    const serviceName = servicedOrganisation.Name || "unknown name";
-                    const endDate = latestEndDate.format("YYYY-MM-DD");
+                        if (latestEndDate.isBefore(today)) {
+                            const serviceName = servicedOrganisation.Name || "unknown name";
+                            const endDate = latestEndDate.format("YYYY-MM-DD");
 
-                    observations.push({
-                        importance: "advisory",
-                        category: "dataset",
-                        observation: "Serviced organisation out of date",
-                        serviceCode: "n/a",
-                        lineName: "n/a",
-                        details: `The Working Days for Serviced Organisation ${serviceName} (${organisationCode}) has expired on ${endDate}. Please update the dates for this Serviced Organisation.`,
-                    });
+                            observations.push({
+                                importance: "advisory",
+                                category: "dataset",
+                                observation: "Serviced organisation out of date",
+                                serviceCode: "n/a",
+                                lineName: "n/a",
+                                details: `The Working Days for Serviced Organisation ${serviceName} (${organisationCode}) has expired on ${endDate}. Please update the dates for this Serviced Organisation.`,
+                            });
+                        }
+                    }
                 }
             }
         }

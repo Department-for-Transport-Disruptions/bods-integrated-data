@@ -10,7 +10,7 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
 
     const txcStops = data.TransXChange?.StopPoints?.AnnotatedStopPointRef?.reduce(
         (acc: Record<string, string | null>, stop) => {
-            acc[stop.StopPointRef] = stop.CommonName;
+            acc[stop.StopPointRef.toUpperCase()] = stop.CommonName;
             return acc;
         },
         {},
@@ -65,9 +65,10 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                 const previousStop = {
                                     departureTime,
                                     commonName: txcStops
-                                        ? txcStops[timingLinksForJourney[0]?.From?.StopPointRef ?? ""] ?? "n/a"
+                                        ? txcStops[timingLinksForJourney[0]?.From?.StopPointRef?.toUpperCase() ?? ""] ??
+                                          "n/a"
                                         : "n/a",
-                                    stopPointRef: timingLinksForJourney[0]?.From?.StopPointRef,
+                                    stopPointRef: timingLinksForJourney[0]?.From?.StopPointRef?.toUpperCase(),
                                 };
                                 let accumulatedTimeWithoutATimingPoint = 0;
 
@@ -82,9 +83,9 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                     const currentStop = {
                                         departureTime: currentStopDepartureTime,
                                         commonName: txcStops
-                                            ? txcStops[timingLink.To?.StopPointRef ?? ""] ?? "n/a"
+                                            ? txcStops[timingLink.To?.StopPointRef?.toUpperCase() ?? ""] ?? "n/a"
                                             : "n/a",
-                                        stopPointRef: timingLink.To?.StopPointRef,
+                                        stopPointRef: timingLink.To?.StopPointRef?.toUpperCase(),
                                     };
 
                                     accumulatedTimeWithoutATimingPoint = allowedTimingPointValues.includes(
