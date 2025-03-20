@@ -1,7 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { Agency, KyselyDb, Route, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { chunkArray } from "@bods-integrated-data/shared/utils";
+import { chunkArray, notEmpty } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import axios from "axios";
 import { sql } from "kysely";
@@ -11,6 +10,11 @@ import { File, Open } from "unzipper";
 type CsvAgency = {
     agency_id: string;
     agency_noc: string;
+    agency_name: string;
+    agency_url: string;
+    agency_timezone: string;
+    agency_lang: string;
+    agency_phone: string;
 };
 
 type CsvRoute = {
@@ -96,11 +100,7 @@ const getGtfsData = async (regionName: RegionName) => {
     return { csvAgencies, csvRoutes };
 };
 
-const getNewRoutes = async (
-    regionName: RegionName,
-    dbAgencyNocMap: DbAgencyNocMap,
-    dbRouteNocLineNameRegionMap: DbRouteNocLineNameMap,
-) => {
+const getNewRoutes = async (regionName: RegionName, dbRouteNocLineNameRegionMap: DbRouteNocLineNameMap) => {
     const data = await getGtfsData(regionName);
 
     // Live datasets can contain invalid data, so filter out agencies and routes with missing vital keys
@@ -120,12 +120,14 @@ const getNewRoutes = async (
     const invalidAgencyIds = new Set<string>();
     const unknownAgencyIds = new Set<string>();
     const regionCode = regionCodeMap[regionName];
+    const unmappedRouteIds = new Set<number>();
 
     for (const route of csvRoutes) {
         const noc = csvAgencyMap[route.agency_id];
 
         if (!noc) {
             invalidAgencyIds.add(route.agency_id);
+            unmappedRouteIds.add(route.route_id);
             continue;
         }
 
@@ -144,29 +146,11 @@ const getNewRoutes = async (
                 existingRouteId: existingRoute.route.id,
             });
         } else {
-            const existingAgency = dbAgencyNocMap[noc];
-
-            if (!existingAgency) {
-                unknownAgencyIds.add(route.agency_id);
-                continue;
-            }
-
-            newRoutes.push({
-                route: {
-                    id: route.route_id,
-                    agency_id: dbAgencyNocMap[noc].id,
-                    route_short_name: route.route_short_name,
-                    route_long_name: route.route_long_name,
-                    route_type: route.route_type,
-                    line_id: `?-${randomUUID()}`, // cannot be inferred
-                    data_source: "bods", // cannot be inferred
-                    noc_line_name: nocLineName,
-                },
-            });
+            unmappedRouteIds.add(route.route_id);
         }
     }
 
-    return { newRoutes, invalidAgencyIds, unknownAgencyIds };
+    return { newRoutes, invalidAgencyIds, unknownAgencyIds, csvAgencies, unmappedRouteIds };
 };
 
 export const handler: Handler = async (event, context) => {
@@ -182,18 +166,25 @@ export const handler: Handler = async (event, context) => {
 
         dbClient = await getDatabaseClient(STAGE === "local");
 
+        await dbClient.schema.dropTable("agency_migration").ifExists().execute();
         await dbClient.schema.dropTable("route_migration").ifExists().execute();
         await dbClient.schema.dropTable("trip_migration").ifExists().execute();
+
+        logger.info("Creating migration tables");
+
+        await sql`CREATE TABLE ${sql.table("agency_migration")} (LIKE ${sql.table("agency")} INCLUDING ALL)`.execute(
+            dbClient,
+        );
         await sql`CREATE TABLE ${sql.table("route_migration")} (LIKE ${sql.table("route")} INCLUDING ALL)`.execute(
             dbClient,
         );
-        await sql`CREATE TABLE ${sql.table("trip_migration")} (LIKE ${sql.table("trip")} INCLUDING ALL)`.execute(
-            dbClient,
-        );
+
+        logger.info("Migration tables created");
 
         const dbAgencies = await dbClient.selectFrom("agency").selectAll().execute();
+        logger.info("agency data fetched");
         const dbRoutes = await dbClient.selectFrom("route").selectAll().execute();
-        const dbTrips = await dbClient.selectFrom("trip").selectAll().execute();
+        logger.info("route data fetched");
         const dbRoutesAcrossMultipleRegions = (
             await sql<Route & { region_code: string }>`
 WITH q1 AS (
@@ -207,22 +198,25 @@ q2 AS (
     SELECT noc_line_name FROM q1 WHERE route_count > 1
 ),
 q3 AS (
-  SELECT * FROM route WHERE noc_line_name IN (SELECT noc_line_name FROM q2)
+    SELECT * FROM route WHERE noc_line_name IN (SELECT noc_line_name FROM q2)
 )
 SELECT DISTINCT route.id, route.agency_id, route.route_short_name, route.route_long_name, route.noc_line_name, stop.region_code FROM route
 JOIN trip ON trip.route_id = route.id
 JOIN stop_time ON stop_time.trip_id = trip.id
 JOIN stop ON stop.id = stop_time.stop_id
-AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
+AND route.noc_line_name IN (SELECT noc_line_name FROM q3)
+        `.execute(dbClient)
         ).rows;
+
+        logger.info("Data fetched");
 
         const dbAgencyNocMap: DbAgencyNocMap = {};
         const dbRouteNocLineNameRegionMap: DbRouteNocLineNameMap = {};
         const newRoutesMap: NewRouteMap = {};
+        const allCsvAgencies: Agency[] = [];
         const allInvalidAgencyIds = new Set<string>();
         const allUnknownAgencyIds = new Set<string>();
-        let highestNewRouteId = 0;
-        let lowestNonMigratedRouteId = Number.MAX_SAFE_INTEGER;
+        const allUnmappedRouteIds = new Set<number>();
         let newRouteInMultipleRegionsCount = 0;
 
         for (const agency of dbAgencies) {
@@ -248,10 +242,23 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
         for await (const regionName of regionNames) {
             logger.info(`Getting GTFS data for region: ${regionName}`);
 
-            const { newRoutes, invalidAgencyIds, unknownAgencyIds } = await getNewRoutes(
+            const { newRoutes, invalidAgencyIds, unknownAgencyIds, csvAgencies, unmappedRouteIds } = await getNewRoutes(
                 regionName,
-                dbAgencyNocMap,
                 dbRouteNocLineNameRegionMap,
+            );
+
+            for (const id of unmappedRouteIds) {
+                allUnmappedRouteIds.add(id);
+            }
+
+            allCsvAgencies.push(
+                ...csvAgencies.map((a) => ({
+                    id: Number(a.agency_id.split("OP")[1]),
+                    name: a.agency_name,
+                    url: a.agency_url,
+                    phone: a.agency_phone,
+                    noc: a.agency_noc,
+                })),
             );
 
             for (const { route, existingRouteId } of newRoutes) {
@@ -262,10 +269,6 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
                         route,
                         existingRouteId,
                     };
-
-                    if (route.id > highestNewRouteId) {
-                        highestNewRouteId = route.id;
-                    }
                 }
             }
 
@@ -278,28 +281,6 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
             }
         }
 
-        const nonMigratedRouteMap: Record<number, Route> = {};
-
-        for (const routeKey in dbRouteNocLineNameRegionMap) {
-            const route = dbRouteNocLineNameRegionMap[routeKey];
-
-            if (!route.isMatched) {
-                nonMigratedRouteMap[route.route.id] = route.route;
-
-                if (route.route.id < lowestNonMigratedRouteId) {
-                    lowestNonMigratedRouteId = route.route.id;
-                }
-            }
-        }
-
-        const nonMigratedRouteIdIncrement = highestNewRouteId - lowestNonMigratedRouteId + 1;
-
-        if (nonMigratedRouteIdIncrement > 0) {
-            for (const routeKey in nonMigratedRouteMap) {
-                nonMigratedRouteMap[routeKey].id += nonMigratedRouteIdIncrement;
-            }
-        }
-
         const newRoutes = Object.values(newRoutesMap);
         const newRouteByExistingRouteIdMap: Record<number, Route> = {};
 
@@ -309,41 +290,59 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
             }
         }
 
-        let affectedTripCount = 0;
-
-        for (const trip of dbTrips) {
-            const nonMigratedRoute = nonMigratedRouteMap[trip.route_id];
-
-            if (nonMigratedRoute) {
-                trip.route_id = nonMigratedRoute.id;
-                affectedTripCount++;
-            } else {
-                const newRoute = newRouteByExistingRouteIdMap[trip.route_id];
-
-                if (newRoute) {
-                    trip.route_id = newRoute.id;
-                    affectedTripCount++;
-                }
-            }
-        }
-
-        const nonMigratedRoutes = Object.values(nonMigratedRouteMap);
-        const routesToInsert = [...newRoutes.map(({ route }) => route), ...nonMigratedRoutes]
-            .sort((a, b) => a.id - b.id)
-            // necessary to remove the region_code from the DB route fetch
-            .map<Route>((route) => ({
-                id: route.id,
-                agency_id: route.agency_id,
-                route_short_name: route.route_short_name,
-                route_long_name: route.route_long_name,
-                route_type: route.route_type,
-                line_id: route.line_id,
-                data_source: route.data_source,
-                noc_line_name: route.noc_line_name,
+        const dedubedCsvAgencies = allCsvAgencies
+            .filter((a, i, arr) => arr.findIndex((b) => b.noc === a.noc) === i)
+            .map((a) => ({
+                ...a,
+                noc: a.noc.toUpperCase(),
             }));
 
+        // Insert agencies from CSV first
+        await dbClient
+            .insertInto("agency_migration")
+            .values(dedubedCsvAgencies)
+            .onConflict((oc) => oc.column("noc").doNothing())
+            .onConflict((oc) => oc.column("id").doNothing())
+            .execute();
+
+        await sql`SELECT SETVAL('agency_migration_id_seq',MAX(id)+1) FROM ${sql.table("agency_migration")}`.execute(
+            dbClient,
+        );
+
+        let invalidRouteCount = 0;
+
+        const routesToInsert = [...newRoutes.map(({ route }) => route)]
+            .sort((a, b) => a.id - b.id)
+            // necessary to remove the region_code from the DB route fetch
+            .map<Route | null>((route) => {
+                const currentAgency = dbAgencies.find((agency) => agency.id === route.agency_id);
+                const noc = currentAgency?.noc;
+
+                if (!noc || !route.line_id || !route.data_source || !route.route_type) {
+                    logger.info(route);
+                    invalidRouteCount++;
+                    return null;
+                }
+
+                const agencyIdToUse =
+                    dedubedCsvAgencies.find((agency) => agency.noc.toUpperCase() === noc.toUpperCase())?.id ||
+                    currentAgency.id;
+
+                return {
+                    id: route.id,
+                    agency_id: agencyIdToUse,
+                    route_short_name: route.route_short_name,
+                    route_long_name: route.route_long_name,
+                    route_type: route.route_type,
+                    line_id: route.line_id,
+                    data_source: route.data_source,
+                    noc_line_name: route.noc_line_name,
+                };
+            })
+            .filter(notEmpty);
+
         logger.info(
-            `Inserting ${routesToInsert.length} routes (${newRoutes.length} new, ${nonMigratedRoutes.length} non-migrated)`,
+            `Inserting ${routesToInsert.length} routes, ${allUnmappedRouteIds.size} not mapped, ${invalidRouteCount} invalid routes`,
         );
         logger.info(`Number of new routes in multiple regions: ${newRouteInMultipleRegionsCount}`);
 
@@ -351,27 +350,15 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
 
         for await (const chunk of routeChunks) {
             await dbClient
-                // todo: once the migration is tested, the routes table will be truncated and the new routes will be inserted
-                // @ts-ignore temporary ts-ignore until the migration is tested
                 .insertInto("route_migration")
                 .values(chunk)
                 .onConflict((oc) => oc.doNothing())
                 .execute();
         }
 
-        logger.info(`Inserting ${dbTrips.length} trips (${affectedTripCount} affected)`);
-
-        const tripChunks = chunkArray(dbTrips, 3000);
-
-        for await (const chunk of tripChunks) {
-            await dbClient
-                // todo: once the migration is tested, the routes table will be truncated and the new routes will be inserted
-                // @ts-ignore temporary ts-ignore until the migration is tested
-                .insertInto("trip_migration")
-                .values(chunk)
-                .onConflict((oc) => oc.doNothing())
-                .execute();
-        }
+        await sql`SELECT SETVAL('route_migration_id_seq',MAX(id)+1) FROM ${sql.table("route_migration")}`.execute(
+            dbClient,
+        );
 
         if (allInvalidAgencyIds.size) {
             logger.warn(
@@ -382,6 +369,12 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)`.execute(dbClient)
         if (allUnknownAgencyIds.size) {
             logger.warn(
                 `${allUnknownAgencyIds.size} unknown agency ids: ${Array.from(allUnknownAgencyIds).join(", ")}`,
+            );
+        }
+
+        if (allUnmappedRouteIds.size) {
+            logger.warn(
+                `${allUnmappedRouteIds.size} unmapped route ids: ${Array.from(allUnmappedRouteIds).join(", ")}`,
             );
         }
     } catch (e) {

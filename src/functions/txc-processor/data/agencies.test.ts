@@ -32,13 +32,13 @@ describe("agencies", () => {
         const expectedAgencies: NewAgency[] = [
             {
                 name: "name1",
-                noc: "noc1",
+                noc: "NOC1",
                 url: "https://www.traveline.info",
                 phone: "",
             },
             {
                 name: "name2",
-                noc: "noc2",
+                noc: "NOC2",
                 url: "https://www.traveline.info",
                 phone: "",
             },
@@ -69,13 +69,13 @@ describe("agencies", () => {
         const expectedAgencies: NewAgency[] = [
             {
                 name: "name3",
-                noc: "noc1",
+                noc: "NOC1",
                 url: "https://www.traveline.info",
                 phone: "",
             },
             {
                 name: "name3",
-                noc: "noc2",
+                noc: "NOC2",
                 url: "https://www.traveline.info",
                 phone: "",
             },
@@ -113,15 +113,13 @@ describe("agencies", () => {
             {
                 id: 3,
                 name: "name3",
-                noc: "noc3",
+                noc: "NOC3",
                 url: "https://www.traveline.info",
                 phone: "",
-                timezone: "",
-                lang: "",
             },
             {
                 name: "name2",
-                noc: "noc2",
+                noc: "NOC2",
                 url: "https://www.traveline.info",
                 phone: "",
             },
@@ -130,11 +128,9 @@ describe("agencies", () => {
         getAgencyMock.mockResolvedValueOnce({
             id: 3,
             name: "name3",
-            noc: "noc3",
+            noc: "NOC3",
             url: "https://www.traveline.info",
             phone: "",
-            timezone: "",
-            lang: "",
         });
         getAgencyMock.mockResolvedValueOnce(undefined);
         getOperatorMock.mockResolvedValue(undefined);

@@ -95,6 +95,9 @@ export interface Database {
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
     tfl_line: TflLineTable;
+    route_migration: GtfsRouteTable;
+    trip_migration: GtfsTripTable;
+    agency_migration: GtfsAgencyTable;
 }
 
 export interface NaptanStopTable {
@@ -289,8 +292,6 @@ export interface GtfsAgencyTable {
     url: string;
     phone: string | null;
     noc: string;
-    timezone: string | null;
-    lang: string | null;
 }
 
 export type Agency = Selectable<GtfsAgencyTable>;

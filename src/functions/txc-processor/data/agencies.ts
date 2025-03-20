@@ -23,7 +23,7 @@ export const processAgencies = async (dbClient: KyselyDb, operators: Operator[])
 
         const newAgency: NewAgency = {
             name: existingNoc?.operator_public_name ?? operator.OperatorShortName,
-            noc,
+            noc: noc.toUpperCase(),
             url: "https://www.traveline.info",
             phone: "",
         };
