@@ -25,13 +25,11 @@ type CsvRoute = {
     route_type: number;
 };
 
-type DbAgencyNocMap = Record<string, Agency>;
-
 type DbRouteNocLineNameMap = Record<
     string,
     {
         route: Route;
-        isMatched: boolean;
+        use: boolean;
     }
 >;
 
@@ -133,11 +131,13 @@ const getNewRoutes = async (regionName: RegionName, dbRouteNocLineNameRegionMap:
 
         const nocLineName = `${noc}${route.route_short_name}`;
         const nocLineNameRegion = `${nocLineName}${regionCode}`;
-        const existingRoute =
-            dbRouteNocLineNameRegionMap[nocLineNameRegion] || dbRouteNocLineNameRegionMap[nocLineName];
+        const existingRoute = dbRouteNocLineNameRegionMap[nocLineNameRegion]?.use
+            ? dbRouteNocLineNameRegionMap[nocLineNameRegion]
+            : dbRouteNocLineNameRegionMap[nocLineName]?.use
+              ? dbRouteNocLineNameRegionMap[nocLineName]
+              : null;
 
         if (existingRoute) {
-            existingRoute.isMatched = true;
             newRoutes.push({
                 route: {
                     ...existingRoute.route,
@@ -200,7 +200,7 @@ q2 AS (
 q3 AS (
     SELECT * FROM route WHERE noc_line_name IN (SELECT noc_line_name FROM q2)
 )
-SELECT DISTINCT route.id, route.agency_id, route.route_short_name, route.route_long_name, route.noc_line_name, stop.region_code FROM route
+SELECT DISTINCT route.id, route.line_id, route.data_source, route.agency_id, route.route_short_name, route.route_long_name, route.route_type, route.noc_line_name, stop.region_code FROM route
 JOIN trip ON trip.route_id = route.id
 JOIN stop_time ON stop_time.trip_id = trip.id
 JOIN stop ON stop.id = stop_time.stop_id
@@ -210,7 +210,6 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)
 
         logger.info("Data fetched");
 
-        const dbAgencyNocMap: DbAgencyNocMap = {};
         const dbRouteNocLineNameRegionMap: DbRouteNocLineNameMap = {};
         const newRoutesMap: NewRouteMap = {};
         const allCsvAgencies: Agency[] = [];
@@ -219,24 +218,28 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)
         const allUnmappedRouteIds = new Set<number>();
         let newRouteInMultipleRegionsCount = 0;
 
-        for (const agency of dbAgencies) {
-            dbAgencyNocMap[agency.noc] = agency;
-        }
-
         for (const route of dbRoutesAcrossMultipleRegions) {
             const nocLineNameRegion = `${route.noc_line_name}${route.region_code}`;
 
-            dbRouteNocLineNameRegionMap[nocLineNameRegion] = {
-                route,
-                isMatched: false,
-            };
+            if (dbRouteNocLineNameRegionMap[nocLineNameRegion]) {
+                dbRouteNocLineNameRegionMap[nocLineNameRegion].use = false;
+            } else {
+                dbRouteNocLineNameRegionMap[nocLineNameRegion] = {
+                    route,
+                    use: true,
+                };
+            }
         }
 
         for (const route of dbRoutes) {
-            dbRouteNocLineNameRegionMap[route.noc_line_name] = {
-                route,
-                isMatched: false,
-            };
+            if (dbRouteNocLineNameRegionMap[route.noc_line_name]) {
+                dbRouteNocLineNameRegionMap[route.noc_line_name].use = false;
+            } else {
+                dbRouteNocLineNameRegionMap[route.noc_line_name] = {
+                    route,
+                    use: true,
+                };
+            }
         }
 
         for await (const regionName of regionNames) {
@@ -282,13 +285,6 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)
         }
 
         const newRoutes = Object.values(newRoutesMap);
-        const newRouteByExistingRouteIdMap: Record<number, Route> = {};
-
-        for (const { route, existingRouteId } of newRoutes) {
-            if (existingRouteId) {
-                newRouteByExistingRouteIdMap[existingRouteId] = route;
-            }
-        }
 
         const dedubedCsvAgencies = allCsvAgencies
             .filter((a, i, arr) => arr.findIndex((b) => b.noc === a.noc) === i)
@@ -318,8 +314,15 @@ AND route.noc_line_name IN (SELECT noc_line_name FROM q3)
                 const currentAgency = dbAgencies.find((agency) => agency.id === route.agency_id);
                 const noc = currentAgency?.noc;
 
-                if (!noc || !route.line_id || !route.data_source || !route.route_type) {
-                    logger.info(route);
+                if (
+                    !noc ||
+                    !route.line_id ||
+                    !route.data_source ||
+                    route.route_type === null ||
+                    route.route_type === undefined
+                ) {
+                    logger.info("Invalid route");
+                    logger.info(route, noc);
                     invalidRouteCount++;
                     return null;
                 }
