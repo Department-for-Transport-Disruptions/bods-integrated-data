@@ -319,3 +319,14 @@ module "siri_consumer_api_public" {
   siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
   siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
 }
+
+module "integrated_data_gtfs_routes_migrator" {
+  source = "../modules/gtfs-routes-migrator"
+
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
+}

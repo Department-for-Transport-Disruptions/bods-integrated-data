@@ -98,7 +98,7 @@ const processServices = (
         }
 
         const noc = getNationalOperatorCode(operator);
-        const agency = agencyData.find((agency) => agency.noc === noc);
+        const agency = noc ? agencyData.find((agency) => agency.noc === noc.toUpperCase()) : null;
 
         if (!agency) {
             logger.warn(`Unable to find agency with national operator code: ${noc}`, {

@@ -8,7 +8,7 @@ import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
-import { Avl, BodsAvl, KyselyDb, NewAvl } from "../database";
+import { Avl, KyselyDb, NewAvl } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
@@ -211,7 +211,7 @@ export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
  * @param avl The AVL
  * @returns The mapped AVL
  */
-export const mapBodsAvlFieldsIntoUsableFormats = (avl: BodsAvl): BodsAvl => ({
+export const mapBodsAvlFieldsIntoUsableFormats = (avl: Avl): Avl => ({
     ...avl,
     id: Number.parseInt(avl.id as unknown as string),
     response_time_stamp: formatSiriDatetime(getDate(avl.response_time_stamp), true),
