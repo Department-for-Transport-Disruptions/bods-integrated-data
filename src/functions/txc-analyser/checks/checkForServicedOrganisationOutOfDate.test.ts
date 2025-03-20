@@ -35,9 +35,11 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                         {
                             OrganisationCode: "servicedOrg1",
                             Name: "Test Organisation 1",
-                            WorkingDays: {
-                                DateRange: [{ EndDate: "2025-01-08" }, { EndDate: "2025-01-09" }],
-                            },
+                            WorkingDays: [
+                                {
+                                    DateRange: [{ EndDate: "2025-01-08" }, { EndDate: "2025-01-09" }],
+                                },
+                            ],
                         },
                     ],
                 },
@@ -56,15 +58,19 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                         {
                             OrganisationCode: "servicedOrg1",
                             Name: "Test Organisation 1",
-                            WorkingDays: {
-                                DateRange: [{ EndDate: "2025-01-06" }, { EndDate: "2025-01-05" }],
-                            },
+                            WorkingDays: [
+                                {
+                                    DateRange: [{ EndDate: "2025-01-06" }, { EndDate: "2025-01-05" }],
+                                },
+                            ],
                         },
                         {
                             OrganisationCode: "",
-                            WorkingDays: {
-                                DateRange: [{ EndDate: "2025-01-05" }, { EndDate: "2025-01-04" }],
-                            },
+                            WorkingDays: [
+                                {
+                                    DateRange: [{ EndDate: "2025-01-05" }, { EndDate: "2025-01-04" }],
+                                },
+                            ],
                         },
                     ],
                 },
