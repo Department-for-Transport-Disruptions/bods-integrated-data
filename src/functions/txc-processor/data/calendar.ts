@@ -204,16 +204,37 @@ export const processServicedOrganisation = (
     servicedOrganisations: ServicedOrganisation[],
     calendar: NewCalendar,
 ) => {
-    const servicedOrganisationWorkingDaysOperation =
-        servicedOrganisations
-            .find((org) =>
-                org.OrganisationCode
-                    ? servicedOrganisationDayType?.DaysOfOperation?.WorkingDays?.ServicedOrganisationRef.includes(
-                          org.OrganisationCode,
-                      )
-                    : false,
-            )
-            ?.WorkingDays?.DateRange.flat() ?? [];
+    //loop over services organisations
+    // for that org, check if the org code is in the servicedOrganisationDayType by looping over working days
+    // if it is then push the days of operation and non operation into an array
+
+    const servicedOrganisationWorkingDaysOperation: Dayjs[] = [];
+    const servicedOrganisationWorkingDaysNonOperation: Dayjs[] = [];
+
+    for (const org of servicedOrganisations) {
+        const daysOfOperation = servicedOrganisationDayType?.DaysOfOperation?.WorkingDays;
+        const daysOfNonOperation = servicedOrganisationDayType?.DaysOfNonOperation?.WorkingDays;
+
+        if (daysOfOperation) {
+            for (const day of daysOfOperation) {
+                if (day.ServicedOrganisationRef.includes(org.OrganisationCode ?? "")) {
+                    org.WorkingDays?.map((workingDay) =>
+                        servicedOrganisationWorkingDaysOperation.push(...workingDay.DateRange.flat()),
+                    );
+                }
+            }
+        }
+
+        if (daysOfNonOperation) {
+            for (const day of daysOfNonOperation) {
+                if (day.ServicedOrganisationRef.includes(org.OrganisationCode ?? "")) {
+                    org.WorkingDays?.map((workingDay) =>
+                        servicedOrganisationWorkingDaysNonOperation.push(...workingDay.DateRange.flat()),
+                    );
+                }
+            }
+        }
+    }
 
     const servicedOrganisationHolidaysOperation =
         servicedOrganisations
@@ -225,17 +246,6 @@ export const processServicedOrganisation = (
                     : false,
             )
             ?.Holidays?.DateRange.flat() ?? [];
-
-    const servicedOrganisationWorkingDaysNonOperation =
-        servicedOrganisations
-            .find((org) =>
-                org.OrganisationCode
-                    ? servicedOrganisationDayType?.DaysOfNonOperation?.WorkingDays?.ServicedOrganisationRef.includes(
-                          org.OrganisationCode,
-                      )
-                    : false,
-            )
-            ?.WorkingDays?.DateRange.flat() ?? [];
 
     const servicedOrganisationHolidaysNonOperation =
         servicedOrganisations
