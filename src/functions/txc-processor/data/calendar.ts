@@ -204,10 +204,6 @@ export const processServicedOrganisation = (
     servicedOrganisations: ServicedOrganisation[],
     calendar: NewCalendar,
 ) => {
-    //loop over services organisations
-    // for that org, check if the org code is in the servicedOrganisationDayType by looping over working days
-    // if it is then push the days of operation and non operation into an array
-
     const servicedOrganisationWorkingDaysOperation: Dayjs[] = [];
     const servicedOrganisationWorkingDaysNonOperation: Dayjs[] = [];
 
