@@ -8,7 +8,7 @@ import { processTrips } from "./trips";
 describe("trips", () => {
     MockDate.set("2024-02-10");
 
-    let dbClient: KyselyDb;
+    const dbClient: KyselyDb = vi.fn() as unknown as KyselyDb;
     const insertTripsMock = vi.spyOn(databaseFunctions, "insertTrips");
 
     beforeEach(() => {
@@ -73,7 +73,7 @@ describe("trips", () => {
 
         const expectedTrips: NewTrip[] = [
             {
-                id: expect.any(String) as string,
+                id: "VJ5aa39cd9247e2bea2a57f2d3b737c17498775d97",
                 route_id: 1,
                 service_id: 2,
                 block_id: "block1",
@@ -87,7 +87,7 @@ describe("trips", () => {
                 departure_time: "00:00:00z",
             },
             {
-                id: expect.any(String) as string,
+                id: "VJ1e3eff5b164b3306d56e95dc8887c38cfcfd7d89",
                 route_id: 11,
                 service_id: 12,
                 block_id: "",
@@ -147,7 +147,7 @@ describe("trips", () => {
 
         const expectedTrips: NewTrip[] = [
             {
-                id: expect.any(String) as string,
+                id: "VJ38f960b84d47cc9795f2eadb6518e31da903a966",
                 route_id: 1,
                 service_id: 2,
                 block_id: "block1",
