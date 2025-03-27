@@ -24,6 +24,7 @@ describe("trips", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "12345",
                 shapeId: "3",
                 tripId: "",
                 serviceCode: "test",
@@ -53,6 +54,7 @@ describe("trips", () => {
             {
                 routeId: 11,
                 serviceId: 12,
+                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "",
                 serviceCode: "test",
@@ -73,7 +75,7 @@ describe("trips", () => {
 
         const expectedTrips: NewTrip[] = [
             {
-                id: "VJ5aa39cd9247e2bea2a57f2d3b737c17498775d97",
+                id: "VJf424cd47299e2f5bbe9a13ec45260e253c08fc21",
                 route_id: 1,
                 service_id: 2,
                 block_id: "block1",
@@ -87,7 +89,7 @@ describe("trips", () => {
                 departure_time: "00:00:00z",
             },
             {
-                id: "VJ1e3eff5b164b3306d56e95dc8887c38cfcfd7d89",
+                id: "VJafef8f5646b6f4d0d790579d8873181ac40912d6",
                 route_id: 11,
                 service_id: 12,
                 block_id: "",
@@ -119,6 +121,7 @@ describe("trips", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: null,
                 shapeId: "3",
                 tripId: "",
                 serviceCode: "test",
@@ -147,7 +150,7 @@ describe("trips", () => {
 
         const expectedTrips: NewTrip[] = [
             {
-                id: "VJ38f960b84d47cc9795f2eadb6518e31da903a966",
+                id: "VJa5368d400df2565e6c91e7d5704299e827b918af",
                 route_id: 1,
                 service_id: 2,
                 block_id: "block1",

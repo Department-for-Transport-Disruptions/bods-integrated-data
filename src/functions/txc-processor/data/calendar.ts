@@ -394,6 +394,7 @@ export const mapVehicleJourneysToCalendars = (
             return {
                 ...vehicleJourneyMapping,
                 calendar: serviceCalendar,
+                calendarHash: serviceCalendar.calendar.calendar_hash,
             };
         }
 
@@ -402,25 +403,31 @@ export const mapVehicleJourneysToCalendars = (
          * operating profile, use DEFAULT_OPERATING_PROFILE
          */
         if (!vehicleJourneyMapping.vehicleJourney.OperatingProfile) {
-            return {
-                ...vehicleJourneyMapping,
-                calendar: formatCalendar(
-                    DEFAULT_OPERATING_PROFILE,
-                    operatingPeriod,
-                    bankHolidaysJson,
-                    servicedOrganisations,
-                ),
-            };
-        }
-
-        return {
-            ...vehicleJourneyMapping,
-            calendar: formatCalendar(
-                vehicleJourneyMapping.vehicleJourney.OperatingProfile,
+            const formattedCalendar = formatCalendar(
+                DEFAULT_OPERATING_PROFILE,
                 operatingPeriod,
                 bankHolidaysJson,
                 servicedOrganisations,
-            ),
+            );
+
+            return {
+                ...vehicleJourneyMapping,
+                calendar: formattedCalendar,
+                calendarHash: formattedCalendar.calendar.calendar_hash,
+            };
+        }
+
+        const formattedCalendar = formatCalendar(
+            vehicleJourneyMapping.vehicleJourney.OperatingProfile,
+            operatingPeriod,
+            bankHolidaysJson,
+            servicedOrganisations,
+        );
+
+        return {
+            ...vehicleJourneyMapping,
+            calendar: formattedCalendar,
+            calendarHash: formattedCalendar.calendar.calendar_hash,
         };
     });
 

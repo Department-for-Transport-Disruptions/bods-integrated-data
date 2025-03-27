@@ -6,7 +6,7 @@ import { processAgencies } from "./agencies";
 import * as databaseFunctions from "./database";
 
 describe("agencies", () => {
-    let dbClient: KyselyDb;
+    const dbClient = vi.fn() as unknown as KyselyDb;
     const getAgencyMock = vi.spyOn(databaseFunctions, "getAgency");
     const getOperatorMock = vi.spyOn(databaseFunctions, "getOperator");
     const insertAgencyMock = vi.spyOn(databaseFunctions, "insertAgency");

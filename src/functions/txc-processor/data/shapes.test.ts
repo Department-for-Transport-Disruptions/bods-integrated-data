@@ -6,7 +6,7 @@ import * as databaseFunctions from "./database";
 import { getRouteLinks, getRouteRefs, mapRouteLinksToShapes, processShapes } from "./shapes";
 
 describe("shapes", () => {
-    let dbClient: KyselyDb;
+    const dbClient = vi.fn() as unknown as KyselyDb;
     const insertShapesMock = vi.spyOn(databaseFunctions, "insertShapes");
 
     beforeEach(() => {
@@ -19,6 +19,7 @@ describe("shapes", () => {
                 {
                     routeId: 1,
                     serviceId: 2,
+                    calendarHash: "54321",
                     shapeId: "3",
                     tripId: "",
                     serviceCode: "test",
@@ -47,6 +48,7 @@ describe("shapes", () => {
                 {
                     routeId: 11,
                     serviceId: 12,
+                    calendarHash: "54321",
                     shapeId: "13",
                     tripId: "",
                     serviceCode: "test",
@@ -90,6 +92,7 @@ describe("shapes", () => {
                 {
                     routeId: 1,
                     serviceId: 2,
+                    calendarHash: "54321",
                     shapeId: "3",
                     tripId: "",
                     serviceCode: "test",
@@ -118,6 +121,7 @@ describe("shapes", () => {
                 {
                     routeId: 11,
                     serviceId: 12,
+                    calendarHash: "54321",
                     shapeId: "13",
                     tripId: "",
                     serviceCode: "test",
@@ -160,6 +164,7 @@ describe("shapes", () => {
                 {
                     routeId: 1,
                     serviceId: 2,
+                    calendarHash: "54321",
                     shapeId: "3",
                     tripId: "",
                     serviceCode: "test",
@@ -188,6 +193,7 @@ describe("shapes", () => {
                 {
                     routeId: 11,
                     serviceId: 12,
+                    calendarHash: "54321",
                     shapeId: "13",
                     tripId: "",
                     serviceCode: "test",
@@ -462,6 +468,13 @@ describe("shapes", () => {
             const { shapes } = mapRouteLinksToShapes(routeLinks);
             expect(shapes).toEqual(expectedShapes);
         });
+
+        it("returns null shapeId if no tracks data", () => {
+            const routeLinks: TxcRouteLink[] = [{}];
+
+            const { shapeId } = mapRouteLinksToShapes(routeLinks);
+            expect(shapeId).toBeNull();
+        });
     });
 
     describe("processShapes", () => {
@@ -470,6 +483,7 @@ describe("shapes", () => {
                 {
                     routeId: 1,
                     serviceId: 2,
+                    calendarHash: "54321",
                     shapeId: "3",
                     tripId: "",
                     serviceCode: "test",
@@ -498,6 +512,7 @@ describe("shapes", () => {
                 {
                     routeId: 11,
                     serviceId: 12,
+                    calendarHash: "54321",
                     shapeId: "13",
                     tripId: "",
                     serviceCode: "test",
@@ -606,6 +621,7 @@ describe("shapes", () => {
                 {
                     routeId: 1,
                     serviceId: 2,
+                    calendarHash: "54321",
                     shapeId: "3",
                     tripId: "",
                     serviceCode: "test",
@@ -628,6 +644,7 @@ describe("shapes", () => {
                 {
                     routeId: 11,
                     serviceId: 12,
+                    calendarHash: "54321",
                     shapeId: "13",
                     tripId: "",
                     serviceCode: "test",

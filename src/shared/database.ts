@@ -460,7 +460,7 @@ export interface GtfsTripTable {
     route_id: number;
     service_id: number;
     block_id: string;
-    shape_id: string;
+    shape_id: string | null;
     trip_headsign: string;
     wheelchair_accessible: WheelchairAccessibility;
     vehicle_journey_code: string;
@@ -471,6 +471,7 @@ export interface GtfsTripTable {
     destination_stop_ref: string | null;
     revision_number: string | null;
     departure_time: string | null;
+    conflicting_files?: string[];
 }
 
 export type Trip = Selectable<GtfsTripTable>;

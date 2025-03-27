@@ -5,7 +5,7 @@ import * as databaseFunctions from "./database";
 import { NaptanStopWithRegionCode, mapStop, processAnnotatedStopPointRefs, processStopPoints } from "./stops";
 
 describe("stops", () => {
-    let dbClient: KyselyDb;
+    const dbClient = vi.fn() as unknown as KyselyDb;
     const getNaptanStopsMock = vi.spyOn(databaseFunctions, "getNaptanStops");
     const insertStopsMock = vi.spyOn(databaseFunctions, "insertStops");
 

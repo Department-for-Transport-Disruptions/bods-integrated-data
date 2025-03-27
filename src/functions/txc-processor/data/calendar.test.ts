@@ -717,6 +717,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                        calendarHash: null,
                     },
                     {
                         routeId: 2,
@@ -725,6 +726,7 @@ describe("calendar", () => {
                         tripId: "2",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test2",
+                        calendarHash: null,
                     },
                 ],
                 serviceCalendar,
@@ -741,6 +743,7 @@ describe("calendar", () => {
                     vehicleJourney: defaultVehicleJourney,
                     serviceCode: "test",
                     calendar: serviceCalendar,
+                    calendarHash: "ServiceCalendarHash",
                 },
                 {
                     routeId: 2,
@@ -750,6 +753,7 @@ describe("calendar", () => {
                     vehicleJourney: defaultVehicleJourney,
                     serviceCode: "test2",
                     calendar: serviceCalendar,
+                    calendarHash: "ServiceCalendarHash",
                 },
             ]);
         });
@@ -776,6 +780,7 @@ describe("calendar", () => {
                     {
                         routeId: 1,
                         serviceId: 0,
+                        calendarHash: "54321",
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
@@ -796,6 +801,7 @@ describe("calendar", () => {
                     vehicleJourney: defaultVehicleJourney,
                     serviceCode: "test",
                     calendar: expectedCalendar,
+                    calendarHash: "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840",
                 },
             ]);
         });
@@ -831,6 +837,7 @@ describe("calendar", () => {
                     {
                         routeId: 1,
                         serviceId: 0,
+                        calendarHash: "54321",
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney,
@@ -851,6 +858,7 @@ describe("calendar", () => {
                     vehicleJourney,
                     serviceCode: "test",
                     calendar: expectedCalendar,
+                    calendarHash: "cc65c0de950f1d5daf75ad415278134aecedebcde3dd896596481f32ec4806e5",
                 },
             ]);
         });
@@ -983,6 +991,7 @@ describe("calendar", () => {
                     {
                         routeId: 1,
                         serviceId: 0,
+                        calendarHash: null,
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
@@ -991,6 +1000,7 @@ describe("calendar", () => {
                     {
                         routeId: 2,
                         serviceId: 0,
+                        calendarHash: null,
                         shapeId: "2",
                         tripId: "2",
                         vehicleJourney: defaultVehicleJourney,
@@ -1008,6 +1018,7 @@ describe("calendar", () => {
                     shapeId: "1",
                     tripId: "1",
                     vehicleJourney: defaultVehicleJourney,
+                    calendarHash: DEFAULT_HASH,
                 },
                 {
                     routeId: 2,
@@ -1016,6 +1027,7 @@ describe("calendar", () => {
                     shapeId: "2",
                     tripId: "2",
                     vehicleJourney: defaultVehicleJourney,
+                    calendarHash: DEFAULT_HASH,
                 },
             ]);
         });
@@ -1028,6 +1040,7 @@ describe("calendar", () => {
                     {
                         routeId: 1,
                         serviceId: 0,
+                        calendarHash: "54321",
                         shapeId: "1",
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
@@ -1036,6 +1049,7 @@ describe("calendar", () => {
                     {
                         routeId: 2,
                         serviceId: 0,
+                        calendarHash: "54321",
                         shapeId: "2",
                         tripId: "2",
                         vehicleJourney: defaultVehicleJourney,
@@ -1044,6 +1058,7 @@ describe("calendar", () => {
                     {
                         routeId: 2,
                         serviceId: 0,
+                        calendarHash: "54321",
                         shapeId: "3",
                         tripId: "3",
                         vehicleJourney: {

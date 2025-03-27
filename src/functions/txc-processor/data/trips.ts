@@ -22,7 +22,6 @@ export const processTrips = async (
 
             const hashableData = {
                 route_id: vehicleJourneyMapping.routeId,
-                service_id: vehicleJourneyMapping.serviceId,
                 block_id: vehicleJourney.Operational?.Block?.BlockNumber || "",
                 trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
                 wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
@@ -36,9 +35,15 @@ export const processTrips = async (
                 departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
             };
 
-            const hashedTripData = objectHasher.hash(hashableData, {
-                alg: "sha1",
-            });
+            const hashedTripData = objectHasher.hash(
+                {
+                    ...hashableData,
+                    calendarHash: vehicleJourneyMapping.calendarHash,
+                },
+                {
+                    alg: "sha1",
+                },
+            );
 
             const tripId = `VJ${hashedTripData}`;
 
@@ -47,6 +52,7 @@ export const processTrips = async (
             return {
                 id: tripId,
                 shape_id: vehicleJourneyMapping.shapeId,
+                service_id: vehicleJourneyMapping.serviceId,
                 file_path: filePath,
                 ...hashableData,
             };
