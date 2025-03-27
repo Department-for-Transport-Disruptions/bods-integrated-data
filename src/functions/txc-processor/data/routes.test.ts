@@ -5,7 +5,7 @@ import * as databaseFunctions from "./database";
 import { processRoutes } from "./routes";
 
 describe("routes", () => {
-    let dbClient: KyselyDb;
+    const dbClient = vi.fn() as unknown as KyselyDb;
     const getTndsRouteMock = vi.spyOn(databaseFunctions, "getTndsRoute");
     const insertRoutesMock = vi.spyOn(databaseFunctions, "insertRoutes");
 

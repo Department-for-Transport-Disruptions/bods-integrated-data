@@ -5,10 +5,11 @@ export type VehicleJourneyMapping = {
     vehicleJourney: VehicleJourney;
     routeId: number;
     serviceId: number;
-    shapeId: string;
+    shapeId: string | null;
     tripId: string;
     serviceCode: string;
     journeyPattern?: JourneyPattern;
+    calendarHash: string | null;
 };
 
 export type CalendarWithDates = {

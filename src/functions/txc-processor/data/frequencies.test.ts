@@ -5,7 +5,7 @@ import * as databaseFunctions from "./database";
 import { processFrequencies } from "./frequencies";
 
 describe("frequencies", () => {
-    let dbClient: KyselyDb;
+    const dbClient = vi.fn() as unknown as KyselyDb;
     const insertFrequenciesMock = vi.spyOn(databaseFunctions, "insertFrequencies");
 
     beforeEach(() => {
@@ -17,6 +17,7 @@ describe("frequencies", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "4",
                 serviceCode: "test",
@@ -37,6 +38,7 @@ describe("frequencies", () => {
             {
                 routeId: 11,
                 serviceId: 12,
+                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "14",
                 serviceCode: "test",
@@ -83,6 +85,7 @@ describe("frequencies", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "4",
                 serviceCode: "test",

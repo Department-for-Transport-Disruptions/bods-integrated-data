@@ -89,7 +89,7 @@ export const mapRouteLinksToShapes = (routeLinks: TxcRouteLink[]) => {
     });
 
     return {
-        shapeId,
+        shapeId: shapes.length > 0 ? shapeId : null,
         shapes,
     };
 };

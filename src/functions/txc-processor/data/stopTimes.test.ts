@@ -7,7 +7,7 @@ import * as databaseFunctions from "./database";
 import { processStopTimes } from "./stopTimes";
 
 describe("stopTimes", () => {
-    let dbClient: KyselyDb;
+    const dbClient = vi.fn() as unknown as KyselyDb;
     const mapTimingLinksToStopTimesMock = vi.spyOn(utilFunctions, "mapTimingLinksToStopTimes");
     const insertStopTimesMock = vi.spyOn(databaseFunctions, "insertStopTimes");
     const updateTripWithOriginAndDestinationRefMock = vi.spyOn(
@@ -41,6 +41,7 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "12345",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -68,6 +69,7 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
+                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
@@ -158,6 +160,7 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -185,6 +188,7 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
+                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
@@ -251,8 +255,8 @@ describe("stopTimes", () => {
         await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
 
         expect(updateTripWithOriginAndDestinationRefMock).toBeCalledTimes(2);
-        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[0]).toEqual([undefined, "trip1", "1", "2"]);
-        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[1]).toEqual([undefined, "trip2", "2", null]);
+        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[0]).toEqual([dbClient, "trip1", "1", "2"]);
+        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[1]).toEqual([dbClient, "trip2", "2", null]);
     });
 
     it("doesn't insert stop times that fail to reference a journey pattern section", async () => {
@@ -260,6 +264,7 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -287,6 +292,7 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
+                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
@@ -321,6 +327,7 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
+                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -343,6 +350,7 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
+                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",

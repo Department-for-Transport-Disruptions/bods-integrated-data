@@ -13,6 +13,7 @@ import {
 import { logger } from "@bods-integrated-data/shared/logger";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { BackoffOptions, backOff } from "exponential-backoff";
+import { sql } from "kysely";
 
 const retryBackOffOptions: BackoffOptions = {
     jitter: "full",
@@ -180,7 +181,21 @@ export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime
 
 export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
     const insertChunks = chunkArray(trips, 3000);
-    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("trip_new").values(chunk).execute()));
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            dbClient
+                .insertInto("trip_new")
+                .onConflict((oc) =>
+                    oc.column("id").doUpdateSet((eb) => ({
+                        conflicting_files: sql<string[]>`array_append(${eb.ref("trip_new.conflicting_files")}, ${eb.ref(
+                            "excluded.file_path",
+                        )})`,
+                    })),
+                )
+                .values(chunk)
+                .execute(),
+        ),
+    );
 };
 
 export const updateTripWithOriginAndDestinationRef = async (

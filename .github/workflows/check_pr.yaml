@@ -149,7 +149,7 @@ jobs:
         run: terraform -chdir=dev plan -lock-timeout=5m -input=false -no-color -out .planfile
 
       - name: Post PR comment with Terraform plan
-        uses: borchero/terraform-plan-comment@v1
+        uses: borchero/terraform-plan-comment@v2
         with:
           token: ${{ github.token }}
           working-directory: ./terraform/dev
