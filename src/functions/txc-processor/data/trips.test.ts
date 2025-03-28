@@ -22,6 +22,25 @@ describe("trips", () => {
     it("inserts trips into the database", async () => {
         const vehicleJourneyMappings: VehicleJourneyMapping[] = [
             {
+                routeId: 11,
+                serviceId: 12,
+                shapeId: "13",
+                tripId: "",
+                serviceCode: "test",
+                vehicleJourney: {
+                    "@_RevisionNumber": "2",
+                    LineRef: "15",
+                    ServiceRef: "16",
+                    JourneyPatternRef: "17",
+                    VehicleJourneyCode: "18",
+                    DepartureTime: "00:01:00",
+                },
+                journeyPattern: {
+                    "@_id": "1",
+                    JourneyPatternSectionRefs: [],
+                },
+            },
+            {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
@@ -50,44 +69,11 @@ describe("trips", () => {
                     Direction: "inbound",
                 },
             },
-            {
-                routeId: 11,
-                serviceId: 12,
-                shapeId: "13",
-                tripId: "",
-                serviceCode: "test",
-                vehicleJourney: {
-                    "@_RevisionNumber": "2",
-                    LineRef: "15",
-                    ServiceRef: "16",
-                    JourneyPatternRef: "17",
-                    VehicleJourneyCode: "18",
-                    DepartureTime: "00:01:00",
-                },
-                journeyPattern: {
-                    "@_id": "1",
-                    JourneyPatternSectionRefs: [],
-                },
-            },
         ];
 
         const expectedTrips: NewTrip[] = [
             {
-                id: "VJ18d5d65d0d5e713afafcb01abb2212cd070587b4",
-                route_id: 1,
-                service_id: 2,
-                block_id: "block1",
-                shape_id: "3",
-                trip_headsign: "vjDisplay1",
-                wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
-                vehicle_journey_code: "8",
-                ticket_machine_journey_code: "journey1",
-                file_path: "",
-                direction: "1",
-                departure_time: "00:00:00z",
-            },
-            {
-                id: "VJd0a5a66bd5e8c083ba790f7b5fbf6fc901b9bdee",
+                id: "VJ668c580888094ff9bad05521b7b82f58e8f31ed0",
                 route_id: 11,
                 service_id: 12,
                 block_id: "",
@@ -100,6 +86,20 @@ describe("trips", () => {
                 direction: "",
                 revision_number: "2",
                 departure_time: "00:01:00z",
+            },
+            {
+                id: "VJ8bde1c74de1117e9b02fe84bc6e178389f5ab8ab",
+                route_id: 1,
+                service_id: 2,
+                block_id: "block1",
+                shape_id: "3",
+                trip_headsign: "vjDisplay1",
+                wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
+                vehicle_journey_code: "8",
+                ticket_machine_journey_code: "journey1",
+                file_path: "",
+                direction: "1",
+                departure_time: "00:00:00z",
             },
         ];
 
@@ -147,7 +147,7 @@ describe("trips", () => {
 
         const expectedTrips: NewTrip[] = [
             {
-                id: "VJ0a30893dda5b43999440415f0c1dbb311913e1ec",
+                id: "VJa86d0c4c9a415ad9410c3833141bf70b0e6edee7",
                 route_id: 1,
                 service_id: 2,
                 block_id: "block1",

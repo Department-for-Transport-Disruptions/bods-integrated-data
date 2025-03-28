@@ -1,6 +1,7 @@
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
 import { getLocalTime } from "@bods-integrated-data/shared/dates";
 import { getDirectionRef } from "@bods-integrated-data/shared/gtfs-rt/utils";
+import { Service } from "@bods-integrated-data/shared/schema";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { hasher } from "node-object-hash";
 import { VehicleJourneyMapping } from "../types";
@@ -10,7 +11,7 @@ export const processTrips = async (
     dbClient: KyselyDb,
     vehicleJourneyMappings: VehicleJourneyMapping[],
     filePath: string,
-    mode?: string,
+    service?: Service,
 ) => {
     const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings);
 
@@ -20,9 +21,12 @@ export const processTrips = async (
         .map<NewTrip | null>((vehicleJourneyMapping, index) => {
             const { vehicleJourney, journeyPattern } = vehicleJourneyMapping;
 
-            const hashedVehicleJourney = objectHasher.hash(vehicleJourney, {
-                alg: "sha1",
-            });
+            const hashedVehicleJourney = objectHasher.hash(
+                { vehicleJourney, service },
+                {
+                    alg: "sha1",
+                },
+            );
 
             const tripId = `VJ${hashedVehicleJourney}`;
 
@@ -38,7 +42,7 @@ export const processTrips = async (
                 trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
                 wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
                     vehicleJourney.Operational?.VehicleType,
-                    mode,
+                    service?.Mode,
                 ),
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
                 ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
