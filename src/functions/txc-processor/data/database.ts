@@ -102,7 +102,12 @@ export const insertCalendarDates = async (dbClient: KyselyDb, calendarDates: New
 };
 
 export const insertFrequencies = (dbClient: KyselyDb, frequencies: NewFrequency[]) => {
-    return dbClient.insertInto("frequency_new").values(frequencies).returningAll().execute();
+    return dbClient
+        .insertInto("frequency_new")
+        .values(frequencies)
+        .onConflict((oc) => oc.column("trip_id").doNothing())
+        .returningAll()
+        .execute();
 };
 
 export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopLocality: boolean) => {
@@ -176,7 +181,15 @@ export const insertShapes = async (dbClient: KyselyDb, shapes: NewShape[]) => {
 
 export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime[]) => {
     const insertChunks = chunkArray(stopTimes, 3000);
-    await Promise.all(insertChunks.map((chunk) => dbClient.insertInto("stop_time_new").values(chunk).execute()));
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            dbClient
+                .insertInto("stop_time_new")
+                .onConflict((oc) => oc.columns(["trip_id", "stop_sequence"]).doNothing())
+                .values(chunk)
+                .execute(),
+        ),
+    );
 };
 
 export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
