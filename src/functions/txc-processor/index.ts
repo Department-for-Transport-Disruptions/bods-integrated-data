@@ -150,7 +150,6 @@ const processServices = (
                 tripId: "",
                 serviceCode: service.ServiceCode,
                 journeyPattern: getJourneyPatternForVehicleJourney(vehicleJourney, vehicleJourneys, services),
-                calendarHash: null,
             };
 
             const route = routes.find((r) => {

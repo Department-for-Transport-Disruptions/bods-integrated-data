@@ -20,7 +20,19 @@ export const processTrips = async (
         .map<NewTrip | null>((vehicleJourneyMapping, index) => {
             const { vehicleJourney, journeyPattern } = vehicleJourneyMapping;
 
-            const hashableData = {
+            const hashedVehicleJourney = objectHasher.hash(vehicleJourney, {
+                alg: "sha1",
+            });
+
+            const tripId = `VJ${hashedVehicleJourney}`;
+
+            updatedVehicleJourneyMappings[index].tripId = tripId;
+
+            return {
+                id: tripId,
+                shape_id: vehicleJourneyMapping.shapeId,
+                service_id: vehicleJourneyMapping.serviceId,
+                file_path: filePath,
                 route_id: vehicleJourneyMapping.routeId,
                 block_id: vehicleJourney.Operational?.Block?.BlockNumber || "",
                 trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
@@ -34,33 +46,14 @@ export const processTrips = async (
                 revision_number: vehicleJourney["@_RevisionNumber"],
                 departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
             };
-
-            const hashedTripData = objectHasher.hash(
-                {
-                    ...hashableData,
-                    calendarHash: vehicleJourneyMapping.calendarHash,
-                },
-                {
-                    alg: "sha1",
-                },
-            );
-
-            const tripId = `VJ${hashedTripData}`;
-
-            updatedVehicleJourneyMappings[index].tripId = tripId;
-
-            return {
-                id: tripId,
-                shape_id: vehicleJourneyMapping.shapeId,
-                service_id: vehicleJourneyMapping.serviceId,
-                file_path: filePath,
-                ...hashableData,
-            };
         })
         .filter(notEmpty);
 
     if (trips.length > 0) {
-        await insertTrips(dbClient, trips);
+        await insertTrips(
+            dbClient,
+            trips.sort((a, b) => a.id.localeCompare(b.id)),
+        );
     }
 
     return updatedVehicleJourneyMappings;

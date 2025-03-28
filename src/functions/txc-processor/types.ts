@@ -9,7 +9,6 @@ export type VehicleJourneyMapping = {
     tripId: string;
     serviceCode: string;
     journeyPattern?: JourneyPattern;
-    calendarHash: string | null;
 };
 
 export type CalendarWithDates = {

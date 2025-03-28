@@ -394,7 +394,6 @@ export const mapVehicleJourneysToCalendars = (
             return {
                 ...vehicleJourneyMapping,
                 calendar: serviceCalendar,
-                calendarHash: serviceCalendar.calendar.calendar_hash,
             };
         }
 
@@ -413,7 +412,6 @@ export const mapVehicleJourneysToCalendars = (
             return {
                 ...vehicleJourneyMapping,
                 calendar: formattedCalendar,
-                calendarHash: formattedCalendar.calendar.calendar_hash,
             };
         }
 
@@ -427,7 +425,6 @@ export const mapVehicleJourneysToCalendars = (
         return {
             ...vehicleJourneyMapping,
             calendar: formattedCalendar,
-            calendarHash: formattedCalendar.calendar.calendar_hash,
         };
     });
 
