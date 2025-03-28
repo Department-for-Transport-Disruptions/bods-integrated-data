@@ -17,7 +17,6 @@ describe("frequencies", () => {
             {
                 routeId: 1,
                 serviceId: 2,
-                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "4",
                 serviceCode: "test",
@@ -38,7 +37,6 @@ describe("frequencies", () => {
             {
                 routeId: 11,
                 serviceId: 12,
-                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "14",
                 serviceCode: "test",
@@ -85,7 +83,6 @@ describe("frequencies", () => {
             {
                 routeId: 1,
                 serviceId: 2,
-                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "4",
                 serviceCode: "test",

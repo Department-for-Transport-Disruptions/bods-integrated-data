@@ -216,7 +216,7 @@ module "integrated_data_txc_processor_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 300
+  timeout         = 600
   memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id

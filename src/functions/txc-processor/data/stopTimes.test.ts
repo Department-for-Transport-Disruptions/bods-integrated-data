@@ -41,7 +41,6 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
-                calendarHash: "12345",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -69,7 +68,6 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
-                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
@@ -160,7 +158,6 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
-                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -188,7 +185,6 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
-                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
@@ -264,7 +260,6 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
-                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -292,7 +287,6 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
-                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
@@ -327,7 +321,6 @@ describe("stopTimes", () => {
             {
                 routeId: 1,
                 serviceId: 2,
-                calendarHash: "54321",
                 shapeId: "3",
                 tripId: "trip1",
                 serviceCode: "test",
@@ -350,7 +343,6 @@ describe("stopTimes", () => {
             {
                 routeId: 11,
                 serviceId: 12,
-                calendarHash: "54321",
                 shapeId: "13",
                 tripId: "trip2",
                 serviceCode: "test",
