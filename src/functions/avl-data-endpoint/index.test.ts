@@ -345,12 +345,18 @@ describe("AVL-data-endpoint", () => {
         expect(dynamo.putDynamoItem).toHaveBeenCalledOnce();
     });
 
-    it("should return a 200 but not add data to S3 if only cancellations data is received", async () => {
+    it("should return a 200 and add data to S3 if only cancellations data is received", async () => {
         mockEvent.body = testCancellationsSiri;
         await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({ statusCode: 200, body: "" });
 
-        expect(s3.putS3Object).not.toHaveBeenCalledOnce();
-        expect(dynamo.putDynamoItem).not.toHaveBeenCalledOnce();
+        expect(s3.putS3Object).toHaveBeenCalledOnce();
+        expect(s3.putS3Object).toHaveBeenCalledWith({
+            Body: `${testCancellationsSiri}`,
+            Bucket: "test-bucket",
+            ContentType: "application/xml",
+            Key: `${mockSubscriptionId}/2024-03-11T15:20:02.093Z.xml`,
+        });
+        expect(dynamo.putDynamoItem).toHaveBeenCalledOnce();
     });
 
     it.each([testSiriWithNoVehicleActivity, testSiriWithSelfClosingVehicleActivity, testSiriWithEmptyVehicleActivity])(

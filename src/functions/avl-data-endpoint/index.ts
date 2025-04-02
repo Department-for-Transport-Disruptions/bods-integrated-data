@@ -148,7 +148,9 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         if (
             xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery &&
             (!xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity ||
-                xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "")
+                xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivity[0] === "") &&
+            (!xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation ||
+                xml?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery?.VehicleActivityCancellation[0] === "")
         ) {
             logger.warn("Received location data with no Vehicle Activity from data producer, data will be ignored...");
             return createHttpSuccessResponse();
