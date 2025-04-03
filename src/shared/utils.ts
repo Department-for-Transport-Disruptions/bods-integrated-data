@@ -7,7 +7,6 @@ import { Dayjs } from "dayjs";
 import { outputFile, pathExists, readJson, readdir, stat } from "fs-extra";
 import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { putMetricData } from "./cloudwatch";
 import { RouteType, WheelchairAccessibility } from "./database";
 import { getDate, getDateFromUnix, isDateAfter } from "./dates";
 import { logger } from "./logger";
@@ -86,8 +85,7 @@ export const makeFilteredArraySchema = <T extends ZodSchema>(namespace: string, 
             const parsedItem = schema.safeParse(item);
 
             if (!parsedItem.success) {
-                logger.warn(`Error parsing item: ${fromZodError(parsedItem.error).toString()}`);
-                putMetricData(`custom/${namespace}`, [{ MetricName: "MakeFilteredArraySchemaParseError", Value: 1 }]);
+                logger.warn(`Error parsing item in ${namespace}: ${fromZodError(parsedItem.error).toString()}`);
             }
 
             return parsedItem.success;
