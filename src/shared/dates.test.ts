@@ -1,6 +1,7 @@
 import { Dayjs } from "dayjs";
 import Mockdate from "mockdate";
-import { describe, expect, it } from "vitest";
+import MockDate from "mockdate";
+import { afterEach, describe, expect, it } from "vitest";
 import {
     BankHolidayName,
     BankHolidaysJson,
@@ -8,6 +9,7 @@ import {
     getDate,
     getDatesInRange,
     getNextOccurrenceOfDate,
+    getTflOriginAimedDepartureTime,
 } from "./dates";
 
 const bankHolidaysJson: BankHolidaysJson = {
@@ -54,9 +56,8 @@ const bankHolidaysJson: BankHolidaysJson = {
     },
 };
 
-Mockdate.set("2024-03-01");
-
 describe("getNextOccurrenceOfBankHoliday", () => {
+    Mockdate.set("2024-03-01");
     const { getNextOccurrenceOfBankHoliday } = createBankHolidayFunctions(bankHolidaysJson);
 
     it.each<[BankHolidayName, string]>([
@@ -73,6 +74,7 @@ describe("getNextOccurrenceOfBankHoliday", () => {
 });
 
 describe("getNextOccurrenceOfDate", () => {
+    Mockdate.set("2024-03-01");
     it.each<[number, number, string]>([
         [4, 5, "2024-06-04T00:00:00.000Z"],
         [2, 2, "2024-03-02T00:00:00.000Z"],
@@ -83,6 +85,7 @@ describe("getNextOccurrenceOfDate", () => {
 });
 
 describe("getDateRange", () => {
+    Mockdate.set("2024-03-01");
     it.each<[Dayjs, Dayjs, Dayjs[]]>([
         [getDate("2024-01-01"), getDate("2024-01-01"), [getDate("2024-01-01")]],
         [
@@ -100,5 +103,18 @@ describe("getDateRange", () => {
             getDate("2024-11-30"),
             getDate("2024-12-01"),
         ]);
+    });
+
+    describe("getTflOriginAimedDepartureTime", () => {
+        afterEach(() => {
+            MockDate.reset();
+        });
+        it.each([
+            ["2024-05-21", "2024-05-21T02:25:40.000Z"],
+            ["2024-12-21", "2024-12-21T03:25:40.000Z"],
+        ])("should show the correct timestamp when date is: %o", (mockDate: string, expectedTimestamp: string) => {
+            Mockdate.set(mockDate);
+            expect(getTflOriginAimedDepartureTime(12340)).toEqual(expectedTimestamp);
+        });
     });
 });
