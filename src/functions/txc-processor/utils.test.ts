@@ -158,7 +158,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.Pickup,
                     drop_off_type: DropOffType.NoDropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Exact,
                 },
                 {
@@ -171,7 +171,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.Pickup,
                     drop_off_type: DropOffType.DropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Exact,
                 },
                 {
@@ -184,7 +184,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.Pickup,
                     drop_off_type: DropOffType.DropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Approximate,
                 },
                 {
@@ -197,7 +197,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.NoPickup,
                     drop_off_type: DropOffType.DropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Approximate,
                 },
             ];
@@ -285,7 +285,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.Pickup,
                     drop_off_type: DropOffType.NoDropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Exact,
                 },
                 {
@@ -298,7 +298,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.Pickup,
                     drop_off_type: DropOffType.DropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Exact,
                 },
                 {
@@ -311,7 +311,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.Pickup,
                     drop_off_type: DropOffType.DropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Approximate,
                 },
                 {
@@ -324,7 +324,7 @@ describe("utils", () => {
                     stop_headsign: "",
                     pickup_type: PickupType.NoPickup,
                     drop_off_type: DropOffType.DropOff,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                     timepoint: Timepoint.Approximate,
                 },
             ];
@@ -376,7 +376,7 @@ describe("utils", () => {
                 stop_headsign: "",
                 pickup_type: PickupType.Pickup,
                 drop_off_type: DropOffType.DropOff,
-                shape_dist_traveled: 0,
+                shape_dist_traveled: null,
                 timepoint: Timepoint.Exact,
             };
 
@@ -414,7 +414,7 @@ describe("utils", () => {
                 stop_headsign: "",
                 pickup_type: PickupType.Pickup,
                 drop_off_type: DropOffType.DropOff,
-                shape_dist_traveled: 0,
+                shape_dist_traveled: null,
                 timepoint: Timepoint.Exact,
             };
 
@@ -453,7 +453,7 @@ describe("utils", () => {
                 stop_headsign: "",
                 pickup_type: PickupType.Pickup,
                 drop_off_type: DropOffType.DropOff,
-                shape_dist_traveled: 0,
+                shape_dist_traveled: null,
                 timepoint: Timepoint.Exact,
             };
 
@@ -491,7 +491,7 @@ describe("utils", () => {
                 stop_headsign: "",
                 pickup_type: PickupType.Pickup,
                 drop_off_type: DropOffType.DropOff,
-                shape_dist_traveled: 0,
+                shape_dist_traveled: null,
                 timepoint: Timepoint.Exact,
             };
 
@@ -531,7 +531,7 @@ describe("utils", () => {
                 stop_headsign: "",
                 pickup_type: PickupType.Pickup,
                 drop_off_type: DropOffType.DropOff,
-                shape_dist_traveled: 0,
+                shape_dist_traveled: null,
                 timepoint: Timepoint.Exact,
             };
 
