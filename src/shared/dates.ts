@@ -37,6 +37,8 @@ dayjs.tz.setDefault("Europe/London");
 
 export const getDate = (input?: Parameters<typeof dayjs.utc>[0]) => dayjs.utc(input);
 
+export const getDateWithLocalTime = (input?: Parameters<typeof dayjs>[0]) => dayjs(input).local();
+
 export const getDateFromUnix = (input: number) => dayjs.unix(input);
 
 export type BankHolidayName =
@@ -134,3 +136,6 @@ export const getDatesInRange = (startDate: Dayjs, endDate: Dayjs) => {
 
     return dates;
 };
+
+export const getTflOriginAimedDepartureTime = (originAimedDepartureTime: number) =>
+    getDateWithLocalTime().startOf("day").add(originAimedDepartureTime, "seconds").toISOString();
