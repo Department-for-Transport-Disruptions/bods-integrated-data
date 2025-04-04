@@ -74,7 +74,9 @@ export const ignoreEmptyFiles = async (outputBucket: string, filePath: string, q
 };
 
 export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, filePath: string, queries: Query[]) => {
-    const archive = archiver("zip", {});
+    const archive = archiver("zip", {
+        zlib: { level: 7 },
+    });
 
     try {
         const passThrough = new PassThrough();
