@@ -356,14 +356,14 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
                 {
                     shape_id: expect.any(String) as string,
                     shape_pt_lat: 3,
                     shape_pt_lon: 4,
                     shape_pt_sequence: 1,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 
@@ -422,7 +422,7 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 
@@ -455,7 +455,7 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 
@@ -583,14 +583,14 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
                 {
                     shape_id: expect.any(String) as string,
                     shape_pt_lat: 3,
                     shape_pt_lon: 4,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 

@@ -82,7 +82,7 @@ export const mapRouteLinksToShapes = (routeLinks: TxcRouteLink[]) => {
                     shape_pt_lat: latitude,
                     shape_pt_lon: longitude,
                     shape_pt_sequence: currentPtSequence++,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 };
             });
         });
