@@ -81,6 +81,7 @@ module "integrated_data_txc_analyser_function" {
     TXC_OBSERVATION_TABLE_NAME = local.txc_observation_table_name
     NAPTAN_BUCKET_NAME         = var.naptan_bucket_name
     NPTG_BUCKET_NAME           = var.nptg_bucket_name
+    TZ                         = "Europe/London"
   }
 }
 
