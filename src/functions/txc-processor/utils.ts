@@ -198,11 +198,16 @@ export const mapTimingLinkToStopTime = (
 
     let arrivalTimeString = arrivalTime.format("HH:mm:ss");
     let departureTimeString = departureTime.format("HH:mm:ss");
-    const daysPastInitialServiceDay = currentStopDepartureTime.diff(initialStopDepartureDate, "day");
 
-    if (daysPastInitialServiceDay > 0) {
-        arrivalTimeString = appendRolloverHours(arrivalTimeString, daysPastInitialServiceDay);
-        departureTimeString = appendRolloverHours(departureTimeString, daysPastInitialServiceDay);
+    const arrivalTimeDaysPastInitialServiceDay = arrivalTime.diff(initialStopDepartureDate, "day");
+    const departureTimeDaysPastInitialServiceDay = departureTime.diff(initialStopDepartureDate, "day");
+
+    if (arrivalTimeDaysPastInitialServiceDay > 0) {
+        arrivalTimeString = appendRolloverHours(arrivalTimeString, arrivalTimeDaysPastInitialServiceDay);
+    }
+
+    if (departureTimeDaysPastInitialServiceDay > 0) {
+        departureTimeString = appendRolloverHours(departureTimeString, departureTimeDaysPastInitialServiceDay);
     }
 
     return {
@@ -217,7 +222,7 @@ export const mapTimingLinkToStopTime = (
             stop_headsign: "",
             pickup_type: getPickupTypeFromStopActivity(activity),
             drop_off_type: getDropOffTypeFromStopActivity(activity),
-            shape_dist_traveled: 0,
+            shape_dist_traveled: null,
             timepoint: getTimepointFromTimingStatus(timingStatus),
         },
     };

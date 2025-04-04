@@ -382,7 +382,7 @@ export interface GtfsShapeTable {
     shape_pt_lat: number;
     shape_pt_lon: number;
     shape_pt_sequence: number;
-    shape_dist_traveled: number;
+    shape_dist_traveled: number | null;
 }
 
 export type Shape = Selectable<GtfsShapeTable>;
@@ -442,7 +442,7 @@ export interface GtfsStopTimeTable {
     stop_headsign: string;
     pickup_type: PickupType;
     drop_off_type: DropOffType;
-    shape_dist_traveled: number;
+    shape_dist_traveled: number | null;
     timepoint: Timepoint;
 }
 
