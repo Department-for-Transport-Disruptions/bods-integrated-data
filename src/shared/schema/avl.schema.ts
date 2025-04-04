@@ -4,7 +4,7 @@ import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
 import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
 import { Avl, NewAvl } from "../database";
-import { getDate } from "../dates";
+import { getDate, getTflOriginAimedDepartureTime } from "../dates";
 import { logger } from "../logger";
 import {
     makeFilteredArraySchema,
@@ -299,10 +299,7 @@ export type TflVehicleLocation = z.infer<typeof tflVehicleLocationSchema>;
 export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.transform<NewAvl>((item) => {
     const recordedAtTime = item.recordedAtTime || getDate().toISOString();
     const validUntilTime = getDate().add(5, "minutes").toISOString();
-    const originAimedDepartureTime = getDate()
-        .startOf("day")
-        .add(item.originAimedDepartureTime || 0, "seconds")
-        .toISOString();
+    const originAimedDepartureTime = getTflOriginAimedDepartureTime(item.originAimedDepartureTime || 0);
 
     const avl: NewAvl = {
         response_time_stamp: recordedAtTime,
