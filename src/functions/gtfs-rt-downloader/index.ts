@@ -5,7 +5,7 @@ import { generateGtfsRtFeed, getAvlDataForGtfs, mapAvlToGtfsEntity } from "@bods
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { FileCache } from "@bods-integrated-data/shared/utils";
-import { createBoundingBoxValidation, createNmTokenArrayValidation } from "@bods-integrated-data/shared/validation";
+import { createBoundingBoxValidation, createNumberArrayValidation } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyEventV2, Handler } from "aws-lambda";
 import { hasher } from "node-object-hash";
 import { ZodError, z } from "zod";
@@ -18,7 +18,7 @@ const requestParamsSchema = z.preprocess(
     Object,
     z.object({
         boundingBox: createBoundingBoxValidation("boundingBox").optional(),
-        routeId: createNmTokenArrayValidation("routeId").optional(),
+        routeId: createNumberArrayValidation("routeId").optional(),
         startTimeBefore: z.coerce.number({ message: "startTimeBefore must be a number" }).optional(),
         startTimeAfter: z.coerce.number({ message: "startTimeAfter must be a number" }).optional(),
     }),
@@ -43,11 +43,13 @@ export const handler: Handler = async (
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
+        logger.info("Retrieving GTFS-RT data", { queryParams: event.queryStringParameters });
+
         const queryParams = requestParamsSchema.parse(event.queryStringParameters);
 
         const { routeId, startTimeBefore, startTimeAfter, boundingBox } = queryParams;
 
-        if (routeId || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox) {
+        if (routeId?.length || startTimeBefore !== undefined || startTimeAfter !== undefined || boundingBox?.length) {
             const keyHash = hasher().hash(queryParams);
 
             const cache = enableCache === "true" ? new FileCache(CACHE_DIR, 5, 4) : null;

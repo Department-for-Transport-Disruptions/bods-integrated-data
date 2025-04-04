@@ -167,6 +167,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
     DB_NAME                   = var.db_name
     TFL_API_ARN               = aws_secretsmanager_secret.tfl_api_keys_secret.arn
     GTFS_TRIP_MAPS_TABLE_NAME = var.gtfs_trip_maps_table_name
+    TZ                        = "Europe/London"
   }
 }
 
