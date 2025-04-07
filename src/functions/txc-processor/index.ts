@@ -238,12 +238,24 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 
     const useStopLocality = services.some((service) => service.Mode && service.Mode !== "bus");
 
+    let validStops = true;
+
     if (stopPoints.length > 0) {
-        await processStopPoints(dbClient, stopPoints, useStopLocality);
+        validStops = await processStopPoints(dbClient, stopPoints, useStopLocality);
+    }
+
+    if (!validStops) {
+        logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
+        return;
     }
 
     if (annotatedStopPointRefs.length > 0) {
-        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs, useStopLocality);
+        validStops = await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs, useStopLocality);
+    }
+
+    if (!validStops) {
+        logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
+        return;
     }
 
     await processServices(
