@@ -219,7 +219,12 @@ describe("stops", () => {
                     Descriptor: {
                         CommonName: "name1",
                     },
-                    Place: {},
+                    Place: {
+                        Location: {
+                            Latitude: 1,
+                            Longitude: 2,
+                        },
+                    },
                 },
                 {
                     AtcoCode: "2",
@@ -241,8 +246,8 @@ describe("stops", () => {
                     wheelchair_boarding: 0,
                     parent_station: null,
                     stop_name: "name1",
-                    stop_lat: undefined,
-                    stop_lon: undefined,
+                    stop_lat: 1,
+                    stop_lon: 2,
                     location_type: LocationType.None,
                     platform_code: null,
                     region_code: null,
@@ -263,8 +268,40 @@ describe("stops", () => {
             getNaptanStopsMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
-            await processStopPoints(dbClient, stops, false);
+            const result = await processStopPoints(dbClient, stops, false);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+            expect(result).toBeTruthy();
+        });
+
+        it("returns false if any stops without lon/lat", async () => {
+            const stops: TxcStopPoint[] = [
+                {
+                    AtcoCode: "1",
+                    Descriptor: {
+                        CommonName: "name1",
+                    },
+                    Place: {},
+                },
+                {
+                    AtcoCode: "2",
+                    Descriptor: {
+                        CommonName: "name2",
+                    },
+                    Place: {
+                        Location: {
+                            Latitude: 1,
+                            Longitude: 4,
+                        },
+                    },
+                },
+            ];
+
+            getNaptanStopsMock.mockResolvedValue([]);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
+
+            const result = await processStopPoints(dbClient, stops, false);
+            expect(insertStopsMock).not.toHaveBeenCalled();
+            expect(result).toBeFalsy();
         });
     });
 

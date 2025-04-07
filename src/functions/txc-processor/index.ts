@@ -242,13 +242,29 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const insertedStopPoints: NewStop[] = [];
 
     if (stopPoints.length > 0) {
-        insertedStopPoints.push(...(await processStopPoints(dbClient, stopPoints, useStopLocality)));
+        const processedStopPoints = await processStopPoints(dbClient, stopPoints, useStopLocality);
+
+        if (!processedStopPoints) {
+            logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
+            return;
+        }
+
+        insertedStopPoints.push(...processedStopPoints);
     }
 
     if (annotatedStopPointRefs.length > 0) {
-        insertedStopPoints.push(
-            ...(await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs, useStopLocality)),
+        const processedStopPoints = await processAnnotatedStopPointRefs(
+            dbClient,
+            annotatedStopPointRefs,
+            useStopLocality,
         );
+
+        if (!processedStopPoints) {
+            logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
+            return;
+        }
+
+        insertedStopPoints.push(...processedStopPoints);
     }
 
     await processServices(

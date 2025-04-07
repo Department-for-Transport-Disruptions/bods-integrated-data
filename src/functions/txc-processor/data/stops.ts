@@ -62,11 +62,19 @@ export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[
 
     const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
-        const latitude = stop.Place.Location?.Latitude;
-        const longitude = stop.Place.Location?.Longitude;
+        const latitude = stop.Place.Location?.Translation
+            ? stop.Place.Location.Translation.Latitude
+            : stop.Place.Location?.Latitude;
+        const longitude = stop.Place.Location?.Translation
+            ? stop.Place.Location.Translation.Longitude
+            : stop.Place.Location?.Longitude;
 
         return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
+
+    if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
+        return false;
+    }
 
     if (stopsToInsert.length > 0) {
         await insertStops(dbClient, stopsToInsert);
@@ -90,6 +98,10 @@ export const processAnnotatedStopPointRefs = async (
 
         return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
+
+    if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
+        return false;
+    }
 
     if (stopsToInsert.length > 0) {
         await insertStops(dbClient, stopsToInsert);
