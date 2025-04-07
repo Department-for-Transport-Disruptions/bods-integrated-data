@@ -444,6 +444,7 @@ export interface GtfsStopTimeTable {
     drop_off_type: DropOffType;
     shape_dist_traveled: number | null;
     timepoint: Timepoint;
+    exclude: boolean | null;
 }
 
 export type StopTime = Selectable<GtfsStopTimeTable>;
