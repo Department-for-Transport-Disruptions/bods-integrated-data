@@ -184,7 +184,7 @@ describe("avl-processor", () => {
         expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls);
     });
 
-    it("correctly processes a siri-vm file with only VehicleActivityCancellation data", async () => {
+    it("correctly handles a siri-vm file with only VehicleActivityCancellation data", async () => {
         const valuesMock = vi.fn().mockReturnValue({
             onConflict: vi.fn().mockReturnValue({
                 execute: vi.fn().mockResolvedValue(""),
