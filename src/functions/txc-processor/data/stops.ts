@@ -71,6 +71,8 @@ export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[
     if (stopsToInsert.length > 0) {
         await insertStops(dbClient, stopsToInsert);
     }
+
+    return stopsToInsert;
 };
 
 export const processAnnotatedStopPointRefs = async (
@@ -92,4 +94,6 @@ export const processAnnotatedStopPointRefs = async (
     if (stopsToInsert.length > 0) {
         await insertStops(dbClient, stopsToInsert);
     }
+
+    return stopsToInsert;
 };
