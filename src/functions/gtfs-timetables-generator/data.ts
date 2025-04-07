@@ -1,5 +1,5 @@
 import { RegionCode } from "@bods-integrated-data/shared/constants";
-import { KyselyDb, LocationType, Trip } from "@bods-integrated-data/shared/database";
+import { KyselyDb, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { sql } from "kysely";
 
@@ -228,7 +228,6 @@ export const queryBuilder = (dbClient: KyselyDb): Query[] => [
         getQuery: () => {
             const query = dbClient
                 .selectFrom("stop_time")
-                .innerJoin("stop", "stop.id", "stop_time.stop_id")
                 .select([
                     "trip_id",
                     "arrival_time",
@@ -241,7 +240,7 @@ export const queryBuilder = (dbClient: KyselyDb): Query[] => [
                     "shape_dist_traveled",
                     "timepoint",
                 ])
-                .where("stop.location_type", "!=", sql.lit(LocationType.RealStationEntrance));
+                .where("stop_time.exclude", "is not", true);
 
             return query.compile().sql;
         },
@@ -456,7 +455,6 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
             const query = dbClient
                 .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("stop_time", "stop_time.trip_id", "trip_region.id")
-                .innerJoin("stop", "stop.id", "stop_time.stop_id")
                 .select([
                     "stop_time.trip_id",
                     "stop_time.arrival_time",
@@ -469,7 +467,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
                     "stop_time.shape_dist_traveled",
                     "stop_time.timepoint",
                 ])
-                .where("stop.location_type", "!=", sql.lit(LocationType.RealStationEntrance))
+                .where("stop_time.exclude", "is not", true)
                 .distinct();
 
             return query.compile().sql;
