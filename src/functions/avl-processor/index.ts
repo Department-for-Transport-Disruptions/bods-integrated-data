@@ -16,7 +16,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const arrayProperties = ["VehicleActivity", "OnwardCall"];
+const arrayProperties = ["VehicleActivity", "OnwardCall", "VehicleActivityCancellation"];
 
 const parseXml = (xml: string, errors: AvlValidationError[]) => {
     const parser = new XMLParser({

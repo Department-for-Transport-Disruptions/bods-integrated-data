@@ -17,6 +17,7 @@ import {
     parsedSiriWithOnwardCalls,
     testInvalidSiri,
     testSiri,
+    testSiriWithCancellationsOnly,
     testSiriWithDuplicates,
     testSiriWithInvalidVehicleActivities,
     testSiriWithOnwardCalls,
@@ -181,6 +182,36 @@ describe("avl-processor", () => {
         );
 
         expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls);
+    });
+
+    it("correctly processes a siri-vm file with only VehicleActivityCancellation data", async () => {
+        const valuesMock = vi.fn().mockReturnValue({
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+                returning: vi.fn().mockReturnValue({
+                    executeTakeFirst: vi.fn().mockResolvedValue({
+                        id: 123,
+                    }),
+                }),
+            }),
+        });
+
+        const dbClient = {
+            insertInto: () => ({
+                values: valuesMock,
+            }),
+        };
+
+        mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => testSiriWithCancellationsOnly } });
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
+        );
+
+        expect(valuesMock).not.toHaveBeenCalled();
     });
 
     it("correctly removes duplicates before inserting into the db", async () => {
