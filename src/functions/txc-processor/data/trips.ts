@@ -38,7 +38,7 @@ export const processTrips = async (
                 service_id: vehicleJourneyMapping.serviceId,
                 file_path: filePath,
                 route_id: vehicleJourneyMapping.routeId,
-                block_id: vehicleJourney.Operational?.Block?.BlockNumber || "",
+                block_id: "",
                 trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
                 wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
                     vehicleJourney.Operational?.VehicleType,
