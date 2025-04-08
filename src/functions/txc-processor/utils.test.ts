@@ -19,26 +19,28 @@ import {
 describe("utils", () => {
     describe("getPickupTypeFromStopActivity", () => {
         it.each([
-            ["pickUp", PickupType.Pickup],
-            ["pickUpAndSetDown", PickupType.Pickup],
-            ["setDown", PickupType.NoPickup],
-            ["pass", PickupType.NoPickup],
-            [undefined, PickupType.Pickup],
-        ])("returns the correct pickup type for the activity", (input, expected) => {
-            const result = getPickupTypeFromStopActivity(input);
+            ["pickUp", false, PickupType.Pickup],
+            ["pickUpAndSetDown", false, PickupType.Pickup],
+            ["setDown", false, PickupType.NoPickup],
+            ["pass", false, PickupType.NoPickup],
+            [undefined, false, PickupType.Pickup],
+            [undefined, true, PickupType.NoPickup],
+        ])("returns the correct pickup type for the activity", (activity, isLastStop, expected) => {
+            const result = getPickupTypeFromStopActivity(activity, isLastStop);
             expect(result).toEqual(expected);
         });
     });
 
     describe("getDropOffTypeFromStopActivity", () => {
         it.each([
-            ["pickUp", DropOffType.NoDropOff],
-            ["pickUpAndSetDown", DropOffType.DropOff],
-            ["setDown", DropOffType.DropOff],
-            ["pass", DropOffType.NoDropOff],
-            [undefined, DropOffType.NoDropOff],
-        ])("returns the correct drop off type for the activity", (input, expected) => {
-            const result = getDropOffTypeFromStopActivity(input);
+            ["pickUp", false, DropOffType.NoDropOff],
+            ["pickUpAndSetDown", false, DropOffType.DropOff],
+            ["setDown", false, DropOffType.DropOff],
+            ["pass", false, DropOffType.NoDropOff],
+            [undefined, true, DropOffType.NoDropOff],
+            [undefined, false, DropOffType.DropOff],
+        ])("returns the correct drop off type for the activity", (activity, isFirstStop, expected) => {
+            const result = getDropOffTypeFromStopActivity(activity, isFirstStop);
             expect(result).toEqual(expected);
         });
     });
@@ -107,7 +109,6 @@ describe("utils", () => {
                     "@_id": "1",
                     From: {
                         StopPointRef: "1",
-                        Activity: "pickUp",
                         TimingStatus: "principalTimingPoint",
                     },
                     To: {
@@ -120,9 +121,9 @@ describe("utils", () => {
                     "@_id": "2",
                     From: {
                         StopPointRef: "stop_id_2",
-                        Activity: "pickUpAndSetDown",
                         TimingStatus: "principalTimingPoint",
                         WaitTime: "PT30S",
+                        Activity: "setDown",
                     },
                     To: {
                         StopPointRef: "3",
@@ -134,13 +135,11 @@ describe("utils", () => {
                     "@_id": "3",
                     From: {
                         StopPointRef: "3",
-                        Activity: "pickUpAndSetDown",
                         TimingStatus: "timeInfoPoint",
                         WaitTime: "PT2M",
                     },
                     To: {
                         StopPointRef: "4",
-                        Activity: "setDown",
                         TimingStatus: "timeInfoPoint",
                     },
                     RunTime: "PT10M",
@@ -169,7 +168,7 @@ describe("utils", () => {
                     departure_time: "00:01:55",
                     stop_sequence: 1,
                     stop_headsign: "",
-                    pickup_type: PickupType.Pickup,
+                    pickup_type: PickupType.NoPickup,
                     drop_off_type: DropOffType.DropOff,
                     shape_dist_traveled: null,
                     timepoint: Timepoint.Exact,
