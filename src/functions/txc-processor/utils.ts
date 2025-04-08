@@ -10,7 +10,7 @@ export const hasServiceExpired = (service: Service) => {
     return endDate?.isBefore(currentDate, "day");
 };
 
-export const getPickupTypeFromStopActivity = (activity?: string) => {
+export const getPickupTypeFromStopActivity = (activity?: string, isLastStop = false) => {
     switch (activity) {
         case "pickUp":
         case "pickUpAndSetDown":
@@ -19,11 +19,11 @@ export const getPickupTypeFromStopActivity = (activity?: string) => {
         case "pass":
             return PickupType.NoPickup;
         default:
-            return PickupType.Pickup;
+            return isLastStop ? PickupType.NoPickup : PickupType.Pickup;
     }
 };
 
-export const getDropOffTypeFromStopActivity = (activity?: string) => {
+export const getDropOffTypeFromStopActivity = (activity?: string, isFirstStop = false) => {
     switch (activity) {
         case "setDown":
         case "pickUpAndSetDown":
@@ -32,7 +32,7 @@ export const getDropOffTypeFromStopActivity = (activity?: string) => {
         case "pass":
             return DropOffType.NoDropOff;
         default:
-            return DropOffType.NoDropOff;
+            return isFirstStop ? DropOffType.NoDropOff : DropOffType.DropOff;
     }
 };
 
@@ -86,6 +86,7 @@ export const mapTimingLinksToStopTimes = (
             sequenceNumber,
             journeyPatternTimingLink,
             vehicleJourneyTimingLink,
+            index === 0,
         );
 
         currentStopDepartureTime = nextArrivalTime.clone();
@@ -106,6 +107,8 @@ export const mapTimingLinksToStopTimes = (
                 sequenceNumber,
                 journeyPatternTimingLink,
                 vehicleJourneyTimingLink,
+                false,
+                true,
             );
 
             if (finalStopTime) {
@@ -137,6 +140,8 @@ export const mapTimingLinkToStopTime = (
     sequenceNumber: number,
     journeyPatternTimingLink: AbstractTimingLink,
     vehicleJourneyTimingLink?: AbstractTimingLink,
+    isFirstStop = false,
+    isLastStop = false,
 ): { nextArrivalTime: Dayjs; stopTime: NewStopTime } => {
     const journeyPatternTimingLinkStopUsage =
         stopUsageType === "from" ? journeyPatternTimingLink.From : journeyPatternTimingLink.To;
@@ -220,8 +225,8 @@ export const mapTimingLinkToStopTime = (
             departure_time: departureTimeString,
             stop_sequence: sequenceNumber,
             stop_headsign: "",
-            pickup_type: getPickupTypeFromStopActivity(activity),
-            drop_off_type: getDropOffTypeFromStopActivity(activity),
+            pickup_type: getPickupTypeFromStopActivity(activity, isLastStop),
+            drop_off_type: getDropOffTypeFromStopActivity(activity, isFirstStop),
             shape_dist_traveled: null,
             timepoint: getTimepointFromTimingStatus(timingStatus),
         },
