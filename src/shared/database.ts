@@ -98,6 +98,7 @@ export interface Database {
     route_migration: GtfsRouteTable;
     trip_migration: GtfsTripTable;
     agency_migration: GtfsAgencyTable;
+    avl_cancellation: AvlCancellationsTable;
 }
 
 export interface NaptanStopTable {
@@ -506,3 +507,19 @@ export type NewSituation = Insertable<SituationTable>;
 export type SituationUpdate = Updateable<SituationTable>;
 
 export type KyselyDb = Kysely<Database>;
+
+export interface AvlCancellationsTable {
+    id: Generated<number>;
+    response_time_stamp: string;
+    recorded_at_time: string;
+    vehicle_monitoring_ref: string;
+    data_frame_ref: string;
+    dated_vehicle_journey_ref: string;
+    line_ref: string;
+    direction_ref: string;
+    subscription_id: string;
+}
+
+export type AvlCancellations = Selectable<AvlCancellationsTable>;
+export type NewAvlCancellations = Insertable<AvlCancellationsTable>;
+export type AvlCancellationsUpdate = Updateable<AvlCancellationsTable>;

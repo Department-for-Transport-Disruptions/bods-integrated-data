@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getAvlErrorDetails } from "../avl/utils";
 import { putMetricData } from "../cloudwatch";
 import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
-import { Avl, NewAvl } from "../database";
+import { Avl, NewAvl, NewAvlCancellations } from "../database";
 import { getDate, getTflOriginAimedDepartureTime } from "../dates";
 import { logger } from "../logger";
 import {
@@ -244,9 +244,15 @@ export const siriVmSchema = (errors?: AvlValidationError[]) =>
 
 export type SiriVM = z.infer<ReturnType<typeof siriVmSchema>>;
 
+type SiriSchemaTransformed = {
+    avls: NewAvl[];
+    avlCancellations: NewAvlCancellations[];
+};
+
 export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
-    siriVmSchema(errors).transform((item) => {
+    siriVmSchema(errors).transform<SiriSchemaTransformed>((item) => {
         const avls: NewAvl[] = [];
+        const avlCancellations: NewAvlCancellations[] = [];
 
         if (item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity) {
             const transformedAvls: NewAvl[] = item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.map(
@@ -330,7 +336,29 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
             avls.push(...transformedAvls);
         }
 
-        return avls;
+        if (item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivityCancellation) {
+            const transformedCancellations =
+                item.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivityCancellation.map(
+                    (vehicleActivityCancellation) => {
+                        return {
+                            response_time_stamp: item.Siri.ServiceDelivery.ResponseTimestamp,
+                            vehicle_monitoring_ref: vehicleActivityCancellation.VehicleMonitoringRef,
+                            recorded_at_time: vehicleActivityCancellation.RecordedAtTime,
+                            line_ref: vehicleActivityCancellation.LineRef,
+                            direction_ref: vehicleActivityCancellation.DirectionRef.toString(),
+                            data_frame_ref:
+                                vehicleActivityCancellation.VehicleJourneyRef?.DataFrameRef.toString() ?? null,
+                            dated_vehicle_journey_ref:
+                                vehicleActivityCancellation.VehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
+                                null,
+                        };
+                    },
+                );
+
+            avlCancellations.push(...transformedCancellations);
+        }
+
+        return { avls, avlCancellations };
     });
 
 export const tflVehicleLocationSchema = z.object({
