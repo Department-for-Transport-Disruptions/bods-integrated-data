@@ -1,5 +1,6 @@
 import { KyselyDb, LocationType, NaptanStop, NewStop } from "@bods-integrated-data/shared/database";
-import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
+import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
+import OsPoint from "ospoint";
 import { getNaptanStops, insertStops } from "./database";
 
 const platformCodes = ["BCS", "PLT", "FBT"];
@@ -56,18 +57,55 @@ export const mapStop = (
     return stop;
 };
 
+export const getCoordinates = (location?: StopPointLocation) => {
+    let latitude: number | undefined;
+    let longitude: number | undefined;
+
+    if (location?.Translation?.Longitude) {
+        longitude = location.Translation.Longitude;
+    } else if (location?.Longitude) {
+        longitude = location.Longitude;
+    }
+
+    if (location?.Translation?.Latitude) {
+        latitude = location.Translation.Latitude;
+    } else if (location?.Latitude) {
+        latitude = location.Latitude;
+    }
+
+    if (!longitude || !latitude) {
+        const easting = location?.Translation?.Easting || location?.Easting;
+        const northing = location?.Translation?.Northing || location?.Northing;
+
+        if (easting && northing) {
+            const osPoint = new OsPoint(northing, easting);
+            const coords = osPoint.toWGS84();
+
+            latitude = coords?.latitude;
+            longitude = coords?.longitude;
+        }
+    }
+
+    if (!latitude || !longitude) {
+        return {
+            latitude: undefined,
+            longitude: undefined,
+        };
+    }
+
+    return {
+        latitude,
+        longitude,
+    };
+};
+
 export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
     const atcoCodes = stops.map((stop) => stop.AtcoCode);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
     const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
-        const latitude = stop.Place.Location?.Translation
-            ? stop.Place.Location.Translation.Latitude
-            : stop.Place.Location?.Latitude;
-        const longitude = stop.Place.Location?.Translation
-            ? stop.Place.Location.Translation.Longitude
-            : stop.Place.Location?.Longitude;
+        const { latitude, longitude } = getCoordinates(stop.Place.Location);
 
         return mapStop(stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
@@ -93,8 +131,7 @@ export const processAnnotatedStopPointRefs = async (
 
     const stopsToInsert = stops.map((stop): NewStop => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
-        const latitude = stop.Location?.Translation ? stop.Location.Translation.Latitude : stop.Location?.Latitude;
-        const longitude = stop.Location?.Translation ? stop.Location?.Translation.Longitude : stop.Location?.Longitude;
+        const { latitude, longitude } = getCoordinates(stop.Location);
 
         return mapStop(stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
