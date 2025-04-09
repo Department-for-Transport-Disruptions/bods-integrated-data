@@ -40,15 +40,17 @@ export const processTrips = async (
                 service_id: vehicleJourneyMapping.serviceId,
                 file_path: filePath,
                 route_id: vehicleJourneyMapping.routeId,
-                block_id: blockNumber
-                    ? objectHasher.hash(
-                          {
-                              filePath: filePath.split(/\/(.*)/s)[1],
-                              blockNumber,
-                          },
-                          { alg: "sha1" },
-                      )
-                    : "",
+                block_id:
+                    blockNumber && (vehicleJourney.OperatingProfile || service?.OperatingProfile)
+                        ? objectHasher.hash(
+                              {
+                                  filePath: filePath.split(/\/(.*)/s)[1],
+                                  blockNumber,
+                                  operatingProfile: vehicleJourney.OperatingProfile || service?.OperatingProfile,
+                              },
+                              { alg: "sha1" },
+                          )
+                        : "",
                 trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
                 wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
                     vehicleJourney.Operational?.VehicleType,

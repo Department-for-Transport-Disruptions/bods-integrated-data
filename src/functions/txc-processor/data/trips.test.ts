@@ -52,6 +52,13 @@ describe("trips", () => {
                     JourneyPatternRef: "7",
                     VehicleJourneyCode: "8",
                     DepartureTime: "00:00:00",
+                    OperatingProfile: {
+                        RegularDayType: {
+                            DaysOfWeek: {
+                                MondayToFriday: "",
+                            },
+                        },
+                    },
                     Operational: {
                         Block: {
                             BlockNumber: "block1",
@@ -88,10 +95,10 @@ describe("trips", () => {
                 departure_time: "00:01:00z",
             },
             {
-                id: "VJ8bde1c74de1117e9b02fe84bc6e178389f5ab8ab",
+                id: "VJd9632b407d61357682a7fdf3e8e768b2cc834ba0",
                 route_id: 1,
                 service_id: 2,
-                block_id: "5901f971c759017b7f1c56dac809f6403596fb6b",
+                block_id: "99efa9979ca08bbc9346b85765615e95cdcd9485",
                 shape_id: "3",
                 trip_headsign: "vjDisplay1",
                 wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
@@ -150,7 +157,7 @@ describe("trips", () => {
                 id: "VJa86d0c4c9a415ad9410c3833141bf70b0e6edee7",
                 route_id: 1,
                 service_id: 2,
-                block_id: "5901f971c759017b7f1c56dac809f6403596fb6b",
+                block_id: "",
                 shape_id: "3",
                 trip_headsign: "jpDisplay1",
                 wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
