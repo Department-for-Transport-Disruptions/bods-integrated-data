@@ -32,13 +32,23 @@ export const processTrips = async (
 
             updatedVehicleJourneyMappings[index].tripId = tripId;
 
+            const blockNumber = vehicleJourney.Operational?.Block?.BlockNumber;
+
             return {
                 id: tripId,
                 shape_id: vehicleJourneyMapping.shapeId,
                 service_id: vehicleJourneyMapping.serviceId,
                 file_path: filePath,
                 route_id: vehicleJourneyMapping.routeId,
-                block_id: "",
+                block_id: blockNumber
+                    ? objectHasher.hash(
+                          {
+                              filePath: filePath.split(/\/(.*)/s)[1],
+                              blockNumber,
+                          },
+                          { alg: "sha1" },
+                      )
+                    : "",
                 trip_headsign: vehicleJourney.DestinationDisplay || journeyPattern?.DestinationDisplay || "",
                 wheelchair_accessible: getWheelchairAccessibilityFromVehicleType(
                     vehicleJourney.Operational?.VehicleType,
