@@ -1,8 +1,14 @@
 import { KyselyDb, LocationType, NaptanStop, NewStop } from "@bods-integrated-data/shared/database";
-import { TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
+import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
-import { NaptanStopWithRegionCode, mapStop, processAnnotatedStopPointRefs, processStopPoints } from "./stops";
+import {
+    NaptanStopWithRegionCode,
+    getCoordinates,
+    mapStop,
+    processAnnotatedStopPointRefs,
+    processStopPoints,
+} from "./stops";
 
 describe("stops", () => {
     const dbClient = vi.fn() as unknown as KyselyDb;
@@ -273,6 +279,67 @@ describe("stops", () => {
             expect(result).toBeTruthy();
         });
 
+        it("inserts coordinates uses easting and northing if no longitude and latitude", async () => {
+            const stops: TxcStopPoint[] = [
+                {
+                    AtcoCode: "1",
+                    Descriptor: {
+                        CommonName: "name1",
+                    },
+                    Place: {
+                        Location: {
+                            Easting: "535053",
+                            Northing: "182711",
+                        },
+                    },
+                },
+                {
+                    AtcoCode: "2",
+                    Descriptor: {
+                        CommonName: "name2",
+                    },
+                    Place: {
+                        Location: {
+                            Easting: "528507",
+                            Northing: "181113",
+                        },
+                    },
+                },
+            ];
+
+            const expectedStops: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_name: "name1",
+                    stop_lat: 51.527168897029235,
+                    stop_lon: -0.05455691862311166,
+                    location_type: LocationType.None,
+                    platform_code: null,
+                    region_code: null,
+                },
+                {
+                    id: "2",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_name: "name2",
+                    stop_lat: 51.514334456018496,
+                    stop_lon: -0.14944772395499886,
+                    location_type: LocationType.None,
+                    platform_code: null,
+                    region_code: null,
+                },
+            ];
+
+            getNaptanStopsMock.mockResolvedValue([]);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
+
+            const result = await processStopPoints(dbClient, stops, false);
+            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+            expect(result).toBeTruthy();
+        });
+
         it("returns false if any stops without lon/lat", async () => {
             const stops: TxcStopPoint[] = [
                 {
@@ -358,6 +425,76 @@ describe("stops", () => {
 
             await processAnnotatedStopPointRefs(dbClient, stops, false);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+        });
+    });
+
+    describe("getCoordinates", () => {
+        it("returns the coordinates from the location, using Translation when present", () => {
+            const location: StopPointLocation = {
+                Translation: {
+                    Latitude: 1,
+                    Longitude: 2,
+                    Easting: "535053",
+                    Northing: "182711",
+                },
+                Easting: "535053",
+                Northing: "182711",
+                Latitude: 3,
+                Longitude: 4,
+            };
+
+            const result = getCoordinates(location);
+            expect(result).toEqual({ latitude: 1, longitude: 2 });
+        });
+
+        it("returns the coordinates from the location when translation is not present", () => {
+            const location = {
+                Latitude: 3,
+                Longitude: 4,
+            };
+
+            const result = getCoordinates(location);
+            expect(result).toEqual({ latitude: 3, longitude: 4 });
+        });
+
+        it("returns undefined coordinates when no location is provided", () => {
+            const result = getCoordinates();
+            expect(result).toEqual({ latitude: undefined, longitude: undefined });
+        });
+
+        it("returns undefined coordinates when only longitude is provided", () => {
+            const location = {
+                Longitude: 4,
+            };
+
+            const result = getCoordinates(location);
+            expect(result).toEqual({ latitude: undefined, longitude: undefined });
+        });
+
+        it("returns the coordinates when easting and northing provided with incomplete lon/lat", () => {
+            const location: StopPointLocation = {
+                Longitude: 4,
+                Easting: "535053",
+                Northing: "182711",
+            };
+
+            const result = getCoordinates(location);
+            expect(result).toEqual({ latitude: 51.527168897029235, longitude: -0.05455691862311166 });
+        });
+
+        it("returns the coordinates when easting and northing provided with incomplete lon/lat", () => {
+            const location: StopPointLocation = {
+                Longitude: 4,
+                Translation: {
+                    Easting: "1",
+                    Northing: "2",
+                },
+                Easting: "3",
+                Northing: "4",
+            };
+
+            const result = getCoordinates(location);
+            expect(result).toEqual({ latitude: 49.76683816759407, longitude: -7.557151359370474 });
         });
     });
 });

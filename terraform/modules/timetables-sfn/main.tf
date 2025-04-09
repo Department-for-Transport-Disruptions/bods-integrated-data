@@ -223,6 +223,8 @@ resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
 
   name = "integrated-data-timetables-sfn-schedule-${var.environment}"
 
+  schedule_expression_timezone = "Europe/London"
+
   flexible_time_window {
     mode = "OFF"
   }
