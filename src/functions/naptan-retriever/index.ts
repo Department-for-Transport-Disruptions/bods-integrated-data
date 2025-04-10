@@ -6,6 +6,21 @@ import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
+const retrieveNaptanData = async (bucketName: string, contentType: "xml" | "csv") => {
+    const response = await axios.get("https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=xml", {
+        responseType: "arraybuffer",
+    });
+
+    logger.info("Data retrieved");
+
+    await putS3Object({
+        Bucket: bucketName,
+        Key: `Stops.${contentType}`,
+        ContentType: contentType === "xml" ? "application/xml" : "text/csv",
+        Body: response.data as string,
+    });
+};
+
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
@@ -18,18 +33,7 @@ export const handler: Handler = async (event, context) => {
 
         logger.info("Starting naptan retriever");
 
-        const response = await axios.get("https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv", {
-            responseType: "arraybuffer",
-        });
-
-        logger.info("Data retrieved");
-
-        await putS3Object({
-            Bucket: bucketName,
-            Key: "Stops.csv",
-            ContentType: "text/csv",
-            Body: response.data as string,
-        });
+        await Promise.all([retrieveNaptanData(bucketName, "xml"), retrieveNaptanData(bucketName, "csv")]);
 
         logger.info("Naptan retriever successful");
     } catch (e) {

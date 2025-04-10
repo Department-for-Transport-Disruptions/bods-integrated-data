@@ -67,6 +67,8 @@ export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
 export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;
+    naptan_stop_area: NaptanStopAreaTable;
+    naptan_stop_area_new: NaptanStopAreaTable;
     nptg_admin_area: NptgAdminAreaTable;
     nptg_admin_area_new: NptgAdminAreaTable;
     nptg_locality: NptgLocalityTable;
@@ -149,6 +151,22 @@ export interface NaptanStopTable {
 export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
+
+export interface NaptanStopAreaTable {
+    stop_area_code: string;
+    name: string;
+    administrative_area_code: string;
+    stop_area_type: string;
+    grid_type: string;
+    easting: string;
+    northing: string;
+    longitude: string;
+    latitude: string;
+}
+
+export type NaptanStopArea = Selectable<NaptanStopAreaTable>;
+export type NewNaptanStopArea = Insertable<NaptanStopAreaTable>;
+export type NaptanStopAreaUpdate = Updateable<NaptanStopAreaTable>;
 
 export interface NptgAdminAreaTable {
     admin_area_code: string;
