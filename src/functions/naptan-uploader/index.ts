@@ -23,6 +23,7 @@ const parseXml = (xml: string) => {
     });
 
     const parsedXml = parser.parse(xml);
+
     const parsedJson = naptanSchemaTransformed.safeParse(parsedXml);
 
     if (!parsedJson.success) {
