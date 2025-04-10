@@ -261,7 +261,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   environment     = var.environment
   function_name   = "integrated-data-gtfs-timetables-generator"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
-  handler         = "index.handler"
+  handler         = "index.export_handler"
   runtime         = "nodejs20.x"
   timeout         = 900
   memory          = 2048
@@ -280,6 +280,31 @@ module "integrated_data_gtfs_timetables_generator_function" {
         var.db_secret_arn,
       ]
     },
+  ]
+
+  env_vars = {
+    STAGE         = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+    OUTPUT_BUCKET = var.rds_output_bucket_name
+    GTFS_BUCKET   = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.bucket
+  }
+}
+
+module "integrated_data_gtfs_timetables_zipper_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-gtfs-timetables-zipper"
+  zip_path      = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
+  handler       = "index.zip_handler"
+  runtime       = "nodejs20.x"
+  timeout       = 900
+  memory        = 2048
+
+  permissions = [
     {
       Action = [
         "s3:GetObject",
@@ -311,10 +336,6 @@ module "integrated_data_gtfs_timetables_generator_function" {
 
   env_vars = {
     STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
     OUTPUT_BUCKET = var.rds_output_bucket_name
     GTFS_BUCKET   = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.bucket
   }
