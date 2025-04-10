@@ -87,6 +87,16 @@ export const testSiri = `
                     </VehicleJourney>
                 </Extensions>
             </VehicleActivity>
+            <VehicleActivityCancellation>
+                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
+                <VehicleJourneyRef>
+                  <DataFrameRef>2018-08-17</DataFrameRef>
+                  <DatedVehicleJourneyRef>1234</DatedVehicleJourneyRef>
+                </VehicleJourneyRef>
+                <LineRef>567</LineRef>
+                <DirectionRef>inbound</DirectionRef>
+            </VehicleActivityCancellation>
         </VehicleMonitoringDelivery>
     </ServiceDelivery>
 </Siri>
@@ -604,3 +614,30 @@ export const expectedPutMetricDataCallForFilteredArrayParseError = {
         },
     ],
 };
+
+export const testSiriWithCancellationsOnly = `
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+    xmlns:ns2="http://www.ifopt.org.uk/acsb"
+    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+    version="2.0">
+    <ServiceDelivery>
+        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+        <ProducerRef>ATB</ProducerRef>
+        <VehicleMonitoringDelivery version="2.0">
+            <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+            <VehicleActivityCancellation>
+                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
+                <VehicleJourneyRef>
+                  <DataFrameRef>2018-08-17</DataFrameRef>
+                  <DatedVehicleJourneyRef>1234</DatedVehicleJourneyRef>
+                </VehicleJourneyRef>
+                <LineRef>567</LineRef>
+                <DirectionRef>inbound</DirectionRef>
+            </VehicleActivityCancellation>
+        </VehicleMonitoringDelivery>
+    </ServiceDelivery>
+</Siri>
+`;
