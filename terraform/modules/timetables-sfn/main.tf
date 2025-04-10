@@ -62,6 +62,7 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     tnds_txc_zipped_bucket_name              = var.tnds_txc_zipped_bucket_name,
     table_renamer_function_arn               = var.table_renamer_function_arn,
     gtfs_timetables_generator_function_arn   = var.gtfs_timetables_generator_function_arn
+    gtfs_timetables_zipper_function_arn      = var.gtfs_timetables_zipper_function_arn
     gtfs_timetables_trip_mapper_function_arn = var.gtfs_timetables_trip_mapper_function_arn
   })
 }
@@ -87,6 +88,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           var.unzipper_function_arn,
           var.txc_processor_function_arn,
           var.gtfs_timetables_generator_function_arn,
+          var.gtfs_timetables_zipper_function_arn,
           var.gtfs_timetables_trip_mapper_function_arn,
           var.db_cleardown_function_arn,
           var.table_renamer_function_arn,
@@ -102,6 +104,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "${var.unzipper_function_arn}*",
           "${var.txc_processor_function_arn}*",
           "${var.gtfs_timetables_generator_function_arn}*",
+          "${var.gtfs_timetables_zipper_function_arn}*",
           "${var.gtfs_timetables_trip_mapper_function_arn}*",
           "${var.db_cleardown_function_arn}*",
           "${var.table_renamer_function_arn}*",

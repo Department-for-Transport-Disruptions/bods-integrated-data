@@ -324,6 +324,7 @@ module "integrated_data_timetables_sfn" {
   txc_processor_function_arn               = module.integrated_data_txc_pipeline.txc_processor_function_arn
   unzipper_function_arn                    = module.integrated_data_txc_pipeline.unzipper_function_arn
   gtfs_timetables_generator_function_arn   = module.integrated_data_txc_pipeline.gtfs_timetables_generator_function_arn
+  gtfs_timetables_zipper_function_arn      = module.integrated_data_txc_pipeline.gtfs_timetables_zipper_function_arn
   gtfs_timetables_trip_mapper_function_arn = module.integrated_data_txc_pipeline.gtfs_timetables_trip_mapper_function_arn
   naptan_retriever_function_arn            = module.integrated_data_naptan_pipeline.naptan_retriever_function_arn
   naptan_uploader_function_arn             = module.integrated_data_naptan_pipeline.naptan_uploader_function_arn

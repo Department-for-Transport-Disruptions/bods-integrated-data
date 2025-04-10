@@ -39,6 +39,10 @@ variable "gtfs_timetables_generator_function_arn" {
   type = string
 }
 
+variable "gtfs_timetables_zipper_function_arn" {
+  type = string
+}
+
 variable "gtfs_timetables_trip_mapper_function_arn" {
   type = string
 }

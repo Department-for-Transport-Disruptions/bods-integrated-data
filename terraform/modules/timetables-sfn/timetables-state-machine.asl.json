@@ -1,872 +1,1268 @@
 {
-  "Comment": "Import reference data and generate GTFS timetables",
-  "StartAt": "DB Cleardown",
-  "States": {
-    "DB Cleardown": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "Parameters": {
-        "FunctionName": "${db_cleardown_function_arn}:$LATEST"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "Retrieve and Process Reference Data"
-    },
-    "Retrieve and Process Reference Data": {
-      "Type": "Parallel",
-      "Branches": [
-        {
-          "StartAt": "Retrieve NOC Data",
-          "States": {
-            "Retrieve NOC Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "Parameters": {
-                "FunctionName": "${noc_retriever_function_arn}:$LATEST"
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "Process NOC Data"
-            },
-            "Process NOC Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${noc_processor_function_arn}:$LATEST",
-                "Payload": {
-                  "Records": [
-                    {
-                      "s3": {
-                        "object": {
-                          "key": "noc.xml"
-                        },
-                        "bucket": {
-                          "name": "${noc_bucket_name}"
-                        }
-                      }
-                    }
-                  ]
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "End": true
-            }
-          }
-        },
-        {
-          "StartAt": "Retrieve NaPTAN Data",
-          "States": {
-            "Retrieve NaPTAN Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "Parameters": {
-                "FunctionName": "${naptan_retriever_function_arn}:$LATEST"
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "Process NaPTAN Data"
-            },
-            "Process NaPTAN Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "Parameters": {
-                "FunctionName": "${naptan_uploader_function_arn}:$LATEST",
-                "Payload": {
-                  "Records": [
-                    {
-                      "s3": {
-                        "object": {
-                          "key": "Stops.csv"
-                        },
-                        "bucket": {
-                          "name": "${naptan_bucket_name}"
-                        }
-                      }
-                    }
-                  ]
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "End": true
-            }
-          }
-        },
-        {
-          "StartAt": "Retrieve NPTG Data",
-          "States": {
-            "Retrieve NPTG Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "Parameters": {
-                "FunctionName": "${nptg_retriever_function_arn}:$LATEST"
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "Process NPTG Data"
-            },
-            "Process NPTG Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "Parameters": {
-                "FunctionName": "${nptg_uploader_function_arn}:$LATEST",
-                "Payload": {
-                  "Records": [
-                    {
-                      "s3": {
-                        "object": {
-                          "key": "NPTG.xml"
-                        },
-                        "bucket": {
-                          "name": "${nptg_bucket_name}"
-                        }
-                      }
-                    }
-                  ]
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "End": true
-            }
-          }
-        },
-        {
-          "StartAt": "Retrieve Bank Holidays Data",
-          "States": {
-            "Retrieve Bank Holidays Data": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "Parameters": {
-                "FunctionName": "${bank_holidays_retriever_function_arn}:$LATEST"
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "End": true
-            }
-          }
-        }
-      ],
-      "Next": "Retrieve BODS TXC Data"
-    },
-    "Retrieve BODS TXC Data": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "Parameters": {
-        "FunctionName": "${bods_txc_retriever_function_arn}:$LATEST"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "OutputPath": "$.Payload",
-      "Next": "Get Zipped BODS TXC Keys"
-    },
-    "Get Zipped BODS TXC Keys": {
-      "Type": "Map",
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "DISTRIBUTED",
-          "ExecutionType": "STANDARD"
-        },
-        "StartAt": "Unzip BODS TXC Data",
-        "States": {
-          "Unzip BODS TXC Data": {
+    "Comment": "Import reference data and generate GTFS timetables",
+    "StartAt": "DB Cleardown",
+    "States": {
+        "DB Cleardown": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "Parameters": {
-              "FunctionName": "${unzipper_function_arn}:$LATEST",
-              "Payload": {
-                "Records": [
-                  {
-                    "s3": {
-                      "bucket": {
-                        "name": "${bods_txc_zipped_bucket_name}"
-                      },
-                      "object": {
-                        "key.$": "$.Key"
-                      }
-                    }
-                  }
-                ]
-              }
-            },
-            "End": true,
-            "Retry": [
-              {
-                "ErrorEquals": [
-                  "Lambda.ServiceException",
-                  "Lambda.AWSLambdaException",
-                  "Lambda.SdkClientException",
-                  "Lambda.TooManyRequestsException"
-                ],
-                "BackoffRate": 2,
-                "IntervalSeconds": 1,
-                "MaxAttempts": 3
-              }
-            ]
-          }
-        }
-      },
-      "ItemReader": {
-        "Resource": "arn:aws:states:::s3:listObjectsV2",
-        "Parameters": {
-          "Bucket.$": "$.bodsTxcZippedBucketName",
-          "Prefix.$": "$.prefix"
-        }
-      },
-      "ResultPath": null,
-      "Next": "Get BODS TXC Object Keys"
-    },
-    "Get BODS TXC Object Keys": {
-      "Type": "Map",
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "DISTRIBUTED",
-          "ExecutionType": "STANDARD"
-        },
-        "StartAt": "Process BODS TXC",
-        "States": {
-          "Process BODS TXC": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "Parameters": {
-              "FunctionName": "${txc_processor_function_arn}:$LATEST",
-              "Payload": {
-                "Records": [
-                  {
-                    "s3": {
-                      "bucket": {
-                        "name": "${bods_txc_bucket_name}"
-                      },
-                      "object": {
-                        "key.$": "$.Key"
-                      }
-                    }
-                  }
-                ]
-              }
-            },
-            "End": true
-          }
-        }
-      },
-      "ItemReader": {
-        "Resource": "arn:aws:states:::s3:listObjectsV2",
-        "Parameters": {
-          "Bucket": "${bods_txc_bucket_name}",
-          "Prefix.$": "$.prefix"
-        }
-      },
-      "MaxConcurrency": 50,
-      "ToleratedFailureCount": 10,
-      "Next": "Retrieve TNDS TXC Data",
-      "ResultPath": null
-    },
-    "Retrieve TNDS TXC Data": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "Parameters": {
-        "FunctionName": "${tnds_txc_retriever_function_arn}:$LATEST"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "Get Zipped TNDS TXC Keys",
-      "OutputPath": "$.Payload"
-    },
-    "Get Zipped TNDS TXC Keys": {
-      "Type": "Map",
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "DISTRIBUTED",
-          "ExecutionType": "STANDARD"
-        },
-        "StartAt": "Unzip TNDS TXC Data",
-        "States": {
-          "Unzip TNDS TXC Data": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "Parameters": {
-              "FunctionName": "${unzipper_function_arn}:$LATEST",
-              "Payload": {
-                "Records": [
-                  {
-                    "s3": {
-                      "bucket": {
-                        "name": "${tnds_txc_zipped_bucket_name}"
-                      },
-                      "object": {
-                        "key.$": "$.Key"
-                      }
-                    }
-                  }
-                ]
-              }
+                "FunctionName": "${db_cleardown_function_arn}:$LATEST"
             },
             "Retry": [
-              {
-                "ErrorEquals": [
-                  "Lambda.ServiceException",
-                  "Lambda.AWSLambdaException",
-                  "Lambda.SdkClientException",
-                  "Lambda.TooManyRequestsException"
-                ],
-                "IntervalSeconds": 1,
-                "MaxAttempts": 3,
-                "BackoffRate": 2
-              }
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
             ],
-            "End": true
-          }
-        }
-      },
-      "ItemReader": {
-        "Resource": "arn:aws:states:::s3:listObjectsV2",
-        "Parameters": {
-          "Bucket.$": "$.tndsTxcZippedBucketName",
-          "Prefix.$": "$.prefix"
-        }
-      },
-      "ResultPath": null,
-      "Next": "Get TNDS TXC Object Keys"
-    },
-    "Get TNDS TXC Object Keys": {
-      "Type": "Map",
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "DISTRIBUTED",
-          "ExecutionType": "STANDARD"
+            "Next": "Retrieve and Process Reference Data"
         },
-        "StartAt": "Process TNDS TXC",
-        "States": {
-          "Process TNDS TXC": {
+        "Retrieve and Process Reference Data": {
+            "Type": "Parallel",
+            "Branches": [
+                {
+                    "StartAt": "Retrieve NOC Data",
+                    "States": {
+                        "Retrieve NOC Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${noc_retriever_function_arn}:$LATEST"
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "Process NOC Data"
+                        },
+                        "Process NOC Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${noc_processor_function_arn}:$LATEST",
+                                "Payload": {
+                                    "Records": [
+                                        {
+                                            "s3": {
+                                                "object": {
+                                                    "key": "noc.xml"
+                                                },
+                                                "bucket": {
+                                                    "name": "${noc_bucket_name}"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Retrieve NaPTAN Data",
+                    "States": {
+                        "Retrieve NaPTAN Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${naptan_retriever_function_arn}:$LATEST"
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "Process NaPTAN Data"
+                        },
+                        "Process NaPTAN Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${naptan_uploader_function_arn}:$LATEST",
+                                "Payload": {
+                                    "Records": [
+                                        {
+                                            "s3": {
+                                                "object": {
+                                                    "key": "Stops.csv"
+                                                },
+                                                "bucket": {
+                                                    "name": "${naptan_bucket_name}"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Retrieve NPTG Data",
+                    "States": {
+                        "Retrieve NPTG Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${nptg_retriever_function_arn}:$LATEST"
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "Process NPTG Data"
+                        },
+                        "Process NPTG Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${nptg_uploader_function_arn}:$LATEST",
+                                "Payload": {
+                                    "Records": [
+                                        {
+                                            "s3": {
+                                                "object": {
+                                                    "key": "NPTG.xml"
+                                                },
+                                                "bucket": {
+                                                    "name": "${nptg_bucket_name}"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Retrieve Bank Holidays Data",
+                    "States": {
+                        "Retrieve Bank Holidays Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${bank_holidays_retriever_function_arn}:$LATEST"
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "End": true
+                        }
+                    }
+                }
+            ],
+            "Next": "Retrieve BODS TXC Data"
+        },
+        "Retrieve BODS TXC Data": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "Parameters": {
-              "FunctionName": "${txc_processor_function_arn}:$LATEST",
-              "Payload": {
-                "Records": [
-                  {
-                    "s3": {
-                      "bucket": {
-                        "name": "${tnds_txc_bucket_name}"
-                      },
-                      "object": {
-                        "key.$": "$.Key"
-                      }
-                    }
-                  }
-                ]
-              }
+                "FunctionName": "${bods_txc_retriever_function_arn}:$LATEST"
             },
-            "End": true
-          }
-        }
-      },
-      "ItemReader": {
-        "Resource": "arn:aws:states:::s3:listObjectsV2",
-        "Parameters": {
-          "Bucket": "${tnds_txc_bucket_name}",
-          "Prefix.$": "$.prefix"
-        }
-      },
-      "MaxConcurrency": 50,
-      "ToleratedFailureCount": 10,
-      "ResultPath": null,
-      "Next": "Run Table Renamer"
-    },
-    "Run Table Renamer": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "Parameters": {
-        "FunctionName": "${table_renamer_function_arn}:$LATEST"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "Generate Trip Maps"
-    },
-    "Generate Trip Maps": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "FunctionName": "${gtfs_timetables_trip_mapper_function_arn}:$LATEST",
-        "Payload": {}
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "National GTFS"
-    },
-    "National GTFS": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-        "Payload": {}
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "England GTFS"
-    },
-    "England GTFS": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-        "Payload": {
-          "regionCode": "E"
-        }
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "London GTFS"
-    },
-    "London GTFS": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-        "Payload": {
-          "regionCode": "L"
-        }
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "South East GTFS"
-    },
-    "South East GTFS": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-        "Payload": {
-          "regionCode": "SE"
-        }
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "South West GTFS"
-    },
-    "South West GTFS": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-        "Payload": {
-          "regionCode": "SW"
-        }
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 1,
-          "MaxAttempts": 3,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "Generate Remaining GTFS"
-    },
-    "Generate Remaining GTFS": {
-      "Type": "Parallel",
-      "End": true,
-      "Branches": [
-        {
-          "StartAt": "Wales GTFS",
-          "States": {
-            "Wales GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "W"
-                }
-              },
-              "Retry": [
+            "Retry": [
                 {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
                 }
-              ],
-              "Next": "Scotland GTFS"
-            },
-            "Scotland GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "S"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "North West GTFS"
-            },
-            "North West GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "NW"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "West Midlands GTFS"
-            },
-            "West Midlands GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "WM"
-                }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "End": true
-            }
-          }
+            ],
+            "OutputPath": "$.Payload",
+            "Next": "Get Zipped BODS TXC Keys"
         },
-        {
-          "StartAt": "Yorkshire GTFS",
-          "States": {
-            "Yorkshire GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "Y"
+        "Get Zipped BODS TXC Keys": {
+            "Type": "Map",
+            "ItemProcessor": {
+                "ProcessorConfig": {
+                    "Mode": "DISTRIBUTED",
+                    "ExecutionType": "STANDARD"
+                },
+                "StartAt": "Unzip BODS TXC Data",
+                "States": {
+                    "Unzip BODS TXC Data": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                            "FunctionName": "${unzipper_function_arn}:$LATEST",
+                            "Payload": {
+                                "Records": [
+                                    {
+                                        "s3": {
+                                            "bucket": {
+                                                "name": "${bods_txc_zipped_bucket_name}"
+                                            },
+                                            "object": {
+                                                "key.$": "$.Key"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "End": true,
+                        "Retry": [
+                            {
+                                "ErrorEquals": [
+                                    "Lambda.ServiceException",
+                                    "Lambda.AWSLambdaException",
+                                    "Lambda.SdkClientException",
+                                    "Lambda.TooManyRequestsException"
+                                ],
+                                "BackoffRate": 2,
+                                "IntervalSeconds": 1,
+                                "MaxAttempts": 3
+                            }
+                        ]
+                    }
                 }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "East Anglia GTFS"
             },
-            "East Anglia GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "EA"
+            "ItemReader": {
+                "Resource": "arn:aws:states:::s3:listObjectsV2",
+                "Parameters": {
+                    "Bucket.$": "$.bodsTxcZippedBucketName",
+                    "Prefix.$": "$.prefix"
                 }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "East Midlands GTFS"
             },
-            "East Midlands GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
-                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
-                "Payload": {
-                  "regionCode": "EM"
+            "ResultPath": null,
+            "Next": "Get BODS TXC Object Keys"
+        },
+        "Get BODS TXC Object Keys": {
+            "Type": "Map",
+            "ItemProcessor": {
+                "ProcessorConfig": {
+                    "Mode": "DISTRIBUTED",
+                    "ExecutionType": "STANDARD"
+                },
+                "StartAt": "Process BODS TXC",
+                "States": {
+                    "Process BODS TXC": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                            "FunctionName": "${txc_processor_function_arn}:$LATEST",
+                            "Payload": {
+                                "Records": [
+                                    {
+                                        "s3": {
+                                            "bucket": {
+                                                "name": "${bods_txc_bucket_name}"
+                                            },
+                                            "object": {
+                                                "key.$": "$.Key"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "End": true
+                    }
                 }
-              },
-              "Retry": [
-                {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
-                }
-              ],
-              "Next": "North East GTFS"
             },
-            "North East GTFS": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::lambda:invoke",
-              "OutputPath": "$.Payload",
-              "Parameters": {
+            "ItemReader": {
+                "Resource": "arn:aws:states:::s3:listObjectsV2",
+                "Parameters": {
+                    "Bucket": "${bods_txc_bucket_name}",
+                    "Prefix.$": "$.prefix"
+                }
+            },
+            "MaxConcurrency": 50,
+            "ToleratedFailureCount": 10,
+            "Next": "Retrieve TNDS TXC Data",
+            "ResultPath": null
+        },
+        "Retrieve TNDS TXC Data": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${tnds_txc_retriever_function_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "Get Zipped TNDS TXC Keys",
+            "OutputPath": "$.Payload"
+        },
+        "Get Zipped TNDS TXC Keys": {
+            "Type": "Map",
+            "ItemProcessor": {
+                "ProcessorConfig": {
+                    "Mode": "DISTRIBUTED",
+                    "ExecutionType": "STANDARD"
+                },
+                "StartAt": "Unzip TNDS TXC Data",
+                "States": {
+                    "Unzip TNDS TXC Data": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                            "FunctionName": "${unzipper_function_arn}:$LATEST",
+                            "Payload": {
+                                "Records": [
+                                    {
+                                        "s3": {
+                                            "bucket": {
+                                                "name": "${tnds_txc_zipped_bucket_name}"
+                                            },
+                                            "object": {
+                                                "key.$": "$.Key"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "Retry": [
+                            {
+                                "ErrorEquals": [
+                                    "Lambda.ServiceException",
+                                    "Lambda.AWSLambdaException",
+                                    "Lambda.SdkClientException",
+                                    "Lambda.TooManyRequestsException"
+                                ],
+                                "IntervalSeconds": 1,
+                                "MaxAttempts": 3,
+                                "BackoffRate": 2
+                            }
+                        ],
+                        "End": true
+                    }
+                }
+            },
+            "ItemReader": {
+                "Resource": "arn:aws:states:::s3:listObjectsV2",
+                "Parameters": {
+                    "Bucket.$": "$.tndsTxcZippedBucketName",
+                    "Prefix.$": "$.prefix"
+                }
+            },
+            "ResultPath": null,
+            "Next": "Get TNDS TXC Object Keys"
+        },
+        "Get TNDS TXC Object Keys": {
+            "Type": "Map",
+            "ItemProcessor": {
+                "ProcessorConfig": {
+                    "Mode": "DISTRIBUTED",
+                    "ExecutionType": "STANDARD"
+                },
+                "StartAt": "Process TNDS TXC",
+                "States": {
+                    "Process TNDS TXC": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                            "FunctionName": "${txc_processor_function_arn}:$LATEST",
+                            "Payload": {
+                                "Records": [
+                                    {
+                                        "s3": {
+                                            "bucket": {
+                                                "name": "${tnds_txc_bucket_name}"
+                                            },
+                                            "object": {
+                                                "key.$": "$.Key"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "End": true
+                    }
+                }
+            },
+            "ItemReader": {
+                "Resource": "arn:aws:states:::s3:listObjectsV2",
+                "Parameters": {
+                    "Bucket": "${tnds_txc_bucket_name}",
+                    "Prefix.$": "$.prefix"
+                }
+            },
+            "MaxConcurrency": 50,
+            "ToleratedFailureCount": 10,
+            "ResultPath": null,
+            "Next": "Run Table Renamer"
+        },
+        "Run Table Renamer": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${table_renamer_function_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "National GTFS"
+        },
+        "National GTFS": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                "Payload": {}
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "England GTFS"
+        },
+        "England GTFS": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
                 "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
                 "Payload": {
-                  "regionCode": "NE"
+                    "regionCode": "E"
                 }
-              },
-              "Retry": [
+            },
+            "Retry": [
                 {
-                  "ErrorEquals": [
-                    "Lambda.ServiceException",
-                    "Lambda.AWSLambdaException",
-                    "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
-                  ],
-                  "IntervalSeconds": 1,
-                  "MaxAttempts": 3,
-                  "BackoffRate": 2
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
                 }
-              ],
-              "End": true
-            }
-          }
+            ],
+            "Next": "London GTFS"
+        },
+        "London GTFS": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                "Payload": {
+                    "regionCode": "L"
+                }
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "South East GTFS"
+        },
+        "South East GTFS": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                "Payload": {
+                    "regionCode": "SE"
+                }
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "South West GTFS"
+        },
+        "South West GTFS": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                "Payload": {
+                    "regionCode": "SW"
+                }
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "Generate Remaining GTFS"
+        },
+        "Generate Remaining GTFS": {
+            "Type": "Parallel",
+            "Next": "Generate Trip Map",
+            "Branches": [
+                {
+                    "StartAt": "Wales GTFS",
+                    "States": {
+                        "Wales GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "W"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "Scotland GTFS"
+                        },
+                        "Scotland GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "S"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "North West GTFS"
+                        },
+                        "North West GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "NW"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "West Midlands GTFS"
+                        },
+                        "West Midlands GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "WM"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "End": true
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Yorkshire GTFS",
+                    "States": {
+                        "Yorkshire GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "Y"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "East Anglia GTFS"
+                        },
+                        "East Anglia GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "EA"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "East Midlands GTFS"
+                        },
+                        "East Midlands GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "EM"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "North East GTFS"
+                        },
+                        "North East GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_generator_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "NE"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "End": true
+                        }
+                    }
+                }
+            ]
+        },
+        "Generate Trip Map": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_trip_mapper_function_arn}:$LATEST",
+                "Payload": {}
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "Zip GTFS"
+        },
+        "Zip GTFS": {
+            "Type": "Parallel",
+            "End": true,
+            "Branches": [
+                {
+                    "StartAt": "Zip National GTFS",
+                    "States": {
+                        "Zip National GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "ALL"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip England GTFS",
+                    "States": {
+                        "Zip England GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "E"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip London GTFS",
+                    "States": {
+                        "Zip London GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "L"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip South East GTFS",
+                    "States": {
+                        "Zip South East GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "SE"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip South West GTFS",
+                    "States": {
+                        "Zip South West GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "SW"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip Wales GTFS",
+                    "States": {
+                        "Zip Wales GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "W"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip Scotland GTFS",
+                    "States": {
+                        "Zip Scotland GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "S"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip North West GTFS",
+                    "States": {
+                        "Zip North West GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "NW"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip West Midlands GTFS",
+                    "States": {
+                        "Zip West Midlands GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "WM"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip Yorkshire GTFS",
+                    "States": {
+                        "Zip Yorkshire GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "Y"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip East Anglia GTFS",
+                    "States": {
+                        "Zip East Anglia GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "EA"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip East Midlands GTFS",
+                    "States": {
+                        "Zip East Midlands GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "EM"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip North East GTFS",
+                    "States": {
+                        "Zip North East GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "NE"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
         }
-      ]
     }
-  }
 }

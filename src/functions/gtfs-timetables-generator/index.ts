@@ -14,7 +14,8 @@ import archiver from "archiver";
 import { Handler } from "aws-lambda";
 import { z } from "zod";
 import {
-    Query,
+    Files,
+    GtfsFile,
     createRegionalTripTable,
     dropRegionalTable,
     exportDataToS3,
@@ -35,11 +36,10 @@ let dbClient: KyselyDb;
  * @param queries
  * @returns
  */
-export const ignoreEmptyFiles = async (outputBucket: string, filePath: string, queries: Query[]) => {
-    const newQueries: Query[] = queries.map((query) => ({
-        fileName: query.fileName,
-        include: query.include,
-        getQuery: query.getQuery,
+export const ignoreEmptyFiles = async (outputBucket: string, filePath: string, files: GtfsFile[]) => {
+    const newFiles: GtfsFile[] = files.map((file) => ({
+        fileName: file.fileName,
+        include: file.include,
     }));
 
     const objects = await listS3Objects({
@@ -60,20 +60,20 @@ export const ignoreEmptyFiles = async (outputBucket: string, filePath: string, q
 
         if (rows.length <= 1) {
             logger.warn(`CSV empty: ${object.Key}`);
-            const queryIndex = queries.findIndex((q) => q.fileName === path.basename(object.Key ?? "", ".txt"));
+            const queryIndex = files.findIndex((q) => q.fileName === path.basename(object.Key ?? "", ".txt"));
 
             if (queryIndex > -1) {
                 logger.info(`Excluding ${object.Key} from generated GTFS`);
 
-                newQueries[queryIndex].include = false;
+                newFiles[queryIndex].include = false;
             }
         }
     }
 
-    return newQueries;
+    return newFiles;
 };
 
-export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, filePath: string, queries: Query[]) => {
+export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, filePath: string, files: GtfsFile[]) => {
     const archive = archiver("zip");
 
     try {
@@ -81,13 +81,13 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
         archive.pipe(passThrough);
         const upload = startS3Upload(gtfsBucket, `${filePath}.zip`, passThrough, "application/zip");
 
-        for (const query of queries) {
-            if (query.include) {
-                const file = `${query.fileName}.txt`;
-                const downloadStream = createLazyDownloadStreamFrom(outputBucket, `${filePath}/${file}`);
+        for (const file of files) {
+            if (file.include) {
+                const fileNameWithExt = `${file.fileName}.txt`;
+                const downloadStream = createLazyDownloadStreamFrom(outputBucket, `${filePath}/${fileNameWithExt}`);
 
                 archive.append(downloadStream, {
-                    name: file,
+                    name: fileNameWithExt,
                 });
             }
         }
@@ -100,7 +100,7 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
     }
 };
 
-export const handler: Handler = async (event, context) => {
+export const export_handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, STAGE: stage } = process.env;
@@ -120,7 +120,7 @@ export const handler: Handler = async (event, context) => {
             await createRegionalTripTable(dbClient, regionCode);
         }
 
-        let queries = regionCode === "ALL" ? queryBuilder(dbClient) : regionalQueryBuilder(dbClient, regionCode);
+        const queries = regionCode === "ALL" ? queryBuilder(dbClient) : regionalQueryBuilder(dbClient, regionCode);
 
         const filePath = `${regionCode.toLowerCase()}${GTFS_FILE_SUFFIX}`;
 
@@ -128,11 +128,7 @@ export const handler: Handler = async (event, context) => {
 
         if (regionCode !== "ALL") {
             await dropRegionalTable(dbClient, regionCode);
-
-            queries = await ignoreEmptyFiles(outputBucket, filePath, queries);
         }
-
-        await createGtfsZip(gtfsBucket, outputBucket, filePath, queries);
 
         logger.info("GTFS Timetable Generator successful");
     } catch (e) {
@@ -147,6 +143,43 @@ export const handler: Handler = async (event, context) => {
 
             await dropRegionalTable(dbClient, regionCode);
         }
+    }
+};
+
+export const zip_handler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
+    const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket } = process.env;
+
+    if (!outputBucket || !gtfsBucket) {
+        throw new Error("Env vars must be set");
+    }
+
+    const regionCode = regionCodeSchema.parse(event?.regionCode ?? "ALL");
+
+    try {
+        logger.info(`Starting GTFS Timetable Zipper for region: ${regionCode}`);
+
+        let files = Object.values(Files).map<GtfsFile>((file) => ({
+            fileName: file,
+            include: true,
+        }));
+
+        const filePath = `${regionCode.toLowerCase()}${GTFS_FILE_SUFFIX}`;
+
+        if (regionCode !== "ALL") {
+            files = await ignoreEmptyFiles(outputBucket, filePath, files);
+        }
+
+        await createGtfsZip(gtfsBucket, outputBucket, filePath, files);
+
+        logger.info("GTFS Timetable Zipper successful");
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem with the GTFS Timetable Zipper");
+        }
+
+        throw e;
     }
 };
 
