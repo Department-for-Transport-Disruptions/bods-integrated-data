@@ -96,13 +96,19 @@ export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 const locationSchema = z.object({
     Translation: z
         .object({
-            Latitude: z.coerce.number(),
-            Longitude: z.coerce.number(),
+            Latitude: z.coerce.number().optional(),
+            Longitude: z.coerce.number().optional(),
+            Easting: z.string().optional(),
+            Northing: z.string().optional(),
         })
         .optional(),
     Latitude: z.coerce.number().optional(),
     Longitude: z.coerce.number().optional(),
+    Easting: z.string().optional(),
+    Northing: z.string().optional(),
 });
+
+export type StopPointLocation = z.infer<typeof locationSchema>;
 
 const trackSchema = z.object({
     Mapping: z.object({
