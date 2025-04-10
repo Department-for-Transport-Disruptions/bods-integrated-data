@@ -2,8 +2,6 @@ import { Database } from "@bods-integrated-data/shared/database";
 import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
-    await db.schema.alterTable("naptan_stop").addColumn("stop_area_code", "text").execute();
-
     await db.schema
         .createTable("naptan_stop_area")
         .addColumn("stop_area_code", "text", (col) => col.primaryKey())
@@ -15,8 +13,11 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("northing", "text")
         .addColumn("longitude", "text")
         .addColumn("latitude", "text")
-        .addForeignKeyConstraint("stop_area_code_foreign", ["stop_area_code"], "naptan_stop", ["stop_area_code"])
         .execute();
+
+    await db.schema.alterTable("naptan_stop").addColumn("stop_area_code", "text").execute();
+
+    await db.schema.createIndex("idx_naptan_stop_stop_area_code").on("naptan_stop").column("stop_area_code").execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
