@@ -1,12 +1,12 @@
 import { KyselyDb, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
+import { naptanSchemaTransformed } from "@bods-integrated-data/shared/schema/naptan.schema";
 import { S3Event, S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
+import { XMLParser } from "fast-xml-parser";
 import OsPoint from "ospoint";
 import { z } from "zod";
-import { XMLParser } from "fast-xml-parser";
-import { naptanSchemaTransformed } from "@bods-integrated-data/shared/schema/naptan.schema";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -80,7 +80,6 @@ const insertNaptanData = async (
     dbClient: KyselyDb,
     naptanData: unknown[],
     tableName: "naptan_stop_new" | "naptan_stop_area_new",
-    type: string,
 ) => {
     const numRows = naptanData.length;
     const batches = [];
@@ -115,9 +114,9 @@ export const handler: S3Handler = async (event, context) => {
     try {
         logger.info("Starting naptan uploader");
 
-        const { stopPoints, stopAreas } = await getAndParseNaptanFile(event);
+        const { stopPoints } = await getAndParseNaptanFile(event);
         const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
-        const naptanStopsWithLonsAndLatsWithStopAreas = addLonAndLatData(stopAreas);
+        //const naptanStopsWithLonsAndLatsWithStopAreas = addLonAndLatData(stopAreas);
 
         await insertNaptanData(dbClient, naptanStopsWithLonsAndLats);
 

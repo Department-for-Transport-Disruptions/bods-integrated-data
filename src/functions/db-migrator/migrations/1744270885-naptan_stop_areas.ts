@@ -1,5 +1,5 @@
-import { Kysely } from "kysely";
 import { Database } from "@bods-integrated-data/shared/database";
+import { Kysely } from "kysely";
 
 export async function up(db: Kysely<Database>): Promise<void> {
     await db.schema.alterTable("naptan_stop").addColumn("stop_area_code", "text").execute();
