@@ -4,12 +4,33 @@ import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { S3Event, S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
 import OsPoint from "ospoint";
-import { parse } from "papaparse";
 import { z } from "zod";
+import { XMLParser } from "fast-xml-parser";
+import { naptanSchemaTransformed } from "@bods-integrated-data/shared/schema/naptan.schema";
 
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
+
+const arrayProperties = ["StopPoint", "StopAreas"];
+
+const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+        isArray: (tagName) => arrayProperties.includes(tagName),
+    });
+
+    const parsedXml = parser.parse(xml);
+    const parsedJson = naptanSchemaTransformed.safeParse(parsedXml);
+
+    if (!parsedJson.success) {
+        throw new Error("Unable to parse Naptan XML");
+    }
+
+    return parsedJson.data;
+};
 
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
@@ -50,64 +71,17 @@ const getAndParseNaptanFile = async (event: S3Event) => {
 
     const body = (await file.Body?.transformToString()) || "";
 
-    const { data } = parse(body, {
-        skipEmptyLines: "greedy",
-        header: true,
-        transformHeader: (header) => {
-            const headerMap: Record<string, string> = {
-                ATCOCode: "atco_code",
-                NaptanCode: "naptan_code",
-                PlateCode: "plate_code",
-                CleardownCode: "cleardown_code",
-                CommonName: "common_name",
-                CommonNameLang: "common_name_lang",
-                ShortCommonName: "short_common_name",
-                ShortCommonNameLang: "short_common_name_lang",
-                Landmark: "landmark",
-                LandmarkLang: "landmark_lang",
-                Street: "street",
-                StreetLang: "street_lang",
-                Crossing: "crossing",
-                CrossingLang: "crossing_lang",
-                Indicator: "indicator",
-                IndicatorLang: "indicator_lang",
-                Bearing: "bearing",
-                NptgLocalityCode: "nptg_locality_code",
-                LocalityName: "locality_name",
-                ParentLocalityName: "parent_locality_name",
-                GrandParentLocalityName: "grand_parent_locality_name",
-                Town: "town",
-                TownLang: "town_lang",
-                Suburb: "suburb",
-                SuburbLang: "suburb_lang",
-                LocalityCentre: "locality_centre",
-                GridType: "grid_type",
-                Easting: "easting",
-                Northing: "northing",
-                Longitude: "longitude",
-                Latitude: "latitude",
-                StopType: "stop_type",
-                BusStopType: "bus_stop_type",
-                TimingStatus: "timing_status",
-                DefaultWaitTime: "default_wait_time",
-                Notes: "notes",
-                NotesLang: "notes_lang",
-                AdministrativeAreaCode: "administrative_area_code",
-                CreationDateTime: "creation_date_time",
-                ModificationDateTime: "modification_date_time",
-                RevisionNumber: "revision_number",
-                Modification: "modification",
-                Status: "status",
-            };
-
-            return headerMap[header];
-        },
-    });
+    const data = parseXml(body);
 
     return data;
 };
 
-const insertNaptanData = async (dbClient: KyselyDb, naptanData: unknown[]) => {
+const insertNaptanData = async (
+    dbClient: KyselyDb,
+    naptanData: unknown[],
+    tableName: "naptan_stop_new" | "naptan_stop_area_new",
+    type: string,
+) => {
     const numRows = naptanData.length;
     const batches = [];
 
@@ -122,7 +96,7 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanData: unknown[]) => {
         batches,
         (batch) => {
             return dbClient
-                .insertInto("naptan_stop_new")
+                .insertInto(tableName)
                 .values(batch as NaptanStop[])
                 .execute()
                 .then(() => 0);
@@ -141,10 +115,11 @@ export const handler: S3Handler = async (event, context) => {
     try {
         logger.info("Starting naptan uploader");
 
-        const naptanData = await getAndParseNaptanFile(event);
-        const naptanDataWithLonsAndLats = addLonAndLatData(naptanData);
+        const { stopPoints, stopAreas } = await getAndParseNaptanFile(event);
+        const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
+        const naptanStopsWithLonsAndLatsWithStopAreas = addLonAndLatData(stopAreas);
 
-        await insertNaptanData(dbClient, naptanDataWithLonsAndLats);
+        await insertNaptanData(dbClient, naptanStopsWithLonsAndLats);
 
         logger.info("Naptan uploader successful");
     } catch (e) {
