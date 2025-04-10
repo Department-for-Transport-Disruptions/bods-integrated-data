@@ -1,4 +1,4 @@
-import { KyselyDb, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NaptanStop, NaptanStopArea, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { naptanSchemaTransformed } from "@bods-integrated-data/shared/schema/naptan.schema";
@@ -76,26 +76,48 @@ const getAndParseNaptanFile = async (event: S3Event) => {
     return data;
 };
 
-const insertNaptanData = async (
-    dbClient: KyselyDb,
-    naptanData: unknown[],
-    tableName: "naptan_stop_new" | "naptan_stop_area_new",
-) => {
-    const numRows = naptanData.length;
-    const batches = [];
+const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], naptanStopAreas: unknown[]) => {
+    const numStopAreaRows = naptanStopAreas.length;
+    const stopAreaBatches = [];
 
-    while (naptanData.length > 0) {
-        const chunk = naptanData.splice(0, 1000);
-        batches.push(chunk);
+    while (naptanStopAreas.length > 0) {
+        const chunk = naptanStopAreas.splice(0, 1000);
+        stopAreaBatches.push(chunk);
     }
 
-    logger.info(`Uploading ${numRows} rows to the database in ${batches.length} batches`);
+    logger.info(
+        `Uploading ${numStopAreaRows} rows to the naptan_stop_area_new table in ${stopAreaBatches.length} batches`,
+    );
 
     await BluebirdPromise.map(
-        batches,
+        stopAreaBatches,
         (batch) => {
             return dbClient
-                .insertInto(tableName)
+                .insertInto("naptan_stop_area_new")
+                .values(batch as NaptanStopArea[])
+                .execute()
+                .then(() => 0);
+        },
+        {
+            concurrency: 50,
+        },
+    );
+
+    const numStopRows = naptanStops.length;
+    const stopBatches = [];
+
+    while (naptanStops.length > 0) {
+        const chunk = naptanStops.splice(0, 1000);
+        stopBatches.push(chunk);
+    }
+
+    logger.info(`Uploading ${numStopRows} rows to the naptan_stop_new table in ${stopBatches.length} batches`);
+
+    await BluebirdPromise.map(
+        stopBatches,
+        (batch) => {
+            return dbClient
+                .insertInto("naptan_stop_new")
                 .values(batch as NaptanStop[])
                 .execute()
                 .then(() => 0);
@@ -114,11 +136,11 @@ export const handler: S3Handler = async (event, context) => {
     try {
         logger.info("Starting naptan uploader");
 
-        const { stopPoints } = await getAndParseNaptanFile(event);
+        const { stopPoints, stopAreas } = await getAndParseNaptanFile(event);
         const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
-        //const naptanStopsWithLonsAndLatsWithStopAreas = addLonAndLatData(stopAreas);
+        const naptanStopAreasWithLonsAndLats = addLonAndLatData(stopAreas);
 
-        await insertNaptanData(dbClient, naptanStopsWithLonsAndLats);
+        await insertNaptanData(dbClient, naptanStopsWithLonsAndLats, naptanStopAreasWithLonsAndLats);
 
         logger.info("Naptan uploader successful");
     } catch (e) {
