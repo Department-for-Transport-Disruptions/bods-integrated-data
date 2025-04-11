@@ -523,6 +523,62 @@ describe("calendar", () => {
             });
         });
 
+        it("formats serviced organisations with only days of non-operation", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            MondayToFriday: "",
+                        },
+                    },
+                    ServicedOrganisationDayType: {
+                        DaysOfNonOperation: {
+                            WorkingDays: [
+                                {
+                                    ServicedOrganisationRef: ["123"],
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    StartDate: "2024-04-01",
+                },
+                bankHolidaysJson,
+                [
+                    {
+                        OrganisationCode: "123",
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-04-08")]],
+                            },
+                        ],
+                    },
+                ],
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                    calendar_hash: expect.any(String),
+                },
+                calendarDates: [
+                    {
+                        date: "20240408",
+                        exception_type: 2,
+                    },
+                ],
+            });
+        });
+
         it("prioritises days of non operation if overlap", () => {
             const formattedCalendar = formatCalendar(
                 {
