@@ -341,6 +341,7 @@ const castToObject = <T extends ZodSchema>(schema: T) => z.preprocess((val) => O
 
 export const txcSchema = z.object({
     TransXChange: z.object({
+        "@_RevisionNumber": z.coerce.string().optional().default("0"),
         Operators: castToObject(operatorsSchema.optional()),
         RouteSections: castToObject(routeSectionsSchema.optional()),
         Routes: castToObject(routesSchema.optional()),

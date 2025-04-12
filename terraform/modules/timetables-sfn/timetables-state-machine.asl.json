@@ -504,6 +504,27 @@
                     "BackoffRate": 2
                 }
             ],
+            "Next": "Run Trip Table Creator"
+        },
+        "Run Trip Table Creator": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
             "Next": "National GTFS"
         },
         "National GTFS": {

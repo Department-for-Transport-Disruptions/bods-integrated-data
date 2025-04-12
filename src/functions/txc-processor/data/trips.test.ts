@@ -99,13 +99,14 @@ describe("trips", () => {
                 ticket_machine_journey_code: "journey1",
                 file_path: "",
                 direction: "1",
+                revision_number: "2",
                 departure_time: "00:00:00z",
             },
         ];
 
         insertTripsMock.mockImplementation((_dbClient) => Promise.resolve());
 
-        const updatedVehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, "");
+        const updatedVehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, "", "2");
 
         expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
         expect(updatedVehicleJourneyMappings[0].tripId).toEqual(expectedTrips[0].id);
@@ -159,18 +160,19 @@ describe("trips", () => {
                 file_path: "",
                 direction: "",
                 departure_time: "05:00:00z",
+                revision_number: "1",
             },
         ];
 
         insertTripsMock.mockImplementation((_dbClient) => Promise.resolve());
 
-        await processTrips(dbClient, vehicleJourneyMappings, "");
+        await processTrips(dbClient, vehicleJourneyMappings, "", "1");
 
         expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
     });
 
     it("doesn't insert trips into the database when the vehicle journey mapping is empty", async () => {
-        await processTrips(dbClient, [], "");
+        await processTrips(dbClient, [], "", "1");
         expect(insertTripsMock).not.toHaveBeenCalled();
     });
 });

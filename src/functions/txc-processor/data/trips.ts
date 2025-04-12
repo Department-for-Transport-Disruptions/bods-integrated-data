@@ -11,6 +11,7 @@ export const processTrips = async (
     dbClient: KyselyDb,
     vehicleJourneyMappings: VehicleJourneyMapping[],
     filePath: string,
+    revisionNumber: string,
     service?: Service,
 ) => {
     const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings);
@@ -47,7 +48,7 @@ export const processTrips = async (
                 vehicle_journey_code: vehicleJourney.VehicleJourneyCode,
                 ticket_machine_journey_code: vehicleJourney.Operational?.TicketMachine?.JourneyCode || "",
                 direction: getDirectionRef(journeyPattern?.Direction),
-                revision_number: vehicleJourney["@_RevisionNumber"],
+                revision_number: revisionNumber,
                 departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
             };
         })
