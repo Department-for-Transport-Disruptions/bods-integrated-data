@@ -2,7 +2,7 @@ import { KyselyDb, NaptanStop, NaptanStopArea, getDatabaseClient } from "@bods-i
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { naptanSchemaTransformed } from "@bods-integrated-data/shared/schema/naptan.schema";
-import { S3Event, S3Handler } from "aws-lambda";
+import { S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
 import { XMLParser } from "fast-xml-parser";
 import OsPoint from "ospoint";
@@ -62,15 +62,36 @@ const addLonAndLatData = (naptanData: unknown[]) => {
     });
 };
 
-const getAndParseNaptanFile = async (event: S3Event) => {
-    const { object, bucket } = event.Records[0].s3;
+// const getFilteredNaptanFile = async (stream: ReadStream) => {
+//     const textDecoder = new TextDecoder();
+//     const attributesRegex = / [\w:]+?=".+?"/g;
+//     let body = "";
 
+//     for await (const chunk of stream as ReadStream) {
+//         const chunkString = textDecoder.decode(chunk, { stream: true });
+//         const filteredChunk = chunkString.replace(attributesRegex, "");
+//         body += filteredChunk;
+//     }
+
+//     return body;
+// };
+
+const getAndParseNaptanFile = async (bucketName: string, filepath: string) => {
     const file = await getS3Object({
-        Bucket: bucket.name,
-        Key: object.key,
+        Bucket: bucketName,
+        Key: filepath,
     });
 
     const body = (await file.Body?.transformToString()) || "";
+
+    // const readableStream = file.Body?.transformToWebStream();
+
+    // if (!readableStream) {
+    //     throw new Error(`Unable to get stream from S3 object ${bucket.name}/${object.key}`);
+    // }
+
+    // const body = await getFilteredNaptanFile(readableStream as ReadStream);
+    // console.log("body completely filtered", body.length);
 
     const data = parseXml(body);
 
@@ -135,9 +156,17 @@ export const handler: S3Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
+        const bucketName = event.Records[0].s3.bucket.name;
+        const filepath = event.Records[0].s3.object.key;
+
+        if (!filepath.endsWith(".xml")) {
+            logger.info(`File ${filepath} is not an XML file, skipping`);
+            return;
+        }
+
         logger.info("Starting naptan uploader");
 
-        const { stopPoints, stopAreas } = await getAndParseNaptanFile(event);
+        const { stopPoints, stopAreas } = await getAndParseNaptanFile(bucketName, filepath);
         const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
         const naptanStopAreasWithLonsAndLats = addLonAndLatData(stopAreas);
 

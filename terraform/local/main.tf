@@ -276,49 +276,49 @@ module "integrated_data_cancellations_data_producer_api" {
   cancellations_raw_siri_bucket_name        = module.integrated_data_cancellations_pipeline.cancellations_raw_siri_bucket_name
 }
 
-module "siri_consumer_api_private" {
-  source = "../modules/siri-consumer-api"
+# module "siri_consumer_api_private" {
+#   source = "../modules/siri-consumer-api"
 
-  environment                              = local.env
-  aws_region                               = data.aws_region.current.name
-  account_id                               = data.aws_caller_identity.current.account_id
-  api_name                                 = "integrated-data-siri-consumer-api-private"
-  private                                  = true
-  siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
-  siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
-  siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
-  siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
-  avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
-  avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
-  avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
-  avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
-  avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
-  avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
-  siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
-  siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
-}
+#   environment                              = local.env
+#   aws_region                               = data.aws_region.current.name
+#   account_id                               = data.aws_caller_identity.current.account_id
+#   api_name                                 = "integrated-data-siri-consumer-api-private"
+#   private                                  = true
+#   siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
+#   siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
+#   siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
+#   siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
+#   avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
+#   avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
+#   avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
+#   avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
+#   avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
+#   avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
+#   siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
+#   siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
+# }
 
-module "siri_consumer_api_public" {
-  source = "../modules/siri-consumer-api"
+# module "siri_consumer_api_public" {
+#   source = "../modules/siri-consumer-api"
 
-  environment                              = local.env
-  aws_region                               = data.aws_region.current.name
-  account_id                               = data.aws_caller_identity.current.account_id
-  api_name                                 = "integrated-data-siri-consumer-api-public"
-  private                                  = false
-  siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
-  siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
-  siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
-  siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
-  avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
-  avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
-  avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
-  avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
-  avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
-  avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
-  siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
-  siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
-}
+#   environment                              = local.env
+#   aws_region                               = data.aws_region.current.name
+#   account_id                               = data.aws_caller_identity.current.account_id
+#   api_name                                 = "integrated-data-siri-consumer-api-public"
+#   private                                  = false
+#   siri_vm_downloader_invoke_arn            = module.integrated_data_avl_pipeline.siri_vm_downloader_invoke_arn
+#   siri_vm_downloader_function_name         = module.integrated_data_avl_pipeline.siri_vm_downloader_function_name
+#   siri_vm_stats_invoke_arn                 = module.integrated_data_avl_pipeline.siri_vm_stats_invoke_arn
+#   siri_vm_stats_function_name              = module.integrated_data_avl_pipeline.siri_vm_stats_function_name
+#   avl_consumer_subscriber_invoke_arn       = module.integrated_data_avl_pipeline.avl_consumer_subscriber_invoke_arn
+#   avl_consumer_subscriber_function_name    = module.integrated_data_avl_pipeline.avl_consumer_subscriber_function_name
+#   avl_consumer_unsubscriber_invoke_arn     = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_invoke_arn
+#   avl_consumer_unsubscriber_function_name  = module.integrated_data_avl_pipeline.avl_consumer_unsubscriber_function_name
+#   avl_consumer_subscriptions_invoke_arn    = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_invoke_arn
+#   avl_consumer_subscriptions_function_name = module.integrated_data_avl_pipeline.avl_consumer_subscriptions_function_name
+#   siri_sx_downloader_invoke_arn            = module.integrated_data_cancellations_pipeline.siri_sx_downloader_invoke_arn
+#   siri_sx_downloader_function_name         = module.integrated_data_cancellations_pipeline.siri_sx_downloader_function_name
+# }
 
 module "integrated_data_gtfs_routes_migrator" {
   source = "../modules/gtfs-routes-migrator"

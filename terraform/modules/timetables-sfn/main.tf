@@ -120,6 +120,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "arn:aws:s3:::${var.tnds_txc_zipped_bucket_name}",
           "arn:aws:s3:::${var.bods_txc_bucket_name}",
           "arn:aws:s3:::${var.tnds_txc_bucket_name}",
+          "arn:aws:s3:::${var.naptan_bucket_name}",
         ]
       },
       {

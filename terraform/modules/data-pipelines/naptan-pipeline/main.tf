@@ -32,13 +32,17 @@ resource "aws_s3_bucket_versioning" "integrated_data_naptan_s3_bucket_versioning
 module "integrated_data_naptan_retriever_function" {
   source = "../../shared/lambda-function"
 
-  environment   = var.environment
-  function_name = "integrated-data-naptan-retriever"
-  zip_path      = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  timeout       = 120
-  memory        = 2048
+  environment     = var.environment
+  function_name   = "integrated-data-naptan-retriever"
+  zip_path        = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
+  handler         = "index.handler"
+  runtime         = "nodejs20.x"
+  timeout         = 120
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
 
   permissions = [
     {
@@ -49,12 +53,25 @@ module "integrated_data_naptan_retriever_function" {
       Resource = [
         "${aws_s3_bucket.integrated_data_naptan_s3_bucket.arn}/*"
       ]
+    },
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn
+      ]
     }
   ]
 
   env_vars = {
-    STAGE       = var.environment
-    BUCKET_NAME = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
+    STAGE         = var.environment
+    BUCKET_NAME   = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
   }
 }
 
