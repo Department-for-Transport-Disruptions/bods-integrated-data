@@ -1,7 +1,7 @@
 import { KyselyDb, NewTrip } from "@bods-integrated-data/shared/database";
 import { getLocalTime } from "@bods-integrated-data/shared/dates";
 import { getDirectionRef } from "@bods-integrated-data/shared/gtfs-rt/utils";
-import { Service } from "@bods-integrated-data/shared/schema";
+import { Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { hasher } from "node-object-hash";
 import { VehicleJourneyMapping } from "../types";
@@ -17,12 +17,22 @@ export const processTrips = async (
 
     const objectHasher = hasher();
 
+    const ignoredHashProperties: (keyof VehicleJourney)[] = ["DepartureDayShift"];
+
     const trips = vehicleJourneyMappings
         .map<NewTrip | null>((vehicleJourneyMapping, index) => {
             const { vehicleJourney, journeyPattern } = vehicleJourneyMapping;
 
+            const clonedVehicleJourney = structuredClone(vehicleJourney);
+
+            for (const property of ignoredHashProperties) {
+                if (property in clonedVehicleJourney) {
+                    delete clonedVehicleJourney[property];
+                }
+            }
+
             const hashedVehicleJourney = objectHasher.hash(
-                { vehicleJourney, service },
+                { vehicleJourney: clonedVehicleJourney, service },
                 {
                     alg: "sha1",
                 },

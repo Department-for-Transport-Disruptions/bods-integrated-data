@@ -40,11 +40,15 @@ export const getTimepointFromTimingStatus = (timingStatus?: string) => {
     return timingStatus === "principalTimingPoint" ? Timepoint.Exact : Timepoint.Approximate;
 };
 
-export const appendRolloverHours = (timeString: string, daysPastInitialServiceDay: number) => {
+export const appendRolloverHours = (
+    timeString: string,
+    daysPastInitialServiceDay: number,
+    isDepartureDayShift = false,
+) => {
     const [hoursString] = timeString.split(":");
 
     let hours = Number.parseInt(hoursString);
-    hours += daysPastInitialServiceDay * 24;
+    hours += (isDepartureDayShift ? daysPastInitialServiceDay + 1 : daysPastInitialServiceDay) * 24;
 
     return timeString.replace(hoursString, hours.toString());
 };
@@ -72,6 +76,7 @@ export const mapTimingLinksToStopTimes = (
     let currentStopDepartureTime = initialStopDepartureTime.clone();
     const initialStopDepartureDate = initialStopDepartureTime.startOf("day");
     let sequenceNumber = 0;
+    const isDepartureDayShift = vehicleJourney.DepartureDayShift === 1;
 
     return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
         const vehicleJourneyTimingLink = vehicleJourney.VehicleJourneyTimingLink?.find(
@@ -87,6 +92,8 @@ export const mapTimingLinksToStopTimes = (
             journeyPatternTimingLink,
             vehicleJourneyTimingLink,
             index === 0,
+            false,
+            isDepartureDayShift,
         );
 
         currentStopDepartureTime = nextArrivalTime.clone();
@@ -109,6 +116,7 @@ export const mapTimingLinksToStopTimes = (
                 vehicleJourneyTimingLink,
                 false,
                 true,
+                isDepartureDayShift,
             );
 
             if (finalStopTime) {
@@ -142,6 +150,7 @@ export const mapTimingLinkToStopTime = (
     vehicleJourneyTimingLink?: AbstractTimingLink,
     isFirstStop = false,
     isLastStop = false,
+    isDepartureDayShift = false,
 ): { nextArrivalTime: Dayjs; stopTime: NewStopTime } => {
     const journeyPatternTimingLinkStopUsage =
         stopUsageType === "from" ? journeyPatternTimingLink.From : journeyPatternTimingLink.To;
@@ -207,12 +216,20 @@ export const mapTimingLinkToStopTime = (
     const arrivalTimeDaysPastInitialServiceDay = arrivalTime.diff(initialStopDepartureDate, "day");
     const departureTimeDaysPastInitialServiceDay = departureTime.diff(initialStopDepartureDate, "day");
 
-    if (arrivalTimeDaysPastInitialServiceDay > 0) {
-        arrivalTimeString = appendRolloverHours(arrivalTimeString, arrivalTimeDaysPastInitialServiceDay);
+    if (arrivalTimeDaysPastInitialServiceDay > 0 || isDepartureDayShift) {
+        arrivalTimeString = appendRolloverHours(
+            arrivalTimeString,
+            arrivalTimeDaysPastInitialServiceDay,
+            isDepartureDayShift,
+        );
     }
 
-    if (departureTimeDaysPastInitialServiceDay > 0) {
-        departureTimeString = appendRolloverHours(departureTimeString, departureTimeDaysPastInitialServiceDay);
+    if (departureTimeDaysPastInitialServiceDay > 0 || isDepartureDayShift) {
+        departureTimeString = appendRolloverHours(
+            departureTimeString,
+            departureTimeDaysPastInitialServiceDay,
+            isDepartureDayShift,
+        );
     }
 
     return {
