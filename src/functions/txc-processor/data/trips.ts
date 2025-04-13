@@ -60,6 +60,7 @@ export const processTrips = async (
                 direction: getDirectionRef(journeyPattern?.Direction),
                 revision_number: revisionNumber,
                 departure_time: getLocalTime(vehicleJourney.DepartureTime).utc().format("HH:mm:ssz"),
+                departure_day_shift: vehicleJourney.DepartureDayShift === 1,
             };
         })
         .filter(notEmpty);

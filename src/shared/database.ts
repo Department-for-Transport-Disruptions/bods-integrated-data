@@ -486,6 +486,7 @@ export interface GtfsTripTable {
     revision_number: string | null;
     departure_time: string | null;
     conflicting_files?: string[];
+    departure_day_shift: boolean | null;
 }
 
 export type Trip = Selectable<GtfsTripTable>;

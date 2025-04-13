@@ -34,6 +34,7 @@ describe("trips", () => {
                     JourneyPatternRef: "17",
                     VehicleJourneyCode: "18",
                     DepartureTime: "00:01:00",
+                    DepartureDayShift: 1,
                 },
                 journeyPattern: {
                     "@_id": "1",
@@ -51,7 +52,7 @@ describe("trips", () => {
                     ServiceRef: "6",
                     JourneyPatternRef: "7",
                     VehicleJourneyCode: "8",
-                    DepartureTime: "00:00:00",
+                    DepartureTime: "23:59:00",
                     Operational: {
                         Block: {
                             BlockNumber: "block1",
@@ -73,9 +74,26 @@ describe("trips", () => {
 
         const expectedTrips: NewTrip[] = [
             {
+                id: "VJ5f636f2f4df708fa0611071cd26675038d860a9d",
+                route_id: 1,
+                service_id: 2,
+                departure_day_shift: false,
+                block_id: "",
+                shape_id: "3",
+                trip_headsign: "vjDisplay1",
+                wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
+                vehicle_journey_code: "8",
+                ticket_machine_journey_code: "journey1",
+                file_path: "",
+                direction: "1",
+                revision_number: "2",
+                departure_time: "23:59:00z",
+            },
+            {
                 id: "VJ668c580888094ff9bad05521b7b82f58e8f31ed0",
                 route_id: 11,
                 service_id: 12,
+                departure_day_shift: true,
                 block_id: "",
                 shape_id: "13",
                 trip_headsign: "",
@@ -87,21 +105,6 @@ describe("trips", () => {
                 revision_number: "2",
                 departure_time: "00:01:00z",
             },
-            {
-                id: "VJ8bde1c74de1117e9b02fe84bc6e178389f5ab8ab",
-                route_id: 1,
-                service_id: 2,
-                block_id: "",
-                shape_id: "3",
-                trip_headsign: "vjDisplay1",
-                wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
-                vehicle_journey_code: "8",
-                ticket_machine_journey_code: "journey1",
-                file_path: "",
-                direction: "1",
-                revision_number: "2",
-                departure_time: "00:00:00z",
-            },
         ];
 
         insertTripsMock.mockImplementation((_dbClient) => Promise.resolve());
@@ -109,8 +112,8 @@ describe("trips", () => {
         const updatedVehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, "", "2");
 
         expect(insertTripsMock).toHaveBeenCalledWith(dbClient, expectedTrips);
-        expect(updatedVehicleJourneyMappings[0].tripId).toEqual(expectedTrips[0].id);
-        expect(updatedVehicleJourneyMappings[1].tripId).toEqual(expectedTrips[1].id);
+        expect(updatedVehicleJourneyMappings[0].tripId).toEqual(expectedTrips[1].id);
+        expect(updatedVehicleJourneyMappings[1].tripId).toEqual(expectedTrips[0].id);
     });
 
     it("uses the journey pattern destination display when the vehicle journey destination display is omitted", async () => {
@@ -153,6 +156,7 @@ describe("trips", () => {
                 service_id: 2,
                 block_id: "",
                 shape_id: "3",
+                departure_day_shift: false,
                 trip_headsign: "jpDisplay1",
                 wheelchair_accessible: WheelchairAccessibility.NoAccessibilityInformation,
                 vehicle_journey_code: "8",
