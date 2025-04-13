@@ -1,7 +1,7 @@
 import { RegionCode } from "@bods-integrated-data/shared/constants";
-import { Database, GtfsTripTable, KyselyDb, LocationType, Trip } from "@bods-integrated-data/shared/database";
+import { KyselyDb, LocationType, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { Kysely, sql } from "kysely";
+import { sql } from "kysely";
 
 export type Query = {
     getQuery: () => string;
@@ -14,25 +14,7 @@ export type GtfsFile = {
     include: boolean;
 };
 
-export type KyselyDbWithTempRegions = Kysely<
-    Database & {
-        trip_ALL: GtfsTripTable;
-        trip_E: GtfsTripTable;
-        trip_S: GtfsTripTable;
-        trip_W: GtfsTripTable;
-        trip_NE: GtfsTripTable;
-        trip_NW: GtfsTripTable;
-        trip_EM: GtfsTripTable;
-        trip_WM: GtfsTripTable;
-        trip_L: GtfsTripTable;
-        trip_SE: GtfsTripTable;
-        trip_SW: GtfsTripTable;
-        trip_Y: GtfsTripTable;
-        trip_EA: GtfsTripTable;
-    }
->;
-
-export const createTripTable = async (dbClient: KyselyDbWithTempRegions) => {
+export const createTripTable = async (dbClient: KyselyDb) => {
     await dbClient.schema.dropTable("trip_ALL").ifExists().execute();
     await sql`CREATE TABLE ${sql.table("trip_ALL")} (LIKE ${sql.table("trip")} INCLUDING ALL)`.execute(dbClient);
 
@@ -65,7 +47,7 @@ export const createTripTable = async (dbClient: KyselyDbWithTempRegions) => {
         .execute();
 };
 
-export const createRegionalTripTable = async (dbClient: KyselyDbWithTempRegions, regionCode: RegionCode) => {
+export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
     if (regionCode === "ALL") {
         return;
     }

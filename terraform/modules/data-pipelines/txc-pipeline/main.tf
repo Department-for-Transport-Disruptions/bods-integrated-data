@@ -261,7 +261,7 @@ module "integrated_data_gtfs_trip_table_creator_function" {
   environment     = var.environment
   function_name   = "integrated-data-gtfs-trip-table-creator"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
-  handler         = "index.trip_table_handler"
+  handler         = "index.tripTableHandler"
   runtime         = "nodejs20.x"
   timeout         = 900
   memory          = 2048
@@ -297,7 +297,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   environment     = var.environment
   function_name   = "integrated-data-gtfs-timetables-generator"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
-  handler         = "index.export_handler"
+  handler         = "index.exportHandler"
   runtime         = "nodejs20.x"
   timeout         = 900
   memory          = 2048
@@ -335,7 +335,7 @@ module "integrated_data_gtfs_timetables_zipper_function" {
   environment   = var.environment
   function_name = "integrated-data-gtfs-timetables-zipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
-  handler       = "index.zip_handler"
+  handler       = "index.zipHandler"
   runtime       = "nodejs20.x"
   timeout       = 900
   memory        = 2048

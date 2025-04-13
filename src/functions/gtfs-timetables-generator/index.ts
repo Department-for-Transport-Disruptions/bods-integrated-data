@@ -16,7 +16,6 @@ import { z } from "zod";
 import {
     Files,
     GtfsFile,
-    KyselyDbWithTempRegions,
     createRegionalTripTable,
     createTripTable,
     dropRegionalTripTable,
@@ -111,7 +110,7 @@ export const tripTableHandler: Handler = async (event, context) => {
     try {
         logger.info("Starting GTFS Trip Table Creator");
 
-        await createTripTable(dbClient as unknown as KyselyDbWithTempRegions);
+        await createTripTable(dbClient);
 
         logger.info("GTFS Trip Table Creator successful");
     } catch (e) {
@@ -140,7 +139,7 @@ export const exportHandler: Handler = async (event, context) => {
         logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
 
         if (regionCode !== "ALL") {
-            await createRegionalTripTable(dbClient as unknown as KyselyDbWithTempRegions, regionCode);
+            await createRegionalTripTable(dbClient, regionCode);
         }
 
         const queries = queryBuilder(dbClient, regionCode);

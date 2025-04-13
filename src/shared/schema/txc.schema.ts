@@ -221,7 +221,7 @@ export const vehicleJourneySchema = z.object({
     "@_RevisionNumber": z.string().optional(),
     VehicleJourneyCode: z.string(),
     DepartureTime: z.string(),
-    DepartureDayShift: z.preprocess((item) => (item === "1" ? 1 : undefined), z.number().optional()),
+    DepartureDayShift: z.preprocess((item) => (item === "1" || item === "+1" ? 1 : undefined), z.literal(1).optional()),
     DestinationDisplay: z.string().optional(),
     Frequency: z
         .object({
