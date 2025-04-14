@@ -67,6 +67,7 @@ const processServices = (
     insertedStopPoints: NewStop[],
     filePath: string,
     isTnds: boolean,
+    revisionNumber: string,
     servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -178,7 +179,13 @@ const processServices = (
             servicedOrganisations,
         );
         vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
-        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath, service);
+        vehicleJourneyMappings = await processTrips(
+            dbClient,
+            vehicleJourneyMappings,
+            filePath,
+            revisionNumber,
+            service,
+        );
         await processFrequencies(dbClient, vehicleJourneyMappings);
         await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings, insertedStopPoints);
     });
@@ -234,6 +241,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const stopPoints = TransXChange.StopPoints?.StopPoint || [];
     const annotatedStopPointRefs = TransXChange.StopPoints?.AnnotatedStopPointRef || [];
     const vehicleJourneys = TransXChange.VehicleJourneys?.VehicleJourney || [];
+    const revisionNumber = TransXChange["@_RevisionNumber"];
 
     const agencyData = await processAgencies(dbClient, operators);
 
@@ -280,6 +288,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
         insertedStopPoints,
         record.s3.object.key,
         isTnds,
+        revisionNumber,
         TransXChange.ServicedOrganisations?.ServicedOrganisation,
     );
 };

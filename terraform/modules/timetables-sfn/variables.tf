@@ -35,6 +35,10 @@ variable "txc_processor_function_arn" {
   type = string
 }
 
+variable "gtfs_timetables_trip_table_creator_function_arn" {
+  type = string
+}
+
 variable "gtfs_timetables_generator_function_arn" {
   type = string
 }

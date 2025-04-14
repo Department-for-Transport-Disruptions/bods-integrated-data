@@ -17,10 +17,10 @@ import {
     Files,
     GtfsFile,
     createRegionalTripTable,
-    dropRegionalTable,
+    createTripTable,
+    dropRegionalTripTable,
     exportDataToS3,
     queryBuilder,
-    regionalQueryBuilder,
 } from "./data";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -100,12 +100,34 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
     }
 };
 
-export const export_handler: Handler = async (event, context) => {
+export const tripTableHandler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket, STAGE: stage } = process.env;
+    const { STAGE: stage } = process.env;
 
-    if (!outputBucket || !gtfsBucket) {
+    dbClient = dbClient || (await getDatabaseClient(stage === "local"));
+
+    try {
+        logger.info("Starting GTFS Trip Table Creator");
+
+        await createTripTable(dbClient);
+
+        logger.info("GTFS Trip Table Creator successful");
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(e, "There was a problem with the GTFS Timetable Generator");
+        }
+
+        throw e;
+    }
+};
+
+export const exportHandler: Handler = async (event, context) => {
+    withLambdaRequestTracker(event ?? {}, context ?? {});
+
+    const { OUTPUT_BUCKET: outputBucket, STAGE: stage } = process.env;
+
+    if (!outputBucket) {
         throw new Error("Env vars must be set");
     }
 
@@ -120,15 +142,11 @@ export const export_handler: Handler = async (event, context) => {
             await createRegionalTripTable(dbClient, regionCode);
         }
 
-        const queries = regionCode === "ALL" ? queryBuilder(dbClient) : regionalQueryBuilder(dbClient, regionCode);
+        const queries = queryBuilder(dbClient, regionCode);
 
         const filePath = `${regionCode.toLowerCase()}${GTFS_FILE_SUFFIX}`;
 
         await exportDataToS3(queries, outputBucket, dbClient, filePath);
-
-        if (regionCode !== "ALL") {
-            await dropRegionalTable(dbClient, regionCode);
-        }
 
         logger.info("GTFS Timetable Generator successful");
     } catch (e) {
@@ -138,15 +156,15 @@ export const export_handler: Handler = async (event, context) => {
 
         throw e;
     } finally {
-        if (regionCode) {
-            logger.info(`Dropping region table: trip_${regionCode}`);
+        logger.info(`Dropping region table: trip_${regionCode}`);
 
-            await dropRegionalTable(dbClient, regionCode);
+        if (regionCode !== "ALL") {
+            await dropRegionalTripTable(dbClient, regionCode);
         }
     }
 };
 
-export const zip_handler: Handler = async (event, context) => {
+export const zipHandler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket } = process.env;

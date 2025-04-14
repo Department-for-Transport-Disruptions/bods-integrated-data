@@ -221,6 +221,7 @@ export const vehicleJourneySchema = z.object({
     "@_RevisionNumber": z.string().optional(),
     VehicleJourneyCode: z.string(),
     DepartureTime: z.string(),
+    DepartureDayShift: z.preprocess((item) => (item === "1" || item === "+1" ? 1 : undefined), z.literal(1).optional()),
     DestinationDisplay: z.string().optional(),
     Frequency: z
         .object({
@@ -341,6 +342,7 @@ const castToObject = <T extends ZodSchema>(schema: T) => z.preprocess((val) => O
 
 export const txcSchema = z.object({
     TransXChange: z.object({
+        "@_RevisionNumber": z.string().optional().default("0"),
         Operators: castToObject(operatorsSchema.optional()),
         RouteSections: castToObject(routeSectionsSchema.optional()),
         Routes: castToObject(routesSchema.optional()),
