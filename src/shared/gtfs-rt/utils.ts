@@ -232,7 +232,7 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
     return await dbClient
         .selectFrom("agency")
         .innerJoin("route", "route.agency_id", "agency.id")
-        .innerJoin("trip", "trip.route_id", "route.id")
+        .innerJoin("trip_ALL as trip", "trip.route_id", "route.id")
         .innerJoin("calendar", (join) =>
             join
                 .onRef("calendar.id", "=", "trip.service_id")

@@ -11,7 +11,7 @@ output "errors_table_name" {
 }
 
 output "data_endpoint_function_url" {
-  value = aws_lambda_function_url.cancellations_data_endpoint_function_url.function_url
+  value = var.environment == "local" ? aws_lambda_function_url.cancellations_data_endpoint_function_url[0].function_url : null
 }
 
 output "data_endpoint_function_name" {
