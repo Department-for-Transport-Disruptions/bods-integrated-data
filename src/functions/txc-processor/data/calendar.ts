@@ -331,7 +331,9 @@ export const formatCalendar = (
             calendar,
         ));
 
-        calendar = defaultCalendar;
+        if (servicedOrgDaysOfOperation.length) {
+            calendar = defaultCalendar;
+        }
     }
 
     const daysOfNonOperation = [

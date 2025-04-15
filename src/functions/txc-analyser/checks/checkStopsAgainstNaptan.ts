@@ -1,8 +1,9 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedStopTypes } from "@bods-integrated-data/shared/txc-analysis/constants";
 import { NaptanStopMap, Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
+import { PartialDeep } from "type-fest";
 
-export default (txcData: Partial<TxcSchema>, naptanStopMap: NaptanStopMap): Observation[] => {
+export default (txcData: PartialDeep<TxcSchema>, naptanStopMap: NaptanStopMap): Observation[] => {
     const observations: Observation[] = [];
 
     const txcStops =

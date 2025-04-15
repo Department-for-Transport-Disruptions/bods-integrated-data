@@ -226,7 +226,7 @@ describe("shapes", () => {
             const routes: TxcRoute[] = [
                 {
                     "@_id": "1",
-                    RouteSectionRef: ["11"],
+                    RouteSectionRef: ["12", "11"],
                 },
                 {
                     "@_id": "2",
@@ -254,10 +254,29 @@ describe("shapes", () => {
                         },
                     ],
                 },
+                {
+                    "@_id": "12",
+                    RouteLink: [
+                        {
+                            Track: [
+                                {
+                                    Mapping: {
+                                        Location: [
+                                            {
+                                                Latitude: 3,
+                                                Longitude: 4,
+                                            },
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
             ];
 
             const routeLinks = getRouteLinks("1", routes, routeSections);
-            expect(routeLinks).toEqual(routeSections[0].RouteLink);
+            expect(routeLinks).toEqual([...routeSections[1].RouteLink, ...routeSections[0].RouteLink]);
         });
 
         it("returns an empty array when the route ref fails to reference a route section", () => {

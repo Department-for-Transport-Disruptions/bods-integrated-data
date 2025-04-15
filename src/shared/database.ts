@@ -94,6 +94,19 @@ export interface Database {
     stop_time_new: GtfsStopTimeTable;
     trip: GtfsTripTable;
     trip_new: GtfsTripTable;
+    trip_ALL: GtfsTripTable;
+    trip_E: GtfsTripTable;
+    trip_S: GtfsTripTable;
+    trip_W: GtfsTripTable;
+    trip_NE: GtfsTripTable;
+    trip_NW: GtfsTripTable;
+    trip_EM: GtfsTripTable;
+    trip_WM: GtfsTripTable;
+    trip_L: GtfsTripTable;
+    trip_SE: GtfsTripTable;
+    trip_SW: GtfsTripTable;
+    trip_Y: GtfsTripTable;
+    trip_EA: GtfsTripTable;
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
     tfl_line: TflLineTable;
@@ -491,6 +504,7 @@ export interface GtfsTripTable {
     revision_number: string | null;
     departure_time: string | null;
     conflicting_files?: string[];
+    departure_day_shift: boolean | null;
 }
 
 export type Trip = Selectable<GtfsTripTable>;

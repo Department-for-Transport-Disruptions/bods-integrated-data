@@ -41,6 +41,7 @@ module "avl_data_endpoint" {
 }
 
 resource "aws_lambda_function_url" "avl_data_endpoint_function_url" {
+  count              = var.environment == "local" ? 1 : 0
   function_name      = module.avl_data_endpoint.function_name
   authorization_type = "NONE"
 }

@@ -331,6 +331,122 @@ describe("utils", () => {
             const result = mapTimingLinksToStopTimes("trip_id", vehicleJourney, journeyPatternTimingLinks);
             expect(result).toEqual(expected);
         });
+
+        it("correctly handles DepartureDayShift", () => {
+            const vehicleJourney: VehicleJourney = {
+                DepartureTime: "00:10:00",
+                DepartureDayShift: 1,
+                JourneyPatternRef: "",
+                LineRef: "",
+                ServiceRef: "",
+                VehicleJourneyCode: "1",
+                VehicleJourneyTimingLink: [
+                    {
+                        JourneyPatternTimingLinkRef: "1",
+                    },
+                ],
+            };
+
+            const journeyPatternTimingLinks: AbstractTimingLink[] = [
+                {
+                    "@_id": "1",
+                    From: {
+                        StopPointRef: "1",
+                        Activity: "pickUp",
+                        TimingStatus: "principalTimingPoint",
+                        WaitTime: "PT2M",
+                    },
+                    To: {
+                        StopPointRef: "2",
+                    },
+                    RunTime: "PT35M",
+                },
+                {
+                    "@_id": "2",
+                    From: {
+                        StopPointRef: "2",
+                        Activity: "pickUpAndSetDown",
+                        TimingStatus: "principalTimingPoint",
+                    },
+                    To: {
+                        StopPointRef: "3",
+                    },
+                    RunTime: "PT25H",
+                },
+                {
+                    "@_id": "3",
+                    From: {
+                        StopPointRef: "3",
+                        Activity: "pickUpAndSetDown",
+                        TimingStatus: "timeInfoPoint",
+                    },
+                    To: {
+                        StopPointRef: "4",
+                        Activity: "setDown",
+                        TimingStatus: "timeInfoPoint",
+                    },
+                    RunTime: "PT15S",
+                },
+            ];
+
+            const expected: NewStopTime[] = [
+                {
+                    trip_id: "trip_id",
+                    stop_id: "1",
+                    destination_stop_id: "2",
+                    arrival_time: "24:10:00",
+                    departure_time: "24:12:00",
+                    stop_sequence: 0,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.NoDropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Exact,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "2",
+                    destination_stop_id: "3",
+                    arrival_time: "24:47:00",
+                    departure_time: "24:47:00",
+                    stop_sequence: 1,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Exact,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "3",
+                    destination_stop_id: "4",
+                    arrival_time: "49:47:00",
+                    departure_time: "49:47:00",
+                    stop_sequence: 2,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Approximate,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "4",
+                    destination_stop_id: "",
+                    arrival_time: "49:47:15",
+                    departure_time: "49:47:15",
+                    stop_sequence: 3,
+                    stop_headsign: "",
+                    pickup_type: PickupType.NoPickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Approximate,
+                },
+            ];
+
+            const result = mapTimingLinksToStopTimes("trip_id", vehicleJourney, journeyPatternTimingLinks);
+            expect(result).toEqual(expected);
+        });
     });
 
     describe("mapTimingLinkToStopTime", () => {

@@ -34,8 +34,16 @@ output "txc_processor_function_arn" {
   value = module.integrated_data_txc_processor_function.function_arn
 }
 
+output "gtfs_timetables_trip_table_creator_function_arn" {
+  value = module.integrated_data_gtfs_trip_table_creator_function.function_arn
+}
+
 output "gtfs_timetables_generator_function_arn" {
   value = module.integrated_data_gtfs_timetables_generator_function.function_arn
+}
+
+output "gtfs_timetables_zipper_function_arn" {
+  value = module.integrated_data_gtfs_timetables_zipper_function.function_arn
 }
 
 output "gtfs_timetables_trip_mapper_function_arn" {
