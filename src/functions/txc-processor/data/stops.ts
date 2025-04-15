@@ -18,7 +18,7 @@ export const mapStop = (
         id: id.toUpperCase(),
         wheelchair_boarding: 0,
         parent_station: null,
-        stop_name: name,
+        stop_name: name.trim(),
         stop_lat: latitude,
         stop_lon: longitude,
         location_type: LocationType.None,

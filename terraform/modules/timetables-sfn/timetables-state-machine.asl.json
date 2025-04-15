@@ -155,14 +155,6 @@
                             },
                             "Retry": [
                                 {
-                                    "ErrorEquals": [
-                                        "Lambda.ServiceException",
-                                        "Lambda.AWSLambdaException",
-                                        "Lambda.SdkClientException",
-                                        "Lambda.TooManyRequestsException"
-                                    ],
-                                    "IntervalSeconds": 1,
-                                    "MaxAttempts": 3,
                                     "BackoffRate": 2
                                 }
                             ],
@@ -508,15 +500,14 @@
                     "BackoffRate": 2
                 }
             ],
-            "Next": "Generate Trip Maps"
+            "Next": "Run Trip Table Creator"
         },
-        "Generate Trip Maps": {
+        "Run Trip Table Creator": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "OutputPath": "$.Payload",
             "Parameters": {
-                "FunctionName": "${gtfs_timetables_trip_mapper_function_arn}:$LATEST",
-                "Payload": {}
+                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST"
             },
             "Retry": [
                 {
@@ -658,7 +649,7 @@
         },
         "Generate Remaining GTFS": {
             "Type": "Parallel",
-            "End": true,
+            "Next": "Generate Trip Map",
             "Branches": [
                 {
                     "StartAt": "Wales GTFS",
@@ -867,6 +858,425 @@
                                 }
                             ],
                             "End": true
+                        }
+                    }
+                }
+            ]
+        },
+        "Generate Trip Map": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${gtfs_timetables_trip_mapper_function_arn}:$LATEST",
+                "Payload": {}
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException",
+                        "Lambda.TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "Zip GTFS"
+        },
+        "Zip GTFS": {
+            "Type": "Parallel",
+            "End": true,
+            "Branches": [
+                {
+                    "StartAt": "Zip National GTFS",
+                    "States": {
+                        "Zip National GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "ALL"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip England GTFS",
+                    "States": {
+                        "Zip England GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "E"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip London GTFS",
+                    "States": {
+                        "Zip London GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "L"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip South East GTFS",
+                    "States": {
+                        "Zip South East GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "SE"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip South West GTFS",
+                    "States": {
+                        "Zip South West GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "SW"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip Wales GTFS",
+                    "States": {
+                        "Zip Wales GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "W"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip Scotland GTFS",
+                    "States": {
+                        "Zip Scotland GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "S"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip North West GTFS",
+                    "States": {
+                        "Zip North West GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "NW"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip West Midlands GTFS",
+                    "States": {
+                        "Zip West Midlands GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "WM"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip Yorkshire GTFS",
+                    "States": {
+                        "Zip Yorkshire GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "Y"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip East Anglia GTFS",
+                    "States": {
+                        "Zip East Anglia GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "EA"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip East Midlands GTFS",
+                    "States": {
+                        "Zip East Midlands GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "EM"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "StartAt": "Zip North East GTFS",
+                    "States": {
+                        "Zip North East GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "End": true,
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "NE"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ]
                         }
                     }
                 }
