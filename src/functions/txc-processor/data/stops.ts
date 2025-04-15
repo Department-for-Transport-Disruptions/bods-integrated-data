@@ -30,7 +30,7 @@ export const mapStop = (
         stop.stop_code = naptanStop.naptan_code;
 
         if (naptanStop.common_name) {
-            stop.stop_name = naptanStop.common_name;
+            stop.stop_name = naptanStop.common_name.trim();
         }
 
         if (naptanStop.latitude) {

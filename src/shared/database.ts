@@ -345,6 +345,11 @@ export type CalendarDate = Selectable<GtfsCalendarDateTable>;
 export type NewCalendarDate = Insertable<GtfsCalendarDateTable>;
 export type CalendarDateUpdate = Updateable<GtfsCalendarDateTable>;
 
+export type CalendarWithDates = {
+    calendar: NewCalendar;
+    calendarDates: Omit<NewCalendarDate, "service_id">[];
+};
+
 export enum ServiceType {
     FrequencyBased = 0,
     ScheduleBased = 1,
