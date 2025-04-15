@@ -208,7 +208,7 @@
                                 }
                             },
                             "MaxConcurrency": 1,
-                            "ToleratedFailureCount": 10,
+                            "ToleratedFailureCount": 0,
                             "End": true,
                             "ResultPath": null
                         }

@@ -12,9 +12,9 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const arrayProperties = ["StopPoint", "StopAreas"];
+const arrayProperties = ["StopPoint", "StopArea"];
 
-const parseXml = (xml: string) => {
+export const parseXml = (xml: string) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
@@ -23,14 +23,7 @@ const parseXml = (xml: string) => {
     });
 
     const parsedXml = parser.parse(xml);
-
-    const parsedJson = naptanSchemaTransformed.safeParse(parsedXml);
-
-    if (!parsedJson.success) {
-        throw new Error("Unable to parse Naptan XML");
-    }
-
-    return parsedJson.data;
+    return naptanSchemaTransformed.parse(parsedXml);
 };
 
 const addLonAndLatData = (naptanData: unknown[]) => {
@@ -62,20 +55,6 @@ const addLonAndLatData = (naptanData: unknown[]) => {
     });
 };
 
-// const getFilteredNaptanFile = async (stream: ReadStream) => {
-//     const textDecoder = new TextDecoder();
-//     const attributesRegex = / [\w:]+?=".+?"/g;
-//     let body = "";
-
-//     for await (const chunk of stream as ReadStream) {
-//         const chunkString = textDecoder.decode(chunk, { stream: true });
-//         const filteredChunk = chunkString.replace(attributesRegex, "");
-//         body += filteredChunk;
-//     }
-
-//     return body;
-// };
-
 const getAndParseNaptanFile = async (bucketName: string, filepath: string) => {
     const file = await getS3Object({
         Bucket: bucketName,
@@ -83,16 +62,6 @@ const getAndParseNaptanFile = async (bucketName: string, filepath: string) => {
     });
 
     const body = (await file.Body?.transformToString()) || "";
-
-    // const readableStream = file.Body?.transformToWebStream();
-
-    // if (!readableStream) {
-    //     throw new Error(`Unable to get stream from S3 object ${bucket.name}/${object.key}`);
-    // }
-
-    // const body = await getFilteredNaptanFile(readableStream as ReadStream);
-    // console.log("body completely filtered", body.length);
-
     const data = parseXml(body);
 
     return data;
@@ -158,9 +127,10 @@ export const handler: S3Handler = async (event, context) => {
     try {
         const bucketName = event.Records[0].s3.bucket.name;
         const filepath = event.Records[0].s3.object.key;
+        logger.filepath = filepath;
 
         if (!filepath.endsWith(".xml")) {
-            logger.info(`File ${filepath} is not an XML file, skipping`);
+            logger.info("Not an XML file, skipping");
             return;
         }
 

@@ -13,9 +13,11 @@
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "^3.682.0",
         "@bods-integrated-data/shared": "workspace:^",
+        "@rgrove/parse-xml": "^4.2.0",
         "bluebird": "^3.7.2",
-        "fast-xml-parser": "^4.4.1",
+        "fast-xml-parser": "^5.2.0",
         "kysely": "^0.27.3",
+        "node-expat": "^2.4.1",
         "ospoint": "^0.2.1",
         "papaparse": "^5.4.1",
         "pg": "^8.11.3",
@@ -25,6 +27,7 @@
         "@types/aws-lambda": "^8.10.134",
         "@types/bluebird": "^3.5.42",
         "@types/node": "^20.11.19",
+        "@types/node-expat": "^2.3.5",
         "@types/papaparse": "^5.3.14",
         "@types/pg": "^8.11.0"
     }

@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { NewNaptanStop } from "../database";
 
+const selfClosingTag = z.literal("");
+const emptyTag = selfClosingTag.transform(() => undefined);
+
 const locationSchema = z.object({
     Translation: z.object({
         GridType: z.string().optional(),
@@ -13,27 +16,50 @@ const locationSchema = z.object({
 
 const stopClassificationSchema = z.object({
     StopType: z.string(),
-    OnStreet: z.object({
-        Bus: z.object({
-            BusStopType: z.string().optional(),
-            TimingStatus: z.string().optional(),
-            MarkedPoint: z
+    OnStreet: z
+        .object({
+            Bus: z
                 .object({
-                    DefaultWaitTime: z.string().optional(),
-                    Bearing: z.object({
-                        CompassPoint: z.string(),
-                    }),
+                    BusStopType: z.string().optional(),
+                    TimingStatus: z.string().optional(),
+                    MarkedPoint: z
+                        .object({
+                            DefaultWaitTime: z.string().optional(),
+                            Bearing: z.object({
+                                CompassPoint: z.string(),
+                            }),
+                        })
+                        .optional(),
+                    UnmarkedPoint: z
+                        .object({
+                            Bearing: z.object({
+                                CompassPoint: z.string(),
+                            }),
+                        })
+                        .optional(),
                 })
                 .optional(),
-            UnmarkedPoint: z
+        })
+        .optional(),
+    OffStreet: z
+        .object({
+            BusAndCoach: z
                 .object({
-                    Bearing: z.object({
-                        CompassPoint: z.string(),
-                    }),
+                    Bay: z
+                        .object({
+                            TimingStatus: z.string().optional(),
+                        })
+                        .or(emptyTag)
+                        .optional(),
+                    VariableBay: z
+                        .object({
+                            TimingStatus: z.string().optional(),
+                        })
+                        .optional(),
                 })
                 .optional(),
-        }),
-    }),
+        })
+        .optional(),
 });
 
 const stopPointStopAreasSchema = z.object({
@@ -44,11 +70,6 @@ const stopPointStopAreasSchema = z.object({
 });
 
 const stopPointSchema = z.object({
-    CreationDateTime: z.string(),
-    ModificationDateTime: z.string().optional(),
-    Modification: z.string().optional(),
-    RevisionNumber: z.string().optional(),
-    Status: z.string().optional().default("active"),
     AtcoCode: z.string(),
     NaptanCode: z.string().optional(),
     PlateCode: z.string().optional(),
@@ -79,7 +100,7 @@ const stopPointSchema = z.object({
         .optional(),
 });
 
-const stopAreasSchema = z.object({
+const stopAreaSchema = z.object({
     StopAreaCode: z.string().transform((ref) => ref.toUpperCase()),
     Name: z.string(),
     AdministrativeAreaRef: z.string(),
@@ -89,8 +110,12 @@ const stopAreasSchema = z.object({
 
 export const naptanSchema = z.object({
     NaPTAN: z.object({
-        StopPoints: z.array(stopPointSchema),
-        StopAreas: z.array(stopAreasSchema),
+        StopPoints: z.object({
+            StopPoint: z.array(stopPointSchema),
+        }),
+        StopAreas: z.object({
+            StopArea: z.array(stopAreaSchema),
+        }),
     }),
 });
 
@@ -98,8 +123,8 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
     const stopPoints: NewNaptanStop[] = [];
     const stopAreas = [];
 
-    if (item.NaPTAN.StopPoints.length > 0) {
-        const transformedStopPoints = item.NaPTAN.StopPoints.map((stop) => {
+    if (item.NaPTAN.StopPoints.StopPoint.length > 0) {
+        const transformedStopPoints = item.NaPTAN.StopPoints.StopPoint.map((stop) => {
             return {
                 atco_code: stop.AtcoCode,
                 naptan_code: stop.NaptanCode ?? null,
@@ -111,9 +136,10 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
                 street: stop.Descriptor.Street ?? null,
                 crossing: stop.Descriptor.Crossing ?? null,
                 indicator: stop.Descriptor.Indicator ?? null,
-                bearing: stop.StopClassification.OnStreet.Bus.MarkedPoint?.Bearing.CompassPoint
-                    ? stop.StopClassification.OnStreet.Bus.MarkedPoint.Bearing.CompassPoint
-                    : stop.StopClassification.OnStreet.Bus.UnmarkedPoint?.Bearing.CompassPoint ?? null,
+                bearing:
+                    stop.StopClassification.OnStreet?.Bus?.MarkedPoint?.Bearing.CompassPoint ??
+                    stop.StopClassification.OnStreet?.Bus?.UnmarkedPoint?.Bearing.CompassPoint ??
+                    null,
                 nptg_locality_code: stop.Place.NptgLocalityRef,
                 locality_name: stop.Place.LocalityName ?? null,
                 town: stop.Place.Town ?? null,
@@ -125,16 +151,20 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
                 longitude: stop.Place.Location.Translation.Longitude,
                 latitude: stop.Place.Location.Translation.Latitude,
                 stop_type: stop.StopClassification.StopType,
-                bus_stop_type: stop.StopClassification.OnStreet.Bus.BusStopType,
-                timing_status: stop.StopClassification.OnStreet.Bus.TimingStatus ?? null,
-                default_wait_time: stop.StopClassification.OnStreet.Bus.MarkedPoint?.DefaultWaitTime ?? null,
+                bus_stop_type: stop.StopClassification.OnStreet?.Bus?.BusStopType,
+                timing_status:
+                    stop.StopClassification.OnStreet?.Bus?.TimingStatus ??
+                    stop.StopClassification.OffStreet?.BusAndCoach?.Bay?.TimingStatus ??
+                    stop.StopClassification.OffStreet?.BusAndCoach?.VariableBay?.TimingStatus ??
+                    null,
+                default_wait_time: stop.StopClassification.OnStreet?.Bus?.MarkedPoint?.DefaultWaitTime ?? null,
                 notes: stop.StopFurtherDetails?.Notes ?? null,
                 administrative_area_code: stop.AdministrativeAreaRef,
-                creation_date_time: stop.CreationDateTime ?? null,
-                modification_date_time: stop.ModificationDateTime ?? null,
-                revision_number: stop.RevisionNumber ?? null,
-                modification: stop.Modification ?? null,
-                status: stop.Status,
+                creation_date_time: null,
+                modification_date_time: null,
+                revision_number: null,
+                modification: null,
+                status: null,
                 stop_area_code: stop.StopAreas?.StopAreaRef ?? null,
             };
         });
@@ -142,8 +172,8 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
         stopPoints.push(...transformedStopPoints);
     }
 
-    if (item.NaPTAN.StopAreas.length > 0) {
-        const transformedStopAreas = item.NaPTAN.StopAreas.map((stopArea) => {
+    if (item.NaPTAN.StopAreas.StopArea.length > 0) {
+        const transformedStopAreas = item.NaPTAN.StopAreas.StopArea.map((stopArea) => {
             return {
                 stop_area_code: stopArea.StopAreaCode,
                 name: stopArea.Name,
