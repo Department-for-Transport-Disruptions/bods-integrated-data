@@ -146,6 +146,7 @@ export interface NaptanStopTable {
     revision_number: string | null;
     modification: string | null;
     status: string | null;
+    stop_area_code: string | null;
 }
 
 export type NaptanStop = Selectable<NaptanStopTable>;

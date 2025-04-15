@@ -12,7 +12,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const arrayProperties = ["StopPoint", "StopArea"];
+const arrayProperties = ["StopPoint", "StopArea", "StopAreaRef"];
 
 export const parseXml = (xml: string) => {
     const parser = new XMLParser({

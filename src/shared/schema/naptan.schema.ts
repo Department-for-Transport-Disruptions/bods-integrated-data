@@ -66,6 +66,7 @@ const stopPointStopAreasSchema = z.object({
     StopAreaRef: z
         .string()
         .transform((ref) => ref.toUpperCase())
+        .array()
         .optional(),
 });
 
@@ -125,7 +126,7 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
 
     if (item.NaPTAN.StopPoints.StopPoint.length > 0) {
         const transformedStopPoints = item.NaPTAN.StopPoints.StopPoint.map((stop) => {
-            return {
+            const newStop: NewNaptanStop = {
                 atco_code: stop.AtcoCode,
                 naptan_code: stop.NaptanCode ?? null,
                 plate_code: stop.PlateCode ?? null,
@@ -165,8 +166,10 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
                 revision_number: null,
                 modification: null,
                 status: null,
-                stop_area_code: stop.StopAreas?.StopAreaRef ?? null,
+                stop_area_code: stop.StopAreas?.StopAreaRef?.length === 1 ? stop.StopAreas.StopAreaRef[0] : null,
             };
+
+            return newStop;
         });
 
         stopPoints.push(...transformedStopPoints);

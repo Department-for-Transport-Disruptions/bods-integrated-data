@@ -14,9 +14,6 @@ importers:
       '@bods-integrated-data/shared':
         specifier: workspace:^
         version: link:../../shared
-      '@rgrove/parse-xml':
-        specifier: ^4.2.0
-        version: 4.2.0
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
@@ -26,9 +23,6 @@ importers:
       kysely:
         specifier: ^0.27.3
         version: 0.27.3
-      node-expat:
-        specifier: ^2.4.1
-        version: 2.4.1
       ospoint:
         specifier: ^0.2.1
         version: 0.2.1
@@ -51,9 +45,6 @@ importers:
       '@types/node':
         specifier: ^20.11.19
         version: 20.11.19
-      '@types/node-expat':
-        specifier: ^2.3.5
-        version: 2.3.5
       '@types/papaparse':
         specifier: ^5.3.14
         version: 5.3.14
@@ -179,10 +170,6 @@ packages:
     peerDependenciesMeta:
       aws-crt:
         optional: true
-
-  '@rgrove/parse-xml@4.2.0':
-    resolution: {integrity: sha512-UuBOt7BOsKVOkFXRe4Ypd/lADuNIfqJXv8GvHqtXaTYXPPKkj2nS2zPllVsrtRjcomDhIJVBnZwfmlI222WH8g==}
-    engines: {node: '>=14.0.0'}
 
   '@smithy/abort-controller@3.1.6':
     resolution: {integrity: sha512-0XuhuHQlEqbNQZp7QxxrFTdVWdwxch4vjxYgfInF91hZFkPxf9QDrdQka0KfxFMPqLNzSw0b95uGTrLliQUavQ==}
@@ -354,9 +341,6 @@ packages:
   '@types/bluebird@3.5.42':
     resolution: {integrity: sha512-Jhy+MWRlro6UjVi578V/4ZGNfeCOcNCp0YaFNIUGFKlImowqwb1O/22wDVk3FDGMLqxdpOV3qQHD5fPEH4hK6A==}
 
-  '@types/node-expat@2.3.5':
-    resolution: {integrity: sha512-6h0OrKm8vYz4wo+YIUmG3kTHQ0FByYStTXKqKSaVlqSuayk0TQ1SNoG3tmc89Fa2nQ/x/3wx6zwzZ4i/J3tJnw==}
-
   '@types/node@20.11.19':
     resolution: {integrity: sha512-7xMnVEcZFu0DikYjWOlRq7NTPETrm7teqUT2WkQjrTIkEgUyyGdWsj/Zg8bEJt5TNklzbPD1X3fqfsHw3SpapQ==}
 
@@ -368,9 +352,6 @@ packages:
 
   '@types/uuid@9.0.8':
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
-
-  bindings@1.5.0:
-    resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
 
   bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
@@ -390,18 +371,9 @@ packages:
     resolution: {integrity: sha512-Uw9+Mjt4SBRud1IcaYuW/O0lW8SKKdMl5g7g24HiIuyH5fQSD+AVLybSlJtqLYEbytVFjWQa5DMGcNgeksdRBg==}
     hasBin: true
 
-  file-uri-to-path@1.0.0:
-    resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
-
   kysely@0.27.3:
     resolution: {integrity: sha512-lG03Ru+XyOJFsjH3OMY6R/9U38IjDPfnOfDgO3ynhbDr+Dz8fak+X6L62vqu3iybQnj+lG84OttBuU9KY3L9kA==}
     engines: {node: '>=14.0.0'}
-
-  nan@2.22.2:
-    resolution: {integrity: sha512-DANghxFkS1plDdRsX0X9pm0Z6SJNN6gBdtXfanwoZ8hooC5gosGFSBGRYHUVPz1asKA/kMRqDRdHrluZ61SpBQ==}
-
-  node-expat@2.4.1:
-    resolution: {integrity: sha512-uWgvQLgo883NKIL+66oJsK9ysKK3ej0YjVCPBZzO/7wMAuH68/Yb7+JwPWNaVq0yPaxrb48AoEXfYEc8gsmFbg==}
 
   obuf@1.1.2:
     resolution: {integrity: sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==}
@@ -912,8 +884,6 @@ snapshots:
       '@smithy/types': 3.6.0
       tslib: 2.6.2
 
-  '@rgrove/parse-xml@4.2.0': {}
-
   '@smithy/abort-controller@3.1.6':
     dependencies:
       '@smithy/types': 3.6.0
@@ -1185,10 +1155,6 @@ snapshots:
 
   '@types/bluebird@3.5.42': {}
 
-  '@types/node-expat@2.3.5':
-    dependencies:
-      '@types/node': 20.11.19
-
   '@types/node@20.11.19':
     dependencies:
       undici-types: 5.26.5
@@ -1205,10 +1171,6 @@ snapshots:
 
   '@types/uuid@9.0.8': {}
 
-  bindings@1.5.0:
-    dependencies:
-      file-uri-to-path: 1.0.0
-
   bluebird@3.7.2: {}
 
   bowser@2.11.0: {}
@@ -1223,16 +1185,7 @@ snapshots:
     dependencies:
       strnum: 2.0.5
 
-  file-uri-to-path@1.0.0: {}
-
   kysely@0.27.3: {}
-
-  nan@2.22.2: {}
-
-  node-expat@2.4.1:
-    dependencies:
-      bindings: 1.5.0
-      nan: 2.22.2
 
   obuf@1.1.2: {}
 
