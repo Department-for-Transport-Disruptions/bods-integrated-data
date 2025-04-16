@@ -37,7 +37,7 @@ module "integrated_data_naptan_retriever_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 120
+  timeout         = 600
   memory          = 2048
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
