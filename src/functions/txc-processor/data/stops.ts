@@ -3,8 +3,8 @@ import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods
 import OsPoint from "ospoint";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
 
-const platformCodes = ["BCS", "FBT", "PLT", "RPL"];
-const realStationEntranceCodes = ["BCE", "FTD", "RSE"];
+const naptanPlatformStopTypeCodes = ["BCS", "FBT", "PLT", "RPL"];
+const naptanStationStopTypeCodes = ["BCE", "FTD", "RSE"];
 
 export type NaptanStopWithRegionCode = NaptanStop & { region_code: string | null };
 
@@ -23,7 +23,7 @@ export const mapStop = (
         stop_name: name.trim(),
         stop_lat: latitude,
         stop_lon: longitude,
-        location_type: LocationType.None,
+        location_type: LocationType.StopOrPlatform,
         platform_code: null,
         region_code: null,
     };
@@ -45,31 +45,27 @@ export const mapStop = (
             stop.stop_lon = Number.parseFloat(naptanStop.longitude);
         }
 
-        if (naptanStop.stop_type === "RSE") {
-            stop.location_type = LocationType.RealStationEntrance;
-        }
-
         if (naptanStop.region_code) {
             stop.region_code = naptanStop.region_code;
         }
 
-        if (naptanStop.stop_type && platformCodes.includes(naptanStop.stop_type)) {
+        if (naptanStop.stop_type && naptanPlatformStopTypeCodes.includes(naptanStop.stop_type)) {
             stop.platform_code = naptanStop.stop_type;
 
             const stopArea = naptanStopAreaMap[naptanStop.atco_code];
 
             if (stopArea) {
                 stop.parent_station = stopArea.stop_area_code;
-                stopAreaStop = createStopAreaStop(stop, stopArea, LocationType.StopAreas);
+                stopAreaStop = createStopAreaStop(stop, stopArea, LocationType.Station);
             }
         }
 
-        if (naptanStop.stop_type && realStationEntranceCodes.includes(naptanStop.stop_type)) {
+        if (naptanStop.stop_type && naptanStationStopTypeCodes.includes(naptanStop.stop_type)) {
             const stopArea = naptanStopAreaMap[naptanStop.atco_code];
 
             if (stopArea) {
                 stop.parent_station = stopArea.stop_area_code;
-                stopAreaStop = createStopAreaStop(stop, stopArea, LocationType.RealStationEntrance);
+                stopAreaStop = createStopAreaStop(stop, stopArea, LocationType.EntranceOrExit);
             }
         }
     }
