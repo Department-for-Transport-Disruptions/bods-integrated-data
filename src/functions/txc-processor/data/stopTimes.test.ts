@@ -29,27 +29,27 @@ describe("stopTimes", () => {
     const defaultInsertedStops = [
         {
             id: "1",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "2",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "3",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "A",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "B",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
     ];
@@ -728,17 +728,17 @@ describe("stopTimes", () => {
         await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, [
             {
                 id: "1",
-                location_type: LocationType.None,
+                location_type: LocationType.StopOrPlatform,
                 wheelchair_boarding: 0,
             },
             {
                 id: "2",
-                location_type: LocationType.RealStationEntrance,
+                location_type: LocationType.EntranceOrExit,
                 wheelchair_boarding: 0,
             },
             {
                 id: "3",
-                location_type: LocationType.None,
+                location_type: LocationType.StopOrPlatform,
                 wheelchair_boarding: 0,
             },
         ]);

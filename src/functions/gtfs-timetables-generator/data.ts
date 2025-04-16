@@ -154,7 +154,7 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                     "stop.parent_station",
                     "stop.platform_code",
                 ])
-                .where("stop.location_type", "!=", sql.lit(LocationType.RealStationEntrance))
+                .where("stop.location_type", "!=", sql.lit(LocationType.EntranceOrExit))
                 .distinct();
 
             return query.compile().sql;

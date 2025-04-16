@@ -422,9 +422,11 @@ export type NewShape = Insertable<GtfsShapeTable>;
 export type ShapeUpdate = Updateable<GtfsShapeTable>;
 
 export enum LocationType {
-    None = 0,
-    StopAreas = 1,
-    RealStationEntrance = 2,
+    StopOrPlatform = 0,
+    Station = 1,
+    EntranceOrExit = 2,
+    GenericNode = 3,
+    BoardingArea = 4,
 }
 
 export interface GtfsStopTable {
