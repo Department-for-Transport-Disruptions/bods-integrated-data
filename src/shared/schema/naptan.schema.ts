@@ -57,6 +57,7 @@ const stopClassificationSchema = z.object({
                         .object({
                             TimingStatus: z.string().optional(),
                         })
+                        .or(emptyTag)
                         .optional(),
                 })
                 .optional(),
@@ -116,9 +117,11 @@ export const naptanSchema = z.object({
         StopPoints: z.object({
             StopPoint: z.array(stopPointSchema),
         }),
-        StopAreas: z.object({
-            StopArea: z.array(stopAreaSchema),
-        }),
+        StopAreas: z
+            .object({
+                StopArea: z.array(stopAreaSchema),
+            })
+            .optional(),
     }),
 });
 
@@ -177,7 +180,7 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
         stopPoints.push(...transformedStopPoints);
     }
 
-    if (item.NaPTAN.StopAreas.StopArea.length > 0) {
+    if (item.NaPTAN.StopAreas && item.NaPTAN.StopAreas.StopArea.length > 0) {
         const transformedStopAreas = item.NaPTAN.StopAreas.StopArea.map((stopArea) => {
             const newStopArea: NewNaptanStopArea = {
                 stop_area_code: stopArea.StopAreaCode,
