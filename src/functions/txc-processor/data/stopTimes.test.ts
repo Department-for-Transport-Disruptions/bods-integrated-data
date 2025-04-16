@@ -610,7 +610,7 @@ describe("stopTimes", () => {
         expect(insertStopTimesMock).not.toHaveBeenCalled();
     });
 
-    it("excludes stop times with location type of 2", async () => {
+    it("excludes stop times with location type of 2, 3 or 4", async () => {
         const journeyPatternSections: TxcJourneyPatternSection[] = [
             {
                 "@_id": "1",
@@ -739,6 +739,16 @@ describe("stopTimes", () => {
             {
                 id: "3",
                 location_type: LocationType.StopOrPlatform,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "4",
+                location_type: LocationType.GenericNode,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "5",
+                location_type: LocationType.BoardingArea,
                 wheelchair_boarding: 0,
             },
         ]);
