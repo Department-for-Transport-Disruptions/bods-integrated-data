@@ -1,17 +1,19 @@
 import { z } from "zod";
-import { NewNaptanStop } from "../database";
+import { NewNaptanStop, NewNaptanStopArea } from "../database";
 
 const selfClosingTag = z.literal("");
 const emptyTag = selfClosingTag.transform(() => undefined);
 
 const locationSchema = z.object({
-    Translation: z.object({
-        GridType: z.string().optional(),
-        Easting: z.string(),
-        Northing: z.string(),
-        Longitude: z.string(),
-        Latitude: z.string(),
-    }),
+    Translation: z
+        .object({
+            GridType: z.string().optional(),
+            Easting: z.string(),
+            Northing: z.string(),
+            Longitude: z.string(),
+            Latitude: z.string(),
+        })
+        .optional(),
 });
 
 const stopClassificationSchema = z.object({
@@ -146,11 +148,11 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
                 town: stop.Place.Town ?? null,
                 suburb: stop.Place.Suburb ?? null,
                 locality_centre: stop.Place.LocalityCentre ?? null,
-                grid_type: stop.Place.Location.Translation.GridType ?? null,
-                easting: stop.Place.Location.Translation.Easting,
-                northing: stop.Place.Location.Translation.Northing,
-                longitude: stop.Place.Location.Translation.Longitude,
-                latitude: stop.Place.Location.Translation.Latitude,
+                grid_type: stop.Place.Location.Translation?.GridType ?? null,
+                easting: stop.Place.Location.Translation?.Easting ?? null,
+                northing: stop.Place.Location.Translation?.Northing ?? null,
+                longitude: stop.Place.Location.Translation?.Longitude ?? null,
+                latitude: stop.Place.Location.Translation?.Latitude ?? null,
                 stop_type: stop.StopClassification.StopType,
                 bus_stop_type: stop.StopClassification.OnStreet?.Bus?.BusStopType,
                 timing_status:
@@ -177,17 +179,18 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
 
     if (item.NaPTAN.StopAreas.StopArea.length > 0) {
         const transformedStopAreas = item.NaPTAN.StopAreas.StopArea.map((stopArea) => {
-            return {
+            const newStopArea: NewNaptanStopArea = {
                 stop_area_code: stopArea.StopAreaCode,
                 name: stopArea.Name,
                 administrative_area_code: stopArea.AdministrativeAreaRef,
                 stop_area_type: stopArea.StopAreaType,
-                grid_type: stopArea.Location.Translation.GridType ?? null,
-                easting: stopArea.Location.Translation.Easting,
-                northing: stopArea.Location.Translation.Northing,
-                longitude: stopArea.Location.Translation.Longitude,
-                latitude: stopArea.Location.Translation.Latitude,
+                grid_type: stopArea.Location.Translation?.GridType ?? null,
+                easting: stopArea.Location.Translation?.Easting ?? null,
+                northing: stopArea.Location.Translation?.Northing ?? null,
+                longitude: stopArea.Location.Translation?.Longitude ?? null,
+                latitude: stopArea.Location.Translation?.Latitude ?? null,
             };
+            return newStopArea;
         });
 
         stopAreas.push(...transformedStopAreas);

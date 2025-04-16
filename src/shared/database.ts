@@ -171,11 +171,11 @@ export interface NaptanStopAreaTable {
     name: string;
     administrative_area_code: string;
     stop_area_type: string;
-    grid_type: string;
-    easting: string;
-    northing: string;
-    longitude: string;
-    latitude: string;
+    grid_type: string | null;
+    easting: string | null;
+    northing: string | null;
+    longitude: string | null;
+    latitude: string | null;
 }
 
 export type NaptanStopArea = Selectable<NaptanStopAreaTable>;
