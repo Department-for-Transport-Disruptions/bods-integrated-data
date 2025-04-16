@@ -25,7 +25,7 @@ const databaseTables: TableKey[] = [
     { table: "stop_time", newTable: "stop_time_new", key: "id" },
     { table: "noc_operator", newTable: "noc_operator_new", key: "noc" },
     { table: "naptan_stop", newTable: "naptan_stop_new", key: "atco_code" },
-    { table: "naptan_stop_area", newTable: "naptan_stop_area_new", key: "atco_code" },
+    { table: "naptan_stop_area", newTable: "naptan_stop_area_new", key: "stop_area_code" },
     { table: "nptg_admin_area", newTable: "nptg_admin_area_new", key: "admin_area_code" },
     { table: "nptg_locality", newTable: "nptg_locality_new", key: "locality_code" },
     { table: "nptg_region", newTable: "nptg_region_new", key: "region_code" },

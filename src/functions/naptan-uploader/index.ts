@@ -86,6 +86,7 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], napt
             return dbClient
                 .insertInto("naptan_stop_area_new")
                 .values(batch as NaptanStopArea[])
+                .onConflict((oc) => oc.doNothing())
                 .execute()
                 .then(() => 0);
         },

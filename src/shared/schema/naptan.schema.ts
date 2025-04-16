@@ -127,7 +127,7 @@ export const naptanSchema = z.object({
 
 export const naptanSchemaTransformed = naptanSchema.transform((item) => {
     const stopPoints: NewNaptanStop[] = [];
-    const stopAreas = [];
+    const stopAreas: NewNaptanStopArea[] = [];
 
     if (item.NaPTAN.StopPoints.StopPoint.length > 0) {
         const transformedStopPoints = item.NaPTAN.StopPoints.StopPoint.map((stop) => {

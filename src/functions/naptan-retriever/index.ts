@@ -23,7 +23,11 @@ const retrieveNaptanCsvData = async (bucketName: string) => {
 };
 
 const getAtcoAreaCodes = async (dbClient: KyselyDb) => {
-    const nptgAdminAreas = await dbClient.selectFrom("nptg_admin_area_new").selectAll().execute();
+    const nptgAdminAreas = await dbClient
+        .selectFrom("nptg_admin_area_new")
+        .selectAll()
+        .distinctOn(["atco_code"])
+        .execute();
     return nptgAdminAreas.map((nptgAdminArea) => nptgAdminArea.atco_code);
 };
 
@@ -68,6 +72,10 @@ export const handler: Handler = async (event, context) => {
         logger.info("Starting naptan retriever");
 
         const atcoAreaCodes = await getAtcoAreaCodes(dbClient);
+
+        if (atcoAreaCodes.length === 0) {
+            throw new Error("No ATCO area codes found in nptg_admin_area_new table");
+        }
 
         await retrieveNaptanCsvData(bucketName);
         await retrieveNaptanXmlData(bucketName, atcoAreaCodes);
