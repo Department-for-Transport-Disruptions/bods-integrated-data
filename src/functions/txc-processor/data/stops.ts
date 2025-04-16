@@ -1,4 +1,11 @@
-import { KyselyDb, LocationType, NaptanStop, NaptanStopArea, NewStop } from "@bods-integrated-data/shared/database";
+import {
+    KyselyDb,
+    LocationType,
+    NaptanStop,
+    NaptanStopArea,
+    NewStop,
+    WheelchairAccessibility,
+} from "@bods-integrated-data/shared/database";
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import OsPoint from "ospoint";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
@@ -18,7 +25,7 @@ export const mapStop = (
 ): NewStop[] => {
     const stop: NewStop = {
         id: id.toUpperCase(),
-        wheelchair_boarding: 0,
+        wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
         parent_station: null,
         stop_name: name.trim(),
         stop_lat: latitude,
@@ -56,7 +63,7 @@ export const mapStop = (
 
             if (stopArea) {
                 stop.parent_station = stopArea.stop_area_code;
-                stopAreaStop = createStopAreaStop(stop, stopArea, LocationType.Station);
+                stopAreaStop = createStopAreaStop(stopArea, LocationType.Station, naptanStop.region_code);
             }
         }
 
@@ -65,7 +72,7 @@ export const mapStop = (
 
             if (stopArea) {
                 stop.parent_station = stopArea.stop_area_code;
-                stopAreaStop = createStopAreaStop(stop, stopArea, LocationType.EntranceOrExit);
+                stopAreaStop = createStopAreaStop(stopArea, LocationType.EntranceOrExit, naptanStop.region_code);
             }
         }
     }
@@ -79,14 +86,21 @@ export const mapStop = (
     return stops;
 };
 
-export const createStopAreaStop = (stop: NewStop, stopArea: NaptanStopArea, locationType: LocationType): NewStop => ({
-    ...stop,
-    id: stopArea.stop_area_code,
-    stop_name: stopArea.name,
+export const createStopAreaStop = (
+    stopArea: NaptanStopArea,
+    locationType: LocationType,
+    regionCode: string | null,
+): NewStop => ({
+    id: stopArea.stop_area_code.toUpperCase(),
+    wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
     parent_station: null,
+    stop_name: stopArea.name.trim(),
     location_type: locationType,
-    stop_lat: stopArea.latitude ? Number.parseFloat(stopArea.latitude) : stop.stop_lat,
-    stop_lon: stopArea.longitude ? Number.parseFloat(stopArea.longitude) : stop.stop_lon,
+    stop_lat: stopArea.latitude ? Number.parseFloat(stopArea.latitude) : null,
+    stop_lon: stopArea.longitude ? Number.parseFloat(stopArea.longitude) : null,
+    stop_code: null,
+    platform_code: null,
+    region_code: regionCode,
 });
 
 export const getCoordinates = (location?: StopPointLocation) => {
