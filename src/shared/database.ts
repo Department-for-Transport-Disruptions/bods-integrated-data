@@ -67,6 +67,8 @@ export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
 export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;
+    naptan_stop_area: NaptanStopAreaTable;
+    naptan_stop_area_new: NaptanStopAreaTable;
     nptg_admin_area: NptgAdminAreaTable;
     nptg_admin_area_new: NptgAdminAreaTable;
     nptg_locality: NptgLocalityTable;
@@ -157,11 +159,28 @@ export interface NaptanStopTable {
     revision_number: string | null;
     modification: string | null;
     status: string | null;
+    stop_area_code: string | null;
 }
 
 export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
+
+export interface NaptanStopAreaTable {
+    stop_area_code: string;
+    name: string;
+    administrative_area_code: string;
+    stop_area_type: string;
+    grid_type: string | null;
+    easting: string | null;
+    northing: string | null;
+    longitude: string | null;
+    latitude: string | null;
+}
+
+export type NaptanStopArea = Selectable<NaptanStopAreaTable>;
+export type NewNaptanStopArea = Insertable<NaptanStopAreaTable>;
+export type NaptanStopAreaUpdate = Updateable<NaptanStopAreaTable>;
 
 export interface NptgAdminAreaTable {
     admin_area_code: string;
@@ -408,9 +427,11 @@ export type NewShape = Insertable<GtfsShapeTable>;
 export type ShapeUpdate = Updateable<GtfsShapeTable>;
 
 export enum LocationType {
-    None = 0,
-    StopAreas = 1,
-    RealStationEntrance = 2,
+    StopOrPlatform = 0,
+    Station = 1,
+    EntranceOrExit = 2,
+    GenericNode = 3,
+    BoardingArea = 4,
 }
 
 export interface GtfsStopTable {

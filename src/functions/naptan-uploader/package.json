@@ -4,7 +4,8 @@
     "description": "",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./naptan-uploader.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/naptan-uploader.zip ../dist/naptan-uploader.zip"
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/naptan-uploader.zip ../dist/naptan-uploader.zip",
+        "test": "vitest run"
     },
     "keywords": [],
     "author": "",
@@ -14,6 +15,7 @@
         "@aws-sdk/client-secrets-manager": "^3.682.0",
         "@bods-integrated-data/shared": "workspace:^",
         "bluebird": "^3.7.2",
+        "fast-xml-parser": "^5.2.0",
         "kysely": "^0.27.3",
         "ospoint": "^0.2.1",
         "papaparse": "^5.4.1",

@@ -101,7 +101,7 @@ export const processStopTimes = async (
             return stopTimes;
         })
         .map<NewStopTime | null>((stopTime) => {
-            const stopPoint = insertedStopPoints.find((isp) => isp.id === stopTime.stop_id);
+            const stopPoint = insertedStopPoints.find((stop) => stop.id === stopTime.stop_id);
 
             if (!stopPoint) {
                 return null;
@@ -109,7 +109,10 @@ export const processStopTimes = async (
 
             return {
                 ...stopTime,
-                exclude: stopPoint?.location_type === LocationType.RealStationEntrance,
+                exclude:
+                    stopPoint.location_type === LocationType.EntranceOrExit ||
+                    stopPoint.location_type === LocationType.GenericNode ||
+                    stopPoint.location_type === LocationType.BoardingArea,
             };
         })
         .filter(notEmpty);

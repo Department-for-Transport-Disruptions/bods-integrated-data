@@ -89,67 +89,6 @@
                     }
                 },
                 {
-                    "StartAt": "Retrieve NaPTAN Data",
-                    "States": {
-                        "Retrieve NaPTAN Data": {
-                            "Type": "Task",
-                            "Resource": "arn:aws:states:::lambda:invoke",
-                            "Parameters": {
-                                "FunctionName": "${naptan_retriever_function_arn}:$LATEST"
-                            },
-                            "Retry": [
-                                {
-                                    "ErrorEquals": [
-                                        "Lambda.ServiceException",
-                                        "Lambda.AWSLambdaException",
-                                        "Lambda.SdkClientException",
-                                        "Lambda.TooManyRequestsException"
-                                    ],
-                                    "IntervalSeconds": 1,
-                                    "MaxAttempts": 3,
-                                    "BackoffRate": 2
-                                }
-                            ],
-                            "Next": "Process NaPTAN Data"
-                        },
-                        "Process NaPTAN Data": {
-                            "Type": "Task",
-                            "Resource": "arn:aws:states:::lambda:invoke",
-                            "Parameters": {
-                                "FunctionName": "${naptan_uploader_function_arn}:$LATEST",
-                                "Payload": {
-                                    "Records": [
-                                        {
-                                            "s3": {
-                                                "object": {
-                                                    "key": "Stops.csv"
-                                                },
-                                                "bucket": {
-                                                    "name": "${naptan_bucket_name}"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            },
-                            "Retry": [
-                                {
-                                    "ErrorEquals": [
-                                        "Lambda.ServiceException",
-                                        "Lambda.AWSLambdaException",
-                                        "Lambda.SdkClientException",
-                                        "Lambda.TooManyRequestsException"
-                                    ],
-                                    "IntervalSeconds": 1,
-                                    "MaxAttempts": 3,
-                                    "BackoffRate": 2
-                                }
-                            ],
-                            "End": true
-                        }
-                    }
-                },
-                {
                     "StartAt": "Retrieve NPTG Data",
                     "States": {
                         "Retrieve NPTG Data": {
@@ -206,7 +145,72 @@
                                     "BackoffRate": 2
                                 }
                             ],
-                            "End": true
+                            "Next": "Retrieve NaPTAN Data"
+                        },
+                        "Retrieve NaPTAN Data": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "Parameters": {
+                                "FunctionName": "${naptan_retriever_function_arn}:$LATEST"
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 1,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "Process NaPTAN Data"
+                        },
+                        "Process NaPTAN Data": {
+                            "Type": "Map",
+                            "ItemProcessor": {
+                                "ProcessorConfig": {
+                                    "Mode": "DISTRIBUTED",
+                                    "ExecutionType": "STANDARD"
+                                },
+                                "StartAt": "Process NapTAN XML",
+                                "States": {
+                                    "Process NapTAN XML": {
+                                        "Type": "Task",
+                                        "Resource": "arn:aws:states:::lambda:invoke",
+                                        "Parameters": {
+                                            "FunctionName": "${naptan_uploader_function_arn}:$LATEST",
+                                            "Payload": {
+                                                "Records": [
+                                                    {
+                                                        "s3": {
+                                                            "bucket": {
+                                                                "name": "${naptan_bucket_name}"
+                                                            },
+                                                            "object": {
+                                                                "key.$": "$.Key"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "End": true
+                                    }
+                                }
+                            },
+                            "ItemReader": {
+                                "Resource": "arn:aws:states:::s3:listObjectsV2",
+                                "Parameters": {
+                                    "Bucket": "${naptan_bucket_name}"
+                                }
+                            },
+                            "MaxConcurrency": 1,
+                            "ToleratedFailureCount": 0,
+                            "End": true,
+                            "ResultPath": null
                         }
                     }
                 },
@@ -509,6 +513,7 @@
         "Run Trip Table Creator": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
             "Parameters": {
                 "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST"
             },

@@ -1,9 +1,17 @@
-import { KyselyDb, LocationType, NaptanStop, NewStop } from "@bods-integrated-data/shared/database";
+import {
+    KyselyDb,
+    LocationType,
+    NaptanStop,
+    NaptanStopArea,
+    NewStop,
+    WheelchairAccessibility,
+} from "@bods-integrated-data/shared/database";
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import {
     NaptanStopWithRegionCode,
+    createStopAreaStop,
     getCoordinates,
     mapStop,
     processAnnotatedStopPointRefs,
@@ -13,7 +21,9 @@ import {
 describe("stops", () => {
     const dbClient = vi.fn() as unknown as KyselyDb;
     const getNaptanStopsMock = vi.spyOn(databaseFunctions, "getNaptanStops");
+    const getNaptanStopAreasMock = vi.spyOn(databaseFunctions, "getNaptanStopAreas");
     const insertStopsMock = vi.spyOn(databaseFunctions, "insertStops");
+    const mockStopAreas: Record<string, NaptanStopArea> = {};
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -29,20 +39,22 @@ describe("stops", () => {
                 longitude: "6",
             };
 
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "naptan_name",
-                stop_lat: 5,
-                stop_lon: 6,
-                location_type: LocationType.None,
-                platform_code: "BCS",
-                region_code: null,
-            };
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: "BCS",
+                    region_code: null,
+                },
+            ];
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -54,20 +66,22 @@ describe("stops", () => {
                 longitude: "6",
             };
 
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "name",
-                stop_lat: 5,
-                stop_lon: 6,
-                location_type: LocationType.None,
-                platform_code: "BCS",
-                region_code: null,
-            };
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: "4",
+                    stop_name: "name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: "BCS",
+                    region_code: null,
+                },
+            ];
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -78,46 +92,22 @@ describe("stops", () => {
                 stop_type: "BCS",
             };
 
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "naptan_name",
-                stop_lat: 2,
-                stop_lon: 3,
-                location_type: LocationType.None,
-                platform_code: "BCS",
-                region_code: null,
-            };
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 2,
+                    stop_lon: 3,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: "BCS",
+                    region_code: null,
+                },
+            ];
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
-            expect(result).toEqual(expected);
-        });
-
-        it("uses the RSE location when it is defined in the naptan data", () => {
-            const naptanStop: Partial<NaptanStop> = {
-                naptan_code: "4",
-                common_name: "naptan_name",
-                stop_type: "RSE",
-                latitude: "5",
-                longitude: "6",
-            };
-
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "naptan_name",
-                stop_lat: 5,
-                stop_lon: 6,
-                location_type: LocationType.RealStationEntrance,
-                platform_code: null,
-                region_code: null,
-            };
-
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -129,20 +119,22 @@ describe("stops", () => {
                 longitude: "6",
             };
 
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "naptan_name",
-                stop_lat: 5,
-                stop_lon: 6,
-                location_type: LocationType.None,
-                platform_code: null,
-                region_code: null,
-            };
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: null,
+                    region_code: null,
+                },
+            ];
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
@@ -155,37 +147,41 @@ describe("stops", () => {
                 longitude: "6",
             };
 
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "naptan_name",
-                stop_lat: 5,
-                stop_lon: 6,
-                location_type: LocationType.None,
-                platform_code: null,
-                region_code: null,
-            };
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: null,
+                    region_code: null,
+                },
+            ];
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
 
         it("maps a stop using fallback data when no naptan stop exists", () => {
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_name: "name",
-                stop_lat: 2,
-                stop_lon: 3,
-                location_type: LocationType.None,
-                platform_code: null,
-                region_code: null,
-            };
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_name: "name",
+                    stop_lat: 2,
+                    stop_lon: 3,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: null,
+                    region_code: null,
+                },
+            ];
 
-            const result = mapStop("1", "name", 2, 3);
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3);
             expect(result).toEqual(expected);
         });
 
@@ -199,20 +195,134 @@ describe("stops", () => {
                 region_code: "Y",
             };
 
-            const expected: NewStop = {
-                id: "1",
-                wheelchair_boarding: 0,
-                parent_station: null,
-                stop_code: "4",
-                stop_name: "naptan_name",
-                stop_lat: 5,
-                stop_lon: 6,
-                location_type: LocationType.None,
-                platform_code: "BCS",
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: "BCS",
+                    region_code: "Y",
+                },
+            ];
+
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            expect(result).toEqual(expected);
+        });
+
+        it("maps a platform stop area to a stop when a matching stop area is found for a stop", () => {
+            const mockStopAreas: Record<string, NaptanStopArea> = {
+                "111": {
+                    stop_area_code: "111",
+                    name: "stop_area_1",
+                    administrative_area_code: "a1",
+                    stop_area_type: "sa1",
+                    grid_type: null,
+                    easting: null,
+                    northing: null,
+                    longitude: "123",
+                    latitude: "456",
+                },
+            };
+
+            const naptanStop: Partial<NaptanStopWithRegionCode> = {
+                atco_code: "111",
+                naptan_code: "4",
+                common_name: "naptan_name",
+                stop_type: "BCS",
+                latitude: "5",
+                longitude: "6",
                 region_code: "Y",
             };
 
-            const result = mapStop("1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: "111",
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: "BCS",
+                    region_code: "Y",
+                },
+                {
+                    id: "111",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: null,
+                    stop_name: "stop_area_1",
+                    stop_lat: 456,
+                    stop_lon: 123,
+                    location_type: LocationType.Station,
+                    platform_code: null,
+                    region_code: "Y",
+                },
+            ];
+
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            expect(result).toEqual(expected);
+        });
+
+        it("maps a real station entrance stop area to a stop when a matching stop area is found for a stop", () => {
+            const mockStopAreas: Record<string, NaptanStopArea> = {
+                "111": {
+                    stop_area_code: "111",
+                    name: "stop_area_1",
+                    administrative_area_code: "a1",
+                    stop_area_type: "sa1",
+                    grid_type: null,
+                    easting: null,
+                    northing: null,
+                    longitude: "123",
+                    latitude: "456",
+                },
+            };
+
+            const naptanStop: Partial<NaptanStopWithRegionCode> = {
+                atco_code: "111",
+                naptan_code: "4",
+                common_name: "naptan_name",
+                stop_type: "BCE",
+                latitude: "5",
+                longitude: "6",
+                region_code: "Y",
+            };
+
+            const expected: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: "111",
+                    stop_code: "4",
+                    stop_name: "naptan_name",
+                    stop_lat: 5,
+                    stop_lon: 6,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: null,
+                    region_code: "Y",
+                },
+                {
+                    id: "111",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_code: null,
+                    stop_name: "stop_area_1",
+                    stop_lat: 456,
+                    stop_lon: 123,
+                    location_type: LocationType.EntranceOrExit,
+                    platform_code: null,
+                    region_code: "Y",
+                },
+            ];
+
+            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
     });
@@ -254,7 +364,7 @@ describe("stops", () => {
                     stop_name: "name1",
                     stop_lat: 1,
                     stop_lon: 2,
-                    location_type: LocationType.None,
+                    location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
                 },
@@ -265,13 +375,14 @@ describe("stops", () => {
                     stop_name: "name2",
                     stop_lat: 3,
                     stop_lon: 4,
-                    location_type: LocationType.None,
+                    location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
                 },
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
             const result = await processStopPoints(dbClient, stops, false);
@@ -315,7 +426,7 @@ describe("stops", () => {
                     stop_name: "name1",
                     stop_lat: 51.527168897029235,
                     stop_lon: -0.05455691862311166,
-                    location_type: LocationType.None,
+                    location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
                 },
@@ -326,13 +437,14 @@ describe("stops", () => {
                     stop_name: "name2",
                     stop_lat: 51.514334456018496,
                     stop_lon: -0.14944772395499886,
-                    location_type: LocationType.None,
+                    location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
                 },
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
             const result = await processStopPoints(dbClient, stops, false);
@@ -364,6 +476,7 @@ describe("stops", () => {
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
             const result = await processStopPoints(dbClient, stops, false);
@@ -403,7 +516,7 @@ describe("stops", () => {
                     stop_name: "name1",
                     stop_lat: 2,
                     stop_lon: 3,
-                    location_type: LocationType.None,
+                    location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
                 },
@@ -414,13 +527,14 @@ describe("stops", () => {
                     stop_name: "name2",
                     stop_lat: 5,
                     stop_lon: 6,
-                    location_type: LocationType.None,
+                    location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
                 },
             ];
 
             getNaptanStopsMock.mockResolvedValue([]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
             await processAnnotatedStopPointRefs(dbClient, stops, false);
@@ -496,5 +610,74 @@ describe("stops", () => {
             const result = getCoordinates(location);
             expect(result).toEqual({ latitude: 49.76683816759407, longitude: -7.557151359370474 });
         });
+    });
+
+    describe("createStopAreaStop", () => {
+        it("creates a stop area type of stop", () => {
+            const stopArea: NaptanStopArea = {
+                stop_area_code: "1",
+                name: "stop_area_name",
+                administrative_area_code: "a1",
+                stop_area_type: "sa1",
+                grid_type: null,
+                easting: null,
+                northing: null,
+                longitude: "123",
+                latitude: "456",
+            };
+            const result = createStopAreaStop(stopArea, LocationType.Station, "r1");
+            const expected: NewStop = {
+                id: "1",
+                wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+                parent_station: null,
+                stop_name: "stop_area_name",
+                location_type: LocationType.Station,
+                stop_lat: 456,
+                stop_lon: 123,
+                stop_code: null,
+                platform_code: null,
+                region_code: "r1",
+            };
+
+            expect(result).toEqual(expected);
+        });
+
+        it.each([
+            ["123", null, "12", "34", -7.557032183529047, 49.767131940394414],
+            [null, "456", "12", "34", -7.557032183529047, 49.767131940394414],
+            [null, null, "12", "34", -7.557032183529047, 49.767131940394414],
+            [null, null, "12", null, undefined, undefined],
+            [null, null, null, "34", undefined, undefined],
+        ])(
+            "falls back to easting and northing if longitude and latitude are not present",
+            (longitude, latitude, easting, northing, expectedLongitude, expectedLatitude) => {
+                const stopArea: NaptanStopArea = {
+                    stop_area_code: "1",
+                    name: "stop_area_name",
+                    administrative_area_code: "a1",
+                    stop_area_type: "sa1",
+                    grid_type: null,
+                    easting,
+                    northing,
+                    longitude,
+                    latitude,
+                };
+                const result = createStopAreaStop(stopArea, LocationType.EntranceOrExit, null);
+                const expected: NewStop = {
+                    id: "1",
+                    wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+                    parent_station: null,
+                    stop_name: "stop_area_name",
+                    location_type: LocationType.EntranceOrExit,
+                    stop_lat: expectedLatitude,
+                    stop_lon: expectedLongitude,
+                    stop_code: null,
+                    platform_code: null,
+                    region_code: null,
+                };
+
+                expect(result).toEqual(expected);
+            },
+        );
     });
 });
