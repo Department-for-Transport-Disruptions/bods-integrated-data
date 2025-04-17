@@ -41,28 +41,30 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
   name     = "integrated-data-timetables-sfn-${var.environment}"
   role_arn = aws_iam_role.integrated_data_timetables_sfn_role.arn
   definition = templatefile("${path.module}/timetables-state-machine.asl.json", {
-    db_cleardown_function_arn                = var.db_cleardown_function_arn,
-    noc_retriever_function_arn               = var.noc_retriever_function_arn,
-    noc_processor_function_arn               = var.noc_processor_function_arn,
-    noc_bucket_name                          = var.noc_bucket_name
-    naptan_retriever_function_arn            = var.naptan_retriever_function_arn,
-    naptan_uploader_function_arn             = var.naptan_uploader_function_arn,
-    naptan_bucket_name                       = var.naptan_bucket_name,
-    nptg_retriever_function_arn              = var.nptg_retriever_function_arn,
-    nptg_uploader_function_arn               = var.nptg_uploader_function_arn,
-    nptg_bucket_name                         = var.nptg_bucket_name,
-    bank_holidays_retriever_function_arn     = var.bank_holidays_retriever_function_arn,
-    bods_txc_retriever_function_arn          = var.bods_txc_retriever_function_arn,
-    unzipper_function_arn                    = var.unzipper_function_arn,
-    bods_txc_zipped_bucket_name              = var.bods_txc_zipped_bucket_name,
-    txc_processor_function_arn               = var.txc_processor_function_arn,
-    bods_txc_bucket_name                     = var.bods_txc_bucket_name,
-    tnds_txc_bucket_name                     = var.tnds_txc_bucket_name,
-    tnds_txc_retriever_function_arn          = var.tnds_txc_retriever_function_arn,
-    tnds_txc_zipped_bucket_name              = var.tnds_txc_zipped_bucket_name,
-    table_renamer_function_arn               = var.table_renamer_function_arn,
-    gtfs_timetables_generator_function_arn   = var.gtfs_timetables_generator_function_arn
-    gtfs_timetables_trip_mapper_function_arn = var.gtfs_timetables_trip_mapper_function_arn
+    db_cleardown_function_arn                       = var.db_cleardown_function_arn,
+    noc_retriever_function_arn                      = var.noc_retriever_function_arn,
+    noc_processor_function_arn                      = var.noc_processor_function_arn,
+    noc_bucket_name                                 = var.noc_bucket_name
+    naptan_retriever_function_arn                   = var.naptan_retriever_function_arn,
+    naptan_uploader_function_arn                    = var.naptan_uploader_function_arn,
+    naptan_bucket_name                              = var.naptan_bucket_name,
+    nptg_retriever_function_arn                     = var.nptg_retriever_function_arn,
+    nptg_uploader_function_arn                      = var.nptg_uploader_function_arn,
+    nptg_bucket_name                                = var.nptg_bucket_name,
+    bank_holidays_retriever_function_arn            = var.bank_holidays_retriever_function_arn,
+    bods_txc_retriever_function_arn                 = var.bods_txc_retriever_function_arn,
+    unzipper_function_arn                           = var.unzipper_function_arn,
+    bods_txc_zipped_bucket_name                     = var.bods_txc_zipped_bucket_name,
+    txc_processor_function_arn                      = var.txc_processor_function_arn,
+    bods_txc_bucket_name                            = var.bods_txc_bucket_name,
+    tnds_txc_bucket_name                            = var.tnds_txc_bucket_name,
+    tnds_txc_retriever_function_arn                 = var.tnds_txc_retriever_function_arn,
+    tnds_txc_zipped_bucket_name                     = var.tnds_txc_zipped_bucket_name,
+    table_renamer_function_arn                      = var.table_renamer_function_arn,
+    gtfs_timetables_trip_table_creator_function_arn = var.gtfs_timetables_trip_table_creator_function_arn
+    gtfs_timetables_generator_function_arn          = var.gtfs_timetables_generator_function_arn
+    gtfs_timetables_zipper_function_arn             = var.gtfs_timetables_zipper_function_arn
+    gtfs_timetables_trip_mapper_function_arn        = var.gtfs_timetables_trip_mapper_function_arn
   })
 }
 
@@ -86,7 +88,9 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           var.tnds_txc_retriever_function_arn,
           var.unzipper_function_arn,
           var.txc_processor_function_arn,
+          var.gtfs_timetables_trip_table_creator_function_arn,
           var.gtfs_timetables_generator_function_arn,
+          var.gtfs_timetables_zipper_function_arn,
           var.gtfs_timetables_trip_mapper_function_arn,
           var.db_cleardown_function_arn,
           var.table_renamer_function_arn,
@@ -101,7 +105,9 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "${var.tnds_txc_retriever_function_arn}*",
           "${var.unzipper_function_arn}*",
           "${var.txc_processor_function_arn}*",
+          "${var.gtfs_timetables_trip_table_creator_function_arn}*",
           "${var.gtfs_timetables_generator_function_arn}*",
+          "${var.gtfs_timetables_zipper_function_arn}*",
           "${var.gtfs_timetables_trip_mapper_function_arn}*",
           "${var.db_cleardown_function_arn}*",
           "${var.table_renamer_function_arn}*",
@@ -120,6 +126,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "arn:aws:s3:::${var.tnds_txc_zipped_bucket_name}",
           "arn:aws:s3:::${var.bods_txc_bucket_name}",
           "arn:aws:s3:::${var.tnds_txc_bucket_name}",
+          "arn:aws:s3:::${var.naptan_bucket_name}",
         ]
       },
       {
@@ -222,6 +229,8 @@ resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
   count = var.schedule != null ? 1 : 0
 
   name = "integrated-data-timetables-sfn-schedule-${var.environment}"
+
+  schedule_expression_timezone = "Europe/London"
 
   flexible_time_window {
     mode = "OFF"

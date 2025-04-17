@@ -9,6 +9,7 @@ import {
     calculateServicedOrgDaysToUse,
     formatCalendar,
     formatCalendarDates,
+    isCalendarEmpty,
     mapVehicleJourneysToCalendars,
     processCalendarDates,
     processCalendars,
@@ -517,6 +518,62 @@ describe("calendar", () => {
                     {
                         date: "20240407",
                         exception_type: 1,
+                    },
+                ],
+            });
+        });
+
+        it("formats serviced organisations with only days of non-operation", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            MondayToFriday: "",
+                        },
+                    },
+                    ServicedOrganisationDayType: {
+                        DaysOfNonOperation: {
+                            WorkingDays: [
+                                {
+                                    ServicedOrganisationRef: ["123"],
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    StartDate: "2024-04-01",
+                },
+                bankHolidaysJson,
+                [
+                    {
+                        OrganisationCode: "123",
+                        WorkingDays: [
+                            {
+                                DateRange: [[getDate("2024-04-08")]],
+                            },
+                        ],
+                    },
+                ],
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    start_date: "20240401",
+                    end_date: "20250101",
+                    calendar_hash: expect.any(String),
+                },
+                calendarDates: [
+                    {
+                        date: "20240408",
+                        exception_type: 2,
                     },
                 ],
             });
@@ -1083,6 +1140,125 @@ describe("calendar", () => {
                     calendar_hash: "fd96c7104362826f9df45c7d00bfe33b391e1954e36304127f96f056ddae198a",
                 },
             ]);
+        });
+
+        it("removes trips with empty calendars", async () => {
+            insertCalendarSpy.mockResolvedValue([
+                {
+                    ...defaultDaysOfOperation,
+                    calendar_hash: DEFAULT_HASH,
+                    id: 12,
+                },
+                {
+                    ...defaultDaysOfOperation,
+                    calendar_hash: "0388f4881e7cc8fbeb02f98d83a8a0f92e24a35458cc1c2b32f21729cd2142b5",
+                    id: 13,
+                },
+            ]);
+
+            const processedCalendars = await processCalendars(
+                dbClientMock,
+                defaultService,
+                [
+                    {
+                        routeId: 1,
+                        serviceId: 0,
+                        shapeId: "1",
+                        tripId: "1",
+                        vehicleJourney: defaultVehicleJourney,
+                        serviceCode: "test",
+                    },
+                    {
+                        routeId: 2,
+                        serviceId: 0,
+                        shapeId: "2",
+                        tripId: "2",
+                        vehicleJourney: {
+                            ...defaultVehicleJourney,
+                            OperatingProfile: {
+                                RegularDayType: {
+                                    DaysOfWeek: {},
+                                },
+                            },
+                        },
+                        serviceCode: "test2",
+                    },
+                ],
+                bankHolidaysJson,
+            );
+
+            expect(processedCalendars).toEqual([
+                {
+                    routeId: 1,
+                    serviceCode: "test",
+                    serviceId: 12,
+                    shapeId: "1",
+                    tripId: "1",
+                    vehicleJourney: defaultVehicleJourney,
+                },
+            ]);
+        });
+    });
+
+    describe("isCalendarEmpty", () => {
+        it("returns true if calendar is empty", () => {
+            const calendar = {
+                ...defaultDaysOfOperation,
+                start_date: "20240401",
+                end_date: "20250101",
+            };
+
+            expect(
+                isCalendarEmpty({
+                    calendar,
+                    calendarDates: [],
+                }),
+            ).toBe(true);
+        });
+
+        it("returns true if only calendar dates with exception type of 2", () => {
+            const calendar = {
+                ...defaultDaysOfOperation,
+                start_date: "20240401",
+                end_date: "20250101",
+            };
+
+            expect(
+                isCalendarEmpty({
+                    calendar,
+                    calendarDates: [
+                        {
+                            date: "20240401",
+                            exception_type: 2,
+                        },
+                        {
+                            date: "20240402",
+                            exception_type: 2,
+                        },
+                    ],
+                }),
+            ).toBe(true);
+        });
+
+        it("returns false if calendar is not empty", () => {
+            const calendar = {
+                ...defaultDaysOfOperation,
+                start_date: "20240401",
+                end_date: "20250101",
+                monday: 1 as const,
+            };
+
+            expect(
+                isCalendarEmpty({
+                    calendar,
+                    calendarDates: [
+                        {
+                            date: "20240401",
+                            exception_type: 1,
+                        },
+                    ],
+                }),
+            ).toBe(false);
         });
     });
 });

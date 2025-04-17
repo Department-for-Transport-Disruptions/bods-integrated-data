@@ -19,26 +19,28 @@ import {
 describe("utils", () => {
     describe("getPickupTypeFromStopActivity", () => {
         it.each([
-            ["pickUp", PickupType.Pickup],
-            ["pickUpAndSetDown", PickupType.Pickup],
-            ["setDown", PickupType.NoPickup],
-            ["pass", PickupType.NoPickup],
-            [undefined, PickupType.Pickup],
-        ])("returns the correct pickup type for the activity", (input, expected) => {
-            const result = getPickupTypeFromStopActivity(input);
+            ["pickUp", false, PickupType.Pickup],
+            ["pickUpAndSetDown", false, PickupType.Pickup],
+            ["setDown", false, PickupType.NoPickup],
+            ["pass", false, PickupType.NoPickup],
+            [undefined, false, PickupType.Pickup],
+            [undefined, true, PickupType.NoPickup],
+        ])("returns the correct pickup type for the activity", (activity, isLastStop, expected) => {
+            const result = getPickupTypeFromStopActivity(activity, isLastStop);
             expect(result).toEqual(expected);
         });
     });
 
     describe("getDropOffTypeFromStopActivity", () => {
         it.each([
-            ["pickUp", DropOffType.NoDropOff],
-            ["pickUpAndSetDown", DropOffType.DropOff],
-            ["setDown", DropOffType.DropOff],
-            ["pass", DropOffType.NoDropOff],
-            [undefined, DropOffType.NoDropOff],
-        ])("returns the correct drop off type for the activity", (input, expected) => {
-            const result = getDropOffTypeFromStopActivity(input);
+            ["pickUp", false, DropOffType.NoDropOff],
+            ["pickUpAndSetDown", false, DropOffType.DropOff],
+            ["setDown", false, DropOffType.DropOff],
+            ["pass", false, DropOffType.NoDropOff],
+            [undefined, true, DropOffType.NoDropOff],
+            [undefined, false, DropOffType.DropOff],
+        ])("returns the correct drop off type for the activity", (activity, isFirstStop, expected) => {
+            const result = getDropOffTypeFromStopActivity(activity, isFirstStop);
             expect(result).toEqual(expected);
         });
     });
@@ -107,7 +109,6 @@ describe("utils", () => {
                     "@_id": "1",
                     From: {
                         StopPointRef: "1",
-                        Activity: "pickUp",
                         TimingStatus: "principalTimingPoint",
                     },
                     To: {
@@ -120,9 +121,9 @@ describe("utils", () => {
                     "@_id": "2",
                     From: {
                         StopPointRef: "stop_id_2",
-                        Activity: "pickUpAndSetDown",
                         TimingStatus: "principalTimingPoint",
                         WaitTime: "PT30S",
+                        Activity: "setDown",
                     },
                     To: {
                         StopPointRef: "3",
@@ -134,13 +135,11 @@ describe("utils", () => {
                     "@_id": "3",
                     From: {
                         StopPointRef: "3",
-                        Activity: "pickUpAndSetDown",
                         TimingStatus: "timeInfoPoint",
                         WaitTime: "PT2M",
                     },
                     To: {
                         StopPointRef: "4",
-                        Activity: "setDown",
                         TimingStatus: "timeInfoPoint",
                     },
                     RunTime: "PT10M",
@@ -169,7 +168,7 @@ describe("utils", () => {
                     departure_time: "00:01:55",
                     stop_sequence: 1,
                     stop_headsign: "",
-                    pickup_type: PickupType.Pickup,
+                    pickup_type: PickupType.NoPickup,
                     drop_off_type: DropOffType.DropOff,
                     shape_dist_traveled: null,
                     timepoint: Timepoint.Exact,
@@ -320,6 +319,122 @@ describe("utils", () => {
                     destination_stop_id: "",
                     arrival_time: "49:05:15",
                     departure_time: "49:05:15",
+                    stop_sequence: 3,
+                    stop_headsign: "",
+                    pickup_type: PickupType.NoPickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Approximate,
+                },
+            ];
+
+            const result = mapTimingLinksToStopTimes("trip_id", vehicleJourney, journeyPatternTimingLinks);
+            expect(result).toEqual(expected);
+        });
+
+        it("correctly handles DepartureDayShift", () => {
+            const vehicleJourney: VehicleJourney = {
+                DepartureTime: "00:10:00",
+                DepartureDayShift: 1,
+                JourneyPatternRef: "",
+                LineRef: "",
+                ServiceRef: "",
+                VehicleJourneyCode: "1",
+                VehicleJourneyTimingLink: [
+                    {
+                        JourneyPatternTimingLinkRef: "1",
+                    },
+                ],
+            };
+
+            const journeyPatternTimingLinks: AbstractTimingLink[] = [
+                {
+                    "@_id": "1",
+                    From: {
+                        StopPointRef: "1",
+                        Activity: "pickUp",
+                        TimingStatus: "principalTimingPoint",
+                        WaitTime: "PT2M",
+                    },
+                    To: {
+                        StopPointRef: "2",
+                    },
+                    RunTime: "PT35M",
+                },
+                {
+                    "@_id": "2",
+                    From: {
+                        StopPointRef: "2",
+                        Activity: "pickUpAndSetDown",
+                        TimingStatus: "principalTimingPoint",
+                    },
+                    To: {
+                        StopPointRef: "3",
+                    },
+                    RunTime: "PT25H",
+                },
+                {
+                    "@_id": "3",
+                    From: {
+                        StopPointRef: "3",
+                        Activity: "pickUpAndSetDown",
+                        TimingStatus: "timeInfoPoint",
+                    },
+                    To: {
+                        StopPointRef: "4",
+                        Activity: "setDown",
+                        TimingStatus: "timeInfoPoint",
+                    },
+                    RunTime: "PT15S",
+                },
+            ];
+
+            const expected: NewStopTime[] = [
+                {
+                    trip_id: "trip_id",
+                    stop_id: "1",
+                    destination_stop_id: "2",
+                    arrival_time: "24:10:00",
+                    departure_time: "24:12:00",
+                    stop_sequence: 0,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.NoDropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Exact,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "2",
+                    destination_stop_id: "3",
+                    arrival_time: "24:47:00",
+                    departure_time: "24:47:00",
+                    stop_sequence: 1,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Exact,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "3",
+                    destination_stop_id: "4",
+                    arrival_time: "49:47:00",
+                    departure_time: "49:47:00",
+                    stop_sequence: 2,
+                    stop_headsign: "",
+                    pickup_type: PickupType.Pickup,
+                    drop_off_type: DropOffType.DropOff,
+                    shape_dist_traveled: null,
+                    timepoint: Timepoint.Approximate,
+                },
+                {
+                    trip_id: "trip_id",
+                    stop_id: "4",
+                    destination_stop_id: "",
+                    arrival_time: "49:47:15",
+                    departure_time: "49:47:15",
                     stop_sequence: 3,
                     stop_headsign: "",
                     pickup_type: PickupType.NoPickup,

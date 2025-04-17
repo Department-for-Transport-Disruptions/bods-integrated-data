@@ -96,13 +96,19 @@ export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
 const locationSchema = z.object({
     Translation: z
         .object({
-            Latitude: z.coerce.number(),
-            Longitude: z.coerce.number(),
+            Latitude: z.coerce.number().optional(),
+            Longitude: z.coerce.number().optional(),
+            Easting: z.string().optional(),
+            Northing: z.string().optional(),
         })
         .optional(),
     Latitude: z.coerce.number().optional(),
     Longitude: z.coerce.number().optional(),
+    Easting: z.string().optional(),
+    Northing: z.string().optional(),
 });
+
+export type StopPointLocation = z.infer<typeof locationSchema>;
 
 const trackSchema = z.object({
     Mapping: z.object({
@@ -215,6 +221,7 @@ export const vehicleJourneySchema = z.object({
     "@_RevisionNumber": z.string().optional(),
     VehicleJourneyCode: z.string(),
     DepartureTime: z.string(),
+    DepartureDayShift: z.preprocess((item) => (item === "1" || item === "+1" ? 1 : undefined), z.literal(1).optional()),
     DestinationDisplay: z.string().optional(),
     Frequency: z
         .object({
@@ -335,6 +342,7 @@ const castToObject = <T extends ZodSchema>(schema: T) => z.preprocess((val) => O
 
 export const txcSchema = z.object({
     TransXChange: z.object({
+        "@_RevisionNumber": z.string().optional().default("0"),
         Operators: castToObject(operatorsSchema.optional()),
         RouteSections: castToObject(routeSectionsSchema.optional()),
         Routes: castToObject(routesSchema.optional()),

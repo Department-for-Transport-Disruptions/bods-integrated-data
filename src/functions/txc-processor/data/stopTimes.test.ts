@@ -1,4 +1,11 @@
-import { DropOffType, KyselyDb, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
+import {
+    DropOffType,
+    KyselyDb,
+    LocationType,
+    NewStopTime,
+    PickupType,
+    Timepoint,
+} from "@bods-integrated-data/shared/database";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VehicleJourneyMapping } from "../types";
@@ -18,6 +25,34 @@ describe("stopTimes", () => {
     beforeEach(() => {
         vi.resetAllMocks();
     });
+
+    const defaultInsertedStops = [
+        {
+            id: "1",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "2",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "3",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "A",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "B",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+    ];
 
     it("inserts stop times into the database", async () => {
         const journeyPatternSections: TxcJourneyPatternSection[] = [
@@ -135,6 +170,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip1",
@@ -148,6 +184,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip1",
@@ -161,6 +198,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -174,6 +212,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -187,12 +226,13 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
         ];
 
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).toHaveBeenCalledWith(dbClient, expectedStopTimes);
     });
@@ -306,6 +346,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip1",
@@ -319,6 +360,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -332,6 +374,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -345,12 +388,13 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
         ];
 
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).toHaveBeenCalledWith(dbClient, expectedStopTimes);
     });
@@ -460,7 +504,7 @@ describe("stopTimes", () => {
 
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
 
         expect(updateTripWithOriginAndDestinationRefMock).toBeCalledTimes(2);
         expect(updateTripWithOriginAndDestinationRefMock.mock.calls[0]).toEqual([dbClient, "trip1", "1", "3"]);
@@ -516,7 +560,7 @@ describe("stopTimes", () => {
             },
         ];
 
-        await processStopTimes(dbClient, [], vehicleJourneyMappings);
+        await processStopTimes(dbClient, [], vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).not.toHaveBeenCalled();
     });
@@ -561,8 +605,154 @@ describe("stopTimes", () => {
             },
         ];
 
-        await processStopTimes(dbClient, [], vehicleJourneyMappings);
+        await processStopTimes(dbClient, [], vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).not.toHaveBeenCalled();
+    });
+
+    it("excludes stop times with location type of 2, 3 or 4", async () => {
+        const journeyPatternSections: TxcJourneyPatternSection[] = [
+            {
+                "@_id": "1",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "1",
+                        From: {
+                            StopPointRef: "1",
+                            Activity: "pickUp",
+                        },
+                        To: {
+                            StopPointRef: "2",
+                        },
+                        RunTime: "PT2M",
+                    },
+                ],
+            },
+            {
+                "@_id": "2",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "2,",
+                        From: {
+                            StopPointRef: "2",
+                            WaitTime: "PT1M",
+                            Activity: "pickUpAndSetDown",
+                        },
+                        To: {
+                            StopPointRef: "3",
+                            Activity: "setDown",
+                        },
+                        RunTime: "PT5M",
+                    },
+                ],
+            },
+        ];
+
+        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+            {
+                routeId: 1,
+                serviceId: 2,
+                shapeId: "3",
+                tripId: "trip1",
+                serviceCode: "test",
+                vehicleJourney: {
+                    LineRef: "5",
+                    ServiceRef: "6",
+                    JourneyPatternRef: "7",
+                    VehicleJourneyCode: "8",
+                    DepartureTime: "00:00:00",
+                    Operational: {
+                        Block: {
+                            BlockNumber: "block1",
+                        },
+                        TicketMachine: {
+                            JourneyCode: "journey1",
+                        },
+                    },
+                },
+                journeyPattern: {
+                    "@_id": "7",
+                    DestinationDisplay: "service1",
+                    JourneyPatternSectionRefs: ["1", "2"],
+                },
+            },
+        ];
+
+        const expectedStopTimes: NewStopTime[] = [
+            {
+                trip_id: "trip1",
+                stop_id: "1",
+                destination_stop_id: "2",
+                arrival_time: "00:00:00",
+                departure_time: "00:00:00",
+                stop_sequence: 0,
+                stop_headsign: "",
+                pickup_type: PickupType.Pickup,
+                drop_off_type: DropOffType.NoDropOff,
+                shape_dist_traveled: null,
+                timepoint: Timepoint.Approximate,
+                exclude: false,
+            },
+            {
+                trip_id: "trip1",
+                stop_id: "2",
+                destination_stop_id: "3",
+                arrival_time: "00:02:00",
+                departure_time: "00:03:00",
+                stop_sequence: 1,
+                stop_headsign: "",
+                pickup_type: PickupType.Pickup,
+                drop_off_type: DropOffType.DropOff,
+                shape_dist_traveled: null,
+                timepoint: Timepoint.Approximate,
+                exclude: true,
+            },
+            {
+                trip_id: "trip1",
+                stop_id: "3",
+                destination_stop_id: "",
+                arrival_time: "00:08:00",
+                departure_time: "00:08:00",
+                stop_sequence: 2,
+                stop_headsign: "",
+                pickup_type: PickupType.NoPickup,
+                drop_off_type: DropOffType.DropOff,
+                shape_dist_traveled: null,
+                timepoint: Timepoint.Approximate,
+                exclude: false,
+            },
+        ];
+
+        insertStopTimesMock.mockImplementation(() => Promise.resolve());
+
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, [
+            {
+                id: "1",
+                location_type: LocationType.StopOrPlatform,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "2",
+                location_type: LocationType.EntranceOrExit,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "3",
+                location_type: LocationType.StopOrPlatform,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "4",
+                location_type: LocationType.GenericNode,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "5",
+                location_type: LocationType.BoardingArea,
+                wheelchair_boarding: 0,
+            },
+        ]);
+
+        expect(insertStopTimesMock).toHaveBeenCalledWith(dbClient, expectedStopTimes);
     });
 });

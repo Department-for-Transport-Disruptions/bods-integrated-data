@@ -10,7 +10,7 @@ export const hasServiceExpired = (service: Service) => {
     return endDate?.isBefore(currentDate, "day");
 };
 
-export const getPickupTypeFromStopActivity = (activity?: string) => {
+export const getPickupTypeFromStopActivity = (activity?: string, isLastStop = false) => {
     switch (activity) {
         case "pickUp":
         case "pickUpAndSetDown":
@@ -19,11 +19,11 @@ export const getPickupTypeFromStopActivity = (activity?: string) => {
         case "pass":
             return PickupType.NoPickup;
         default:
-            return PickupType.Pickup;
+            return isLastStop ? PickupType.NoPickup : PickupType.Pickup;
     }
 };
 
-export const getDropOffTypeFromStopActivity = (activity?: string) => {
+export const getDropOffTypeFromStopActivity = (activity?: string, isFirstStop = false) => {
     switch (activity) {
         case "setDown":
         case "pickUpAndSetDown":
@@ -32,7 +32,7 @@ export const getDropOffTypeFromStopActivity = (activity?: string) => {
         case "pass":
             return DropOffType.NoDropOff;
         default:
-            return DropOffType.NoDropOff;
+            return isFirstStop ? DropOffType.NoDropOff : DropOffType.DropOff;
     }
 };
 
@@ -40,11 +40,15 @@ export const getTimepointFromTimingStatus = (timingStatus?: string) => {
     return timingStatus === "principalTimingPoint" ? Timepoint.Exact : Timepoint.Approximate;
 };
 
-export const appendRolloverHours = (timeString: string, daysPastInitialServiceDay: number) => {
+export const appendRolloverHours = (
+    timeString: string,
+    daysPastInitialServiceDay: number,
+    isDepartureDayShift = false,
+) => {
     const [hoursString] = timeString.split(":");
 
     let hours = Number.parseInt(hoursString);
-    hours += daysPastInitialServiceDay * 24;
+    hours += (isDepartureDayShift ? daysPastInitialServiceDay + 1 : daysPastInitialServiceDay) * 24;
 
     return timeString.replace(hoursString, hours.toString());
 };
@@ -72,6 +76,7 @@ export const mapTimingLinksToStopTimes = (
     let currentStopDepartureTime = initialStopDepartureTime.clone();
     const initialStopDepartureDate = initialStopDepartureTime.startOf("day");
     let sequenceNumber = 0;
+    const isDepartureDayShift = vehicleJourney.DepartureDayShift === 1;
 
     return journeyPatternTimingLinks.flatMap<NewStopTime>((journeyPatternTimingLink, index) => {
         const vehicleJourneyTimingLink = vehicleJourney.VehicleJourneyTimingLink?.find(
@@ -86,6 +91,9 @@ export const mapTimingLinksToStopTimes = (
             sequenceNumber,
             journeyPatternTimingLink,
             vehicleJourneyTimingLink,
+            index === 0,
+            false,
+            isDepartureDayShift,
         );
 
         currentStopDepartureTime = nextArrivalTime.clone();
@@ -106,6 +114,9 @@ export const mapTimingLinksToStopTimes = (
                 sequenceNumber,
                 journeyPatternTimingLink,
                 vehicleJourneyTimingLink,
+                false,
+                true,
+                isDepartureDayShift,
             );
 
             if (finalStopTime) {
@@ -137,6 +148,9 @@ export const mapTimingLinkToStopTime = (
     sequenceNumber: number,
     journeyPatternTimingLink: AbstractTimingLink,
     vehicleJourneyTimingLink?: AbstractTimingLink,
+    isFirstStop = false,
+    isLastStop = false,
+    isDepartureDayShift = false,
 ): { nextArrivalTime: Dayjs; stopTime: NewStopTime } => {
     const journeyPatternTimingLinkStopUsage =
         stopUsageType === "from" ? journeyPatternTimingLink.From : journeyPatternTimingLink.To;
@@ -202,12 +216,20 @@ export const mapTimingLinkToStopTime = (
     const arrivalTimeDaysPastInitialServiceDay = arrivalTime.diff(initialStopDepartureDate, "day");
     const departureTimeDaysPastInitialServiceDay = departureTime.diff(initialStopDepartureDate, "day");
 
-    if (arrivalTimeDaysPastInitialServiceDay > 0) {
-        arrivalTimeString = appendRolloverHours(arrivalTimeString, arrivalTimeDaysPastInitialServiceDay);
+    if (arrivalTimeDaysPastInitialServiceDay > 0 || isDepartureDayShift) {
+        arrivalTimeString = appendRolloverHours(
+            arrivalTimeString,
+            arrivalTimeDaysPastInitialServiceDay,
+            isDepartureDayShift,
+        );
     }
 
-    if (departureTimeDaysPastInitialServiceDay > 0) {
-        departureTimeString = appendRolloverHours(departureTimeString, departureTimeDaysPastInitialServiceDay);
+    if (departureTimeDaysPastInitialServiceDay > 0 || isDepartureDayShift) {
+        departureTimeString = appendRolloverHours(
+            departureTimeString,
+            departureTimeDaysPastInitialServiceDay,
+            isDepartureDayShift,
+        );
     }
 
     return {
@@ -220,8 +242,8 @@ export const mapTimingLinkToStopTime = (
             departure_time: departureTimeString,
             stop_sequence: sequenceNumber,
             stop_headsign: "",
-            pickup_type: getPickupTypeFromStopActivity(activity),
-            drop_off_type: getDropOffTypeFromStopActivity(activity),
+            pickup_type: getPickupTypeFromStopActivity(activity, isLastStop),
+            drop_off_type: getDropOffTypeFromStopActivity(activity, isFirstStop),
             shape_dist_traveled: null,
             timepoint: getTimepointFromTimingStatus(timingStatus),
         },

@@ -65,7 +65,8 @@ module "cancellations_subscriber" {
 }
 
 resource "aws_lambda_function_url" "cancellations_subscribe_endpoint_function_url" {
-  count              = var.environment == "local" ? 1 : 0
+  count = var.environment == "local" ? 1 : 0
+
   function_name      = module.cancellations_subscriber.lambda_name
   authorization_type = "NONE"
 }
@@ -98,6 +99,8 @@ module "cancellations_producer_api_gateway" {
 }
 
 resource "aws_lambda_function_url" "cancellations_data_endpoint_function_url" {
+  count = var.environment == "local" ? 1 : 0
+
   function_name      = module.cancellations_data_endpoint.function_name
   authorization_type = "NONE"
 }

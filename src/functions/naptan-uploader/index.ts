@@ -1,15 +1,30 @@
-import { KyselyDb, NaptanStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, NaptanStop, NaptanStopArea, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { S3Event, S3Handler } from "aws-lambda";
+import { naptanSchemaTransformed } from "@bods-integrated-data/shared/schema/naptan.schema";
+import { S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
+import { XMLParser } from "fast-xml-parser";
 import OsPoint from "ospoint";
-import { parse } from "papaparse";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
+
+const arrayProperties = ["StopPoint", "StopArea", "StopAreaRef"];
+
+export const parseXml = (xml: string) => {
+    const parser = new XMLParser({
+        allowBooleanAttributes: true,
+        ignoreAttributes: true,
+        parseTagValue: false,
+        isArray: (tagName) => arrayProperties.includes(tagName),
+    });
+
+    const parsedXml = parser.parse(xml);
+    return naptanSchemaTransformed.parse(parsedXml);
+};
 
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
@@ -40,86 +55,58 @@ const addLonAndLatData = (naptanData: unknown[]) => {
     });
 };
 
-const getAndParseNaptanFile = async (event: S3Event) => {
-    const { object, bucket } = event.Records[0].s3;
-
+const getAndParseNaptanFile = async (bucketName: string, filepath: string) => {
     const file = await getS3Object({
-        Bucket: bucket.name,
-        Key: object.key,
+        Bucket: bucketName,
+        Key: filepath,
     });
 
     const body = (await file.Body?.transformToString()) || "";
-
-    const { data } = parse(body, {
-        skipEmptyLines: "greedy",
-        header: true,
-        transformHeader: (header) => {
-            const headerMap: Record<string, string> = {
-                ATCOCode: "atco_code",
-                NaptanCode: "naptan_code",
-                PlateCode: "plate_code",
-                CleardownCode: "cleardown_code",
-                CommonName: "common_name",
-                CommonNameLang: "common_name_lang",
-                ShortCommonName: "short_common_name",
-                ShortCommonNameLang: "short_common_name_lang",
-                Landmark: "landmark",
-                LandmarkLang: "landmark_lang",
-                Street: "street",
-                StreetLang: "street_lang",
-                Crossing: "crossing",
-                CrossingLang: "crossing_lang",
-                Indicator: "indicator",
-                IndicatorLang: "indicator_lang",
-                Bearing: "bearing",
-                NptgLocalityCode: "nptg_locality_code",
-                LocalityName: "locality_name",
-                ParentLocalityName: "parent_locality_name",
-                GrandParentLocalityName: "grand_parent_locality_name",
-                Town: "town",
-                TownLang: "town_lang",
-                Suburb: "suburb",
-                SuburbLang: "suburb_lang",
-                LocalityCentre: "locality_centre",
-                GridType: "grid_type",
-                Easting: "easting",
-                Northing: "northing",
-                Longitude: "longitude",
-                Latitude: "latitude",
-                StopType: "stop_type",
-                BusStopType: "bus_stop_type",
-                TimingStatus: "timing_status",
-                DefaultWaitTime: "default_wait_time",
-                Notes: "notes",
-                NotesLang: "notes_lang",
-                AdministrativeAreaCode: "administrative_area_code",
-                CreationDateTime: "creation_date_time",
-                ModificationDateTime: "modification_date_time",
-                RevisionNumber: "revision_number",
-                Modification: "modification",
-                Status: "status",
-            };
-
-            return headerMap[header];
-        },
-    });
+    const data = parseXml(body);
 
     return data;
 };
 
-const insertNaptanData = async (dbClient: KyselyDb, naptanData: unknown[]) => {
-    const numRows = naptanData.length;
-    const batches = [];
+const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], naptanStopAreas: unknown[]) => {
+    const numStopAreaRows = naptanStopAreas.length;
+    const stopAreaBatches = [];
 
-    while (naptanData.length > 0) {
-        const chunk = naptanData.splice(0, 1000);
-        batches.push(chunk);
+    while (naptanStopAreas.length > 0) {
+        const chunk = naptanStopAreas.splice(0, 1000);
+        stopAreaBatches.push(chunk);
     }
 
-    logger.info(`Uploading ${numRows} rows to the database in ${batches.length} batches`);
+    logger.info(
+        `Uploading ${numStopAreaRows} rows to the naptan_stop_area_new table in ${stopAreaBatches.length} batches`,
+    );
 
     await BluebirdPromise.map(
-        batches,
+        stopAreaBatches,
+        (batch) => {
+            return dbClient
+                .insertInto("naptan_stop_area_new")
+                .values(batch as NaptanStopArea[])
+                .onConflict((oc) => oc.doNothing())
+                .execute()
+                .then(() => 0);
+        },
+        {
+            concurrency: 50,
+        },
+    );
+
+    const numStopRows = naptanStops.length;
+    const stopBatches = [];
+
+    while (naptanStops.length > 0) {
+        const chunk = naptanStops.splice(0, 1000);
+        stopBatches.push(chunk);
+    }
+
+    logger.info(`Uploading ${numStopRows} rows to the naptan_stop_new table in ${stopBatches.length} batches`);
+
+    await BluebirdPromise.map(
+        stopBatches,
         (batch) => {
             return dbClient
                 .insertInto("naptan_stop_new")
@@ -139,12 +126,22 @@ export const handler: S3Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
+        const bucketName = event.Records[0].s3.bucket.name;
+        const filepath = event.Records[0].s3.object.key;
+        logger.filepath = filepath;
+
+        if (!filepath.endsWith(".xml")) {
+            logger.info("Not an XML file, skipping");
+            return;
+        }
+
         logger.info("Starting naptan uploader");
 
-        const naptanData = await getAndParseNaptanFile(event);
-        const naptanDataWithLonsAndLats = addLonAndLatData(naptanData);
+        const { stopPoints, stopAreas } = await getAndParseNaptanFile(bucketName, filepath);
+        const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
+        const naptanStopAreasWithLonsAndLats = addLonAndLatData(stopAreas);
 
-        await insertNaptanData(dbClient, naptanDataWithLonsAndLats);
+        await insertNaptanData(dbClient, naptanStopsWithLonsAndLats, naptanStopAreasWithLonsAndLats);
 
         logger.info("Naptan uploader successful");
     } catch (e) {
