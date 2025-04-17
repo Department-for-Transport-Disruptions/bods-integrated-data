@@ -90,18 +90,46 @@ export const createStopAreaStop = (
     stopArea: NaptanStopArea,
     locationType: LocationType,
     regionCode: string | null,
-): NewStop => ({
-    id: stopArea.stop_area_code.toUpperCase(),
-    wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
-    parent_station: null,
-    stop_name: stopArea.name.trim(),
-    location_type: locationType,
-    stop_lat: stopArea.latitude ? Number.parseFloat(stopArea.latitude) : null,
-    stop_lon: stopArea.longitude ? Number.parseFloat(stopArea.longitude) : null,
-    stop_code: null,
-    platform_code: null,
-    region_code: regionCode,
-});
+): NewStop => {
+    let latitude: number | undefined;
+    let longitude: number | undefined;
+
+    if (stopArea.longitude) {
+        longitude = Number.parseFloat(stopArea.longitude);
+    }
+
+    if (stopArea.latitude) {
+        latitude = Number.parseFloat(stopArea.latitude);
+    }
+
+    if (!longitude || !latitude) {
+        if (stopArea.northing && stopArea.easting) {
+            const osPoint = new OsPoint(stopArea.northing, stopArea.easting);
+            const coords = osPoint.toWGS84();
+
+            latitude = coords?.latitude;
+            longitude = coords?.longitude;
+        }
+    }
+
+    if (!latitude || !longitude) {
+        latitude = undefined;
+        longitude = undefined;
+    }
+
+    return {
+        id: stopArea.stop_area_code.toUpperCase(),
+        wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+        parent_station: null,
+        stop_name: stopArea.name.trim(),
+        location_type: locationType,
+        stop_lat: latitude,
+        stop_lon: longitude,
+        stop_code: null,
+        platform_code: null,
+        region_code: regionCode,
+    };
+};
 
 export const getCoordinates = (location?: StopPointLocation) => {
     let latitude: number | undefined;

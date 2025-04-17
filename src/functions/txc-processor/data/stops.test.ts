@@ -1,9 +1,17 @@
-import { KyselyDb, LocationType, NaptanStop, NaptanStopArea, NewStop } from "@bods-integrated-data/shared/database";
+import {
+    KyselyDb,
+    LocationType,
+    NaptanStop,
+    NaptanStopArea,
+    NewStop,
+    WheelchairAccessibility,
+} from "@bods-integrated-data/shared/database";
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import {
     NaptanStopWithRegionCode,
+    createStopAreaStop,
     getCoordinates,
     mapStop,
     processAnnotatedStopPointRefs,
@@ -602,5 +610,74 @@ describe("stops", () => {
             const result = getCoordinates(location);
             expect(result).toEqual({ latitude: 49.76683816759407, longitude: -7.557151359370474 });
         });
+    });
+
+    describe("createStopAreaStop", () => {
+        it("creates a stop area type of stop", () => {
+            const stopArea: NaptanStopArea = {
+                stop_area_code: "1",
+                name: "stop_area_name",
+                administrative_area_code: "a1",
+                stop_area_type: "sa1",
+                grid_type: null,
+                easting: null,
+                northing: null,
+                longitude: "123",
+                latitude: "456",
+            };
+            const result = createStopAreaStop(stopArea, LocationType.Station, "r1");
+            const expected: NewStop = {
+                id: "1",
+                wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+                parent_station: null,
+                stop_name: "stop_area_name",
+                location_type: LocationType.Station,
+                stop_lat: 456,
+                stop_lon: 123,
+                stop_code: null,
+                platform_code: null,
+                region_code: "r1",
+            };
+
+            expect(result).toEqual(expected);
+        });
+
+        it.each([
+            ["123", null, "12", "34", -7.557032183529047, 49.767131940394414],
+            [null, "456", "12", "34", -7.557032183529047, 49.767131940394414],
+            [null, null, "12", "34", -7.557032183529047, 49.767131940394414],
+            [null, null, "12", null, undefined, undefined],
+            [null, null, null, "34", undefined, undefined],
+        ])(
+            "falls back to easting and northing if longitude and latitude are not present",
+            (longitude, latitude, easting, northing, expectedLongitude, expectedLatitude) => {
+                const stopArea: NaptanStopArea = {
+                    stop_area_code: "1",
+                    name: "stop_area_name",
+                    administrative_area_code: "a1",
+                    stop_area_type: "sa1",
+                    grid_type: null,
+                    easting,
+                    northing,
+                    longitude,
+                    latitude,
+                };
+                const result = createStopAreaStop(stopArea, LocationType.EntranceOrExit, null);
+                const expected: NewStop = {
+                    id: "1",
+                    wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+                    parent_station: null,
+                    stop_name: "stop_area_name",
+                    location_type: LocationType.EntranceOrExit,
+                    stop_lat: expectedLatitude,
+                    stop_lon: expectedLongitude,
+                    stop_code: null,
+                    platform_code: null,
+                    region_code: null,
+                };
+
+                expect(result).toEqual(expected);
+            },
+        );
     });
 });
