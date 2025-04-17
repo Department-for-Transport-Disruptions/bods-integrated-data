@@ -19,6 +19,7 @@ describe("frequencies", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "4",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
@@ -39,6 +40,7 @@ describe("frequencies", () => {
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "14",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
@@ -85,6 +87,7 @@ describe("frequencies", () => {
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "4",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",

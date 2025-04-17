@@ -219,17 +219,29 @@ export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
     );
 };
 
-export const updateTripWithOriginAndDestinationRef = async (
+export const updateTripWithOriginDestinationRefAndBlockId = async (
     dbClient: KyselyDb,
     tripId: string,
     originRef: string | null,
     destinationRef: string | null,
+    blockId: string,
 ) => {
     await dbClient
         .updateTable("trip_new")
         .set({
             origin_stop_ref: originRef,
             destination_stop_ref: destinationRef,
+            block_id: blockId,
+        })
+        .where("id", "=", tripId)
+        .execute();
+};
+
+export const updateTripBlockId = async (dbClient: KyselyDb, tripId: string, blockId: string) => {
+    await dbClient
+        .updateTable("trip_new")
+        .set({
+            block_id: blockId,
         })
         .where("id", "=", tripId)
         .execute();

@@ -25,7 +25,8 @@ describe("calendar", () => {
     const dbClientMock = {} as KyselyDb;
     vi.mock("./database.ts");
 
-    vi.mock("@bods-integrated-data/shared/schema/dates.schema", () => ({
+    vi.mock("@bods-integrated-data/shared/schema/dates.schema", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/schema/dates.schema")>()),
         getTransformedBankHolidayOperationSchema: (_: BankHolidaysJson, schema: BankHolidayOperation) => {
             if (schema.ChristmasDay !== undefined) return ["20241225"];
             if (schema.BoxingDay !== undefined) return ["20241226"];
@@ -774,6 +775,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                        blockId: "",
                     },
                     {
                         routeId: 2,
@@ -782,6 +784,7 @@ describe("calendar", () => {
                         tripId: "2",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test2",
+                        blockId: "",
                     },
                 ],
                 serviceCalendar,
@@ -795,6 +798,7 @@ describe("calendar", () => {
                     serviceId: 0,
                     shapeId: "1",
                     tripId: "1",
+                    blockId: "",
                     vehicleJourney: defaultVehicleJourney,
                     serviceCode: "test",
                     calendar: serviceCalendar,
@@ -804,6 +808,7 @@ describe("calendar", () => {
                     serviceId: 0,
                     shapeId: "2",
                     tripId: "2",
+                    blockId: "",
                     vehicleJourney: defaultVehicleJourney,
                     serviceCode: "test2",
                     calendar: serviceCalendar,
@@ -837,6 +842,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                        blockId: "",
                     },
                 ],
                 null,
@@ -850,6 +856,7 @@ describe("calendar", () => {
                     serviceId: 0,
                     shapeId: "1",
                     tripId: "1",
+                    blockId: "",
                     vehicleJourney: defaultVehicleJourney,
                     serviceCode: "test",
                     calendar: expectedCalendar,
@@ -892,6 +899,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney,
                         serviceCode: "test",
+                        blockId: "",
                     },
                 ],
                 null,
@@ -905,6 +913,7 @@ describe("calendar", () => {
                     serviceId: 0,
                     shapeId: "1",
                     tripId: "1",
+                    blockId: "",
                     vehicleJourney,
                     serviceCode: "test",
                     calendar: expectedCalendar,
@@ -1044,6 +1053,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                        blockId: "",
                     },
                     {
                         routeId: 2,
@@ -1052,6 +1062,7 @@ describe("calendar", () => {
                         tripId: "2",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test2",
+                        blockId: "",
                     },
                 ],
                 bankHolidaysJson,
@@ -1065,6 +1076,22 @@ describe("calendar", () => {
                     shapeId: "1",
                     tripId: "1",
                     vehicleJourney: defaultVehicleJourney,
+                    blockId: "",
+                    calendarWithDates: {
+                        calendar: {
+                            calendar_hash: "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840",
+                            end_date: "20250101",
+                            friday: 1,
+                            monday: 1,
+                            saturday: 1,
+                            start_date: "20240401",
+                            sunday: 1,
+                            thursday: 1,
+                            tuesday: 1,
+                            wednesday: 1,
+                        },
+                        calendarDates: [],
+                    },
                 },
                 {
                     routeId: 2,
@@ -1073,6 +1100,22 @@ describe("calendar", () => {
                     shapeId: "2",
                     tripId: "2",
                     vehicleJourney: defaultVehicleJourney,
+                    blockId: "",
+                    calendarWithDates: {
+                        calendar: {
+                            calendar_hash: "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840",
+                            end_date: "20250101",
+                            friday: 1,
+                            monday: 1,
+                            saturday: 1,
+                            start_date: "20240401",
+                            sunday: 1,
+                            thursday: 1,
+                            tuesday: 1,
+                            wednesday: 1,
+                        },
+                        calendarDates: [],
+                    },
                 },
             ]);
         });
@@ -1089,6 +1132,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                        blockId: "",
                     },
                     {
                         routeId: 2,
@@ -1097,12 +1141,14 @@ describe("calendar", () => {
                         tripId: "2",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test2",
+                        blockId: "",
                     },
                     {
                         routeId: 2,
                         serviceId: 0,
                         shapeId: "3",
                         tripId: "3",
+                        blockId: "",
                         vehicleJourney: {
                             ...defaultVehicleJourney,
                             OperatingProfile: {
@@ -1167,6 +1213,7 @@ describe("calendar", () => {
                         tripId: "1",
                         vehicleJourney: defaultVehicleJourney,
                         serviceCode: "test",
+                        blockId: "",
                     },
                     {
                         routeId: 2,
@@ -1177,11 +1224,14 @@ describe("calendar", () => {
                             ...defaultVehicleJourney,
                             OperatingProfile: {
                                 RegularDayType: {
-                                    DaysOfWeek: {},
+                                    DaysOfWeek: {
+                                        Monday: "",
+                                    },
                                 },
                             },
                         },
                         serviceCode: "test2",
+                        blockId: "",
                     },
                 ],
                 bankHolidaysJson,
@@ -1195,6 +1245,22 @@ describe("calendar", () => {
                     shapeId: "1",
                     tripId: "1",
                     vehicleJourney: defaultVehicleJourney,
+                    blockId: "",
+                    calendarWithDates: {
+                        calendar: {
+                            calendar_hash: "927fd813a3f84dcb748712795f691fb8188961ec1a3ecf6377e5de9bc6614840",
+                            end_date: "20250101",
+                            friday: 1,
+                            monday: 1,
+                            saturday: 1,
+                            start_date: "20240401",
+                            sunday: 1,
+                            thursday: 1,
+                            tuesday: 1,
+                            wednesday: 1,
+                        },
+                        calendarDates: [],
+                    },
                 },
             ]);
         });

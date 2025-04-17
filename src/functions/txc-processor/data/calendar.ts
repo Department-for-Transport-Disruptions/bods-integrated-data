@@ -1,20 +1,19 @@
+import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
 import {
     Calendar,
     CalendarDateExceptionType,
+    CalendarWithDates,
     KyselyDb,
     NewCalendar,
     NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson, getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
 import { OperatingPeriod, OperatingProfile, Service, ServicedOrganisation } from "@bods-integrated-data/shared/schema";
-import {
-    DEFAULT_DATE_FORMAT,
-    getTransformedBankHolidayOperationSchema,
-} from "@bods-integrated-data/shared/schema/dates.schema";
+import { getTransformedBankHolidayOperationSchema } from "@bods-integrated-data/shared/schema/dates.schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Dayjs } from "dayjs";
 import { hasher } from "node-object-hash";
-import { CalendarWithDates, VehicleJourneyMapping } from "../types";
+import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
 import { insertCalendarDates, insertCalendars } from "./database";
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
@@ -482,7 +481,7 @@ export const processCalendars = async (
     vehicleJourneyMappings: VehicleJourneyMapping[],
     bankHolidaysJson: BankHolidaysJson,
     servicedOrganisations?: ServicedOrganisation[],
-): Promise<VehicleJourneyMapping[]> => {
+): Promise<VehicleJourneyMappingWithCalendar[]> => {
     let serviceCalendar: ReturnType<typeof formatCalendar> | null = null;
 
     if (service.OperatingProfile) {
@@ -516,7 +515,7 @@ export const processCalendars = async (
     await processCalendarDates(dbClient, insertedCalendars, uniqueCalendars);
 
     return calendarVehicleJourneyMappings
-        .map(({ calendar, ...keepAttrs }) => {
+        .map<VehicleJourneyMappingWithCalendar | null>(({ calendar, ...keepAttrs }) => {
             const calendarForService = uniqueCalendars.find(
                 (c) => c.calendar.calendar_hash === calendar.calendar.calendar_hash,
             );
@@ -536,6 +535,7 @@ export const processCalendars = async (
             return {
                 ...keepAttrs,
                 serviceId: insertedCalendarId,
+                calendarWithDates: calendarForService,
             };
         })
         .filter(notEmpty);

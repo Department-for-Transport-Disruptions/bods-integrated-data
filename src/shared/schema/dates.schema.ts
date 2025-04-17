@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_DATE_FORMAT } from "../constants";
 import {
     BankHolidaysJson,
     createBankHolidayFunctions,
@@ -7,8 +8,6 @@ import {
     getNextOccurrenceOfDate,
 } from "../dates";
 import { notEmpty, txcSelfClosingProperty } from "../utils";
-
-export const DEFAULT_DATE_FORMAT = "YYYYMMDD";
 
 const fixedBankHolidaysSchema = z.object({
     BoxingDay: txcSelfClosingProperty.optional(),

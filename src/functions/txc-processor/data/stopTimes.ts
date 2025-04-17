@@ -1,25 +1,29 @@
 import { KyselyDb, LocationType, NewStop, NewStopTime } from "@bods-integrated-data/shared/database";
+import { checkCalendarsOverlap } from "@bods-integrated-data/shared/dates";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { VehicleJourneyMapping } from "../types";
+import { VehicleJourneyMappingWithCalendar, VehicleJourneyMappingWithTimes } from "../types";
 import { mapTimingLinksToStopTimes } from "../utils";
-import { insertStopTimes, updateTripWithOriginAndDestinationRef } from "./database";
+import { insertStopTimes, updateTripWithOriginDestinationRefAndBlockId } from "./database";
 
 export const processStopTimes = async (
     dbClient: KyselyDb,
     txcJourneyPatternSections: TxcJourneyPatternSection[],
-    vehicleJourneyMappings: VehicleJourneyMapping[],
+    vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[],
     insertedStopPoints: NewStop[],
 ) => {
-    const tripOriginDestinationMap: {
+    const tripOriginDestinationBlockIdMap: {
         tripId: string;
         originStopRef: string | null;
         destinationStopRef: string | null;
+        blockId: string;
     }[] = [];
 
+    const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings) as VehicleJourneyMappingWithTimes[];
+
     const stopTimes = vehicleJourneyMappings
-        .flatMap<NewStopTime>((vehicleJourneyMapping) => {
+        .flatMap<NewStopTime>((vehicleJourneyMapping, index) => {
             const { tripId, vehicleJourney, journeyPattern } = vehicleJourneyMapping;
 
             if (!journeyPattern) {
@@ -42,10 +46,56 @@ export const processStopTimes = async (
 
             const stopTimes = mapTimingLinksToStopTimes(tripId, vehicleJourney, journeyPatternTimingLinks);
 
-            tripOriginDestinationMap.push({
+            if (!stopTimes.length) {
+                logger.warn(`No stop times found for trip ID: ${tripId}`);
+                return [];
+            }
+
+            const startTime = stopTimes[0].arrival_time;
+            const endTime = stopTimes[stopTimes.length - 1].departure_time;
+
+            const updatedVehicleJourneyMapping = updatedVehicleJourneyMappings[index];
+
+            updatedVehicleJourneyMapping.startTime = startTime;
+            updatedVehicleJourneyMapping.endTime = endTime;
+
+            if (updatedVehicleJourneyMapping.blockId) {
+                for (const vj of updatedVehicleJourneyMappings) {
+                    if (
+                        !vj.blockId ||
+                        vehicleJourneyMapping.blockId !== vj.blockId ||
+                        vehicleJourneyMapping.tripId === vj.tripId
+                    ) {
+                        continue;
+                    }
+
+                    const calendarsOverlap = checkCalendarsOverlap(
+                        vehicleJourneyMapping.calendarWithDates,
+                        vj.calendarWithDates,
+                    );
+
+                    if (!calendarsOverlap) {
+                        continue;
+                    }
+
+                    if (startTime < vj.endTime && endTime > vj.startTime) {
+                        updatedVehicleJourneyMapping.blockId = "";
+                        vj.blockId = "";
+
+                        const existingMapping = tripOriginDestinationBlockIdMap.find((t) => t.tripId === vj.tripId);
+
+                        if (existingMapping) {
+                            existingMapping.blockId = "";
+                        }
+                    }
+                }
+            }
+
+            tripOriginDestinationBlockIdMap.push({
                 tripId: tripId,
-                originStopRef: stopTimes[0]?.stop_id ?? null,
-                destinationStopRef: stopTimes.length > 1 ? stopTimes.at(-1)?.stop_id ?? null : null,
+                originStopRef: stopTimes[0].stop_id,
+                destinationStopRef: stopTimes[stopTimes.length - 1].stop_id,
+                blockId: updatedVehicleJourneyMappings[index].blockId,
             });
 
             return stopTimes;
@@ -70,12 +120,13 @@ export const processStopTimes = async (
     if (stopTimes.length > 0) {
         await insertStopTimes(dbClient, stopTimes);
 
-        for (const tripMapping of tripOriginDestinationMap) {
-            await updateTripWithOriginAndDestinationRef(
+        for (const tripMapping of tripOriginDestinationBlockIdMap) {
+            await updateTripWithOriginDestinationRefAndBlockId(
                 dbClient,
                 tripMapping.tripId,
                 tripMapping.originStopRef,
                 tripMapping.destinationStopRef,
+                tripMapping.blockId,
             );
         }
     }

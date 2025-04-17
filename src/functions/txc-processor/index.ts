@@ -143,13 +143,14 @@ const processServices = (
             return null;
         }
 
-        let vehicleJourneyMappings = vehicleJourneysForLines.map((vehicleJourney) => {
+        const vehicleJourneyMappings = vehicleJourneysForLines.map((vehicleJourney) => {
             const vehicleJourneyMapping: VehicleJourneyMapping = {
                 vehicleJourney,
                 routeId: 0,
                 serviceId: 0,
                 shapeId: "",
                 tripId: "",
+                blockId: "",
                 serviceCode: service.ServiceCode,
                 journeyPattern: getJourneyPatternForVehicleJourney(vehicleJourney, vehicleJourneys, services),
             };
@@ -171,23 +172,33 @@ const processServices = (
             return vehicleJourneyMapping;
         });
 
-        vehicleJourneyMappings = await processCalendars(
+        let vehicleJourneyMappingsWithCalendars = await processCalendars(
             dbClient,
             service,
             vehicleJourneyMappings,
             bankHolidaysJson,
             servicedOrganisations,
         );
-        vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
-        vehicleJourneyMappings = await processTrips(
+        vehicleJourneyMappingsWithCalendars = await processShapes(
             dbClient,
-            vehicleJourneyMappings,
+            txcRoutes,
+            txcRouteSections,
+            vehicleJourneyMappingsWithCalendars,
+        );
+        vehicleJourneyMappingsWithCalendars = await processTrips(
+            dbClient,
+            vehicleJourneyMappingsWithCalendars,
             filePath,
             revisionNumber,
             service,
         );
-        await processFrequencies(dbClient, vehicleJourneyMappings);
-        await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings, insertedStopPoints);
+        await processFrequencies(dbClient, vehicleJourneyMappingsWithCalendars);
+        await processStopTimes(
+            dbClient,
+            txcJourneyPatternSections,
+            vehicleJourneyMappingsWithCalendars,
+            insertedStopPoints,
+        );
     });
 
     return Promise.all(promises);

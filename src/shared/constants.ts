@@ -176,3 +176,5 @@ export const siriSxArrayProperties = [
     "Origins",
     "Destinations",
 ];
+
+export const DEFAULT_DATE_FORMAT = "YYYYMMDD";

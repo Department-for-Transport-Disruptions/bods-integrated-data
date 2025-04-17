@@ -21,6 +21,7 @@ describe("shapes", () => {
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
@@ -49,6 +50,7 @@ describe("shapes", () => {
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
@@ -92,6 +94,7 @@ describe("shapes", () => {
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
@@ -120,6 +123,7 @@ describe("shapes", () => {
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
@@ -162,6 +166,7 @@ describe("shapes", () => {
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
@@ -190,6 +195,7 @@ describe("shapes", () => {
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
@@ -498,6 +504,7 @@ describe("shapes", () => {
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
@@ -526,6 +533,7 @@ describe("shapes", () => {
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
@@ -634,6 +642,7 @@ describe("shapes", () => {
                     serviceId: 2,
                     shapeId: "3",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "5",
@@ -656,6 +665,7 @@ describe("shapes", () => {
                     serviceId: 12,
                     shapeId: "13",
                     tripId: "",
+                    blockId: "",
                     serviceCode: "test",
                     vehicleJourney: {
                         LineRef: "15",
