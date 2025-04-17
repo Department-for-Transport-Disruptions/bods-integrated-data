@@ -29,27 +29,27 @@ describe("stopTimes", () => {
     const defaultInsertedStops = [
         {
             id: "1",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "2",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "3",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "A",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
         {
             id: "B",
-            location_type: LocationType.None,
+            location_type: LocationType.StopOrPlatform,
             wheelchair_boarding: 0,
         },
     ];
@@ -610,7 +610,7 @@ describe("stopTimes", () => {
         expect(insertStopTimesMock).not.toHaveBeenCalled();
     });
 
-    it("excludes stop times with location type of 2", async () => {
+    it("excludes stop times with location type of 2, 3 or 4", async () => {
         const journeyPatternSections: TxcJourneyPatternSection[] = [
             {
                 "@_id": "1",
@@ -728,17 +728,27 @@ describe("stopTimes", () => {
         await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, [
             {
                 id: "1",
-                location_type: LocationType.None,
+                location_type: LocationType.StopOrPlatform,
                 wheelchair_boarding: 0,
             },
             {
                 id: "2",
-                location_type: LocationType.RealStationEntrance,
+                location_type: LocationType.EntranceOrExit,
                 wheelchair_boarding: 0,
             },
             {
                 id: "3",
-                location_type: LocationType.None,
+                location_type: LocationType.StopOrPlatform,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "4",
+                location_type: LocationType.GenericNode,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "5",
+                location_type: LocationType.BoardingArea,
                 wheelchair_boarding: 0,
             },
         ]);
