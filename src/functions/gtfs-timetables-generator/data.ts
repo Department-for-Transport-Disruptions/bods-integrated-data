@@ -1,30 +1,80 @@
 import { RegionCode } from "@bods-integrated-data/shared/constants";
-import { KyselyDb, Trip } from "@bods-integrated-data/shared/database";
+import { KyselyDb, LocationType, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { sql } from "kysely";
 
 export type Query = {
     getQuery: () => string;
-    fileName: string;
     forceQuote?: string[];
+    fileName: Files;
+};
+
+export type GtfsFile = {
+    fileName: Files;
     include: boolean;
 };
 
-export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
-    let query = dbClient
-        .selectFrom("trip")
-        .selectAll("trip")
-        .distinct()
-        .innerJoin("stop_time", "stop_time.trip_id", "trip.id")
-        .innerJoin("stop", "stop.id", "stop_time.stop_id");
+export const createTripTable = async (dbClient: KyselyDb) => {
+    await dbClient.schema.dropTable("trip_ALL").ifExists().execute();
+    await sql`CREATE TABLE ${sql.table("trip_ALL")} (LIKE ${sql.table("trip")} INCLUDING ALL)`.execute(dbClient);
 
-    if (regionCode === "E") {
-        query = query.where("stop.region_code", "in", ["EA", "EM", "L", "NE", "NW", "SE", "SW", "WM", "Y"]);
-    } else {
-        query = query.where("stop.region_code", "=", regionCode);
+    await dbClient
+        .insertInto("trip_ALL")
+        .expression((eb) =>
+            eb
+                .selectFrom("trip")
+                .selectAll("trip")
+                .distinctOn([
+                    "trip.route_id",
+                    "trip.service_id",
+                    "trip.ticket_machine_journey_code",
+                    "trip.direction",
+                    "trip.origin_stop_ref",
+                    "trip.destination_stop_ref",
+                    "trip.departure_time",
+                ])
+                .orderBy([
+                    "trip.route_id",
+                    "trip.service_id",
+                    "trip.ticket_machine_journey_code",
+                    "trip.direction",
+                    "trip.origin_stop_ref",
+                    "trip.destination_stop_ref",
+                    "trip.departure_time",
+                    "trip.revision_number desc",
+                ]),
+        )
+        .execute();
+};
+
+export const createRegionalTripTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
+    if (regionCode === "ALL") {
+        return;
     }
 
-    await dbClient.schema.createTable(`trip_${regionCode}`).as(query).execute();
+    await sql`CREATE TABLE ${sql.table(`trip_${regionCode}`)} (LIKE ${sql.table("trip_ALL")} INCLUDING ALL)`.execute(
+        dbClient,
+    );
+
+    await dbClient
+        .insertInto(`trip_${regionCode}`)
+        .expression((eb) => {
+            let query = eb
+                .selectFrom("trip_ALL")
+                .selectAll("trip_ALL")
+                .innerJoin("stop_time", "stop_time.trip_id", "trip_ALL.id")
+                .innerJoin("stop", "stop.id", "stop_time.stop_id")
+                .distinct();
+
+            if (regionCode === "E") {
+                query = query.where("stop.region_code", "in", ["EA", "EM", "L", "NE", "NW", "SE", "SW", "WM", "Y"]);
+            } else {
+                query = query.where("stop.region_code", "=", regionCode);
+            }
+
+            return query;
+        })
+        .execute();
 };
 
 export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbClient: KyselyDb, filePath: string) => {
@@ -46,209 +96,24 @@ export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbC
     );
 };
 
-export const dropRegionalTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
+export const dropRegionalTripTable = async (dbClient: KyselyDb, regionCode: RegionCode) => {
     await dbClient.schema.dropTable(`trip_${regionCode}`).ifExists().execute();
 };
 
-export const queryBuilder = (dbClient: KyselyDb): Query[] => [
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("agency")
-                .innerJoin("route", "route.agency_id", "agency.id")
-                .innerJoin("trip", "trip.route_id", "route.id")
-                .select(({ ref }) => [
-                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
-                    "agency.name as agency_name",
-                    "agency.url as agency_url",
-                    sql.lit<string>(`'Europe/London'`).as("agency_timezone"),
-                    sql.lit<string>(`'EN'`).as("agency_lang"),
-                    "agency.phone as agency_phone",
-                    "agency.noc as agency_noc",
-                ])
-                .distinct()
-                .orderBy("agency_id asc");
+export enum Files {
+    AGENCY = "agency",
+    STOPS = "stops",
+    ROUTES = "routes",
+    CALENDAR = "calendar",
+    CALENDAR_DATES = "calendar_dates",
+    TRIPS = "trips",
+    SHAPES = "shapes",
+    FREQUENCIES = "frequencies",
+    FEED_INFO = "feed_info",
+    STOP_TIMES = "stop_times",
+}
 
-            return query.compile().sql;
-        },
-        fileName: "agency",
-        forceQuote: ["agency_name", "agency_url", "agency_noc", "agency_phone"],
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("stop")
-                .select([
-                    "id as stop_id",
-                    "stop_code",
-                    "stop_name",
-                    "stop_lat",
-                    "stop_lon",
-                    "wheelchair_boarding",
-                    "location_type",
-                    "parent_station",
-                    "platform_code",
-                ]);
-
-            return query.compile().sql;
-        },
-        fileName: "stops",
-        forceQuote: ["stop_name"],
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("route")
-                .innerJoin("trip", "trip.route_id", "route.id")
-                .select(({ ref }) => [
-                    "route.id as route_id",
-                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
-                    "route.route_short_name",
-                    "route.route_long_name",
-                    "route.route_type",
-                ])
-                .distinct()
-                .orderBy("route_id asc");
-
-            return query.compile().sql;
-        },
-        fileName: "routes",
-        forceQuote: ["route_short_name"],
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("calendar")
-                .select([
-                    "id as service_id",
-                    "monday",
-                    "tuesday",
-                    "wednesday",
-                    "thursday",
-                    "friday",
-                    "saturday",
-                    "sunday",
-                    "start_date",
-                    "end_date",
-                ])
-                .where((eb) =>
-                    eb.or([
-                        eb("monday", "=", eb.lit(1)),
-                        eb("tuesday", "=", eb.lit(1)),
-                        eb("wednesday", "=", eb.lit(1)),
-                        eb("thursday", "=", eb.lit(1)),
-                        eb("friday", "=", eb.lit(1)),
-                        eb("saturday", "=", eb.lit(1)),
-                        eb("sunday", "=", eb.lit(1)),
-                    ]),
-                )
-                .orderBy("service_id asc");
-
-            return query.compile().sql;
-        },
-        fileName: "calendar",
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient.selectFrom("calendar_date").select(["service_id", "date", "exception_type"]);
-
-            return query.compile().sql;
-        },
-        fileName: "calendar_dates",
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("trip")
-                .select([
-                    "route_id",
-                    "service_id",
-                    "id as trip_id",
-                    "trip_headsign",
-                    "direction as direction_id",
-                    "block_id",
-                    "shape_id",
-                    "wheelchair_accessible",
-                    "vehicle_journey_code",
-                ])
-                .orderBy("route_id asc");
-
-            return query.compile().sql;
-        },
-        fileName: "trips",
-        forceQuote: ["trip_headsign", "vehicle_journey_code"],
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("shape")
-                .select(["shape_id", "shape_pt_lat", "shape_pt_lon", "shape_pt_sequence", "shape_dist_traveled"]);
-
-            return query.compile().sql;
-        },
-        fileName: "shapes",
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("frequency")
-                .select(["trip_id", "start_time", "end_time", "headway_secs", "exact_times"]);
-
-            return query.compile().sql;
-        },
-        fileName: "frequencies",
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("calendar")
-                .select(({ fn }) => [
-                    sql.lit<string>(`'Bus Open Data Service (BODS)'`).as("feed_publisher_name"),
-                    sql.lit<string>(`'https://www.bus-data.dft.gov.uk/'`).as("feed_publisher_url"),
-                    sql.lit<string>(`'EN'`).as("feed_lang"),
-                    fn.min("start_date").as("feed_start_date"),
-                    fn.max("end_date").as("feed_end_date"),
-                    sql.lit<string>(`'${getDate().format("YYYYMMDD_HHmmss")}'`).as("feed_version"),
-                ]);
-
-            return query.compile().sql;
-        },
-        fileName: "feed_info",
-        include: true,
-    },
-    {
-        getQuery: () => {
-            const query = dbClient
-                .selectFrom("stop_time")
-                .select([
-                    "trip_id",
-                    "arrival_time",
-                    "departure_time",
-                    "stop_id",
-                    "stop_sequence",
-                    "stop_headsign",
-                    "pickup_type",
-                    "drop_off_type",
-                    "shape_dist_traveled",
-                    "timepoint",
-                ]);
-
-            return query.compile().sql;
-        },
-        fileName: "stop_times",
-        include: true,
-    },
-];
-
-export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[] => [
+export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[] => [
     {
         getQuery: () => {
             const query = dbClient
@@ -269,9 +134,8 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "agency",
+        fileName: Files.AGENCY,
         forceQuote: ["agency_name", "agency_url", "agency_noc", "agency_phone"],
-        include: true,
     },
     {
         getQuery: () => {
@@ -290,13 +154,13 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
                     "stop.parent_station",
                     "stop.platform_code",
                 ])
+                .where("stop.location_type", "!=", sql.lit(LocationType.EntranceOrExit))
                 .distinct();
 
             return query.compile().sql;
         },
-        fileName: "stops",
+        fileName: Files.STOPS,
         forceQuote: ["stop_name"],
-        include: true,
     },
     {
         getQuery: () => {
@@ -315,9 +179,8 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "routes",
+        fileName: Files.ROUTES,
         forceQuote: ["route_short_name"],
-        include: true,
     },
     {
         getQuery: () => {
@@ -352,8 +215,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "calendar",
-        include: true,
+        fileName: Files.CALENDAR,
     },
     {
         getQuery: () => {
@@ -365,8 +227,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "calendar_dates",
-        include: true,
+        fileName: Files.CALENDAR_DATES,
     },
     {
         getQuery: () => {
@@ -387,9 +248,8 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "trips",
+        fileName: Files.TRIPS,
         forceQuote: ["trip_headsign", "vehicle_journey_code"],
-        include: true,
     },
     {
         getQuery: () => {
@@ -407,8 +267,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "shapes",
-        include: true,
+        fileName: Files.SHAPES,
     },
     {
         getQuery: () => {
@@ -426,8 +285,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "frequencies",
-        include: true,
+        fileName: Files.FREQUENCIES,
     },
     {
         getQuery: () => {
@@ -446,8 +304,7 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
 
             return query.compile().sql;
         },
-        fileName: "feed_info",
-        include: true,
+        fileName: Files.FEED_INFO,
     },
     {
         getQuery: () => {
@@ -466,11 +323,11 @@ export const regionalQueryBuilder = (dbClient: KyselyDb, regionCode: RegionCode)
                     "stop_time.shape_dist_traveled",
                     "stop_time.timepoint",
                 ])
+                .where("stop_time.exclude", "is not", sql.lit(true))
                 .distinct();
 
             return query.compile().sql;
         },
-        fileName: "stop_times",
-        include: true,
+        fileName: Files.STOP_TIMES,
     },
 ];

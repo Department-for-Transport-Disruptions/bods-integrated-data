@@ -331,7 +331,9 @@ export const formatCalendar = (
             calendar,
         ));
 
-        calendar = defaultCalendar;
+        if (servicedOrgDaysOfOperation.length) {
+            calendar = defaultCalendar;
+        }
     }
 
     const daysOfNonOperation = [
@@ -341,6 +343,7 @@ export const formatCalendar = (
             ...servicedOrgDaysOfNonOperation,
         ]),
     ];
+
     const daysOfOperation = [
         ...new Set([
             ...specialDaysOfOperation,
@@ -355,6 +358,7 @@ export const formatCalendar = (
         endDateToUse,
         CalendarDateExceptionType.ServiceAdded,
     );
+
     const formattedExtraDaysOfNonOperation = formatCalendarDates(
         daysOfNonOperation,
         startDateToUse,
@@ -457,6 +461,21 @@ export const processCalendarDates = async (
     await insertCalendarDates(dbClient, calendarDates);
 };
 
+export const isCalendarEmpty = (calendar: CalendarWithDates) => {
+    const { calendar: c, calendarDates } = calendar;
+
+    return (
+        c.monday === 0 &&
+        c.tuesday === 0 &&
+        c.wednesday === 0 &&
+        c.thursday === 0 &&
+        c.friday === 0 &&
+        c.saturday === 0 &&
+        c.sunday === 0 &&
+        !calendarDates.some((c) => c.exception_type === 1)
+    );
+};
+
 export const processCalendars = async (
     dbClient: KyselyDb,
     service: Service,
@@ -498,15 +517,25 @@ export const processCalendars = async (
 
     return calendarVehicleJourneyMappings
         .map(({ calendar, ...keepAttrs }) => {
-            const serviceId = insertedCalendars.find((c) => c.calendar_hash === calendar.calendar.calendar_hash)?.id;
+            const calendarForService = uniqueCalendars.find(
+                (c) => c.calendar.calendar_hash === calendar.calendar.calendar_hash,
+            );
 
-            if (!serviceId) {
+            if (!calendarForService || isCalendarEmpty(calendarForService)) {
+                return null;
+            }
+
+            const insertedCalendarId = insertedCalendars.find(
+                (c) => c.calendar_hash === calendarForService.calendar.calendar_hash,
+            )?.id;
+
+            if (!insertedCalendarId) {
                 return null;
             }
 
             return {
                 ...keepAttrs,
-                serviceId,
+                serviceId: insertedCalendarId,
             };
         })
         .filter(notEmpty);

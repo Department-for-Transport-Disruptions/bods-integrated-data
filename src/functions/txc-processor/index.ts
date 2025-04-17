@@ -1,5 +1,5 @@
 import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
-import { Agency, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { Agency, KyselyDb, NewStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -64,8 +64,10 @@ const processServices = (
     txcRoutes: TxcRoute[],
     txcJourneyPatternSections: TxcJourneyPatternSection[],
     agencyData: Agency[],
+    insertedStopPoints: NewStop[],
     filePath: string,
     isTnds: boolean,
+    revisionNumber: string,
     servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
@@ -177,9 +179,15 @@ const processServices = (
             servicedOrganisations,
         );
         vehicleJourneyMappings = await processShapes(dbClient, txcRoutes, txcRouteSections, vehicleJourneyMappings);
-        vehicleJourneyMappings = await processTrips(dbClient, vehicleJourneyMappings, filePath, service);
+        vehicleJourneyMappings = await processTrips(
+            dbClient,
+            vehicleJourneyMappings,
+            filePath,
+            revisionNumber,
+            service,
+        );
         await processFrequencies(dbClient, vehicleJourneyMappings);
-        await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, txcJourneyPatternSections, vehicleJourneyMappings, insertedStopPoints);
     });
 
     return Promise.all(promises);
@@ -233,17 +241,38 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const stopPoints = TransXChange.StopPoints?.StopPoint || [];
     const annotatedStopPointRefs = TransXChange.StopPoints?.AnnotatedStopPointRef || [];
     const vehicleJourneys = TransXChange.VehicleJourneys?.VehicleJourney || [];
+    const revisionNumber = TransXChange["@_RevisionNumber"];
 
     const agencyData = await processAgencies(dbClient, operators);
 
     const useStopLocality = services.some((service) => service.Mode && service.Mode !== "bus");
 
+    const insertedStopPoints: NewStop[] = [];
+
     if (stopPoints.length > 0) {
-        await processStopPoints(dbClient, stopPoints, useStopLocality);
+        const processedStopPoints = await processStopPoints(dbClient, stopPoints, useStopLocality);
+
+        if (!processedStopPoints) {
+            logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
+            return;
+        }
+
+        insertedStopPoints.push(...processedStopPoints);
     }
 
     if (annotatedStopPointRefs.length > 0) {
-        await processAnnotatedStopPointRefs(dbClient, annotatedStopPointRefs, useStopLocality);
+        const processedStopPoints = await processAnnotatedStopPointRefs(
+            dbClient,
+            annotatedStopPointRefs,
+            useStopLocality,
+        );
+
+        if (!processedStopPoints) {
+            logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
+            return;
+        }
+
+        insertedStopPoints.push(...processedStopPoints);
     }
 
     await processServices(
@@ -256,8 +285,10 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
         routes,
         journeyPatternSections,
         agencyData,
+        insertedStopPoints,
         record.s3.object.key,
         isTnds,
+        revisionNumber,
         TransXChange.ServicedOrganisations?.ServicedOrganisation,
     );
 };

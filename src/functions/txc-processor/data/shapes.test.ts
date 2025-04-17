@@ -226,7 +226,7 @@ describe("shapes", () => {
             const routes: TxcRoute[] = [
                 {
                     "@_id": "1",
-                    RouteSectionRef: ["11"],
+                    RouteSectionRef: ["12", "11"],
                 },
                 {
                     "@_id": "2",
@@ -254,10 +254,29 @@ describe("shapes", () => {
                         },
                     ],
                 },
+                {
+                    "@_id": "12",
+                    RouteLink: [
+                        {
+                            Track: [
+                                {
+                                    Mapping: {
+                                        Location: [
+                                            {
+                                                Latitude: 3,
+                                                Longitude: 4,
+                                            },
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
             ];
 
             const routeLinks = getRouteLinks("1", routes, routeSections);
-            expect(routeLinks).toEqual(routeSections[0].RouteLink);
+            expect(routeLinks).toEqual([...routeSections[1].RouteLink, ...routeSections[0].RouteLink]);
         });
 
         it("returns an empty array when the route ref fails to reference a route section", () => {
@@ -356,14 +375,14 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
                 {
                     shape_id: expect.any(String) as string,
                     shape_pt_lat: 3,
                     shape_pt_lon: 4,
                     shape_pt_sequence: 1,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 
@@ -422,7 +441,7 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 
@@ -455,7 +474,7 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 
@@ -583,14 +602,14 @@ describe("shapes", () => {
                     shape_pt_lat: 1,
                     shape_pt_lon: 2,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
                 {
                     shape_id: expect.any(String) as string,
                     shape_pt_lat: 3,
                     shape_pt_lon: 4,
                     shape_pt_sequence: 0,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 },
             ];
 

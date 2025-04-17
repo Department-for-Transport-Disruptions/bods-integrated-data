@@ -67,6 +67,8 @@ export const getDatabaseClient = async (isLocal = false, readOnly = false) => {
 export interface Database {
     naptan_stop: NaptanStopTable;
     naptan_stop_new: NaptanStopTable;
+    naptan_stop_area: NaptanStopAreaTable;
+    naptan_stop_area_new: NaptanStopAreaTable;
     nptg_admin_area: NptgAdminAreaTable;
     nptg_admin_area_new: NptgAdminAreaTable;
     nptg_locality: NptgLocalityTable;
@@ -92,6 +94,19 @@ export interface Database {
     stop_time_new: GtfsStopTimeTable;
     trip: GtfsTripTable;
     trip_new: GtfsTripTable;
+    trip_ALL: GtfsTripTable;
+    trip_E: GtfsTripTable;
+    trip_S: GtfsTripTable;
+    trip_W: GtfsTripTable;
+    trip_NE: GtfsTripTable;
+    trip_NW: GtfsTripTable;
+    trip_EM: GtfsTripTable;
+    trip_WM: GtfsTripTable;
+    trip_L: GtfsTripTable;
+    trip_SE: GtfsTripTable;
+    trip_SW: GtfsTripTable;
+    trip_Y: GtfsTripTable;
+    trip_EA: GtfsTripTable;
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
     tfl_line: TflLineTable;
@@ -144,11 +159,28 @@ export interface NaptanStopTable {
     revision_number: string | null;
     modification: string | null;
     status: string | null;
+    stop_area_code: string | null;
 }
 
 export type NaptanStop = Selectable<NaptanStopTable>;
 export type NewNaptanStop = Insertable<NaptanStopTable>;
 export type NaptanStopUpdate = Updateable<NaptanStopTable>;
+
+export interface NaptanStopAreaTable {
+    stop_area_code: string;
+    name: string;
+    administrative_area_code: string;
+    stop_area_type: string;
+    grid_type: string | null;
+    easting: string | null;
+    northing: string | null;
+    longitude: string | null;
+    latitude: string | null;
+}
+
+export type NaptanStopArea = Selectable<NaptanStopAreaTable>;
+export type NewNaptanStopArea = Insertable<NaptanStopAreaTable>;
+export type NaptanStopAreaUpdate = Updateable<NaptanStopAreaTable>;
 
 export interface NptgAdminAreaTable {
     admin_area_code: string;
@@ -382,7 +414,7 @@ export interface GtfsShapeTable {
     shape_pt_lat: number;
     shape_pt_lon: number;
     shape_pt_sequence: number;
-    shape_dist_traveled: number;
+    shape_dist_traveled: number | null;
 }
 
 export type Shape = Selectable<GtfsShapeTable>;
@@ -390,9 +422,11 @@ export type NewShape = Insertable<GtfsShapeTable>;
 export type ShapeUpdate = Updateable<GtfsShapeTable>;
 
 export enum LocationType {
-    None = 0,
-    StopAreas = 1,
-    RealStationEntrance = 2,
+    StopOrPlatform = 0,
+    Station = 1,
+    EntranceOrExit = 2,
+    GenericNode = 3,
+    BoardingArea = 4,
 }
 
 export interface GtfsStopTable {
@@ -442,8 +476,9 @@ export interface GtfsStopTimeTable {
     stop_headsign: string;
     pickup_type: PickupType;
     drop_off_type: DropOffType;
-    shape_dist_traveled: number;
+    shape_dist_traveled: number | null;
     timepoint: Timepoint;
+    exclude: boolean | null;
 }
 
 export type StopTime = Selectable<GtfsStopTimeTable>;
@@ -472,6 +507,7 @@ export interface GtfsTripTable {
     revision_number: string | null;
     departure_time: string | null;
     conflicting_files?: string[];
+    departure_day_shift: boolean | null;
 }
 
 export type Trip = Selectable<GtfsTripTable>;

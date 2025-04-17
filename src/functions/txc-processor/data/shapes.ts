@@ -48,7 +48,8 @@ export const getRouteLinks = (
 ): TxcRouteLink[] => {
     const route = routes.find((route) => route["@_id"] === routeRef);
 
-    const routeSectionsForRoute = routeSections.filter((section) => route?.RouteSectionRef.includes(section["@_id"]));
+    const routeSectionsForRoute =
+        route?.RouteSectionRef.map((ref) => routeSections.find((rs) => rs["@_id"] === ref)).filter(notEmpty) ?? [];
 
     if (!routeSectionsForRoute.length) {
         logger.warn(`Unable to find route sections for route: ${routeRef}`);
@@ -82,7 +83,7 @@ export const mapRouteLinksToShapes = (routeLinks: TxcRouteLink[]) => {
                     shape_pt_lat: latitude,
                     shape_pt_lon: longitude,
                     shape_pt_sequence: currentPtSequence++,
-                    shape_dist_traveled: 0,
+                    shape_dist_traveled: null,
                 };
             });
         });
@@ -101,6 +102,7 @@ export const processShapes = async (
     vehicleJourneyMappings: VehicleJourneyMapping[],
 ) => {
     const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(routes, vehicleJourneyMappings);
+
     const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings);
 
     const shapes = routeRefs.flatMap<NewShape>((routeRef) => {

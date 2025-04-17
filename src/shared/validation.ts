@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { notEmpty } from "./utils";
 
 export const REQUEST_PARAM_MAX_LENGTH = 256;
 export const STRING_LENGTH_REGEX = new RegExp(`^.{1,${REQUEST_PARAM_MAX_LENGTH}}$`);
@@ -147,6 +148,31 @@ export const createBoundingBoxValidation = (propertyName: string) => {
                 .array()
                 .length(4, {
                     message: `${propertyName} must be four comma-separated values: minLongitude, minLatitude, maxLongitude and maxLatitude`,
+                }),
+        );
+};
+
+export const createNumberArrayValidation = (propertyName: string) => {
+    return z.coerce
+        .string({
+            required_error: `${propertyName} is required`,
+            invalid_type_error: `${propertyName} must be a string`,
+        })
+        .trim()
+        .transform((value) =>
+            value
+                .split(",")
+                .map((v) => v.trim())
+                .filter((v) => notEmpty(v) && v !== "" && !Number.isNaN(Number(v))),
+        )
+        .pipe(
+            z.coerce
+                .number({
+                    message: `${propertyName} must use valid numbers`,
+                })
+                .array()
+                .min(1, {
+                    message: `${propertyName} must have at least one value`,
                 }),
         );
 };

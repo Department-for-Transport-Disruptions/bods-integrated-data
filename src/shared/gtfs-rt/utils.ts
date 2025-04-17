@@ -92,7 +92,7 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
  */
 export const getAvlDataForGtfs = async (
     dbClient: KyselyDb,
-    routeId?: string[],
+    routeId?: number[],
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: number[],
@@ -101,11 +101,7 @@ export const getAvlDataForGtfs = async (
         let query = dbClient.selectFrom("avl").distinctOn(["vehicle_ref", "operator_ref"]).selectAll("avl");
 
         if (routeId) {
-            query = query.where(
-                "route_id",
-                "in",
-                routeId.map((id) => Number(id)),
-            );
+            query = query.where("route_id", "in", routeId);
         }
 
         if (startTimeBefore) {
@@ -236,7 +232,7 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
     return await dbClient
         .selectFrom("agency")
         .innerJoin("route", "route.agency_id", "agency.id")
-        .innerJoin("trip", "trip.route_id", "route.id")
+        .innerJoin("trip_ALL as trip", "trip.route_id", "route.id")
         .innerJoin("calendar", (join) =>
             join
                 .onRef("calendar.id", "=", "trip.service_id")

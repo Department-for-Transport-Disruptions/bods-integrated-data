@@ -11,6 +11,7 @@ type CustomLogger = Logger & {
 export const logger = Pino(
     {
         mixin: (_mergeObject, _level, customLogger: CustomLogger) => ({
+            filepath: customLogger.filepath,
             subscriptionId: customLogger.subscriptionId,
         }),
     },

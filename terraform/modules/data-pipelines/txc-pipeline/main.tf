@@ -255,13 +255,13 @@ module "integrated_data_txc_processor_function" {
   }
 }
 
-module "integrated_data_gtfs_timetables_generator_function" {
+module "integrated_data_gtfs_trip_table_creator_function" {
   source = "../../shared/lambda-function"
 
   environment     = var.environment
-  function_name   = "integrated-data-gtfs-timetables-generator"
+  function_name   = "integrated-data-gtfs-trip-table-creator"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
-  handler         = "index.handler"
+  handler         = "index.tripTableHandler"
   runtime         = "nodejs20.x"
   timeout         = 900
   memory          = 2048
@@ -280,6 +280,67 @@ module "integrated_data_gtfs_timetables_generator_function" {
         var.db_secret_arn,
       ]
     },
+  ]
+
+  env_vars = {
+    STAGE         = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+  }
+}
+
+module "integrated_data_gtfs_timetables_generator_function" {
+  source = "../../shared/lambda-function"
+
+  environment     = var.environment
+  function_name   = "integrated-data-gtfs-timetables-generator"
+  zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
+  handler         = "index.exportHandler"
+  runtime         = "nodejs20.x"
+  timeout         = 900
+  memory          = 2048
+  needs_db_access = var.environment != "local"
+  vpc_id          = var.vpc_id
+  subnet_ids      = var.private_subnet_ids
+  database_sg_id  = var.db_sg_id
+
+  permissions = [
+    {
+      Action = [
+        "secretsmanager:GetSecretValue",
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.db_secret_arn,
+      ]
+    },
+  ]
+
+  env_vars = {
+    STAGE         = var.environment
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
+    OUTPUT_BUCKET = var.rds_output_bucket_name
+    GTFS_BUCKET   = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.bucket
+  }
+}
+
+module "integrated_data_gtfs_timetables_zipper_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-gtfs-timetables-zipper"
+  zip_path      = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
+  handler       = "index.zipHandler"
+  runtime       = "nodejs20.x"
+  timeout       = 900
+  memory        = 2048
+
+  permissions = [
     {
       Action = [
         "s3:GetObject",
@@ -311,10 +372,6 @@ module "integrated_data_gtfs_timetables_generator_function" {
 
   env_vars = {
     STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
     OUTPUT_BUCKET = var.rds_output_bucket_name
     GTFS_BUCKET   = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.bucket
   }
