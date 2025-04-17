@@ -22,6 +22,7 @@ const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
     const tables: (keyof Database)[] = [
         ...gtfsTables,
         "naptan_stop",
+        "naptan_stop_area",
         "noc_operator",
         "nptg_admin_area",
         "nptg_locality",
