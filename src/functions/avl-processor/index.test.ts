@@ -14,12 +14,14 @@ import {
     mockItemId,
     mockSubscriptionId,
     parsedSiri,
+    parsedSiriWithCancellationsOnly,
     parsedSiriWithOnwardCalls,
     testInvalidSiri,
     testSiri,
     testSiriWithCancellationsOnly,
     testSiriWithDuplicates,
     testSiriWithInvalidVehicleActivities,
+    testSiriWithLocationsAndCancellations,
     testSiriWithOnwardCalls,
 } from "./test/testSiriVm";
 
@@ -211,7 +213,41 @@ describe("avl-processor", () => {
             mockGtfsTripMapsTableName,
         );
 
-        expect(valuesMock).not.toHaveBeenCalled();
+        expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithCancellationsOnly);
+    });
+
+    it("correctly handles a siri-vm file with both VehicleActivity and VehicleActivityCancellation data", async () => {
+        const valuesMock = vi.fn().mockReturnValue({
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+                returning: vi.fn().mockReturnValue({
+                    executeTakeFirst: vi.fn().mockResolvedValue({
+                        id: 123,
+                    }),
+                }),
+            }),
+        });
+
+        const dbClient = {
+            insertInto: () => ({
+                values: valuesMock,
+            }),
+        };
+
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriWithLocationsAndCancellations },
+        });
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
+        );
+
+        expect(valuesMock).toHaveBeenCalledTimes(2);
+        expect(valuesMock).toBeCalledWith([parsedSiri[0]]);
+        expect(valuesMock).toBeCalledWith(parsedSiriWithCancellationsOnly);
     });
 
     it("correctly removes duplicates before inserting into the db", async () => {

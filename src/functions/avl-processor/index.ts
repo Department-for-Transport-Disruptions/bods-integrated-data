@@ -131,6 +131,7 @@ export const processSqsRecord = async (
                     subscriptionId,
                 });
             }
+
             if (avlCancellations.length > 0) {
                 await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
                 logger.info("AVL cancellations processed successfully", {
