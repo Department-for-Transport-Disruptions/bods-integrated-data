@@ -6,6 +6,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import { CalendarDateExceptionType, CalendarWithDates } from "./database";
 
 interface Event {
     title: string;
@@ -34,6 +35,8 @@ dayjsExtend(isSameOrBefore);
 dayjsExtend(isBetween);
 
 dayjs.tz.setDefault("Europe/London");
+
+export const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
 export const getDate = (input?: Parameters<typeof dayjs.utc>[0]) => dayjs.utc(input);
 
@@ -135,6 +138,37 @@ export const getDatesInRange = (startDate: Dayjs, endDate: Dayjs) => {
     }
 
     return dates;
+};
+
+export const checkCalendarsOverlap = (calendarWithDatesA: CalendarWithDates, calendarWithDatesB: CalendarWithDates) => {
+    const { calendar: calendarA, calendarDates: calendarDatesA } = calendarWithDatesA;
+    const { calendar: calendarB, calendarDates: calendarDatesB } = calendarWithDatesB;
+
+    const dateRangesOverlap = calendarA.start_date <= calendarB.end_date && calendarA.end_date >= calendarB.start_date;
+
+    if (!dateRangesOverlap) {
+        return false;
+    }
+
+    let daysOfWeekOverlap = false;
+
+    for (const day of daysOfWeek) {
+        if (calendarA[day] === 1 && calendarB[day] === 1) {
+            daysOfWeekOverlap = true;
+            break;
+        }
+    }
+
+    const calendarDatesOverlap = calendarDatesA.some((calendarDateA) =>
+        calendarDatesB.some(
+            (calendarDateB) =>
+                calendarDateA.date === calendarDateB.date &&
+                calendarDateA.exception_type === CalendarDateExceptionType.ServiceAdded &&
+                calendarDateB.exception_type === CalendarDateExceptionType.ServiceAdded,
+        ),
+    );
+
+    return daysOfWeekOverlap || calendarDatesOverlap;
 };
 
 export const getTflOriginAimedDepartureTime = (originAimedDepartureTime: number) =>
