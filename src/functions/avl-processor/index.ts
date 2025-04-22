@@ -16,7 +16,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const arrayProperties = ["VehicleActivity", "OnwardCall"];
+const arrayProperties = ["VehicleActivity", "OnwardCall", "VehicleActivityCancellation"];
 
 const parseXml = (xml: string, errors: AvlValidationError[]) => {
     const parser = new XMLParser({
@@ -121,11 +121,14 @@ export const processSqsRecord = async (
 
             if (totalAvlCount > 0) {
                 await insertAvls(dbClient, enrichedAvls, subscriptionId);
+                logger.info("AVL processed successfully", {
+                    subscriptionId,
+                });
+            } else {
+                logger.warn("No VehicleActivity was provided in SIRI-VM message", {
+                    subscriptionId,
+                });
             }
-
-            logger.info("AVL processed successfully", {
-                subscriptionId,
-            });
         }
     } catch (e) {
         logger.error(`AVL processing failed for file ${record.s3.object.key}`);
