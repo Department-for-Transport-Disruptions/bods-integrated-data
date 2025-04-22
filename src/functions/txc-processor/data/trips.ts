@@ -4,7 +4,7 @@ import { getDirectionRef } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { Service, VehicleJourney } from "@bods-integrated-data/shared/schema";
 import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integrated-data/shared/utils";
 import { hasher } from "node-object-hash";
-import { VehicleJourneyMapping } from "../types";
+import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
 import { insertTrips } from "./database";
 
 export const processTrips = async (
@@ -13,8 +13,10 @@ export const processTrips = async (
     filePath: string,
     revisionNumber: string,
     service?: Service,
-) => {
-    const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings);
+): Promise<VehicleJourneyMappingWithCalendar[]> => {
+    const updatedVehicleJourneyMappings = structuredClone(
+        vehicleJourneyMappings,
+    ) as VehicleJourneyMappingWithCalendar[];
 
     const objectHasher = hasher();
 
@@ -41,7 +43,21 @@ export const processTrips = async (
 
             const tripId = `VJ${hashedVehicleJourney}`;
 
+            const blockNumber = vehicleJourney.Operational?.Block?.BlockNumber;
+
             updatedVehicleJourneyMappings[index].tripId = tripId;
+
+            updatedVehicleJourneyMappings[index].blockId =
+                blockNumber && (vehicleJourney.OperatingProfile || service?.OperatingProfile)
+                    ? objectHasher.hash(
+                          {
+                              filePath: filePath.split(/\/(.*)/s)[1],
+                              blockNumber,
+                              operatingProfile: vehicleJourney.OperatingProfile || service?.OperatingProfile,
+                          },
+                          { alg: "sha1" },
+                      )
+                    : "";
 
             return {
                 id: tripId,

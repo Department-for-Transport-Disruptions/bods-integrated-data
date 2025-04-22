@@ -3,7 +3,7 @@ import { KyselyDb, NewShape } from "@bods-integrated-data/shared/database";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { VehicleJourneyMapping } from "../types";
+import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
 import { insertShapes } from "./database";
 
 export const getRouteRefs = (routes: TxcRoute[], vehicleJourneyMappings: VehicleJourneyMapping[]) => {
@@ -100,10 +100,12 @@ export const processShapes = async (
     routes: TxcRoute[],
     routeSections: TxcRouteSection[],
     vehicleJourneyMappings: VehicleJourneyMapping[],
-) => {
+): Promise<VehicleJourneyMappingWithCalendar[]> => {
     const { routeRefs, journeyPatternToRouteRefMapping } = getRouteRefs(routes, vehicleJourneyMappings);
 
-    const updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings);
+    const updatedVehicleJourneyMappings = structuredClone(
+        vehicleJourneyMappings,
+    ) as VehicleJourneyMappingWithCalendar[];
 
     const shapes = routeRefs.flatMap<NewShape>((routeRef) => {
         const routeLinks = getRouteLinks(routeRef, routes, routeSections);

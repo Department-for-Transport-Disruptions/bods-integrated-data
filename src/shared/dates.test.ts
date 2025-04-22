@@ -2,9 +2,11 @@ import { Dayjs } from "dayjs";
 import Mockdate from "mockdate";
 import MockDate from "mockdate";
 import { afterEach, describe, expect, it } from "vitest";
+import { CalendarDateExceptionType, CalendarWithDates } from "./database";
 import {
     BankHolidayName,
     BankHolidaysJson,
+    checkCalendarsOverlap,
     createBankHolidayFunctions,
     getDate,
     getDatesInRange,
@@ -103,6 +105,166 @@ describe("getDateRange", () => {
             getDate("2024-11-30"),
             getDate("2024-12-01"),
         ]);
+    });
+
+    describe("checkCalendarsOverlap", () => {
+        it("returns true if calendars overlap with days of week", () => {
+            const calendarA: CalendarWithDates = {
+                calendar: {
+                    id: 1,
+                    start_date: "20240301",
+                    end_date: "20240310",
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    calendar_hash: "",
+                },
+                calendarDates: [],
+            };
+            const calendarB: CalendarWithDates = {
+                calendar: {
+                    id: 2,
+                    start_date: "20240305",
+                    end_date: "20240315",
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    calendar_hash: "",
+                },
+                calendarDates: [],
+            };
+
+            expect(checkCalendarsOverlap(calendarA, calendarB)).toBe(true);
+        });
+
+        it("returns true if calendars overlap with calendar date exceptions", () => {
+            const calendarA: CalendarWithDates = {
+                calendar: {
+                    id: 1,
+                    start_date: "20240301",
+                    end_date: "20240310",
+                    monday: 0,
+                    tuesday: 0,
+                    wednesday: 0,
+                    thursday: 0,
+                    friday: 0,
+                    saturday: 1,
+                    sunday: 1,
+                    calendar_hash: "",
+                },
+                calendarDates: [
+                    {
+                        date: "20240306",
+                        exception_type: CalendarDateExceptionType.ServiceAdded,
+                    },
+                ],
+            };
+            const calendarB: CalendarWithDates = {
+                calendar: {
+                    id: 2,
+                    start_date: "20240305",
+                    end_date: "20240315",
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    calendar_hash: "",
+                },
+                calendarDates: [
+                    {
+                        date: "20240306",
+                        exception_type: CalendarDateExceptionType.ServiceAdded,
+                    },
+                ],
+            };
+
+            expect(checkCalendarsOverlap(calendarA, calendarB)).toBe(true);
+        });
+
+        it("returns false if calendars don't have same date ranges", () => {
+            const calendarA: CalendarWithDates = {
+                calendar: {
+                    id: 1,
+                    start_date: "20240301",
+                    end_date: "20240304",
+                    monday: 0,
+                    tuesday: 0,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 1,
+                    sunday: 1,
+                    calendar_hash: "",
+                },
+                calendarDates: [],
+            };
+            const calendarB: CalendarWithDates = {
+                calendar: {
+                    id: 2,
+                    start_date: "20240305",
+                    end_date: "20240315",
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    calendar_hash: "",
+                },
+                calendarDates: [],
+            };
+
+            expect(checkCalendarsOverlap(calendarA, calendarB)).toBe(false);
+        });
+
+        it("returns false if calendars have no overlapping days", () => {
+            const calendarA: CalendarWithDates = {
+                calendar: {
+                    id: 1,
+                    start_date: "20240301",
+                    end_date: "20240312",
+                    monday: 0,
+                    tuesday: 0,
+                    wednesday: 0,
+                    thursday: 0,
+                    friday: 0,
+                    saturday: 1,
+                    sunday: 1,
+                    calendar_hash: "",
+                },
+                calendarDates: [],
+            };
+            const calendarB: CalendarWithDates = {
+                calendar: {
+                    id: 2,
+                    start_date: "20240305",
+                    end_date: "20240315",
+                    monday: 1,
+                    tuesday: 1,
+                    wednesday: 1,
+                    thursday: 1,
+                    friday: 1,
+                    saturday: 0,
+                    sunday: 0,
+                    calendar_hash: "",
+                },
+                calendarDates: [],
+            };
+
+            expect(checkCalendarsOverlap(calendarA, calendarB)).toBe(false);
+        });
     });
 
     describe("getTflOriginAimedDepartureTime", () => {
