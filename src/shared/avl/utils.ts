@@ -192,7 +192,6 @@ export const insertAvlCancellations = async (
     avlsCancellations: NewAvlCancellations[],
     subscriptionId: string,
 ) => {
-    //TODO: how do we define duplicates?
     const modifiedAvlsCancellations = avlsCancellations.map((cancellation) => ({
         ...cancellation,
         subscription_id: subscriptionId,
