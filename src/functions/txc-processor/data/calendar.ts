@@ -1,20 +1,19 @@
+import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
 import {
     Calendar,
     CalendarDateExceptionType,
+    CalendarWithDates,
     KyselyDb,
     NewCalendar,
     NewCalendarDate,
 } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson, getDate, getDateWithCustomFormat, isDateBetween } from "@bods-integrated-data/shared/dates";
 import { OperatingPeriod, OperatingProfile, Service, ServicedOrganisation } from "@bods-integrated-data/shared/schema";
-import {
-    DEFAULT_DATE_FORMAT,
-    getTransformedBankHolidayOperationSchema,
-} from "@bods-integrated-data/shared/schema/dates.schema";
+import { getTransformedBankHolidayOperationSchema } from "@bods-integrated-data/shared/schema/dates.schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { Dayjs } from "dayjs";
 import { hasher } from "node-object-hash";
-import { CalendarWithDates, VehicleJourneyMapping } from "../types";
+import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
 import { insertCalendarDates, insertCalendars } from "./database";
 
 const DEFAULT_OPERATING_PROFILE: OperatingProfile = {
@@ -331,7 +330,9 @@ export const formatCalendar = (
             calendar,
         ));
 
-        calendar = defaultCalendar;
+        if (servicedOrgDaysOfOperation.length) {
+            calendar = defaultCalendar;
+        }
     }
 
     const daysOfNonOperation = [
@@ -341,6 +342,7 @@ export const formatCalendar = (
             ...servicedOrgDaysOfNonOperation,
         ]),
     ];
+
     const daysOfOperation = [
         ...new Set([
             ...specialDaysOfOperation,
@@ -355,6 +357,7 @@ export const formatCalendar = (
         endDateToUse,
         CalendarDateExceptionType.ServiceAdded,
     );
+
     const formattedExtraDaysOfNonOperation = formatCalendarDates(
         daysOfNonOperation,
         startDateToUse,
@@ -457,13 +460,28 @@ export const processCalendarDates = async (
     await insertCalendarDates(dbClient, calendarDates);
 };
 
+export const isCalendarEmpty = (calendar: CalendarWithDates) => {
+    const { calendar: c, calendarDates } = calendar;
+
+    return (
+        c.monday === 0 &&
+        c.tuesday === 0 &&
+        c.wednesday === 0 &&
+        c.thursday === 0 &&
+        c.friday === 0 &&
+        c.saturday === 0 &&
+        c.sunday === 0 &&
+        !calendarDates.some((c) => c.exception_type === 1)
+    );
+};
+
 export const processCalendars = async (
     dbClient: KyselyDb,
     service: Service,
     vehicleJourneyMappings: VehicleJourneyMapping[],
     bankHolidaysJson: BankHolidaysJson,
     servicedOrganisations?: ServicedOrganisation[],
-): Promise<VehicleJourneyMapping[]> => {
+): Promise<VehicleJourneyMappingWithCalendar[]> => {
     let serviceCalendar: ReturnType<typeof formatCalendar> | null = null;
 
     if (service.OperatingProfile) {
@@ -497,16 +515,27 @@ export const processCalendars = async (
     await processCalendarDates(dbClient, insertedCalendars, uniqueCalendars);
 
     return calendarVehicleJourneyMappings
-        .map(({ calendar, ...keepAttrs }) => {
-            const serviceId = insertedCalendars.find((c) => c.calendar_hash === calendar.calendar.calendar_hash)?.id;
+        .map<VehicleJourneyMappingWithCalendar | null>(({ calendar, ...keepAttrs }) => {
+            const calendarForService = uniqueCalendars.find(
+                (c) => c.calendar.calendar_hash === calendar.calendar.calendar_hash,
+            );
 
-            if (!serviceId) {
+            if (!calendarForService || isCalendarEmpty(calendarForService)) {
+                return null;
+            }
+
+            const insertedCalendarId = insertedCalendars.find(
+                (c) => c.calendar_hash === calendarForService.calendar.calendar_hash,
+            )?.id;
+
+            if (!insertedCalendarId) {
                 return null;
             }
 
             return {
                 ...keepAttrs,
-                serviceId,
+                serviceId: insertedCalendarId,
+                calendarWithDates: calendarForService,
             };
         })
         .filter(notEmpty);

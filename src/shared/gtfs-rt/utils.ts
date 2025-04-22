@@ -1,20 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
+import { DEFAULT_DATE_FORMAT } from "../constants";
 import tflMapping from "../data/tflRouteToNocMapping.json";
-import { Avl, Calendar, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
-import { getDate, getDateWithCustomFormat } from "../dates";
+import { Avl, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
+import { daysOfWeek, getDate, getDateWithCustomFormat } from "../dates";
 import { getDynamoItem } from "../dynamo";
 import { transit_realtime } from "../gtfs-realtime";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
-import { DEFAULT_DATE_FORMAT } from "../schema/dates.schema";
 
 const { OccupancyStatus } = transit_realtime.VehiclePosition;
 const ukNumberPlateRegex = new RegExp(
     /(^[A-Z]{2}[0-9]{2}\s?[A-Z]{3}$)|(^[A-Z][0-9]{1,3}[A-Z]{3}$)|(^[A-Z]{3}[0-9]{1,3}[A-Z]$)|(^[0-9]{1,4}[A-Z]{1,2}$)|(^[0-9]{1,3}[A-Z]{1,3}$)|(^[A-Z]{1,2}[0-9]{1,4}$)|(^[A-Z]{1,3}[0-9]{1,3}$)|(^[A-Z]{1,3}[0-9]{1,4}$)|(^[0-9]{3}[DX]{1}[0-9]{3}$)/,
 );
-const daysOfWeek: (keyof Calendar)[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export const getOccupancyStatus = (occupancy: string): transit_realtime.VehiclePosition.OccupancyStatus => {
     switch (occupancy) {
@@ -232,7 +231,7 @@ export const retrieveMatchableTimetableData = async (dbClient: KyselyDb) => {
     return await dbClient
         .selectFrom("agency")
         .innerJoin("route", "route.agency_id", "agency.id")
-        .innerJoin("trip", "trip.route_id", "route.id")
+        .innerJoin("trip_ALL as trip", "trip.route_id", "route.id")
         .innerJoin("calendar", (join) =>
             join
                 .onRef("calendar.id", "=", "trip.service_id")

@@ -1,7 +1,7 @@
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createGtfsZip, handler, ignoreEmptyFiles } from ".";
-import { Query } from "./data";
+import { createGtfsZip, exportHandler, ignoreEmptyFiles, zipHandler } from ".";
+import { Files, GtfsFile } from "./data";
 
 describe("gtfs-timetables-generator", () => {
     const mocks = vi.hoisted(() => {
@@ -45,22 +45,21 @@ describe("gtfs-timetables-generator", () => {
     });
 
     describe("ignoreEmptyFiles", () => {
-        it("returns same queries if no empty files are present", async () => {
-            const queries: Query[] = [
+        it("returns same files if no empty files are present", async () => {
+            const files: GtfsFile[] = [
                 {
-                    fileName: "test",
+                    fileName: Files.AGENCY,
                     include: true,
-                    getQuery: () => "QUERY",
                 },
             ];
 
-            const newQueries = await ignoreEmptyFiles("bucket", "filePath", queries);
+            const newFiles = await ignoreEmptyFiles("bucket", "filePath", files);
 
             expect(mocks.getS3Object).not.toBeCalled();
-            expect(newQueries[0].include).toBeTruthy();
+            expect(newFiles[0].include).toBeTruthy();
         });
 
-        it("returns same queries if there is a small file which isn't empty", async () => {
+        it("returns same files if there is a small file which isn't empty", async () => {
             mocks.listS3Objects.mockResolvedValue({
                 Contents: [
                     {
@@ -76,26 +75,25 @@ describe("gtfs-timetables-generator", () => {
                 },
             });
 
-            const queries: Query[] = [
+            const files: GtfsFile[] = [
                 {
-                    fileName: "test",
+                    fileName: Files.AGENCY,
                     include: true,
-                    getQuery: () => "QUERY",
                 },
             ];
 
-            const newQueries = await ignoreEmptyFiles("bucket", "filePath", queries);
+            const newFiles = await ignoreEmptyFiles("bucket", "filePath", files);
 
             expect(mocks.getS3Object).toBeCalledTimes(1);
-            expect(newQueries[0].include).toBeTruthy();
+            expect(newFiles[0].include).toBeTruthy();
         });
 
-        it("disables queries if there is an empty file", async () => {
+        it("disables files if there is an empty file", async () => {
             mocks.listS3Objects.mockResolvedValue({
                 Contents: [
                     {
                         Size: 100,
-                        Key: "test",
+                        Key: Files.ROUTES,
                     },
                 ],
             });
@@ -106,18 +104,17 @@ describe("gtfs-timetables-generator", () => {
                 },
             });
 
-            const queries: Query[] = [
+            const files: GtfsFile[] = [
                 {
-                    fileName: "test",
+                    fileName: Files.ROUTES,
                     include: true,
-                    getQuery: () => "QUERY",
                 },
             ];
 
-            const newQueries = await ignoreEmptyFiles("bucket", "filePath", queries);
+            const newFiles = await ignoreEmptyFiles("bucket", "filePath", files);
 
             expect(mocks.getS3Object).toBeCalledTimes(1);
-            expect(newQueries[0].include).toBeFalsy();
+            expect(newFiles[0].include).toBeFalsy();
         });
     });
 
@@ -136,44 +133,40 @@ describe("gtfs-timetables-generator", () => {
         });
 
         it("appends files when include is true", async () => {
-            const queries: Query[] = [
+            const files: GtfsFile[] = [
                 {
-                    fileName: "test",
+                    fileName: Files.CALENDAR,
                     include: true,
-                    getQuery: () => "QUERY",
                 },
                 {
-                    fileName: "test2",
+                    fileName: Files.SHAPES,
                     include: true,
-                    getQuery: () => "QUERY",
                 },
             ];
 
-            await createGtfsZip("gtfsBucket", "outputBucket", "filePath", queries);
+            await createGtfsZip("gtfsBucket", "outputBucket", "filePath", files);
 
             expect(mocks.appendMock).toBeCalledTimes(2);
-            expect(mocks.appendMock).toBeCalledWith("stream", { name: "test.txt" });
-            expect(mocks.appendMock).toBeCalledWith("stream", { name: "test2.txt" });
+            expect(mocks.appendMock).toBeCalledWith("stream", { name: "calendar.txt" });
+            expect(mocks.appendMock).toBeCalledWith("stream", { name: "shapes.txt" });
         });
 
         it("ignores files when include is false", async () => {
-            const queries: Query[] = [
+            const files: GtfsFile[] = [
                 {
-                    fileName: "test",
+                    fileName: Files.FREQUENCIES,
                     include: false,
-                    getQuery: () => "QUERY",
                 },
                 {
-                    fileName: "test2",
+                    fileName: Files.AGENCY,
                     include: true,
-                    getQuery: () => "QUERY",
                 },
             ];
 
-            await createGtfsZip("gtfsBucket", "outputBucket", "filePath", queries);
+            await createGtfsZip("gtfsBucket", "outputBucket", "filePath", files);
 
             expect(mocks.appendMock).toBeCalledTimes(1);
-            expect(mocks.appendMock).toBeCalledWith("stream", { name: "test2.txt" });
+            expect(mocks.appendMock).toBeCalledWith("stream", { name: "agency.txt" });
         });
     });
 
@@ -181,22 +174,15 @@ describe("gtfs-timetables-generator", () => {
         const handlerMocks = vi.hoisted(() => {
             return {
                 createRegionalTripTable: vi.fn(),
-                regionalQueryBuilder: vi.fn().mockReturnValue([
-                    {
-                        fileName: "region1",
-                        include: true,
-                        getQuery: mocks.getQueryMock,
-                    },
-                ]),
                 queryBuilder: vi.fn().mockReturnValue([
                     {
-                        fileName: "national1",
+                        fileName: "calendar",
                         include: true,
                         getQuery: mocks.getQueryMock,
                     },
                 ]),
                 exportDataToS3: vi.fn(),
-                dropRegionalTable: vi.fn(),
+                dropRegionalTripTable: vi.fn(),
                 databaseClient: {
                     destroy: vi.fn(),
                 },
@@ -207,12 +193,12 @@ describe("gtfs-timetables-generator", () => {
             getDatabaseClient: () => handlerMocks.databaseClient,
         }));
 
-        vi.mock("./data", () => ({
+        vi.mock("./data", async (importOriginal) => ({
+            ...(await importOriginal<typeof import("./data")>()),
             createRegionalTripTable: handlerMocks.createRegionalTripTable,
-            regionalQueryBuilder: handlerMocks.regionalQueryBuilder,
             queryBuilder: handlerMocks.queryBuilder,
             exportDataToS3: handlerMocks.exportDataToS3,
-            dropRegionalTable: handlerMocks.dropRegionalTable,
+            dropRegionalTripTable: handlerMocks.dropRegionalTripTable,
         }));
 
         beforeEach(() => {
@@ -225,19 +211,25 @@ describe("gtfs-timetables-generator", () => {
 
         describe("national GTFS", () => {
             it("exports national data to s3 when no region code passed", async () => {
-                await handler(mockEvent, mockContext, mockCallback);
+                await exportHandler(mockEvent, mockContext, mockCallback);
 
                 expect(handlerMocks.exportDataToS3).toBeCalledTimes(1);
                 expect(handlerMocks.exportDataToS3).toBeCalledWith(
-                    [{ fileName: "national1", getQuery: mocks.getQueryMock, include: true }],
+                    [{ fileName: "calendar", getQuery: mocks.getQueryMock, include: true }],
                     "outputBucket",
                     handlerMocks.databaseClient,
                     "all_gtfs",
                 );
             });
 
+            it("doesn't create regional trip table for national file", async () => {
+                await exportHandler(mockEvent, mockContext, mockCallback);
+
+                expect(handlerMocks.createRegionalTripTable).not.toBeCalled();
+            });
+
             it("creates GTFS zip", async () => {
-                await handler(mockEvent, mockContext, mockCallback);
+                await zipHandler(mockEvent, mockContext, mockCallback);
 
                 expect(mocks.startS3Upload).toBeCalledTimes(1);
                 expect(mocks.startS3Upload).toBeCalledWith(
@@ -251,19 +243,25 @@ describe("gtfs-timetables-generator", () => {
 
         describe("regional GTFS", () => {
             it("exports regional data to s3 when region code passed", async () => {
-                await handler({ regionCode: "Y" }, mockContext, mockCallback);
+                await exportHandler({ regionCode: "Y" }, mockContext, mockCallback);
 
                 expect(handlerMocks.exportDataToS3).toBeCalledTimes(1);
                 expect(handlerMocks.exportDataToS3).toBeCalledWith(
-                    [{ fileName: "region1", getQuery: mocks.getQueryMock, include: true }],
+                    [{ fileName: "calendar", getQuery: mocks.getQueryMock, include: true }],
                     "outputBucket",
                     handlerMocks.databaseClient,
                     "y_gtfs",
                 );
             });
 
+            it("creates regional trip table", async () => {
+                await exportHandler({ regionCode: "Y" }, mockContext, mockCallback);
+
+                expect(handlerMocks.createRegionalTripTable).toBeCalledWith(handlerMocks.databaseClient, "Y");
+            });
+
             it("creates GTFS zip", async () => {
-                await handler({ regionCode: "Y" }, mockContext, mockCallback);
+                await zipHandler({ regionCode: "Y" }, mockContext, mockCallback);
 
                 expect(mocks.startS3Upload).toBeCalledTimes(1);
                 expect(mocks.startS3Upload).toBeCalledWith(

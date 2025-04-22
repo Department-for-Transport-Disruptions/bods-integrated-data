@@ -1,0 +1,64 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`trips > inserts trips into the database 1`] = `
+[
+  {
+    "blockId": "",
+    "journeyPattern": {
+      "@_id": "1",
+      "JourneyPatternSectionRefs": [],
+    },
+    "routeId": 11,
+    "serviceCode": "test",
+    "serviceId": 12,
+    "shapeId": "13",
+    "tripId": "VJ668c580888094ff9bad05521b7b82f58e8f31ed0",
+    "vehicleJourney": {
+      "@_RevisionNumber": "2",
+      "DepartureDayShift": 1,
+      "DepartureTime": "00:01:00",
+      "JourneyPatternRef": "17",
+      "LineRef": "15",
+      "ServiceRef": "16",
+      "VehicleJourneyCode": "18",
+    },
+  },
+  {
+    "blockId": "ad4b5661e10bc4d2f9209e1e1f0083bc4112d31b",
+    "journeyPattern": {
+      "@_id": "1",
+      "DestinationDisplay": "jpDisplay1",
+      "Direction": "inbound",
+      "JourneyPatternSectionRefs": [],
+    },
+    "routeId": 1,
+    "serviceCode": "test",
+    "serviceId": 2,
+    "shapeId": "3",
+    "tripId": "VJ28c521ca45f8b29027531375bd76dec15ec90dd5",
+    "vehicleJourney": {
+      "DepartureTime": "23:59:00",
+      "DestinationDisplay": "vjDisplay1",
+      "JourneyPatternRef": "7",
+      "LineRef": "5",
+      "OperatingProfile": {
+        "RegularDayType": {
+          "DaysOfWeek": {
+            "Monday": "",
+          },
+        },
+      },
+      "Operational": {
+        "Block": {
+          "BlockNumber": "block1",
+        },
+        "TicketMachine": {
+          "JourneyCode": "journey1",
+        },
+      },
+      "ServiceRef": "6",
+      "VehicleJourneyCode": "8",
+    },
+  },
+]
+`;

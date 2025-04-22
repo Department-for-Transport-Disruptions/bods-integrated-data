@@ -1,7 +1,14 @@
-import { DropOffType, KyselyDb, NewStopTime, PickupType, Timepoint } from "@bods-integrated-data/shared/database";
+import {
+    DropOffType,
+    KyselyDb,
+    LocationType,
+    NewStopTime,
+    PickupType,
+    Timepoint,
+} from "@bods-integrated-data/shared/database";
 import { TxcJourneyPatternSection } from "@bods-integrated-data/shared/schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { VehicleJourneyMapping } from "../types";
+import { VehicleJourneyMappingWithCalendar } from "../types";
 import * as databaseFunctions from "./database";
 import { processStopTimes } from "./stopTimes";
 
@@ -10,7 +17,7 @@ describe("stopTimes", () => {
     const insertStopTimesMock = vi.spyOn(databaseFunctions, "insertStopTimes");
     const updateTripWithOriginAndDestinationRefMock = vi.spyOn(
         databaseFunctions,
-        "updateTripWithOriginAndDestinationRef",
+        "updateTripWithOriginDestinationRefAndBlockId",
     );
 
     updateTripWithOriginAndDestinationRefMock.mockImplementation(() => Promise.resolve());
@@ -18,6 +25,34 @@ describe("stopTimes", () => {
     beforeEach(() => {
         vi.resetAllMocks();
     });
+
+    const defaultInsertedStops = [
+        {
+            id: "1",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "2",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "3",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "A",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+        {
+            id: "B",
+            location_type: LocationType.StopOrPlatform,
+            wheelchair_boarding: 0,
+        },
+    ];
 
     it("inserts stop times into the database", async () => {
         const journeyPatternSections: TxcJourneyPatternSection[] = [
@@ -74,12 +109,13 @@ describe("stopTimes", () => {
             },
         ];
 
-        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
             {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
@@ -101,11 +137,27 @@ describe("stopTimes", () => {
                     DestinationDisplay: "service1",
                     JourneyPatternSectionRefs: ["1", "2"],
                 },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
             {
                 routeId: 11,
                 serviceId: 12,
                 shapeId: "13",
+                blockId: "",
                 tripId: "trip2",
                 serviceCode: "test",
                 vehicleJourney: {
@@ -118,6 +170,21 @@ describe("stopTimes", () => {
                 journeyPattern: {
                     "@_id": "17",
                     JourneyPatternSectionRefs: ["3"],
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
                 },
             },
         ];
@@ -135,6 +202,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip1",
@@ -148,6 +216,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip1",
@@ -161,6 +230,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -174,6 +244,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -187,12 +258,13 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
         ];
 
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).toHaveBeenCalledWith(dbClient, expectedStopTimes);
     });
@@ -236,12 +308,13 @@ describe("stopTimes", () => {
             },
         ];
 
-        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
             {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
@@ -263,12 +336,28 @@ describe("stopTimes", () => {
                     DestinationDisplay: "service1",
                     JourneyPatternSectionRefs: ["1"],
                 },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
             {
                 routeId: 2,
                 serviceId: 200,
                 shapeId: "31",
                 tripId: "trip2",
+                blockId: "",
                 serviceCode: "test2",
                 vehicleJourney: {
                     LineRef: "51",
@@ -290,6 +379,21 @@ describe("stopTimes", () => {
                     DestinationDisplay: "service2",
                     JourneyPatternSectionRefs: ["2"],
                 },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
         ];
 
@@ -306,6 +410,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip1",
@@ -319,6 +424,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -332,6 +438,7 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.NoDropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
             {
                 trip_id: "trip2",
@@ -345,12 +452,13 @@ describe("stopTimes", () => {
                 drop_off_type: DropOffType.DropOff,
                 shape_dist_traveled: null,
                 timepoint: Timepoint.Approximate,
+                exclude: false,
             },
         ];
 
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).toHaveBeenCalledWith(dbClient, expectedStopTimes);
     });
@@ -410,12 +518,13 @@ describe("stopTimes", () => {
             },
         ];
 
-        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
             {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                blockId: "123",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
@@ -437,12 +546,28 @@ describe("stopTimes", () => {
                     DestinationDisplay: "service1",
                     JourneyPatternSectionRefs: ["1", "2"],
                 },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
             {
                 routeId: 11,
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                blockId: "abc",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
@@ -454,26 +579,96 @@ describe("stopTimes", () => {
                 journeyPattern: {
                     "@_id": "17",
                     JourneyPatternSectionRefs: ["3"],
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
                 },
             },
         ];
 
         insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings);
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
 
         expect(updateTripWithOriginAndDestinationRefMock).toBeCalledTimes(2);
-        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[0]).toEqual([dbClient, "trip1", "1", "3"]);
-        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[1]).toEqual([dbClient, "trip2", "A", "B"]);
+        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[0]).toEqual([dbClient, "trip1", "1", "3", "123"]);
+        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[1]).toEqual([dbClient, "trip2", "A", "B", "abc"]);
     });
 
-    it("doesn't insert stop times that fail to reference a journey pattern section", async () => {
-        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+    it("removes block ids if trips with same block ids overlap", async () => {
+        const journeyPatternSections: TxcJourneyPatternSection[] = [
+            {
+                "@_id": "1",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "1",
+                        From: {
+                            StopPointRef: "1",
+                            Activity: "pickUp",
+                        },
+                        To: {
+                            StopPointRef: "2",
+                        },
+                        RunTime: "PT2M",
+                    },
+                ],
+            },
+            {
+                "@_id": "2",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "2,",
+                        From: {
+                            StopPointRef: "2",
+                            WaitTime: "PT1M",
+                            Activity: "pickUpAndSetDown",
+                        },
+                        To: {
+                            StopPointRef: "3",
+                            Activity: "setDown",
+                        },
+                        RunTime: "PT5M",
+                    },
+                ],
+            },
+            {
+                "@_id": "3",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "3",
+                        From: {
+                            StopPointRef: "a",
+                            Activity: "pickUp",
+                        },
+                        To: {
+                            StopPointRef: "b",
+                            Activity: "setDown",
+                        },
+                        RunTime: "PT12M",
+                    },
+                ],
+            },
+        ];
+
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
             {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                blockId: "123",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
@@ -495,12 +690,28 @@ describe("stopTimes", () => {
                     DestinationDisplay: "service1",
                     JourneyPatternSectionRefs: ["1", "2"],
                 },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
             {
                 routeId: 11,
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                blockId: "123",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
@@ -513,21 +724,41 @@ describe("stopTimes", () => {
                     "@_id": "17",
                     JourneyPatternSectionRefs: ["3"],
                 },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
         ];
 
-        await processStopTimes(dbClient, [], vehicleJourneyMappings);
+        insertStopTimesMock.mockImplementation(() => Promise.resolve());
 
-        expect(insertStopTimesMock).not.toHaveBeenCalled();
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, defaultInsertedStops);
+
+        expect(updateTripWithOriginAndDestinationRefMock).toBeCalledTimes(2);
+        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[0]).toEqual([dbClient, "trip1", "1", "3", ""]);
+        expect(updateTripWithOriginAndDestinationRefMock.mock.calls[1]).toEqual([dbClient, "trip2", "A", "B", ""]);
     });
 
-    it("doesn't insert stop times that fail to reference a journey pattern", async () => {
-        const vehicleJourneyMappings: VehicleJourneyMapping[] = [
+    it("doesn't insert stop times that fail to reference a journey pattern section", async () => {
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
             {
                 routeId: 1,
                 serviceId: 2,
                 shapeId: "3",
                 tripId: "trip1",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "5",
@@ -544,12 +775,33 @@ describe("stopTimes", () => {
                         },
                     },
                 },
+                journeyPattern: {
+                    "@_id": "7",
+                    DestinationDisplay: "service1",
+                    JourneyPatternSectionRefs: ["1", "2"],
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
             {
                 routeId: 11,
                 serviceId: 12,
                 shapeId: "13",
                 tripId: "trip2",
+                blockId: "",
                 serviceCode: "test",
                 vehicleJourney: {
                     LineRef: "15",
@@ -558,11 +810,269 @@ describe("stopTimes", () => {
                     VehicleJourneyCode: "18",
                     DepartureTime: "00:01:00",
                 },
+                journeyPattern: {
+                    "@_id": "17",
+                    JourneyPatternSectionRefs: ["3"],
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
             },
         ];
 
-        await processStopTimes(dbClient, [], vehicleJourneyMappings);
+        await processStopTimes(dbClient, [], vehicleJourneyMappings, defaultInsertedStops);
 
         expect(insertStopTimesMock).not.toHaveBeenCalled();
+    });
+
+    it("doesn't insert stop times that fail to reference a journey pattern", async () => {
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
+            {
+                routeId: 1,
+                serviceId: 2,
+                shapeId: "3",
+                tripId: "trip1",
+                blockId: "",
+                serviceCode: "test",
+                vehicleJourney: {
+                    LineRef: "5",
+                    ServiceRef: "6",
+                    JourneyPatternRef: "7",
+                    VehicleJourneyCode: "8",
+                    DepartureTime: "00:00:00",
+                    Operational: {
+                        Block: {
+                            BlockNumber: "block1",
+                        },
+                        TicketMachine: {
+                            JourneyCode: "journey1",
+                        },
+                    },
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
+            },
+            {
+                routeId: 11,
+                serviceId: 12,
+                shapeId: "13",
+                tripId: "trip2",
+                blockId: "",
+                serviceCode: "test",
+                vehicleJourney: {
+                    LineRef: "15",
+                    ServiceRef: "16",
+                    JourneyPatternRef: "17",
+                    VehicleJourneyCode: "18",
+                    DepartureTime: "00:01:00",
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
+            },
+        ];
+
+        await processStopTimes(dbClient, [], vehicleJourneyMappings, defaultInsertedStops);
+
+        expect(insertStopTimesMock).not.toHaveBeenCalled();
+    });
+
+    it("excludes stop times with location type of 2, 3 or 4", async () => {
+        const journeyPatternSections: TxcJourneyPatternSection[] = [
+            {
+                "@_id": "1",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "1",
+                        From: {
+                            StopPointRef: "1",
+                            Activity: "pickUp",
+                        },
+                        To: {
+                            StopPointRef: "2",
+                        },
+                        RunTime: "PT2M",
+                    },
+                ],
+            },
+            {
+                "@_id": "2",
+                JourneyPatternTimingLink: [
+                    {
+                        "@_id": "2,",
+                        From: {
+                            StopPointRef: "2",
+                            WaitTime: "PT1M",
+                            Activity: "pickUpAndSetDown",
+                        },
+                        To: {
+                            StopPointRef: "3",
+                            Activity: "setDown",
+                        },
+                        RunTime: "PT5M",
+                    },
+                ],
+            },
+        ];
+
+        const vehicleJourneyMappings: VehicleJourneyMappingWithCalendar[] = [
+            {
+                routeId: 1,
+                serviceId: 2,
+                shapeId: "3",
+                tripId: "trip1",
+                blockId: "",
+                serviceCode: "test",
+                vehicleJourney: {
+                    LineRef: "5",
+                    ServiceRef: "6",
+                    JourneyPatternRef: "7",
+                    VehicleJourneyCode: "8",
+                    DepartureTime: "00:00:00",
+                    Operational: {
+                        Block: {
+                            BlockNumber: "block1",
+                        },
+                        TicketMachine: {
+                            JourneyCode: "journey1",
+                        },
+                    },
+                },
+                journeyPattern: {
+                    "@_id": "7",
+                    DestinationDisplay: "service1",
+                    JourneyPatternSectionRefs: ["1", "2"],
+                },
+                calendarWithDates: {
+                    calendar: {
+                        calendar_hash: "",
+                        start_date: "20240320",
+                        end_date: "20240325",
+                        monday: 1,
+                        tuesday: 1,
+                        wednesday: 1,
+                        thursday: 1,
+                        friday: 1,
+                        saturday: 0,
+                        sunday: 0,
+                    },
+                    calendarDates: [],
+                },
+            },
+        ];
+
+        const expectedStopTimes: NewStopTime[] = [
+            {
+                trip_id: "trip1",
+                stop_id: "1",
+                destination_stop_id: "2",
+                arrival_time: "00:00:00",
+                departure_time: "00:00:00",
+                stop_sequence: 0,
+                stop_headsign: "",
+                pickup_type: PickupType.Pickup,
+                drop_off_type: DropOffType.NoDropOff,
+                shape_dist_traveled: null,
+                timepoint: Timepoint.Approximate,
+                exclude: false,
+            },
+            {
+                trip_id: "trip1",
+                stop_id: "2",
+                destination_stop_id: "3",
+                arrival_time: "00:02:00",
+                departure_time: "00:03:00",
+                stop_sequence: 1,
+                stop_headsign: "",
+                pickup_type: PickupType.Pickup,
+                drop_off_type: DropOffType.DropOff,
+                shape_dist_traveled: null,
+                timepoint: Timepoint.Approximate,
+                exclude: true,
+            },
+            {
+                trip_id: "trip1",
+                stop_id: "3",
+                destination_stop_id: "",
+                arrival_time: "00:08:00",
+                departure_time: "00:08:00",
+                stop_sequence: 2,
+                stop_headsign: "",
+                pickup_type: PickupType.NoPickup,
+                drop_off_type: DropOffType.DropOff,
+                shape_dist_traveled: null,
+                timepoint: Timepoint.Approximate,
+                exclude: false,
+            },
+        ];
+
+        insertStopTimesMock.mockImplementation(() => Promise.resolve());
+
+        await processStopTimes(dbClient, journeyPatternSections, vehicleJourneyMappings, [
+            {
+                id: "1",
+                location_type: LocationType.StopOrPlatform,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "2",
+                location_type: LocationType.EntranceOrExit,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "3",
+                location_type: LocationType.StopOrPlatform,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "4",
+                location_type: LocationType.GenericNode,
+                wheelchair_boarding: 0,
+            },
+            {
+                id: "5",
+                location_type: LocationType.BoardingArea,
+                wheelchair_boarding: 0,
+            },
+        ]);
+
+        expect(insertStopTimesMock).toHaveBeenCalledWith(dbClient, expectedStopTimes);
     });
 });

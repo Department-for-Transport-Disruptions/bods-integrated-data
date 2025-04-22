@@ -4,6 +4,7 @@ import { PartialDeep } from "type-fest";
 
 export const mockValidData: PartialDeep<TxcSchema> = {
     TransXChange: {
+        "@_RevisionNumber": "1",
         Operators: {
             Operator: [
                 {
@@ -266,6 +267,7 @@ export const mockValidData: PartialDeep<TxcSchema> = {
 
 export const mockInvalidData: PartialDeep<TxcSchema> = {
     TransXChange: {
+        "@_RevisionNumber": "1",
         Operators: {
             Operator: [
                 {

@@ -135,6 +135,14 @@ export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopL
         .execute();
 };
 
+export const getNaptanStopAreas = (dbClient: KyselyDb, atcoCodes: string[]) => {
+    return dbClient
+        .selectFrom("naptan_stop_area_new")
+        .selectAll("naptan_stop_area_new")
+        .where("naptan_stop_area_new.stop_area_code", "in", atcoCodes)
+        .execute();
+};
+
 export const getTndsRoute = (dbClient: KyselyDb, nocLineName: string) => {
     return dbClient.selectFrom("route").selectAll().where("noc_line_name", "=", nocLineName).executeTakeFirst();
 };
@@ -211,17 +219,29 @@ export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
     );
 };
 
-export const updateTripWithOriginAndDestinationRef = async (
+export const updateTripWithOriginDestinationRefAndBlockId = async (
     dbClient: KyselyDb,
     tripId: string,
     originRef: string | null,
     destinationRef: string | null,
+    blockId: string,
 ) => {
     await dbClient
         .updateTable("trip_new")
         .set({
             origin_stop_ref: originRef,
             destination_stop_ref: destinationRef,
+            block_id: blockId,
+        })
+        .where("id", "=", tripId)
+        .execute();
+};
+
+export const updateTripBlockId = async (dbClient: KyselyDb, tripId: string, blockId: string) => {
+    await dbClient
+        .updateTable("trip_new")
+        .set({
+            block_id: blockId,
         })
         .where("id", "=", tripId)
         .execute();
