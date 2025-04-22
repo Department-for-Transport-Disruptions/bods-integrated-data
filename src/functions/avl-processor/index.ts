@@ -137,10 +137,13 @@ export const processSqsRecord = async (
                 logger.info("AVL cancellations processed successfully", {
                     subscriptionId,
                 });
-            } else
+            }
+
+            if (totalAvlCount === 0 && avlCancellations.length === 0) {
                 logger.warn("No VehicleActivity or VehicleActivityCancellation was provided in SIRI-VM message", {
                     subscriptionId,
                 });
+            }
         }
     } catch (e) {
         logger.error(`AVL processing failed for file ${record.s3.object.key}`);
