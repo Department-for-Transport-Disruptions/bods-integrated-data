@@ -24,15 +24,8 @@ describe("tfl-timetable-retriever", () => {
         }),
     }));
 
-    vi.mock("@aws-sdk/client-s3", () => ({
-        S3Client: vi.fn(),
-        ListObjectsV2Command: vi.fn(),
-        GetObjectCommand: vi.fn(),
-    }));
-
-    vi.mock("@bods-integrated-data/shared/unzip", () => ({
-        unzip: vi.fn(),
-    }));
+    vi.mock("@aws-sdk/client-s3");
+    vi.mock("@bods-integrated-data/shared/unzip");
 
     beforeEach(() => {
         process.env.TFL_TIMETABLES_BUCKET_NAME = mockBucketName;
@@ -73,12 +66,8 @@ describe("tfl-timetable-retriever", () => {
         });
 
         it("throws an error when no prefixes with a valid date are found", async () => {
-            vi.mocked(S3Client).mockImplementation(
-                () =>
-                    ({
-                        send: vi.fn().mockResolvedValue({ CommonPrefixes: [{ Prefix: "invalid-prefix/" }] }),
-                    }) as unknown as S3Client,
-            );
+            // @ts-ignore mock S3Client
+            vi.mocked(S3Client.prototype.send).mockResolvedValue({ CommonPrefixes: [{ Prefix: "invalid-prefix/" }] });
 
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
                 "No prefixes with a valid date found in the S3 bucket",
@@ -91,12 +80,8 @@ describe("tfl-timetable-retriever", () => {
         });
 
         it("logs a warning and skips retrieval when the prefix already exists", async () => {
-            vi.mocked(S3Client).mockImplementation(
-                () =>
-                    ({
-                        send: vi.fn().mockResolvedValue({ CommonPrefixes: [{ Prefix: "20250101/" }] }),
-                    }) as unknown as S3Client,
-            );
+            // @ts-ignore mock S3Client
+            vi.mocked(S3Client.prototype.send).mockResolvedValue({ CommonPrefixes: [{ Prefix: "20250101/" }] });
 
             await handler(mockEvent, mockContext, mockCallback);
 
@@ -108,22 +93,18 @@ describe("tfl-timetable-retriever", () => {
             mockBody.push("mock data");
             mockBody.push(null);
 
-            vi.mocked(S3Client).mockImplementation(
-                () =>
-                    ({
-                        send: vi.fn().mockImplementation((command) => {
-                            if (command instanceof ListObjectsV2Command) {
-                                return {
-                                    CommonPrefixes: [{ Prefix: "20250102/" }],
-                                    Contents: [{ Key: "file1.zip" }, { Key: "file2.zip" }],
-                                };
-                            }
-                            if (command instanceof GetObjectCommand) {
-                                return { Body: mockBody };
-                            }
-                        }),
-                    }) as unknown as S3Client,
-            );
+            // @ts-ignore mock S3Client
+            vi.mocked(S3Client.prototype.send).mockImplementation((command) => {
+                if (command instanceof ListObjectsV2Command) {
+                    return {
+                        CommonPrefixes: [{ Prefix: "20250102/" }],
+                        Contents: [{ Key: "file1.zip" }, { Key: "file2.zip" }],
+                    };
+                }
+                if (command instanceof GetObjectCommand) {
+                    return { Body: mockBody };
+                }
+            });
 
             const unzipMock = vi.fn();
             vi.mocked(unzip).mockImplementation(unzipMock);
