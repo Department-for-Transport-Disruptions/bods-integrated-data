@@ -27,7 +27,7 @@ importers:
         specifier: ^0.2.1
         version: 0.2.1
       zod:
-        specifier: ^3.23.8
+        specifier: 3.23.8
         version: 3.23.8
       zod-validation-error:
         specifier: ^3.3.0

@@ -28,7 +28,7 @@ importers:
         specifier: ^20.11.19
         version: 20.11.25
       zod:
-        specifier: ^3.23.8
+        specifier: 3.23.8
         version: 3.23.8
 
 packages:
