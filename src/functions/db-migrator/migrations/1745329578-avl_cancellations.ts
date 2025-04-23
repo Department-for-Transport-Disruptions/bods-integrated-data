@@ -20,6 +20,28 @@ export async function up(db: Kysely<Database>): Promise<void> {
             "direction_ref",
         ])
         .execute();
+
+    await db.schema
+        .createIndex("idx_avl_cancellation_recorded_at_time")
+        .on("avl_cancellation")
+        .column("recorded_at_time")
+        .execute();
+    await db.schema
+        .createIndex("idx_avl_cancellation_data_frame_ref")
+        .on("avl_cancellation")
+        .column("data_frame_ref")
+        .execute();
+    await db.schema
+        .createIndex("idx_avl_cancellation_dated_vehicle_journey_ref")
+        .on("avl_cancellation")
+        .column("dated_vehicle_journey_ref")
+        .execute();
+    await db.schema.createIndex("idx_avl_cancellation_line_ref").on("avl_cancellation").column("line_ref").execute();
+    await db.schema
+        .createIndex("idx_avl_cancellation_direction_ref")
+        .on("avl_cancellation")
+        .column("direction_ref")
+        .execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
