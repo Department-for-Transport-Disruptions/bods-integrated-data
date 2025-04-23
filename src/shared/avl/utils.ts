@@ -8,7 +8,7 @@ import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
-import { Avl, KyselyDb, NewAvl } from "../database";
+import { Avl, KyselyDb, NewAvl, NewAvlCancellations } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
@@ -181,6 +181,43 @@ export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptio
                             trip_id: eb.ref("excluded.trip_id"),
                         }))
                         .whereRef("excluded.recorded_at_time", ">", "avl.recorded_at_time"),
+                )
+                .execute(),
+        ),
+    );
+};
+
+export const insertAvlCancellations = async (
+    dbClient: KyselyDb,
+    avlsCancellations: NewAvlCancellations[],
+    subscriptionId: string,
+) => {
+    const modifiedAvlsCancellations = avlsCancellations.map((cancellation) => ({
+        ...cancellation,
+        subscription_id: subscriptionId,
+    }));
+    const insertChunks = chunkArray(modifiedAvlsCancellations, 1000);
+
+    await Promise.all(
+        insertChunks.map((chunk) =>
+            dbClient
+                .insertInto("avl_cancellation")
+                .values(chunk)
+                .onConflict((oc) =>
+                    oc
+                        .columns(["data_frame_ref", "dated_vehicle_journey_ref", "line_ref", "direction_ref"])
+                        .doUpdateSet((eb) => ({
+                            id: eb.ref("excluded.id"),
+                            response_time_stamp: eb.ref("excluded.response_time_stamp"),
+                            recorded_at_time: eb.ref("excluded.recorded_at_time"),
+                            vehicle_monitoring_ref: eb.ref("excluded.vehicle_monitoring_ref"),
+                            data_frame_ref: eb.ref("excluded.data_frame_ref"),
+                            dated_vehicle_journey_ref: eb.ref("excluded.dated_vehicle_journey_ref"),
+                            line_ref: eb.ref("excluded.line_ref"),
+                            direction_ref: eb.ref("excluded.direction_ref"),
+                            subscription_id: eb.ref("excluded.subscription_id"),
+                        }))
+                        .whereRef("excluded.recorded_at_time", ">", "avl_cancellation.recorded_at_time"),
                 )
                 .execute(),
         ),

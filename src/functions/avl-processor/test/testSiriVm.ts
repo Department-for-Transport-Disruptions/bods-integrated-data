@@ -1,4 +1,4 @@
-import { NewAvl } from "@bods-integrated-data/shared/database";
+import { NewAvl, NewAvlCancellations } from "@bods-integrated-data/shared/database";
 import { expect } from "vitest";
 
 export const mockSubscriptionId = "123";
@@ -627,6 +627,71 @@ export const testSiriWithCancellationsOnly = `
         <ProducerRef>ATB</ProducerRef>
         <VehicleMonitoringDelivery version="2.0">
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+            <VehicleActivityCancellation>
+                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
+                <VehicleJourneyRef>
+                  <DataFrameRef>2018-08-17</DataFrameRef>
+                  <DatedVehicleJourneyRef>1234</DatedVehicleJourneyRef>
+                </VehicleJourneyRef>
+                <LineRef>567</LineRef>
+                <DirectionRef>inbound</DirectionRef>
+            </VehicleActivityCancellation>
+        </VehicleMonitoringDelivery>
+    </ServiceDelivery>
+</Siri>
+`;
+
+export const parsedSiriWithCancellationsOnly: NewAvlCancellations[] = [
+    {
+        data_frame_ref: "2018-08-17",
+        dated_vehicle_journey_ref: "1234",
+        direction_ref: "inbound",
+        line_ref: "567",
+        recorded_at_time: "2018-08-17T15:22:20",
+        response_time_stamp: "2018-08-17T15:14:21.432",
+        subscription_id: "123",
+        vehicle_monitoring_ref: "TEST",
+    },
+];
+
+export const testSiriWithLocationsAndCancellations = `
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Siri xmlns="http://www.siri.org.uk/siri"
+    xmlns:ns2="http://www.ifopt.org.uk/acsb"
+    xmlns:ns3="http://www.ifopt.org.uk/ifopt"
+    xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0"
+    version="2.0">
+    <ServiceDelivery>
+        <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+        <ProducerRef>ATB</ProducerRef>
+        <VehicleMonitoringDelivery version="2.0">
+            <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
+            <VehicleActivity>
+                <RecordedAtTime>2018-08-17T15:13:20</RecordedAtTime>
+                <ValidUntilTime>2018-08-17T16:13:29</ValidUntilTime>
+                <MonitoredVehicleJourney>
+                    <LineRef>ATB:Line:60</LineRef>
+                    <DirectionRef>2</DirectionRef>
+                    <Occupancy>full</Occupancy>
+                    <OperatorRef>placeholder</OperatorRef>
+                    <FramedVehicleJourneyRef>
+                        <DataFrameRef>2018-08-17</DataFrameRef>
+                        <DatedVehicleJourneyRef>ATB:ServiceJourney:00600027</DatedVehicleJourneyRef>
+                    </FramedVehicleJourneyRef>
+                    <VehicleRef>200141</VehicleRef>
+                    <Bearing>0</Bearing>
+                    <VehicleLocation>
+                        <Longitude>10.40261</Longitude>
+                        <Latitude>63.43613</Latitude>
+                    </VehicleLocation>
+                    <BlockRef>blockRef</BlockRef>
+                    <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:13:20</OriginAimedDepartureTime>
+                    <DestinationRef>destinationRef</DestinationRef>
+                    <PublishedLineName>1</PublishedLineName>
+                </MonitoredVehicleJourney>
+            </VehicleActivity>
             <VehicleActivityCancellation>
                 <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
                 <VehicleMonitoringRef>TEST</VehicleMonitoringRef>

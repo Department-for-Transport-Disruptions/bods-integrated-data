@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
+import {
+    getAvlErrorDetails,
+    getAvlSubscription,
+    insertAvlCancellations,
+    insertAvls,
+} from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
@@ -50,7 +55,8 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
 
     return {
         responseTimestamp: parsedXml?.Siri?.ServiceDelivery?.ResponseTimestamp,
-        avls: parsedJson.success ? parsedJson.data : [],
+        avls: parsedJson.success ? parsedJson.data.avls : [],
+        avlCancellations: parsedJson.success ? parsedJson.data.avlCancellations : [],
     };
 };
 
@@ -103,7 +109,7 @@ export const processSqsRecord = async (
         if (body) {
             const xml = await body.transformToString();
             const errors: AvlValidationError[] = [];
-            const { responseTimestamp, avls } = parseXml(xml, errors);
+            const { responseTimestamp, avls, avlCancellations } = parseXml(xml, errors);
 
             if (errors.length > 0) {
                 await uploadValidationErrorsToDatabase(
@@ -124,8 +130,17 @@ export const processSqsRecord = async (
                 logger.info("AVL processed successfully", {
                     subscriptionId,
                 });
-            } else {
-                logger.warn("No VehicleActivity was provided in SIRI-VM message", {
+            }
+
+            if (avlCancellations.length > 0) {
+                await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
+                logger.info("AVL cancellations processed successfully", {
+                    subscriptionId,
+                });
+            }
+
+            if (totalAvlCount === 0 && avlCancellations.length === 0) {
+                logger.warn("No VehicleActivity or VehicleActivityCancellation was provided in SIRI-VM message", {
                     subscriptionId,
                 });
             }
