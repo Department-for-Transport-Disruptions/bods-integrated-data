@@ -132,7 +132,7 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
     if (item.NaPTAN.StopPoints.StopPoint.length > 0) {
         const transformedStopPoints = item.NaPTAN.StopPoints.StopPoint.map((stop) => {
             const newStop: NewNaptanStop = {
-                atco_code: stop.AtcoCode,
+                atco_code: stop.AtcoCode.toUpperCase(),
                 naptan_code: stop.NaptanCode ?? null,
                 plate_code: stop.PlateCode ?? null,
                 cleardown_code: stop.CleardownCode ?? null,
@@ -171,7 +171,8 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
                 revision_number: null,
                 modification: null,
                 status: null,
-                stop_area_code: stop.StopAreas?.StopAreaRef?.length === 1 ? stop.StopAreas.StopAreaRef[0] : null,
+                stop_area_code:
+                    stop.StopAreas?.StopAreaRef?.length === 1 ? stop.StopAreas.StopAreaRef[0].toUpperCase() : null,
             };
 
             return newStop;
@@ -183,7 +184,7 @@ export const naptanSchemaTransformed = naptanSchema.transform((item) => {
     if (item.NaPTAN.StopAreas && item.NaPTAN.StopAreas.StopArea.length > 0) {
         const transformedStopAreas = item.NaPTAN.StopAreas.StopArea.map((stopArea) => {
             const newStopArea: NewNaptanStopArea = {
-                stop_area_code: stopArea.StopAreaCode,
+                stop_area_code: stopArea.StopAreaCode.toUpperCase(),
                 name: stopArea.Name,
                 administrative_area_code: stopArea.AdministrativeAreaRef,
                 stop_area_type: stopArea.StopAreaType,

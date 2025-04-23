@@ -230,13 +230,14 @@ describe("stops", () => {
             };
 
             const naptanStop: Partial<NaptanStopWithRegionCode> = {
-                atco_code: "111",
+                atco_code: "123",
                 naptan_code: "4",
                 common_name: "naptan_name",
                 stop_type: "BCS",
                 latitude: "5",
                 longitude: "6",
                 region_code: "Y",
+                stop_area_code: "111",
             };
 
             const expected: NewStop[] = [
@@ -286,13 +287,14 @@ describe("stops", () => {
             };
 
             const naptanStop: Partial<NaptanStopWithRegionCode> = {
-                atco_code: "111",
+                atco_code: "123",
                 naptan_code: "4",
                 common_name: "naptan_name",
                 stop_type: "BCE",
                 latitude: "5",
                 longitude: "6",
                 region_code: "Y",
+                stop_area_code: "111",
             };
 
             const expected: NewStop[] = [
