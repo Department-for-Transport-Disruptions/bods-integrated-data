@@ -81,7 +81,7 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
 
 /**
  * Get all AVL data from the database using optional filters.
- * The route ID and trip ID for each AVL                                                                                                                                                                                                                                                                                                                                                                                                  are determined by a series of matching rules.
+ * The route ID and trip ID for each AVL are determined by a series of matching rules.
  * @param dbClient The database client
  * @param routeId Optional route ID or comma-separated route IDs to filter on
  * @param startTimeBefore Optional start time before to filter on using the AVL's departure time
