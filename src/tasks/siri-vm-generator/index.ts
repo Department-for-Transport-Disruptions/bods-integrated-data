@@ -18,7 +18,7 @@ const bree = new Bree({
             closeWorkerAfterMs: 30000,
         },
         {
-            name: "avl-cancellations-cleardown",
+            name: "avl-cancellation-cleardown",
             interval: `${cleardownFrequency}s`,
             timeout: 0,
             closeWorkerAfterMs: 30000,
