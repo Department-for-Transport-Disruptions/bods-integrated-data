@@ -24,7 +24,7 @@ export const mapStop = (
     naptanStop?: NaptanStopWithRegionCode,
 ): NewStop[] => {
     const stop: NewStop = {
-        id: id.toUpperCase(),
+        id,
         wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
         parent_station: null,
         stop_name: name.trim(),
@@ -58,8 +58,14 @@ export const mapStop = (
 
         if (naptanStop.stop_type && naptanPlatformStopTypeCodes.includes(naptanStop.stop_type)) {
             stop.platform_code = naptanStop.stop_type;
+        }
 
-            const stopArea = naptanStopAreaMap[naptanStop.atco_code];
+        if (
+            naptanStop.stop_type &&
+            naptanStop.stop_area_code &&
+            naptanPlatformStopTypeCodes.includes(naptanStop.stop_type)
+        ) {
+            const stopArea = naptanStopAreaMap[naptanStop.stop_area_code];
 
             if (stopArea) {
                 stop.parent_station = stopArea.stop_area_code;
@@ -67,8 +73,12 @@ export const mapStop = (
             }
         }
 
-        if (naptanStop.stop_type && naptanStationStopTypeCodes.includes(naptanStop.stop_type)) {
-            const stopArea = naptanStopAreaMap[naptanStop.atco_code];
+        if (
+            naptanStop.stop_type &&
+            naptanStop.stop_area_code &&
+            naptanStationStopTypeCodes.includes(naptanStop.stop_type)
+        ) {
+            const stopArea = naptanStopAreaMap[naptanStop.stop_area_code];
 
             if (stopArea) {
                 stop.parent_station = stopArea.stop_area_code;
@@ -118,7 +128,7 @@ export const createStopAreaStop = (
     }
 
     return {
-        id: stopArea.stop_area_code.toUpperCase(),
+        id: stopArea.stop_area_code,
         wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
         parent_station: null,
         stop_name: stopArea.name.trim(),
@@ -174,9 +184,10 @@ export const getCoordinates = (location?: StopPointLocation) => {
 };
 
 export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
-    const atcoCodes = stops.map((stop) => stop.AtcoCode);
+    const atcoCodes = stops.map((stop) => stop.AtcoCode.toUpperCase());
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, atcoCodes);
+    const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
+    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
     for (const naptanStopArea of naptanStopAreas) {
@@ -208,7 +219,8 @@ export const processAnnotatedStopPointRefs = async (
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, atcoCodes);
+    const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
+    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
     for (const naptanStopArea of naptanStopAreas) {
