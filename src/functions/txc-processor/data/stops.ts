@@ -6,10 +6,10 @@ import {
     NewStop,
     WheelchairAccessibility,
 } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import OsPoint from "ospoint";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
-import { logger } from "@bods-integrated-data/shared/logger";
 
 const naptanPlatformStopTypeCodes = ["BCS", "FBT", "PLT", "RPL"];
 const naptanStationStopTypeCodes = ["BCE", "FTD", "RSE"];
