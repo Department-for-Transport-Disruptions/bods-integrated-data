@@ -6,6 +6,7 @@ import {
     NewStop,
     WheelchairAccessibility,
 } from "@bods-integrated-data/shared/database";
+import { logger } from "@bods-integrated-data/shared/logger";
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import OsPoint from "ospoint";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
@@ -219,12 +220,22 @@ export const processAnnotatedStopPointRefs = async (
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
+
+    if (!naptanStops) {
+        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
+        return [];
+    }
+
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
-    for (const naptanStopArea of naptanStopAreas) {
-        naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+    if (naptanStopAreaCodes.length > 0) {
+        const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
+        for (const naptanStopArea of naptanStopAreas) {
+            naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+        }
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
