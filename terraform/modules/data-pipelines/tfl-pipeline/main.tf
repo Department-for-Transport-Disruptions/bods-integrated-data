@@ -36,13 +36,23 @@ module "integrated_data_tfl_timetable_retriever_function" {
   permissions = [
     {
       Action = [
-        "s3:GetObject",
         "s3:ListObject",
         "s3:PutObject",
       ],
       Effect = "Allow",
       Resource = [
         "${aws_s3_bucket.integrated_data_tfl_timetables_bucket.arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "s3:GetObject",
+        "s3:ListBucket",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "arn:aws:s3:::ibus.data.tfl.gov.uk",
+        "arn:aws:s3:::ibus.data.tfl.gov.uk/*"
       ]
     }
   ]
