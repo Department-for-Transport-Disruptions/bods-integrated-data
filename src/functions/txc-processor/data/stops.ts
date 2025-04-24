@@ -9,6 +9,7 @@ import {
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import OsPoint from "ospoint";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
+import { logger } from "@bods-integrated-data/shared/logger";
 
 const naptanPlatformStopTypeCodes = ["BCS", "FBT", "PLT", "RPL"];
 const naptanStationStopTypeCodes = ["BCE", "FTD", "RSE"];
@@ -206,7 +207,9 @@ export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[
     }
 
     if (stopsToInsert.length > 0) {
+        logger.info("Inserting into stops DB");
         await insertStops(dbClient, stopsToInsert);
+        logger.info("Successfully inserted into stops DB");
     }
 
     return stopsToInsert;
@@ -219,12 +222,22 @@ export const processAnnotatedStopPointRefs = async (
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
+
+    if (!naptanStops) {
+        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
+        return [];
+    }
+
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
-    for (const naptanStopArea of naptanStopAreas) {
-        naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+    if (naptanStopAreaCodes.length > 0) {
+        const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
+        for (const naptanStopArea of naptanStopAreas) {
+            naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+        }
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
@@ -239,7 +252,9 @@ export const processAnnotatedStopPointRefs = async (
     }
 
     if (stopsToInsert.length > 0) {
+        logger.info("Inserting into stops (2) DB");
         await insertStops(dbClient, stopsToInsert);
+        logger.info("Successfully inserted into stops (2) DB");
     }
 
     return stopsToInsert;

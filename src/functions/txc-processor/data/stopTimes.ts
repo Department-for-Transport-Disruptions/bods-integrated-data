@@ -118,7 +118,9 @@ export const processStopTimes = async (
         .filter(notEmpty);
 
     if (stopTimes.length > 0) {
+        logger.info("Inserting into stop times DB");
         await insertStopTimes(dbClient, stopTimes);
+        logger.info("Successfully inserted into stop times DB");
 
         for (const tripMapping of tripOriginDestinationBlockIdMap) {
             await updateTripWithOriginDestinationRefAndBlockId(

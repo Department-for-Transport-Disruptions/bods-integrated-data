@@ -26,7 +26,9 @@ const retryBackOffOptions: BackoffOptions = {
 };
 
 export const getAgency = (dbClient: KyselyDb, nationalOperatorCode: string) => {
-    return dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode).executeTakeFirst();
+    const query = dbClient.selectFrom("agency").selectAll().where("noc", "=", nationalOperatorCode);
+    logger.info(`Query: ${JSON.stringify(query)}`);
+    return query.executeTakeFirst();
 };
 
 export const getOperator = (dbClient: KyselyDb, nationalOperatorCode: string) => {
@@ -110,19 +112,31 @@ export const insertFrequencies = (dbClient: KyselyDb, frequencies: NewFrequency[
         .execute();
 };
 
-export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopLocality: boolean) => {
+export const getNaptanStops = async (dbClient: KyselyDb, atcoCodes: string[], useStopLocality: boolean) => {
+    logger.info(`Atco codes: ${JSON.stringify(atcoCodes)}`);
+    logger.info(`Use stop locality: ${useStopLocality}`);
+
     if (useStopLocality) {
-        return dbClient
+        const query = dbClient
             .selectFrom("naptan_stop_new")
             .leftJoin("nptg_locality_new", "nptg_locality_new.locality_code", "naptan_stop_new.nptg_locality_code")
             .leftJoin("nptg_admin_area_new", "nptg_admin_area_new.admin_area_code", "nptg_locality_new.admin_area_ref")
             .selectAll("naptan_stop_new")
             .select(["nptg_admin_area_new.region_code"])
-            .where("naptan_stop_new.atco_code", "in", atcoCodes)
-            .execute();
+            .where("naptan_stop_new.atco_code", "in", atcoCodes);
+
+        logger.info(`Query sql: ${JSON.stringify(query.compile().sql)}`);
+        logger.info(`Query params: ${JSON.stringify(query.compile().parameters)}`);
+        logger.info(`Query params: ${JSON.stringify(query.compile().query)}`);
+
+        await new Promise((resolve) => {
+            setTimeout(resolve, 5000);
+        });
+
+        return query.execute();
     }
 
-    return dbClient
+    const query = dbClient
         .selectFrom("naptan_stop_new")
         .leftJoin(
             "nptg_admin_area_new",
@@ -131,8 +145,17 @@ export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopL
         )
         .selectAll("naptan_stop_new")
         .select(["nptg_admin_area_new.region_code"])
-        .where("naptan_stop_new.atco_code", "in", atcoCodes)
-        .execute();
+        .where("naptan_stop_new.atco_code", "in", atcoCodes);
+
+    logger.info(`Query sql: ${JSON.stringify(query.compile().sql)}`);
+    logger.info(`Query params: ${JSON.stringify(query.compile().parameters)}`);
+    logger.info(`Query params: ${JSON.stringify(query.compile().query)}`);
+
+    await new Promise((resolve) => {
+        setTimeout(resolve, 5000);
+    });
+
+    return query.execute();
 };
 
 export const getNaptanStopAreas = (dbClient: KyselyDb, stopAreaCodes: (string | null)[]) => {

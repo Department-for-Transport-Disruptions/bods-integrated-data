@@ -6,6 +6,7 @@ import { getWheelchairAccessibilityFromVehicleType, notEmpty } from "@bods-integ
 import { hasher } from "node-object-hash";
 import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
 import { insertTrips } from "./database";
+import { logger } from "@bods-integrated-data/shared/logger";
 
 export const processTrips = async (
     dbClient: KyselyDb,
@@ -82,10 +83,12 @@ export const processTrips = async (
         .filter(notEmpty);
 
     if (trips.length > 0) {
+        logger.info("Inserting into trips DB");
         await insertTrips(
             dbClient,
             trips.sort((a, b) => a.id.localeCompare(b.id)),
         );
+        logger.info("Successfully inserted into trips DB");
     }
 
     return updatedVehicleJourneyMappings;

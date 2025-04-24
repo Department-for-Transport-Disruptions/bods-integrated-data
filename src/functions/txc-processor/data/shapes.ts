@@ -123,7 +123,10 @@ export const processShapes = async (
     });
 
     if (shapes.length > 0) {
+        logger.info("Inserting into shapes DB");
+
         await insertShapes(dbClient, shapes);
+        logger.info("Successfully inserted into shapes DB");
     }
 
     return updatedVehicleJourneyMappings;

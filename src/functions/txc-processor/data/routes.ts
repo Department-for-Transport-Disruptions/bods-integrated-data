@@ -3,6 +3,7 @@ import { Service } from "@bods-integrated-data/shared/schema";
 import { getRouteTypeFromServiceMode, notEmpty } from "@bods-integrated-data/shared/utils";
 import { DuplicateRouteError } from "../errors";
 import { getTndsRoute, insertRoutes } from "./database";
+import { logger } from "@bods-integrated-data/shared/logger";
 
 const getLineId = (isTnds: boolean, lineId: string, serviceCode?: string) =>
     isTnds ? `${serviceCode}_${lineId}` : lineId;
@@ -49,8 +50,10 @@ export const processRoutes = async (
         );
 
         const sortedRoutes = routes.sort((a, b) => a.line_id.localeCompare(b.line_id));
+        logger.info("Inserting into routes DB");
 
         const routeData = await insertRoutes(dbClient, sortedRoutes);
+        logger.info("Successfully inserted into routes DB");
 
         return {
             routes: routeData.filter(notEmpty),

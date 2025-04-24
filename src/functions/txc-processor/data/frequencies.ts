@@ -3,6 +3,7 @@ import { getDuration } from "@bods-integrated-data/shared/dates";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { VehicleJourneyMapping } from "../types";
 import { insertFrequencies } from "./database";
+import { logger } from "@bods-integrated-data/shared/logger";
 
 export const processFrequencies = async (dbClient: KyselyDb, vehicleJourneyMappings: VehicleJourneyMapping[]) => {
     const frequencies = vehicleJourneyMappings
@@ -35,6 +36,8 @@ export const processFrequencies = async (dbClient: KyselyDb, vehicleJourneyMappi
         .filter(notEmpty);
 
     if (frequencies.length > 0) {
+        logger.info("Inserting into frequencies DB");
         await insertFrequencies(dbClient, frequencies);
+        logger.info("Successfully inserted into frequencies DB");
     }
 };
