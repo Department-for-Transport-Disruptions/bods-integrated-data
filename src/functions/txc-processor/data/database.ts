@@ -135,11 +135,15 @@ export const getNaptanStops = (dbClient: KyselyDb, atcoCodes: string[], useStopL
         .execute();
 };
 
-export const getNaptanStopAreas = (dbClient: KyselyDb, atcoCodes: string[]) => {
+export const getNaptanStopAreas = (dbClient: KyselyDb, stopAreaCodes: (string | null)[]) => {
     return dbClient
         .selectFrom("naptan_stop_area_new")
         .selectAll("naptan_stop_area_new")
-        .where("naptan_stop_area_new.stop_area_code", "in", atcoCodes)
+        .where(
+            "naptan_stop_area_new.stop_area_code",
+            "in",
+            stopAreaCodes.filter((code) => code !== null),
+        )
         .execute();
 };
 
