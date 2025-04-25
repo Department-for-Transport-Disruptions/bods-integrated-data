@@ -185,7 +185,7 @@ export const getCoordinates = (location?: StopPointLocation) => {
 };
 
 export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
-    const atcoCodes = stops.map((stop) => stop.AtcoCode.toUpperCase());
+    const atcoCodes = stops.map((stop) => stop.AtcoCode);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
     if (!naptanStops) {
@@ -205,11 +205,10 @@ export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
-        const atcoCode = stop.AtcoCode.toUpperCase();
-        const naptanStop = naptanStops.find((s) => s.atco_code === atcoCode);
+        const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
         const { latitude, longitude } = getCoordinates(stop.Place.Location);
 
-        return mapStop(naptanStopAreaMap, atcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
+        return mapStop(naptanStopAreaMap, stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
 
     if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
@@ -228,7 +227,7 @@ export const processAnnotatedStopPointRefs = async (
     stops: TxcAnnotatedStopPointRef[],
     useStopLocality: boolean,
 ) => {
-    const atcoCodes = stops.map((stop) => stop.StopPointRef.toUpperCase());
+    const atcoCodes = stops.map((stop) => stop.StopPointRef);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
     if (!naptanStops) {
@@ -248,11 +247,10 @@ export const processAnnotatedStopPointRefs = async (
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
-        const stopPointRef = stop.StopPointRef.toUpperCase();
-        const naptanStop = naptanStops.find((s) => s.atco_code === stopPointRef);
+        const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
         const { latitude, longitude } = getCoordinates(stop.Location);
 
-        return mapStop(naptanStopAreaMap, stopPointRef, stop.CommonName, latitude, longitude, naptanStop);
+        return mapStop(naptanStopAreaMap, stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
     if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
