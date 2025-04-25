@@ -185,14 +185,23 @@ export const getCoordinates = (location?: StopPointLocation) => {
 };
 
 export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
-    const atcoCodes = stops.map((stop) => stop.AtcoCode.toUpperCase());
+    const atcoCodes = stops.map((stop) => stop.AtcoCode);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
+
+    if (!naptanStops) {
+        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
+        return [];
+    }
+
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
-    for (const naptanStopArea of naptanStopAreas) {
-        naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+    if (naptanStopAreaCodes.length > 0) {
+        const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
+        for (const naptanStopArea of naptanStopAreas) {
+            naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+        }
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
@@ -227,7 +236,6 @@ export const processAnnotatedStopPointRefs = async (
     }
 
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
     if (naptanStopAreaCodes.length > 0) {

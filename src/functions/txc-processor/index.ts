@@ -261,6 +261,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     const insertedStopPoints: NewStop[] = [];
 
     if (stopPoints.length > 0) {
+        logger.info("Processing stop points");
         const processedStopPoints = await processStopPoints(dbClient, stopPoints, useStopLocality);
 
         if (!processedStopPoints) {
@@ -272,6 +273,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
     }
 
     if (annotatedStopPointRefs.length > 0) {
+        logger.info("Processing annotated stop point refs");
         const processedStopPoints = await processAnnotatedStopPointRefs(
             dbClient,
             annotatedStopPointRefs,

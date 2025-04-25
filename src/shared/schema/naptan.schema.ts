@@ -74,7 +74,7 @@ const stopPointStopAreasSchema = z.object({
 });
 
 const stopPointSchema = z.object({
-    AtcoCode: z.string(),
+    AtcoCode: z.string().toUpperCase(),
     NaptanCode: z.string().optional(),
     PlateCode: z.string().optional(),
     CleardownCode: z.string().optional(),
