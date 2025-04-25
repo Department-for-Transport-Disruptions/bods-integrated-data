@@ -187,19 +187,29 @@ export const getCoordinates = (location?: StopPointLocation) => {
 export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
     const atcoCodes = stops.map((stop) => stop.AtcoCode.toUpperCase());
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
+
+    if (!naptanStops) {
+        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
+        return [];
+    }
+
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
-    for (const naptanStopArea of naptanStopAreas) {
-        naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+    if (naptanStopAreaCodes.length > 0) {
+        const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
+        for (const naptanStopArea of naptanStopAreas) {
+            naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+        }
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
-        const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
+        const atcoCode = stop.AtcoCode.toUpperCase();
+        const naptanStop = naptanStops.find((s) => s.atco_code === atcoCode);
         const { latitude, longitude } = getCoordinates(stop.Place.Location);
 
-        return mapStop(naptanStopAreaMap, stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
+        return mapStop(naptanStopAreaMap, atcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
 
     if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
@@ -218,7 +228,7 @@ export const processAnnotatedStopPointRefs = async (
     stops: TxcAnnotatedStopPointRef[],
     useStopLocality: boolean,
 ) => {
-    const atcoCodes = stops.map((stop) => stop.StopPointRef);
+    const atcoCodes = stops.map((stop) => stop.StopPointRef.toUpperCase());
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
     if (!naptanStops) {
@@ -227,7 +237,6 @@ export const processAnnotatedStopPointRefs = async (
     }
 
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
     if (naptanStopAreaCodes.length > 0) {
@@ -239,10 +248,11 @@ export const processAnnotatedStopPointRefs = async (
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
-        const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
+        const stopPointRef = stop.StopPointRef.toUpperCase();
+        const naptanStop = naptanStops.find((s) => s.atco_code === stopPointRef);
         const { latitude, longitude } = getCoordinates(stop.Location);
 
-        return mapStop(naptanStopAreaMap, stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
+        return mapStop(naptanStopAreaMap, stopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
     if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
