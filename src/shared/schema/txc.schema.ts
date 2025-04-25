@@ -170,7 +170,7 @@ export type Service = z.infer<typeof serviceSchema>;
 // Abstract schema for From and To within AbstractTimingLink
 const abstractStopUsageSchema = z.object({
     Activity: z.string().optional(),
-    StopPointRef: z.string().optional(),
+    StopPointRef: z.string().toUpperCase().optional(),
     TimingStatus: z.string().optional(),
     WaitTime: z.string().optional(),
 });
@@ -266,7 +266,7 @@ export const vehicleJourneySchema = z.object({
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
 
 export const stopPointSchema = z.object({
-    AtcoCode: z.string(),
+    AtcoCode: z.string().toUpperCase(),
     Descriptor: z.object({
         CommonName: z.string(),
     }),
@@ -278,7 +278,7 @@ export const stopPointSchema = z.object({
 export type TxcStopPoint = z.infer<typeof stopPointSchema>;
 
 export const annotatedStopPointRefSchema = z.object({
-    StopPointRef: z.coerce.string(),
+    StopPointRef: z.coerce.string().toUpperCase(),
     CommonName: z.string(),
     Location: locationSchema.optional(),
 });

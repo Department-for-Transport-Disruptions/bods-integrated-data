@@ -185,14 +185,23 @@ export const getCoordinates = (location?: StopPointLocation) => {
 };
 
 export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
-    const atcoCodes = stops.map((stop) => stop.AtcoCode.toUpperCase());
+    const atcoCodes = stops.map((stop) => stop.AtcoCode);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-    const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-    const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
+    if (!naptanStops) {
+        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
+        return [];
+    }
+
+    const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code).filter((code) => code !== null);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
-    for (const naptanStopArea of naptanStopAreas) {
-        naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+    if (naptanStopAreaCodes.length > 0) {
+        const naptanStopAreas = await getNaptanStopAreas(dbClient, naptanStopAreaCodes);
+
+        for (const naptanStopArea of naptanStopAreas) {
+            naptanStopAreaMap[naptanStopArea.stop_area_code] = naptanStopArea;
+        }
     }
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
@@ -202,7 +211,10 @@ export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[
         return mapStop(naptanStopAreaMap, stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
 
-    if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
+    const stopsWithMissingCoordinates = stopsToInsert.filter((s) => !s.stop_lat || !s.stop_lon);
+
+    if (stopsWithMissingCoordinates.length > 0) {
+        logger.warn(`Some stops have missing coordinates: ${stopsWithMissingCoordinates.map((s) => s.id)}`);
         return false;
     }
 
@@ -226,8 +238,7 @@ export const processAnnotatedStopPointRefs = async (
         return [];
     }
 
-    const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code);
-
+    const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code).filter((code) => code !== null);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
 
     if (naptanStopAreaCodes.length > 0) {
@@ -245,7 +256,10 @@ export const processAnnotatedStopPointRefs = async (
         return mapStop(naptanStopAreaMap, stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
-    if (stopsToInsert.some((s) => !s.stop_lat || !s.stop_lon)) {
+    const stopsWithMissingCoordinates = stopsToInsert.filter((s) => !s.stop_lat || !s.stop_lon);
+
+    if (stopsWithMissingCoordinates.length > 0) {
+        logger.warn(`Some stops have missing coordinates: ${stopsWithMissingCoordinates.map((s) => s.id)}`);
         return false;
     }
 
