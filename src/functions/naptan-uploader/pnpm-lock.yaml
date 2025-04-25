@@ -33,7 +33,7 @@ importers:
         specifier: ^8.11.3
         version: 8.11.3
       zod:
-        specifier: ^3.23.8
+        specifier: 3.23.8
         version: 3.23.8
     devDependencies:
       '@types/aws-lambda':

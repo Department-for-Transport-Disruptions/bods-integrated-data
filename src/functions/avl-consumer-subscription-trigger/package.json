@@ -14,7 +14,7 @@
     "dependencies": {
         "@aws-sdk/client-sqs": "^3.682.0",
         "@bods-integrated-data/shared": "workspace:^",
-        "zod": "^3.23.8",
+        "zod": "3.23.8",
         "zod-validation-error": "^3.3.0"
     },
     "devDependencies": {

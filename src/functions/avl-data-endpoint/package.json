@@ -15,7 +15,7 @@
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "^4.4.1",
         "mockdate": "^3.0.5",
-        "zod": "^3.23.8"
+        "zod": "3.23.8"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",

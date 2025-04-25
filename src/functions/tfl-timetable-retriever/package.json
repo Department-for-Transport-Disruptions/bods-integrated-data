@@ -1,0 +1,23 @@
+{
+    "name": "@bods-integrated-data/tfl-timetable-retriever",
+    "version": "0.1.0",
+    "description": "TfL timetable retriever",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-timetable-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-timetable-retriever.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.682.0",
+        "@bods-integrated-data/shared": "workspace:^",
+        "zod": "3.23.8"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

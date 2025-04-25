@@ -18,7 +18,7 @@ importers:
         specifier: ^0.27.3
         version: 0.27.3
       zod:
-        specifier: ^3.23.8
+        specifier: 3.23.8
         version: 3.23.8
     devDependencies:
       '@types/aws-lambda':
@@ -52,6 +52,7 @@ packages:
 
   boolean@3.2.0:
     resolution: {integrity: sha512-d0II/GO9uf9lfUHH2BQsjxzRJZBdsjgsBiW4BvhWk/3qoKwQFjIDVN19PfX8F2D/r9PCMTtLWjYVCFrpeYUzsw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   bree@9.2.3:
     resolution: {integrity: sha512-iCVyLVcqql8rFogVX5gzkofdo6OZu8mxe5dUSkAZyaR43UdNfP0DOj3jJk31yogy6lfnRMhGvO5Gj1ypLeInuA==}

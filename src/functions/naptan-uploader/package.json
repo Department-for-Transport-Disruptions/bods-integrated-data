@@ -20,7 +20,7 @@
         "ospoint": "^0.2.1",
         "papaparse": "^5.4.1",
         "pg": "^8.11.3",
-        "zod": "^3.23.8"
+        "zod": "3.23.8"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.134",

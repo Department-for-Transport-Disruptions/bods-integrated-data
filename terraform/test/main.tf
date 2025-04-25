@@ -170,6 +170,12 @@ module "integrated_data_txc_pipeline" {
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
 }
 
+module "integrated_data_tfl_pipeline" {
+  source = "../modules/data-pipelines/tfl-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_gtfs_downloader" {
   source = "../modules/gtfs-downloader"
 
