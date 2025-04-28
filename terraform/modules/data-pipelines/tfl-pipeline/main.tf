@@ -36,7 +36,7 @@ module "integrated_data_tfl_timetable_retriever_function" {
   permissions = [
     {
       Action = [
-        "s3:ListObject",
+        "s3:ListBucket",
         "s3:PutObject",
       ],
       Effect = "Allow",
