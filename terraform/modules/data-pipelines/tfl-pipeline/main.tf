@@ -22,6 +22,17 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetables_buc
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetables_bucket_lifecycle" {
+  bucket = aws_s3_bucket.integrated_data_tfl_timetables_bucket.id
+  rule {
+    id = "config"
+    expiration {
+      days = 30
+    }
+    status = "Enabled"
+  }
+}
+
 module "integrated_data_tfl_timetable_retriever_function" {
   source = "../../shared/lambda-function"
 
