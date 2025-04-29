@@ -13,7 +13,8 @@ AVL_GENERATED_SIRI_VM_BUCKET_NAME="integrated-data-avl-generated-siri-vm-local"
 GTFS_ZIPPED_BUCKET_NAME="integrated-data-gtfs-local"
 GTFS_RT_BUCKET_NAME="integrated-data-gtfs-rt-local"
 GTFS_TRIP_MAPS_TABLE_NAME="integrated-data-gtfs-trip-maps-local"
-TFL_TIMETABLES_BUCKET_NAME="integrated-data-tfl-timetables-local"
+TFL_TIMETABLES_ZIPPED_BUCKET_NAME="integrated-data-tfl-timetable-zipped-local"
+TFL_TIMETABLES_UNZIPPED_BUCKET_NAME="integrated-data-tfl-timetable-local"
 NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
@@ -188,7 +189,10 @@ run-local-tnds-txc-processor:
 # TfL
 
 run-local-tfl-timetable-retriever:
-	STAGE=local TFL_TIMETABLES_BUCKET_NAME="${TFL_TIMETABLES_BUCKET_NAME}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-retriever'; handler().then(console.log).catch(console.error)"
+	STAGE=local TFL_TIMETABLES_ZIPPED_BUCKET_NAME="${TFL_TIMETABLES_ZIPPED_BUCKET_NAME}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-retriever'; handler().then(console.log).catch(console.error)"
+
+run-local-tfl-timetable-unzipper:
+	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${TFL_TIMETABLES_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/tfl-timetable-unzipper'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLES_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
 
 run-local-tfl-timetable-processor:
 	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-processor'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLES_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"

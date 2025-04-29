@@ -9,12 +9,16 @@ terraform {
   }
 }
 
-resource "aws_s3_bucket" "integrated_data_tfl_timetables_bucket" {
-  bucket = "integrated-data-tfl-timetables-${var.environment}"
+resource "aws_s3_bucket" "integrated_data_tfl_timetable_zipped_bucket" {
+  bucket = "integrated-data-tfl-timetable-zipped-${var.environment}"
 }
 
-resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetables_bucket_block_public_access" {
-  bucket = aws_s3_bucket.integrated_data_tfl_timetables_bucket.id
+resource "aws_s3_bucket" "integrated_data_tfl_timetable_bucket" {
+  bucket = "integrated-data-tfl-timetable-${var.environment}"
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetable_zipped_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -22,8 +26,28 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetables_buc
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetables_bucket_lifecycle" {
-  bucket = aws_s3_bucket.integrated_data_tfl_timetables_bucket.id
+resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetable_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_tfl_timetable_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetable_zipped_bucket_lifecycle" {
+  bucket = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.id
+  rule {
+    id = "config"
+    expiration {
+      days = 30
+    }
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetable_bucket_lifecycle" {
+  bucket = aws_s3_bucket.integrated_data_tfl_timetable_bucket.id
   rule {
     id = "config"
     expiration {
@@ -52,8 +76,8 @@ module "integrated_data_tfl_timetable_retriever_function" {
       ],
       Effect = "Allow",
       Resource = [
-        "${aws_s3_bucket.integrated_data_tfl_timetables_bucket.arn}",
-        "${aws_s3_bucket.integrated_data_tfl_timetables_bucket.arn}/*"
+        "${aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.arn}",
+        "${aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.arn}/*"
       ]
     },
     {
@@ -70,8 +94,46 @@ module "integrated_data_tfl_timetable_retriever_function" {
   ]
 
   env_vars = {
-    STAGE                      = var.environment
-    TFL_TIMETABLES_BUCKET_NAME = aws_s3_bucket.integrated_data_tfl_timetables_bucket.bucket
+    STAGE                             = var.environment
+    TFL_TIMETABLES_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.bucket
+  }
+}
+
+module "integrated_data_tfl_timetable_unzipper_function" {
+  source = "../../shared/lambda-function"
+
+  environment   = var.environment
+  function_name = "integrated-data-tfl-timetable-unzipper"
+  zip_path      = "${path.module}/../../../../src/functions/dist/tfl-timetable-unzipper.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 60
+  memory        = 128
+
+  permissions = [
+    {
+      Action = [
+        "s3:GetObject"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.arn}/*",
+      ]
+    },
+    {
+      Action = [
+        "s3:PutObject"
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_tfl_timetable_bucket.arn}/*",
+      ]
+    },
+  ]
+
+  env_vars = {
+    STAGE                = var.environment
+    UNZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tfl_timetable_bucket.id
   }
 }
 
