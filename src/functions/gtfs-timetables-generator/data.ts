@@ -1,5 +1,5 @@
 import { RegionCode } from "@bods-integrated-data/shared/constants";
-import { KyselyDb, LocationType, Trip } from "@bods-integrated-data/shared/database";
+import { KyselyDb, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { sql } from "kysely";
 
@@ -154,7 +154,6 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                     "stop.parent_station",
                     "stop.platform_code",
                 ])
-                .where("stop.location_type", "!=", sql.lit(LocationType.EntranceOrExit))
                 .distinct();
 
             return query.compile().sql;
