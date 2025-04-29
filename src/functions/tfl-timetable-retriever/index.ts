@@ -1,5 +1,12 @@
 import { Readable } from "node:stream";
-import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import {
+    CommonPrefix,
+    GetObjectCommand,
+    ListObjectsV2Command,
+    ListObjectsV2CommandInput,
+    S3Client,
+    _Object,
+} from "@aws-sdk/client-s3";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
@@ -33,6 +40,36 @@ export const getPrefixWithLatestDate = (prefixes: string[]) => {
     return prefixWithLatestDate;
 };
 
+const listTfLS3Objects = async (client: S3Client, commandInput: ListObjectsV2CommandInput) => {
+    const objects: _Object[] = [];
+    const commonPrefixes: CommonPrefix[] = [];
+    let isTruncated = undefined;
+    let startAfterKey = undefined;
+
+    do {
+        const response = await client.send(
+            new ListObjectsV2Command({
+                ...commandInput,
+                StartAfter: startAfterKey,
+            }),
+        );
+
+        if (response.Contents) {
+            objects.push(...response.Contents);
+
+            startAfterKey = objects[objects.length - 1].Key;
+        }
+
+        if (response.CommonPrefixes) {
+            commonPrefixes.push(...response.CommonPrefixes);
+        }
+
+        isTruncated = response.IsTruncated;
+    } while (isTruncated);
+
+    return { objects, commonPrefixes };
+};
+
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
@@ -48,17 +85,13 @@ export const handler: Handler = async (event, context) => {
             endpoint: "https://s3.eu-west-1.amazonaws.com",
         });
 
-        const tflBaseVersionObjects = await tflS3Client.send(
-            new ListObjectsV2Command({
-                Bucket: TFL_IBUS_BUCKET_NAME,
-                Delimiter: "/",
-            }),
-        );
-
-        const tflBaseVersionPrefixes = tflBaseVersionObjects.CommonPrefixes || [];
+        const tflBaseVersionObjects = await listTfLS3Objects(tflS3Client, {
+            Bucket: TFL_IBUS_BUCKET_NAME,
+            Delimiter: "/",
+        });
 
         const mostRecentTimetablePrefix = getPrefixWithLatestDate(
-            tflBaseVersionPrefixes.map((prefix) => prefix.Prefix ?? ""),
+            tflBaseVersionObjects.commonPrefixes.map((prefix) => prefix.Prefix ?? ""),
         );
 
         if (!mostRecentTimetablePrefix) {
@@ -81,18 +114,14 @@ export const handler: Handler = async (event, context) => {
             }
         }
 
-        const tflTimetableObjects = await tflS3Client.send(
-            new ListObjectsV2Command({
-                Bucket: TFL_IBUS_BUCKET_NAME,
-                Prefix: mostRecentTimetablePrefix,
-            }),
-        );
+        const tflTimetableObjects = await listTfLS3Objects(tflS3Client, {
+            Bucket: TFL_IBUS_BUCKET_NAME,
+            Prefix: mostRecentTimetablePrefix,
+        });
 
-        const files = tflTimetableObjects.Contents || [];
+        logger.info(`Retrieving ${tflTimetableObjects.objects.length} files`);
 
-        logger.info(`Retrieving ${files.length} files`);
-
-        for await (const { Key } of files) {
+        for await (const { Key } of tflTimetableObjects.objects) {
             if (Key) {
                 const object = await tflS3Client.send(
                     new GetObjectCommand({
