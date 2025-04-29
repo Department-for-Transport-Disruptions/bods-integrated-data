@@ -68,11 +68,11 @@ export const generateMockSiriVm = (subscriptionId: string, currentTime: string, 
                 </Extensions>
             </VehicleActivity>
             <VehicleActivityCancellation>
-                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <RecordedAtTime>${currentTime}</RecordedAtTime>
                 <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
                 <VehicleJourneyRef>
                   <DataFrameRef>2018-08-17</DataFrameRef>
-                  <DatedVehicleJourneyRef>1234</DatedVehicleJourneyRef>
+                  <DatedVehicleJourneyRef>${subscriptionId}</DatedVehicleJourneyRef>
                 </VehicleJourneyRef>
                 <LineRef>567</LineRef>
                 <DirectionRef>inbound</DirectionRef>
