@@ -1,8 +1,7 @@
-import { Readable } from "node:stream";
 import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
-import { unzip } from "@bods-integrated-data/shared/unzip";
+import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getPrefixWithLatestDate, handler } from ".";
 
@@ -22,13 +21,13 @@ describe("tfl-timetable-retriever", () => {
         listS3Objects: vi.fn().mockResolvedValue({
             CommonPrefixes: [{ Prefix: "20250101/" }],
         }),
+        putS3Object: vi.fn(),
     }));
 
     vi.mock("@aws-sdk/client-s3");
-    vi.mock("@bods-integrated-data/shared/unzip");
 
     beforeEach(() => {
-        process.env.TFL_TIMETABLES_BUCKET_NAME = mockBucketName;
+        process.env.TFL_TIMETABLES_ZIPPED_BUCKET_NAME = mockBucketName;
     });
 
     describe("getPrefixWithLatestDate", () => {
@@ -52,11 +51,11 @@ describe("tfl-timetable-retriever", () => {
     });
 
     describe("handler", () => {
-        it("throws an error when the TFL_TIMETABLES_BUCKET_NAME environment variable is missing", async () => {
-            process.env.TFL_TIMETABLES_BUCKET_NAME = "";
+        it("throws an error when the TFL_TIMETABLES_ZIPPED_BUCKET_NAME environment variable is missing", async () => {
+            process.env.TFL_TIMETABLES_ZIPPED_BUCKET_NAME = "";
 
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
-                "Missing env vars - TFL_TIMETABLES_BUCKET_NAME must be set",
+                "Missing env vars - TFL_TIMETABLES_ZIPPED_BUCKET_NAME must be set",
             );
 
             expect(logger.error).toHaveBeenCalledWith(
@@ -88,10 +87,8 @@ describe("tfl-timetable-retriever", () => {
             expect(logger.warn).toHaveBeenCalledWith('Prefix "20250101/" already exists, skipping retrieval');
         });
 
-        it("retrieves and unzips files from the S3 bucket", async () => {
-            const mockBody = new Readable();
-            mockBody.push("mock data");
-            mockBody.push(null);
+        it("retrieves files from the S3 bucket", async () => {
+            const mockBody = [1, 2, 3];
 
             // @ts-ignore mock S3Client
             vi.mocked(S3Client.prototype.send).mockImplementation((command) => {
@@ -102,20 +99,28 @@ describe("tfl-timetable-retriever", () => {
                     };
                 }
                 if (command instanceof GetObjectCommand) {
-                    return { Body: mockBody };
+                    return { Body: { transformToByteArray: () => Promise.resolve(mockBody) } };
                 }
             });
 
-            const unzipMock = vi.fn();
-            vi.mocked(unzip).mockImplementation(unzipMock);
+            const putS3ObjectMock = vi.fn();
+            vi.mocked(putS3Object).mockImplementation(putS3ObjectMock);
 
             await handler(mockEvent, mockContext, mockCallback);
 
             expect(logger.info).toHaveBeenCalledWith('Prefix with latest date: "20250102/"');
             expect(logger.info).toHaveBeenCalledWith("Retrieving 2 files");
-            expect(unzipMock).toHaveBeenCalledTimes(2);
-            expect(unzipMock).toHaveBeenCalledWith(mockBody, mockBucketName, "file1.zip");
-            expect(unzipMock).toHaveBeenCalledWith(mockBody, mockBucketName, "file2.zip");
+            expect(putS3ObjectMock).toHaveBeenCalledTimes(2);
+            expect(putS3ObjectMock).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: "file1.zip",
+                Body: mockBody,
+            });
+            expect(putS3ObjectMock).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: "file2.zip",
+                Body: mockBody,
+            });
         });
     });
 });

@@ -1,4 +1,3 @@
-import { Readable } from "node:stream";
 import {
     CommonPrefix,
     GetObjectCommand,
@@ -9,8 +8,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { listS3Objects } from "@bods-integrated-data/shared/s3";
-import { unzip } from "@bods-integrated-data/shared/unzip";
+import { listS3Objects, putS3Object } from "@bods-integrated-data/shared/s3";
 import { Handler } from "aws-lambda";
 import { z } from "zod";
 
@@ -74,10 +72,10 @@ export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { TFL_TIMETABLES_BUCKET_NAME } = process.env;
+        const { TFL_TIMETABLES_ZIPPED_BUCKET_NAME } = process.env;
 
-        if (!TFL_TIMETABLES_BUCKET_NAME) {
-            throw new Error("Missing env vars - TFL_TIMETABLES_BUCKET_NAME must be set");
+        if (!TFL_TIMETABLES_ZIPPED_BUCKET_NAME) {
+            throw new Error("Missing env vars - TFL_TIMETABLES_ZIPPED_BUCKET_NAME must be set");
         }
 
         const tflS3Client = new S3Client({
@@ -101,7 +99,7 @@ export const handler: Handler = async (event, context) => {
         logger.info(`Prefix with latest date: "${mostRecentTimetablePrefix}"`);
 
         const ourBaseVersionObjects = await listS3Objects({
-            Bucket: TFL_TIMETABLES_BUCKET_NAME,
+            Bucket: TFL_TIMETABLES_ZIPPED_BUCKET_NAME,
             Delimiter: "/",
         });
 
@@ -130,9 +128,13 @@ export const handler: Handler = async (event, context) => {
                     }),
                 );
 
-                if (object.Body instanceof Readable) {
-                    await unzip(object.Body, TFL_TIMETABLES_BUCKET_NAME, Key);
-                }
+                const body = await object.Body?.transformToByteArray();
+
+                await putS3Object({
+                    Bucket: TFL_TIMETABLES_ZIPPED_BUCKET_NAME,
+                    Key,
+                    Body: body,
+                });
             }
         }
     } catch (e) {
