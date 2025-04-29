@@ -164,11 +164,11 @@ const expectedAvlXml = (subscriptionId: string) => `<?xml version="1.0" encoding
                 </Extensions>
             </VehicleActivity>
             <VehicleActivityCancellation>
-                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <RecordedAtTime>2024-03-11T15:20:02.093+00:00</RecordedAtTime>
                 <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
                 <VehicleJourneyRef>
                   <DataFrameRef>2018-08-17</DataFrameRef>
-                  <DatedVehicleJourneyRef>1234</DatedVehicleJourneyRef>
+                  <DatedVehicleJourneyRef>subscription-avl-1</DatedVehicleJourneyRef>
                 </VehicleJourneyRef>
                 <LineRef>567</LineRef>
                 <DirectionRef>inbound</DirectionRef>
