@@ -10,6 +10,7 @@ export * from "./avl.schema";
 export * from "./cancellations-subscribe.schema";
 export * from "./cancellations-validation-error.schema";
 export * from "./dates.schema";
+export * from "./ibus.schema";
 export * from "./misc.schema";
 export * from "./noc.schema";
 export * from "./nptg.schema";

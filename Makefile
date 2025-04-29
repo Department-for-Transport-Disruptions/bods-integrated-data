@@ -190,6 +190,10 @@ run-local-tnds-txc-processor:
 run-local-tfl-timetable-retriever:
 	STAGE=local TFL_TIMETABLES_BUCKET_NAME="${TFL_TIMETABLES_BUCKET_NAME}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-retriever'; handler().then(console.log).catch(console.error)"
 
+run-local-tfl-timetable-processor:
+	STAGE=local TFL_TIMETABLES_BUCKET_NAME="${TFL_TIMETABLES_BUCKET_NAME}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-retriever'; handler().then(console.log).catch(console.error)"
+	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-processor'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLES_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
+
 # GTFS
 
 run-local-gtfs-timetables-generator:
