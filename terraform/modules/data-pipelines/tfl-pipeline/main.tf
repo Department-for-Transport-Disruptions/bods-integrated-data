@@ -41,6 +41,7 @@ module "integrated_data_tfl_timetable_retriever_function" {
       ],
       Effect = "Allow",
       Resource = [
+        "${aws_s3_bucket.integrated_data_tfl_timetables_bucket.arn}",
         "${aws_s3_bucket.integrated_data_tfl_timetables_bucket.arn}/*"
       ]
     },
