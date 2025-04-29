@@ -13,6 +13,7 @@ import {
     VehicleJourney,
     txcSchema,
 } from "@bods-integrated-data/shared/schema";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { S3EventRecord, S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
@@ -260,9 +261,25 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 
     const insertedStopPoints: NewStop[] = [];
 
+    const stopsInJourneyPatternSections = journeyPatternSections
+        .flatMap((journeyPatternSection) =>
+            journeyPatternSection.JourneyPatternTimingLink.flatMap((timingLink) => {
+                const fromStopPointRef = timingLink.From?.StopPointRef;
+                const toStopPointRef = timingLink.From?.StopPointRef;
+
+                return [fromStopPointRef, toStopPointRef];
+            }),
+        )
+        .filter(notEmpty);
+
     if (stopPoints.length > 0) {
         logger.info("Processing stop points");
-        const processedStopPoints = await processStopPoints(dbClient, stopPoints, useStopLocality);
+        const processedStopPoints = await processStopPoints(
+            dbClient,
+            stopPoints,
+            useStopLocality,
+            stopsInJourneyPatternSections,
+        );
 
         if (!processedStopPoints) {
             logger.warn(`Invalid stop points found in file: ${record.s3.object.key}, skipping service processing`);
@@ -278,6 +295,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
             dbClient,
             annotatedStopPointRefs,
             useStopLocality,
+            stopsInJourneyPatternSections,
         );
 
         if (!processedStopPoints) {
