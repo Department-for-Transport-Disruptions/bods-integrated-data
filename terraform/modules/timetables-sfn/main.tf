@@ -65,6 +65,11 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     gtfs_timetables_generator_function_arn          = var.gtfs_timetables_generator_function_arn
     gtfs_timetables_zipper_function_arn             = var.gtfs_timetables_zipper_function_arn
     gtfs_timetables_trip_mapper_function_arn        = var.gtfs_timetables_trip_mapper_function_arn
+    tfl_timetable_retriever_function_arn            = var.tfl_timetable_retriever_function_arn
+    tfl_timetable_unzipper_function_arn             = var.tfl_timetable_unzipper_function_arn
+    tfl_timetable_processor_function_arn            = var.tfl_timetable_processor_function_arn
+    tfl_timetable_zipped_bucket_name                = var.tfl_timetable_zipped_bucket_name
+    tfl_timetable_bucket_name                       = var.tfl_timetable_bucket_name
   })
 }
 

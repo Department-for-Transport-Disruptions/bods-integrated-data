@@ -137,6 +137,10 @@ export const handler: Handler = async (event, context) => {
                 });
             }
         }
+
+        return {
+            prefix: mostRecentTimetablePrefix,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the TfL timetable retriever function");
