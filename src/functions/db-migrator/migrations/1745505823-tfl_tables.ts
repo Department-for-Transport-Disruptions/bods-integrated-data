@@ -102,7 +102,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("id", "integer", (col) => col.primaryKey())
         .addColumn("sequence_no", "integer", (col) => col.notNull())
         .addColumn("pattern_id", "integer", (col) => col.notNull().references("tfl_pattern.id"))
-        .addColumn("destination_id", "integer", (col) => col.notNull().references("tfl_destination.id"))
+        .addColumn("destination_id", "integer", (col) => col.references("tfl_destination.id"))
         .addColumn("stop_point_id", "integer", (col) => col.notNull().references("tfl_stop_point.id"))
         .addColumn("timing_point_code", "varchar(10)", (col) => col.notNull())
         .execute();

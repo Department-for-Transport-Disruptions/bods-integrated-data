@@ -1,4 +1,5 @@
 import {
+    Database,
     KyselyDb,
     TflBlock,
     TflBlockCalendarDay,
@@ -16,199 +17,144 @@ import {
     TflVehicle,
 } from "@bods-integrated-data/shared/database";
 import { logger } from "@bods-integrated-data/shared/logger";
+import { chunkArray } from "@bods-integrated-data/shared/utils";
 
-export const insertTflVehicles = (dbClient: KyselyDb, tflVehicles: TflVehicle[]) => {
+const insertAsChunks = async <T>(dbClient: KyselyDb, tableName: keyof Database, items: T[]) => {
+    const chunks = chunkArray(items, 3000);
+
+    await Promise.all(
+        chunks.map((chunk) =>
+            dbClient
+                .insertInto(tableName)
+                .values(chunk)
+                .onConflict((oc) => oc.column("id").doNothing())
+                .execute(),
+        ),
+    );
+};
+
+export const insertTflVehicles = async (dbClient: KyselyDb, tflVehicles: TflVehicle[]) => {
     if (tflVehicles.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflVehicles.length} vehicles`);
-
-    return dbClient
-        .insertInto("tfl_vehicle")
-        .values(tflVehicles)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_vehicle", tflVehicles);
 };
 
-export const insertTflOperators = (dbClient: KyselyDb, tflOperators: TflOperator[]) => {
+export const insertTflOperators = async (dbClient: KyselyDb, tflOperators: TflOperator[]) => {
     if (tflOperators.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflOperators.length} operators`);
-
-    return dbClient
-        .insertInto("tfl_operator")
-        .values(tflOperators)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_operator", tflOperators);
 };
 
-export const insertTflGarages = (dbClient: KyselyDb, tflGarages: TflGarage[]) => {
+export const insertTflGarages = async (dbClient: KyselyDb, tflGarages: TflGarage[]) => {
     if (tflGarages.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflGarages.length} garages`);
-
-    return dbClient
-        .insertInto("tfl_garage")
-        .values(tflGarages)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_garage", tflGarages);
 };
 
-export const insertTflBlocks = (dbClient: KyselyDb, tflBlocks: TflBlock[]) => {
+export const insertTflBlocks = async (dbClient: KyselyDb, tflBlocks: TflBlock[]) => {
     if (tflBlocks.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflBlocks.length} blocks`);
-
-    return dbClient
-        .insertInto("tfl_block")
-        .values(tflBlocks)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_block", tflBlocks);
 };
 
-export const insertTflBlockCalendarDays = (dbClient: KyselyDb, tflBlockCalendarDays: TflBlockCalendarDay[]) => {
+export const insertTflBlockCalendarDays = async (dbClient: KyselyDb, tflBlockCalendarDays: TflBlockCalendarDay[]) => {
     if (tflBlockCalendarDays.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflBlockCalendarDays.length} blockCalendarDays`);
-
-    return dbClient
-        .insertInto("tfl_block_calendar_day")
-        .values(tflBlockCalendarDays)
-        .onConflict((oc) => oc.column("calendar_day").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_block_calendar_day", tflBlockCalendarDays);
 };
 
-export const insertTflStopPoints = (dbClient: KyselyDb, tflStopPoints: TflStopPoint[]) => {
+export const insertTflStopPoints = async (dbClient: KyselyDb, tflStopPoints: TflStopPoint[]) => {
     if (tflStopPoints.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflStopPoints.length} stopPoints`);
-
-    return dbClient
-        .insertInto("tfl_stop_point")
-        .values(tflStopPoints)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_stop_point", tflStopPoints);
 };
 
-export const insertTflDestinations = (dbClient: KyselyDb, tflDestinations: TflDestination[]) => {
+export const insertTflDestinations = async (dbClient: KyselyDb, tflDestinations: TflDestination[]) => {
     if (tflDestinations.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflDestinations.length} destinations`);
-
-    return dbClient
-        .insertInto("tfl_destination")
-        .values(tflDestinations)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_destination", tflDestinations);
 };
 
-export const insertTflRouteGeometries = (dbClient: KyselyDb, tflRouteGeometries: TflRouteGeometry[]) => {
+export const insertTflRouteGeometries = async (dbClient: KyselyDb, tflRouteGeometries: TflRouteGeometry[]) => {
     if (tflRouteGeometries.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflRouteGeometries.length} routeGeometries`);
-
-    return dbClient
-        .insertInto("tfl_route_geometry")
-        .values(tflRouteGeometries)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_route_geometry", tflRouteGeometries);
 };
 
-export const insertTflLines = (dbClient: KyselyDb, tflLines: TflLine[]) => {
+export const insertTflLines = async (dbClient: KyselyDb, tflLines: TflLine[]) => {
     if (tflLines.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflLines.length} lines`);
-
-    return dbClient
-        .insertInto("tfl_line")
-        .values(tflLines)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_line", tflLines);
 };
 
-export const insertTflPatterns = (dbClient: KyselyDb, tflPatterns: TflPattern[]) => {
+export const insertTflPatterns = async (dbClient: KyselyDb, tflPatterns: TflPattern[]) => {
     if (tflPatterns.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflPatterns.length} patterns`);
-
-    return dbClient
-        .insertInto("tfl_pattern")
-        .values(tflPatterns)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_pattern", tflPatterns);
 };
 
-export const insertTflStopInPatterns = (dbClient: KyselyDb, tflStopInPatterns: TflStopInPattern[]) => {
+export const insertTflStopInPatterns = async (dbClient: KyselyDb, tflStopInPatterns: TflStopInPattern[]) => {
     if (tflStopInPatterns.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflStopInPatterns.length} stopInPatterns`);
-
-    return dbClient
-        .insertInto("tfl_stop_in_pattern")
-        .values(tflStopInPatterns)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_stop_in_pattern", tflStopInPatterns);
 };
 
-export const insertTflJourneys = (dbClient: KyselyDb, tflJourneys: TflJourney[]) => {
+export const insertTflJourneys = async (dbClient: KyselyDb, tflJourneys: TflJourney[]) => {
     if (tflJourneys.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflJourneys.length} journeys`);
-
-    return dbClient
-        .insertInto("tfl_journey")
-        .values(tflJourneys)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_journey", tflJourneys);
 };
 
-export const insertTflJourneyWaitTimes = (dbClient: KyselyDb, tflJourneyWaitTimes: TflJourneyWaitTime[]) => {
+export const insertTflJourneyWaitTimes = async (dbClient: KyselyDb, tflJourneyWaitTimes: TflJourneyWaitTime[]) => {
     if (tflJourneyWaitTimes.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflJourneyWaitTimes.length} journeyWaitTimes`);
-
-    return dbClient
-        .insertInto("tfl_journey_wait_time")
-        .values(tflJourneyWaitTimes)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_journey_wait_time", tflJourneyWaitTimes);
 };
 
-export const insertTflJourneyDriveTimes = (dbClient: KyselyDb, tflJourneyDriveTimes: TflJourneyDriveTime[]) => {
+export const insertTflJourneyDriveTimes = async (dbClient: KyselyDb, tflJourneyDriveTimes: TflJourneyDriveTime[]) => {
     if (tflJourneyDriveTimes.length === 0) {
         return [];
     }
 
     logger.info(`Inserting ${tflJourneyDriveTimes.length} journeyDriveTimes`);
-
-    return dbClient
-        .insertInto("tfl_journey_drive_time")
-        .values(tflJourneyDriveTimes)
-        .onConflict((oc) => oc.column("id").doNothing())
-        .execute();
+    await insertAsChunks(dbClient, "tfl_journey_drive_time", tflJourneyDriveTimes);
 };

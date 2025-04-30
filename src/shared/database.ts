@@ -700,7 +700,7 @@ export interface TflStopInPatternTable {
     id: number;
     sequence_no: number;
     pattern_id: number;
-    destination_id: number;
+    destination_id: number | null;
     stop_point_id: number;
     timing_point_code: string;
 }

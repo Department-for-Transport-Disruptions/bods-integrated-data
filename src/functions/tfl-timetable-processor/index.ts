@@ -43,7 +43,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const getAndParseTflData = async (bucketName: string, objectKey: string) => {
+export const getAndParseTflData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
         Bucket: bucketName,
         Key: objectKey,
@@ -62,7 +62,8 @@ const getAndParseTflData = async (bucketName: string, objectKey: string) => {
         throw new Error("No xml data");
     }
 
-    const parsedTxc = parser.parse(xml) as Record<string, unknown>;
+    const xmlWithoutNilAttributes = xml.replace(/xsi:nil="true"/g, "");
+    const parsedTxc = parser.parse(xmlWithoutNilAttributes) as Record<string, unknown>;
     const tflJson = iBusSchema.safeParse(parsedTxc);
 
     if (!tflJson.success) {

@@ -15,7 +15,7 @@ program
                 {
                     s3: {
                         bucket: {
-                            name: `integrated-data-tfl-timetables-${stage}`,
+                            name: `integrated-data-tfl-timetable-${stage}`,
                         },
                         object: {
                             key: file,

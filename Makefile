@@ -195,7 +195,7 @@ run-local-tfl-timetable-unzipper:
 	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${TFL_TIMETABLES_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/tfl-timetable-unzipper'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLES_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
 
 run-local-tfl-timetable-processor:
-	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-processor'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLES_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
+	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-processor'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLES_UNZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
 
 # GTFS
 
