@@ -114,19 +114,33 @@ export interface Database {
     agency_migration: GtfsAgencyTable;
     avl_cancellation: AvlCancellationsTable;
     tfl_vehicle: TflVehicleTable;
+    tfl_vehicle_new: TflVehicleTable;
     tfl_operator: TflOperatorTable;
+    tfl_operator_new: TflOperatorTable;
     tfl_garage: TflGarageTable;
+    tfl_garage_new: TflGarageTable;
     tfl_block: TflBlockTable;
+    tfl_block_new: TflBlockTable;
     tfl_block_calendar_day: TflBlockCalendarDayTable;
+    tfl_block_calendar_day_new: TflBlockCalendarDayTable;
     tfl_stop_point: TflStopPointTable;
+    tfl_stop_point_new: TflStopPointTable;
     tfl_destination: TflDestinationTable;
+    tfl_destination_new: TflDestinationTable;
     tfl_route_geometry: TflRouteGeometryTable;
+    tfl_route_geometry_new: TflRouteGeometryTable;
     tfl_line: TflLineTable;
+    tfl_line_new: TflLineTable;
     tfl_pattern: TflPatternTable;
+    tfl_pattern_new: TflPatternTable;
     tfl_stop_in_pattern: TflStopInPatternTable;
+    tfl_stop_in_pattern_new: TflStopInPatternTable;
     tfl_journey: TflJourneyTable;
+    tfl_journey_new: TflJourneyTable;
     tfl_journey_wait_time: TflJourneyWaitTimeTable;
+    tfl_journey_wait_time_new: TflJourneyWaitTimeTable;
     tfl_journey_drive_time: TflJourneyDriveTimeTable;
+    tfl_journey_drive_time_new: TflJourneyDriveTimeTable;
 }
 
 export type KyselyDb = Kysely<Database>;

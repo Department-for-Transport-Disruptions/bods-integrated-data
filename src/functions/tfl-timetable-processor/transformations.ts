@@ -43,7 +43,7 @@ export const mapTflVehicles = (vehicleData: TflVehicleSchema): TflVehicle[] => {
 export const mapTflOperators = (operatorData: TflOperatorSchema): TflOperator[] => {
     return operatorData.Operator.map((operator) => ({
         id: operator["@_aOperator_Code"],
-        operator_name: operator.Operator_Name,
+        operator_name: operator.Operator_Name || null,
         operator_agency: operator.Operator_Agency,
     }));
 };
@@ -63,7 +63,7 @@ export const mapTflBlocks = (blockData: TflBlockSchema): TflBlock[] => {
         operator_code: block["@_aOperator_Code"],
         block_no: block.Block_No,
         running_no: block.Running_No,
-        garage_no: block.Garage_No,
+        garage_no: block.Garage_No || null,
     }));
 };
 
@@ -85,21 +85,21 @@ export const mapTflBlockCalendarDays = (blockCalendarDayData: TflBlockCalendarDa
 export const mapTflStopPoints = (stopPointData: TflStopPointSchema): TflStopPoint[] => {
     return stopPointData.Stop_Point.map((stopPoint) => ({
         id: stopPoint["@_aStop_Point_Idx"],
-        stop_code_lbsl: stopPoint.Stop_Code_LBSL,
+        stop_code_lbsl: stopPoint.Stop_Code_LBSL || null,
         stop_name: stopPoint.Stop_Name,
-        location_easting: stopPoint.Location_Easting,
-        location_northing: stopPoint.Location_Northing,
+        location_easting: stopPoint.Location_Easting || null,
+        location_northing: stopPoint.Location_Northing || null,
         location_longitude: stopPoint.Location_Longitude,
         location_latitude: stopPoint.Location_Latitude,
-        point_letter: stopPoint.Point_Letter,
-        naptan_code: stopPoint.NaPTAN_Code,
-        sms_code: stopPoint.SMS_Code,
+        point_letter: stopPoint.Point_Letter || null,
+        naptan_code: stopPoint.NaPTAN_Code || null,
+        sms_code: stopPoint.SMS_Code || null,
         stop_area: stopPoint.Stop_Area,
-        borough_code: stopPoint.Borough_Code,
-        heading: stopPoint.Heading,
+        borough_code: stopPoint.Borough_Code || null,
+        heading: stopPoint.Heading || null,
         stop_type: stopPoint.Stop_Type,
-        street_name: stopPoint.Street_Name,
-        post_code: stopPoint.Post_Code,
+        street_name: stopPoint.Street_Name || null,
+        post_code: stopPoint.Post_Code || null,
         towards: stopPoint.Towards,
     }));
 };
@@ -108,7 +108,7 @@ export const mapTflDestinations = (destinationData: TflDestinationSchema): TflDe
     return destinationData.Destination.map((destination) => ({
         id: destination["@_aDestination_Idx"],
         long_destination_name: destination.Long_Destination_Name,
-        short_destination_name: destination.Short_Destination_Name,
+        short_destination_name: destination.Short_Destination_Name || null,
     }));
 };
 
@@ -154,7 +154,7 @@ export const mapTflStopInPatterns = (stopInPatternData: TflStopInPatternSchema):
     return stopInPatternData.Stop_In_Pattern.map((stopInPattern) => ({
         id: stopInPattern["@_aStop_In_Pattern_Idx"],
         pattern_id: stopInPattern["@_aPattern_Idx"],
-        destination_id: stopInPattern["@_aDestination_Idx"],
+        destination_id: stopInPattern["@_aDestination_Idx"] || null,
         stop_point_id: stopInPattern["@_aStop_Point_Idx"],
         sequence_no: stopInPattern.Sequence_No,
         timing_point_code: stopInPattern.Timing_Point_Code,
