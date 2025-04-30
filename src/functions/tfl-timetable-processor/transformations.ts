@@ -32,6 +32,10 @@ import {
 } from "@bods-integrated-data/shared/schema";
 
 export const mapTflVehicles = (vehicleData: TflVehicleSchema): TflVehicle[] => {
+    if (!vehicleData.Vehicle) {
+        return [];
+    }
+
     return vehicleData.Vehicle.map((vehicle) => ({
         id: vehicle["@_aVehicleId"],
         registration_number: vehicle.Registration_Number,
@@ -41,6 +45,10 @@ export const mapTflVehicles = (vehicleData: TflVehicleSchema): TflVehicle[] => {
 };
 
 export const mapTflOperators = (operatorData: TflOperatorSchema): TflOperator[] => {
+    if (!operatorData.Operator) {
+        return [];
+    }
+
     return operatorData.Operator.map((operator) => ({
         id: operator["@_aOperator_Code"],
         operator_name: operator.Operator_Name || null,
@@ -49,6 +57,10 @@ export const mapTflOperators = (operatorData: TflOperatorSchema): TflOperator[] 
 };
 
 export const mapTflGarages = (garageData: TflGarageSchema): TflGarage[] => {
+    if (!garageData.Garage) {
+        return [];
+    }
+
     return garageData.Garage.map((garage) => ({
         id: garage["@_aGarage_No"],
         operator_code: garage["@_aOperator_Code"],
@@ -58,6 +70,10 @@ export const mapTflGarages = (garageData: TflGarageSchema): TflGarage[] => {
 };
 
 export const mapTflBlocks = (blockData: TflBlockSchema): TflBlock[] => {
+    if (!blockData.Block) {
+        return [];
+    }
+
     return blockData.Block.map((block) => ({
         id: block["@_aBlock_Idx"],
         operator_code: block["@_aOperator_Code"],
@@ -68,6 +84,10 @@ export const mapTflBlocks = (blockData: TflBlockSchema): TflBlock[] => {
 };
 
 export const mapTflBlockCalendarDays = (blockCalendarDayData: TflBlockCalendarDaySchema): TflBlockCalendarDay[] => {
+    if (!blockCalendarDayData.Block_CalendarDay) {
+        return [];
+    }
+
     return blockCalendarDayData.Block_CalendarDay.map((blockCalendarDay) => {
         const block_id = blockCalendarDay["@_aBlock_Idx"];
         const calendar_day = blockCalendarDay["@_aCalendar_Day"];
@@ -83,6 +103,10 @@ export const mapTflBlockCalendarDays = (blockCalendarDayData: TflBlockCalendarDa
 };
 
 export const mapTflStopPoints = (stopPointData: TflStopPointSchema): TflStopPoint[] => {
+    if (!stopPointData.Stop_Point) {
+        return [];
+    }
+
     return stopPointData.Stop_Point.map((stopPoint) => ({
         id: stopPoint["@_aStop_Point_Idx"],
         stop_code_lbsl: stopPoint.Stop_Code_LBSL || null,
@@ -105,6 +129,10 @@ export const mapTflStopPoints = (stopPointData: TflStopPointSchema): TflStopPoin
 };
 
 export const mapTflDestinations = (destinationData: TflDestinationSchema): TflDestination[] => {
+    if (!destinationData.Destination) {
+        return [];
+    }
+
     return destinationData.Destination.map((destination) => ({
         id: destination["@_aDestination_Idx"],
         long_destination_name: destination.Long_Destination_Name,
@@ -113,6 +141,10 @@ export const mapTflDestinations = (destinationData: TflDestinationSchema): TflDe
 };
 
 export const mapTflRouteGeometries = (routeGeometryData: TflRouteGeometrySchema): TflRouteGeometry[] => {
+    if (!routeGeometryData.Route_Geometry) {
+        return [];
+    }
+
     return routeGeometryData.Route_Geometry.map((routeGeometry) => {
         const contract_line_no = routeGeometry["@_aContract_Line_No"];
         const lbsl_run_no = routeGeometry["@_aLBSL_Run_No"];
@@ -134,6 +166,10 @@ export const mapTflRouteGeometries = (routeGeometryData: TflRouteGeometrySchema)
 };
 
 export const mapTflLines = (lineData: TflLineSchema): TflLine[] => {
+    if (!lineData.Line) {
+        return [];
+    }
+
     return lineData.Line.map((line) => ({
         id: line["@_aContract_Line_No"],
         service_line_no: line.Service_Line_No,
@@ -142,6 +178,10 @@ export const mapTflLines = (lineData: TflLineSchema): TflLine[] => {
 };
 
 export const mapTflPatterns = (patternData: TflPatternSchema): TflPattern[] => {
+    if (!patternData.Pattern) {
+        return [];
+    }
+
     return patternData.Pattern.map((pattern) => ({
         id: pattern["@_aPattern_Idx"],
         contract_line_no: pattern["@_aContract_Line_No"],
@@ -151,6 +191,10 @@ export const mapTflPatterns = (patternData: TflPatternSchema): TflPattern[] => {
 };
 
 export const mapTflStopInPatterns = (stopInPatternData: TflStopInPatternSchema): TflStopInPattern[] => {
+    if (!stopInPatternData.Stop_In_Pattern) {
+        return [];
+    }
+
     return stopInPatternData.Stop_In_Pattern.map((stopInPattern) => ({
         id: stopInPattern["@_aStop_In_Pattern_Idx"],
         pattern_id: stopInPattern["@_aPattern_Idx"],
@@ -162,6 +206,10 @@ export const mapTflStopInPatterns = (stopInPatternData: TflStopInPatternSchema):
 };
 
 export const mapTflJourneys = (journeyData: TflJourneySchema): TflJourney[] => {
+    if (!journeyData.Journey) {
+        return [];
+    }
+
     return journeyData.Journey.map((journey) => ({
         id: journey["@_aJourney_Idx"],
         pattern_id: journey["@_aPattern_Idx"],
@@ -173,6 +221,10 @@ export const mapTflJourneys = (journeyData: TflJourneySchema): TflJourney[] => {
 };
 
 export const mapTflJourneyWaitTimes = (journeyWaitTimeData: TflJourneyWaitTimeSchema): TflJourneyWaitTime[] => {
+    if (!journeyWaitTimeData.Journey_Wait_Time) {
+        return [];
+    }
+
     return journeyWaitTimeData.Journey_Wait_Time.map((journeyWaitTime) => {
         const journey_id = journeyWaitTime["@_aJourney_Idx"];
         const stop_in_pattern_id = journeyWaitTime["@_aStop_In_Pattern_Idx"];
@@ -188,6 +240,10 @@ export const mapTflJourneyWaitTimes = (journeyWaitTimeData: TflJourneyWaitTimeSc
 };
 
 export const mapTflJourneyDriveTimes = (journeyDriveTimeData: TflJourneyDriveTimeSchema): TflJourneyDriveTime[] => {
+    if (!journeyDriveTimeData.Journey_Drive_Time) {
+        return [];
+    }
+
     return journeyDriveTimeData.Journey_Drive_Time.map((journeyDriveTime) => {
         const journey_id = journeyDriveTime["@_aJourney_Idx"];
         const stop_in_pattern_from_id = journeyDriveTime["@_aStop_In_Pattern_From_Idx"];

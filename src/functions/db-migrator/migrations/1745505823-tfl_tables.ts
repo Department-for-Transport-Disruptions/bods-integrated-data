@@ -22,7 +22,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("id", "integer", (col) => col.primaryKey())
         .addColumn("garage_code", "varchar(10)", (col) => col.notNull())
         .addColumn("garage_name", "varchar(256)", (col) => col.notNull())
-        .addColumn("operator_code", "varchar(10)", (col) => col.notNull().references("tfl_operator.id"))
+        .addColumn("operator_code", "varchar(10)", (col) => col.notNull()) // references "tfl_operator.id"
         .execute();
 
     await db.schema
@@ -30,14 +30,14 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("id", "integer", (col) => col.primaryKey())
         .addColumn("block_no", "integer", (col) => col.notNull())
         .addColumn("running_no", "integer", (col) => col.notNull())
-        .addColumn("garage_no", "integer", (col) => col.references("tfl_garage.id"))
-        .addColumn("operator_code", "varchar(10)", (col) => col.notNull().references("tfl_operator.id"))
+        .addColumn("garage_no", "integer", (col) => col) // references "tfl_garage.id"
+        .addColumn("operator_code", "varchar(10)", (col) => col.notNull()) // references "tfl_operator.id"
         .execute();
 
     await db.schema
         .createTable("tfl_block_calendar_day")
         .addColumn("id", "text", (col) => col.primaryKey())
-        .addColumn("block_id", "integer", (col) => col.notNull().references("tfl_block.id"))
+        .addColumn("block_id", "integer", (col) => col.notNull()) // references "tfl_block.id"
         .addColumn("calendar_day", "date", (col) => col.notNull())
         .addColumn("block_runs_on_day", "integer", (col) => col.notNull())
         .execute();
@@ -85,8 +85,8 @@ export async function up(db: Kysely<Database>): Promise<void> {
 
     await db.schema
         .alterTable("tfl_line")
-        .addColumn("service_line_no", "varchar(6)", (col) => col.notNull())
-        .addColumn("logical_line_no", "integer", (col) => col.notNull())
+        .addColumn("service_line_no", "varchar(6)", (col) => col.notNull().defaultTo(""))
+        .addColumn("logical_line_no", "integer", (col) => col.notNull().defaultTo(-1))
         .execute();
 
     await db.schema
@@ -94,16 +94,16 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("id", "integer", (col) => col.primaryKey())
         .addColumn("direction", "integer", (col) => col.notNull())
         .addColumn("type", "integer", (col) => col.notNull())
-        .addColumn("contract_line_no", "text", (col) => col.notNull().references("tfl_line.id"))
+        .addColumn("contract_line_no", "text", (col) => col.notNull()) // references "tfl_line.id"
         .execute();
 
     await db.schema
         .createTable("tfl_stop_in_pattern")
         .addColumn("id", "integer", (col) => col.primaryKey())
         .addColumn("sequence_no", "integer", (col) => col.notNull())
-        .addColumn("pattern_id", "integer", (col) => col.notNull().references("tfl_pattern.id"))
-        .addColumn("destination_id", "integer", (col) => col.references("tfl_destination.id"))
-        .addColumn("stop_point_id", "integer", (col) => col.notNull().references("tfl_stop_point.id"))
+        .addColumn("pattern_id", "integer", (col) => col.notNull()) // references "tfl_pattern.id"
+        .addColumn("destination_id", "integer", (col) => col) // references "tfl_destination.id"
+        .addColumn("stop_point_id", "integer", (col) => col.notNull()) // references "tfl_stop_point.id"
         .addColumn("timing_point_code", "varchar(10)", (col) => col.notNull())
         .execute();
 
@@ -113,24 +113,24 @@ export async function up(db: Kysely<Database>): Promise<void> {
         .addColumn("trip_no_lbsl", "integer", (col) => col.notNull())
         .addColumn("type", "integer", (col) => col.notNull())
         .addColumn("start_time", "integer", (col) => col.notNull())
-        .addColumn("pattern_id", "integer", (col) => col.notNull().references("tfl_pattern.id"))
-        .addColumn("block_id", "integer", (col) => col.notNull().references("tfl_block.id"))
+        .addColumn("pattern_id", "integer", (col) => col.notNull()) // references "tfl_pattern.id"
+        .addColumn("block_id", "integer", (col) => col.notNull()) // references "tfl_block.id"
         .execute();
 
     await db.schema
         .createTable("tfl_journey_wait_time")
         .addColumn("id", "text", (col) => col.primaryKey())
-        .addColumn("journey_id", "integer", (col) => col.notNull().references("tfl_journey.id"))
-        .addColumn("stop_in_pattern_id", "integer", (col) => col.notNull().references("tfl_stop_in_pattern.id"))
+        .addColumn("journey_id", "integer", (col) => col.notNull()) // references "tfl_journey.id"
+        .addColumn("stop_in_pattern_id", "integer", (col) => col.notNull()) // references "tfl_stop_in_pattern.id"
         .addColumn("wait_time", "integer", (col) => col.notNull())
         .execute();
 
     await db.schema
         .createTable("tfl_journey_drive_time")
         .addColumn("id", "text", (col) => col.primaryKey())
-        .addColumn("journey_id", "integer", (col) => col.notNull().references("tfl_journey.id"))
-        .addColumn("stop_in_pattern_from_id", "integer", (col) => col.notNull().references("tfl_stop_in_pattern.id"))
-        .addColumn("stop_in_pattern_to_id", "integer", (col) => col.notNull().references("tfl_stop_in_pattern.id"))
+        .addColumn("journey_id", "integer", (col) => col.notNull()) // references "tfl_journey.id"
+        .addColumn("stop_in_pattern_from_id", "integer", (col) => col.notNull()) // references "tfl_stop_in_pattern.id"
+        .addColumn("stop_in_pattern_to_id", "integer", (col) => col.notNull()) // references "tfl_stop_in_pattern.id"
         .addColumn("drive_time", "integer", (col) => col.notNull())
         .execute();
 }

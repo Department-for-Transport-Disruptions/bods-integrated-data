@@ -94,8 +94,8 @@ module "integrated_data_tfl_timetable_retriever_function" {
   ]
 
   env_vars = {
-    STAGE                             = var.environment
-    TFL_TIMETABLES_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.bucket
+    STAGE                            = var.environment
+    TFL_TIMETABLE_ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.bucket
   }
 }
 
@@ -108,7 +108,7 @@ module "integrated_data_tfl_timetable_unzipper_function" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   timeout       = 60
-  memory        = 128
+  memory        = 256
 
   permissions = [
     {
@@ -145,8 +145,8 @@ module "integrated_data_tfl_timetable_processor_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-timetable-processor.zip"
   handler         = "index.handler"
   runtime         = "nodejs20.x"
-  timeout         = 60
-  memory          = 128
+  timeout         = 300
+  memory          = 1024
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids

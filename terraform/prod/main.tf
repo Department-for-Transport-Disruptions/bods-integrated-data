@@ -360,11 +360,11 @@ module "integrated_data_timetables_sfn" {
   noc_bucket_name                                 = module.integrated_data_noc_pipeline.noc_bucket_name
   naptan_bucket_name                              = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name                                = module.integrated_data_nptg_pipeline.nptg_bucket_name
-  tfl_timetable_retriever_function_arn            = module.tfl_timetable_retriever_function_arn
-  tfl_timetable_unzipper_function_arn             = module.tfl_timetable_unzipper_function_arn
-  tfl_timetable_processor_function_arn            = module.tfl_timetable_processor_function_arn
-  tfl_timetable_zipped_bucket_name                = module.tfl_timetable_zipped_bucket_name
-  tfl_timetable_bucket_name                       = module.tfl_timetable_bucket_name
+  tfl_timetable_retriever_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_retriever_function_arn
+  tfl_timetable_unzipper_function_arn             = module.integrated_data_tfl_pipeline.tfl_timetable_unzipper_function_arn
+  tfl_timetable_processor_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_processor_function_arn
+  tfl_timetable_zipped_bucket_name                = module.integrated_data_tfl_pipeline.tfl_timetable_zipped_bucket_name
+  tfl_timetable_bucket_name                       = module.integrated_data_tfl_pipeline.tfl_timetable_bucket_name
   schedule                                        = "cron(0 2 * * ? *)"
 }
 
