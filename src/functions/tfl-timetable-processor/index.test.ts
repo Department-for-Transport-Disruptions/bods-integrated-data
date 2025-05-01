@@ -1,5 +1,7 @@
+import { logger } from "@bods-integrated-data/shared/logger";
+import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { describe, expect, it, vi } from "vitest";
-import { getAndParseTflData } from ".";
+import { getAndParseTflData, handler } from ".";
 
 describe("tfl-timetable-processor", () => {
     const mockBucketName = "mock-bucket";
@@ -8,8 +10,23 @@ describe("tfl-timetable-processor", () => {
     const mocks = vi.hoisted(() => {
         return {
             getS3Object: vi.fn(),
+            mockDbClient: {
+                destroy: vi.fn(),
+                insertInto: vi.fn().mockReturnValue({
+                    values: vi.fn().mockReturnValue({
+                        onConflict: vi.fn().mockReturnValue({
+                            execute: vi.fn(),
+                        }),
+                    }),
+                }),
+            },
         };
     });
+
+    vi.mock("@bods-integrated-data/shared/database", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("@bods-integrated-data/shared/database")>()),
+        getDatabaseClient: vi.fn().mockReturnValue(mocks.mockDbClient),
+    }));
 
     vi.mock("@bods-integrated-data/shared/s3", async (importOriginal) => ({
         ...(await importOriginal<typeof import("@bods-integrated-data/shared/s3")>()),
@@ -25,8 +42,18 @@ describe("tfl-timetable-processor", () => {
         },
     }));
 
+    // beforeEach(() => {
+    //     vi.resetAllMocks();
+    // });
+
     describe("getAndParseTflData", () => {
-        it("should return parsed data", async () => {
+        it("throws an error if the S3 object is not XML", async () => {
+            mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => "" } });
+
+            await expect(getAndParseTflData(mockBucketName, "mock-file.txt")).rejects.toThrow("No xml data");
+        });
+
+        it("returns parsed data", async () => {
             const mockXmlData = `
 <?xml version="1.0" encoding="UTF-8"?>
 <sp:Network_Data xmlns:sp="http://www.tfl.uk/CDII/Stop_Point" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.tfl.uk/CDII/Stop_Point ../Schema/Stop_Point.xsd">
@@ -117,6 +144,96 @@ describe("tfl-timetable-processor", () => {
                     ],
                 },
             });
+        });
+    });
+
+    describe("handler", () => {
+        it("ignores non-XML files", async () => {
+            const mockEvent = {
+                Records: [
+                    {
+                        s3: {
+                            bucket: { name: mockBucketName },
+                            object: { key: "mock-file.txt" },
+                        },
+                    },
+                ],
+            };
+
+            await handler(mockEvent, mockContext, mockCallback);
+
+            expect(logger.info).toHaveBeenCalledWith("Ignoring non-xml file");
+        });
+
+        it("throws an error if an unexpected error occurs", async () => {
+            const mockEvent = {
+                Records: [
+                    {
+                        s3: {
+                            bucket: { name: mockBucketName },
+                            object: { key: "mock-file.xml" },
+                        },
+                    },
+                ],
+            };
+
+            const mockError = new Error("Test error");
+
+            mocks.getS3Object.mockRejectedValueOnce(mockError);
+
+            await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(mockError);
+            expect(logger.error).toHaveBeenCalledWith(
+                mockError,
+                "There was a problem with the TfL timetable processor function",
+            );
+        });
+
+        it.each([
+            [
+                `
+        <?xml version="1.0" encoding="UTF-8"?>
+        <vh:Vehicle_Data xmlns:vh="http://www.tfl.uk/CDII/Vehicle">
+            <Vehicle aVehicleId="123">
+                <Registration_Number>ABC123</Registration_Number>
+                <Bonnet_No>A1</Bonnet_No>
+                <Operator_Agency>Hello</Operator_Agency>
+            </Vehicle>
+        </vh:Vehicle_Data>`,
+                "Inserting 1 vehicles",
+            ],
+            [
+                `
+        <?xml version="1.0" encoding="UTF-8"?>
+        <op:Network_Data xmlns:op="http://www.tfl.uk/CDII/Operator">
+            <Operator aOperator_Code="1">
+                <Operator_Name>Operator A</Operator_Name>
+                <Operator_Agency>OPA</Operator_Agency>
+            </Operator>
+        </op:Network_Data>`,
+                "Inserting 1 operators",
+            ],
+        ])("processes TfL XML data and inserts it into the database", async (xmlData, logMessage) => {
+            const mockEvent = {
+                Records: [
+                    {
+                        s3: {
+                            bucket: { name: mockBucketName },
+                            object: { key: "mock-file.xml" },
+                        },
+                    },
+                ],
+            };
+
+            mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => xmlData } });
+
+            await handler(mockEvent, mockContext, mockCallback);
+
+            expect(mocks.getS3Object).toHaveBeenCalledWith({
+                Bucket: mockBucketName,
+                Key: "mock-file.xml",
+            });
+
+            expect(logger.info).toHaveBeenCalledWith(logMessage);
         });
     });
 });
