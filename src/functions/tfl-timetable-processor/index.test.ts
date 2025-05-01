@@ -42,10 +42,6 @@ describe("tfl-timetable-processor", () => {
         },
     }));
 
-    // beforeEach(() => {
-    //     vi.resetAllMocks();
-    // });
-
     describe("getAndParseTflData", () => {
         it("throws an error if the S3 object is not XML", async () => {
             mocks.getS3Object.mockResolvedValueOnce({ Body: { transformToString: () => "" } });
