@@ -109,12 +109,41 @@ export interface Database {
     trip_EA: GtfsTripTable;
     noc_operator: NocOperatorTable;
     noc_operator_new: NocOperatorTable;
-    tfl_line: TflLineTable;
     route_migration: GtfsRouteTable;
     trip_migration: GtfsTripTable;
     agency_migration: GtfsAgencyTable;
     avl_cancellation: AvlCancellationsTable;
+    tfl_vehicle: TflVehicleTable;
+    tfl_vehicle_new: TflVehicleTable;
+    tfl_operator: TflOperatorTable;
+    tfl_operator_new: TflOperatorTable;
+    tfl_garage: TflGarageTable;
+    tfl_garage_new: TflGarageTable;
+    tfl_block: TflBlockTable;
+    tfl_block_new: TflBlockTable;
+    tfl_block_calendar_day: TflBlockCalendarDayTable;
+    tfl_block_calendar_day_new: TflBlockCalendarDayTable;
+    tfl_stop_point: TflStopPointTable;
+    tfl_stop_point_new: TflStopPointTable;
+    tfl_destination: TflDestinationTable;
+    tfl_destination_new: TflDestinationTable;
+    tfl_route_geometry: TflRouteGeometryTable;
+    tfl_route_geometry_new: TflRouteGeometryTable;
+    tfl_line: TflLineTable;
+    tfl_line_new: TflLineTable;
+    tfl_pattern: TflPatternTable;
+    tfl_pattern_new: TflPatternTable;
+    tfl_stop_in_pattern: TflStopInPatternTable;
+    tfl_stop_in_pattern_new: TflStopInPatternTable;
+    tfl_journey: TflJourneyTable;
+    tfl_journey_new: TflJourneyTable;
+    tfl_journey_wait_time: TflJourneyWaitTimeTable;
+    tfl_journey_wait_time_new: TflJourneyWaitTimeTable;
+    tfl_journey_drive_time: TflJourneyDriveTimeTable;
+    tfl_journey_drive_time_new: TflJourneyDriveTimeTable;
 }
+
+export type KyselyDb = Kysely<Database>;
 
 export interface NaptanStopTable {
     atco_code: string;
@@ -310,14 +339,6 @@ export interface BodsAvlTable {
 export type BodsAvl = Selectable<BodsAvlTable>;
 export type NewBodsAvl = Insertable<BodsAvlTable>;
 export type BodsAvlUpdate = Updateable<BodsAvlTable>;
-
-export interface TflLineTable {
-    id: string;
-}
-
-export type TflLine = Selectable<TflLineTable>;
-export type NewTflLine = Insertable<TflLineTable>;
-export type TflLineUpdate = Updateable<TflLineTable>;
 
 export interface GtfsAgencyTable {
     id: Generated<number>;
@@ -547,8 +568,6 @@ export type Situation = Selectable<SituationTable>;
 export type NewSituation = Insertable<SituationTable>;
 export type SituationUpdate = Updateable<SituationTable>;
 
-export type KyselyDb = Kysely<Database>;
-
 export interface AvlCancellationsTable {
     id: Generated<number>;
     response_time_stamp: string;
@@ -564,3 +583,178 @@ export interface AvlCancellationsTable {
 export type AvlCancellations = Selectable<AvlCancellationsTable>;
 export type NewAvlCancellations = Insertable<AvlCancellationsTable>;
 export type AvlCancellationsUpdate = Updateable<AvlCancellationsTable>;
+
+export interface TflVehicleTable {
+    id: number;
+    registration_number: string;
+    bonnet_no: string;
+    operator_agency: string;
+}
+
+export type TflVehicle = Selectable<TflVehicleTable>;
+export type NewTflVehicle = Insertable<TflVehicleTable>;
+export type TflVehicleUpdate = Updateable<TflVehicleTable>;
+
+export interface TflOperatorTable {
+    id: string;
+    operator_name: string | null;
+    operator_agency: string;
+}
+
+export type TflOperator = Selectable<TflOperatorTable>;
+export type NewTflOperator = Insertable<TflOperatorTable>;
+export type TflOperatorUpdate = Updateable<TflOperatorTable>;
+
+export interface TflGarageTable {
+    id: number;
+    garage_code: string;
+    garage_name: string;
+    operator_code: string;
+}
+
+export type TflGarage = Selectable<TflGarageTable>;
+export type NewTflGarage = Insertable<TflGarageTable>;
+export type TflGarageUpdate = Updateable<TflGarageTable>;
+
+export interface TflBlockTable {
+    id: number;
+    block_no: number;
+    running_no: number;
+    garage_no: number | null;
+    operator_code: string;
+}
+
+export type TflBlock = Selectable<TflBlockTable>;
+export type NewTflBlock = Insertable<TflBlockTable>;
+export type TflBlockUpdate = Updateable<TflBlockTable>;
+
+export interface TflBlockCalendarDayTable {
+    id: string;
+    block_id: number;
+    calendar_day: string;
+    block_runs_on_day: number;
+}
+
+export type TflBlockCalendarDay = Selectable<TflBlockCalendarDayTable>;
+export type NewTflBlockCalendarDay = Insertable<TflBlockCalendarDayTable>;
+export type TflBlockCalendarDayUpdate = Updateable<TflBlockCalendarDayTable>;
+
+export interface TflStopPointTable {
+    id: number;
+    stop_code_lbsl: string | null;
+    stop_name: string;
+    location_easting: number | null;
+    location_northing: number | null;
+    location_longitude: number;
+    location_latitude: number;
+    point_letter: string | null;
+    naptan_code: string | null;
+    sms_code: string | null;
+    stop_area: string;
+    borough_code: string | null;
+    heading: number | null;
+    stop_type: string;
+    street_name: string | null;
+    post_code: string | null;
+    towards: string;
+}
+
+export type TflStopPoint = Selectable<TflStopPointTable>;
+export type NewTflStopPoint = Insertable<TflStopPointTable>;
+export type TflStopPointUpdate = Updateable<TflStopPointTable>;
+
+export interface TflDestinationTable {
+    id: number;
+    long_destination_name: string;
+    short_destination_name: string | null;
+}
+
+export type TflDestination = Selectable<TflDestinationTable>;
+export type NewTflDestination = Insertable<TflDestinationTable>;
+export type TflDestinationUpdate = Updateable<TflDestinationTable>;
+
+export interface TflRouteGeometryTable {
+    id: string;
+    contract_line_no: string;
+    lbsl_run_no: number;
+    sequence_no: number;
+    direction: number;
+    location_easting: number;
+    location_northing: number;
+    location_longitude: number;
+    location_latitude: number;
+}
+
+export type TflRouteGeometry = Selectable<TflRouteGeometryTable>;
+export type NewTflRouteGeometry = Insertable<TflRouteGeometryTable>;
+export type TflRouteGeometryUpdate = Updateable<TflRouteGeometryTable>;
+
+export interface TflLineTable {
+    id: string;
+    service_line_no: string;
+    logical_line_no: number;
+}
+
+export type TflLine = Selectable<TflLineTable>;
+export type NewTflLine = Insertable<TflLineTable>;
+export type TflLineUpdate = Updateable<TflLineTable>;
+
+export interface TflPatternTable {
+    id: number;
+    direction: number;
+    type: number;
+    contract_line_no: string;
+}
+
+export type TflPattern = Selectable<TflPatternTable>;
+export type NewTflPattern = Insertable<TflPatternTable>;
+export type TflPatternUpdate = Updateable<TflPatternTable>;
+
+export interface TflStopInPatternTable {
+    id: number;
+    sequence_no: number;
+    pattern_id: number;
+    destination_id: number | null;
+    stop_point_id: number;
+    timing_point_code: string;
+}
+
+export type TflStopInPattern = Selectable<TflStopInPatternTable>;
+export type NewTflStopInPattern = Insertable<TflStopInPatternTable>;
+export type TflStopInPatternUpdate = Updateable<TflStopInPatternTable>;
+
+export interface TflJourneyTable {
+    id: number;
+    trip_no_lbsl: number;
+    type: number;
+    start_time: number;
+    pattern_id: number;
+    block_id: number;
+}
+
+export type TflJourney = Selectable<TflJourneyTable>;
+export type NewTflJourney = Insertable<TflJourneyTable>;
+export type TflJourneyUpdate = Updateable<TflJourneyTable>;
+
+export interface TflJourneyWaitTimeTable {
+    id: string;
+    journey_id: number;
+    stop_in_pattern_id: number;
+    wait_time: number;
+}
+
+export type TflJourneyWaitTime = Selectable<TflJourneyWaitTimeTable>;
+export type NewTflJourneyWaitTime = Insertable<TflJourneyWaitTimeTable>;
+export type TflJourneyWaitTimeUpdate = Updateable<TflJourneyWaitTimeTable>;
+
+export interface TflJourneyDriveTimeTable {
+    id: string;
+    journey_id: number;
+    stop_in_pattern_from_id: number;
+    stop_in_pattern_to_id: number;
+    drive_time: number;
+}
+
+export type TflJourneyDriveTime = Selectable<TflJourneyDriveTimeTable>;
+export type NewTflJourneyDriveTime = Insertable<TflJourneyDriveTimeTable>;
+export type TflJourneyDriveTimeUpdate = Updateable<TflJourneyDriveTimeTable>;

@@ -100,7 +100,12 @@ module "integrated_data_txc_pipeline" {
 module "integrated_data_tfl_pipeline" {
   source = "../modules/data-pipelines/tfl-pipeline"
 
-  environment = local.env
+  environment        = local.env
+  vpc_id             = null
+  private_subnet_ids = null
+  db_secret_arn      = "*"
+  db_sg_id           = null
+  db_host            = null
 }
 
 module "integrated_data_gtfs_downloader" {

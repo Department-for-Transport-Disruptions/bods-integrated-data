@@ -178,7 +178,12 @@ module "integrated_data_txc_pipeline" {
 module "integrated_data_tfl_pipeline" {
   source = "../modules/data-pipelines/tfl-pipeline"
 
-  environment = local.env
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
 }
 
 module "integrated_data_gtfs_downloader" {
@@ -355,6 +360,11 @@ module "integrated_data_timetables_sfn" {
   noc_bucket_name                                 = module.integrated_data_noc_pipeline.noc_bucket_name
   naptan_bucket_name                              = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name                                = module.integrated_data_nptg_pipeline.nptg_bucket_name
+  tfl_timetable_retriever_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_retriever_function_arn
+  tfl_timetable_unzipper_function_arn             = module.integrated_data_tfl_pipeline.tfl_timetable_unzipper_function_arn
+  tfl_timetable_processor_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_processor_function_arn
+  tfl_timetable_zipped_bucket_name                = module.integrated_data_tfl_pipeline.tfl_timetable_zipped_bucket_name
+  tfl_timetable_bucket_name                       = module.integrated_data_tfl_pipeline.tfl_timetable_bucket_name
   schedule                                        = "cron(0 2 * * ? *)"
 }
 

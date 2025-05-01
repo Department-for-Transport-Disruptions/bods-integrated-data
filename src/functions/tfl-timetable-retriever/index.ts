@@ -68,14 +68,19 @@ const listTfLS3Objects = async (client: S3Client, commandInput: ListObjectsV2Com
     return { objects, commonPrefixes };
 };
 
-export const handler: Handler = async (event, context) => {
+export type TflTimetableRetrieverOutput = {
+    tflTimetableZippedBucketName: string;
+    prefix: string;
+};
+
+export const handler: Handler = async (event, context): Promise<TflTimetableRetrieverOutput> => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const { TFL_TIMETABLES_ZIPPED_BUCKET_NAME } = process.env;
+        const { TFL_TIMETABLE_ZIPPED_BUCKET_NAME } = process.env;
 
-        if (!TFL_TIMETABLES_ZIPPED_BUCKET_NAME) {
-            throw new Error("Missing env vars - TFL_TIMETABLES_ZIPPED_BUCKET_NAME must be set");
+        if (!TFL_TIMETABLE_ZIPPED_BUCKET_NAME) {
+            throw new Error("Missing env vars - TFL_TIMETABLE_ZIPPED_BUCKET_NAME must be set");
         }
 
         const tflS3Client = new S3Client({
@@ -96,10 +101,15 @@ export const handler: Handler = async (event, context) => {
             throw new Error("No prefixes with a valid date found in the S3 bucket");
         }
 
+        const functionOutput: TflTimetableRetrieverOutput = {
+            tflTimetableZippedBucketName: TFL_TIMETABLE_ZIPPED_BUCKET_NAME,
+            prefix: mostRecentTimetablePrefix,
+        };
+
         logger.info(`Prefix with latest date: "${mostRecentTimetablePrefix}"`);
 
         const ourBaseVersionObjects = await listS3Objects({
-            Bucket: TFL_TIMETABLES_ZIPPED_BUCKET_NAME,
+            Bucket: TFL_TIMETABLE_ZIPPED_BUCKET_NAME,
             Delimiter: "/",
         });
 
@@ -108,7 +118,7 @@ export const handler: Handler = async (event, context) => {
         for (const commonPrefix of ourBaseVersionPrefixes) {
             if (commonPrefix.Prefix === mostRecentTimetablePrefix) {
                 logger.warn(`Prefix "${mostRecentTimetablePrefix}" already exists, skipping retrieval`);
-                return;
+                return functionOutput;
             }
         }
 
@@ -131,12 +141,14 @@ export const handler: Handler = async (event, context) => {
                 const body = await object.Body?.transformToByteArray();
 
                 await putS3Object({
-                    Bucket: TFL_TIMETABLES_ZIPPED_BUCKET_NAME,
+                    Bucket: TFL_TIMETABLE_ZIPPED_BUCKET_NAME,
                     Key,
                     Body: body,
                 });
             }
         }
+
+        return functionOutput;
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the TfL timetable retriever function");

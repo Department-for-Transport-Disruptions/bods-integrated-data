@@ -3,7 +3,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getPrefixWithLatestDate, handler } from ".";
+import { TflTimetableRetrieverOutput, getPrefixWithLatestDate, handler } from ".";
 
 describe("tfl-timetable-retriever", () => {
     const mockBucketName = "mock-bucket";
@@ -27,7 +27,7 @@ describe("tfl-timetable-retriever", () => {
     vi.mock("@aws-sdk/client-s3");
 
     beforeEach(() => {
-        process.env.TFL_TIMETABLES_ZIPPED_BUCKET_NAME = mockBucketName;
+        process.env.TFL_TIMETABLE_ZIPPED_BUCKET_NAME = mockBucketName;
     });
 
     describe("getPrefixWithLatestDate", () => {
@@ -51,11 +51,11 @@ describe("tfl-timetable-retriever", () => {
     });
 
     describe("handler", () => {
-        it("throws an error when the TFL_TIMETABLES_ZIPPED_BUCKET_NAME environment variable is missing", async () => {
-            process.env.TFL_TIMETABLES_ZIPPED_BUCKET_NAME = "";
+        it("throws an error when the TFL_TIMETABLE_ZIPPED_BUCKET_NAME environment variable is missing", async () => {
+            process.env.TFL_TIMETABLE_ZIPPED_BUCKET_NAME = "";
 
             await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
-                "Missing env vars - TFL_TIMETABLES_ZIPPED_BUCKET_NAME must be set",
+                "Missing env vars - TFL_TIMETABLE_ZIPPED_BUCKET_NAME must be set",
             );
 
             expect(logger.error).toHaveBeenCalledWith(
@@ -82,9 +82,16 @@ describe("tfl-timetable-retriever", () => {
             // @ts-ignore mock S3Client
             vi.mocked(S3Client.prototype.send).mockResolvedValue({ CommonPrefixes: [{ Prefix: "20250101/" }] });
 
-            await handler(mockEvent, mockContext, mockCallback);
+            const response = await handler(mockEvent, mockContext, mockCallback);
 
             expect(logger.warn).toHaveBeenCalledWith('Prefix "20250101/" already exists, skipping retrieval');
+
+            const expectedOutput: TflTimetableRetrieverOutput = {
+                tflTimetableZippedBucketName: mockBucketName,
+                prefix: "20250101/",
+            };
+
+            expect(response).toEqual(expectedOutput);
         });
 
         it("retrieves files from the S3 bucket", async () => {
@@ -106,7 +113,7 @@ describe("tfl-timetable-retriever", () => {
             const putS3ObjectMock = vi.fn();
             vi.mocked(putS3Object).mockImplementation(putS3ObjectMock);
 
-            await handler(mockEvent, mockContext, mockCallback);
+            const response = await handler(mockEvent, mockContext, mockCallback);
 
             expect(logger.info).toHaveBeenCalledWith('Prefix with latest date: "20250102/"');
             expect(logger.info).toHaveBeenCalledWith("Retrieving 2 files");
@@ -121,6 +128,13 @@ describe("tfl-timetable-retriever", () => {
                 Key: "file2.zip",
                 Body: mockBody,
             });
+
+            const expectedOutput: TflTimetableRetrieverOutput = {
+                tflTimetableZippedBucketName: mockBucketName,
+                prefix: "20250102/",
+            };
+
+            expect(response).toEqual(expectedOutput);
         });
     });
 });
