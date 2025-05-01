@@ -20,8 +20,8 @@ export const mapStop = (
     naptanStopAreaMap: Record<string, NaptanStopArea>,
     id: string,
     name: string,
-    latitude?: number,
-    longitude?: number,
+    latitude: number,
+    longitude: number,
     naptanStop?: NaptanStopWithRegionCode,
 ): NewStop[] => {
     const stop: NewStop = {
@@ -142,7 +142,14 @@ export const createStopAreaStop = (
     };
 };
 
-export const getCoordinates = (location?: StopPointLocation) => {
+export const getCoordinates = (location?: StopPointLocation, naptanStop?: NaptanStop) => {
+    if (naptanStop?.longitude && naptanStop?.latitude) {
+        return {
+            latitude: Number.parseFloat(naptanStop.latitude),
+            longitude: Number.parseFloat(naptanStop.longitude),
+        };
+    }
+
     let latitude: number | undefined;
     let longitude: number | undefined;
 
@@ -184,7 +191,12 @@ export const getCoordinates = (location?: StopPointLocation) => {
     };
 };
 
-export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[], useStopLocality: boolean) => {
+export const processStopPoints = async (
+    dbClient: KyselyDb,
+    stops: TxcStopPoint[],
+    useStopLocality: boolean,
+    stopsInJourneyPatternSections: string[],
+) => {
     const atcoCodes = stops.map((stop) => stop.AtcoCode);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
 
@@ -204,18 +216,25 @@ export const processStopPoints = async (dbClient: KyselyDb, stops: TxcStopPoint[
         }
     }
 
+    const stopsWithMissingCoordinates: string[] = [];
+
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
-        const { latitude, longitude } = getCoordinates(stop.Place.Location);
+        const { latitude, longitude } = getCoordinates(stop.Place.Location, naptanStop);
+
+        if (!latitude || !longitude) {
+            stopsWithMissingCoordinates.push(stop.AtcoCode);
+            return [];
+        }
 
         return mapStop(naptanStopAreaMap, stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
     });
 
-    const stopsWithMissingCoordinates = stopsToInsert.filter((s) => !s.stop_lat || !s.stop_lon);
-
     if (stopsWithMissingCoordinates.length > 0) {
-        logger.warn(`Some stops have missing coordinates: ${stopsWithMissingCoordinates.map((s) => s.id)}`);
-        return false;
+        if (stopsWithMissingCoordinates.some((s) => stopsInJourneyPatternSections.includes(s))) {
+            logger.warn(`Some stops have missing coordinates: ${stopsWithMissingCoordinates}`);
+            return false;
+        }
     }
 
     if (stopsToInsert.length > 0) {
@@ -229,6 +248,7 @@ export const processAnnotatedStopPointRefs = async (
     dbClient: KyselyDb,
     stops: TxcAnnotatedStopPointRef[],
     useStopLocality: boolean,
+    stopsInJourneyPatternSections: string[],
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
     const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
@@ -249,18 +269,25 @@ export const processAnnotatedStopPointRefs = async (
         }
     }
 
+    const stopsWithMissingCoordinates: string[] = [];
+
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
-        const { latitude, longitude } = getCoordinates(stop.Location);
+        const { latitude, longitude } = getCoordinates(stop.Location, naptanStop);
+
+        if (!latitude || !longitude) {
+            stopsWithMissingCoordinates.push(stop.StopPointRef);
+            return [];
+        }
 
         return mapStop(naptanStopAreaMap, stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
     });
 
-    const stopsWithMissingCoordinates = stopsToInsert.filter((s) => !s.stop_lat || !s.stop_lon);
-
     if (stopsWithMissingCoordinates.length > 0) {
-        logger.warn(`Some stops have missing coordinates: ${stopsWithMissingCoordinates.map((s) => s.id)}`);
-        return false;
+        if (stopsWithMissingCoordinates.some((s) => stopsInJourneyPatternSections.includes(s))) {
+            logger.warn(`Some stops have missing coordinates: ${stopsWithMissingCoordinates}`);
+            return false;
+        }
     }
 
     if (stopsToInsert.length > 0) {
