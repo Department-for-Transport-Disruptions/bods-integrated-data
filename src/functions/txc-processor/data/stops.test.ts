@@ -387,7 +387,7 @@ describe("stops", () => {
             getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
-            const result = await processStopPoints(dbClient, stops, false);
+            const result = await processStopPoints(dbClient, stops, false, []);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
             expect(result).toBeTruthy();
         });
@@ -449,12 +449,12 @@ describe("stops", () => {
             getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
-            const result = await processStopPoints(dbClient, stops, false);
+            const result = await processStopPoints(dbClient, stops, false, []);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
             expect(result).toBeTruthy();
         });
 
-        it("returns false if any stops without lon/lat", async () => {
+        it("doesn't return false if any stops without lon/lat that are not in the journey patterns", async () => {
             const stops: TxcStopPoint[] = [
                 {
                     AtcoCode: "1",
@@ -481,7 +481,51 @@ describe("stops", () => {
             getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
-            const result = await processStopPoints(dbClient, stops, false);
+            const result = await processStopPoints(dbClient, stops, false, ["2"]);
+            expect(insertStopsMock).toHaveBeenCalled();
+            expect(result).toEqual([
+                {
+                    id: "2",
+                    location_type: 0,
+                    parent_station: null,
+                    platform_code: null,
+                    region_code: null,
+                    stop_lat: 1,
+                    stop_lon: 4,
+                    stop_name: "name2",
+                    wheelchair_boarding: 0,
+                },
+            ]);
+        });
+
+        it("returns false if any stops without lon/lat that are in the journey patterns", async () => {
+            const stops: TxcStopPoint[] = [
+                {
+                    AtcoCode: "1",
+                    Descriptor: {
+                        CommonName: "name1",
+                    },
+                    Place: {},
+                },
+                {
+                    AtcoCode: "2",
+                    Descriptor: {
+                        CommonName: "name2",
+                    },
+                    Place: {
+                        Location: {
+                            Latitude: 1,
+                            Longitude: 4,
+                        },
+                    },
+                },
+            ];
+
+            getNaptanStopsMock.mockResolvedValue([]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
+
+            const result = await processStopPoints(dbClient, stops, false, ["1", "2"]);
             expect(insertStopsMock).not.toHaveBeenCalled();
             expect(result).toBeFalsy();
         });
@@ -539,7 +583,7 @@ describe("stops", () => {
             getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
-            await processAnnotatedStopPointRefs(dbClient, stops, false);
+            await processAnnotatedStopPointRefs(dbClient, stops, false, []);
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
         });
     });

@@ -573,7 +573,7 @@ export interface AvlCancellationsTable {
     response_time_stamp: string;
     recorded_at_time: string;
     vehicle_monitoring_ref: string | null;
-    data_frame_ref: string | null;
+    data_frame_ref: string;
     dated_vehicle_journey_ref: string;
     line_ref: string | null;
     direction_ref: string;

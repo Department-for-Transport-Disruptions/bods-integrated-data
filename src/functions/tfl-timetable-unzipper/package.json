@@ -1,7 +1,7 @@
 {
     "name": "@bods-integrated-data/tfl-timetable-unzipper",
     "version": "0.1.0",
-    "description": "Template for a typescript lambda",
+    "description": "TfL timetable unzipper",
     "scripts": {
         "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-timetable-unzipper.zip .",
         "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-timetable-unzipper.zip ../dist",
