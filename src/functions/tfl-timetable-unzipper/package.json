@@ -1,0 +1,22 @@
+{
+    "name": "@bods-integrated-data/tfl-timetable-unzipper",
+    "version": "0.1.0",
+    "description": "TfL timetable unzipper",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-timetable-unzipper.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-timetable-unzipper.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "zod": "3.23.8"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}
