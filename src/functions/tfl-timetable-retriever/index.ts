@@ -68,12 +68,12 @@ const listTfLS3Objects = async (client: S3Client, commandInput: ListObjectsV2Com
     return { objects, commonPrefixes };
 };
 
-type FunctionOutput = {
+export type TflTimetableRetrieverOutput = {
     tflTimetableZippedBucketName: string;
     prefix: string;
 };
 
-export const handler: Handler = async (event, context): Promise<FunctionOutput> => {
+export const handler: Handler = async (event, context): Promise<TflTimetableRetrieverOutput> => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
@@ -101,7 +101,7 @@ export const handler: Handler = async (event, context): Promise<FunctionOutput> 
             throw new Error("No prefixes with a valid date found in the S3 bucket");
         }
 
-        const functionOutput: FunctionOutput = {
+        const functionOutput: TflTimetableRetrieverOutput = {
             tflTimetableZippedBucketName: TFL_TIMETABLE_ZIPPED_BUCKET_NAME,
             prefix: mostRecentTimetablePrefix,
         };

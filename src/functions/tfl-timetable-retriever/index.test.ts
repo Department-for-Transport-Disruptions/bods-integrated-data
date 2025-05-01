@@ -3,7 +3,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getPrefixWithLatestDate, handler } from ".";
+import { TflTimetableRetrieverOutput, getPrefixWithLatestDate, handler } from ".";
 
 describe("tfl-timetable-retriever", () => {
     const mockBucketName = "mock-bucket";
@@ -86,10 +86,12 @@ describe("tfl-timetable-retriever", () => {
 
             expect(logger.warn).toHaveBeenCalledWith('Prefix "20250101/" already exists, skipping retrieval');
 
-            expect(response).toEqual({
+            const expectedOutput: TflTimetableRetrieverOutput = {
                 tflTimetableZippedBucketName: mockBucketName,
                 prefix: "20250101/",
-            });
+            };
+
+            expect(response).toEqual(expectedOutput);
         });
 
         it("retrieves files from the S3 bucket", async () => {
@@ -127,10 +129,12 @@ describe("tfl-timetable-retriever", () => {
                 Body: mockBody,
             });
 
-            expect(response).toEqual({
+            const expectedOutput: TflTimetableRetrieverOutput = {
                 tflTimetableZippedBucketName: mockBucketName,
                 prefix: "20250102/",
-            });
+            };
+
+            expect(response).toEqual(expectedOutput);
         });
     });
 });
