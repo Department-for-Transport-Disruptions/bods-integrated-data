@@ -344,11 +344,9 @@ export const siriSchemaTransformed = (errors?: AvlValidationError[]) =>
                             recorded_at_time: vehicleActivityCancellation.RecordedAtTime,
                             line_ref: vehicleActivityCancellation.LineRef ?? null,
                             direction_ref: vehicleActivityCancellation.DirectionRef.toString(),
-                            data_frame_ref:
-                                vehicleActivityCancellation.VehicleJourneyRef?.DataFrameRef.toString() ?? null,
+                            data_frame_ref: vehicleActivityCancellation.VehicleJourneyRef?.DataFrameRef.toString(),
                             dated_vehicle_journey_ref:
-                                vehicleActivityCancellation.VehicleJourneyRef?.DatedVehicleJourneyRef.toString() ??
-                                null,
+                                vehicleActivityCancellation.VehicleJourneyRef?.DatedVehicleJourneyRef.toString(),
                         };
                     },
                 );
