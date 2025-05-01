@@ -272,7 +272,18 @@ export const getQueryForLatestAvl = (
     lastRetrievedAvlId?: number,
     recordedAtTimeAfter?: string,
 ) => {
-    let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
+    let query = dbClient
+        .selectFrom("avl")
+        .distinctOn(["operator_ref", "vehicle_ref"])
+        .leftJoin("avl_cancellation", (join) =>
+            join
+                .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
+                .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
+                .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
+                .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
+        )
+        .selectAll("avl")
+        .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
 
     if (boundingBox) {
         const [minX, minY, maxX, maxY] = boundingBox;
@@ -295,7 +306,7 @@ export const getQueryForLatestAvl = (
     }
 
     if (lineRef) {
-        query = query.where("line_ref", "=", lineRef);
+        query = query.where("avl.line_ref", "=", lineRef);
     }
 
     if (producerRef) {
@@ -311,15 +322,15 @@ export const getQueryForLatestAvl = (
     }
 
     if (subscriptionId) {
-        query = query.where("subscription_id", "in", subscriptionId);
+        query = query.where("avl.subscription_id", "in", subscriptionId);
     }
 
     if (lastRetrievedAvlId) {
-        query = query.where("id", ">", lastRetrievedAvlId);
+        query = query.where("avl.id", ">", lastRetrievedAvlId);
     }
 
     if (recordedAtTimeAfter) {
-        query = query.where("recorded_at_time", ">", recordedAtTimeAfter);
+        query = query.where("avl.recorded_at_time", ">", recordedAtTimeAfter);
     }
 
     return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
