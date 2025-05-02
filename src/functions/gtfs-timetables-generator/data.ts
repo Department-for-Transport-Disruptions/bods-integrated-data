@@ -1,7 +1,7 @@
 import { RegionCode } from "@bods-integrated-data/shared/constants";
 import { KyselyDb, Trip } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
-import { sql } from "kysely";
+import { NotNull, sql } from "kysely";
 
 export type Query = {
     getQuery: () => string;
@@ -140,9 +140,28 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
     {
         getQuery: () => {
             const query = dbClient
-                .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
-                .innerJoin("stop_time", "stop_time.trip_id", "trip_region.id")
-                .innerJoin("stop", "stop.id", "stop_time.stop_id")
+                .with("trip_stops", (db) =>
+                    db
+                        .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
+                        .innerJoin("stop_time", "stop_time.trip_id", "trip_region.id")
+                        .innerJoin("stop", "stop.id", "stop_time.stop_id")
+                        .select(["stop.id", "stop.parent_station"]),
+                )
+                .with("relevant_stop_ids", (db) =>
+                    db
+                        .selectFrom("trip_stops")
+                        .select("id")
+                        .distinct()
+                        .union(
+                            db
+                                .selectFrom("trip_stops")
+                                .select("parent_station as id")
+                                .distinct()
+                                .where("parent_station", "is not", null)
+                                .$narrowType<{ id: NotNull }>(),
+                        ),
+                )
+                .selectFrom("stop")
                 .select([
                     "stop.id as stop_id",
                     "stop.stop_code",
@@ -154,7 +173,7 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                     "stop.parent_station",
                     "stop.platform_code",
                 ])
-                .distinct();
+                .innerJoin("relevant_stop_ids", "relevant_stop_ids.id", "stop.id");
 
             return query.compile().sql;
         },
