@@ -243,60 +243,49 @@ export const mapAvlFieldsIntoUsableFormats = <T extends Avl>(avl: T): T => ({
         : null,
 });
 
-/**
- * Maps various AVL fields into more usable formats.
- * @param avl The AVL
- * @returns The mapped AVL
- */
-export const mapBodsAvlFieldsIntoUsableFormats = (avl: Avl): Avl => ({
-    ...avl,
-    id: Number.parseInt(avl.id as unknown as string),
-    response_time_stamp: formatSiriDatetime(getDate(avl.response_time_stamp), true),
-    recorded_at_time: formatSiriDatetime(getDate(avl.recorded_at_time), false),
-    valid_until_time: formatSiriDatetime(getDate(avl.valid_until_time), true),
-    origin_aimed_departure_time: avl.origin_aimed_departure_time
-        ? formatSiriDatetime(getDate(avl.origin_aimed_departure_time), false)
-        : null,
-});
+export interface AvlQueryOptions {
+    boundingBox?: number[];
+    operatorRef?: string[];
+    vehicleRef?: string;
+    lineRef?: string;
+    producerRef?: string;
+    originRef?: string;
+    destinationRef?: string;
+    subscriptionId?: string[];
+    lastRetrievedAvlId?: number;
+    recordedAtTimeAfter?: string;
+    routeId?: number[];
+    startTimeBefore?: number;
+    startTimeAfter?: number;
+}
 
-export const getQueryForLatestAvl = (
-    dbClient: KyselyDb,
-    boundingBox?: number[],
-    operatorRef?: string[],
-    vehicleRef?: string,
-    lineRef?: string,
-    producerRef?: string,
-    originRef?: string,
-    destinationRef?: string,
-    subscriptionId?: string[],
-    lastRetrievedAvlId?: number,
-    recordedAtTimeAfter?: string,
-) => {
+export const getQueryForLatestAvl = (dbClient: KyselyDb, avlQueryOptions: AvlQueryOptions) => {
     let query = dbClient
         .selectFrom("avl")
         .distinctOn(["operator_ref", "vehicle_ref"])
-        .leftJoin("avl_cancellation", (join) =>
-            join
-                .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
-                .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
-                .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
-                .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
-        )
-        .selectAll("avl")
-        .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
+        // .leftJoin("avl_cancellation", (join) =>
+        //     join
+        //         .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
+        //         .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
+        //         .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
+        //         .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
+        // )
+        .selectAll("avl");
+    // .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
 
-    if (boundingBox) {
-        const [minX, minY, maxX, maxY] = boundingBox;
+    if (avlQueryOptions.boundingBox) {
+        const [minX, minY, maxX, maxY] = avlQueryOptions.boundingBox;
         const envelope = sql<string>`ST_MakeEnvelope
             (${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
         query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
     }
 
-    if (operatorRef) {
-        query = query.where("operator_ref", "in", operatorRef);
+    if (avlQueryOptions.operatorRef) {
+        query = query.where("operator_ref", "in", avlQueryOptions.operatorRef);
     }
 
-    if (vehicleRef) {
+    if (avlQueryOptions.vehicleRef !== undefined) {
+        const vehicleRef = avlQueryOptions.vehicleRef;
         query = query.where((qb) =>
             qb.or([
                 qb.and([qb("operator_ref", "!=", "TFLO"), qb("vehicle_ref", "=", vehicleRef)]),
@@ -305,32 +294,52 @@ export const getQueryForLatestAvl = (
         );
     }
 
-    if (lineRef) {
-        query = query.where("avl.line_ref", "=", lineRef);
+    if (avlQueryOptions.lineRef) {
+        query = query.where("avl.line_ref", "=", avlQueryOptions.lineRef);
     }
 
-    if (producerRef) {
-        query = query.where("producer_ref", "=", producerRef);
+    if (avlQueryOptions.producerRef) {
+        query = query.where("producer_ref", "=", avlQueryOptions.producerRef);
     }
 
-    if (originRef) {
-        query = query.where("origin_ref", "=", originRef);
+    if (avlQueryOptions.originRef) {
+        query = query.where("origin_ref", "=", avlQueryOptions.originRef);
     }
 
-    if (destinationRef) {
-        query = query.where("destination_ref", "=", destinationRef);
+    if (avlQueryOptions.destinationRef) {
+        query = query.where("destination_ref", "=", avlQueryOptions.destinationRef);
     }
 
-    if (subscriptionId) {
-        query = query.where("avl.subscription_id", "in", subscriptionId);
+    if (avlQueryOptions.subscriptionId) {
+        query = query.where("avl.subscription_id", "in", avlQueryOptions.subscriptionId);
     }
 
-    if (lastRetrievedAvlId) {
-        query = query.where("avl.id", ">", lastRetrievedAvlId);
+    if (avlQueryOptions.lastRetrievedAvlId) {
+        query = query.where("avl.id", ">", avlQueryOptions.lastRetrievedAvlId);
     }
 
-    if (recordedAtTimeAfter) {
-        query = query.where("avl.recorded_at_time", ">", recordedAtTimeAfter);
+    if (avlQueryOptions.recordedAtTimeAfter) {
+        query = query.where("avl.recorded_at_time", ">", avlQueryOptions.recordedAtTimeAfter);
+    }
+
+    if (avlQueryOptions.routeId) {
+        query = query.where("route_id", "in", avlQueryOptions.routeId);
+    }
+
+    if (avlQueryOptions.startTimeBefore) {
+        query = query.where(
+            "avl.origin_aimed_departure_time",
+            "<",
+            sql<string>`to_timestamp(${avlQueryOptions.startTimeBefore})`,
+        );
+    }
+
+    if (avlQueryOptions.startTimeAfter) {
+        query = query.where(
+            "avl.origin_aimed_departure_time",
+            ">",
+            sql<string>`to_timestamp(${avlQueryOptions.startTimeAfter})`,
+        );
     }
 
     return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
@@ -351,8 +360,7 @@ export const getAvlDataForSiriVm = async (
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
 
-        const query = getQueryForLatestAvl(
-            dbClient,
+        const query = getQueryForLatestAvl(dbClient, {
             boundingBox,
             operatorRef,
             vehicleRef,
@@ -362,8 +370,8 @@ export const getAvlDataForSiriVm = async (
             destinationRef,
             subscriptionId,
             lastRetrievedAvlId,
-            dayAgo,
-        );
+            recordedAtTimeAfter: dayAgo,
+        });
 
         const avls = await query.execute();
 

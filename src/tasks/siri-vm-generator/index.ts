@@ -17,12 +17,12 @@ const bree = new Bree({
             timeout: 0,
             closeWorkerAfterMs: 30000,
         },
-        {
-            name: "avl-cancellation-cleardown",
-            interval: `${cleardownFrequency}s`,
-            timeout: 0,
-            closeWorkerAfterMs: 30000,
-        },
+        // {
+        //     name: "avl-cancellation-cleardown",
+        //     interval: `${cleardownFrequency}s`,
+        //     timeout: 0,
+        //     closeWorkerAfterMs: 30000,
+        // },
         {
             name: "siri-vm-generator",
             interval: `${generatorFrequency}s`,
