@@ -1,10 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-    getAvlErrorDetails,
-    getAvlSubscription,
-    insertAvlCancellations,
-    insertAvls,
-} from "@bods-integrated-data/shared/avl/utils";
+import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
@@ -132,12 +127,12 @@ export const processSqsRecord = async (
                 });
             }
 
-            if (avlCancellations.length > 0) {
-                await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
-                logger.info("AVL cancellations processed successfully", {
-                    subscriptionId,
-                });
-            }
+            // if (avlCancellations.length > 0) {
+            //     await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
+            //     logger.info("AVL cancellations processed successfully", {
+            //         subscriptionId,
+            //     });
+            // }
 
             if (totalAvlCount === 0 && avlCancellations.length === 0) {
                 logger.warn("No VehicleActivity or VehicleActivityCancellation was provided in SIRI-VM message", {

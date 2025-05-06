@@ -13,8 +13,63 @@ import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
 
 const naptanPlatformStopTypeCodes = ["BCS", "FBT", "PLT", "RPL"];
 const naptanStationStopTypeCodes = ["BCE", "FTD", "RSE"];
+const platformTypes = ["stand", "stance", "platform", "bay", "stop"];
+const indicatorIgnoredWords = [
+    "adj",
+    "at",
+    "quay",
+    "pier",
+    "o/s",
+    "opp",
+    "arrivals",
+    "departures",
+    "inside",
+    "outside",
+    "near",
+    "nr",
+    "opposite",
+    "by",
+    "in",
+    "landing",
+    "berth",
+    "bay",
+    "jetty",
+    "platform",
+    "stand",
+    "stance",
+    "stances",
+    "after",
+    "dead",
+    "entrance",
+    "for",
+    "gen",
+    "location",
+    "net",
+    "bound",
+    "shudehill",
+    " ",
+    "-",
+];
 
 export type NaptanStopWithRegionCode = NaptanStop & { region_code: string | null };
+
+export const sanitiseIndicator = (indicator: string | null): string | null => {
+    if (!indicator) {
+        return null;
+    }
+
+    let indicatorToReturn = indicator.trim();
+
+    if (platformTypes.some((type) => indicatorToReturn.toLowerCase().startsWith(type))) {
+        indicatorToReturn = indicatorToReturn.split(" ").slice(1).join(" ").trim();
+    }
+
+    if (indicatorIgnoredWords.some((word) => indicatorToReturn.toLowerCase().includes(word))) {
+        return null;
+    }
+
+    return indicatorToReturn;
+};
 
 export const mapStop = (
     naptanStopAreaMap: Record<string, NaptanStopArea>,
@@ -58,7 +113,7 @@ export const mapStop = (
         }
 
         if (naptanStop.stop_type && naptanPlatformStopTypeCodes.includes(naptanStop.stop_type)) {
-            stop.platform_code = naptanStop.stop_type;
+            stop.platform_code = sanitiseIndicator(naptanStop.indicator);
         }
 
         if (

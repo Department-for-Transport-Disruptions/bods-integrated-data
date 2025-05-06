@@ -275,15 +275,15 @@ export const getQueryForLatestAvl = (
     let query = dbClient
         .selectFrom("avl")
         .distinctOn(["operator_ref", "vehicle_ref"])
-        .leftJoin("avl_cancellation", (join) =>
-            join
-                .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
-                .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
-                .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
-                .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
-        )
-        .selectAll("avl")
-        .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
+        // .leftJoin("avl_cancellation", (join) =>
+        //     join
+        //         .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
+        //         .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
+        //         .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
+        //         .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
+        // )
+        .selectAll("avl");
+    // .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
 
     if (boundingBox) {
         const [minX, minY, maxX, maxY] = boundingBox;

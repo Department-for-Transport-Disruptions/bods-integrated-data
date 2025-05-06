@@ -213,7 +213,7 @@ describe("avl-processor", () => {
             mockGtfsTripMapsTableName,
         );
 
-        expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithCancellationsOnly);
+        expect(valuesMock).not.toHaveBeenCalledWith(parsedSiriWithCancellationsOnly);
     });
 
     it("correctly handles a siri-vm file with both VehicleActivity and VehicleActivityCancellation data", async () => {
@@ -245,9 +245,9 @@ describe("avl-processor", () => {
             mockGtfsTripMapsTableName,
         );
 
-        expect(valuesMock).toHaveBeenCalledTimes(2);
+        expect(valuesMock).toHaveBeenCalledTimes(1);
         expect(valuesMock).toBeCalledWith([parsedSiri[0]]);
-        expect(valuesMock).toBeCalledWith(parsedSiriWithCancellationsOnly);
+        expect(valuesMock).not.toBeCalledWith(parsedSiriWithCancellationsOnly);
     });
 
     it("correctly removes duplicates before inserting into the db", async () => {
