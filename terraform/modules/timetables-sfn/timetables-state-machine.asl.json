@@ -1417,12 +1417,12 @@
                     "ErrorEquals": [
                         "States.ALL"
                     ],
-                    "Next": "Generate Trip Map"
+                    "Next": "Generate Trip Map Fallback"
                 }
             ],
             "End": true
         },
-        "Generate Trip Map": {
+        "Generate Trip Map Fallback": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "OutputPath": "$.Payload",
