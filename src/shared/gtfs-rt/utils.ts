@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { sql } from "kysely";
-import { mapBodsAvlFieldsIntoUsableFormats } from "../avl/utils";
+import { getQueryForLatestAvl, mapAvlFieldsIntoUsableFormats } from "../avl/utils";
 import { DEFAULT_DATE_FORMAT } from "../constants";
 import tflMapping from "../data/tflRouteToNocMapping.json";
 import { Avl, CalendarDateExceptionType, KyselyDb, NewAvl } from "../database";
@@ -97,31 +96,19 @@ export const getAvlDataForGtfs = async (
     boundingBox?: number[],
 ): Promise<Avl[]> => {
     try {
-        let query = dbClient.selectFrom("avl").distinctOn(["vehicle_ref", "operator_ref"]).selectAll("avl");
+        const dayAgo = getDate().subtract(1, "day").toISOString();
 
-        if (routeId) {
-            query = query.where("route_id", "in", routeId);
-        }
-
-        if (startTimeBefore) {
-            query = query.where("avl.origin_aimed_departure_time", "<", sql<string>`to_timestamp(${startTimeBefore})`);
-        }
-
-        if (startTimeAfter) {
-            query = query.where("avl.origin_aimed_departure_time", ">", sql<string>`to_timestamp(${startTimeAfter})`);
-        }
-
-        if (boundingBox) {
-            const [minX, minY, maxX, maxY] = boundingBox;
-            const envelope = sql<string>`ST_MakeEnvelope(${minX}, ${minY}, ${maxX}, ${maxY}, 4326)`;
-            query = query.where(dbClient.fn("ST_Within", ["geom", envelope]), "=", true);
-        }
-
-        query = query.orderBy(["avl.vehicle_ref", "avl.operator_ref", "avl.recorded_at_time desc"]);
+        const query = getQueryForLatestAvl(dbClient, {
+            routeId,
+            startTimeBefore,
+            startTimeAfter,
+            boundingBox,
+            recordedAtTimeAfter: dayAgo,
+        });
 
         const avls = await query.execute();
 
-        return avls.map(mapBodsAvlFieldsIntoUsableFormats);
+        return avls.map(mapAvlFieldsIntoUsableFormats);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem getting AVL data from the database");
