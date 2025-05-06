@@ -1,4 +1,3 @@
 packages:
     - "functions/**/*"
-    - "tasks/**/*"
     - "shared"

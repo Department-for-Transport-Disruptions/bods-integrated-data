@@ -10,9 +10,45 @@ terraform {
 }
 
 locals {
-  source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) :
-  data.aws_lambda_function.existing_function[0].source_code_hash)
-  function_name = "${var.function_name}-${var.environment}"
+  source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].source_code_hash)
+  function_name    = "${var.function_name}-${var.environment}"
+  image_tag        = var.deploy_as_container_lambda ? (fileexists(var.zip_path) ? filesha256(var.zip_path) : split(":", data.aws_lambda_function.existing_function[0].image_uri)[1]) : null
+  image_uri        = var.deploy_as_container_lambda ? "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${aws_ecr_repository.ecr_repository[0].name}:${local.image_tag}" : null
+  path_to_src      = "${path.module}/../../../../src"
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+resource "aws_ecr_repository" "ecr_repository" {
+  count = var.deploy_as_container_lambda ? 1 : 0
+
+  name                 = local.function_name
+  image_tag_mutability = "IMMUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "terraform_data" "build_image" {
+  count = var.deploy_as_container_lambda ? 1 : 0
+
+  triggers_replace = [
+    local.image_tag,
+  ]
+
+  provisioner "local-exec" {
+    command = "aws ecr get-login-password --region ${data.aws_region.current.name} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+  }
+
+  provisioner "local-exec" {
+    command = "docker build --platform=linux/arm64 --provenance false --file ${local.path_to_src}/Dockerfile.lambda --build-arg SERVICE_NAME=${split(".", basename(var.zip_path))[0]} -t ${local.image_uri} ${local.path_to_src}/functions/dist"
+  }
+
+  provisioner "local-exec" {
+    command = "docker push ${local.image_uri}"
+  }
 }
 
 data "aws_lambda_function" "existing_function" {
@@ -115,16 +151,22 @@ resource "aws_iam_role_policy_attachment" "insights_policy" {
 }
 
 resource "aws_lambda_function" "function" {
+  depends_on = [terraform_data.build_image]
+
   function_name    = local.function_name
-  filename         = var.zip_path
+  filename         = !var.deploy_as_container_lambda ? var.zip_path : null
   role             = aws_iam_role.lambda_role.arn
-  handler          = var.handler
-  source_code_hash = local.source_code_hash
+  handler          = !var.deploy_as_container_lambda ? var.handler : null
+  source_code_hash = !var.deploy_as_container_lambda ? local.source_code_hash : null
   architectures    = var.architectures
 
-  runtime     = var.runtime
+  runtime     = !var.deploy_as_container_lambda ? var.runtime : null
   timeout     = var.timeout
   memory_size = var.memory
+
+  image_uri    = var.deploy_as_container_lambda ? local.image_uri : null
+  package_type = var.deploy_as_container_lambda ? "Image" : "Zip"
+
   dynamic "ephemeral_storage" {
     for_each = var.ephemeral_storage != null ? [1] : []
 
@@ -136,7 +178,7 @@ resource "aws_lambda_function" "function" {
 
   reserved_concurrent_executions = var.reserved_concurrency != null ? var.reserved_concurrency : null
 
-  layers = var.environment != "local" ? [
+  layers = var.environment != "local" && !var.deploy_as_container_lambda ? [
     "arn:aws:lambda:eu-west-2:580247275435:layer:LambdaInsightsExtension-Arm64:20"
   ] : []
 

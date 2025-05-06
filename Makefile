@@ -110,7 +110,7 @@ test-functions:
 	cd src && pnpm test:ci
 
 docker-build-%:
-	docker build --platform=linux/arm64 src --build-arg servicePath=$* -t $*:latest
+	docker build --platform=linux/arm64 --provenance false --file src/Dockerfile.lambda --build-arg SERVICE_NAME=$* -t $*:latest src/functions/dist
 
 check-types:
 	cd src && pnpm run check-types

@@ -72,7 +72,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ steps.image_tag.outputs.image }}
-          build-args: servicePath=${{ inputs.task_name }}
+          build-args: SERVICE_NAME=${{ inputs.task_name }}
+          provenance: false
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

@@ -3,16 +3,15 @@ import {
     generateSiriSxAndUploadToS3,
     getSituationsDataForSiriSx,
 } from "@bods-integrated-data/shared/cancellations/utils";
-import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { logger } from "@bods-integrated-data/shared/logger";
 
-void (async () => {
-    performance.mark("siri-sx-generator-start");
+let dbClient: KyselyDb;
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
-
+export const handler = async () => {
     try {
+        dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local", true));
+
         logger.info("Starting SIRI-SX file generator");
 
         const { BUCKET_NAME: bucketName } = process.env;
@@ -26,24 +25,21 @@ void (async () => {
 
         await generateSiriSxAndUploadToS3(situations, requestMessageRef, bucketName);
 
-        performance.mark("siri-sx-generator-end");
-
-        const time = performance.measure("siri-sx-generator", "siri-sx-generator-start", "siri-sx-generator-end");
-
-        await putMetricData("custom/SiriSxGenerator", [
-            { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
-        ]);
-
         logger.info("Successfully uploaded SIRI-SX data to S3");
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "Error generating SIRI-SX file");
         }
 
-        await putMetricData("custom/SiriSxGenerator", [{ MetricName: "Errors", Value: 1 }]);
-
         throw e;
-    } finally {
+    }
+};
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
         await dbClient.destroy();
     }
-})();
+
+    process.exit(0);
+});
