@@ -37,3 +37,8 @@ variable "private_hosted_zone_name" {
   type        = string
   description = "Name of the private hosted zone"
 }
+
+variable "db_engine_version" {
+  type        = string
+  description = "DB engine version"
+}
