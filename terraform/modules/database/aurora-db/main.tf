@@ -129,7 +129,7 @@ resource "aws_iam_role" "rds_enhanced_monitoring_role" {
 
 resource "aws_rds_cluster" "integrated_data_rds_cluster" {
   engine                      = "aurora-postgresql"
-  engine_version              = "16.1"
+  engine_version              = var.db_engine_version
   engine_mode                 = "provisioned"
   master_username             = "postgres"
   manage_master_user_password = true
@@ -156,7 +156,7 @@ resource "aws_rds_cluster_role_association" "integrated_data_rds_cluster_s3_expo
 resource "aws_rds_cluster_instance" "integrated_data_postgres_db_instance" {
   cluster_identifier                    = aws_rds_cluster.integrated_data_rds_cluster.id
   engine                                = "aurora-postgresql"
-  engine_version                        = "16.1"
+  engine_version                        = var.db_engine_version
   instance_class                        = var.instance_class
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
@@ -169,7 +169,7 @@ resource "aws_rds_cluster_instance" "integrated_data_postgres_db_read_replica_in
   count                                 = var.multi_az ? 1 : 0
   cluster_identifier                    = aws_rds_cluster.integrated_data_rds_cluster.id
   engine                                = "aurora-postgresql"
-  engine_version                        = "16.1"
+  engine_version                        = var.db_engine_version
   instance_class                        = var.instance_class
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
