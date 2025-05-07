@@ -6,36 +6,48 @@ import {
     S3Client,
     _Object,
 } from "@aws-sdk/client-s3";
-import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { listS3Objects, putS3Object } from "@bods-integrated-data/shared/s3";
+import { tflBaseVersionSchema } from "@bods-integrated-data/shared/schema";
 import { Handler } from "aws-lambda";
+import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 
 z.setErrorMap(errorMapWithDataLogging);
 
 const TFL_IBUS_BUCKET_NAME = "ibus.data.tfl.gov.uk";
 
-export const getPrefixWithLatestDate = (prefixes: string[]) => {
-    const dateRegex = /(?<date>\d{8})\/$/;
-    let prefixWithLatestDate: string | undefined = undefined;
-    let latestDate = getDate(0);
+const getAndParseTflBaseVersionData = async (client: S3Client, bucketName: string, objectKey: string) => {
+    const file = await client.send(
+        new GetObjectCommand({
+            Bucket: bucketName,
+            Key: objectKey,
+        }),
+    );
 
-    for (const prefix of prefixes) {
-        const match = prefix.match(dateRegex);
-        const dateString = match?.groups?.date;
+    const xml = await file.Body?.transformToString();
 
-        if (dateString) {
-            const date = getDate(dateString);
-
-            if (date > latestDate) {
-                latestDate = date;
-                prefixWithLatestDate = prefix;
-            }
-        }
+    if (!xml) {
+        throw new Error("No base version xml data");
     }
 
-    return prefixWithLatestDate;
+    const parser = new XMLParser({
+        ignoreAttributes: true,
+        parseTagValue: false,
+    });
+
+    const parsedXml = parser.parse(xml) as Record<string, unknown>;
+    const tflJson = tflBaseVersionSchema.safeParse(parsedXml);
+
+    if (!tflJson.success) {
+        const validationError = fromZodError(tflJson.error);
+        logger.error(validationError.toString());
+
+        throw validationError;
+    }
+
+    return tflJson.data;
 };
 
 const listTfLS3Objects = async (client: S3Client, commandInput: ListObjectsV2CommandInput) => {
@@ -88,25 +100,21 @@ export const handler: Handler = async (event, context): Promise<TflTimetableRetr
             endpoint: "https://s3.eu-west-1.amazonaws.com",
         });
 
-        const tflBaseVersionObjects = await listTfLS3Objects(tflS3Client, {
-            Bucket: TFL_IBUS_BUCKET_NAME,
-            Delimiter: "/",
-        });
-
-        const mostRecentTimetablePrefix = getPrefixWithLatestDate(
-            tflBaseVersionObjects.commonPrefixes.map((prefix) => prefix.Prefix ?? ""),
+        const tflBaseVersionData = await getAndParseTflBaseVersionData(
+            tflS3Client,
+            TFL_IBUS_BUCKET_NAME,
+            "ibus.data.tfl.gov.uk/",
         );
 
-        if (!mostRecentTimetablePrefix) {
-            throw new Error("No prefixes with a valid date found in the S3 bucket");
-        }
+        const baseVersion = tflBaseVersionData["bv:Versioning_Of_Data"].Base_Version;
+        const prefix = `Base_Version_${baseVersion}/`;
 
         const functionOutput: TflTimetableRetrieverOutput = {
             tflTimetableZippedBucketName: TFL_TIMETABLE_ZIPPED_BUCKET_NAME,
-            prefix: mostRecentTimetablePrefix,
+            prefix,
         };
 
-        logger.info(`Prefix with latest date: "${mostRecentTimetablePrefix}"`);
+        logger.info(`Selected base version: "${prefix}"`);
 
         const ourBaseVersionObjects = await listS3Objects({
             Bucket: TFL_TIMETABLE_ZIPPED_BUCKET_NAME,
@@ -116,15 +124,15 @@ export const handler: Handler = async (event, context): Promise<TflTimetableRetr
         const ourBaseVersionPrefixes = ourBaseVersionObjects.CommonPrefixes || [];
 
         for (const commonPrefix of ourBaseVersionPrefixes) {
-            if (commonPrefix.Prefix === mostRecentTimetablePrefix) {
-                logger.warn(`Prefix "${mostRecentTimetablePrefix}" already exists, skipping retrieval`);
+            if (commonPrefix.Prefix === prefix) {
+                logger.warn(`Prefix "${prefix}" already exists, skipping retrieval`);
                 return functionOutput;
             }
         }
 
         const tflTimetableObjects = await listTfLS3Objects(tflS3Client, {
             Bucket: TFL_IBUS_BUCKET_NAME,
-            Prefix: mostRecentTimetablePrefix,
+            Prefix: prefix,
         });
 
         logger.info(`Retrieving ${tflTimetableObjects.objects.length} files`);
