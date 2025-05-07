@@ -103,7 +103,7 @@ export const handler: Handler = async (event, context): Promise<TflTimetableRetr
         const tflBaseVersionData = await getAndParseTflBaseVersionData(
             tflS3Client,
             TFL_IBUS_BUCKET_NAME,
-            "ibus.data.tfl.gov.uk/",
+            "Base_Version.xml",
         );
 
         const baseVersion = tflBaseVersionData["bv:Versioning_Of_Data"].Base_Version;
