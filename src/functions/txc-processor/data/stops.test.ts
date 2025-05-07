@@ -301,14 +301,14 @@ describe("stops", () => {
 
             const expected: NewStop[] = [
                 {
-                    id: "1",
+                    id: "123",
                     wheelchair_boarding: 0,
                     parent_station: "111",
                     stop_code: "4",
                     stop_name: "naptan_name",
                     stop_lat: 5,
                     stop_lon: 6,
-                    location_type: LocationType.StopOrPlatform,
+                    location_type: LocationType.EntranceOrExit,
                     platform_code: null,
                     region_code: "Y",
                 },
@@ -320,13 +320,13 @@ describe("stops", () => {
                     stop_name: "stop_area_1",
                     stop_lat: 456,
                     stop_lon: 123,
-                    location_type: LocationType.EntranceOrExit,
+                    location_type: LocationType.Station,
                     platform_code: null,
                     region_code: "Y",
                 },
             ];
 
-            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "123", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
     });
@@ -711,18 +711,21 @@ describe("stops", () => {
                     latitude,
                 };
                 const result = createStopAreaStop(stopArea, LocationType.EntranceOrExit, null);
-                const expected: NewStop = {
-                    id: "1",
-                    wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
-                    parent_station: null,
-                    stop_name: "stop_area_name",
-                    location_type: LocationType.EntranceOrExit,
-                    stop_lat: expectedLatitude,
-                    stop_lon: expectedLongitude,
-                    stop_code: null,
-                    platform_code: null,
-                    region_code: null,
-                };
+                const expected: NewStop | null =
+                    expectedLongitude && expectedLatitude
+                        ? {
+                              id: "1",
+                              wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+                              parent_station: null,
+                              stop_name: "stop_area_name",
+                              location_type: LocationType.EntranceOrExit,
+                              stop_lat: expectedLatitude,
+                              stop_lon: expectedLongitude,
+                              stop_code: null,
+                              platform_code: null,
+                              region_code: null,
+                          }
+                        : null;
 
                 expect(result).toEqual(expected);
             },
