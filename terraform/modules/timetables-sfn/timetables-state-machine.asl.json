@@ -549,7 +549,7 @@
             "ItemReader": {
                 "Resource": "arn:aws:states:::s3:listObjectsV2",
                 "Parameters": {
-                    "Bucket.$": "${tfl_timetable_zipped_bucket_name}",
+                    "Bucket": "${tfl_timetable_zipped_bucket_name}",
                     "Prefix.$": "$.prefix"
                 }
             },
