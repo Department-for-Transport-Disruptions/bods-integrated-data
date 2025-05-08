@@ -19,6 +19,7 @@ export const cancellationsSubscribeMessageSchema = z.object(
         requestorRef: createStringLengthValidation("requestorRef").nullish(),
         subscriptionId: createStringLengthValidation("subscriptionId"),
         publisherId: createStringLengthValidation("publisherId"),
+        operatorRef: createStringLengthValidation("operatorRef").nullish(),
     },
     {
         message: "Body must be an object with required properties",
@@ -42,6 +43,7 @@ export const cancellationsSubscriptionSchema = z.object({
     serviceStartDatetime: z.string().nullish(),
     serviceEndDatetime: z.string().nullish(),
     publisherId: z.string(),
+    operatorRef: z.string().nullish(),
     lastCancellationsDataReceivedDateTime: z.string().nullish(),
     lastModifiedDateTime: z.string().nullish(),
     apiKey: z.string(),
@@ -69,6 +71,7 @@ export const cancellationsSubscriptionRequestSchema = z.object({
                 SituationExchangeRequest: z.object({
                     RequestTimestamp: z.string(),
                     "@_version": z.string().nullish(),
+                    OperatorRef: z.string().nullish(),
                 }),
             }),
             IncrementalUpdates: z.literal(true),
