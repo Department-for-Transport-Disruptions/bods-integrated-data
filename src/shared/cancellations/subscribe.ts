@@ -31,6 +31,7 @@ export const generateCancellationsSubscriptionRequestXml = (
     dataEndpoint: string,
     requestorRef: string | null,
     apiKey: string,
+    operatorRef: string | null,
     isInternal = false,
 ) => {
     const subscriptionRequestJson: CancellationsSubscriptionRequest = {
@@ -39,7 +40,7 @@ export const generateCancellationsSubscriptionRequestXml = (
                 RequestTimestamp: currentTimestamp,
                 ConsumerAddress: !isInternal
                     ? `${dataEndpoint}/${subscriptionId}?apiKey=${apiKey}`
-                    : `${dataEndpoint}/${subscriptionId}`,
+                    : `${dataEndpoint}/cancellations/${subscriptionId}`,
                 RequestorRef: requestorRef ?? "BODS",
                 MessageIdentifier: messageIdentifier,
                 SubscriptionContext: {
@@ -52,6 +53,7 @@ export const generateCancellationsSubscriptionRequestXml = (
                     SituationExchangeRequest: {
                         RequestTimestamp: currentTimestamp,
                         "@_version": "2.0",
+                        ...(operatorRef ? { OperatorRef: operatorRef } : {}),
                     },
                 },
                 IncrementalUpdates: true,
@@ -125,6 +127,7 @@ export const updateDynamoWithSubscriptionInfo = async (
         serviceStartDatetime: subscription.serviceStartDatetime
             ? subscription.serviceStartDatetime
             : currentTimestamp ?? null,
+        operatorRef: subscription.operatorRef ?? null,
         publisherId: subscription.publisherId ?? null,
         lastModifiedDateTime: currentTimestamp ?? null,
         apiKey: subscription.apiKey,
@@ -162,6 +165,7 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
         dataEndpoint,
         subscriptionDetails.requestorRef ?? null,
         subscriptionDetails.apiKey,
+        subscriptionDetails.operatorRef ?? null,
         isInternal,
     );
 
