@@ -1,7 +1,7 @@
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { z } from "zod";
 import { TflLinesSchema } from "./tfl-line.schema";
 
@@ -19,9 +19,7 @@ export const getLineIds = async () => {
 
         return response.data.map((line) => line.id);
     } catch (e) {
-        if (e instanceof Error) {
-            logger.error(e, `Error fetching TfL line IDs with URL ${url}`);
-        }
+        logger.error(e instanceof AxiosError ? e.toJSON() : e, `Error fetching TfL line IDs with URL ${url}`);
 
         throw e;
     }

@@ -53,7 +53,7 @@ const retrieveNaptanDataForAreaCodes = async (areaCodes: string[], fileName: str
         });
     } catch (e) {
         if (axios.isAxiosError(e)) {
-            logger.error(e, `Error retrieving Naptan XML data for ATCO area codes: ${joinedAreaCodes}`);
+            logger.error(e.toJSON(), `Error retrieving Naptan XML data for ATCO area codes: ${joinedAreaCodes}`);
         } else {
             logger.error(e, "Unknown error occurred");
         }

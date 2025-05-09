@@ -86,7 +86,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             ]);
             if (e instanceof AxiosError) {
                 logger.error(
-                    `There was an error when sending the unsubscribe request to the data producer for subscription ${subscriptionId} - code: ${e.code}, message: ${e.message}`,
+                    e.toJSON(),
+                    `There was an error when sending the unsubscribe request to the data producer for subscription ${subscriptionId}`,
                 );
             }
         }

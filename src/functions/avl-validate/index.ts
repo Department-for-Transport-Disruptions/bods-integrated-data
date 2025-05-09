@@ -144,7 +144,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         }
 
         if (e instanceof AxiosError) {
-            logger.warn(e, "Invalid request");
+            logger.warn(e.toJSON(), "Invalid request");
             return createHttpValidationErrorResponse(["Invalid request to data producer"]);
         }
 

@@ -385,7 +385,8 @@ describe("avl-feed-validator", () => {
         await handler(mockEvent, mockContext, mockCallback);
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was an error when resubscribing to the data producer - subscriptionId: mock-subscription-id-1, code: 500, message: Error resubscribing",
+            expect.any(Object),
+            "There was an error when resubscribing to the data producer - subscriptionId: mock-subscription-id-1",
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();

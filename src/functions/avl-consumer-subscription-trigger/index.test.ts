@@ -19,6 +19,10 @@ describe("avl-consumer-subscription-trigger", () => {
         },
     }));
 
+    vi.mock("@bods-integrated-data/shared/sqs", () => ({
+        sendBatchMessage: vi.fn(),
+    }));
+
     const sendBatchMessageSpy = vi.spyOn(sqs, "sendBatchMessage");
 
     let mockEvent: Parameters<typeof handler>[0];

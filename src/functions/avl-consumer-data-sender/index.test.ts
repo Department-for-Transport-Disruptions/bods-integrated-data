@@ -387,7 +387,8 @@ describe("avl-consumer-subscriber", () => {
 
             expect(axiosSpy).toHaveBeenCalledTimes(1);
             expect(logger.warn).toHaveBeenCalledWith(
-                `Unsuccessful heartbeat notification response from subscription ${subscription.subscriptionId}, code: 500, message: Request failed with status code 500`,
+                expect.any(Object),
+                `Unsuccessful heartbeat notification response from subscription ${subscription.subscriptionId}`,
             );
 
             const expectedSubscription: AvlConsumerSubscription = {
@@ -435,7 +436,8 @@ describe("avl-consumer-subscriber", () => {
 
             expect(axiosSpy).toHaveBeenCalledTimes(1);
             expect(logger.warn).toHaveBeenCalledWith(
-                `Unsuccessful heartbeat notification response from subscription ${subscription.subscriptionId}, code: 500, message: Request failed with status code 500`,
+                expect.any(Object),
+                `Unsuccessful heartbeat notification response from subscription ${subscription.subscriptionId}`,
             );
 
             const expectedSubscription: AvlConsumerSubscription = {
