@@ -122,7 +122,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
 
         const requestApiKey = event.queryStringParameters?.apiKey;
 
-        if (requestApiKey !== subscription.apiKey) {
+        if (isApiGatewayEvent(event) && requestApiKey !== subscription.apiKey) {
             throw new InvalidApiKeyError(`Invalid API key '${requestApiKey}' for subscription ID: ${subscriptionId}`);
         }
 

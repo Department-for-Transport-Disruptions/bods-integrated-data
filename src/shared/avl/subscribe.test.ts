@@ -26,6 +26,10 @@ describe("sendSubscriptionRequestAndUpdateDynamo", () => {
         putDynamoItem: vi.fn(),
     }));
 
+    vi.mock("../dynamo", () => ({
+        putDynamoItem: vi.fn(),
+    }));
+
     const putDynamoItemSpy = vi.spyOn(dynamo, "putDynamoItem");
 
     const axiosSpy = vi.spyOn(mockedAxios, "post");

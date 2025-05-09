@@ -243,6 +243,7 @@ describe("cancellations-feed-validator", () => {
             {
                 dataProducerEndpoint: "https://mock-data-producer.com/",
                 description: "test-description",
+                operatorRef: null,
                 password: "test-password",
                 requestorRef: null,
                 shortDescription: "test-short-description",
@@ -385,7 +386,8 @@ describe("cancellations-feed-validator", () => {
         await handler(mockEvent, mockContext, mockCallback);
 
         expect(logger.error).toHaveBeenCalledWith(
-            "There was an error when resubscribing to the data producer - subscriptionId: mock-subscription-id-1, code: 500, message: Error resubscribing",
+            expect.any(Object),
+            "There was an error when resubscribing to the data producer - subscriptionId: mock-subscription-id-1",
         );
 
         expect(putDynamoItemSpy).toHaveBeenCalledOnce();
@@ -418,6 +420,7 @@ describe("cancellations-feed-validator", () => {
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
                 publisherId: "test-publisher-id-1",
                 apiKey: "mock-api-key-1",
+                operatorRef: "TEST",
             },
             {
                 PK: "mock-subscription-id-2",
@@ -451,6 +454,7 @@ describe("cancellations-feed-validator", () => {
             {
                 dataProducerEndpoint: "https://mock-data-producer.com/",
                 description: "test-description",
+                operatorRef: "TEST",
                 password: "test-password",
                 requestorRef: null,
                 shortDescription: "test-short-description",
@@ -468,6 +472,7 @@ describe("cancellations-feed-validator", () => {
             PK: "mock-subscription-id-1",
             description: "test-description",
             heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
+            operatorRef: "TEST",
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",

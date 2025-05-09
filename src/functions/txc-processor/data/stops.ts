@@ -12,9 +12,76 @@ import OsPoint from "ospoint";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
 
 const naptanPlatformStopTypeCodes = ["BCS", "FBT", "PLT", "RPL"];
-const naptanStationStopTypeCodes = ["BCE", "FTD", "RSE"];
+const naptanStationEntranceStopTypeCodes = ["BCE", "FTD", "RSE"];
+const platformTypes = ["stand", "stance", "platform", "bay", "stop"];
+const indicatorIgnoredWords = [
+    "adj",
+    "at",
+    "quay",
+    "pier",
+    "o/s",
+    "opp",
+    "arrivals",
+    "departures",
+    "inside",
+    "outside",
+    "near",
+    "nr",
+    "opposite",
+    "by",
+    "in",
+    "landing",
+    "berth",
+    "bay",
+    "jetty",
+    "platform",
+    "stand",
+    "stance",
+    "stances",
+    "after",
+    "dead",
+    "entrance",
+    "for",
+    "gen",
+    "location",
+    "net",
+    "bound",
+    "shudehill",
+    " ",
+    "-",
+];
 
 export type NaptanStopWithRegionCode = NaptanStop & { region_code: string | null };
+
+export const sanitiseIndicator = (indicator: string | null): string | null => {
+    if (!indicator) {
+        return null;
+    }
+
+    let indicatorToReturn = indicator.trim();
+
+    if (platformTypes.some((type) => indicatorToReturn.toLowerCase().startsWith(type))) {
+        indicatorToReturn = indicatorToReturn.split(" ").slice(1).join(" ").trim();
+    }
+
+    if (indicatorIgnoredWords.some((word) => indicatorToReturn.toLowerCase().includes(word))) {
+        return null;
+    }
+
+    return indicatorToReturn;
+};
+
+export const getLocationType = (naptanStop?: NaptanStop): LocationType => {
+    if (
+        naptanStop?.stop_type &&
+        naptanStationEntranceStopTypeCodes.includes(naptanStop.stop_type) &&
+        naptanStop.stop_area_code
+    ) {
+        return LocationType.EntranceOrExit;
+    }
+
+    return LocationType.StopOrPlatform;
+};
 
 export const mapStop = (
     naptanStopAreaMap: Record<string, NaptanStopArea>,
@@ -31,12 +98,12 @@ export const mapStop = (
         stop_name: name.trim(),
         stop_lat: latitude,
         stop_lon: longitude,
-        location_type: LocationType.StopOrPlatform,
+        location_type: getLocationType(naptanStop),
         platform_code: null,
         region_code: null,
     };
 
-    let stopAreaStop: NewStop | undefined = undefined;
+    let stopAreaStop: NewStop | null = null;
 
     if (naptanStop) {
         stop.stop_code = naptanStop.naptan_code;
@@ -58,34 +125,29 @@ export const mapStop = (
         }
 
         if (naptanStop.stop_type && naptanPlatformStopTypeCodes.includes(naptanStop.stop_type)) {
-            stop.platform_code = naptanStop.stop_type;
+            stop.platform_code = sanitiseIndicator(naptanStop.indicator);
         }
 
         if (
             naptanStop.stop_type &&
             naptanStop.stop_area_code &&
-            naptanPlatformStopTypeCodes.includes(naptanStop.stop_type)
+            (naptanPlatformStopTypeCodes.includes(naptanStop.stop_type) ||
+                naptanStationEntranceStopTypeCodes.includes(naptanStop.stop_type))
         ) {
             const stopArea = naptanStopAreaMap[naptanStop.stop_area_code];
 
             if (stopArea) {
-                stop.parent_station = stopArea.stop_area_code;
                 stopAreaStop = createStopAreaStop(stopArea, LocationType.Station, naptanStop.region_code);
+
+                if (stopAreaStop) {
+                    stop.parent_station = stopArea.stop_area_code;
+                }
             }
         }
+    }
 
-        if (
-            naptanStop.stop_type &&
-            naptanStop.stop_area_code &&
-            naptanStationStopTypeCodes.includes(naptanStop.stop_type)
-        ) {
-            const stopArea = naptanStopAreaMap[naptanStop.stop_area_code];
-
-            if (stopArea) {
-                stop.parent_station = stopArea.stop_area_code;
-                stopAreaStop = createStopAreaStop(stopArea, LocationType.EntranceOrExit, naptanStop.region_code);
-            }
-        }
+    if (stop.location_type === LocationType.EntranceOrExit && !stopAreaStop) {
+        return [];
     }
 
     const stops: NewStop[] = [stop];
@@ -101,7 +163,7 @@ export const createStopAreaStop = (
     stopArea: NaptanStopArea,
     locationType: LocationType,
     regionCode: string | null,
-): NewStop => {
+): NewStop | null => {
     let latitude: number | undefined;
     let longitude: number | undefined;
 
@@ -124,8 +186,7 @@ export const createStopAreaStop = (
     }
 
     if (!latitude || !longitude) {
-        latitude = undefined;
-        longitude = undefined;
+        return null;
     }
 
     return {

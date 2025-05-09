@@ -109,10 +109,7 @@ export const processStopTimes = async (
 
             return {
                 ...stopTime,
-                exclude:
-                    stopPoint.location_type === LocationType.EntranceOrExit ||
-                    stopPoint.location_type === LocationType.GenericNode ||
-                    stopPoint.location_type === LocationType.BoardingArea,
+                exclude: stopPoint.location_type !== LocationType.StopOrPlatform,
             };
         })
         .filter(notEmpty);

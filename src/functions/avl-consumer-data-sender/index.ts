@@ -70,7 +70,7 @@ const sendData = async (subscription: AvlConsumerSubscription, consumerSubscript
         await putDynamoItem(consumerSubscriptionTableName, subscription.PK, subscription.SK, updatedSubscription);
     } catch (e) {
         if (e instanceof AxiosError) {
-            logger.error(e, "Unsuccessful response from consumer subscription");
+            logger.error(e.toJSON(), "Unsuccessful response from consumer subscription");
         }
 
         throw e;
@@ -99,7 +99,8 @@ const sendHeartbeat = async (subscription: AvlConsumerSubscription, consumerSubs
     } catch (e) {
         if (e instanceof AxiosError) {
             logger.warn(
-                `Unsuccessful heartbeat notification response from subscription ${subscription.subscriptionId}, code: ${e.code}, message: ${e.message}`,
+                e.toJSON(),
+                `Unsuccessful heartbeat notification response from subscription ${subscription.subscriptionId}`,
             );
 
             const updatedSubscription: AvlConsumerSubscription = {

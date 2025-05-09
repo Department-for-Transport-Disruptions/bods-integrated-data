@@ -7,7 +7,7 @@ import { tflVehicleLocationSchemaTransformed } from "@bods-integrated-data/share
 import { getSecret } from "@bods-integrated-data/shared/secretsManager";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { z } from "zod";
 import { RealTimeVehicleLocationsApiResponse, TflApiKeys } from "./types";
 
@@ -33,7 +33,10 @@ export const retrieveTflVehicleLocations = async (
             return response.data;
         } catch (e) {
             if (e instanceof Error) {
-                logger.error(e, `Error fetching TFL vehicle locations with chunk URL ${url}`);
+                logger.error(
+                    e instanceof AxiosError ? e.toJSON() : e,
+                    `Error fetching TFL vehicle locations with chunk URL ${url}`,
+                );
             }
 
             return { lines: [] };

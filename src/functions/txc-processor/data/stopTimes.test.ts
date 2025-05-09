@@ -15,6 +15,12 @@ import { processStopTimes } from "./stopTimes";
 describe("stopTimes", () => {
     const dbClient = vi.fn() as unknown as KyselyDb;
     const insertStopTimesMock = vi.spyOn(databaseFunctions, "insertStopTimes");
+
+    vi.mock("./database", async () => ({
+        insertStopTimes: vi.fn(),
+        updateTripWithOriginDestinationRefAndBlockId: vi.fn(),
+    }));
+
     const updateTripWithOriginAndDestinationRefMock = vi.spyOn(
         databaseFunctions,
         "updateTripWithOriginDestinationRefAndBlockId",

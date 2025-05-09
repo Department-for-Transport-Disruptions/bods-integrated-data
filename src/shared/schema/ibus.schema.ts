@@ -295,3 +295,9 @@ export const iBusSchema = z.object({
     "jouwt:Schedule_Data": tflJourneyWaitTimeSchema.optional(),
     "joudt:Schedule_Data": tflJourneyDriveTimeSchema.optional(),
 });
+
+export const tflBaseVersionSchema = z.object({
+    "bv:Versioning_Of_Data": z.object({
+        Base_Version: z.string(),
+    }),
+});

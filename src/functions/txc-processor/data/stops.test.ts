@@ -16,6 +16,7 @@ import {
     mapStop,
     processAnnotatedStopPointRefs,
     processStopPoints,
+    sanitiseIndicator,
 } from "./stops";
 
 describe("stops", () => {
@@ -49,7 +50,7 @@ describe("stops", () => {
                     stop_lat: 5,
                     stop_lon: 6,
                     location_type: LocationType.StopOrPlatform,
-                    platform_code: "BCS",
+                    platform_code: null,
                     region_code: null,
                 },
             ];
@@ -76,7 +77,7 @@ describe("stops", () => {
                     stop_lat: 5,
                     stop_lon: 6,
                     location_type: LocationType.StopOrPlatform,
-                    platform_code: "BCS",
+                    platform_code: null,
                     region_code: null,
                 },
             ];
@@ -90,6 +91,7 @@ describe("stops", () => {
                 naptan_code: "4",
                 common_name: "naptan_name",
                 stop_type: "BCS",
+                indicator: "1",
             };
 
             const expected: NewStop[] = [
@@ -102,7 +104,7 @@ describe("stops", () => {
                     stop_lat: 2,
                     stop_lon: 3,
                     location_type: LocationType.StopOrPlatform,
-                    platform_code: "BCS",
+                    platform_code: "1",
                     region_code: null,
                 },
             ];
@@ -205,7 +207,7 @@ describe("stops", () => {
                     stop_lat: 5,
                     stop_lon: 6,
                     location_type: LocationType.StopOrPlatform,
-                    platform_code: "BCS",
+                    platform_code: null,
                     region_code: "Y",
                 },
             ];
@@ -250,7 +252,7 @@ describe("stops", () => {
                     stop_lat: 5,
                     stop_lon: 6,
                     location_type: LocationType.StopOrPlatform,
-                    platform_code: "BCS",
+                    platform_code: null,
                     region_code: "Y",
                 },
                 {
@@ -299,14 +301,14 @@ describe("stops", () => {
 
             const expected: NewStop[] = [
                 {
-                    id: "1",
+                    id: "123",
                     wheelchair_boarding: 0,
                     parent_station: "111",
                     stop_code: "4",
                     stop_name: "naptan_name",
                     stop_lat: 5,
                     stop_lon: 6,
-                    location_type: LocationType.StopOrPlatform,
+                    location_type: LocationType.EntranceOrExit,
                     platform_code: null,
                     region_code: "Y",
                 },
@@ -318,13 +320,13 @@ describe("stops", () => {
                     stop_name: "stop_area_1",
                     stop_lat: 456,
                     stop_lon: 123,
-                    location_type: LocationType.EntranceOrExit,
+                    location_type: LocationType.Station,
                     platform_code: null,
                     region_code: "Y",
                 },
             ];
 
-            const result = mapStop(mockStopAreas, "1", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
+            const result = mapStop(mockStopAreas, "123", "name", 2, 3, naptanStop as NaptanStopWithRegionCode);
             expect(result).toEqual(expected);
         });
     });
@@ -709,21 +711,66 @@ describe("stops", () => {
                     latitude,
                 };
                 const result = createStopAreaStop(stopArea, LocationType.EntranceOrExit, null);
-                const expected: NewStop = {
-                    id: "1",
-                    wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
-                    parent_station: null,
-                    stop_name: "stop_area_name",
-                    location_type: LocationType.EntranceOrExit,
-                    stop_lat: expectedLatitude,
-                    stop_lon: expectedLongitude,
-                    stop_code: null,
-                    platform_code: null,
-                    region_code: null,
-                };
+                const expected: NewStop | null =
+                    expectedLongitude && expectedLatitude
+                        ? {
+                              id: "1",
+                              wheelchair_boarding: WheelchairAccessibility.NoAccessibilityInformation,
+                              parent_station: null,
+                              stop_name: "stop_area_name",
+                              location_type: LocationType.EntranceOrExit,
+                              stop_lat: expectedLatitude,
+                              stop_lon: expectedLongitude,
+                              stop_code: null,
+                              platform_code: null,
+                              region_code: null,
+                          }
+                        : null;
 
                 expect(result).toEqual(expected);
             },
         );
+    });
+
+    describe("sanitiseIndicator", () => {
+        it("returns null if the indicator is null", () => {
+            const result = sanitiseIndicator(null);
+            expect(result).toBeNull();
+        });
+
+        it("trims whitespace from the indicator", () => {
+            const result = sanitiseIndicator("  platform 1  ");
+            expect(result).toBe("1");
+        });
+
+        it("removes platform types from the start of the indicator", () => {
+            const result = sanitiseIndicator("platform 1A");
+            expect(result).toBe("1A");
+        });
+
+        it("handles invalid words after platform type", () => {
+            const result = sanitiseIndicator("platform adj");
+            expect(result).toBeNull();
+        });
+
+        it("returns null if the indicator contains an ignored word", () => {
+            const result = sanitiseIndicator("opp station");
+            expect(result).toBeNull();
+        });
+
+        it("returns the indicator unchanged if it does not start with a platform type or contain an ignored word", () => {
+            const result = sanitiseIndicator("A1");
+            expect(result).toBe("A1");
+        });
+
+        it("handles mixed case platform types", () => {
+            const result = sanitiseIndicator("StAnD 5");
+            expect(result).toBe("5");
+        });
+
+        it("handles mixed case ignored words", () => {
+            const resultIgnored = sanitiseIndicator("OpPosite station");
+            expect(resultIgnored).toBeNull();
+        });
     });
 });
