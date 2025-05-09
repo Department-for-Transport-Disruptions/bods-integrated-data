@@ -49,6 +49,12 @@ export const getAndParseTflData = async (bucketName: string, objectKey: string) 
         Key: objectKey,
     });
 
+    const xml = await file.Body?.transformToString();
+
+    if (!xml) {
+        throw new Error("No xml data");
+    }
+
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: false,
@@ -56,15 +62,9 @@ export const getAndParseTflData = async (bucketName: string, objectKey: string) 
         isArray: (tagName) => iBusArrayProperties.includes(tagName),
     });
 
-    const xml = await file.Body?.transformToString();
-
-    if (!xml) {
-        throw new Error("No xml data");
-    }
-
     const xmlWithoutNilAttributes = xml.replace(/xsi:nil="true"/g, "");
-    const parsedTxc = parser.parse(xmlWithoutNilAttributes) as Record<string, unknown>;
-    const tflJson = iBusSchema.safeParse(parsedTxc);
+    const parsedXml = parser.parse(xmlWithoutNilAttributes) as Record<string, unknown>;
+    const tflJson = iBusSchema.safeParse(parsedXml);
 
     if (!tflJson.success) {
         const validationError = fromZodError(tflJson.error);
