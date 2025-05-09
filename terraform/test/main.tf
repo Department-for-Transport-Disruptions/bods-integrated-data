@@ -189,13 +189,6 @@ module "integrated_data_gtfs_downloader" {
   gtfs_bucket_name = module.integrated_data_txc_pipeline.gtfs_timetables_bucket_name
 }
 
-module "integrated_data_ecs_cluster" {
-  source = "../modules/shared/ecs-cluster"
-
-  environment  = local.env
-  cluster_name = "integrated-data-ecs-cluster"
-}
-
 module "integrated_data_gtfs_rt_pipeline" {
   source = "../modules/data-pipelines/gtfs-rt-pipeline"
 
@@ -206,7 +199,6 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_sg_id                           = module.integrated_data_aurora_db.db_sg_id
   db_host                            = module.integrated_data_aurora_db.db_host
   db_reader_host                     = module.integrated_data_aurora_db.db_reader_host
-  cluster_id                         = module.integrated_data_ecs_cluster.cluster_id
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
   siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
@@ -225,7 +217,6 @@ module "integrated_data_avl_pipeline" {
   db_sg_id                                    = module.integrated_data_aurora_db.db_sg_id
   db_host                                     = module.integrated_data_aurora_db.db_host
   db_reader_host                              = module.integrated_data_aurora_db.db_reader_host
-  cluster_id                                  = module.integrated_data_ecs_cluster.cluster_id
   alarm_topic_arn                             = module.integrated_data_monitoring.alarm_topic_arn
   ok_topic_arn                                = module.integrated_data_monitoring.ok_topic_arn
   tfl_api_keys                                = local.secrets["tfl_api_keys"]
@@ -397,7 +388,6 @@ module "integrated_data_cancellations_pipeline" {
   ok_topic_arn                          = module.integrated_data_monitoring.ok_topic_arn
   cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.subscriptions_table_name
   cancellations_errors_table_name       = module.integrated_data_cancellations_data_producer_api.errors_table_name
-  cluster_id                            = module.integrated_data_ecs_cluster.cluster_id
   siri_sx_generator_cpu                 = 1024
   siri_sx_generator_frequency           = 30
   siri_sx_generator_image_url           = local.secrets["siri_sx_generator_image_url"]

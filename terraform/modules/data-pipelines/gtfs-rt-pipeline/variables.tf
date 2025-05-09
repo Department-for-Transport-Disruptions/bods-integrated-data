@@ -41,10 +41,6 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "cluster_id" {
-  type = string
-}
-
 variable "gtfs_rt_service_alerts_bucket_name" {
   type        = string
   description = "Name of bucket containing service alerts file"

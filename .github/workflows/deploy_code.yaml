@@ -27,7 +27,6 @@ jobs:
     name: Get functions and tasks
     outputs:
       all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
-      all_ecs_tasks: ${{ steps.get_list_of_ecs_tasks.outputs.all_ecs_tasks }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,10 +34,6 @@ jobs:
       - name: Get list of functions
         id: get_list_of_functions
         run: echo "all_functions=$(cd ./src/functions && ls -d */ | sed 's#/##' | jq -R | jq -sc)" >> "$GITHUB_OUTPUT"
-
-      - name: Get list of ECS tasks
-        id: get_list_of_ecs_tasks
-        run: echo "all_ecs_tasks=$(cd ./src/tasks && ls -d */ | sed 's#/##' | jq -R | jq -sc)" >> "$GITHUB_OUTPUT"
 
   check_for_function_changes:
     uses: ./.github/workflows/get_directories_with_changes.yaml
@@ -105,18 +100,3 @@ jobs:
       - name: Run database migrations
         run: |
           aws lambda invoke --function-name integrated-data-db-migrator-migrate-${{ inputs.stage }} --cli-binary-format raw-in-base64-out response.json
-
-  deploy_ecs_tasks:
-    uses: ./.github/workflows/deploy_ecs_task.yaml
-    name: Deploy ECS tasks
-    if: ${{ always() && !cancelled() && needs.get_functions_and_tasks.result == 'success' }}
-    strategy:
-      matrix:
-        dir: ${{ fromJSON(needs.get_functions_and_tasks.outputs.all_ecs_tasks) }}
-    needs:
-      - get_functions_and_tasks
-      - deploy_functions_and_infrastructure
-    with:
-      stage: ${{ inputs.stage }}
-      task_name: ${{ matrix.dir }}
-    secrets: inherit

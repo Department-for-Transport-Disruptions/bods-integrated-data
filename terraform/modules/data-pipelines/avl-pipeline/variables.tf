@@ -45,10 +45,6 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "cluster_id" {
-  type = string
-}
-
 variable "ok_topic_arn" {
   type        = string
   description = "ARN of the SNS topic to use for ok notifications"

@@ -86,10 +86,6 @@ variable "siri_sx_generator_memory" {
   description = "Memory in MB to assign to the SIRI-SX Generator task"
 }
 
-variable "cluster_id" {
-  type = string
-}
-
 variable "private_subnet_ids" {
   type        = list(string)
   description = "List of Subnet IDs"
