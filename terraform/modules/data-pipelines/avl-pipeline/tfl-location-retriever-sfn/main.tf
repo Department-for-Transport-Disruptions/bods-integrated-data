@@ -1,3 +1,14 @@
+terraform {
+  required_version = ">= 1.6.6"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.54"
+    }
+  }
+}
+
 resource "aws_iam_role" "integrated_data_avl_tfl_location_retriever_sfn_role" {
   name = "avl-tfl-location-retriever-sfn-role-${var.environment}"
 

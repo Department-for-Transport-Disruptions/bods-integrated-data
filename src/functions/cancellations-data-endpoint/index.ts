@@ -57,7 +57,7 @@ const processHeartbeatNotification = async (
     });
 };
 
-const uploadSiriVmToS3 = async (xml: string, bucketName: string, subscription: AvlSubscription, tableName: string) => {
+const uploadSiriSxToS3 = async (xml: string, bucketName: string, subscription: AvlSubscription, tableName: string) => {
     logger.info("SIRI-SX Vehicle Cancellation data received - uploading data to S3");
 
     const currentTime = getDate().toISOString();
@@ -149,7 +149,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
             return createHttpSuccessResponse();
         }
 
-        await uploadSiriVmToS3(body, bucketName, subscription, tableName);
+        await uploadSiriSxToS3(body, bucketName, subscription, tableName);
         return createHttpSuccessResponse();
     } catch (e) {
         if (e instanceof ZodError) {

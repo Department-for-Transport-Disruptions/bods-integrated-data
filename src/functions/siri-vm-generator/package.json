@@ -1,9 +1,10 @@
 {
-    "name": "@bods-integrated-data/siri-vm-generator-task",
+    "name": "@bods-integrated-data/siri-vm-generator",
     "version": "0.1.0",
-    "description": "ECS task for generating SIRI-VM data",
+    "description": "Container lambda for generating SIRI-VM data",
     "scripts": {
-        "build": "rm -rf ./dist && tsc && node ./esbuild.mjs && cp -R ../../shared/xsd dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cp -R ../../shared/xsd dist && cd ./dist && zip -rq ./siri-vm-generator.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/siri-vm-generator.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],
@@ -12,7 +13,6 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "bree": "^9.2.3",
         "kysely": "^0.27.3",
         "zod": "3.23.8"
     },

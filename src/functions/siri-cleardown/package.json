@@ -1,9 +1,10 @@
 {
-    "name": "@bods-integrated-data/siri-sx-generator-task",
+    "name": "@bods-integrated-data/siri-cleardown",
     "version": "0.1.0",
-    "description": "ECS task for generating SIRI-SX data",
+    "description": "Container lambda for clearing down SIRI data from database",
     "scripts": {
-        "build": "rm -rf ./dist && tsc && node ./esbuild.mjs && cp -R ../../shared/xsd dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./siri-cleardown.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/siri-cleardown.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],
@@ -12,7 +13,6 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "bree": "^9.2.3",
         "kysely": "^0.27.3",
         "zod": "3.23.8"
     },

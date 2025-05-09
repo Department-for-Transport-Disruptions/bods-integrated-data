@@ -110,7 +110,7 @@ test-functions:
 	cd src && pnpm test:ci
 
 docker-build-%:
-	docker build --platform=linux/arm64 src --build-arg servicePath=$* -t $*:latest
+	docker build --platform=linux/arm64 --provenance false --file src/Dockerfile.lambda --build-arg SERVICE_NAME=$* -t $*:latest src/functions/dist
 
 check-types:
 	cd src && pnpm run check-types
@@ -214,9 +214,6 @@ run-local-gtfs-rt-generator:
 # example usage with query params: make run-local-gtfs-rt-downloader GTFS_RT_DOWNLOADER_INPUT="{ queryStringParameters: { routeId: '1,2', startTimeAfter: 1712288820 } }"
 run-local-gtfs-rt-downloader:
 	STAGE=local BUCKET_NAME=${GTFS_RT_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/gtfs-rt-downloader'; handler(${GTFS_RT_DOWNLOADER_INPUT}).then(r => console.log(r)).catch(e => console.error(e))"
-
-run-local-gtfs-routes-migrator:
-	STAGE=local npx tsx -e "import {handler} from './src/functions/gtfs-routes-migrator'; handler().then(console.log).catch(console.error)"
 
 # AVL
 

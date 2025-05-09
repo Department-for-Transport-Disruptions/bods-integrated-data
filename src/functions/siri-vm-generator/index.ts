@@ -1,19 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed, mapAvlToGtfsEntity, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
-void (async () => {
-    performance.mark("siri-vm-generator-start");
+let dbClient: KyselyDb;
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
-
+export const handler = async () => {
     try {
+        dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local", true));
+
         logger.info("Starting SIRI-VM file generator");
 
         const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON, SIRI_VM_SNS_TOPIC_ARN } = process.env;
@@ -34,10 +34,6 @@ void (async () => {
             uploadGtfsRtToS3(GTFS_RT_BUCKET_NAME, "gtfs-rt", gtfsRtFeed, SAVE_JSON === "true"),
         ]);
 
-        performance.mark("siri-vm-generator-end");
-
-        const time = performance.measure("siri-vm-generator", "siri-vm-generator-start", "siri-vm-generator-end");
-
         const totalAvlCount = avls.length;
         const matchedAvlCount = avls.filter((avl) => avl.route_id && avl.trip_id).length;
         const tflTotalAvlCount = avls.filter((avl) => avl.operator_ref === "TFLO").length;
@@ -46,7 +42,6 @@ void (async () => {
         ).length;
 
         await putMetricData("custom/SiriVmGenerator", [
-            { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
             { MetricName: "MatchedAvl", Value: matchedAvlCount },
             { MetricName: "TotalAvl", Value: totalAvlCount },
             { MetricName: "TflMatchedAvl", Value: tflMatchedAvlCount },
@@ -59,10 +54,15 @@ void (async () => {
             logger.error(e, "Error generating SIRI-VM file");
         }
 
-        await putMetricData("custom/SiriVmGenerator", [{ MetricName: "Errors", Value: 1 }]);
-
         throw e;
-    } finally {
+    }
+};
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
         await dbClient.destroy();
     }
-})();
+
+    process.exit(0);
+});

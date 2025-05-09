@@ -232,14 +232,14 @@ export const formatSiriDatetime = (datetime: Dayjs, includeMilliseconds: boolean
 export const runXmlLint = async (xml: string) => {
     const fileName = randomUUID();
 
-    await writeFile(`/app/${fileName}.xml`, xml, { flag: "w" });
+    await writeFile(`/tmp/${fileName}.xml`, xml, { flag: "w" });
 
     const command = spawn("xmllint", [
-        `/app/${fileName}.xml`,
+        `/tmp/${fileName}.xml`,
         "--noout",
         "--nowarning",
         "--schema",
-        "/app/xsd/www.siri.org.uk/schema/2.0/xsd/siri.xsd",
+        "/var/task/xsd/www.siri.org.uk/schema/2.0/xsd/siri.xsd",
     ]);
 
     let error = "";
@@ -252,7 +252,7 @@ export const runXmlLint = async (xml: string) => {
         command.on("close", resolve);
     });
 
-    await unlink(`/app/${fileName}.xml`);
+    await unlink(`/tmp/${fileName}.xml`);
 
     if (exitCode) {
         logger.error(error.slice(0, 10000));
