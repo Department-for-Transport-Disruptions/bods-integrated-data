@@ -18,10 +18,6 @@ variable "db_sg_id" {
   description = "Database Security Group ID"
 }
 
-variable "db_host" {
-  type = string
-}
-
 variable "db_reader_host" {
   type = string
 }
@@ -49,19 +45,4 @@ variable "gtfs_rt_service_alerts_bucket_name" {
 variable "gtfs_rt_service_alerts_bucket_arn" {
   type        = string
   description = "Arn of bucket containing service alerts file"
-}
-
-variable "siri_vm_bucket_name" {
-  type        = string
-  description = "Name of bucket containing the AVL SIRI-VM file"
-}
-
-variable "siri_vm_bucket_arn" {
-  type        = string
-  description = "Arn of bucket containing the AVL SIRI-VM file"
-}
-
-variable "save_json" {
-  type        = bool
-  description = "Whether or not to save the GTFS-RT as JSON as well"
 }

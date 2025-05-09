@@ -10,7 +10,7 @@ terraform {
 }
 
 locals {
-  source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].source_code_hash)
+  source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].code_sha256)
   function_name    = "${var.function_name}-${var.environment}"
   image_tag        = var.deploy_as_container_lambda ? (fileexists(var.zip_path) ? filesha256(var.zip_path) : split(":", data.aws_lambda_function.existing_function[0].image_uri)[1]) : null
   image_uri        = var.deploy_as_container_lambda ? "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${aws_ecr_repository.ecr_repository[0].name}:${local.image_tag}" : null
@@ -94,8 +94,16 @@ resource "aws_iam_policy" "lambda_policy" {
 
   name = "${var.function_name}-policy-${var.environment}"
   policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = var.permissions
+    Version = "2012-10-17"
+    Statement = concat(var.permissions, [
+      {
+        Action = [
+          "cloudwatch:PutMetricData"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ])
   })
 }
 
@@ -114,22 +122,6 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
-
-  inline_policy {
-    name = "put-metrics-policy"
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action = [
-            "cloudwatch:PutMetricData"
-          ],
-          Effect   = "Allow",
-          Resource = "*"
-        }
-      ]
-    })
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_role_lambda_policy_attachment" {

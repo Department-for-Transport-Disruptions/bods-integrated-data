@@ -9,8 +9,6 @@ terraform {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
 module "integrated_data_avl_s3_sqs" {
   source = "../../shared/s3-sqs"
 
@@ -383,7 +381,7 @@ module "integrated_data_siri_vm_generator_lambda" {
     {
       "Effect" : "Allow",
       "Action" : "sns:Publish",
-      "Resource" : "${aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn}"
+      "Resource" : aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
     },
     {
       "Effect" : "Allow",
@@ -402,7 +400,7 @@ module "integrated_data_siri_vm_generator_lambda" {
     DB_SECRET_ARN         = var.db_secret_arn
     DB_NAME               = var.db_name
     GTFS_RT_BUCKET_NAME   = var.gtfs_rt_bucket_name
-    SAVE_JSON             = var.environment != "prod" ? "true" : "false"
+    SAVE_JSON             = var.save_json ? "true" : "false"
     SIRI_VM_BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
     SIRI_VM_SNS_TOPIC_ARN = aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
     STAGE                 = var.environment

@@ -8,10 +8,6 @@ variable "vpc_id" {
   description = "VPC ID"
 }
 
-variable "sg_id" {
-  type = string
-}
-
 variable "private_subnet_ids" {
   type        = list(string)
   description = "List of Subnet IDs"
@@ -80,29 +76,10 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-variable "siri_vm_generator_image_url" {
-  type        = string
-  description = "URL for the SIRI-VM Generator image in ECR"
-}
 
 variable "siri_vm_generator_frequency" {
   type        = number
   description = "Frequency in seconds at which to run the SIRI-VM Generator"
-}
-
-variable "avl_cleardown_frequency" {
-  type        = number
-  description = "Frequency in seconds at which to run the AVL Cleardown process"
-}
-
-variable "siri_vm_generator_cpu" {
-  type        = number
-  description = "CPU in MB to assign to the SIRI-VM Generator task"
-}
-
-variable "siri_vm_generator_memory" {
-  type        = number
-  description = "Memory in MB to assign to the SIRI-VM Generator task"
 }
 
 variable "avl_validation_error_table_name" {

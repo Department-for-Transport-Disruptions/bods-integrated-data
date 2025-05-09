@@ -197,13 +197,9 @@ module "integrated_data_gtfs_rt_pipeline" {
   private_subnet_ids                 = module.integrated_data_vpc.private_subnet_ids
   db_secret_arn                      = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                           = module.integrated_data_aurora_db.db_sg_id
-  db_host                            = module.integrated_data_aurora_db.db_host
   db_reader_host                     = module.integrated_data_aurora_db.db_reader_host
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
-  siri_vm_bucket_name                = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_name
-  siri_vm_bucket_arn                 = module.integrated_data_avl_pipeline.avl_generated_siri_bucket_arn
-  save_json                          = true
 }
 
 module "integrated_data_avl_pipeline" {
@@ -211,7 +207,6 @@ module "integrated_data_avl_pipeline" {
 
   environment                                 = local.env
   vpc_id                                      = module.integrated_data_vpc.vpc_id
-  sg_id                                       = module.integrated_data_vpc.default_sg_id
   private_subnet_ids                          = module.integrated_data_vpc.private_subnet_ids
   db_secret_arn                               = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                                    = module.integrated_data_aurora_db.db_sg_id
@@ -224,11 +219,7 @@ module "integrated_data_avl_pipeline" {
   avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
   aws_account_id                              = data.aws_caller_identity.current.account_id
   aws_region                                  = data.aws_region.current.name
-  siri_vm_generator_image_url                 = local.secrets["siri_vm_generator_image_url"]
-  siri_vm_generator_cpu                       = 1024
-  siri_vm_generator_memory                    = 2048
   siri_vm_generator_frequency                 = 30
-  avl_cleardown_frequency                     = 86400
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
   gtfs_trip_maps_table_name                   = module.integrated_data_txc_pipeline.gtfs_trip_maps_table_name
   gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
@@ -378,7 +369,6 @@ module "integrated_data_cancellations_pipeline" {
   aws_account_id                        = data.aws_caller_identity.current.account_id
   aws_region                            = data.aws_region.current.name
   vpc_id                                = module.integrated_data_vpc.vpc_id
-  sg_id                                 = module.integrated_data_vpc.default_sg_id
   private_subnet_ids                    = module.integrated_data_vpc.private_subnet_ids
   db_secret_arn                         = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                              = module.integrated_data_aurora_db.db_sg_id
@@ -388,11 +378,7 @@ module "integrated_data_cancellations_pipeline" {
   ok_topic_arn                          = module.integrated_data_monitoring.ok_topic_arn
   cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.subscriptions_table_name
   cancellations_errors_table_name       = module.integrated_data_cancellations_data_producer_api.errors_table_name
-  siri_sx_generator_cpu                 = 1024
   siri_sx_generator_frequency           = 30
-  siri_sx_generator_image_url           = local.secrets["siri_sx_generator_image_url"]
-  siri_sx_generator_memory              = 2048
-  situations_cleardown_frequency        = 60
 }
 
 module "integrated_data_cancellations_data_producer_api" {
@@ -494,15 +480,4 @@ module "integrated_data_txc_analysis" {
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
-}
-
-module "integrated_data_gtfs_routes_migrator" {
-  source = "../modules/gtfs-routes-migrator"
-
-  environment        = local.env
-  vpc_id             = module.integrated_data_vpc.vpc_id
-  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
-  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
-  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
-  db_host            = module.integrated_data_aurora_db.db_host
 }
