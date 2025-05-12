@@ -19,29 +19,47 @@ export const createTripTable = async (dbClient: KyselyDb) => {
     await sql`CREATE TABLE ${sql.table("trip_ALL")} (LIKE ${sql.table("trip")} INCLUDING ALL)`.execute(dbClient);
 
     await dbClient
-        .insertInto("trip_ALL")
-        .expression((eb) =>
+        .with("trips_with_highest_revision", (eb) =>
             eb
                 .selectFrom("trip")
                 .selectAll("trip")
+                .innerJoin(
+                    (eb) =>
+                        eb
+                            .selectFrom("trip")
+                            .select((sb) => ["route_id", sb.fn.max("revision_number").as("max_revision")])
+                            .groupBy("route_id")
+                            .as("max_revisions"),
+                    (join) =>
+                        join
+                            .onRef("trip.route_id", "=", "max_revisions.route_id")
+                            .onRef("trip.revision_number", "=", "max_revisions.max_revision"),
+                ),
+        )
+        .insertInto("trip_ALL")
+        .expression((eb) =>
+            eb
+
+                .selectFrom("trips_with_highest_revision as t")
+                .selectAll("t")
                 .distinctOn([
-                    "trip.route_id",
-                    "trip.service_id",
-                    "trip.ticket_machine_journey_code",
-                    "trip.direction",
-                    "trip.origin_stop_ref",
-                    "trip.destination_stop_ref",
-                    "trip.departure_time",
+                    "t.route_id",
+                    "t.service_id",
+                    "t.ticket_machine_journey_code",
+                    "t.direction",
+                    "t.origin_stop_ref",
+                    "t.destination_stop_ref",
+                    "t.departure_time",
                 ])
                 .orderBy([
-                    "trip.route_id",
-                    "trip.service_id",
-                    "trip.ticket_machine_journey_code",
-                    "trip.direction",
-                    "trip.origin_stop_ref",
-                    "trip.destination_stop_ref",
-                    "trip.departure_time",
-                    "trip.revision_number desc",
+                    "t.route_id",
+                    "t.service_id",
+                    "t.ticket_machine_journey_code",
+                    "t.direction",
+                    "t.origin_stop_ref",
+                    "t.destination_stop_ref",
+                    "t.departure_time",
+                    "t.revision_number desc",
                 ]),
         )
         .execute();
