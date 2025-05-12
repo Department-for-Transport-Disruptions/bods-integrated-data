@@ -170,7 +170,8 @@ module "integrated_data_avl_tfl_location_retriever_function" {
 }
 
 module "avl_tfl_location_retriever_sfn" {
-  count                               = var.environment == "local" ? 0 : 1
+  count = var.environment == "local" ? 0 : 1
+
   step_function_name                  = "integrated-data-avl-tfl-location-retriever"
   source                              = "./tfl-location-retriever-sfn"
   environment                         = var.environment
@@ -406,9 +407,9 @@ module "integrated_data_siri_vm_generator_lambda" {
     STAGE                 = var.environment
   }
 
-  runtime                    = null
-  handler                    = null
-  deploy_as_container_lambda = true
+  runtime                    = var.environment == "local" ? "nodejs20.x" : null
+  handler                    = var.environment == "local" ? "index.handler" : null
+  deploy_as_container_lambda = var.environment != "local"
 }
 
 module "integrated_data_siri_cleardown_lambda" {
@@ -446,12 +447,13 @@ module "integrated_data_siri_cleardown_lambda" {
     STAGE         = var.environment
   }
 
-  runtime                    = null
-  handler                    = null
-  deploy_as_container_lambda = true
+  runtime = "nodejs20.x"
+  handler = "index.handler"
 }
 
 module "integrated_data_siri_vm_generator_sfn" {
+  count = var.environment == "local" ? 0 : 1
+
   source = "../../shared/lambda-trigger-sfn"
 
   environment          = var.environment

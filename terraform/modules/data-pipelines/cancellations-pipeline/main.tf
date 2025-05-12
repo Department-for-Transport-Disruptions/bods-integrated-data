@@ -201,12 +201,14 @@ module "integrated_data_siri_sx_generator_lambda" {
     STAGE          = var.environment
   }
 
-  runtime                    = null
-  handler                    = null
-  deploy_as_container_lambda = true
+  runtime                    = var.environment == "local" ? "nodejs20.x" : null
+  handler                    = var.environment == "local" ? "index.handler" : null
+  deploy_as_container_lambda = var.environment != "local"
 }
 
 module "integrated_data_siri_sx_generator_sfn" {
+  count = var.environment == "local" ? 0 : 1
+
   source = "../../shared/lambda-trigger-sfn"
 
   environment          = var.environment

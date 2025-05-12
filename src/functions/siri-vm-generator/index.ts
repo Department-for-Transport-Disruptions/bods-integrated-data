@@ -12,7 +12,8 @@ let dbClient: KyselyDb;
 
 export const handler = async () => {
     try {
-        dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local", true));
+        const isLocal = process.env.STAGE === "local";
+        dbClient = dbClient || (await getDatabaseClient(isLocal, true));
 
         logger.info("Starting SIRI-VM file generator");
 
@@ -30,7 +31,7 @@ export const handler = async () => {
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
         await Promise.all([
-            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN),
+            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN, !isLocal),
             uploadGtfsRtToS3(GTFS_RT_BUCKET_NAME, "gtfs-rt", gtfsRtFeed, SAVE_JSON === "true"),
         ]);
 

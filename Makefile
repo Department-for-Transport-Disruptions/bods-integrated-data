@@ -32,7 +32,7 @@ CANCELLATIONS_SUBSCRIPTION_TABLE_NAME="integrated-data-cancellations-subscriptio
 
 # Dev
 
-setup: install-deps build-functions docker-build-siri-vm-generator docker-build-siri-sx-generator dev-containers-up create-local-env migrate-local-db-to-latest
+setup: install-deps build-functions dev-containers-up create-local-env migrate-local-db-to-latest
 
 asdf:
 	asdf plugin add pnpm && \

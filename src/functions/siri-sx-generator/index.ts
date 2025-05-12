@@ -10,7 +10,9 @@ let dbClient: KyselyDb;
 
 export const handler = async () => {
     try {
-        dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local", true));
+        const isLocal = process.env.STAGE === "local";
+
+        dbClient = dbClient || (await getDatabaseClient(isLocal, true));
 
         logger.info("Starting SIRI-SX file generator");
 
@@ -23,7 +25,7 @@ export const handler = async () => {
         const requestMessageRef = randomUUID();
         const situations = await getSituationsDataForSiriSx(dbClient);
 
-        await generateSiriSxAndUploadToS3(situations, requestMessageRef, bucketName);
+        await generateSiriSxAndUploadToS3(situations, requestMessageRef, bucketName, !isLocal);
 
         logger.info("Successfully uploaded SIRI-SX data to S3");
     } catch (e) {
