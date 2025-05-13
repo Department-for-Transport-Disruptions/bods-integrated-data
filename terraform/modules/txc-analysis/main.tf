@@ -298,7 +298,7 @@ resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
   schedule_expression = var.schedule
 
   target {
-    arn      = aws_sfn_state_machine.integrated_data_timetables_sfn.arn
-    role_arn = aws_iam_role.integrated_data_timetables_sfn_schedule_role[0].arn
+    arn      = aws_sfn_state_machine.integrated_data_txc_analysis_sfn.arn
+    role_arn = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].arn
   }
 }
