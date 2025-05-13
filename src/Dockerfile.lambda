@@ -3,8 +3,8 @@ FROM public.ecr.aws/lambda/nodejs:22-arm64
 ARG FUNCTION_DIR
 ARG SERVICE_NAME
 
-RUN if [[ ${SERVICE_NAME} == "siri-vm-generator" || "siri-sx-generator" ]] ; then dnf install -y libxml2 unzip ; else : ; fi
-ADD ${SERVICE_NAME}.zip ${LAMBDA_TASK_ROOT}
-RUN unzip ${SERVICE_NAME}.zip && rm -rf ${SERVICE_NAME}.zip
+RUN ["dnf", "install", "-y", "libxml2", "unzip"]
+ADD ["${SERVICE_NAME}.zip", "${LAMBDA_TASK_ROOT}"]
+RUN unzip ${LAMBDA_TASK_ROOT}/${SERVICE_NAME}.zip && rm -rf ${LAMBDA_TASK_ROOT}/${SERVICE_NAME}.zip
 
 CMD ["index.handler"]
