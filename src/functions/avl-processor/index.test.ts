@@ -213,6 +213,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         expect(valuesMock).not.toHaveBeenCalledWith(parsedSiriWithCancellationsOnly);
