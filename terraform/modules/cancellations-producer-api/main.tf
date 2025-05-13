@@ -120,7 +120,8 @@ module "cancellations_feed_validator" {
 }
 
 module "cancellations_feed_validator_sfn" {
-  count                = var.environment == "local" ? 0 : 1
+  count = var.environment == "local" ? 0 : 1
+
   step_function_name   = "integrated-data-cancellations-feed-validator"
   source               = "../../modules/shared/lambda-trigger-sfn"
   environment          = var.environment

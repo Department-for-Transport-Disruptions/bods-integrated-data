@@ -1,48 +1,40 @@
 import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed, mapAvlToGtfsEntity, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
-void (async () => {
-    performance.mark("siri-vm-generator-start");
+let dbClient: KyselyDb;
 
-    const dbClient = await getDatabaseClient(process.env.STAGE === "local", true);
-
+export const handler = async () => {
     try {
+        const isLocal = process.env.STAGE === "local";
+        dbClient = dbClient || (await getDatabaseClient(isLocal, true));
+
         logger.info("Starting SIRI-VM file generator");
 
-        const {
-            GTFS_RT_BUCKET_NAME: gtfsRtBucketName,
-            SIRI_VM_BUCKET_NAME: siriVmBucketName,
-            SAVE_JSON: saveJson,
-            SIRI_VM_SNS_TOPIC_ARN: siriVmSnsTopicArn,
-            ENABLE_CANCELLATIONS: enableCancellations,
-        } = process.env;
+        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON, SIRI_VM_SNS_TOPIC_ARN, ENABLE_CANCELLATIONS } =
+            process.env;
 
-        if (!gtfsRtBucketName || !siriVmBucketName || !siriVmSnsTopicArn) {
+        if (!GTFS_RT_BUCKET_NAME || !SIRI_VM_BUCKET_NAME || !SIRI_VM_SNS_TOPIC_ARN) {
             throw new Error(
                 "Missing env vars - GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME and SIRI_VM_SNS_TOPIC_ARN must be set",
             );
         }
 
         const requestMessageRef = randomUUID();
-        const avls = await getAvlDataForSiriVm(dbClient, enableCancellations === "true");
+        const avls = await getAvlDataForSiriVm(dbClient, ENABLE_CANCELLATIONS === "true");
         const entities = avls.map(mapAvlToGtfsEntity);
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
         await Promise.all([
-            generateSiriVmAndUploadToS3(avls, requestMessageRef, siriVmBucketName, siriVmSnsTopicArn),
-            uploadGtfsRtToS3(gtfsRtBucketName, "gtfs-rt", gtfsRtFeed, saveJson === "true"),
+            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN, !isLocal),
+            uploadGtfsRtToS3(GTFS_RT_BUCKET_NAME, "gtfs-rt", gtfsRtFeed, SAVE_JSON === "true"),
         ]);
-
-        performance.mark("siri-vm-generator-end");
-
-        const time = performance.measure("siri-vm-generator", "siri-vm-generator-start", "siri-vm-generator-end");
 
         const totalAvlCount = avls.length;
         const matchedAvlCount = avls.filter((avl) => avl.route_id && avl.trip_id).length;
@@ -52,7 +44,6 @@ void (async () => {
         ).length;
 
         await putMetricData("custom/SiriVmGenerator", [
-            { MetricName: "ExecutionTime", Value: time.duration, Unit: "Milliseconds" },
             { MetricName: "MatchedAvl", Value: matchedAvlCount },
             { MetricName: "TotalAvl", Value: totalAvlCount },
             { MetricName: "TflMatchedAvl", Value: tflMatchedAvlCount },
@@ -65,10 +56,15 @@ void (async () => {
             logger.error(e, "Error generating SIRI-VM file");
         }
 
-        await putMetricData("custom/SiriVmGenerator", [{ MetricName: "Errors", Value: 1 }]);
-
         throw e;
-    } finally {
+    }
+};
+
+process.on("SIGTERM", async () => {
+    if (dbClient) {
+        logger.info("Destroying DB client...");
         await dbClient.destroy();
     }
-})();
+
+    process.exit(0);
+});

@@ -9,7 +9,7 @@ program
         });
 
         await invokeLambda(stage, {
-            FunctionName: `integrated-data-gtfs-routes-migrator-${stage}`,
+            FunctionName: `integrated-data-siri-vm-file-generator-${stage}`,
             InvocationType: "RequestResponse",
         });
     })

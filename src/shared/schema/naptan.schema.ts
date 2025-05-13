@@ -4,13 +4,17 @@ const selfClosingTag = z.literal("");
 const emptyTag = selfClosingTag.transform(() => undefined);
 
 const locationSchema = z.object({
+    Easting: z.string().optional(),
+    Northing: z.string().optional(),
+    Longitude: z.string().optional(),
+    Latitude: z.string().optional(),
     Translation: z
         .object({
             GridType: z.string().optional(),
-            Easting: z.string(),
-            Northing: z.string(),
-            Longitude: z.string(),
-            Latitude: z.string(),
+            Easting: z.string().optional(),
+            Northing: z.string().optional(),
+            Longitude: z.string().optional(),
+            Latitude: z.string().optional(),
         })
         .optional(),
 });

@@ -18,10 +18,6 @@ variable "db_sg_id" {
   description = "Database Security Group ID"
 }
 
-variable "db_host" {
-  type = string
-}
-
 variable "db_reader_host" {
   type = string
 }
@@ -39,10 +35,6 @@ variable "db_secret_arn" {
 variable "db_name" {
   type    = string
   default = "bods_integrated_data"
-}
-
-variable "cluster_id" {
-  type = string
 }
 
 variable "gtfs_rt_service_alerts_bucket_name" {

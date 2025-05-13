@@ -61,12 +61,12 @@ describe("naptan-uploader", () => {
 				<NptgLocalityRef>E0000324</NptgLocalityRef>
 				<LocalityCentre>true</LocalityCentre>
 				<Location>
+          <Easting>512116</Easting>
+          <Northing>218097</Northing>
+          <Longitude>-0.37369</Longitude>
+          <Latitude>51.85022</Latitude>
 					<Translation>
 						<GridType>UKOS</GridType>
-						<Easting>512116</Easting>
-						<Northing>218097</Northing>
-						<Longitude>-0.37369</Longitude>
-						<Latitude>51.85022</Latitude>
 					</Translation>
 				</Location>
 			</Place>

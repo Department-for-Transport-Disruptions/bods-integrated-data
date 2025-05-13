@@ -109,11 +109,13 @@ variable "default_alert" {
 }
 
 variable "evaluation_delay" {
+  type        = number
   description = "Delay in seconds for the metric evaluation"
   default     = 900
 }
 
 variable "new_group_delay" {
+  type        = number
   description = "Delay in seconds before monitor new resource"
   default     = 300
 }
@@ -195,11 +197,13 @@ locals {
 }
 
 variable "sqs_critical_threshold" {
+  type        = number
   description = "The monitor critical threshold"
   default     = 10
 }
 
 variable "sqs_normal_threshold" {
+  type        = number
   description = "The normal length of the queue"
   default     = 0
 }

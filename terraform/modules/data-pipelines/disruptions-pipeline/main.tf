@@ -146,6 +146,6 @@ module "integrated_data_bods_disruptions_processor_function" {
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
     BUCKET_NAME   = aws_s3_bucket.integrated_data_bods_disruptions_gtfs_rt_bucket.bucket
-    SAVE_JSON     = var.save_json
+    SAVE_JSON     = var.save_json ? "true" : "false"
   }
 }
