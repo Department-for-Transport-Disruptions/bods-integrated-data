@@ -124,6 +124,9 @@ describe("txc-analysis-reporter", () => {
         const observationByObservationTypeCsvContent3 =
             "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,test-extra-column-1\r\n";
 
+        const observationByObservationTypeCsvContent4 =
+            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-3\r\n";
+
         await handler(mockEvent, mockContext, mockCallback);
 
         expect(mocks.startS3Upload).toHaveBeenCalledWith(
@@ -133,7 +136,7 @@ describe("txc-analysis-reporter", () => {
             "application/zip",
         );
 
-        expect(mocks.appendMock).toHaveBeenCalledTimes(5);
+        expect(mocks.appendMock).toHaveBeenCalledTimes(6);
         expect(mocks.appendMock).toHaveBeenNthCalledWith(1, observationSummariesByDataSourceCsvContent, {
             name: "20250108/observationSummariesByDataSource.csv",
         });
@@ -148,6 +151,9 @@ describe("txc-analysis-reporter", () => {
         });
         expect(mocks.appendMock).toHaveBeenNthCalledWith(5, observationByObservationTypeCsvContent3, {
             name: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent4, {
+            name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
     });
 
