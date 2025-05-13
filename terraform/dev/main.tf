@@ -243,6 +243,7 @@ module "integrated_data_avl_pipeline" {
   gtfs_rt_bucket_arn                          = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_arn
   save_json                                   = true
   abods_account_ids                           = local.secrets["abods_account_ids"]
+  enable_cancellations                        = true
 }
 
 module "integrated_data_avl_subscription_table" {

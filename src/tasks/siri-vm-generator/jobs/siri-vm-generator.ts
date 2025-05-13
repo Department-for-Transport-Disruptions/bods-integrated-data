@@ -16,22 +16,28 @@ void (async () => {
     try {
         logger.info("Starting SIRI-VM file generator");
 
-        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON, SIRI_VM_SNS_TOPIC_ARN } = process.env;
+        const {
+            GTFS_RT_BUCKET_NAME: gtfsRtBucketName,
+            SIRI_VM_BUCKET_NAME: siriVmBucketName,
+            SAVE_JSON: saveJson,
+            SIRI_VM_SNS_TOPIC_ARN: siriVmSnsTopicArn,
+            ENABLE_CANCELLATIONS: enableCancellations,
+        } = process.env;
 
-        if (!GTFS_RT_BUCKET_NAME || !SIRI_VM_BUCKET_NAME || !SIRI_VM_SNS_TOPIC_ARN) {
+        if (!gtfsRtBucketName || !siriVmBucketName || !siriVmSnsTopicArn) {
             throw new Error(
                 "Missing env vars - GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME and SIRI_VM_SNS_TOPIC_ARN must be set",
             );
         }
 
         const requestMessageRef = randomUUID();
-        const avls = await getAvlDataForSiriVm(dbClient);
+        const avls = await getAvlDataForSiriVm(dbClient, enableCancellations === "true");
         const entities = avls.map(mapAvlToGtfsEntity);
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 
         await Promise.all([
-            generateSiriVmAndUploadToS3(avls, requestMessageRef, SIRI_VM_BUCKET_NAME, SIRI_VM_SNS_TOPIC_ARN),
-            uploadGtfsRtToS3(GTFS_RT_BUCKET_NAME, "gtfs-rt", gtfsRtFeed, SAVE_JSON === "true"),
+            generateSiriVmAndUploadToS3(avls, requestMessageRef, siriVmBucketName, siriVmSnsTopicArn),
+            uploadGtfsRtToS3(gtfsRtBucketName, "gtfs-rt", gtfsRtFeed, saveJson === "true"),
         ]);
 
         performance.mark("siri-vm-generator-end");

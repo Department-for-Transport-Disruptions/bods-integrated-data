@@ -91,6 +91,7 @@ export const base64Encode = (data: Uint8Array) => Buffer.from(data).toString("ba
 export const getAvlDataForGtfs = async (
     dbClient: KyselyDb,
     routeId?: number[],
+    enableCancellations = false,
     startTimeBefore?: number,
     startTimeAfter?: number,
     boundingBox?: number[],
@@ -98,13 +99,17 @@ export const getAvlDataForGtfs = async (
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
 
-        const query = getQueryForLatestAvl(dbClient, {
-            routeId,
-            startTimeBefore,
-            startTimeAfter,
-            boundingBox,
-            recordedAtTimeAfter: dayAgo,
-        });
+        const query = getQueryForLatestAvl(
+            dbClient,
+            {
+                routeId,
+                startTimeBefore,
+                startTimeAfter,
+                boundingBox,
+                recordedAtTimeAfter: dayAgo,
+            },
+            enableCancellations,
+        );
 
         const avls = await query.execute();
 

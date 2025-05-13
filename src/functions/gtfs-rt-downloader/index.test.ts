@@ -133,7 +133,14 @@ describe("gtfs-downloader-endpoint", () => {
 
             await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfs).toHaveBeenCalledWith(mocks.mockDbClient, [1], undefined, undefined, undefined);
+            expect(getAvlDataForGtfs).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                [1],
+                false,
+                undefined,
+                undefined,
+                undefined,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -149,6 +156,7 @@ describe("gtfs-downloader-endpoint", () => {
             expect(getAvlDataForGtfs).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 [1, 2, 3],
+                false,
                 undefined,
                 undefined,
                 undefined,
@@ -165,7 +173,14 @@ describe("gtfs-downloader-endpoint", () => {
 
             await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfs).toHaveBeenCalledWith(mocks.mockDbClient, undefined, 123, undefined, undefined);
+            expect(getAvlDataForGtfs).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                undefined,
+                false,
+                123,
+                undefined,
+                undefined,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -178,7 +193,14 @@ describe("gtfs-downloader-endpoint", () => {
 
             await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfs).toHaveBeenCalledWith(mocks.mockDbClient, undefined, undefined, 123, undefined);
+            expect(getAvlDataForGtfs).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                undefined,
+                false,
+                undefined,
+                123,
+                undefined,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 
@@ -194,6 +216,7 @@ describe("gtfs-downloader-endpoint", () => {
             expect(getAvlDataForGtfs).toHaveBeenCalledWith(
                 mocks.mockDbClient,
                 undefined,
+                false,
                 undefined,
                 undefined,
                 [1, 2, 3, 4],
@@ -221,7 +244,14 @@ describe("gtfs-downloader-endpoint", () => {
 
             await handler(mockEvent, mockContext, mockCallback);
 
-            expect(getAvlDataForGtfs).toHaveBeenCalledWith(mocks.mockDbClient, [1, 2], undefined, undefined, undefined);
+            expect(getAvlDataForGtfs).toHaveBeenCalledWith(
+                mocks.mockDbClient,
+                [1, 2],
+                false,
+                undefined,
+                undefined,
+                undefined,
+            );
             expect(logger.error).not.toHaveBeenCalled();
         });
 

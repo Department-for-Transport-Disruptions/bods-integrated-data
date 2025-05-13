@@ -138,3 +138,9 @@ variable "abods_account_ids" {
   type        = list(string)
   description = "List of ABODS account IDs to allow access to SIRI-VM bucket"
 }
+
+variable "enable_cancellations" {
+  type        = bool
+  description = "Feature flag for VehicleActivityCancellation work"
+  default     = false
+}

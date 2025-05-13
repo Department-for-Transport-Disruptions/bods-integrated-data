@@ -91,6 +91,7 @@ module "integrated_data_avl_processor_function" {
     AVL_SUBSCRIPTION_TABLE_NAME     = var.avl_subscription_table_name
     AVL_VALIDATION_ERROR_TABLE_NAME = var.avl_validation_error_table_name
     GTFS_TRIP_MAPS_TABLE_NAME       = var.gtfs_trip_maps_table_name
+    ENABLE_CANCELLATIONS            = var.enable_cancellations
   }
 }
 
@@ -559,12 +560,13 @@ module "siri_vm_downloader" {
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
-    DB_HOST       = var.db_reader_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
+    STAGE                = var.environment
+    BUCKET_NAME          = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+    DB_HOST              = var.db_reader_host
+    DB_PORT              = var.db_port
+    DB_SECRET_ARN        = var.db_secret_arn
+    DB_NAME              = var.db_name
+    ENABLE_CANCELLATIONS = var.enable_cancellations
   }
 }
 

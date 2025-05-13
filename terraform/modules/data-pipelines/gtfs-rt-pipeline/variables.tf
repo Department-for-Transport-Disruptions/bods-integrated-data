@@ -69,3 +69,9 @@ variable "save_json" {
   type        = bool
   description = "Whether or not to save the GTFS-RT as JSON as well"
 }
+
+variable "enable_cancellations" {
+  type        = bool
+  description = "Feature flag for VehicleActivityCancellation work"
+  default     = false
+}

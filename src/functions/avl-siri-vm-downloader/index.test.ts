@@ -167,6 +167,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     [1, 2, 3, 4],
                     undefined,
                     undefined,
@@ -196,6 +197,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     ["1"],
                     undefined,
@@ -225,6 +227,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     ["1", "2", "3"],
                     undefined,
@@ -254,6 +257,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     undefined,
                     "1",
@@ -283,6 +287,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     undefined,
                     undefined,
@@ -312,6 +317,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     undefined,
                     undefined,
@@ -341,6 +347,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     undefined,
                     undefined,
@@ -370,6 +377,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     undefined,
                     undefined,
@@ -399,6 +407,7 @@ describe("avl-siri-vm-downloader-endpoint", () => {
 
                 expect(getAvlDataForSiriVmMock).toHaveBeenCalledWith(
                     mocks.mockDbClient,
+                    false,
                     undefined,
                     undefined,
                     undefined,

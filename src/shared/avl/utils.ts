@@ -259,19 +259,27 @@ export interface AvlQueryOptions {
     startTimeAfter?: number;
 }
 
-export const getQueryForLatestAvl = (dbClient: KyselyDb, avlQueryOptions: AvlQueryOptions) => {
-    let query = dbClient
-        .selectFrom("avl")
-        .distinctOn(["operator_ref", "vehicle_ref"])
-        // .leftJoin("avl_cancellation", (join) =>
-        //     join
-        //         .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
-        //         .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
-        //         .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
-        //         .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
-        // )
-        .selectAll("avl");
-    // .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
+export const getQueryForLatestAvl = (
+    dbClient: KyselyDb,
+    avlQueryOptions: AvlQueryOptions,
+    enableCancellations: boolean,
+) => {
+    let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
+
+    if (enableCancellations) {
+        query = dbClient
+            .selectFrom("avl")
+            .distinctOn(["operator_ref", "vehicle_ref"])
+            .leftJoin("avl_cancellation", (join) =>
+                join
+                    .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
+                    .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
+                    .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
+                    .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
+            )
+            .selectAll("avl")
+            .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
+    }
 
     if (avlQueryOptions.boundingBox) {
         const [minX, minY, maxX, maxY] = avlQueryOptions.boundingBox;
@@ -347,6 +355,7 @@ export const getQueryForLatestAvl = (dbClient: KyselyDb, avlQueryOptions: AvlQue
 
 export const getAvlDataForSiriVm = async (
     dbClient: KyselyDb,
+    enableCancellations: boolean,
     boundingBox?: number[],
     operatorRef?: string[],
     vehicleRef?: string,
@@ -360,18 +369,22 @@ export const getAvlDataForSiriVm = async (
     try {
         const dayAgo = getDate().subtract(1, "day").toISOString();
 
-        const query = getQueryForLatestAvl(dbClient, {
-            boundingBox,
-            operatorRef,
-            vehicleRef,
-            lineRef,
-            producerRef,
-            originRef,
-            destinationRef,
-            subscriptionId,
-            lastRetrievedAvlId,
-            recordedAtTimeAfter: dayAgo,
-        });
+        const query = getQueryForLatestAvl(
+            dbClient,
+            {
+                boundingBox,
+                operatorRef,
+                vehicleRef,
+                lineRef,
+                producerRef,
+                originRef,
+                destinationRef,
+                subscriptionId,
+                lastRetrievedAvlId,
+                recordedAtTimeAfter: dayAgo,
+            },
+            enableCancellations,
+        );
 
         const avls = await query.execute();
 

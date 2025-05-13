@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { getAvlErrorDetails, getAvlSubscription, insertAvls } from "@bods-integrated-data/shared/avl/utils";
+import {
+    getAvlErrorDetails,
+    getAvlSubscription,
+    insertAvlCancellations,
+    insertAvls,
+} from "@bods-integrated-data/shared/avl/utils";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
@@ -80,6 +85,7 @@ export const processSqsRecord = async (
     avlSubscriptionTableName: string,
     avlValidationErrorTableName: string,
     gtfsTripMapsTableName: string,
+    enableCancellations: boolean,
 ) => {
     try {
         const subscriptionId = record.s3.object.key.substring(0, record.s3.object.key.indexOf("/"));
@@ -127,12 +133,12 @@ export const processSqsRecord = async (
                 });
             }
 
-            // if (avlCancellations.length > 0) {
-            //     await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
-            //     logger.info("AVL cancellations processed successfully", {
-            //         subscriptionId,
-            //     });
-            // }
+            if (enableCancellations && avlCancellations.length > 0) {
+                await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
+                logger.info("AVL cancellations processed successfully", {
+                    subscriptionId,
+                });
+            }
 
             if (totalAvlCount === 0 && avlCancellations.length === 0) {
                 logger.warn("No VehicleActivity or VehicleActivityCancellation was provided in SIRI-VM message", {
@@ -150,7 +156,12 @@ export const processSqsRecord = async (
 export const handler: SQSHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { AVL_SUBSCRIPTION_TABLE_NAME, AVL_VALIDATION_ERROR_TABLE_NAME, GTFS_TRIP_MAPS_TABLE_NAME } = process.env;
+    const {
+        AVL_SUBSCRIPTION_TABLE_NAME,
+        AVL_VALIDATION_ERROR_TABLE_NAME,
+        GTFS_TRIP_MAPS_TABLE_NAME,
+        ENABLE_CANCELLATIONS,
+    } = process.env;
 
     if (!AVL_SUBSCRIPTION_TABLE_NAME || !AVL_VALIDATION_ERROR_TABLE_NAME || !GTFS_TRIP_MAPS_TABLE_NAME) {
         throw new Error(
@@ -173,6 +184,7 @@ export const handler: SQSHandler = async (event, context) => {
                             AVL_SUBSCRIPTION_TABLE_NAME,
                             AVL_VALIDATION_ERROR_TABLE_NAME,
                             GTFS_TRIP_MAPS_TABLE_NAME,
+                            ENABLE_CANCELLATIONS === "true",
                         ),
                     ),
                 ),
