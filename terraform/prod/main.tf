@@ -512,3 +512,16 @@ module "integrated_data_gtfs_routes_migrator" {
   db_sg_id           = module.integrated_data_aurora_db.db_sg_id
   db_host            = module.integrated_data_aurora_db.db_host
 }
+
+module "integrated_data_txc_analysis" {
+  source = "../modules/txc-analysis"
+
+  environment          = local.env
+  aws_account_id       = data.aws_caller_identity.current.account_id
+  aws_region           = data.aws_region.current.name
+  bods_txc_bucket_name = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
+  naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
+  nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
+  schedule             = "cron(30 4 * * ? *)"
+}
