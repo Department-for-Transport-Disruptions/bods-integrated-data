@@ -149,6 +149,7 @@ describe("avl-processor", () => {
                 mockAvlSubscriptionTableName,
                 mockAvlValidationErrorsTableName,
                 mockGtfsTripMapsTableName,
+                false,
             );
 
             expect(uuidSpy).toHaveBeenCalledOnce();
@@ -181,6 +182,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithOnwardCalls);
@@ -243,6 +245,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         expect(valuesMock).toHaveBeenCalledTimes(1);
@@ -270,6 +273,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         expect(uuidSpy).toHaveBeenCalledOnce();
@@ -288,6 +292,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         expect(valuesMock).not.toHaveBeenCalled();
@@ -304,6 +309,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         expect(valuesMock).not.toHaveBeenCalled();
@@ -337,6 +343,7 @@ describe("avl-processor", () => {
             mockAvlSubscriptionTableName,
             mockAvlValidationErrorsTableName,
             mockGtfsTripMapsTableName,
+            false,
         );
 
         /**
@@ -514,6 +521,7 @@ describe("avl-processor", () => {
                 mockAvlSubscriptionTableName,
                 mockAvlValidationErrorsTableName,
                 mockGtfsTripMapsTableName,
+                false,
             ),
         ).rejects.toThrowError(`Unable to process AVL for subscription ${mockSubscriptionId} because it is inactive`);
 
