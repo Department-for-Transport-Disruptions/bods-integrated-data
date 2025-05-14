@@ -17,8 +17,7 @@ export const handler = async () => {
 
         logger.info("Starting SIRI-VM file generator");
 
-        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON, SIRI_VM_SNS_TOPIC_ARN, ENABLE_CANCELLATIONS } =
-            process.env;
+        const { GTFS_RT_BUCKET_NAME, SIRI_VM_BUCKET_NAME, SAVE_JSON, SIRI_VM_SNS_TOPIC_ARN } = process.env;
 
         if (!GTFS_RT_BUCKET_NAME || !SIRI_VM_BUCKET_NAME || !SIRI_VM_SNS_TOPIC_ARN) {
             throw new Error(
@@ -27,7 +26,7 @@ export const handler = async () => {
         }
 
         const requestMessageRef = randomUUID();
-        const avls = await getAvlDataForSiriVm(dbClient, ENABLE_CANCELLATIONS === "true");
+        const avls = await getAvlDataForSiriVm(dbClient);
         const entities = avls.map(mapAvlToGtfsEntity);
         const gtfsRtFeed = generateGtfsRtFeed(entities);
 

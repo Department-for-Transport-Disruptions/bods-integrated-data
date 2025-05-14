@@ -21,16 +21,11 @@ const MAX_HEARTBEAT_ATTEMPTS = 3;
 
 let dbClient: KyselyDb;
 
-const sendData = async (
-    subscription: AvlConsumerSubscription,
-    consumerSubscriptionTableName: string,
-    enableCancellations: boolean,
-) => {
+const sendData = async (subscription: AvlConsumerSubscription, consumerSubscriptionTableName: string) => {
     const { queryParams } = subscription;
 
     const avls = await getAvlDataForSiriVm(
         dbClient,
-        enableCancellations,
         queryParams.boundingBox,
         queryParams.operatorRef,
         queryParams.vehicleRef,
@@ -136,11 +131,7 @@ const sendHeartbeat = async (subscription: AvlConsumerSubscription, consumerSubs
     }
 };
 
-const processSqsRecord = async (
-    record: SQSRecord,
-    consumerSubscriptionTableName: string,
-    enableCancellations: boolean,
-) => {
+const processSqsRecord = async (record: SQSRecord, consumerSubscriptionTableName: string) => {
     const { subscriptionPK, SK, messageType } = subscriptionDataSenderMessageSchema.parse(record.body);
 
     const subscription = await getAvlConsumerSubscriptionByPK(consumerSubscriptionTableName, subscriptionPK, SK);
@@ -152,7 +143,7 @@ const processSqsRecord = async (
     }
 
     if (messageType === "data") {
-        await sendData(subscription, consumerSubscriptionTableName, enableCancellations);
+        await sendData(subscription, consumerSubscriptionTableName);
     } else {
         await sendHeartbeat(subscription, consumerSubscriptionTableName);
     }
@@ -161,11 +152,7 @@ const processSqsRecord = async (
 export const handler: SQSHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const {
-        STAGE,
-        AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTable,
-        ENABLE_CANCELLATIONS: enableCancellations,
-    } = process.env;
+    const { STAGE, AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTable } = process.env;
 
     if (!avlConsumerSubscriptionTable) {
         throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
@@ -176,11 +163,7 @@ export const handler: SQSHandler = async (event, context) => {
     try {
         logger.info(`Starting avl-consumer-data-sender. Number of records to process: ${event.Records.length}`);
 
-        await Promise.all(
-            event.Records.map((record) =>
-                processSqsRecord(record, avlConsumerSubscriptionTable, enableCancellations === "true"),
-            ),
-        );
+        await Promise.all(event.Records.map((record) => processSqsRecord(record, avlConsumerSubscriptionTable)));
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the avl-consumer-data-sender endpoint");

@@ -36,11 +36,7 @@ export const handler: Handler = async (
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     try {
-        const {
-            BUCKET_NAME: bucketName,
-            ENABLE_CACHE: enableCache = "true",
-            ENABLE_CANCELLATIONS: enableCancellations = "false",
-        } = process.env;
+        const { BUCKET_NAME: bucketName, ENABLE_CACHE: enableCache = "true" } = process.env;
         const key = "gtfs-rt.bin";
 
         if (!bucketName) {
@@ -79,7 +75,6 @@ export const handler: Handler = async (
                 const avlData = await getAvlDataForGtfs(
                     dbClient,
                     routeId,
-                    enableCancellations === "true",
                     startTimeBefore,
                     startTimeAfter,
                     boundingBox,

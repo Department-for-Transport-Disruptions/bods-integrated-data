@@ -239,7 +239,6 @@ describe("avl-consumer-subscriber", () => {
 
             expect(getAvlDataForSiriVmSpy).toHaveBeenCalledWith(
                 mocks.mockDbClient,
-                false,
                 [1, 2, 3, 4],
                 ["a", "b", "c"],
                 "vehicle-ref",

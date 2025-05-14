@@ -297,7 +297,7 @@ module "avl_consumer_data_sender" {
     DB_SECRET_ARN                        = var.db_secret_arn
     DB_NAME                              = var.db_name
     AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
-    ENABLE_CANCELLATIONS                 = var.enable_cancellations
+    ENABLE_CANCELLATIONS                 = var.enable_cancellations ? "true" : "false"
   }
 }
 

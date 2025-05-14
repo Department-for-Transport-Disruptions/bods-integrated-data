@@ -90,7 +90,7 @@ module "integrated_data_gtfs_rt_downloader_function" {
     DB_PORT              = var.db_port
     DB_SECRET_ARN        = var.db_secret_arn
     DB_NAME              = var.db_name
-    ENABLE_CANCELLATIONS = var.enable_cancellations
+    ENABLE_CANCELLATIONS = var.enable_cancellations ? "true" : "false"
   }
 }
 

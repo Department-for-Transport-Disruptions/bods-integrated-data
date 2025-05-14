@@ -48,7 +48,6 @@ const requestParamsSchema = z.preprocess(
 
 const retrieveSiriVmData = async (
     dbClient: KyselyDb,
-    enableCancellations: boolean,
     boundingBox?: number[],
     operatorRef?: string[],
     vehicleRef?: string,
@@ -60,7 +59,6 @@ const retrieveSiriVmData = async (
 ) => {
     const avls = await getAvlDataForSiriVm(
         dbClient,
-        enableCancellations,
         boundingBox,
         operatorRef,
         vehicleRef,
@@ -99,7 +97,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
             };
         }
 
-        const { BUCKET_NAME: bucketName, ENABLE_CANCELLATIONS: enableCancellations } = process.env;
+        const { BUCKET_NAME: bucketName } = process.env;
 
         if (!bucketName) {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
@@ -142,7 +140,6 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
 
             siriVm = await retrieveSiriVmData(
                 dbClient,
-                enableCancellations === "true",
                 boundingBox,
                 operatorRef,
                 vehicleRef,
