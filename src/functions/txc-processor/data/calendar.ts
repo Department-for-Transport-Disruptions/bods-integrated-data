@@ -283,10 +283,9 @@ export const formatCalendar = (
     const startDate = getDateWithCustomFormat(operatingPeriod.StartDate, "YYYY-MM-DD");
     const endDate = operatingPeriod.EndDate ? getDateWithCustomFormat(operatingPeriod.EndDate, "YYYY-MM-DD") : null;
 
-    const dateIn9Months = currentDate.add(9, "months");
-
     const startDateToUse = startDate.isBefore(currentDate) ? currentDate : startDate;
-    const endDateToUse = endDate?.isBefore(dateIn9Months) ? endDate : dateIn9Months;
+    const date9MonthsAfterStart = startDateToUse.add(9, "months");
+    const endDateToUse = endDate?.isBefore(date9MonthsAfterStart) ? endDate : date9MonthsAfterStart;
 
     const specialDaysOfOperation = operatingProfile.SpecialDaysOperation?.DaysOfOperation?.DateRange.flat() ?? [];
     const specialDaysOfNonOperation = operatingProfile.SpecialDaysOperation?.DaysOfNonOperation?.DateRange.flat() ?? [];
