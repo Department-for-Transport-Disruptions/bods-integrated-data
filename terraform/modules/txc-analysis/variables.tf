@@ -28,3 +28,10 @@ variable "naptan_bucket_name" {
 variable "nptg_bucket_name" {
   type = string
 }
+
+variable "schedule" {
+  type        = string
+  description = "Cron schedule to trigger the step function"
+  nullable    = true
+  default     = null
+}
