@@ -22,12 +22,12 @@ variable "permissions" {
 
 variable "handler" {
   type     = string
-  nullable = false
+  nullable = true
 }
 
 variable "runtime" {
   type     = string
-  nullable = false
+  nullable = true
 }
 
 variable "timeout" {
@@ -122,4 +122,10 @@ variable "retry_attempts" {
   nullable    = true
   default     = null
   description = "Maximum number of retry attempts."
+}
+
+variable "deploy_as_container_lambda" {
+  type        = bool
+  default     = false
+  description = "Whether to deploy as a container lambda"
 }

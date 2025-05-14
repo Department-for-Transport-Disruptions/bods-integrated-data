@@ -1,8 +1,15 @@
 terraform {
+  required_version = ">= 1.6.6"
+
   required_providers {
     datadog = {
       source  = "DataDog/datadog"
       version = "3.41.0"
+    }
+
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.54"
     }
   }
 }
