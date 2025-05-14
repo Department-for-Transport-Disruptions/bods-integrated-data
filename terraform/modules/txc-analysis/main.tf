@@ -280,7 +280,7 @@ resource "aws_iam_role" "integrated_data_txc_analysis_sfn_schedule_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "integrated_data_txc_analysis_sfn_schedule_policy_attachment" {
-  count = var.schedule != null ? 1 : 0
+  count      = var.schedule != null ? 1 : 0
   policy_arn = aws_iam_policy.integrated_data_txc_analysis_sfn_schedule_policy[0].arn
   role       = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].name
 }
