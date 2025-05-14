@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -74,7 +74,7 @@ module "avl_consumer_subscriber" {
   zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-subscriber.zip"
   handler       = "index.handler"
   memory        = 256
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
 
   permissions = [
@@ -156,7 +156,7 @@ module "avl_consumer_unsubscriber" {
   zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-unsubscriber.zip"
   handler       = "index.handler"
   memory        = 256
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
 
   permissions = [
@@ -217,7 +217,7 @@ module "avl_consumer_subscriptions" {
   zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-subscriptions.zip"
   handler       = "index.handler"
   memory        = 256
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
 
   permissions = [
@@ -249,7 +249,7 @@ module "avl_consumer_data_sender" {
   zip_path        = "${path.module}/../../../src/functions/dist/avl-consumer-data-sender.zip"
   handler         = "index.handler"
   memory          = 1024
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 60
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
@@ -308,7 +308,7 @@ module "avl_consumer_subscription_trigger" {
   zip_path      = "${path.module}/../../../src/functions/dist/avl-consumer-subscription-trigger.zip"
   handler       = "index.handler"
   memory        = 256
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
 
   permissions = [

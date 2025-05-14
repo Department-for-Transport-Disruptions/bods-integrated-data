@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -36,7 +36,7 @@ module "integrated_data_bank_holidays_retriever_function" {
   function_name = "integrated-data-bank-holidays-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/bank-holidays-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -69,7 +69,7 @@ module "integrated_data_bods_disruptions_retriever_function" {
   function_name = "integrated-data-bods-disruptions-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-disruptions-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 256
   schedule      = var.retriever_schedule
@@ -99,7 +99,7 @@ module "integrated_data_bods_disruptions_processor_function" {
   function_name   = "integrated-data-bods-disruptions-processor"
   zip_path        = "${path.module}/../../../../src/functions/dist/bods-disruptions-processor.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 60
   memory          = 1024
   needs_db_access = var.environment != "local"

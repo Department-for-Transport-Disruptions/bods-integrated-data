@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -16,7 +16,7 @@ module "integrated_data_cancellations_data_endpoint_function" {
   function_name    = "integrated-data-cancellations-data-endpoint"
   zip_path         = "${path.module}/../../../../src/functions/dist/cancellations-data-endpoint.zip"
   handler          = "index.handler"
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = 60
   memory           = 512
   needs_vpc_access = true

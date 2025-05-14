@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -49,7 +49,7 @@ module "integrated_data_bods_fares_retriever_function" {
   function_name = "integrated-data-bods-fares-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-fares-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 
@@ -76,7 +76,7 @@ module "integrated_data_bods_fares_unzipper_function" {
   function_name = "integrated-data-bods-fares-unzipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-fares-unzipper.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 

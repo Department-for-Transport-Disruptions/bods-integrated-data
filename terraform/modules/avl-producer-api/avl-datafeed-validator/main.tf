@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -17,7 +17,7 @@ module "avl_datafeed_validator" {
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-datafeed-validator.zip"
   handler       = "index.handler"
   memory        = 512
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
 
   permissions = [

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -48,7 +48,7 @@ module "integrated_data_gtfs_rt_downloader_function" {
   function_name     = "integrated-data-gtfs-rt-downloader"
   zip_path          = "${path.module}/../../../../src/functions/dist/gtfs-rt-downloader.zip"
   handler           = "index.handler"
-  runtime           = "nodejs20.x"
+  runtime           = "nodejs22.x"
   timeout           = 120
   memory            = 1024
   ephemeral_storage = 5120
@@ -100,7 +100,7 @@ module "integrated_data_gtfs_rt_service_alerts_downloader_function" {
   function_name   = "integrated-data-gtfs-rt-service-alerts-downloader"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-rt-service-alerts-downloader.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 120
   memory          = 1024
   needs_db_access = var.environment != "local"

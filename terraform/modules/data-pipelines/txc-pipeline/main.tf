@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -109,7 +109,7 @@ module "integrated_data_bods_txc_retriever_function" {
   function_name = "integrated-data-bods-txc-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-txc-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 
@@ -138,7 +138,7 @@ module "integrated_data_tnds_txc_retriever_function" {
   function_name = "integrated-data-tnds-txc-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/tnds-txc-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 
@@ -174,7 +174,7 @@ module "integrated_data_unzipper_function" {
   function_name = "integrated-data-txc-unzipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/unzipper.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 3072
 
@@ -215,7 +215,7 @@ module "integrated_data_txc_processor_function" {
   function_name   = "integrated-data-txc-processor"
   zip_path        = "${path.module}/../../../../src/functions/dist/txc-processor.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 600
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -262,7 +262,7 @@ module "integrated_data_gtfs_trip_table_creator_function" {
   function_name   = "integrated-data-gtfs-trip-table-creator"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
   handler         = "index.tripTableHandler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 900
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -298,7 +298,7 @@ module "integrated_data_gtfs_timetables_generator_function" {
   function_name   = "integrated-data-gtfs-timetables-generator"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
   handler         = "index.exportHandler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 900
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -336,7 +336,7 @@ module "integrated_data_gtfs_timetables_zipper_function" {
   function_name = "integrated-data-gtfs-timetables-zipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/gtfs-timetables-generator.zip"
   handler       = "index.zipHandler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 900
   memory        = 2048
 
@@ -392,7 +392,7 @@ module "integrated_data_gtfs_timetables_trip_mapper_function" {
   function_name   = "integrated-data-gtfs-timetables-trip-mapper"
   zip_path        = "${path.module}/../../../../src/functions/dist/gtfs-timetables-trip-mapper.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 900
   memory          = 2048
   needs_db_access = var.environment != "local"

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -16,7 +16,7 @@ module "integrated_data_db_migrator_migrate_function" {
   function_name   = "integrated-data-db-migrator-migrate"
   zip_path        = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 900
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -50,7 +50,7 @@ module "integrated_data_db_migrator_rollback_function" {
   function_name   = "integrated-data-db-migrator-rollback"
   zip_path        = "${path.module}/../../../../src/functions/dist/db-migrator.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 900
   memory          = 2048
   needs_db_access = var.environment != "local"

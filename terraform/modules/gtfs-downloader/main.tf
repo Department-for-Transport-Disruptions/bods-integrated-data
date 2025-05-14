@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -23,7 +23,7 @@ module "integrated_data_gtfs_downloader_function" {
   function_name = "integrated-data-gtfs-downloader"
   zip_path      = "${path.module}/../../../src/functions/dist/gtfs-downloader.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 
@@ -52,7 +52,7 @@ module "integrated_data_gtfs_region_retriever_function" {
   function_name = "integrated-data-gtfs-region-retriever"
   zip_path      = "${path.module}/../../../src/functions/dist/gtfs-timetables-region-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 512
 

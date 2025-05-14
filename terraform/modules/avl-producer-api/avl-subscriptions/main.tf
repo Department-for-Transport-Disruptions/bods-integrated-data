@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -23,7 +23,7 @@ module "integrated_data_avl_subscriptions_function" {
   function_name = "integrated-data-avl-subscriptions"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-subscriptions.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 512
 
