@@ -6,6 +6,8 @@ export default defineConfig({
         environment: "node",
         coverage: {
             enabled: true,
+            provider: "v8",
+            include: ["**/*.ts"],
             exclude: ["**/esbuild.mjs", "**/functions/db-migrator/migrations/*", "**/coverage/**"],
         },
     },

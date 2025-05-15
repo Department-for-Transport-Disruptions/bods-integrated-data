@@ -123,7 +123,8 @@ export const handler: Handler = async (event, context) => {
                 } catch (e) {
                     if (e instanceof AxiosError) {
                         logger.error(
-                            `There was an error when resubscribing to the data producer - subscriptionId: ${subscription.PK}, code: ${e.code}, message: ${e.message}`,
+                            e.toJSON(),
+                            `There was an error when resubscribing to the data producer - subscriptionId: ${subscription.PK}`,
                         );
                     } else {
                         logger.error(e, "There was an error when resubscribing to the data producer");

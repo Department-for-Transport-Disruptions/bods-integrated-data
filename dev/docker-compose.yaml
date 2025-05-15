@@ -33,36 +33,6 @@ services:
     networks:
       - bods_integrated_data_network
 
-  siri-vm-generator:
-    container_name: bods_integrated_data_siri_vm_generator
-    image: siri-vm-generator:latest
-    environment:
-      - IS_DOCKER=true
-      - STAGE=local
-      - GTFS_RT_BUCKET_NAME=integrated-data-gtfs-rt-local
-      - SIRI_VM_BUCKET_NAME=integrated-data-avl-generated-siri-vm-local
-      - PROCESSOR_FREQUENCY_IN_SECONDS=30
-      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
-      - SIRI_VM_SNS_TOPIC_ARN=test
-    volumes:
-      - ./:/app/data
-    networks:
-      - bods_integrated_data_network
-
-  siri-sx-generator:
-    container_name: bods_integrated_data_siri_sx_generator
-    image: siri-sx-generator:latest
-    environment:
-      - IS_DOCKER=true
-      - STAGE=local
-      - BUCKET_NAME=integrated-data-cancellations-generated-siri-sx-local
-      - GENERATOR_FREQUENCY_IN_SECONDS=30
-      - CLEARDOWN_FREQUENCY_IN_SECONDS=60
-    volumes:
-      - ./:/app/data
-    networks:
-      - bods_integrated_data_network
-
 networks:
   bods_integrated_data_network:
     driver: bridge

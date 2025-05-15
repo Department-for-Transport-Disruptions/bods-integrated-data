@@ -9,8 +9,6 @@ terraform {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
 resource "aws_s3_bucket" "integrated_data_gtfs_rt_bucket" {
   bucket = "integrated-data-gtfs-rt-${var.environment}"
 }

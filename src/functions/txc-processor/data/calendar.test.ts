@@ -691,7 +691,7 @@ describe("calendar", () => {
                     saturday: 1,
                     sunday: 1,
                     start_date: "20240410",
-                    end_date: "20250101",
+                    end_date: "20250110",
                     calendar_hash: expect.any(String),
                 },
                 calendarDates: [],
@@ -727,7 +727,36 @@ describe("calendar", () => {
             });
         });
 
-        it("sets end date to 9 months from the current date if no operating period end date set", () => {
+        it("handles start and end dates more than 9 months in future", () => {
+            const formattedCalendar = formatCalendar(
+                {
+                    RegularDayType: {
+                        DaysOfWeek: {
+                            Weekend: "",
+                        },
+                    },
+                },
+                {
+                    StartDate: "2026-06-10",
+                    EndDate: "2026-06-15",
+                },
+                bankHolidaysJson,
+            );
+
+            expect(formattedCalendar).toEqual({
+                calendar: {
+                    ...defaultDaysOfOperation,
+                    saturday: 1,
+                    sunday: 1,
+                    start_date: "20260610",
+                    end_date: "20260615",
+                    calendar_hash: expect.any(String),
+                },
+                calendarDates: [],
+            });
+        });
+
+        it("sets end date to 9 months from the start date if no operating period end date set", () => {
             const formattedCalendar = formatCalendar(
                 {
                     RegularDayType: {
@@ -748,7 +777,7 @@ describe("calendar", () => {
                     saturday: 1,
                     sunday: 1,
                     start_date: "20240604",
-                    end_date: "20250101",
+                    end_date: "20250304",
                     calendar_hash: expect.any(String),
                 },
                 calendarDates: [],

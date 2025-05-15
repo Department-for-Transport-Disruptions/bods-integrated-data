@@ -115,7 +115,8 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
                 await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
 
                 logger.error(
-                    `There was an error when sending the subscription request to the data producer - subscriptionId: ${subscriptionId}, code: ${e.code}, message: ${e.message}`,
+                    e.toJSON(),
+                    `There was an error when sending the subscription request to the data producer - subscriptionId: ${subscriptionId}`,
                 );
             }
             await putMetricData("custom/AVLMetrics", [
