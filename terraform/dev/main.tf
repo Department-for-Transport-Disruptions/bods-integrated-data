@@ -480,4 +480,5 @@ module "integrated_data_txc_analysis" {
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
+  enable_cancellations = true
 }

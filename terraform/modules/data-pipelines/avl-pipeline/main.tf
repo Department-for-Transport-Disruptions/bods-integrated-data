@@ -356,7 +356,7 @@ module "integrated_data_avl_data_consumer_subscriptions" {
   avl_producer_subscription_table = var.avl_subscription_table_name
   alarm_topic_arn                 = var.alarm_topic_arn
   ok_topic_arn                    = var.ok_topic_arn
-  enable_cancellations            = var.enable_cancellations ? "true" : "false"
+  enable_cancellations            = var.enable_cancellations
 }
 
 module "integrated_data_siri_vm_generator_lambda" {

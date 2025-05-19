@@ -132,7 +132,7 @@ export const processSqsRecord = async (
                 });
             }
 
-            if (process.env.enableCancellations === "true" && avlCancellations.length > 0) {
+            if (process.env.ENABLE_CANCELLATIONS === "true" && avlCancellations.length > 0) {
                 await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
                 logger.info("AVL cancellations processed successfully", {
                     subscriptionId,
