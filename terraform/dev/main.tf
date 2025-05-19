@@ -199,6 +199,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host                     = module.integrated_data_aurora_db_dev.db_reader_host
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
+  enable_cancellations               = true
 }
 
 module "integrated_data_avl_pipeline" {
@@ -480,5 +481,4 @@ module "integrated_data_txc_analysis" {
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
-  enable_cancellations = true
 }
