@@ -192,7 +192,6 @@ module "integrated_data_siri_sx_generator_lambda" {
   ]
 
   env_vars = {
-    STAGE          = var.environment
     DB_READER_HOST = var.db_reader_host
     DB_PORT        = var.db_port
     DB_SECRET_ARN  = var.db_secret_arn
