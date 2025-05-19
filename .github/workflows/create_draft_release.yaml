@@ -9,33 +9,35 @@ on:
       is_hotfix:
         type: boolean
         description: Create as hotfix draft release
-
-permissions:
-  id-token: write # This is required for aws oidc connection
-  contents: read # This is required for actions/checkout
-
 jobs:
   create_draft_release:
     runs-on: ubuntu-24.04
     name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
-      contents: write
+      contents: write # This is required to create the release
+      id-token: write # This is required for aws oidc connection
     environment: prod
-    defaults:
-      run:
-        working-directory: ./terraform
-
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+          role-session-name: GitHub-OIDC-TERRAFORM
+
       - name: Terraform init
-        run: terraform -chdir=prod init
+        run: terraform -chdir=terraform/prod init
 
       - name: Terraform plan
-        run: terraform -chdir=prod plan -lock-timeout=5m -input=false -no-color
+        run: terraform -chdir=terraform/prod plan -lock-timeout=5m -input=false -no-color
 
       - name: Bump version
         id: tag_version
