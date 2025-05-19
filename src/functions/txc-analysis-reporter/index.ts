@@ -90,10 +90,14 @@ const createCsv = <T extends Record<string, U>, U>(data: T[]) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME } = process.env;
+    const { STAGE, TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME, DQS_BUCKET_NAME } = process.env;
 
     if (!TXC_OBSERVATION_TABLE_NAME || !TXC_ANALYSIS_BUCKET_NAME) {
         throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set");
+    }
+
+    if (STAGE === "prod" && !DQS_BUCKET_NAME) {
+        throw new Error("Missing env var - DQS_BUCKET_NAME must be set for the prod environment");
     }
 
     const date = event.date;
@@ -238,10 +242,27 @@ export const handler: Handler = async (event, context) => {
         logger.error(error, "Error creating zip file");
     });
 
+    const dqsArchive = archiver("zip", {});
+
+    dqsArchive.on("error", (error) => {
+        logger.error(error, "Error creating zip file for DQS");
+    });
+
     try {
         const passThrough = new PassThrough();
         archive.pipe(passThrough);
         const s3Upload = startS3Upload(TXC_ANALYSIS_BUCKET_NAME, `${date}.zip`, passThrough, "application/zip");
+
+        if (STAGE === "prod" && DQS_BUCKET_NAME) {
+            const passThroughForDqs = new PassThrough();
+            dqsArchive.pipe(passThroughForDqs);
+            const s3UploadToDqsService = startS3Upload(
+                DQS_BUCKET_NAME,
+                `${date}.zip`,
+                passThroughForDqs,
+                "application/zip",
+            );
+        }
 
         const observationByDataSourceItemsCsv = createCsv(Object.values(observationByDataSourceMap));
 
@@ -274,6 +295,10 @@ export const handler: Handler = async (event, context) => {
 
             if (observationByObservationTypeCsv) {
                 archive.append(observationByObservationTypeCsv, {
+                    name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
+                });
+
+                dqsArchive.append(observationByObservationTypeCsv, {
                     name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
                 });
             }
