@@ -233,3 +233,73 @@ resource "aws_iam_role_policy_attachment" "integrated_data_txc_analysis_sfn_poli
   policy_arn = aws_iam_policy.integrated_data_txc_analysis_sfn_policy.arn
   role       = aws_iam_role.integrated_data_txc_analysis_sfn_role.name
 }
+
+resource "aws_iam_policy" "integrated_data_txc_analysis_sfn_schedule_policy" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-txc-analysis-sfn-schedule-policy-${var.environment}"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "states:StartExecution"
+        ],
+        "Resource" : [
+          aws_sfn_state_machine.integrated_data_txc_analysis_sfn.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "integrated_data_txc_analysis_sfn_schedule_role" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-txc-analysis-sfn-schedule-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "scheduler.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole",
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "integrated_data_txc_analysis_sfn_schedule_policy_attachment" {
+  count      = var.schedule != null ? 1 : 0
+  policy_arn = aws_iam_policy.integrated_data_txc_analysis_sfn_schedule_policy[0].arn
+  role       = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].name
+}
+
+resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-timetables-sfn-schedule-${var.environment}"
+
+  schedule_expression_timezone = "Europe/London"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = var.schedule
+
+  target {
+    arn      = aws_sfn_state_machine.integrated_data_txc_analysis_sfn.arn
+    role_arn = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].arn
+  }
+}

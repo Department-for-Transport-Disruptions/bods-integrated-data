@@ -63,7 +63,7 @@ type ObservationSummaryByObservationType = {
     Quantity: number;
 };
 
-type CriticalObservationByObservationType = {
+type CriticalAndAdvisoryObservationByObservationType = {
     "Dataset Date": string;
     Region: string;
     File: string;
@@ -107,7 +107,11 @@ export const handler: Handler = async (event, context) => {
     const observationByObservationTypesMap: Record<string, Record<string, ObservationSummaryByObservationType>> = {};
     const criticalObservationByObservationTypesMap: Record<
         string,
-        Record<string, CriticalObservationByObservationType>
+        Record<string, CriticalAndAdvisoryObservationByObservationType>
+    > = {};
+    const advisoryObservationByObservationTypesMap: Record<
+        string,
+        Record<string, CriticalAndAdvisoryObservationByObservationType>
     > = {};
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
@@ -229,6 +233,25 @@ export const handler: Handler = async (event, context) => {
                             ...observation.extraColumns,
                         };
                     }
+
+                    if (observation.importance === "advisory") {
+                        if (!advisoryObservationByObservationTypesMap[observationType]) {
+                            advisoryObservationByObservationTypesMap[observationType] = {};
+                        }
+
+                        const observationKey = `${observation.PK}#${observation.SK}`;
+
+                        advisoryObservationByObservationTypesMap[observationType][observationKey] = {
+                            "Dataset Date": formattedDate,
+                            Region: observation.region,
+                            File: filename,
+                            "Data Source": dataSource,
+                            "National Operator Code": observation.noc,
+                            "Service Code": observation.serviceCode,
+                            "Line Name": observation.lineName,
+                            ...observation.extraColumns,
+                        };
+                    }
                 } catch (error) {
                     logger.error(error, "Error parsing dynamo item");
                 }
@@ -300,6 +323,18 @@ export const handler: Handler = async (event, context) => {
 
                 dqsArchive.append(observationByObservationTypeCsv, {
                     name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
+                });
+            }
+        }
+
+        for (const [observationType, observationByObservationTypeMap] of Object.entries(
+            advisoryObservationByObservationTypesMap,
+        )) {
+            const observationByObservationTypeCsv = createCsv(Object.values(observationByObservationTypeMap));
+
+            if (observationByObservationTypeCsv) {
+                archive.append(observationByObservationTypeCsv, {
+                    name: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
                 });
             }
         }
