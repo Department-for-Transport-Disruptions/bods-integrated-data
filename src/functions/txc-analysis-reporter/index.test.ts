@@ -14,6 +14,7 @@ describe("txc-analysis-reporter", () => {
             abortMock: vi.fn(),
             appendMock: vi.fn(),
             startS3Upload: vi.fn(),
+            putS3Object: vi.fn(),
         };
     });
 
@@ -31,6 +32,7 @@ describe("txc-analysis-reporter", () => {
         startS3Upload: mocks.startS3Upload.mockReturnValue({
             done: () => Promise.resolve(),
         }),
+        putS3Object: mocks.putS3Object.mockReturnValue(Promise.resolve),
     }));
 
     vi.mock("@bods-integrated-data/shared/logger", async (importOriginal) => ({
@@ -59,7 +61,19 @@ describe("txc-analysis-reporter", () => {
         );
     });
 
-    it("creates a report and uploads it to S3", async () => {
+    it("throws an error when the STAGE is prod and DQS_BUCKET_NAME is not provided", async () => {
+        process.env.STAGE = "prod";
+        await expect(handler(mockEvent, mockContext, mockCallback)).rejects.toThrow(
+            "Missing env var - DQS_BUCKET_NAME must be set for the prod environment",
+        );
+    });
+
+    it.each([
+        { STAGE: "test", DQS_BUCKET_NAME: "test-dqs-bucket" },
+        { STAGE: "prod", DQS_BUCKET_NAME: "test-dqs-bucket" },
+    ])("creates a report and uploads it to S3 including to DQS bucket for prod env", async (env) => {
+        process.env.STAGE = env.STAGE;
+        process.env.DQS_BUCKET_NAME = env.DQS_BUCKET_NAME;
         const mockObservations: DynamoDbObservation[] = [
             {
                 PK: "test-PK-1",
@@ -155,6 +169,25 @@ describe("txc-analysis-reporter", () => {
         expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent4, {
             name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
+        if (process.env.STAGE !== "prod") {
+            expect(mocks.putS3Object).not.toHaveBeenCalled();
+        }
+
+        if (process.env.STAGE === "prod") {
+            expect(mocks.putS3Object).toHaveBeenCalledWith({
+                Bucket: "test-dqs-bucket",
+                ContentType: "application/csv",
+                Key: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
+                Body: observationByObservationTypeCsvContent3,
+            });
+            expect(mocks.putS3Object).toHaveBeenCalledWith({
+                Bucket: "test-dqs-bucket",
+                ContentType: "application/csv",
+                Key: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
+                Body: observationByObservationTypeCsvContent4,
+            });
+            expect(mocks.putS3Object).toHaveBeenCalledTimes(2);
+        }
     });
 
     it("doesn't create a report when there are no observation summaries", async () => {

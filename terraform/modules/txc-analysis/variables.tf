@@ -35,3 +35,11 @@ variable "schedule" {
   nullable    = true
   default     = null
 }
+
+variable "dqs_bucket_name" {
+  type        = string
+  description = "Name of the DQS bucket to store TXC reports"
+  nullable    = true
+  default     = null
+}
+

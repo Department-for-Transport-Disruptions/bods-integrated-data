@@ -108,13 +108,21 @@ module "integrated_data_txc_analysis_reporter_function" {
       ],
       Effect   = "Allow",
       Resource = "${aws_s3_bucket.integrated_data_txc_analysis_bucket.arn}/*"
-    }
+    },
+    var.dqs_bucket_name != null ? {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect   = "Allow",
+      Resource = "${var.dqs_bucket_name}/*"
+    } : null,
   ]
 
   env_vars = {
     STAGE                      = var.environment
     TXC_OBSERVATION_TABLE_NAME = local.txc_observation_table_name
     TXC_ANALYSIS_BUCKET_NAME   = aws_s3_bucket.integrated_data_txc_analysis_bucket.id
+    DQS_BUCKET_NAME            = var.dqs_bucket_name
   }
 }
 

@@ -2,7 +2,7 @@ import { PassThrough } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { scanDynamo } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { putS3Object, startS3Upload } from "@bods-integrated-data/shared/s3";
 import { dynamoDbObservationSchema } from "@bods-integrated-data/shared/txc-analysis/schema";
 import archiver from "archiver";
 import { Handler } from "aws-lambda";
@@ -265,27 +265,12 @@ export const handler: Handler = async (event, context) => {
         logger.error(error, "Error creating zip file");
     });
 
-    const dqsArchive = archiver("zip", {});
-
-    dqsArchive.on("error", (error) => {
-        logger.error(error, "Error creating zip file for DQS");
-    });
-
     try {
         const passThrough = new PassThrough();
         archive.pipe(passThrough);
         const s3Upload = startS3Upload(TXC_ANALYSIS_BUCKET_NAME, `${date}.zip`, passThrough, "application/zip");
 
-        if (STAGE === "prod" && DQS_BUCKET_NAME) {
-            const passThroughForDqs = new PassThrough();
-            dqsArchive.pipe(passThroughForDqs);
-            const s3UploadToDqsService = startS3Upload(
-                DQS_BUCKET_NAME,
-                `${date}.zip`,
-                passThroughForDqs,
-                "application/zip",
-            );
-        }
+        const dqsS3Promises = [];
 
         const observationByDataSourceItemsCsv = createCsv(Object.values(observationByDataSourceMap));
 
@@ -321,9 +306,16 @@ export const handler: Handler = async (event, context) => {
                     name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
                 });
 
-                dqsArchive.append(observationByObservationTypeCsv, {
-                    name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
-                });
+                if (STAGE === "prod") {
+                    dqsS3Promises.push(
+                        putS3Object({
+                            Bucket: DQS_BUCKET_NAME,
+                            Key: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
+                            ContentType: "application/csv",
+                            Body: observationByObservationTypeCsv,
+                        }),
+                    );
+                }
             }
         }
 
@@ -336,11 +328,26 @@ export const handler: Handler = async (event, context) => {
                 archive.append(observationByObservationTypeCsv, {
                     name: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
                 });
+
+                if (STAGE === "prod") {
+                    dqsS3Promises.push(
+                        putS3Object({
+                            Bucket: DQS_BUCKET_NAME,
+                            Key: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
+                            ContentType: "application/csv",
+                            Body: observationByObservationTypeCsv,
+                        }),
+                    );
+                }
             }
         }
 
         archive.finalize();
         await s3Upload.done();
+
+        if (dqsS3Promises.length > 0) {
+            await Promise.all(dqsS3Promises);
+        }
     } catch (error) {
         archive.abort();
         logger.error(error, "Error creating and uploading zip file");
