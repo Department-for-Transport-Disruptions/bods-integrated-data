@@ -1,5 +1,8 @@
 name: Create draft release
 
+env:
+  TERRAFORM_VERSION: 1.6.6
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,14 +10,33 @@ on:
         type: boolean
         description: Create as hotfix draft release
 
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: read # This is required for actions/checkout
+
 jobs:
   create_draft_release:
     runs-on: ubuntu-24.04
     name: ${{ inputs.is_hotfix && 'Create Hotfix Draft Release' || 'Create Draft Release' }}
     permissions:
       contents: write
+    environment: prod
+    defaults:
+      run:
+        working-directory: ./terraform
 
     steps:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init
+        run: terraform -chdir=prod init
+
+      - name: Terraform plan
+        run: terraform -chdir=prod plan -lock-timeout=5m -input=false -no-color
+
       - name: Bump version
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
