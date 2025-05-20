@@ -33,6 +33,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_gtfs_rt_bucket
   bucket = aws_s3_bucket.integrated_data_gtfs_rt_bucket.id
   rule {
     id = "config"
+
+    filter {
+      prefix = ""
+    }
+
     noncurrent_version_transition {
       noncurrent_days = 30
       storage_class   = "STANDARD_IA"

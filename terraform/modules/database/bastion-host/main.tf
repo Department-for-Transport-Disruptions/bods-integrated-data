@@ -11,11 +11,7 @@ terraform {
 
 data "aws_ami" "amzn_linux_2023_ami" {
   most_recent = true
-
-  filter {
-    name   = "owner-alias"
-    values = ["amazon"]
-  }
+  owners      = ["amazon"]
 
   filter {
     name   = "name"
@@ -38,10 +34,19 @@ data "aws_iam_policy_document" "bastion_instance_trust_policy" {
 
 resource "aws_iam_role" "integrated_data_bastion_role" {
   assume_role_policy   = data.aws_iam_policy_document.bastion_instance_trust_policy.json
-  managed_policy_arns  = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore", "arn:aws:iam::aws:policy/EC2InstanceConnect"]
   max_session_duration = "3600"
   name                 = "integrated-data-bastion-role-${var.environment}"
   path                 = "/"
+}
+
+resource "aws_iam_role_policy_attachment" "integrated_data_bastion_role_ssm_policy_attachment" {
+  role       = aws_iam_role.integrated_data_bastion_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "integrated_data_bastion_role_ec2_connect_policy_attachment" {
+  role       = aws_iam_role.integrated_data_bastion_role.name
+  policy_arn = "arn:aws:iam::aws:policy/EC2InstanceConnect"
 }
 
 resource "aws_iam_instance_profile" "integrated_data_bastion_instance_profile" {

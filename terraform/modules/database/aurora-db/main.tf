@@ -84,8 +84,7 @@ resource "aws_iam_policy" "rds_s3_export_policy" {
 }
 
 resource "aws_iam_role" "rds_s3_export_role" {
-  name                = "integrated-data-rds-s3-export-role-${var.environment}"
-  managed_policy_arns = [aws_iam_policy.rds_s3_export_policy.arn]
+  name = "integrated-data-rds-s3-export-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -101,9 +100,13 @@ resource "aws_iam_role" "rds_s3_export_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "rds_s3_export_role_policy_attachment" {
+  role       = aws_iam_role.rds_s3_export_role.name
+  policy_arn = aws_iam_policy.rds_s3_export_policy.arn
+}
+
 resource "aws_iam_role" "rds_enhanced_monitoring_role" {
-  name                = "integrated-data-rds-enhanced-monitoring-role-${var.environment}"
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"]
+  name = "integrated-data-rds-enhanced-monitoring-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -125,6 +128,11 @@ resource "aws_iam_role" "rds_enhanced_monitoring_role" {
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring_role_policy_attachment" {
+  role       = aws_iam_role.rds_enhanced_monitoring_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
 resource "aws_rds_cluster" "integrated_data_rds_cluster" {
@@ -195,8 +203,7 @@ resource "aws_iam_policy" "rds_proxy_policy" {
 }
 
 resource "aws_iam_role" "rds_proxy_role" {
-  name                = "integrated-data-rds-proxy-role-${var.environment}"
-  managed_policy_arns = [aws_iam_policy.rds_proxy_policy.arn]
+  name = "integrated-data-rds-proxy-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
@@ -210,6 +217,11 @@ resource "aws_iam_role" "rds_proxy_role" {
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_proxy_role_policy_attachment" {
+  role       = aws_iam_role.rds_proxy_role.name
+  policy_arn = aws_iam_policy.rds_proxy_policy.arn
 }
 
 resource "aws_db_proxy" "integrated_data_rds_proxy" {
