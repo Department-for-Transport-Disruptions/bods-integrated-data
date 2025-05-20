@@ -346,7 +346,7 @@ export const handler: Handler = async (event, context) => {
         await s3Upload.done();
 
         if (dqsS3Promises.length > 0) {
-            await Promise.all(dqsS3Promises);
+            await Promise.allSettled(dqsS3Promises);
         }
     } catch (error) {
         archive.abort();
