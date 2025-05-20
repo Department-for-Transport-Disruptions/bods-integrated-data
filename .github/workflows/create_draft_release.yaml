@@ -67,7 +67,16 @@ jobs:
         run: terraform -chdir=terraform/prod init
 
       - name: Terraform plan
-        run: terraform -chdir=terraform/prod plan -lock-timeout=5m -input=false -no-color
+        run: terraform -chdir=terraform/prod plan -lock-timeout=5m -input=false -no-color -out .planfile
+
+      - name: Create formatted Terraform plan
+        uses: borchero/terraform-plan-comment@v2
+        with:
+          token: ${{ github.token }}
+          working-directory: ./terraform/prod
+          planfile: .planfile
+          skip-comment: true
+        continue-on-error: true
 
       - name: Bump version
         id: tag_version
