@@ -13,11 +13,24 @@ import { getDate } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
-import { SiriVM, SiriVehicleActivity, siriVmSchema } from "../schema";
+import {
+    SiriVM,
+    SiriVehicleActivity,
+    parseVehicleActivity,
+    parseVehicleActivityCancellation,
+    siriVmWithoutActivitiesSchema,
+} from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
 import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-validation-error.schema";
 import { publishToSnsTopic } from "../sns";
-import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriDatetime, runXmlLint } from "../utils";
+import {
+    CompleteSiriObject,
+    SubscriptionIdNotFoundError,
+    chunkArray,
+    formatSiriDatetime,
+    notEmpty,
+    runXmlLint,
+} from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";
 export const GENERATED_SIRI_VM_TFL_FILE_PATH = "SIRI-VM-TfL.xml";
@@ -450,6 +463,22 @@ export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Parti
     });
 };
 
+/**
+ * The purpose of this transformer is to filter out invalid AVLs
+ * and return the rest of the data as valid.
+ */
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export const mapVehicleActivities = (namespace: string, items: any[], errors?: AvlValidationError[]) =>
+    items.map((item, index) => parseVehicleActivity(item, index, errors, namespace));
+
+/**
+ * The purpose of this transformer is to filter out invalid AVL cancellation data
+ * and return the rest of the data as valid.
+ */
+export const mapVehicleActivityCancellations = (namespace: string, items: unknown[]) =>
+    items.map((item) => parseVehicleActivityCancellation(item, namespace));
+
 export const createSiriVm = (
     vehicleActivities: Partial<SiriVehicleActivity>[],
     requestMessageRef: string,
@@ -468,13 +497,33 @@ export const createSiriVm = (
                     RequestMessageRef: requestMessageRef,
                     ValidUntil: validUntilTime,
                     ShortestPossibleCycle: "PT5S",
-                    VehicleActivity: vehicleActivities as SiriVehicleActivity[],
+                    VehicleActivity: (vehicleActivities ?? []) as SiriVehicleActivity[],
                 },
             },
         },
     };
 
-    const verifiedObject = siriVmSchema().parse(siriVm);
+    const verifiedObject = siriVmWithoutActivitiesSchema.parse(siriVm);
+    const filteredObject: SiriVM = {
+        ...verifiedObject,
+        Siri: {
+            ...verifiedObject.Siri,
+            ServiceDelivery: {
+                ...verifiedObject.Siri.ServiceDelivery,
+                VehicleMonitoringDelivery: {
+                    ...verifiedObject.Siri.ServiceDelivery.VehicleMonitoringDelivery,
+                    VehicleActivity: mapVehicleActivities(
+                        "SiriVmVehicleActivitySchema",
+                        verifiedObject.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity ?? [],
+                    ).filter(notEmpty),
+                    VehicleActivityCancellation: mapVehicleActivityCancellations(
+                        "SiriVmVehicleActivityCancellationSchema",
+                        verifiedObject.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivityCancellation ?? [],
+                    ).filter(notEmpty),
+                },
+            },
+        },
+    };
 
     const completeObject: Partial<CompleteSiriObject<SiriVM["Siri"]>> = {
         Siri: {
@@ -482,7 +531,7 @@ export const createSiriVm = (
             "@_xmlns": "http://www.siri.org.uk/siri",
             "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
             "@_xsi:schemaLocation": "http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd",
-            ...verifiedObject.Siri,
+            ...filteredObject.Siri,
         },
     };
 
