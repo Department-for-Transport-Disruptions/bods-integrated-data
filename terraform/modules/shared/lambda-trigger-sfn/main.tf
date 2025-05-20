@@ -154,6 +154,7 @@ resource "aws_cloudwatch_event_rule" "lambda_trigger_sfn_schedule" {
   name                = "schedule-${aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.name}"
   description         = "Schedule for ${aws_sfn_state_machine.integrated_data_lambda_trigger_sfn.name}"
   schedule_expression = "rate(1 minute)"
+  state               = var.disable_trigger ? "DISABLED" : "ENABLED"
 }
 
 resource "aws_cloudwatch_event_target" "schedule_lambda_trigger_sfn" {
