@@ -3,7 +3,6 @@ import { sync as commandExistsSync } from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
-import { v5 as uuidv5 } from "uuid";
 import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
@@ -84,7 +83,7 @@ export const createSiriSx = (situations: Situation[], requestMessageRef: string,
                     Situations: {
                         PtSituationElement: situations.map((situation) => ({
                             ...situation.situation,
-                            SituationNumber: uuidv5(situation.situation_number, uuidv5.URL),
+                            SituationNumber: situation.display_id,
                         })),
                     },
                 },
