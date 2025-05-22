@@ -285,10 +285,10 @@ resource "aws_iam_role_policy_attachment" "integrated_data_txc_analysis_sfn_sche
   role       = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].name
 }
 
-resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
+resource "aws_scheduler_schedule" "tcx_analysis_sfn_schedule" {
   count = var.schedule != null ? 1 : 0
 
-  name = "integrated-data-timetables-sfn-schedule-${var.environment}"
+  name = "integrated-data-txc-analysis-sfn-schedule-${var.environment}"
 
   schedule_expression_timezone = "Europe/London"
 
