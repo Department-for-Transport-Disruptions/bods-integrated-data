@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -39,6 +39,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetable_
   bucket = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.id
   rule {
     id = "config"
+
+    filter {
+      prefix = ""
+    }
+
     expiration {
       days = 30
     }
@@ -50,6 +55,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetable_
   bucket = aws_s3_bucket.integrated_data_tfl_timetable_bucket.id
   rule {
     id = "config"
+
+    filter {
+      prefix = ""
+    }
+
     expiration {
       days = 30
     }
