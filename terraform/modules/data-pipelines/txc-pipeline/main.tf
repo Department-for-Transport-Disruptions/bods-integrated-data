@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -25,6 +25,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_gtfs_timetable
   bucket = aws_s3_bucket.integrated_data_gtfs_timetables_bucket.id
   rule {
     id = "config"
+
+    filter {
+      prefix = ""
+    }
+
     noncurrent_version_transition {
       noncurrent_days = 30
       storage_class   = "STANDARD_IA"

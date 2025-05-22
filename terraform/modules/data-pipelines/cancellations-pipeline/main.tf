@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -151,11 +151,20 @@ resource "aws_iam_role" "siri_sx_generator_ecs_execution_role" {
       }
     ]
   })
+}
 
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
-    aws_iam_policy.siri_sx_generator_ecs_execution_policy[0].arn
-  ]
+resource "aws_iam_role_policy_attachment" "siri_sx_generator_ecs_execution_service_role_policy_attachment" {
+  count = var.environment == "prod" ? 1 : 0
+
+  role       = aws_iam_role.siri_sx_generator_ecs_execution_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "siri_sx_generator_ecs_execution_role_policy_attachment" {
+  count = var.environment == "prod" ? 1 : 0
+
+  role       = aws_iam_role.siri_sx_generator_ecs_execution_role[0].name
+  policy_arn = aws_iam_policy.siri_sx_generator_ecs_execution_policy[0].arn
 }
 
 resource "aws_iam_policy" "siri_sx_generator_ecs_task_policy" {
@@ -206,8 +215,13 @@ resource "aws_iam_role" "siri_sx_generator_ecs_task_role" {
       }
     ]
   })
+}
 
-  managed_policy_arns = [aws_iam_policy.siri_sx_generator_ecs_task_policy[0].arn]
+resource "aws_iam_role_policy_attachment" "siri_sx_generator_ecs_task_role_policy_attachment" {
+  count = var.environment == "prod" ? 1 : 0
+
+  role       = aws_iam_role.siri_sx_generator_ecs_task_role[0].name
+  policy_arn = aws_iam_policy.siri_sx_generator_ecs_task_policy[0].arn
 }
 
 resource "aws_security_group" "siri_sx_generator_sg" {
