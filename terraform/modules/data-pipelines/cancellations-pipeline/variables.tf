@@ -13,6 +13,11 @@ variable "aws_region" {
   description = "AWS region"
 }
 
+variable "sg_id" {
+  type     = string
+  default  = null
+  nullable = true
+}
 
 variable "ok_topic_arn" {
   type        = string
@@ -58,9 +63,43 @@ variable "db_sg_id" {
   description = "Database Security Group ID"
 }
 
+variable "siri_sx_generator_image_url" {
+  type        = string
+  description = "URL for the SIRI-SX Generator image in ECR"
+  default     = null
+  nullable    = true
+}
+
 variable "siri_sx_generator_frequency" {
   type        = number
   description = "Frequency in seconds at which to run the SIRI-SX Generator"
+}
+
+variable "situations_cleardown_frequency" {
+  type        = number
+  description = "Frequency in seconds at which to run the Situations Cleardown process"
+  default     = null
+  nullable    = true
+}
+
+variable "siri_sx_generator_cpu" {
+  type        = number
+  description = "CPU in MB to assign to the SIRI-SX Generator task"
+  default     = null
+  nullable    = true
+}
+
+variable "siri_sx_generator_memory" {
+  type        = number
+  description = "Memory in MB to assign to the SIRI-SX Generator task"
+  default     = null
+  nullable    = true
+}
+
+variable "cluster_id" {
+  type     = string
+  default  = null
+  nullable = true
 }
 
 variable "private_subnet_ids" {
