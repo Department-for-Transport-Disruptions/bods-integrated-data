@@ -26,7 +26,7 @@ export const handler: Handler = async (event, context) => {
 
     if (!TXC_OBSERVATION_TABLE_NAME || !NAPTAN_BUCKET_NAME || !NPTG_BUCKET_NAME) {
         throw new Error(
-            "Missing env vars - TXC_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME and NPTG_BUCKET_NAME must be set",
+            "Missing env vars - TXC_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME and NPTG_BUCKET_NAME must be set.",
         );
     }
 

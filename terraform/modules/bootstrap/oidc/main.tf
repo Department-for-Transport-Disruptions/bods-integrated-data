@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -165,7 +165,9 @@ resource "aws_iam_role" "oidc_github_actions_role" {
   name               = "integrated-data-github-actions-role-${var.environment}"
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.github_oidc_assume_role_policy.json
-  managed_policy_arns = [
-    aws_iam_policy.integrated_data_oidc_github_actions_policy.arn
-  ]
+}
+
+resource "aws_iam_role_policy_attachment" "oidc_github_actions_policy_attachment" {
+  role       = aws_iam_role.oidc_github_actions_role.name
+  policy_arn = aws_iam_policy.integrated_data_oidc_github_actions_policy.arn
 }
