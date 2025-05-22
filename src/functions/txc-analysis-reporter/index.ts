@@ -93,7 +93,7 @@ export const handler: Handler = async (event, context) => {
     const { TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME } = process.env;
 
     if (!TXC_OBSERVATION_TABLE_NAME || !TXC_ANALYSIS_BUCKET_NAME) {
-        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set");
+        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set.");
     }
 
     const date = event.date;
