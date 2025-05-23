@@ -309,6 +309,8 @@ export enum RoutePointType {
     alteredStartPoint = "alteredStartPoint",
     alteredDestination = "alteredDestination",
     undefinedRoutePoint = "undefinedRoutePoint",
+    cancelled = "cancelled",
+    normalService = "normalService", // This and cancelled are not allowed by the xsd but are used by some providers so need to be converted
 }
 
 export enum FacilityStatus {

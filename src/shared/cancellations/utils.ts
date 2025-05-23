@@ -81,7 +81,10 @@ export const createSiriSx = (situations: Situation[], requestMessageRef: string,
                 SituationExchangeDelivery: {
                     ResponseTimestamp: currentTime,
                     Situations: {
-                        PtSituationElement: situations.map((situation) => situation.situation),
+                        PtSituationElement: situations.map((situation) => ({
+                            ...situation.situation,
+                            SituationNumber: situation.display_id,
+                        })),
                     },
                 },
             },
