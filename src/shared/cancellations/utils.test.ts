@@ -32,6 +32,7 @@ describe("cancelllations utils", () => {
                 producer_ref: "p-1",
                 situation_number: "s-1",
                 version: 1,
+                display_id: "display-id-1",
                 situation: {
                     CreationTime: timestamp.toISOString(),
                     ParticipantRef: "par-1",
@@ -57,7 +58,7 @@ describe("cancelllations utils", () => {
                 end_time: timestamp.add(10, "years").toISOString(),
             };
 
-            const siriSxXml = `<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd"><ServiceDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><ProducerRef>DepartmentForTransport</ProducerRef><ResponseMessageIdentifier>ref</ResponseMessageIdentifier><SituationExchangeDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><Situations><PtSituationElement><CreationTime>2024-03-11T15:20:02.093Z</CreationTime><ParticipantRef>par-1</ParticipantRef><SituationNumber>s-1</SituationNumber><Source><SourceType>other</SourceType></Source><VersionedAtTime>2024-03-11T15:20:02.093Z</VersionedAtTime><Progress>closed</Progress><MiscellaneousReason>accident</MiscellaneousReason><Affects><VehicleJourneys><AffectedVehicleJourney><VehicleJourneyRef>vj-1</VehicleJourneyRef><Route></Route></AffectedVehicleJourney></VehicleJourneys></Affects></PtSituationElement></Situations></SituationExchangeDelivery></ServiceDelivery></Siri>`;
+            const siriSxXml = `<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd"><ServiceDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><ProducerRef>DepartmentForTransport</ProducerRef><ResponseMessageIdentifier>ref</ResponseMessageIdentifier><SituationExchangeDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><Situations><PtSituationElement><CreationTime>2024-03-11T15:20:02.093Z</CreationTime><ParticipantRef>par-1</ParticipantRef><SituationNumber>display-id-1</SituationNumber><Source><SourceType>other</SourceType></Source><VersionedAtTime>2024-03-11T15:20:02.093Z</VersionedAtTime><Progress>closed</Progress><MiscellaneousReason>accident</MiscellaneousReason><Affects><VehicleJourneys><AffectedVehicleJourney><VehicleJourneyRef>vj-1</VehicleJourneyRef><Route></Route></AffectedVehicleJourney></VehicleJourneys></Affects></PtSituationElement></Situations></SituationExchangeDelivery></ServiceDelivery></Siri>`;
 
             const result = createSiriSx([situation], "ref", timestamp);
             expect(putMetricDataSpy).not.toHaveBeenCalled();

@@ -387,7 +387,6 @@ module "integrated_data_cancellations_pipeline" {
   aws_account_id                        = data.aws_caller_identity.current.account_id
   aws_region                            = data.aws_region.current.name
   vpc_id                                = module.integrated_data_vpc.vpc_id
-  sg_id                                 = module.integrated_data_vpc.default_sg_id
   private_subnet_ids                    = module.integrated_data_vpc.private_subnet_ids
   db_secret_arn                         = module.integrated_data_aurora_db.db_secret_arn
   db_sg_id                              = module.integrated_data_aurora_db.db_sg_id
@@ -397,12 +396,7 @@ module "integrated_data_cancellations_pipeline" {
   ok_topic_arn                          = module.integrated_data_monitoring.ok_topic_arn
   cancellations_subscription_table_name = module.integrated_data_cancellations_data_producer_api.subscriptions_table_name
   cancellations_errors_table_name       = module.integrated_data_cancellations_data_producer_api.errors_table_name
-  cluster_id                            = module.integrated_data_ecs_cluster.cluster_id
-  siri_sx_generator_cpu                 = 2048
-  siri_sx_generator_frequency           = 10
-  siri_sx_generator_image_url           = local.secrets["siri_sx_generator_image_url"]
-  siri_sx_generator_memory              = 4096
-  situations_cleardown_frequency        = 30
+  siri_sx_generator_frequency           = 30
 }
 
 module "integrated_data_cancellations_data_producer_api" {
