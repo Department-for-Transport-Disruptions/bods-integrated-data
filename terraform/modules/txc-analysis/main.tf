@@ -96,7 +96,7 @@ module "integrated_data_txc_analysis_reporter_function" {
   timeout       = 900
   memory        = 4096
 
-  permissions = [
+  permissions = concat([
     {
       Action   = ["dynamodb:Scan"],
       Effect   = "Allow",
@@ -108,15 +108,15 @@ module "integrated_data_txc_analysis_reporter_function" {
       ],
       Effect   = "Allow",
       Resource = "${aws_s3_bucket.integrated_data_txc_analysis_bucket.arn}/*"
-    },
-    var.dqs_bucket_name != null ? {
+    }],
+    var.dqs_bucket_name != null ? [{
       Action = [
         "s3:PutObject",
       ],
       Effect   = "Allow",
       Resource = "${var.dqs_bucket_name}/*"
-    } : null,
-  ]
+    }] : [],
+  )
 
   env_vars = {
     STAGE                      = var.environment
