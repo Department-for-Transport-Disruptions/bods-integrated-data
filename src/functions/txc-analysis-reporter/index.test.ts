@@ -44,6 +44,69 @@ describe("txc-analysis-reporter", () => {
         },
     }));
 
+    const mockObservations: DynamoDbObservation[] = [
+        {
+            PK: "test-PK-1",
+            SK: "test-SK-1",
+            dataSource: "test-dataSource-1",
+            noc: "test-noc-1",
+            region: "test-region-1",
+            importance: "critical",
+            category: "dataset",
+            observation: "Duplicate journey",
+            serviceCode: "test-service-1",
+            lineName: "test-line-1",
+            details: "test-details-1",
+            extraColumns: {
+                "Extra Column": "test-extra-column-1",
+            },
+        },
+        {
+            PK: "test-PK-1",
+            SK: "test-SK-2",
+            dataSource: "test-dataSource-2",
+            noc: "test-noc-2",
+            region: "test-region-2",
+            importance: "advisory",
+            category: "dataset",
+            observation: "First stop is not a timing point",
+            serviceCode: "test-service-2",
+            lineName: "test-line-2",
+            details: "test-details-2",
+        },
+        {
+            PK: "test-PK-1",
+            SK: "test-SK-3",
+            dataSource: "test-dataSource-2",
+            noc: "test-noc-2",
+            region: "test-region-2",
+            importance: "advisory",
+            category: "dataset",
+            observation: "First stop is not a timing point",
+            serviceCode: "test-service-2",
+            lineName: "test-line-3",
+            details: "test-details-2",
+        },
+    ];
+
+    const observationSummariesByDataSourceCsvContent =
+        "Dataset Date,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-dataSource-1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0\r\n08/01/2025,test-dataSource-2,2,0,2,0,2,0,0,0,0,0,0,0,0,0,0\r\n";
+
+    const observationSummariesByFileCsvContent =
+        "Dataset Date,Region,File,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,3,1,2,0,2,0,0,0,0,0,0,0,1,0,0\r\n";
+
+    const observationByObservationTypeCsvContent1 =
+        "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,1\r\n";
+
+    const observationByObservationTypeCsvContent2 =
+        "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2,2\r\n";
+
+    const observationByObservationTypeCsvContent3 =
+        "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,test-extra-column-1\r\n";
+
+    const observationByObservationTypeCsvContent4 =
+        "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-3\r\n";
+
     beforeEach(() => {
         vi.clearAllMocks();
         process.env.TXC_OBSERVATION_TABLE_NAME = "test-table";
@@ -68,78 +131,11 @@ describe("txc-analysis-reporter", () => {
         );
     });
 
-    it.each([
-        { STAGE: "test", DQS_BUCKET_NAME: "test-dqs-bucket" },
-        { STAGE: "prod", DQS_BUCKET_NAME: "test-dqs-bucket" },
-    ])("creates a report and uploads it to S3 including to DQS bucket for prod env", async (env) => {
-        process.env.STAGE = env.STAGE;
-        process.env.DQS_BUCKET_NAME = env.DQS_BUCKET_NAME;
-        const mockObservations: DynamoDbObservation[] = [
-            {
-                PK: "test-PK-1",
-                SK: "test-SK-1",
-                dataSource: "test-dataSource-1",
-                noc: "test-noc-1",
-                region: "test-region-1",
-                importance: "critical",
-                category: "dataset",
-                observation: "Duplicate journey",
-                serviceCode: "test-service-1",
-                lineName: "test-line-1",
-                details: "test-details-1",
-                extraColumns: {
-                    "Extra Column": "test-extra-column-1",
-                },
-            },
-            {
-                PK: "test-PK-1",
-                SK: "test-SK-2",
-                dataSource: "test-dataSource-2",
-                noc: "test-noc-2",
-                region: "test-region-2",
-                importance: "advisory",
-                category: "dataset",
-                observation: "First stop is not a timing point",
-                serviceCode: "test-service-2",
-                lineName: "test-line-2",
-                details: "test-details-2",
-            },
-            {
-                PK: "test-PK-1",
-                SK: "test-SK-3",
-                dataSource: "test-dataSource-2",
-                noc: "test-noc-2",
-                region: "test-region-2",
-                importance: "advisory",
-                category: "dataset",
-                observation: "First stop is not a timing point",
-                serviceCode: "test-service-2",
-                lineName: "test-line-3",
-                details: "test-details-2",
-            },
-        ];
-
+    it("creates a report and uploads it to S3", async () => {
+        process.env.STAGE = "test";
         scanDynamoMock.mockResolvedValueOnce({ Items: mockObservations } as unknown as Awaited<
             ReturnType<typeof dynamo.scanDynamo>
         >);
-
-        const observationSummariesByDataSourceCsvContent =
-            "Dataset Date,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-dataSource-1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0\r\n08/01/2025,test-dataSource-2,2,0,2,0,2,0,0,0,0,0,0,0,0,0,0\r\n";
-
-        const observationSummariesByFileCsvContent =
-            "Dataset Date,Region,File,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation out of date\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,3,1,2,0,2,0,0,0,0,0,0,0,1,0,0\r\n";
-
-        const observationByObservationTypeCsvContent1 =
-            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,1\r\n";
-
-        const observationByObservationTypeCsvContent2 =
-            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Quantity\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2,2\r\n";
-
-        const observationByObservationTypeCsvContent3 =
-            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name,Extra Column\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,test-noc-1,test-service-1,test-line-1,test-extra-column-1\r\n";
-
-        const observationByObservationTypeCsvContent4 =
-            "Dataset Date,Region,File,Data Source,National Operator Code,Service Code,Line Name\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-2\r\n08/01/2025,test-region-2,test-PK-1,test-dataSource-2,test-noc-2,test-service-2,test-line-3\r\n";
 
         await handler(mockEvent, mockContext, mockCallback);
 
@@ -170,25 +166,59 @@ describe("txc-analysis-reporter", () => {
             name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
 
-        if (process.env.STAGE !== "prod") {
-            expect(mocks.putS3Object).not.toHaveBeenCalled();
-        }
+        expect(mocks.putS3Object).not.toHaveBeenCalled();
+    });
 
-        if (process.env.STAGE === "prod") {
-            expect(mocks.putS3Object).toHaveBeenCalledWith({
-                Bucket: "test-dqs-bucket",
-                ContentType: "application/csv",
-                Key: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
-                Body: observationByObservationTypeCsvContent3,
-            });
-            expect(mocks.putS3Object).toHaveBeenCalledWith({
-                Bucket: "test-dqs-bucket",
-                ContentType: "application/csv",
-                Key: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
-                Body: observationByObservationTypeCsvContent4,
-            });
-            expect(mocks.putS3Object).toHaveBeenCalledTimes(2);
-        }
+    it("creates a report and uploads it to S3 including the DQS bucket when in prod", async () => {
+        process.env.STAGE = "prod";
+        process.env.DQS_BUCKET_NAME = "mock-dqs-bucket";
+
+        scanDynamoMock.mockResolvedValueOnce({ Items: mockObservations } as unknown as Awaited<
+            ReturnType<typeof dynamo.scanDynamo>
+        >);
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(mocks.startS3Upload).toHaveBeenCalledWith(
+            "test-bucket",
+            "20250108.zip",
+            expect.anything(),
+            "application/zip",
+        );
+
+        expect(mocks.appendMock).toHaveBeenCalledTimes(6);
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(1, observationSummariesByDataSourceCsvContent, {
+            name: "20250108/observationSummariesByDataSource.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(2, observationSummariesByFileCsvContent, {
+            name: "20250108/observationSummariesByFile.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(3, observationByObservationTypeCsvContent1, {
+            name: "20250108/observationSummariesByObservationType/Duplicate journey.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(4, observationByObservationTypeCsvContent2, {
+            name: "20250108/observationSummariesByObservationType/First stop is not a timing point.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(5, observationByObservationTypeCsvContent3, {
+            name: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent4, {
+            name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
+        });
+
+        expect(mocks.putS3Object).toHaveBeenNthCalledWith(1, {
+            Bucket: "mock-dqs-bucket",
+            ContentType: "application/csv",
+            Key: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
+            Body: observationByObservationTypeCsvContent3,
+        });
+        expect(mocks.putS3Object).toHaveBeenNthCalledWith(2, {
+            Bucket: "mock-dqs-bucket",
+            ContentType: "application/csv",
+            Key: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
+            Body: observationByObservationTypeCsvContent4,
+        });
+        expect(mocks.putS3Object).toHaveBeenCalledTimes(2);
     });
 
     it("doesn't create a report when there are no observation summaries", async () => {
