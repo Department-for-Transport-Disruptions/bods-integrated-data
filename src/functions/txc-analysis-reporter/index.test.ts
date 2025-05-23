@@ -169,6 +169,7 @@ describe("txc-analysis-reporter", () => {
         expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent4, {
             name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
+
         if (process.env.STAGE !== "prod") {
             expect(mocks.putS3Object).not.toHaveBeenCalled();
         }

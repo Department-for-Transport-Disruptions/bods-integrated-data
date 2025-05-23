@@ -342,18 +342,6 @@ export const handler: Handler = async (event, context) => {
             }
         }
 
-        for (const [observationType, observationByObservationTypeMap] of Object.entries(
-            advisoryObservationByObservationTypesMap,
-        )) {
-            const observationByObservationTypeCsv = createCsv(Object.values(observationByObservationTypeMap));
-
-            if (observationByObservationTypeCsv) {
-                archive.append(observationByObservationTypeCsv, {
-                    name: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
-                });
-            }
-        }
-
         archive.finalize();
         await s3Upload.done();
 
