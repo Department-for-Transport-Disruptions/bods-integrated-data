@@ -46,3 +46,9 @@ variable "gtfs_rt_service_alerts_bucket_arn" {
   type        = string
   description = "Arn of bucket containing service alerts file"
 }
+
+variable "enable_cancellations" {
+  type        = bool
+  description = "Feature flag for VehicleActivityCancellation work"
+  default     = false
+}

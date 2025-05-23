@@ -91,6 +91,7 @@ module "integrated_data_avl_processor_function" {
     AVL_SUBSCRIPTION_TABLE_NAME     = var.avl_subscription_table_name
     AVL_VALIDATION_ERROR_TABLE_NAME = var.avl_validation_error_table_name
     GTFS_TRIP_MAPS_TABLE_NAME       = var.gtfs_trip_maps_table_name
+    ENABLE_CANCELLATIONS            = var.enable_cancellations ? "true" : "false"
   }
 }
 
@@ -574,12 +575,13 @@ module "siri_vm_downloader" {
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
-    DB_HOST       = var.db_reader_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
+    STAGE                = var.environment
+    BUCKET_NAME          = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+    DB_HOST              = var.db_reader_host
+    DB_PORT              = var.db_port
+    DB_SECRET_ARN        = var.db_secret_arn
+    DB_NAME              = var.db_name
+    ENABLE_CANCELLATIONS = var.enable_cancellations ? "true" : "false"
   }
 }
 
@@ -634,6 +636,7 @@ module "integrated_data_avl_data_consumer_subscriptions" {
   avl_producer_subscription_table = var.avl_subscription_table_name
   alarm_topic_arn                 = var.alarm_topic_arn
   ok_topic_arn                    = var.ok_topic_arn
+  enable_cancellations            = var.enable_cancellations
 }
 
 module "integrated_data_siri_vm_generator_lambda" {
@@ -684,6 +687,7 @@ module "integrated_data_siri_vm_generator_lambda" {
     SIRI_VM_BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
     SIRI_VM_SNS_TOPIC_ARN = aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
     STAGE                 = var.environment
+    ENABLE_CANCELLATIONS  = var.enable_cancellations ? "true" : "false"
   }
 
   runtime                    = var.environment == "local" ? "nodejs20.x" : null
