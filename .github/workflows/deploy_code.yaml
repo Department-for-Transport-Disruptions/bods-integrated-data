@@ -41,6 +41,7 @@ jobs:
     with:
       path: "./src/functions"
       shared_code_path: "./src/shared"
+      stage: ${{ inputs.stage }}
 
   zip_functions:
     uses: ./.github/workflows/zip_function.yaml

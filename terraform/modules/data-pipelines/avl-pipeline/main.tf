@@ -4,10 +4,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
+
+data "aws_caller_identity" "current" {}
 
 module "integrated_data_avl_s3_sqs" {
   source = "../../shared/s3-sqs"
@@ -89,6 +91,7 @@ module "integrated_data_avl_processor_function" {
     AVL_SUBSCRIPTION_TABLE_NAME     = var.avl_subscription_table_name
     AVL_VALIDATION_ERROR_TABLE_NAME = var.avl_validation_error_table_name
     GTFS_TRIP_MAPS_TABLE_NAME       = var.gtfs_trip_maps_table_name
+    ENABLE_CANCELLATIONS            = var.enable_cancellations ? "true" : "false"
   }
 }
 
@@ -257,6 +260,284 @@ resource "aws_sns_topic_policy" "integrated_data_avl_sirivm_sns_topic_policy" {
   policy = data.aws_iam_policy_document.integrated_data_avl_sirivm_sns_policy.json
 }
 
+resource "aws_iam_policy" "siri_vm_generator_ecs_execution_policy" {
+  count = var.environment == "prod" ? 1 : 0
+
+  name = "integrated-data-siri-vm-generator-ecs-execution-policy-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect" : "Allow",
+        "Action" : "logs:CreateLogGroup",
+        "Resource" : [
+          "arn:aws:logs:eu-west-2:${data.aws_caller_identity.current.account_id}:log-group:/ecs/siri-vm-generator-${var.environment}:*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "siri_vm_generator_ecs_execution_role" {
+  count = var.environment == "prod" ? 1 : 0
+
+  name = "integrated-data-siri-vm-generator-ecs-execution-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "siri_vm_generator_ecs_execution_service_role_policy_attachment" {
+  count = var.environment == "prod" ? 1 : 0
+
+  role       = aws_iam_role.siri_vm_generator_ecs_execution_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "siri_vm_generator_ecs_execution_role_policy_attachment" {
+  count = var.environment == "prod" ? 1 : 0
+
+  role       = aws_iam_role.siri_vm_generator_ecs_execution_role[0].name
+  policy_arn = aws_iam_policy.siri_vm_generator_ecs_execution_policy[0].arn
+}
+
+resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
+  count = var.environment == "prod" ? 1 : 0
+
+  name = "integrated-data-siri-vm-generator-ecs-task-policy-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect" : "Allow",
+        "Action" : "s3:PutObject",
+        "Resource" : [
+          "${aws_s3_bucket.integrated_data_avl_siri_vm_bucket.arn}/*",
+          "${var.gtfs_rt_bucket_arn}/*"
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "secretsmanager:GetSecretValue",
+        "Resource" : [
+          var.db_secret_arn
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "cloudwatch:PutMetricData",
+        "Resource" : "*"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "sns:Publish",
+        "Resource" : "${aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn}"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "siri_vm_generator_ecs_task_role" {
+  count = var.environment == "prod" ? 1 : 0
+
+  name = "integrated-data-siri-vm-generator-ecs-task-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "siri_vm_generator_ecs_task_role_policy_attachment" {
+  count = var.environment == "prod" ? 1 : 0
+
+  role       = aws_iam_role.siri_vm_generator_ecs_task_role[0].name
+  policy_arn = aws_iam_policy.siri_vm_generator_ecs_task_policy[0].arn
+}
+
+resource "aws_security_group" "siri_vm_generator_sg" {
+  count = var.environment == "prod" ? 1 : 0
+
+  name   = "integrated-data-siri-vm-generator-sg-${var.environment}"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "siri_vm_generator_sg_allow_all_egress_ipv4" {
+  count = var.environment == "prod" ? 1 : 0
+
+  security_group_id = aws_security_group.siri_vm_generator_sg[0].id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_vpc_security_group_egress_rule" "siri_vm_generator_sg_allow_all_egress_ipv6" {
+  count = var.environment == "prod" ? 1 : 0
+
+  security_group_id = aws_security_group.siri_vm_generator_sg[0].id
+
+  cidr_ipv6   = "::/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db_sg_allow_lambda_ingress" {
+  count = var.environment == "prod" ? 1 : 0
+
+  security_group_id            = var.db_sg_id
+  referenced_security_group_id = aws_security_group.siri_vm_generator_sg[0].id
+
+  from_port = 5432
+  to_port   = 5432
+
+  ip_protocol = "tcp"
+}
+
+resource "aws_ecs_task_definition" "siri_vm_generator_task_definition" {
+  count = var.environment == "prod" ? 1 : 0
+
+  family                   = "integrated-data-siri-vm-generator"
+  cpu                      = var.siri_vm_generator_cpu
+  memory                   = var.siri_vm_generator_memory
+  requires_compatibilities = ["FARGATE"]
+  runtime_platform {
+    cpu_architecture        = "ARM64"
+    operating_system_family = "LINUX"
+  }
+  network_mode = "awsvpc"
+
+  task_role_arn      = aws_iam_role.siri_vm_generator_ecs_task_role[0].arn
+  execution_role_arn = aws_iam_role.siri_vm_generator_ecs_execution_role[0].arn
+
+  container_definitions = jsonencode([
+    {
+      "name" : "siri-vm-generator",
+      "image" : var.siri_vm_generator_image_url,
+      "portMappings" : [],
+      "essential" : true,
+      "environment" : [
+        {
+          "name" : "DB_NAME",
+          "value" : var.db_name
+        },
+        {
+          "name" : "DB_HOST",
+          "value" : var.db_host
+        },
+        {
+          "name" : "DB_READER_HOST",
+          "value" : var.db_reader_host
+        },
+        {
+          "name" : "DB_PORT",
+          "value" : tostring(var.db_port)
+        },
+        {
+          "name" : "DB_SECRET_ARN",
+          "value" : var.db_secret_arn
+        },
+        {
+          "name" : "GTFS_RT_BUCKET_NAME",
+          "value" : var.gtfs_rt_bucket_name
+        },
+        {
+          "name" : "SIRI_VM_BUCKET_NAME",
+          "value" : aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+        },
+        {
+          "name" : "SIRI_VM_SNS_TOPIC_ARN",
+          "value" : aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
+        },
+        {
+          "name" : "SAVE_JSON",
+          "value" : tostring(var.save_json)
+        },
+        {
+          "name" : "PROCESSOR_FREQUENCY_IN_SECONDS",
+          "value" : tostring(var.siri_vm_generator_frequency)
+        },
+        {
+          "name" : "CLEARDOWN_FREQUENCY_IN_SECONDS",
+          "value" : tostring(var.avl_cleardown_frequency)
+        },
+        {
+          "name" : "STAGE",
+          "value" : var.environment
+        }
+      ],
+      "environmentFiles" : [],
+      "mountPoints" : [],
+      "volumesFrom" : [],
+      "readonlyRootFilesystem" : false,
+      "ulimits" : [],
+      "logConfiguration" : {
+        "logDriver" : "awslogs",
+        "options" : {
+          "awslogs-create-group" : "true",
+          "awslogs-group" : "/ecs/siri-vm-generator-${var.environment}",
+          "awslogs-region" : "eu-west-2",
+          "awslogs-stream-prefix" : "ecs"
+        },
+        "secretOptions" : []
+      },
+      "systemControls" : []
+    }
+  ])
+}
+
+resource "aws_ecs_service" "siri_vm_generator_service" {
+  count = var.environment == "prod" ? 1 : 0
+
+  name            = "integrated-data-siri-vm-generator-service-${var.environment}"
+  cluster         = var.cluster_id
+  task_definition = aws_ecs_task_definition.siri_vm_generator_task_definition[0].arn
+  desired_count   = 1
+
+  capacity_provider_strategy {
+    base              = 1
+    weight            = 100
+    capacity_provider = "FARGATE"
+  }
+
+  platform_version    = "1.4.0"
+  scheduling_strategy = "REPLICA"
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  network_configuration {
+    subnets         = var.private_subnet_ids
+    security_groups = [aws_security_group.siri_vm_generator_sg[0].id]
+  }
+
+  depends_on = [aws_iam_policy.siri_vm_generator_ecs_task_policy[0]]
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+}
+
 module "siri_vm_downloader" {
   source = "../../shared/lambda-function"
 
@@ -294,12 +575,13 @@ module "siri_vm_downloader" {
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
-    DB_HOST       = var.db_reader_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
+    STAGE                = var.environment
+    BUCKET_NAME          = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
+    DB_HOST              = var.db_reader_host
+    DB_PORT              = var.db_port
+    DB_SECRET_ARN        = var.db_secret_arn
+    DB_NAME              = var.db_name
+    ENABLE_CANCELLATIONS = var.enable_cancellations ? "true" : "false"
   }
 }
 
@@ -354,6 +636,7 @@ module "integrated_data_avl_data_consumer_subscriptions" {
   avl_producer_subscription_table = var.avl_subscription_table_name
   alarm_topic_arn                 = var.alarm_topic_arn
   ok_topic_arn                    = var.ok_topic_arn
+  enable_cancellations            = var.enable_cancellations
 }
 
 module "integrated_data_siri_vm_generator_lambda" {
@@ -395,7 +678,6 @@ module "integrated_data_siri_vm_generator_lambda" {
   ]
 
   env_vars = {
-    STAGE                 = var.environment
     DB_READER_HOST        = var.db_reader_host
     DB_PORT               = var.db_port
     DB_SECRET_ARN         = var.db_secret_arn
@@ -405,6 +687,7 @@ module "integrated_data_siri_vm_generator_lambda" {
     SIRI_VM_BUCKET_NAME   = aws_s3_bucket.integrated_data_avl_siri_vm_bucket.bucket
     SIRI_VM_SNS_TOPIC_ARN = aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
     STAGE                 = var.environment
+    ENABLE_CANCELLATIONS  = var.enable_cancellations ? "true" : "false"
   }
 
   runtime                    = var.environment == "local" ? "nodejs20.x" : null
@@ -424,7 +707,7 @@ module "integrated_data_siri_cleardown_lambda" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
-  schedule        = "cron(0 0 * * ? *)"
+  schedule        = var.environment == "prod" ? null : "cron(0 0 * * ? *)"
 
   permissions = [
     {
@@ -439,7 +722,6 @@ module "integrated_data_siri_cleardown_lambda" {
   ]
 
   env_vars = {
-    STAGE         = var.environment
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
@@ -460,4 +742,5 @@ module "integrated_data_siri_vm_generator_sfn" {
   function_arn         = module.integrated_data_siri_vm_generator_lambda.lambda_arn
   invoke_every_seconds = var.siri_vm_generator_frequency
   step_function_name   = "integrated-data-siri-vm-file-generator"
+  disable_trigger      = var.environment == "prod"
 }

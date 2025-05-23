@@ -93,7 +93,7 @@ export const handler: Handler = async (event, context) => {
     const { STAGE, TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME, DQS_BUCKET_NAME } = process.env;
 
     if (!TXC_OBSERVATION_TABLE_NAME || !TXC_ANALYSIS_BUCKET_NAME) {
-        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set");
+        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set.");
     }
 
     if (STAGE === "prod" && !DQS_BUCKET_NAME) {
@@ -339,6 +339,18 @@ export const handler: Handler = async (event, context) => {
                         }),
                     );
                 }
+            }
+        }
+
+        for (const [observationType, observationByObservationTypeMap] of Object.entries(
+            advisoryObservationByObservationTypesMap,
+        )) {
+            const observationByObservationTypeCsv = createCsv(Object.values(observationByObservationTypeMap));
+
+            if (observationByObservationTypeCsv) {
+                archive.append(observationByObservationTypeCsv, {
+                    name: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
+                });
             }
         }
 

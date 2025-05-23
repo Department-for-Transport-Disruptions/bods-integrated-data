@@ -17,7 +17,7 @@ export const handler: Handler = async (event, context) => {
     const { TXC_OBSERVATION_TABLE_NAME } = process.env;
 
     if (!TXC_OBSERVATION_TABLE_NAME) {
-        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME must be set");
+        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME must be set.");
     }
 
     try {

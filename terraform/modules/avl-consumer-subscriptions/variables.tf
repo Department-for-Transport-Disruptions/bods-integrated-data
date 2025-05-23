@@ -57,3 +57,9 @@ variable "alarm_topic_arn" {
 variable "ok_topic_arn" {
   type = string
 }
+
+variable "enable_cancellations" {
+  type        = bool
+  description = "Feature flag for VehicleActivityCancellation work"
+  default     = false
+}

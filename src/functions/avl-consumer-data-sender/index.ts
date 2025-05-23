@@ -152,9 +152,9 @@ const processSqsRecord = async (record: SQSRecord, consumerSubscriptionTableName
 export const handler: SQSHandler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { STAGE, AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME } = process.env;
+    const { STAGE, AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTable } = process.env;
 
-    if (!AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME) {
+    if (!avlConsumerSubscriptionTable) {
         throw new Error("Missing env vars - AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME must be set");
     }
 
@@ -163,9 +163,7 @@ export const handler: SQSHandler = async (event, context) => {
     try {
         logger.info(`Starting avl-consumer-data-sender. Number of records to process: ${event.Records.length}`);
 
-        await Promise.all(
-            event.Records.map((record) => processSqsRecord(record, AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME)),
-        );
+        await Promise.all(event.Records.map((record) => processSqsRecord(record, avlConsumerSubscriptionTable)));
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the avl-consumer-data-sender endpoint");

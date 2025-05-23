@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -211,8 +211,6 @@ resource "aws_api_gateway_method" "siri_vm_api_downloader_method" {
 }
 
 resource "aws_api_gateway_method_settings" "siri_vm_api_downloader_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.siri_vm_api_downloader_resource.path_part}/${aws_api_gateway_method.siri_vm_api_downloader_method.http_method}"
@@ -258,8 +256,6 @@ resource "aws_api_gateway_method" "siri_vm_api_stats_method" {
 }
 
 resource "aws_api_gateway_method_settings" "siri_vm_api_stats_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.siri_vm_api_stats_resource.path_part}/${aws_api_gateway_method.siri_vm_api_stats_method.http_method}"
@@ -307,8 +303,6 @@ resource "aws_api_gateway_method" "avl_consumer_subscriber_method" {
 }
 
 resource "aws_api_gateway_method_settings" "avl_consumer_subscriber_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path_part}/${aws_api_gateway_method.avl_consumer_subscriber_method.http_method}"
@@ -345,8 +339,6 @@ resource "aws_api_gateway_method" "avl_consumer_unsubscriber_method" {
 }
 
 resource "aws_api_gateway_method_settings" "avl_consumer_unsubscriber_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path_part}/${aws_api_gateway_method.avl_consumer_unsubscriber_method.http_method}"
@@ -387,8 +379,6 @@ resource "aws_api_gateway_method" "avl_consumer_subscriptions_method" {
 }
 
 resource "aws_api_gateway_method_settings" "avl_consumer_subscriptions_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.avl_consumer_subscriptions_resource.path_part}/${aws_api_gateway_method.avl_consumer_subscriptions_method.http_method}"
@@ -435,8 +425,6 @@ resource "aws_api_gateway_method" "siri_sx_downloader_method" {
 }
 
 resource "aws_api_gateway_method_settings" "siri_sx_downloader_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.siri_sx_downloader_resource.path_part}/${aws_api_gateway_method.siri_sx_downloader_method.http_method}"
@@ -486,8 +474,6 @@ resource "aws_api_gateway_method" "gtfs_downloader_method" {
 }
 
 resource "aws_api_gateway_method_settings" "gtfs_downloader_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.gtfs_downloader_resource.path_part}/${aws_api_gateway_method.gtfs_downloader_method.http_method}"
@@ -533,8 +519,6 @@ resource "aws_api_gateway_method" "gtfs_region_retriever_method" {
 }
 
 resource "aws_api_gateway_method_settings" "gtfs_region_retriever_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.gtfs_downloader_resource.path_part}/${aws_api_gateway_resource.gtfs_region_retriever_resource.path_part}/${aws_api_gateway_method.gtfs_region_retriever_method.http_method}"
@@ -582,8 +566,6 @@ resource "aws_api_gateway_method" "gtfs_rt_downloader_method" {
 }
 
 resource "aws_api_gateway_method_settings" "gtfs_rt_downloader_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.gtfs_rt_downloader_resource.path_part}/${aws_api_gateway_method.gtfs_rt_downloader_method.http_method}"
@@ -706,8 +688,6 @@ resource "aws_api_gateway_method" "gtfs_rt_service_alerts_downloader_method" {
 }
 
 resource "aws_api_gateway_method_settings" "gtfs_rt_service_alerts_downloader_method_settings" {
-  count = var.environment == "local" ? 0 : 1
-
   rest_api_id = aws_api_gateway_rest_api.siri_consumer_api.id
   stage_name  = aws_api_gateway_stage.siri_consumer_api_stage.stage_name
   method_path = "${aws_api_gateway_resource.gtfs_rt_downloader_resource.path_part}/${aws_api_gateway_resource.gtfs_rt_service_alerts_downloader_resource.path_part}/${aws_api_gateway_method.gtfs_rt_service_alerts_downloader_method.http_method}"
