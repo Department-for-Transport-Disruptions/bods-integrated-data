@@ -61,6 +61,11 @@ export const testSiriSx = `<?xml version="1.0" encoding="utf-8"?>
                   <StopPointType>busStop</StopPointType>
                 </Destinations>
                 <Route />
+                <Calls>
+                  <Call>
+                    <CallCondition>cancelled</CallCondition>
+                  </Call>
+                </Calls>
               </AffectedVehicleJourney>
             </VehicleJourneys>
           </Affects>
@@ -103,6 +108,12 @@ export const testSiriSx = `<?xml version="1.0" encoding="utf-8"?>
                   <StopPointName>Second</StopPointName>
                   <StopPointType>busStop</StopPointType>
                 </Destinations>
+                <Route />
+                <Calls>
+                  <Call>
+                    <CallCondition>normalService</CallCondition>
+                  </Call>
+                </Calls>
               </AffectedVehicleJourney>
             </VehicleJourneys>
           </Affects>
@@ -170,6 +181,11 @@ export const testSiriSxWithInvalidSituationsOnly = `<?xml version="1.0" encoding
                   <StopPointType>busStop</StopPointType>
                 </Destinations>
                 <Route />
+                <Calls>
+                  <Call>
+                    <CallCondition>cancelled</CallCondition>
+                  </Call>
+                </Calls>
               </AffectedVehicleJourney>
             </VehicleJourneys>
           </Affects>
@@ -374,6 +390,13 @@ export const parsedSiriSx: NewSituation[] = [
                 VehicleJourneys: {
                     AffectedVehicleJourney: [
                         {
+                            Calls: {
+                                Call: [
+                                    {
+                                        CallCondition: "notStopping",
+                                    },
+                                ],
+                            },
                             VehicleJourneyRef: "2",
                             DatedVehicleJourneyRef: "2",
                             Operator: {
@@ -437,6 +460,13 @@ export const parsedSiriSx: NewSituation[] = [
                 VehicleJourneys: {
                     AffectedVehicleJourney: [
                         {
+                            Calls: {
+                                Call: [
+                                    {
+                                        CallCondition: "stop",
+                                    },
+                                ],
+                            },
                             VehicleJourneyRef: "3",
                             DatedVehicleJourneyRef: "3",
                             Operator: {

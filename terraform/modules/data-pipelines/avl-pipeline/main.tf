@@ -707,7 +707,7 @@ module "integrated_data_siri_cleardown_lambda" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
-  schedule        = var.environment == "prod" ? null : "cron(0 0 * * ? *)"
+  schedule        = "cron(0 0 * * ? *)"
 
   permissions = [
     {

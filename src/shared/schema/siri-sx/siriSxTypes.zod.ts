@@ -154,7 +154,19 @@ export const callsSchema = z.object({
         affectedStopPointSchema.and(
             z.object({
                 Order: z.coerce.number().optional(),
-                CallCondition: enumSchema(RoutePointType).optional(),
+                CallCondition: enumSchema(RoutePointType)
+                    .optional()
+                    .transform((value) => {
+                        if (value === RoutePointType.normalService) {
+                            return RoutePointType.stop;
+                        }
+
+                        if (value === RoutePointType.cancelled) {
+                            return RoutePointType.notStopping;
+                        }
+
+                        return value;
+                    }),
                 VehicleAtStop: booleanStringSchema.optional(),
                 VehicleLocationAtStop: z
                     .object({
@@ -257,7 +269,7 @@ export const affectedRouteSchema = z.object({
 export const journeysSchema = z.object({
     AffectedVehicleJourney: z.array(
         z.object({
-            VehicleJourneyRef: z.string(),
+            VehicleJourneyRef: z.string().optional(),
             DatedVehicleJourneyRef: z.string().optional(),
             JourneyName: z.string().optional(),
             Operator: affectedOperatorSchema.optional(),
