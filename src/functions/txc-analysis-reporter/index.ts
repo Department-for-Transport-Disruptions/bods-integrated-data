@@ -310,7 +310,7 @@ export const handler: Handler = async (event, context) => {
                     dqsS3Promises.push(
                         putS3Object({
                             Bucket: DQS_BUCKET_NAME,
-                            Key: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
+                            Key: `tnds_analysis/${date}/criticalObservationsByObservationType/${observationType}.csv`,
                             ContentType: "application/csv",
                             Body: observationByObservationTypeCsv,
                         }),
@@ -333,7 +333,7 @@ export const handler: Handler = async (event, context) => {
                     dqsS3Promises.push(
                         putS3Object({
                             Bucket: DQS_BUCKET_NAME,
-                            Key: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
+                            Key: `tnds_analysis/${date}/advisoryObservationsByObservationType/${observationType}.csv`,
                             ContentType: "application/csv",
                             Body: observationByObservationTypeCsv,
                         }),

@@ -114,7 +114,7 @@ module "integrated_data_txc_analysis_reporter_function" {
         "s3:PutObject",
       ],
       Effect   = "Allow",
-      Resource = "${var.dqs_bucket_name}/*"
+      Resource = "${var.dqs_bucket_name}/tnds_analysis/*"
     }] : [],
   )
 
