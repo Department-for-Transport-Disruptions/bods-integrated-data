@@ -209,13 +209,13 @@ describe("txc-analysis-reporter", () => {
         expect(mocks.putS3Object).toHaveBeenNthCalledWith(1, {
             Bucket: "mock-dqs-bucket",
             ContentType: "application/csv",
-            Key: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
+            Key: "tnds_analysis/20250108/criticalObservationsByObservationType/Duplicate journey.csv",
             Body: observationByObservationTypeCsvContent3,
         });
         expect(mocks.putS3Object).toHaveBeenNthCalledWith(2, {
             Bucket: "mock-dqs-bucket",
             ContentType: "application/csv",
-            Key: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
+            Key: "tnds_analysis/20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
             Body: observationByObservationTypeCsvContent4,
         });
         expect(mocks.putS3Object).toHaveBeenCalledTimes(2);
