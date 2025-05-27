@@ -16,6 +16,10 @@ const checkFirstStopIsSetDownOnly = (
     if (firstJourneyPatternSection) {
         const firstStopActivity = firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.Activity;
 
+        if (!firstStopActivity) {
+            return { firstStopIsSetDownOnly: false, firstStopPointRef: undefined };
+        }
+
         const firstStopPointRef =
             firstJourneyPatternSection.JourneyPatternTimingLink[0].From?.StopPointRef?.toUpperCase();
 
@@ -41,6 +45,10 @@ const checkLastStopIsPickUpOnly = (journeyPattern: JourneyPattern, journeyPatter
             lastJourneyPatternSection.JourneyPatternTimingLink[
                 lastJourneyPatternSection.JourneyPatternTimingLink.length - 1
             ].To?.Activity;
+
+        if (!lastStopActivity) {
+            return { lastStopIsPickUpOnly: false, lastStopPointRef: undefined };
+        }
 
         const lastStopPointRef =
             lastJourneyPatternSection.JourneyPatternTimingLink[
