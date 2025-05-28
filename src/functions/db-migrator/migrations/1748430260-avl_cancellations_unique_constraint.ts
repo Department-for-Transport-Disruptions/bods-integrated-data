@@ -17,6 +17,12 @@ export async function up(db: Kysely<Database>): Promise<void> {
             "vehicle_monitoring_ref",
         ])
         .execute();
+
+    await db.schema
+        .createIndex("idx_avl_join")
+        .on("avl")
+        .columns(["data_frame_ref", "dated_vehicle_journey_ref", "line_ref", "direction_ref", "vehicle_monitoring_ref"])
+        .execute();
 }
 
 export async function down(db: Kysely<Database>): Promise<void> {
@@ -34,4 +40,6 @@ export async function down(db: Kysely<Database>): Promise<void> {
             "direction_ref",
         ])
         .execute();
+
+    await db.schema.dropIndex("idx_avl_join").on("avl").execute();
 }
