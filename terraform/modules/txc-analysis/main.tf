@@ -109,12 +109,20 @@ module "integrated_data_txc_analysis_reporter_function" {
       Effect   = "Allow",
       Resource = "${aws_s3_bucket.integrated_data_txc_analysis_bucket.arn}/*"
     }],
-    var.dqs_bucket_name != null ? [{
+    var.dqs_bucket_name != null && var.dqs_kms_key_arn != null ? [{
       Action = [
         "s3:PutObject",
       ],
       Effect   = "Allow",
       Resource = "arn:aws:s3:::${var.dqs_bucket_name}/tnds_analysis/*"
+      }, {
+
+      Action : [
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+      ],
+      Effect : "Allow",
+      Resource : var.dqs_kms_key_arn
     }] : [],
   )
 
