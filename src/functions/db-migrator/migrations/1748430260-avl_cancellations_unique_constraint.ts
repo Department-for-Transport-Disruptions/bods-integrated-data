@@ -14,7 +14,7 @@ export async function up(db: Kysely<Database>): Promise<void> {
             "dated_vehicle_journey_ref",
             "line_ref",
             "direction_ref",
-            "subscription_id",
+            "vehicle_monitoring_ref",
         ])
         .execute();
 }

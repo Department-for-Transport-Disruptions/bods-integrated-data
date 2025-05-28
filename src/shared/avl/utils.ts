@@ -272,7 +272,7 @@ export const getQueryForLatestAvl = (dbClient: KyselyDb, avlQueryOptions: AvlQue
                     .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
                     .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
                     .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref")
-                    .onRef("avl_cancellation.subscription_id", "=", "avl.subscription_id"),
+                    .onRef("avl_cancellation.vehicle_monitoring_ref", "=", "avl.vehicle_monitoring_ref"),
             )
             .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
     }
