@@ -91,7 +91,7 @@ module "integrated_data_avl_processor_function" {
     AVL_SUBSCRIPTION_TABLE_NAME     = var.avl_subscription_table_name
     AVL_VALIDATION_ERROR_TABLE_NAME = var.avl_validation_error_table_name
     GTFS_TRIP_MAPS_TABLE_NAME       = var.gtfs_trip_maps_table_name
-    ENABLE_CANCELLATIONS            = var.enable_cancellations ? "true" : "false"
+    ENABLE_CANCELLATIONS            = "true"
   }
 }
 
@@ -707,7 +707,7 @@ module "integrated_data_siri_cleardown_lambda" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
-  schedule        = "cron(0 0 * * ? *)"
+  schedule        = var.environment == "prod" ? "rate(1 hour)" : "cron(0 0 * * ? *)"
 
   permissions = [
     {
