@@ -43,3 +43,10 @@ variable "dqs_bucket_name" {
   default     = null
 }
 
+variable "dqs_kms_key_arn" {
+  type        = string
+  description = "ARN of the KMS Key used to encrypt DQS bucket"
+  nullable    = true
+  default     = null
+}
+

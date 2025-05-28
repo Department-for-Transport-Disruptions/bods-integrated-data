@@ -502,4 +502,5 @@ module "integrated_data_txc_analysis" {
   nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
   schedule             = "cron(30 4 * * ? *)"
   dqs_bucket_name      = local.secrets["dqs_bucket_name"]
+  dqs_kms_key_arn      = local.secrets["dqs_kms_key_arn"]
 }
