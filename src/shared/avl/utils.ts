@@ -205,7 +205,13 @@ export const insertAvlCancellations = async (
                 .values(chunk)
                 .onConflict((oc) =>
                     oc
-                        .columns(["data_frame_ref", "dated_vehicle_journey_ref", "line_ref", "direction_ref"])
+                        .columns([
+                            "data_frame_ref",
+                            "dated_vehicle_journey_ref",
+                            "line_ref",
+                            "direction_ref",
+                            "vehicle_monitoring_ref",
+                        ])
                         .doUpdateSet((eb) => ({
                             id: eb.ref("excluded.id"),
                             response_time_stamp: eb.ref("excluded.response_time_stamp"),
