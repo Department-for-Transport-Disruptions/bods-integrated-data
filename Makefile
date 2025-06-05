@@ -23,6 +23,7 @@ BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-zipped-local"
 BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-unzipped-local"
 BODS_DISRUPTIONS_BUCKET_NAME="integrated-data-bods-disruptions-gtfs-rt-local"
+TFL_TXC_BUCKET_NAME="integrated-data-tfl-txc-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
 TFL_API_ARN=""
 AVL_CONSUMER_API_KEY_ARN=""
@@ -196,6 +197,9 @@ run-local-tfl-timetable-unzipper:
 
 run-local-tfl-timetable-processor:
 	STAGE=local FILE="${FILE}" npx tsx -e "import {handler} from './src/functions/tfl-timetable-processor'; handler({Records:[{s3:{bucket:{name:'${TFL_TIMETABLE_UNZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
+
+run-local-tfl-txc-generator:
+	STAGE=local LINE_ID="${LINE_ID}" TFL_TXC_BUCKET_NAME=${TFL_TXC_BUCKET_NAME} BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/tfl-txc-generator'; handler({lineId:'${LINE_ID}'}).catch(console.error)"
 
 # GTFS
 

@@ -178,11 +178,13 @@ export const getTransformedBankHolidayOperationSchema = (
     return [...new Set(dates)];
 };
 
-export const dateRange = z
-    .object({
-        StartDate: z.string(),
-        EndDate: z.string(),
-    })
-    .transform((range) => getDatesInRange(getDate(range.StartDate), getDate(range.EndDate)));
+export const baseDateRange = z.object({
+    StartDate: z.string(),
+    EndDate: z.string(),
+});
+
+export const dateRange = baseDateRange.transform((range) =>
+    getDatesInRange(getDate(range.StartDate), getDate(range.EndDate)),
+);
 
 export const formattedDateRange = dateRange.transform((dates) => dates.map((date) => date.format(DEFAULT_DATE_FORMAT)));

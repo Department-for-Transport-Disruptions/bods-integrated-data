@@ -1,6 +1,6 @@
 import { ZodSchema, z } from "zod";
 import { txcEmptyProperty, txcSelfClosingProperty } from "../utils";
-import { bankHolidayOperationSchema, dateRange, formattedDateRange } from "./dates.schema";
+import { bankHolidayOperationSchema, baseDateRange, dateRange, formattedDateRange } from "./dates.schema";
 
 export const operatorSchema = z.object({
     NationalOperatorCode: z.string().optional(),
@@ -91,7 +91,28 @@ export const operatingProfileSchema = z.object({
         .optional(),
 });
 
+export const operatingProfileSchemaWithDateRange = operatingProfileSchema.extend({
+    SpecialDaysOperation: z
+        .object({
+            DaysOfOperation: z
+                .object({
+                    DateRange: baseDateRange.array(),
+                })
+                .or(txcEmptyProperty)
+                .optional(),
+            DaysOfNonOperation: z
+                .object({
+                    DateRange: baseDateRange.array(),
+                })
+                .or(txcEmptyProperty)
+                .optional(),
+        })
+        .or(txcEmptyProperty)
+        .optional(),
+});
+
 export type OperatingProfile = z.infer<typeof operatingProfileSchema>;
+export type OperatingProfileWithDateRange = z.infer<typeof operatingProfileSchemaWithDateRange>;
 
 const locationSchema = z.object({
     Translation: z
