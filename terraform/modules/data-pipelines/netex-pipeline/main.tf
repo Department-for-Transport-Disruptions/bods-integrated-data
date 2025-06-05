@@ -67,34 +67,16 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_bods_netex_bucket_
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_versioning" "integrated_data_bods_netex_zipped_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_bods_netex_zipped_bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "integrated_data_bods_netex_bucket_versioning" {
-  bucket = aws_s3_bucket.integrated_data_bods_netex_bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 module "integrated_data_bods_netex_retriever_function" {
   source = "../../shared/lambda-function"
 
-  environment     = var.environment
-  function_name   = "integrated-data-bods-netex-retriever"
-  zip_path        = "${path.module}/../../../../src/functions/dist/bods-netex-retriever.zip"
-  handler         = "index.handler"
-  runtime         = "nodejs20.x"
-  timeout         = 600
-  memory          = 2048
-  needs_db_access = var.environment != "local"
-  vpc_id          = var.vpc_id
-  subnet_ids      = var.private_subnet_ids
-  database_sg_id  = var.db_sg_id
+  environment   = var.environment
+  function_name = "integrated-data-bods-netex-retriever"
+  zip_path      = "${path.module}/../../../../src/functions/dist/bods-netex-retriever.zip"
+  handler       = "index.handler"
+  runtime       = "nodejs22.x"
+  timeout       = 600
+  memory        = 2048
 
   permissions = [
     {
@@ -106,15 +88,6 @@ module "integrated_data_bods_netex_retriever_function" {
         "${aws_s3_bucket.integrated_data_bods_netex_bucket.arn}/*",
         "${aws_s3_bucket.integrated_data_bods_netex_zipped_bucket.arn}/*"
       ]
-    },
-    {
-      Action = [
-        "secretsmanager:GetSecretValue",
-      ],
-      Effect = "Allow",
-      Resource = [
-        var.db_secret_arn
-      ]
     }
   ]
 
@@ -122,10 +95,6 @@ module "integrated_data_bods_netex_retriever_function" {
     STAGE              = var.environment
     BUCKET_NAME        = aws_s3_bucket.integrated_data_bods_netex_bucket.bucket
     ZIPPED_BUCKET_NAME = aws_s3_bucket.integrated_data_bods_netex_zipped_bucket.bucket
-    DB_HOST            = var.db_host
-    DB_PORT            = var.db_port
-    DB_SECRET_ARN      = var.db_secret_arn
-    DB_NAME            = var.db_name
   }
 }
 
@@ -136,7 +105,7 @@ module "integrated_data_bods_netex_unzipper_function" {
   function_name = "integrated-data-bods-netex-unzipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-netex-unzipper.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 256
 

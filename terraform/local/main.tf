@@ -73,12 +73,7 @@ module "integrated_data_naptan_pipeline" {
 module "integrated_data_bods_netex_pipeline" {
   source = "../modules/data-pipelines/netex-pipeline"
 
-  environment        = local.env
-  vpc_id             = null
-  private_subnet_ids = null
-  db_secret_arn      = "*"
-  db_sg_id           = null
-  db_host            = null
+  environment = local.env
 }
 
 module "integrated_data_nptg_pipeline" {
