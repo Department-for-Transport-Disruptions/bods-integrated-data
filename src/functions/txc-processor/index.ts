@@ -13,7 +13,7 @@ import {
     VehicleJourney,
     txcSchema,
 } from "@bods-integrated-data/shared/schema";
-import { notEmpty } from "@bods-integrated-data/shared/utils";
+import { getBankHolidaysJson, notEmpty } from "@bods-integrated-data/shared/utils";
 import { S3EventRecord, S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
@@ -39,21 +39,6 @@ import {
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
-
-const getBankHolidaysJson = async (bucket: string) => {
-    const file = await getS3Object({
-        Bucket: bucket,
-        Key: "bank-holidays.json",
-    });
-
-    const body = await file.Body?.transformToString();
-
-    if (!body) {
-        throw new Error("No data found in bank-holidays.json");
-    }
-
-    return JSON.parse(body) as BankHolidaysJson;
-};
 
 const processServices = (
     dbClient: KyselyDb,
@@ -327,11 +312,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName, STAGE: stage } = process.env;
-
-    if (!bankHolidaysBucketName) {
-        throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
-    }
+    const { STAGE: stage } = process.env;
 
     dbClient = dbClient || (await getDatabaseClient(stage === "local"));
     const record = event.Records[0];
@@ -343,7 +324,7 @@ export const handler: S3Handler = async (event, context) => {
 
     try {
         logger.info("Retrieving bank holidays JSON");
-        const bankHolidaysJson = await getBankHolidaysJson(bankHolidaysBucketName);
+        const bankHolidaysJson = await getBankHolidaysJson();
         logger.info("Starting processing of TXC");
 
         await processRecord(record, bankHolidaysJson, dbClient);

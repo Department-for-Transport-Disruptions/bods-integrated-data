@@ -8,8 +8,9 @@ import { outputFile, pathExists, readJson, readdir, stat } from "fs-extra";
 import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { RouteType, WheelchairAccessibility } from "./database";
-import { getDate, getDateFromUnix, isDateAfter } from "./dates";
+import { BankHolidaysJson, getDate, getDateFromUnix, isDateAfter } from "./dates";
 import { logger } from "./logger";
+import { getS3Object } from "./s3";
 import { CancellationsSubscription, VehicleType } from "./schema";
 import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { getParameter } from "./ssm";
@@ -321,3 +322,24 @@ export class FileCache {
         return data.value as string;
     }
 }
+
+export const getBankHolidaysJson = async () => {
+    const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName } = process.env;
+
+    if (!bankHolidaysBucketName) {
+        throw new Error("Missing env vars - BANK_HOLIDAYS_BUCKET_NAME must be set");
+    }
+
+    const file = await getS3Object({
+        Bucket: bankHolidaysBucketName,
+        Key: "bank-holidays.json",
+    });
+
+    const body = await file.Body?.transformToString();
+
+    if (!body) {
+        throw new Error("No data found in bank-holidays.json");
+    }
+
+    return JSON.parse(body) as BankHolidaysJson;
+};
