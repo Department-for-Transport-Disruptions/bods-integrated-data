@@ -6,9 +6,10 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import weekday from "dayjs/plugin/weekday";
 import { CalendarDateExceptionType, CalendarWithDates } from "./database";
 
-interface Event {
+export interface Event {
     title: string;
     date: string;
     notes: string;
@@ -33,8 +34,11 @@ dayjsExtend(customParseFormat);
 dayjsExtend(isSameOrAfter);
 dayjsExtend(isSameOrBefore);
 dayjsExtend(isBetween);
+dayjsExtend(weekday);
 
 dayjs.tz.setDefault("Europe/London");
+
+export type DayJS = Dayjs;
 
 export const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
@@ -173,3 +177,33 @@ export const checkCalendarsOverlap = (calendarWithDatesA: CalendarWithDates, cal
 
 export const getTflOriginAimedDepartureTime = (originAimedDepartureTime: number) =>
     getDateWithLocalTime().startOf("day").add(originAimedDepartureTime, "seconds").toISOString();
+
+export type BankHoliday = {
+    name: string;
+    date: Dayjs;
+};
+
+export const getBankHolidaysList = (bankHolidaysJson: BankHolidaysJson): BankHoliday[] => {
+    const { getNextOccurrenceOfBankHoliday } = createBankHolidayFunctions(bankHolidaysJson);
+
+    return [
+        { name: "StAndrewsDay", date: getNextOccurrenceOfDate(30, 10) },
+        { name: "ChristmasEve", date: getNextOccurrenceOfDate(24, 11) },
+        { name: "ChristmasDay", date: getNextOccurrenceOfDate(25, 11) },
+        { name: "BoxingDay", date: getNextOccurrenceOfDate(26, 11) },
+        { name: "NewYearsEve", date: getNextOccurrenceOfDate(31, 11) },
+        { name: "NewYearsDay", date: getNextOccurrenceOfDate(1, 0) },
+        { name: "Jan2ndScotland", date: getNextOccurrenceOfDate(2, 0) },
+        { name: "AugustBankHolidayScotland", date: getNextOccurrenceOfBankHoliday("Scotland Summer bank holiday") },
+        { name: "BoxingDayHoliday", date: getNextOccurrenceOfBankHoliday("Boxing Day") },
+        { name: "ChristmasDayHoliday", date: getNextOccurrenceOfBankHoliday("Christmas Day") },
+        { name: "EasterMonday", date: getNextOccurrenceOfBankHoliday("Easter Monday") },
+        { name: "GoodFriday", date: getNextOccurrenceOfBankHoliday("Good Friday") },
+        { name: "Jan2ndScotlandHoliday", date: getNextOccurrenceOfBankHoliday("2nd January") },
+        { name: "LateSummerBankHolidayNotScotland", date: getNextOccurrenceOfBankHoliday("Summer bank holiday") },
+        { name: "MayDay", date: getNextOccurrenceOfBankHoliday("Early May bank holiday") },
+        { name: "NewYearsDayHoliday", date: getNextOccurrenceOfBankHoliday("New Year’s Day") },
+        { name: "SpringBank", date: getNextOccurrenceOfBankHoliday("Spring bank holiday") },
+        { name: "StAndrewsDayHoliday", date: getNextOccurrenceOfBankHoliday("St Andrew’s Day") },
+    ];
+};
