@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/netex-retriever",
+    "name": "@bods-integrated-data/bods-netex-retriever",
     "version": "0.1.0",
-    "description": "NeTEx retriever",
+    "description": "BODS NeTEx retriever",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./netex-retriever.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/netex-retriever.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-netex-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-netex-retriever.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],

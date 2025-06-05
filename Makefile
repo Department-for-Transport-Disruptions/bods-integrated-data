@@ -1,6 +1,6 @@
 NAPTAN_BUCKET_NAME="integrated-data-naptan-stops-local"
-NETEX_BUCKET_NAME="integrated-data-netex-local"
-NETEX_ZIPPED_BUCKET_NAME="integrated-data-netex-zipped_local"
+BODS_NETEX_BUCKET_NAME="integrated-data-bods-netex-local"
+BODS_NETEX_ZIPPED_BUCKET_NAME="integrated-data-bods-netex-zipped_local"
 NPTG_BUCKET_NAME="integrated-data-nptg-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
@@ -21,8 +21,6 @@ NOC_BUCKET_NAME="integrated-data-noc-local"
 TXC_QUEUE_NAME="integrated-data-txc-queue-local"
 AURORA_OUTPUT_BUCKET_NAME="integrated-data-aurora-output-local"
 BANK_HOLIDAYS_BUCKET_NAME="integrated-data-bank-holidays-local"
-BODS_FARES_ZIPPED_BUCKET_NAME="integrated-data-bods-fares-zipped-local"
-BODS_FARES_UNZIPPED_BUCKET_NAME="integrated-data-bods-fares-local"
 BODS_DISRUPTIONS_UNZIPPED_BUCKET_NAME="integrated-data-bods-disruptions-unzipped-local"
 BODS_DISRUPTIONS_BUCKET_NAME="integrated-data-bods-disruptions-gtfs-rt-local"
 GTFS_RT_DOWNLOADER_INPUT="{}"
@@ -156,8 +154,8 @@ run-local-naptan-uploader:
 
 # NeTEx
 
-run-local-netex-retriever:
-	STAGE=local BUCKET_NAME=${NETEX_BUCKET_NAME} ZIPPED_BUCKET_NAME=${NETEX_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/netex-retriever'; handler().catch(console.error)"
+run-local-bods-netex-retriever:
+	STAGE=local BUCKET_NAME=${BODS_NETEX_BUCKET_NAME} ZIPPED_BUCKET_NAME=${BODS_NETEX_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-netex-retriever'; handler().catch(console.error)"
 
 # NPTG
 
@@ -297,14 +295,6 @@ run-local-table-renamer:
 
 run-local-bank-holidays-retriever:
 	STAGE=local BANK_HOLIDAYS_BUCKET_NAME=${BANK_HOLIDAYS_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bank-holidays-retriever'; handler().catch(e => console.error(e))"
-
-# Fares retriever
-
-run-local-bods-fares-retriever:
-	STAGE=local FARES_ZIPPED_BUCKET_NAME=${BODS_FARES_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-fares-retriever'; handler().catch(e => console.error(e))"
-
-run-local-bods-fares-unzipper:
-	STAGE=local FILE="${FILE}" UNZIPPED_FARES_BUCKET_NAME=${BODS_FARES_UNZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-fares-unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_FARES_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(e => console.error(e))"
 
 # Disruptions
 

@@ -119,19 +119,19 @@ variable "tfl_timetable_bucket_name" {
   type = string
 }
 
-variable "netex_retriever_function_arn" {
+variable "bods_netex_retriever_function_arn" {
   type = string
 }
 
-variable "netex_unzipper_function_arn" {
+variable "bods_netex_unzipper_function_arn" {
   type = string
 }
 
-variable "netex_zipped_bucket_name" {
+variable "bods_netex_zipped_bucket_name" {
   type = string
 }
 
-variable "netex_bucket_name" {
+variable "bods_netex_bucket_name" {
   type = string
 }
 

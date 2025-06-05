@@ -70,10 +70,10 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     tfl_timetable_processor_function_arn            = var.tfl_timetable_processor_function_arn
     tfl_timetable_zipped_bucket_name                = var.tfl_timetable_zipped_bucket_name
     tfl_timetable_bucket_name                       = var.tfl_timetable_bucket_name
-    netex_retriever_function_arn                    = var.netex_retriever_function_arn
-    netex_unzipper_function_arn                     = var.netex_unzipper_function_arn
-    netex_zipped_bucket_name                        = var.netex_zipped_bucket_name
-    netex_bucket_name                               = var.netex_bucket_name
+    bods_netex_retriever_function_arn               = var.bods_netex_retriever_function_arn
+    bods_netex_unzipper_function_arn                = var.bods_netex_unzipper_function_arn
+    bods_netex_zipped_bucket_name                   = var.bods_netex_zipped_bucket_name
+    bods_netex_bucket_name                          = var.bods_netex_bucket_name
   })
 }
 
@@ -144,8 +144,8 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "arn:aws:s3:::${var.naptan_bucket_name}",
           "arn:aws:s3:::${var.tfl_timetable_zipped_bucket_name}",
           "arn:aws:s3:::${var.tfl_timetable_bucket_name}",
-          "arn:aws:s3:::${var.netex_zipped_bucket_name}",
-          "arn:aws:s3:::${var.netex_bucket_name}",
+          "arn:aws:s3:::${var.bods_netex_zipped_bucket_name}",
+          "arn:aws:s3:::${var.bods_netex_bucket_name}",
         ]
       },
       {

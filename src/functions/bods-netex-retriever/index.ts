@@ -52,12 +52,12 @@ const getDataAndUploadToS3 = async (
     await Promise.all(promises);
 };
 
-type NetexRetrieverOutput = {
+type BodsNetexRetrieverOutput = {
     netexZippedBucketName: string;
     prefix: string;
 };
 
-export const handler: Handler = async (event, context): Promise<NetexRetrieverOutput> => {
+export const handler: Handler = async (event, context): Promise<BodsNetexRetrieverOutput> => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { BUCKET_NAME, ZIPPED_BUCKET_NAME } = process.env;
@@ -67,7 +67,7 @@ export const handler: Handler = async (event, context): Promise<NetexRetrieverOu
     }
 
     try {
-        logger.info("Starting retrieval of NeTEx data");
+        logger.info("Starting retrieval of BODS NeTEx data");
         const prefix = getDate().format("YYYYMMDD");
 
         await getDataAndUploadToS3(
@@ -77,7 +77,7 @@ export const handler: Handler = async (event, context): Promise<NetexRetrieverOu
             prefix,
         );
 
-        logger.info("NeTEx retrieval complete");
+        logger.info("BODS NeTEx retrieval complete");
 
         return {
             netexZippedBucketName: ZIPPED_BUCKET_NAME,

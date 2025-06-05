@@ -243,7 +243,7 @@
                                             "Type": "Task",
                                             "Resource": "arn:aws:states:::lambda:invoke",
                                             "Parameters": {
-                                                "FunctionName": "${netex_retriever_function_arn}:$LATEST"
+                                                "FunctionName": "${bods_netex_retriever_function_arn}:$LATEST"
                                             },
                                             "Retry": [
                                                 {
@@ -274,13 +274,13 @@
                                                         "Type": "Task",
                                                         "Resource": "arn:aws:states:::lambda:invoke",
                                                         "Parameters": {
-                                                            "FunctionName": "${netex_unzipper_function_arn}:$LATEST",
+                                                            "FunctionName": "${bods_netex_unzipper_function_arn}:$LATEST",
                                                             "Payload": {
                                                                 "Records": [
                                                                     {
                                                                         "s3": {
                                                                             "bucket": {
-                                                                                "name": "${netex_zipped_bucket_name}"
+                                                                                "name": "${bods_netex_zipped_bucket_name}"
                                                                             },
                                                                             "object": {
                                                                                 "key.$": "$.Key"
