@@ -52,7 +52,12 @@ const getDataAndUploadToS3 = async (
     await Promise.all(promises);
 };
 
-export const handler: Handler = async (event, context) => {
+type NetexRetrieverOutput = {
+    netexZippedBucketName: string;
+    prefix: string;
+};
+
+export const handler: Handler = async (event, context): Promise<NetexRetrieverOutput> => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
     const { BUCKET_NAME, ZIPPED_BUCKET_NAME } = process.env;
@@ -73,6 +78,11 @@ export const handler: Handler = async (event, context) => {
         );
 
         logger.info("NeTEx retrieval complete");
+
+        return {
+            netexZippedBucketName: ZIPPED_BUCKET_NAME,
+            prefix,
+        };
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, "There was an error retrieving the NeTEx data");

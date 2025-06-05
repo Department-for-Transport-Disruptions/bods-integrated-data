@@ -372,6 +372,10 @@ module "integrated_data_timetables_sfn" {
   tfl_timetable_processor_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_processor_function_arn
   tfl_timetable_zipped_bucket_name                = module.integrated_data_tfl_pipeline.tfl_timetable_zipped_bucket_name
   tfl_timetable_bucket_name                       = module.integrated_data_tfl_pipeline.tfl_timetable_bucket_name
+  netex_retriever_function_arn                    = module.integrated_data_netex_pipeline.netex_retriever_function_arn
+  netex_unzipper_function_arn                     = module.integrated_data_netex_pipeline.netex_unzipper_function_arn
+  netex_zipped_bucket_name                        = module.integrated_data_netex_pipeline.netex_zipped_bucket_name
+  netex_bucket_name                               = module.integrated_data_netex_pipeline.netex_bucket_name
   schedule                                        = "cron(0 2 * * ? *)"
 }
 
