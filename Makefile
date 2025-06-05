@@ -1,4 +1,6 @@
 NAPTAN_BUCKET_NAME="integrated-data-naptan-stops-local"
+NETEX_BUCKET_NAME="integrated-data-netex-local"
+NETEX_ZIPPED_BUCKET_NAME="integrated-data-netex-zipped_local"
 NPTG_BUCKET_NAME="integrated-data-nptg-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
@@ -151,6 +153,11 @@ run-local-naptan-retriever:
 
 run-local-naptan-uploader:
 	STAGE=local npx tsx -e "import {handler} from './src/functions/naptan-uploader'; handler({Records:[{s3:{bucket:{name:'${NAPTAN_BUCKET_NAME}'},object:{key:'Stops.csv'}}}]}).catch(e => console.error(e))"
+
+# NeTEx
+
+run-local-netex-retriever:
+	STAGE=local BUCKET_NAME=${NETEX_BUCKET_NAME} ZIPPED_BUCKET_NAME=${NETEX_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/netex-retriever'; handler().catch(console.error)"
 
 # NPTG
 

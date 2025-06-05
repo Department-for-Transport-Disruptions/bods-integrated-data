@@ -149,6 +149,17 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db.db_host
 }
 
+module "integrated_data_netex_pipeline" {
+  source = "../modules/data-pipelines/netex-pipeline"
+
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc.vpc_id
+  private_subnet_ids = module.integrated_data_vpc.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db.db_sg_id
+  db_host            = module.integrated_data_aurora_db.db_host
+}
+
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
