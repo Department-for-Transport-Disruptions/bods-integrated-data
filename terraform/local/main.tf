@@ -70,6 +70,12 @@ module "integrated_data_naptan_pipeline" {
   db_host            = null
 }
 
+module "integrated_data_bods_netex_pipeline" {
+  source = "../modules/data-pipelines/netex-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
@@ -214,12 +220,6 @@ module "integrated_data_db_cleardown_function" {
   db_secret_arn      = "*"
   db_sg_id           = null
   db_host            = null
-}
-
-module "integrated_data_fares_pipeline" {
-  source = "../modules/data-pipelines/fares-pipeline"
-
-  environment = local.env
 }
 
 module "integrated_data_disruptions_pipeline" {

@@ -9,7 +9,7 @@ program
         });
 
         await invokeLambda(stage, {
-            FunctionName: `integrated-data-bods-fares-retriever-${stage}`,
+            FunctionName: `integrated-data-bods-netex-retriever-${stage}`,
             InvocationType: "RequestResponse",
         });
     })
