@@ -119,6 +119,8 @@ export const isDateAfter = (date: Dayjs, dateToCompare: Dayjs) => date.isSameOrA
 
 export const getDuration = (duration: string) => dayjs.duration(duration);
 
+export const getDurationInSeconds = (duration: number) => dayjs.duration(duration, "seconds");
+
 export const getLocalTime = (time: string) => dayjs(time, "HH:mm:ss").local();
 
 /**

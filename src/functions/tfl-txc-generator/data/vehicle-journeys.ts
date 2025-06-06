@@ -1,5 +1,18 @@
-import { BankHoliday, type DayJS, getDate } from "@bods-integrated-data/shared/dates";
-import { OperatingProfileWithDateRange } from "@bods-integrated-data/shared/schema";
+import {
+    BankHoliday,
+    type DayJS,
+    getBankHolidaysList,
+    getDate,
+    getDurationInSeconds,
+} from "@bods-integrated-data/shared/dates";
+import {
+    OperatingProfileWithDateRange,
+    VehicleJourneyTimingLink,
+    VehicleJourneyWithDateRanges,
+} from "@bods-integrated-data/shared/schema";
+import { getBankHolidaysJson } from "@bods-integrated-data/shared/utils";
+import { TFLO_NOC } from "../constants";
+import { TflIBusData } from "./db";
 
 const parseDatesAndCreateSet = (dates: string[]) => {
     const parsedDates = dates.map((d) => getDate(d));
@@ -207,12 +220,9 @@ const createSpecialDaysOfOperation = (
     };
 };
 
-export const createOperatingProfile = (
-    dates: string[],
-    bankHolidays: BankHoliday[],
-): OperatingProfileWithDateRange | undefined => {
+export const createOperatingProfile = (dates: string[], bankHolidays: BankHoliday[]): OperatingProfileWithDateRange => {
     if (!dates.length) {
-        return undefined;
+        throw new Error("No dates for operating profile");
     }
 
     const startDate = dates[0];
@@ -249,7 +259,50 @@ export const createOperatingProfile = (
 
     return {
         RegularDayType: createRegularDayType(regularDays),
-        BankHolidayOperation: createBankHolidayOperation(presentBankHolidays, missingBankHolidays),
         SpecialDaysOperation: createSpecialDaysOfOperation(specialOperatingDates, specialNonOperatingDates),
+        BankHolidayOperation: createBankHolidayOperation(presentBankHolidays, missingBankHolidays),
+    };
+};
+
+export const calculateDepartureTime = (startTime: number): string => getDurationInSeconds(startTime).format("HH:mm:ss");
+
+export const generateVehicleJourneys = async (
+    patterns: TflIBusData["patterns"],
+    lineId: string,
+): Promise<{ VehicleJourney: VehicleJourneyWithDateRanges[] }> => {
+    const bankHolidaysJson = await getBankHolidaysJson();
+    const allBankHolidays = getBankHolidaysList(bankHolidaysJson);
+
+    return {
+        VehicleJourney: patterns.flatMap((pattern, patternIndex) =>
+            pattern.journeys.map<VehicleJourneyWithDateRanges>((journey, journeyIndex) => ({
+                OperatorRef: TFLO_NOC,
+                Operational: {
+                    Block: {
+                        Description: journey.block_no.toString(),
+                        BlockNumber: journey.block_no.toString(),
+                    },
+                },
+                OperatingProfile: createOperatingProfile(
+                    journey.calendar_days.map((day) => day.calendar_day),
+                    allBankHolidays,
+                ),
+                VehicleJourneyCode: `VJ${patternIndex + 1}-${journeyIndex + 1}`,
+                ServiceRef: lineId,
+                LineRef: `TFLO:${lineId}`,
+                JourneyPatternRef: `JP${patternIndex + 1}`,
+                DepartureTime: calculateDepartureTime(journey.start_time),
+                DepartureDayShift: journey.start_time >= 86400 ? 1 : undefined,
+                VehicleJourneyTimingLink: pattern.stops.flatMap<VehicleJourneyTimingLink>((_stop, stopIndex) => {
+                    if (stopIndex >= pattern.stops.length - 1) {
+                        return [];
+                    }
+
+                    return {
+                        JourneyPatternTimingLinkRef: `JPTL${patternIndex + 1}-${stopIndex + 1}`,
+                    };
+                }),
+            })),
+        ),
     };
 };

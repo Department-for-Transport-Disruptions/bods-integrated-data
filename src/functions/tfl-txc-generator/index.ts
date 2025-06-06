@@ -6,6 +6,11 @@ import { Handler } from "aws-lambda";
 import { XMLBuilder } from "fast-xml-parser";
 import { z } from "zod";
 import { TflIBusData, getTflIBusData, upsertTxcMetadata } from "./data/db";
+import { generateOperators } from "./data/operators";
+import { generateRouteSections, generateRoutes } from "./data/routes";
+import { generateJourneyPatternSections, generateServices } from "./data/services";
+import { generateStopPoints } from "./data/stop-points";
+import { generateVehicleJourneys } from "./data/vehicle-journeys";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -15,6 +20,7 @@ const xmlBuilder = new XMLBuilder({
     ignoreAttributes: false,
     format: true,
     attributeNamePrefix: "@_",
+    suppressEmptyNode: true,
 });
 
 const getTxcAttributes = (metadata: TflTxcMetadata, lineId: string) => ({
@@ -28,7 +34,7 @@ const getTxcAttributes = (metadata: TflTxcMetadata, lineId: string) => ({
         "@_CreationDateTime": getDate(metadata.creation_datetime).toISOString(),
         "@_ModificationDateTime": metadata.modification_datetime
             ? getDate(metadata.modification_datetime).toISOString()
-            : undefined,
+            : getDate(metadata.creation_datetime).toISOString(),
         "@_Modification": metadata.modification_datetime ? "revise" : "new",
         "@_RevisionNumber": metadata.revision.toString(),
         "@_FileName": `${lineId}.xml`,
@@ -40,21 +46,9 @@ const getTxcAttributes = (metadata: TflTxcMetadata, lineId: string) => ({
 });
 
 const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata) => {
-    // const bankHolidaysJson = await getBankHolidaysJson();
-    // const allBankHolidays = getBankHolidaysList(bankHolidaysJson);
-
-    // const filteredPatterns = iBusData.patterns.filter(
-    //     (pattern) => pattern.journeys.length > 0 && pattern.stops.length > 0,
-    // );
-
-    // const allCalendarDays = filteredPatterns
-    //     .flatMap((pattern) =>
-    //         pattern.journeys.flatMap((journey) => journey.calendar_days.flatMap((day) => day.calendar_day)),
-    //     )
-    //     .sort((a, b) => a.localeCompare(b));
-
-    // const startDate = allCalendarDays[0];
-    // const endDate = allCalendarDays[allCalendarDays.length - 1];
+    const filteredPatterns = iBusData.patterns.filter(
+        (pattern) => pattern.journeys.length > 0 && pattern.stops.length > 0,
+    );
 
     const txcAttributes = getTxcAttributes(metadata, iBusData.id);
 
@@ -62,23 +56,15 @@ const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata) => {
         ...txcAttributes,
         TransXChange: {
             ...txcAttributes.TransXChange,
-            StopPoints: "",
-            RouteSections: "",
-            Routes: "",
-            JourneyPatternSections: "",
-            Operators: "",
-            Services: "",
-            VehicleJourneys: "",
+            StopPoints: generateStopPoints(filteredPatterns),
+            RouteSections: generateRouteSections(filteredPatterns),
+            Routes: generateRoutes(filteredPatterns),
+            JourneyPatternSections: generateJourneyPatternSections(filteredPatterns),
+            Operators: generateOperators(),
+            Services: generateServices(filteredPatterns, iBusData.id),
+            VehicleJourneys: await generateVehicleJourneys(filteredPatterns, iBusData.id),
         },
     };
-
-    // for (const pattern of filteredPatterns) {
-    //     for (const journey of pattern.journeys) {
-    //         const dates = journey.calendar_days.map((day) => day.calendar_day);
-
-    //         createOperatingProfile(dates, allBankHolidays);
-    //     }
-    // }
 
     return xmlBuilder.build(txc);
 };
@@ -102,16 +88,16 @@ export const handler: Handler = async (event, context) => {
         logger.info(`Generating TxC for line: ${parsedLineId}`);
 
         const metadata = await upsertTxcMetadata(dbClient, parsedLineId);
-
-        const data = await getTflIBusData(dbClient, parsedLineId);
-
-        const txc = await buildTxc(data, metadata);
+        const iBusData = await getTflIBusData(dbClient, parsedLineId);
+        const txc = await buildTxc(iBusData, metadata);
 
         await putS3Object({
             Bucket: tflTxcBucketName,
             Key: `${parsedLineId}.xml`,
             Body: txc,
         });
+
+        logger.info(`TxC generated for line: ${parsedLineId}`);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, `Error generating TxC for line: ${parsedLineId}`);

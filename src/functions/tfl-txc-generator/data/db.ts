@@ -1,5 +1,5 @@
 import { Database, KyselyDb } from "@bods-integrated-data/shared/database";
-import { ExpressionBuilder, sql } from "kysely";
+import { ExpressionBuilder, NotNull, sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
 
 export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
@@ -19,6 +19,7 @@ export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
                                 .innerJoin("tfl_block", "tfl_block.id", "tfl_journey.block_id")
                                 .select((eb3) => [
                                     "tfl_journey.start_time",
+                                    "tfl_block.block_no",
                                     jsonArrayFrom(
                                         eb3
                                             .selectFrom("tfl_block_calendar_day")
@@ -36,11 +37,15 @@ export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
                                 .selectFrom("tfl_stop_in_pattern")
                                 .whereRef("tfl_stop_in_pattern.pattern_id", "=", "tfl_pattern.id")
                                 .innerJoin("tfl_stop_point", "tfl_stop_point.id", "tfl_stop_in_pattern.stop_point_id")
+                                .leftJoin("tfl_destination", "tfl_destination.id", "tfl_stop_in_pattern.destination_id")
                                 .select([
                                     "tfl_stop_in_pattern.sequence_no",
                                     "tfl_stop_point.naptan_code as atco_code",
                                     "tfl_stop_point.stop_name as common_name",
+                                    "tfl_destination.short_destination_name",
                                 ])
+                                .where("tfl_stop_point.naptan_code", "is not", null)
+                                .$narrowType<{ atco_code: NotNull }>()
                                 .orderBy("tfl_stop_in_pattern.sequence_no"),
                         ).as("stops"),
                     ])
