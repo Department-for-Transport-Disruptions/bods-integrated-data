@@ -1,17 +1,11 @@
-import {
-    BankHoliday,
-    type DayJS,
-    getBankHolidaysList,
-    getDate,
-    getDurationInSeconds,
-} from "@bods-integrated-data/shared/dates";
+import { BankHoliday, type DayJS, getDate, getDurationInSeconds } from "@bods-integrated-data/shared/dates";
 import {
     OperatingProfileWithDateRange,
     VehicleJourneyTimingLink,
     VehicleJourneyWithDateRanges,
 } from "@bods-integrated-data/shared/schema";
-import { getBankHolidaysJson } from "@bods-integrated-data/shared/utils";
 import { TFLO_NOC } from "../constants";
+import { getServiceCode, getTxcLineId } from "../utils";
 import { TflIBusData } from "./db";
 
 const parseDatesAndCreateSet = (dates: string[]) => {
@@ -22,6 +16,7 @@ const parseDatesAndCreateSet = (dates: string[]) => {
 
 const calculateDayFrequency = (startDate: string, endDate: string, parsedDates: DayJS[]) => {
     const weekMap = new Map<string, Set<number>>();
+    const dayFrequency = new Map<number, number>();
 
     const start = getDate(startDate);
     const end = getDate(endDate);
@@ -42,23 +37,18 @@ const calculateDayFrequency = (startDate: string, endDate: string, parsedDates: 
         const day = d.day();
 
         if (!weekMap.has(weekStart)) {
-            weekMap.set(weekStart, new Set([day]));
-        } else {
-            weekMap.get(weekStart)?.add(day);
+            weekMap.set(weekStart, new Set());
         }
-    }
+        weekMap.get(weekStart)?.add(day);
 
-    const dayFrequency = new Map<number, number>();
-    for (const days of weekMap.values()) {
-        for (const day of days) {
-            dayFrequency.set(day, (dayFrequency.get(day) || 0) + 1);
-        }
+        dayFrequency.set(day, (dayFrequency.get(day) || 0) + 1);
     }
 
     return { weekMap, dayFrequency };
 };
 
 const calculateRegularDaysOfOperation = (dayFrequency: Map<number, number>, totalWeeks: number) => {
+    // Day must occur at least 25% of the total weeks to be considered a regular day
     const threshold = Math.max(2, Math.floor(totalWeeks * 0.25));
     const regularDays = new Set<number>();
 
@@ -269,10 +259,8 @@ export const calculateDepartureTime = (startTime: number): string => getDuration
 export const generateVehicleJourneys = async (
     patterns: TflIBusData["patterns"],
     lineId: string,
+    bankHolidays: BankHoliday[],
 ): Promise<{ VehicleJourney: VehicleJourneyWithDateRanges[] }> => {
-    const bankHolidaysJson = await getBankHolidaysJson();
-    const allBankHolidays = getBankHolidaysList(bankHolidaysJson);
-
     return {
         VehicleJourney: patterns.flatMap((pattern, patternIndex) =>
             pattern.journeys.map<VehicleJourneyWithDateRanges>((journey, journeyIndex) => ({
@@ -285,21 +273,38 @@ export const generateVehicleJourneys = async (
                 },
                 OperatingProfile: createOperatingProfile(
                     journey.calendar_days.map((day) => day.calendar_day),
-                    allBankHolidays,
+                    bankHolidays,
                 ),
                 VehicleJourneyCode: `VJ${patternIndex + 1}-${journeyIndex + 1}`,
-                ServiceRef: lineId,
-                LineRef: `TFLO:${lineId}`,
+                ServiceRef: getServiceCode(lineId),
+                LineRef: getTxcLineId(lineId),
                 JourneyPatternRef: `JP${patternIndex + 1}`,
                 DepartureTime: calculateDepartureTime(journey.start_time),
                 DepartureDayShift: journey.start_time >= 86400 ? 1 : undefined,
-                VehicleJourneyTimingLink: pattern.stops.flatMap<VehicleJourneyTimingLink>((_stop, stopIndex) => {
-                    if (stopIndex >= pattern.stops.length - 1) {
+                VehicleJourneyTimingLink: journey.stops.flatMap<VehicleJourneyTimingLink>((stop, stopIndex) => {
+                    if (stopIndex >= journey.stops.length - 1) {
                         return [];
                     }
 
                     return {
                         JourneyPatternTimingLinkRef: `JPTL${patternIndex + 1}-${stopIndex + 1}`,
+                        RunTime: getDurationInSeconds(stop.drive_time).toISOString(),
+                        ...(stop.wait_time
+                            ? {
+                                  From: {
+                                      WaitTime: getDurationInSeconds(stop.wait_time).toISOString(),
+                                  },
+                              }
+                            : {}),
+                        ...(journey.stops[stopIndex + 1].wait_time
+                            ? {
+                                  To: {
+                                      WaitTime: getDurationInSeconds(
+                                          journey.stops[stopIndex + 1].wait_time || 0,
+                                      ).toISOString(),
+                                  },
+                              }
+                            : {}),
                     };
                 }),
             })),

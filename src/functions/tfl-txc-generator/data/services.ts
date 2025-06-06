@@ -4,30 +4,36 @@ import {
     Service,
     TxcJourneyPatternSection,
 } from "@bods-integrated-data/shared/schema";
-import { SERVICE_CODE_PREFIX, TFLO_NOC } from "../constants";
+import { TFLO_NOC } from "../constants";
+import { getServiceCode, getTxcLineId } from "../utils";
 import { TflIBusData } from "./db";
 
 export const generateJourneyPatternSections = (
     patterns: TflIBusData["patterns"],
 ): { JourneyPatternSection: TxcJourneyPatternSection[] } => ({
-    JourneyPatternSection: patterns.map<TxcJourneyPatternSection>((pattern, index) => ({
-        "@_id": `JPS${index + 1}`,
+    JourneyPatternSection: patterns.flatMap((pattern, patternIndex) => ({
+        "@_id": `JPS${patternIndex + 1}`,
         JourneyPatternTimingLink: pattern.stops.flatMap<AbstractTimingLink>((stop, stopIndex) => {
-            if (stopIndex >= pattern.stops.length - 1) {
+            if (stopIndex === pattern.stops.length - 1) {
                 return [];
             }
 
+            const fromStop = stop;
+            const toStop = pattern.stops[stopIndex + 1];
+
             return {
-                "@_id": `JPTL${index + 1}-${stopIndex + 1}`,
+                "@_id": `JPTL${patternIndex + 1}-${stopIndex + 1}`,
                 From: {
                     Activity: stopIndex === 0 ? "pickUp" : "pickUpAndSetDown",
-                    StopPointRef: stop.atco_code,
+                    StopPointRef: fromStop.atco_code,
+                    TimingStatus: fromStop.timing_point_code ? "principalTimingPoint" : undefined,
                 },
                 To: {
                     Activity: stopIndex === pattern.stops.length - 2 ? "setDown" : "pickUpAndSetDown",
-                    StopPointRef: pattern.stops[stopIndex + 1].atco_code,
+                    StopPointRef: toStop.atco_code,
+                    TimingStatus: toStop.timing_point_code ? "principalTimingPoint" : undefined,
                 },
-                RouteLinkRef: `RL${index + 1}-${stopIndex + 1}`,
+                RouteLinkRef: `RL${patternIndex + 1}-${stopIndex + 1}`,
                 RunTime: "PT0M0S",
             };
         }),
@@ -62,15 +68,13 @@ export const generateServices = (patterns: TflIBusData["patterns"], lineId: stri
     const { origin, destination } = getOriginAndDestination(patterns);
     const { startDate, endDate } = getStartAndEndDates(patterns);
 
-    const serviceCode = `${SERVICE_CODE_PREFIX}${lineId}`;
-
     return {
         Service: {
-            ServiceCode: serviceCode,
+            ServiceCode: getServiceCode(lineId),
             Lines: {
                 Line: [
                     {
-                        "@_id": `${TFLO_NOC}:${serviceCode}:${lineId}`,
+                        "@_id": getTxcLineId(lineId),
                         LineName: lineId,
                     },
                 ],

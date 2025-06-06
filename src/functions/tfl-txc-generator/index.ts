@@ -1,7 +1,8 @@
 import { KyselyDb, TflTxcMetadata, getDatabaseClient } from "@bods-integrated-data/shared/database";
-import { getDate } from "@bods-integrated-data/shared/dates";
+import { BankHoliday, getBankHolidaysList, getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
+import { getBankHolidaysJson } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import { XMLBuilder } from "fast-xml-parser";
 import { z } from "zod";
@@ -45,7 +46,7 @@ const getTxcAttributes = (metadata: TflTxcMetadata, lineId: string) => ({
     },
 });
 
-const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata) => {
+export const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata, bankHolidays: BankHoliday[]) => {
     const filteredPatterns = iBusData.patterns.filter(
         (pattern) => pattern.journeys.length > 0 && pattern.stops.length > 0,
     );
@@ -62,7 +63,7 @@ const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata) => {
             JourneyPatternSections: generateJourneyPatternSections(filteredPatterns),
             Operators: generateOperators(),
             Services: generateServices(filteredPatterns, iBusData.id),
-            VehicleJourneys: await generateVehicleJourneys(filteredPatterns, iBusData.id),
+            VehicleJourneys: await generateVehicleJourneys(filteredPatterns, iBusData.id, bankHolidays),
         },
     };
 
@@ -88,8 +89,13 @@ export const handler: Handler = async (event, context) => {
         logger.info(`Generating TxC for line: ${parsedLineId}`);
 
         const metadata = await upsertTxcMetadata(dbClient, parsedLineId);
+
+        const bankHolidaysJson = await getBankHolidaysJson();
+        const allBankHolidays = getBankHolidaysList(bankHolidaysJson);
+
         const iBusData = await getTflIBusData(dbClient, parsedLineId);
-        const txc = await buildTxc(iBusData, metadata);
+
+        const txc = await buildTxc(iBusData, metadata, allBankHolidays);
 
         await putS3Object({
             Bucket: tflTxcBucketName,

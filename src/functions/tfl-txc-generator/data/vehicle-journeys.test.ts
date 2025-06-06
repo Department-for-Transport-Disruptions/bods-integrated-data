@@ -1,6 +1,6 @@
 import { BankHoliday, getDate } from "@bods-integrated-data/shared/dates";
 import { describe, expect, it } from "vitest";
-import { createOperatingProfile } from "./vehicle-journey";
+import { createOperatingProfile } from "./vehicle-journeys";
 
 const bankHolidays: BankHoliday[] = [
     { name: "ChristmasDay", date: getDate("2025-12-25") },
@@ -255,7 +255,6 @@ describe("createOperatingProfile", () => {
     });
 
     it("handles empty input", () => {
-        const profile = createOperatingProfile([], bankHolidays);
-        expect(profile).toBeUndefined();
+        expect(() => createOperatingProfile([], bankHolidays)).toThrowError("No dates for operating profile");
     });
 });
