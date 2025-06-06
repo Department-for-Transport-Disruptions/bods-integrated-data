@@ -18,7 +18,7 @@ describe("checkForMissingJourneyCodes", () => {
         expect(result).toEqual([]);
     });
 
-    it("should return an empty array if there are no missing vehicle journey codes", () => {
+    it("should return an empty array if there are no missing journey codes", () => {
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 VehicleJourneys: {
@@ -26,10 +26,20 @@ describe("checkForMissingJourneyCodes", () => {
                         {
                             VehicleJourneyCode: "VJ1",
                             DepartureTime: "08:00",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J1",
+                                },
+                            },
                         },
                         {
-                            VehicleJourneyCode: "VJ2",
+                            VehicleJourneyCode: "V21",
                             DepartureTime: "08:30",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J2",
+                                },
+                            },
                         },
                     ],
                 },
@@ -40,17 +50,22 @@ describe("checkForMissingJourneyCodes", () => {
         expect(result).toEqual([]);
     });
 
-    it("should return observations for missing vehicle journey codes", () => {
+    it("should return observations for missing journey codes", () => {
         const data: PartialDeep<TxcSchema> = {
             TransXChange: {
                 VehicleJourneys: {
                     VehicleJourney: [
                         {
-                            VehicleJourneyCode: "",
+                            VehicleJourneyCode: "VJ1",
                             ServiceRef: "SVC1",
                             LineRef: "line1",
                             DepartureTime: "08:00",
                             JourneyPatternRef: "JP1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "",
+                                },
+                            },
                         },
                         {
                             ServiceRef: "SVC1",
@@ -60,6 +75,11 @@ describe("checkForMissingJourneyCodes", () => {
                             VehicleJourneyCode: "VJ2",
                             ServiceRef: "SVC1",
                             LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J2",
+                                },
+                            },
                         },
                     ],
                 },
