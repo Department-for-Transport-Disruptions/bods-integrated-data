@@ -82,7 +82,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             {
                 importance: "advisory",
                 category: "dataset",
-                observation: "Serviced organisation out of date",
+                observation: "Serviced organisation data is out of date",
                 serviceCode: "n/a",
                 lineName: "n/a",
                 details:
@@ -91,7 +91,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
             {
                 importance: "advisory",
                 category: "dataset",
-                observation: "Serviced organisation out of date",
+                observation: "Serviced organisation data is out of date",
                 serviceCode: "n/a",
                 lineName: "n/a",
                 details:

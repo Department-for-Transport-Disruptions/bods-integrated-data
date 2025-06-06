@@ -27,7 +27,7 @@ type ObservationSummaryByDataSource = {
     "Duplicate journey code": number;
     "Duplicate journey": number;
     "Missing bus working number": number;
-    "Serviced organisation out of date": number;
+    "Serviced organisation data is out of date": number;
 };
 
 type ObservationSummaryByFile = {
@@ -49,7 +49,7 @@ type ObservationSummaryByFile = {
     "Duplicate journey code": number;
     "Duplicate journey": number;
     "Missing bus working number": number;
-    "Serviced organisation out of date": number;
+    "Serviced organisation data is out of date": number;
 };
 
 type ObservationSummaryByObservationType = {
@@ -150,7 +150,7 @@ export const handler: Handler = async (event, context) => {
                             "Duplicate journey code": 0,
                             "Duplicate journey": 0,
                             "Missing bus working number": 0,
-                            "Serviced organisation out of date": 0,
+                            "Serviced organisation data is out of date": 0,
                         };
                     }
 
@@ -183,7 +183,7 @@ export const handler: Handler = async (event, context) => {
                             "Duplicate journey code": 0,
                             "Duplicate journey": 0,
                             "Missing bus working number": 0,
-                            "Serviced organisation out of date": 0,
+                            "Serviced organisation data is out of date": 0,
                         };
                     }
 
