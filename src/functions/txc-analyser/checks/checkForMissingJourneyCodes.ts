@@ -8,7 +8,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
     if (vehicleJourneys) {
         for (const vehicleJourney of vehicleJourneys) {
-            if (!vehicleJourney.VehicleJourneyCode) {
+            if (!vehicleJourney.Operational?.TicketMachine?.JourneyCode) {
                 let serviceCode = "n/a";
                 let lineName = "n/a";
                 let direction = "unknown direction";
