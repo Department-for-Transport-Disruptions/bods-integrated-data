@@ -1,4 +1,4 @@
-import { BankHoliday, getDate } from "@bods-integrated-data/shared/dates";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { describe, expect, it } from "vitest";
 import { createOperatingProfile } from "./vehicle-journeys";
 
@@ -256,5 +256,122 @@ describe("createOperatingProfile", () => {
 
     it("handles empty input", () => {
         expect(() => createOperatingProfile([], bankHolidays)).toThrowError("No dates for operating profile");
+    });
+});
+
+import { BankHoliday } from "@bods-integrated-data/shared/dates";
+import { TflIBusData } from "./db";
+import { generateVehicleJourneys } from "./vehicle-journeys";
+
+const mockPatterns = [
+    {
+        journeys: [
+            {
+                block_no: 1,
+                calendar_days: [
+                    { calendar_day: "2025-05-05" }, // May Day (bank holiday)
+                    { calendar_day: "2025-05-12" },
+                    { calendar_day: "2025-05-19" },
+                ],
+                start_time: 36000, // 10:00:00
+                stops: [{ drive_time: 120, wait_time: 30 }, { drive_time: 180, wait_time: 0 }, { drive_time: 240 }],
+            },
+        ],
+        stops: [
+            { atco_code: "A", timing_point_code: "T" },
+            { atco_code: "B" },
+            { atco_code: "C", timing_point_code: "T" },
+        ],
+    },
+];
+
+const mockBankHolidays: BankHoliday[] = [
+    { name: "MayDay", date: getDate("2025-05-05") },
+    { name: "ChristmasDay", date: getDate("2025-12-25") },
+];
+
+describe("generateVehicleJourneys", () => {
+    it("generates correct VehicleJourney structure", async () => {
+        const result = await generateVehicleJourneys(
+            mockPatterns as TflIBusData["patterns"],
+            "Line1",
+            mockBankHolidays,
+        );
+
+        expect(result).toEqual({
+            VehicleJourney: [
+                {
+                    DepartureDayShift: undefined,
+                    DepartureTime: "10:00:00",
+                    JourneyPatternRef: "JP1",
+                    LineRef: "TFLO:UZ000TFLO:Line1:Line1",
+                    OperatingProfile: {
+                        BankHolidayOperation: {
+                            DaysOfNonOperation: undefined,
+                            DaysOfOperation: {
+                                MayDay: "",
+                            },
+                        },
+                        RegularDayType: {
+                            DaysOfWeek: {
+                                Friday: undefined,
+                                Monday: "",
+                                Saturday: undefined,
+                                Sunday: undefined,
+                                Thursday: undefined,
+                                Tuesday: undefined,
+                                Wednesday: undefined,
+                            },
+                        },
+                        SpecialDaysOperation: undefined,
+                    },
+                    Operational: {
+                        Block: {
+                            BlockNumber: "1",
+                            Description: "1",
+                        },
+                    },
+                    OperatorRef: "TFLO",
+                    ServiceRef: "UZ000TFLO:Line1",
+                    VehicleJourneyCode: "VJ1-1",
+                    VehicleJourneyTimingLink: [
+                        {
+                            From: {
+                                WaitTime: "PT30S",
+                            },
+                            JourneyPatternTimingLinkRef: "JPTL1-1",
+                            RunTime: "PT2M",
+                        },
+                        {
+                            JourneyPatternTimingLinkRef: "JPTL1-2",
+                            RunTime: "PT3M",
+                        },
+                    ],
+                },
+            ],
+        });
+    });
+
+    it("sets DepartureDayShift if start_time is over 24 hours", async () => {
+        const patterns = [
+            {
+                journeys: [
+                    {
+                        block_no: 2,
+                        calendar_days: [{ calendar_day: "2025-05-12" }],
+                        start_time: 90000, // 25:00:00
+                        stops: [{ drive_time: 60 }, { drive_time: 60 }],
+                    },
+                ],
+                stops: [{ atco_code: "A" }, { atco_code: "B" }],
+            },
+        ];
+        const result = await generateVehicleJourneys(patterns as TflIBusData["patterns"], "Line2", []);
+        expect(result.VehicleJourney[0].DepartureDayShift).toBe(1);
+    });
+
+    it("handles empty patterns", async () => {
+        const result = await generateVehicleJourneys([], "Line3", []);
+        expect(result.VehicleJourney).toEqual([]);
     });
 });
