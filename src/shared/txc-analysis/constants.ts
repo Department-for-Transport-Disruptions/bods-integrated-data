@@ -13,7 +13,7 @@ export const observationType = [
     "Missing bus working number",
     "Missing journey code",
     "No timing point for more than 15 minutes",
-    "Serviced organisation out of date",
+    "Serviced organisation data is out of date",
     "Stop not found in NaPTAN",
 ] as const;
 

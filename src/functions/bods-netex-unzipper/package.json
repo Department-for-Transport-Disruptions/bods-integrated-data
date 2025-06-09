@@ -1,10 +1,10 @@
 {
-    "name": "@bods-integrated-data/bods-fares-unzipper",
+    "name": "@bods-integrated-data/bods-netex-unzipper",
     "version": "0.1.0",
-    "description": "Unzips BODS fares data.",
+    "description": "BODS NeTEx unzipper",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-fares-unzipper.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-fares-unzipper.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./bods-netex-unzipper.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/bods-netex-unzipper.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],

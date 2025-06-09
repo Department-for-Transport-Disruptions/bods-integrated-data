@@ -149,6 +149,12 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db.db_host
 }
 
+module "integrated_data_bods_netex_pipeline" {
+  source = "../modules/data-pipelines/netex-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
@@ -297,12 +303,6 @@ module "integrated_data_bank_holidays_pipeline" {
   environment = local.env
 }
 
-module "integrated_data_fares_pipeline" {
-  source = "../modules/data-pipelines/fares-pipeline"
-
-  environment = local.env
-}
-
 module "integrated_data_disruptions_pipeline" {
   source = "../modules/data-pipelines/disruptions-pipeline"
 
@@ -361,6 +361,10 @@ module "integrated_data_timetables_sfn" {
   tfl_timetable_processor_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_processor_function_arn
   tfl_timetable_zipped_bucket_name                = module.integrated_data_tfl_pipeline.tfl_timetable_zipped_bucket_name
   tfl_timetable_bucket_name                       = module.integrated_data_tfl_pipeline.tfl_timetable_bucket_name
+  bods_netex_retriever_function_arn               = module.integrated_data_bods_netex_pipeline.bods_netex_retriever_function_arn
+  bods_netex_unzipper_function_arn                = module.integrated_data_bods_netex_pipeline.bods_netex_unzipper_function_arn
+  bods_netex_zipped_bucket_name                   = module.integrated_data_bods_netex_pipeline.bods_netex_zipped_bucket_name
+  bods_netex_bucket_name                          = module.integrated_data_bods_netex_pipeline.bods_netex_bucket_name
   schedule                                        = "cron(0 2 * * ? *)"
 }
 

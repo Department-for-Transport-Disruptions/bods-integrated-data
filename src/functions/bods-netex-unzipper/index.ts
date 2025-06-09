@@ -16,10 +16,10 @@ export const handler: S3Handler = async (event, context) => {
     } = event.Records[0].s3;
 
     try {
-        const { UNZIPPED_FARES_BUCKET_NAME: unzippedFaresBucketName } = process.env;
+        const { UNZIPPED_BUCKET_NAME } = process.env;
 
-        if (!unzippedFaresBucketName) {
-            throw new Error("Missing env vars - UNZIPPED_FARES_BUCKET_NAME must be set");
+        if (!UNZIPPED_BUCKET_NAME) {
+            throw new Error("Missing env vars - UNZIPPED_BUCKET_NAME must be set");
         }
 
         if (!bucketName || !key) {
@@ -35,7 +35,7 @@ export const handler: S3Handler = async (event, context) => {
             throw new Error("No data in file");
         }
 
-        await unzip(object.Body, unzippedFaresBucketName, key);
+        await unzip(object.Body, UNZIPPED_BUCKET_NAME, key);
     } catch (e) {
         if (e instanceof Error) {
             logger.error(e, `Error unzipping file at s3://${bucketName}/${key}`);

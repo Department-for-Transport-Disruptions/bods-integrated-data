@@ -7,16 +7,15 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
     const vehicleJourneys = txcData.TransXChange?.VehicleJourneys?.VehicleJourney;
 
     if (vehicleJourneys) {
-        const vehicleJourneyCodes: string[] = [];
-        const duplicateVehicleJourneyCodes: string[] = [];
+        const journeyCodes: string[] = [];
+        const duplicateJourneyCodes: string[] = [];
 
         for (const vehicleJourney of vehicleJourneys) {
-            if (vehicleJourney.VehicleJourneyCode) {
-                if (
-                    vehicleJourneyCodes.includes(vehicleJourney.VehicleJourneyCode) &&
-                    !duplicateVehicleJourneyCodes.includes(vehicleJourney.VehicleJourneyCode)
-                ) {
-                    duplicateVehicleJourneyCodes.push(vehicleJourney.VehicleJourneyCode);
+            const journeyCode = vehicleJourney.Operational?.TicketMachine?.JourneyCode;
+
+            if (journeyCode) {
+                if (journeyCodes.includes(journeyCode) && !duplicateJourneyCodes.includes(journeyCode)) {
+                    duplicateJourneyCodes.push(journeyCode);
 
                     let serviceCode = "n/a";
                     let lineName = "n/a";
@@ -43,11 +42,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         observation: "Duplicate journey code",
                         serviceCode,
                         lineName,
-                        details: `The Journey Code (${vehicleJourney.VehicleJourneyCode}) is found in more than one vehicle journey.`,
+                        details: `The Journey Code (${journeyCode}) is found in more than one vehicle journey.`,
                     });
                 }
 
-                vehicleJourneyCodes.push(vehicleJourney.VehicleJourneyCode);
+                journeyCodes.push(journeyCode);
             }
         }
     }
