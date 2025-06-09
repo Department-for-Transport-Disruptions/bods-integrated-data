@@ -280,15 +280,15 @@ export const generateVehicleJourneys = async (
                 LineRef: getTxcLineId(lineId),
                 JourneyPatternRef: `JP${patternIndex + 1}`,
                 DepartureTime: calculateDepartureTime(journey.start_time),
-                DepartureDayShift: journey.start_time >= 86400 ? 1 : undefined,
+                DepartureDayShift: journey.start_time >= 86400 ? (1 as const) : undefined,
                 VehicleJourneyTimingLink: journey.stops.flatMap<VehicleJourneyTimingLink>((stop, stopIndex) => {
-                    if (stopIndex >= journey.stops.length - 1) {
+                    if (stopIndex === journey.stops.length - 1) {
                         return [];
                     }
 
                     return {
                         JourneyPatternTimingLinkRef: `JPTL${patternIndex + 1}-${stopIndex + 1}`,
-                        RunTime: getDurationInSeconds(stop.drive_time).toISOString(),
+                        RunTime: getDurationInSeconds(stop.drive_time ?? 0).toISOString(),
                         ...(stop.wait_time
                             ? {
                                   From: {

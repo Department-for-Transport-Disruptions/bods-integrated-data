@@ -18,6 +18,7 @@ export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
                                 .whereRef("tfl_journey.pattern_id", "=", "tfl_pattern.id")
                                 .innerJoin("tfl_block", "tfl_block.id", "tfl_journey.block_id")
                                 .select((eb3) => [
+                                    "tfl_journey.id",
                                     "tfl_journey.start_time",
                                     "tfl_block.block_no",
                                     jsonArrayFrom(
@@ -30,55 +31,42 @@ export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
                                     ).as("calendar_days"),
                                     jsonArrayFrom(
                                         eb3
-                                            .selectFrom("tfl_journey_drive_time")
-                                            .whereRef("tfl_journey_drive_time.journey_id", "=", "tfl_journey.id")
+                                            .selectFrom("tfl_stop_in_pattern")
+                                            .whereRef("tfl_stop_in_pattern.pattern_id", "=", "tfl_journey.pattern_id")
+                                            .leftJoin("tfl_journey_drive_time", (join) =>
+                                                join
+                                                    .onRef(
+                                                        "tfl_journey_drive_time.stop_in_pattern_from_id",
+                                                        "=",
+                                                        "tfl_stop_in_pattern.id",
+                                                    )
+                                                    .onRef("tfl_journey_drive_time.journey_id", "=", "tfl_journey.id"),
+                                            )
                                             .leftJoin("tfl_journey_wait_time", (join) =>
                                                 join
                                                     .onRef(
                                                         "tfl_journey_wait_time.stop_in_pattern_id",
                                                         "=",
-                                                        "tfl_journey_drive_time.stop_in_pattern_from_id",
+                                                        "tfl_stop_in_pattern.id",
                                                     )
                                                     .onRef("tfl_journey_wait_time.journey_id", "=", "tfl_journey.id"),
                                             )
                                             .innerJoin(
-                                                "tfl_stop_in_pattern as from_stop_in_pattern",
-                                                "from_stop_in_pattern.id",
-                                                "tfl_journey_drive_time.stop_in_pattern_from_id",
-                                            )
-                                            .innerJoin(
-                                                "tfl_stop_in_pattern as to_stop_in_pattern",
-                                                "to_stop_in_pattern.id",
-                                                "tfl_journey_drive_time.stop_in_pattern_to_id",
-                                            )
-                                            .innerJoin(
-                                                "tfl_stop_point as from_stop",
-                                                "from_stop.id",
-                                                "from_stop_in_pattern.stop_point_id",
-                                            )
-                                            .innerJoin(
-                                                "tfl_stop_point as to_stop",
-                                                "to_stop.id",
-                                                "to_stop_in_pattern.stop_point_id",
+                                                "tfl_stop_point",
+                                                "tfl_stop_point.id",
+                                                "tfl_stop_in_pattern.stop_point_id",
                                             )
                                             .select([
-                                                "from_stop.naptan_code as from_atco_code",
-                                                "from_stop_in_pattern.timing_point_code as from_timing_point_code",
-                                                "to_stop.naptan_code as to_atco_code",
-                                                "to_stop_in_pattern.timing_point_code as to_timing_point_code",
+                                                "tfl_stop_point.naptan_code as atco_code",
+                                                "tfl_stop_in_pattern.timing_point_code",
                                                 "tfl_journey_drive_time.drive_time",
                                                 "tfl_journey_wait_time.wait_time",
                                             ])
-                                            .where("from_stop.naptan_code", "is not", null)
-                                            .where("to_stop.naptan_code", "is not", null)
+                                            .where("tfl_stop_point.naptan_code", "is not", null)
                                             .$narrowType<{
-                                                from_atco_code: NotNull;
-                                                to_atco_code: NotNull;
+                                                atco_code: NotNull;
                                             }>()
-                                            .orderBy([
-                                                "from_stop_in_pattern.sequence_no asc",
-                                                "to_stop_in_pattern.sequence_no asc",
-                                            ]),
+                                            .orderBy(["tfl_stop_in_pattern.sequence_no asc"]),
                                     ).as("stops"),
                                 ])
                                 .where("tfl_journey.type", "=", 1)
@@ -102,7 +90,8 @@ export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
                                 .orderBy("tfl_stop_in_pattern.sequence_no"),
                         ).as("stops"),
                     ])
-                    .whereRef("tfl_pattern.contract_line_no", "=", "tfl_line.id"),
+                    .whereRef("tfl_pattern.contract_line_no", "=", "tfl_line.id")
+                    .where("tfl_pattern.type", "=", 1),
             ).as("patterns"),
         ])
         .where("tfl_line.id", "=", lineId)
