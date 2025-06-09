@@ -129,6 +129,8 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "${var.tfl_timetable_retriever_function_arn}*",
           "${var.tfl_timetable_unzipper_function_arn}*",
           "${var.tfl_timetable_processor_function_arn}*",
+          "${var.bods_netex_retriever_function_arn}*",
+          "${var.bods_netex_unzipper_function_arn}*",
         ]
       },
       {
