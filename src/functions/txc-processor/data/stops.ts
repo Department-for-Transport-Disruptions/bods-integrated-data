@@ -175,7 +175,7 @@ export const createStopAreaStop = (
         latitude = Number.parseFloat(stopArea.latitude);
     }
 
-    if (!longitude || !latitude) {
+    if (latitude === undefined || longitude === undefined) {
         if (stopArea.northing && stopArea.easting) {
             const osPoint = new OsPoint(stopArea.northing, stopArea.easting);
             const coords = osPoint.toWGS84();
@@ -185,7 +185,7 @@ export const createStopAreaStop = (
         }
     }
 
-    if (!latitude || !longitude) {
+    if (latitude === undefined || longitude === undefined) {
         return null;
     }
 
@@ -204,7 +204,7 @@ export const createStopAreaStop = (
 };
 
 export const getCoordinates = (location?: StopPointLocation, naptanStop?: NaptanStop) => {
-    if (naptanStop?.longitude && naptanStop?.latitude) {
+    if (naptanStop?.longitude != null && naptanStop?.latitude != null) {
         return {
             latitude: Number.parseFloat(naptanStop.latitude),
             longitude: Number.parseFloat(naptanStop.longitude),
@@ -214,19 +214,19 @@ export const getCoordinates = (location?: StopPointLocation, naptanStop?: Naptan
     let latitude: number | undefined;
     let longitude: number | undefined;
 
-    if (location?.Translation?.Longitude) {
+    if (location?.Translation?.Longitude !== undefined) {
         longitude = location.Translation.Longitude;
-    } else if (location?.Longitude) {
+    } else if (location?.Longitude !== undefined) {
         longitude = location.Longitude;
     }
 
-    if (location?.Translation?.Latitude) {
+    if (location?.Translation?.Latitude !== undefined) {
         latitude = location.Translation.Latitude;
-    } else if (location?.Latitude) {
+    } else if (location?.Latitude !== undefined) {
         latitude = location.Latitude;
     }
 
-    if (!longitude || !latitude) {
+    if (latitude === undefined || longitude === undefined) {
         const easting = location?.Translation?.Easting || location?.Easting;
         const northing = location?.Translation?.Northing || location?.Northing;
 
@@ -239,7 +239,7 @@ export const getCoordinates = (location?: StopPointLocation, naptanStop?: Naptan
         }
     }
 
-    if (!latitude || !longitude) {
+    if (latitude === undefined || longitude === undefined) {
         return {
             latitude: undefined,
             longitude: undefined,
@@ -259,12 +259,7 @@ export const processStopPoints = async (
     stopsInJourneyPatternSections: string[],
 ) => {
     const atcoCodes = stops.map((stop) => stop.AtcoCode);
-    const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-
-    if (!naptanStops) {
-        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
-        return [];
-    }
+    const naptanStops = (await getNaptanStops(dbClient, atcoCodes, useStopLocality)) ?? [];
 
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code).filter((code) => code !== null);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
@@ -281,9 +276,10 @@ export const processStopPoints = async (
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
+
         const { latitude, longitude } = getCoordinates(stop.Place.Location, naptanStop);
 
-        if (!latitude || !longitude) {
+        if (latitude === undefined || longitude === undefined) {
             stopsWithMissingCoordinates.push(stop.AtcoCode);
             return [];
         }
@@ -312,12 +308,7 @@ export const processAnnotatedStopPointRefs = async (
     stopsInJourneyPatternSections: string[],
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
-    const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-
-    if (!naptanStops) {
-        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
-        return [];
-    }
+    const naptanStops = (await getNaptanStops(dbClient, atcoCodes, useStopLocality)) ?? [];
 
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code).filter((code) => code !== null);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
@@ -336,7 +327,7 @@ export const processAnnotatedStopPointRefs = async (
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
         const { latitude, longitude } = getCoordinates(stop.Location, naptanStop);
 
-        if (!latitude || !longitude) {
+        if (latitude === undefined || longitude === undefined) {
             stopsWithMissingCoordinates.push(stop.StopPointRef);
             return [];
         }

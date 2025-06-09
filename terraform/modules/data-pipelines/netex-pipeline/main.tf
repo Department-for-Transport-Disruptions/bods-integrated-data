@@ -106,8 +106,8 @@ module "integrated_data_bods_netex_unzipper_function" {
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-netex-unzipper.zip"
   handler       = "index.handler"
   runtime       = "nodejs22.x"
-  timeout       = 60
-  memory        = 256
+  timeout       = 120
+  memory        = 2048
 
   permissions = [
     {
