@@ -4,6 +4,7 @@ import { AbstractTimingLink, Operator, Service, VehicleJourney } from "@bods-int
 import { describe, expect, it } from "vitest";
 import {
     appendRolloverHours,
+    areCoordinatesValid,
     getDropOffTypeFromStopActivity,
     getFirstNonZeroDuration,
     getJourneyPatternForVehicleJourney,
@@ -924,6 +925,23 @@ describe("utils", () => {
 
             const result = getNationalOperatorCode(operator);
             expect(result).toBeUndefined();
+        });
+    });
+
+    describe("areCoordinatesValid", () => {
+        it.each([
+            [[51.5074, -0.1278] as const, true],
+            [[1, 2] as const, true],
+            [[0, -1.234] as const, true],
+            [["0", "-1.234"] as const, true],
+            [["c", -1.234] as const, false],
+            [[0, 0] as const, false],
+            [["0", "0"] as const, false],
+            [["0", 0] as const, false],
+            [["1.234"] as const, false],
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        ])("validates coordinates %s as %s", (coordinates: any, expected) => {
+            expect(areCoordinatesValid(coordinates)).toEqual(expected);
         });
     });
 });
