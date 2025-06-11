@@ -218,7 +218,13 @@ export const insertAvlCancellations = async (
                 .values(chunk)
                 .onConflict((oc) =>
                     oc
-                        .columns(["data_frame_ref", "dated_vehicle_journey_ref", "line_ref", "direction_ref"])
+                        .columns([
+                            "data_frame_ref",
+                            "dated_vehicle_journey_ref",
+                            "line_ref",
+                            "direction_ref",
+                            "vehicle_monitoring_ref",
+                        ])
                         .doUpdateSet((eb) => ({
                             id: eb.ref("excluded.id"),
                             response_time_stamp: eb.ref("excluded.response_time_stamp"),
@@ -273,18 +279,22 @@ export interface AvlQueryOptions {
 }
 
 export const getQueryForLatestAvl = (dbClient: KyselyDb, avlQueryOptions: AvlQueryOptions) => {
-    let query = dbClient
-        .selectFrom("avl")
-        .distinctOn(["operator_ref", "vehicle_ref"])
-        // .leftJoin("avl_cancellation", (join) =>
-        //     join
-        //         .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
-        //         .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
-        //         .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
-        //         .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref"),
-        // )
-        .selectAll("avl");
-    // .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
+    let query = dbClient.selectFrom("avl").distinctOn(["operator_ref", "vehicle_ref"]).selectAll("avl");
+
+    const enableCancellations = process.env.ENABLE_CANCELLATIONS === "true";
+
+    if (enableCancellations) {
+        query = query
+            .leftJoin("avl_cancellation", (join) =>
+                join
+                    .onRef("avl_cancellation.data_frame_ref", "=", "avl.data_frame_ref")
+                    .onRef("avl_cancellation.dated_vehicle_journey_ref", "=", "avl.dated_vehicle_journey_ref")
+                    .onRef("avl_cancellation.line_ref", "=", "avl.line_ref")
+                    .onRef("avl_cancellation.direction_ref", "=", "avl.direction_ref")
+                    .onRef("avl_cancellation.vehicle_monitoring_ref", "=", "avl.vehicle_monitoring_ref"),
+            )
+            .where("avl_cancellation.dated_vehicle_journey_ref", "is", null);
+    }
 
     if (avlQueryOptions.boundingBox) {
         const [minX, minY, maxX, maxY] = avlQueryOptions.boundingBox;

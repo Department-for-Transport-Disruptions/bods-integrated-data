@@ -28,3 +28,25 @@ variable "naptan_bucket_name" {
 variable "nptg_bucket_name" {
   type = string
 }
+
+variable "schedule" {
+  type        = string
+  description = "Cron schedule to trigger the step function"
+  nullable    = true
+  default     = null
+}
+
+variable "dqs_bucket_name" {
+  type        = string
+  description = "Name of the DQS bucket to store TXC reports"
+  nullable    = true
+  default     = null
+}
+
+variable "dqs_kms_key_arn" {
+  type        = string
+  description = "ARN of the KMS Key used to encrypt DQS bucket"
+  nullable    = true
+  default     = null
+}
+

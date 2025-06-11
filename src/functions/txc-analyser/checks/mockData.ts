@@ -527,10 +527,12 @@ export const mockTxcXml = `
     <JourneyPatternSection id="JPS1">
       <JourneyPatternTimingLink id="JPTL1">
         <From>
+        <Activity>setDown</Activity>
           <StopPointRef>SP1</StopPointRef>
           <TimingStatus>PTP</TimingStatus>
         </From>
         <To>
+        <Activity>pickUp</Activity>
           <StopPointRef>SP2</StopPointRef>
           <TimingStatus>PTP</TimingStatus>
         </To>
@@ -643,8 +645,9 @@ export const mockTxcXmlParsed: PartialDeep<TxcSchema> = {
                     JourneyPatternTimingLink: [
                         {
                             "@_id": "JPTL1",
-                            From: { StopPointRef: "SP1", TimingStatus: "PTP" },
-                            To: { StopPointRef: "SP2", TimingStatus: "PTP" },
+
+                            From: { Activity: "setDown", StopPointRef: "SP1", TimingStatus: "PTP" },
+                            To: { Activity: "pickUp", StopPointRef: "SP2", TimingStatus: "PTP" },
                             RunTime: "PT2M0S",
                         },
                     ],

@@ -235,6 +235,89 @@
                                             "End": true
                                         }
                                     }
+                                },
+                                {
+                                    "StartAt": "Retrieve NeTEx Data",
+                                    "States": {
+                                        "Retrieve NeTEx Data": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "Parameters": {
+                                                "FunctionName": "${bods_netex_retriever_function_arn}:$LATEST"
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "OutputPath": "$.Payload",
+                                            "Next": "Get Zipped NeTEx Keys"
+                                        },
+                                        "Get Zipped NeTEx Keys": {
+                                            "Type": "Map",
+                                            "ItemProcessor": {
+                                                "ProcessorConfig": {
+                                                    "Mode": "DISTRIBUTED",
+                                                    "ExecutionType": "STANDARD"
+                                                },
+                                                "StartAt": "Unzip NeTEx Data",
+                                                "States": {
+                                                    "Unzip NeTEx Data": {
+                                                        "Type": "Task",
+                                                        "Resource": "arn:aws:states:::lambda:invoke",
+                                                        "Parameters": {
+                                                            "FunctionName": "${bods_netex_unzipper_function_arn}:$LATEST",
+                                                            "Payload": {
+                                                                "Records": [
+                                                                    {
+                                                                        "s3": {
+                                                                            "bucket": {
+                                                                                "name": "${bods_netex_zipped_bucket_name}"
+                                                                            },
+                                                                            "object": {
+                                                                                "key.$": "$.Key"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        "End": true,
+                                                        "Retry": [
+                                                            {
+                                                                "ErrorEquals": [
+                                                                    "Lambda.ServiceException",
+                                                                    "Lambda.AWSLambdaException",
+                                                                    "Lambda.SdkClientException",
+                                                                    "Lambda.TooManyRequestsException"
+                                                                ],
+                                                                "BackoffRate": 2,
+                                                                "IntervalSeconds": 1,
+                                                                "MaxAttempts": 3
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "ItemReader": {
+                                                "Resource": "arn:aws:states:::s3:listObjectsV2",
+                                                "Parameters": {
+                                                    "Bucket.$": "$.netexZippedBucketName",
+                                                    "Prefix.$": "$.prefix"
+                                                }
+                                            },
+                                            "ResultPath": null,
+                                            "End": true
+                                        }
+                                    }
                                 }
                             ],
                             "Next": "Retrieve BODS TXC Data"

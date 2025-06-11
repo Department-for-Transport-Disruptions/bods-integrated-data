@@ -13,7 +13,6 @@ variable "aws_region" {
   description = "AWS region"
 }
 
-
 variable "ok_topic_arn" {
   type        = string
   description = "ARN of the SNS topic to use for ok notifications"

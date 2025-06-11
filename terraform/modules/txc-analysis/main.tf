@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -96,7 +96,7 @@ module "integrated_data_txc_analysis_reporter_function" {
   timeout       = 900
   memory        = 4096
 
-  permissions = [
+  permissions = concat([
     {
       Action   = ["dynamodb:Scan"],
       Effect   = "Allow",
@@ -108,13 +108,29 @@ module "integrated_data_txc_analysis_reporter_function" {
       ],
       Effect   = "Allow",
       Resource = "${aws_s3_bucket.integrated_data_txc_analysis_bucket.arn}/*"
-    }
-  ]
+    }],
+    var.dqs_bucket_name != null && var.dqs_kms_key_arn != null ? [{
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect   = "Allow",
+      Resource = "arn:aws:s3:::${var.dqs_bucket_name}/tnds_analysis/*"
+      }, {
+
+      Action : [
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+      ],
+      Effect : "Allow",
+      Resource : var.dqs_kms_key_arn
+    }] : [],
+  )
 
   env_vars = {
     STAGE                      = var.environment
     TXC_OBSERVATION_TABLE_NAME = local.txc_observation_table_name
     TXC_ANALYSIS_BUCKET_NAME   = aws_s3_bucket.integrated_data_txc_analysis_bucket.id
+    DQS_BUCKET_NAME            = var.dqs_bucket_name
   }
 }
 
@@ -232,4 +248,74 @@ resource "aws_iam_policy" "integrated_data_txc_analysis_sfn_policy" {
 resource "aws_iam_role_policy_attachment" "integrated_data_txc_analysis_sfn_policy_attachment" {
   policy_arn = aws_iam_policy.integrated_data_txc_analysis_sfn_policy.arn
   role       = aws_iam_role.integrated_data_txc_analysis_sfn_role.name
+}
+
+resource "aws_iam_policy" "integrated_data_txc_analysis_sfn_schedule_policy" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-txc-analysis-sfn-schedule-policy-${var.environment}"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "states:StartExecution"
+        ],
+        "Resource" : [
+          aws_sfn_state_machine.integrated_data_txc_analysis_sfn.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "integrated_data_txc_analysis_sfn_schedule_role" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-txc-analysis-sfn-schedule-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "scheduler.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole",
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "integrated_data_txc_analysis_sfn_schedule_policy_attachment" {
+  count      = var.schedule != null ? 1 : 0
+  policy_arn = aws_iam_policy.integrated_data_txc_analysis_sfn_schedule_policy[0].arn
+  role       = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].name
+}
+
+resource "aws_scheduler_schedule" "tcx_analysis_sfn_schedule" {
+  count = var.schedule != null ? 1 : 0
+
+  name = "integrated-data-txc-analysis-sfn-schedule-${var.environment}"
+
+  schedule_expression_timezone = "Europe/London"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = var.schedule
+
+  target {
+    arn      = aws_sfn_state_machine.integrated_data_txc_analysis_sfn.arn
+    role_arn = aws_iam_role.integrated_data_txc_analysis_sfn_schedule_role[0].arn
+  }
 }

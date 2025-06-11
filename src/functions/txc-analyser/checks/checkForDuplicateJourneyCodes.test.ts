@@ -27,11 +27,21 @@ describe("checkForDuplicateJourneyCodes", () => {
                             VehicleJourneyCode: "VJ1",
                             ServiceRef: "service1",
                             LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J1",
+                                },
+                            },
                         },
                         {
                             VehicleJourneyCode: "VJ2",
                             ServiceRef: "service1",
                             LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J2",
+                                },
+                            },
                         },
                     ],
                 },
@@ -66,31 +76,61 @@ describe("checkForDuplicateJourneyCodes", () => {
                             VehicleJourneyCode: "VJ1",
                             ServiceRef: "SVC1",
                             LineRef: "line1",
-                        },
-                        {
-                            VehicleJourneyCode: "VJ1",
-                            ServiceRef: "SVC1",
-                            LineRef: "line1",
-                        },
-                        {
-                            VehicleJourneyCode: "VJ1",
-                            ServiceRef: "SVC1",
-                            LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J1",
+                                },
+                            },
                         },
                         {
                             VehicleJourneyCode: "VJ2",
                             ServiceRef: "SVC1",
                             LineRef: "line1",
-                        },
-                        {
-                            VehicleJourneyCode: "VJ2",
-                            ServiceRef: "SVC1",
-                            LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J1",
+                                },
+                            },
                         },
                         {
                             VehicleJourneyCode: "VJ3",
                             ServiceRef: "SVC1",
                             LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J1",
+                                },
+                            },
+                        },
+                        {
+                            VehicleJourneyCode: "VJ4",
+                            ServiceRef: "SVC1",
+                            LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J2",
+                                },
+                            },
+                        },
+                        {
+                            VehicleJourneyCode: "VJ5",
+                            ServiceRef: "SVC1",
+                            LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J2",
+                                },
+                            },
+                        },
+                        {
+                            VehicleJourneyCode: "VJ6",
+                            ServiceRef: "SVC1",
+                            LineRef: "line1",
+                            Operational: {
+                                TicketMachine: {
+                                    JourneyCode: "J3",
+                                },
+                            },
                         },
                     ],
                 },
@@ -120,7 +160,7 @@ describe("checkForDuplicateJourneyCodes", () => {
                 observation: "Duplicate journey code",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                details: "The Journey Code (VJ1) is found in more than one vehicle journey.",
+                details: "The Journey Code (J1) is found in more than one vehicle journey.",
             },
             {
                 importance: "advisory",
@@ -128,7 +168,7 @@ describe("checkForDuplicateJourneyCodes", () => {
                 observation: "Duplicate journey code",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                details: "The Journey Code (VJ2) is found in more than one vehicle journey.",
+                details: "The Journey Code (J2) is found in more than one vehicle journey.",
             },
         ]);
     });

@@ -36,7 +36,7 @@ describe("table renamer", () => {
         },
     }));
 
-    const tables: TableKey[] = [{ table: "trip", newTable: "trip_new", key: "id" }];
+    const tables: TableKey[] = [{ table: "trip", newTable: "trip_new", key: "id", requiredPercentage: 60 }];
 
     describe("getMatchingTables", () => {
         it("should not throw an error with valid percentages", async () => {
@@ -50,7 +50,7 @@ describe("table renamer", () => {
             mockExecute.mockResolvedValueOnce([{ count: 50 }]);
 
             await expect(checkTables(dbClient, tables)).rejects.toThrowError(
-                "Tables trip and trip_new have less than an 80% match, percentage match: 50%",
+                "Tables trip and trip_new have less than an 60% match, percentage match: 50%",
             );
         });
 

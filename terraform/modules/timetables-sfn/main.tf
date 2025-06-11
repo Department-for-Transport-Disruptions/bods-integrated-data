@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -70,6 +70,10 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     tfl_timetable_processor_function_arn            = var.tfl_timetable_processor_function_arn
     tfl_timetable_zipped_bucket_name                = var.tfl_timetable_zipped_bucket_name
     tfl_timetable_bucket_name                       = var.tfl_timetable_bucket_name
+    bods_netex_retriever_function_arn               = var.bods_netex_retriever_function_arn
+    bods_netex_unzipper_function_arn                = var.bods_netex_unzipper_function_arn
+    bods_netex_zipped_bucket_name                   = var.bods_netex_zipped_bucket_name
+    bods_netex_bucket_name                          = var.bods_netex_bucket_name
   })
 }
 
@@ -125,6 +129,8 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "${var.tfl_timetable_retriever_function_arn}*",
           "${var.tfl_timetable_unzipper_function_arn}*",
           "${var.tfl_timetable_processor_function_arn}*",
+          "${var.bods_netex_retriever_function_arn}*",
+          "${var.bods_netex_unzipper_function_arn}*",
         ]
       },
       {
@@ -140,6 +146,8 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "arn:aws:s3:::${var.naptan_bucket_name}",
           "arn:aws:s3:::${var.tfl_timetable_zipped_bucket_name}",
           "arn:aws:s3:::${var.tfl_timetable_bucket_name}",
+          "arn:aws:s3:::${var.bods_netex_zipped_bucket_name}",
+          "arn:aws:s3:::${var.bods_netex_bucket_name}",
         ]
       },
       {
@@ -234,9 +242,15 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_schedule_role" {
       }
     ]
   })
-
-  managed_policy_arns = [aws_iam_policy.integrated_data_timetables_sfn_schedule_policy[0].arn]
 }
+
+resource "aws_iam_role_policy_attachment" "integrated_data_timetables_sfn_schedule_role_policy_attachment" {
+  count = var.schedule != null ? 1 : 0
+
+  role       = aws_iam_role.integrated_data_timetables_sfn_schedule_role[0].name
+  policy_arn = aws_iam_policy.integrated_data_timetables_sfn_schedule_policy[0].arn
+}
+
 
 resource "aws_scheduler_schedule" "timetables_sfn_schedule" {
   count = var.schedule != null ? 1 : 0

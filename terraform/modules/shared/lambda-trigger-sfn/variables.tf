@@ -17,3 +17,8 @@ variable "step_function_name" {
   type        = string
   description = "Name of Step Function"
 }
+
+variable "disable_trigger" {
+  type    = bool
+  default = false
+}

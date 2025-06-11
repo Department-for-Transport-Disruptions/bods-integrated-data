@@ -13,7 +13,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
 
     sops = {
@@ -144,6 +144,12 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db.db_host
 }
 
+module "integrated_data_bods_netex_pipeline" {
+  source = "../modules/data-pipelines/netex-pipeline"
+
+  environment = local.env
+}
+
 module "integrated_data_nptg_pipeline" {
   source = "../modules/data-pipelines/nptg-pipeline"
 
@@ -200,6 +206,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host                     = module.integrated_data_aurora_db.db_reader_host
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
+  enable_cancellations               = true
 }
 
 module "integrated_data_avl_pipeline" {
@@ -226,6 +233,7 @@ module "integrated_data_avl_pipeline" {
   gtfs_rt_bucket_arn                          = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_arn
   save_json                                   = true
   abods_account_ids                           = local.secrets["abods_account_ids"]
+  enable_cancellations                        = true
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -274,12 +282,6 @@ module "integrated_data_avl_data_producer_api" {
 
 module "integrated_data_bank_holidays_pipeline" {
   source = "../modules/data-pipelines/bank-holidays-pipeline"
-
-  environment = local.env
-}
-
-module "integrated_data_fares_pipeline" {
-  source = "../modules/data-pipelines/fares-pipeline"
 
   environment = local.env
 }
@@ -342,6 +344,10 @@ module "integrated_data_timetables_sfn" {
   tfl_timetable_processor_function_arn            = module.integrated_data_tfl_pipeline.tfl_timetable_processor_function_arn
   tfl_timetable_zipped_bucket_name                = module.integrated_data_tfl_pipeline.tfl_timetable_zipped_bucket_name
   tfl_timetable_bucket_name                       = module.integrated_data_tfl_pipeline.tfl_timetable_bucket_name
+  bods_netex_retriever_function_arn               = module.integrated_data_bods_netex_pipeline.bods_netex_retriever_function_arn
+  bods_netex_unzipper_function_arn                = module.integrated_data_bods_netex_pipeline.bods_netex_unzipper_function_arn
+  bods_netex_zipped_bucket_name                   = module.integrated_data_bods_netex_pipeline.bods_netex_zipped_bucket_name
+  bods_netex_bucket_name                          = module.integrated_data_bods_netex_pipeline.bods_netex_bucket_name
   schedule                                        = "cron(0 2 * * ? *)"
 }
 

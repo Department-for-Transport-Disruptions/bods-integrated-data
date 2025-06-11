@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
@@ -62,8 +62,11 @@ resource "aws_iam_role" "integrated_data_consumer_subscription_schedule_role" {
       }
     ]
   })
+}
 
-  managed_policy_arns = [aws_iam_policy.integrated_data_consumer_subscription_schedule_policy.arn]
+resource "aws_iam_role_policy_attachment" "integrated_data_consumer_subscription_schedule_policy_attachment" {
+  role       = aws_iam_role.integrated_data_consumer_subscription_schedule_role.name
+  policy_arn = aws_iam_policy.integrated_data_consumer_subscription_schedule_policy.arn
 }
 
 module "avl_consumer_subscriber" {
@@ -297,6 +300,7 @@ module "avl_consumer_data_sender" {
     DB_SECRET_ARN                        = var.db_secret_arn
     DB_NAME                              = var.db_name
     AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME = module.integrated_data_avl_consumer_subscription_table.table_name
+    ENABLE_CANCELLATIONS                 = var.enable_cancellations ? "true" : "false"
   }
 }
 

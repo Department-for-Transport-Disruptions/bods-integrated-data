@@ -322,3 +322,27 @@ export const getJourneyPatternForVehicleJourney = (
  * @returns The national operator code, or undefined if one can't be determined
  */
 export const getNationalOperatorCode = (operator: Operator) => operator.NationalOperatorCode || operator.OperatorCode;
+
+/**
+ * Checks if the given string is numeric
+ * @param string
+ * @returns {boolean}
+ */
+export const isNumeric = (string: string) => /^[+-]?\d+(\.\d+)?$/.test(string);
+
+/**
+ * Checks if the given coordinates are valid. Coordinates are considered valid if both
+ * are defined, are numbers and not both zero (0, 0) or ("0", "0").
+ *
+ * @param coords Tuple of coordinates to validate
+ */
+export const areCoordinatesValid = <T extends string | number>(
+    coords: readonly [T | undefined | null, T | undefined | null],
+): coords is [T, T] =>
+    coords[0] != null &&
+    coords[1] != null &&
+    coords[0] !== "" &&
+    coords[1] !== "" &&
+    isNumeric(coords[0].toString()) &&
+    isNumeric(coords[1].toString()) &&
+    !(coords[0].toString() === "0" && coords[1].toString() === "0");

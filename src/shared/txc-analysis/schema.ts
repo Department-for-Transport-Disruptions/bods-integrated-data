@@ -42,7 +42,7 @@ export const observationSummarySchema = z.object({
     "Duplicate journey code": z.number(),
     "Duplicate journey": z.number(),
     "Missing bus working number": z.number(),
-    "Serviced organisation out of date": z.number(),
+    "Serviced organisation data is out of date": z.number(),
 });
 
 export type ObservationSummary = z.infer<typeof observationSummarySchema>;

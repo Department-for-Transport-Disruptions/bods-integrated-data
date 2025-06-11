@@ -119,6 +119,21 @@ variable "tfl_timetable_bucket_name" {
   type = string
 }
 
+variable "bods_netex_retriever_function_arn" {
+  type = string
+}
+
+variable "bods_netex_unzipper_function_arn" {
+  type = string
+}
+
+variable "bods_netex_zipped_bucket_name" {
+  type = string
+}
+
+variable "bods_netex_bucket_name" {
+  type = string
+}
 
 variable "schedule" {
   type        = string

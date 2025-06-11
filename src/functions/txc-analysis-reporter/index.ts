@@ -2,7 +2,7 @@ import { PassThrough } from "node:stream";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { scanDynamo } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { startS3Upload } from "@bods-integrated-data/shared/s3";
+import { putS3Object, startS3Upload } from "@bods-integrated-data/shared/s3";
 import { dynamoDbObservationSchema } from "@bods-integrated-data/shared/txc-analysis/schema";
 import archiver from "archiver";
 import { Handler } from "aws-lambda";
@@ -27,7 +27,7 @@ type ObservationSummaryByDataSource = {
     "Duplicate journey code": number;
     "Duplicate journey": number;
     "Missing bus working number": number;
-    "Serviced organisation out of date": number;
+    "Serviced organisation data is out of date": number;
 };
 
 type ObservationSummaryByFile = {
@@ -49,7 +49,7 @@ type ObservationSummaryByFile = {
     "Duplicate journey code": number;
     "Duplicate journey": number;
     "Missing bus working number": number;
-    "Serviced organisation out of date": number;
+    "Serviced organisation data is out of date": number;
 };
 
 type ObservationSummaryByObservationType = {
@@ -63,7 +63,7 @@ type ObservationSummaryByObservationType = {
     Quantity: number;
 };
 
-type CriticalObservationByObservationType = {
+type CriticalAndAdvisoryObservationByObservationType = {
     "Dataset Date": string;
     Region: string;
     File: string;
@@ -90,10 +90,14 @@ const createCsv = <T extends Record<string, U>, U>(data: T[]) => {
 export const handler: Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME } = process.env;
+    const { STAGE, TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME, DQS_BUCKET_NAME } = process.env;
 
     if (!TXC_OBSERVATION_TABLE_NAME || !TXC_ANALYSIS_BUCKET_NAME) {
-        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set");
+        throw new Error("Missing env vars - TXC_OBSERVATION_TABLE_NAME and TXC_ANALYSIS_BUCKET_NAME must be set.");
+    }
+
+    if (STAGE === "prod" && !DQS_BUCKET_NAME) {
+        throw new Error("Missing env var - DQS_BUCKET_NAME must be set for the prod environment");
     }
 
     const date = event.date;
@@ -103,7 +107,11 @@ export const handler: Handler = async (event, context) => {
     const observationByObservationTypesMap: Record<string, Record<string, ObservationSummaryByObservationType>> = {};
     const criticalObservationByObservationTypesMap: Record<
         string,
-        Record<string, CriticalObservationByObservationType>
+        Record<string, CriticalAndAdvisoryObservationByObservationType>
+    > = {};
+    const advisoryObservationByObservationTypesMap: Record<
+        string,
+        Record<string, CriticalAndAdvisoryObservationByObservationType>
     > = {};
 
     let dynamoScanStartKey: Record<string, string> | undefined = undefined;
@@ -142,7 +150,7 @@ export const handler: Handler = async (event, context) => {
                             "Duplicate journey code": 0,
                             "Duplicate journey": 0,
                             "Missing bus working number": 0,
-                            "Serviced organisation out of date": 0,
+                            "Serviced organisation data is out of date": 0,
                         };
                     }
 
@@ -175,7 +183,7 @@ export const handler: Handler = async (event, context) => {
                             "Duplicate journey code": 0,
                             "Duplicate journey": 0,
                             "Missing bus working number": 0,
-                            "Serviced organisation out of date": 0,
+                            "Serviced organisation data is out of date": 0,
                         };
                     }
 
@@ -225,6 +233,25 @@ export const handler: Handler = async (event, context) => {
                             ...observation.extraColumns,
                         };
                     }
+
+                    if (observation.importance === "advisory") {
+                        if (!advisoryObservationByObservationTypesMap[observationType]) {
+                            advisoryObservationByObservationTypesMap[observationType] = {};
+                        }
+
+                        const observationKey = `${observation.PK}#${observation.SK}`;
+
+                        advisoryObservationByObservationTypesMap[observationType][observationKey] = {
+                            "Dataset Date": formattedDate,
+                            Region: observation.region,
+                            File: filename,
+                            "Data Source": dataSource,
+                            "National Operator Code": observation.noc,
+                            "Service Code": observation.serviceCode,
+                            "Line Name": observation.lineName,
+                            ...observation.extraColumns,
+                        };
+                    }
                 } catch (error) {
                     logger.error(error, "Error parsing dynamo item");
                 }
@@ -242,6 +269,8 @@ export const handler: Handler = async (event, context) => {
         const passThrough = new PassThrough();
         archive.pipe(passThrough);
         const s3Upload = startS3Upload(TXC_ANALYSIS_BUCKET_NAME, `${date}.zip`, passThrough, "application/zip");
+
+        const dqsS3Promises = [];
 
         const observationByDataSourceItemsCsv = createCsv(Object.values(observationByDataSourceMap));
 
@@ -276,11 +305,49 @@ export const handler: Handler = async (event, context) => {
                 archive.append(observationByObservationTypeCsv, {
                     name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
                 });
+
+                if (STAGE === "prod") {
+                    dqsS3Promises.push(
+                        putS3Object({
+                            Bucket: DQS_BUCKET_NAME,
+                            Key: `tnds_analysis/${date}/criticalObservationsByObservationType/${observationType}.csv`,
+                            ContentType: "application/csv",
+                            Body: observationByObservationTypeCsv,
+                        }),
+                    );
+                }
+            }
+        }
+
+        for (const [observationType, observationByObservationTypeMap] of Object.entries(
+            advisoryObservationByObservationTypesMap,
+        )) {
+            const observationByObservationTypeCsv = createCsv(Object.values(observationByObservationTypeMap));
+
+            if (observationByObservationTypeCsv) {
+                archive.append(observationByObservationTypeCsv, {
+                    name: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
+                });
+
+                if (STAGE === "prod") {
+                    dqsS3Promises.push(
+                        putS3Object({
+                            Bucket: DQS_BUCKET_NAME,
+                            Key: `tnds_analysis/${date}/advisoryObservationsByObservationType/${observationType}.csv`,
+                            ContentType: "application/csv",
+                            Body: observationByObservationTypeCsv,
+                        }),
+                    );
+                }
             }
         }
 
         archive.finalize();
         await s3Upload.done();
+
+        if (dqsS3Promises.length > 0) {
+            await Promise.all(dqsS3Promises);
+        }
     } catch (error) {
         archive.abort();
         logger.error(error, "Error creating and uploading zip file");

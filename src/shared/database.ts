@@ -141,6 +141,7 @@ export interface Database {
     tfl_journey_wait_time_new: TflJourneyWaitTimeTable;
     tfl_journey_drive_time: TflJourneyDriveTimeTable;
     tfl_journey_drive_time_new: TflJourneyDriveTimeTable;
+    tfl_txc_metadata: TflTxcMetadataTable;
 }
 
 export type KyselyDb = Kysely<Database>;
@@ -562,6 +563,7 @@ export interface SituationTable {
     version: number | null;
     situation: ColumnType<PtSituationElement>;
     end_time: string;
+    display_id: Generated<string>;
 }
 
 export type Situation = Selectable<SituationTable>;
@@ -758,3 +760,14 @@ export interface TflJourneyDriveTimeTable {
 export type TflJourneyDriveTime = Selectable<TflJourneyDriveTimeTable>;
 export type NewTflJourneyDriveTime = Insertable<TflJourneyDriveTimeTable>;
 export type TflJourneyDriveTimeUpdate = Updateable<TflJourneyDriveTimeTable>;
+
+export interface TflTxcMetadataTable {
+    line_id: string;
+    revision: number;
+    creation_datetime: Generated<string>;
+    modification_datetime: Generated<string> | null;
+}
+
+export type TflTxcMetadata = Selectable<TflTxcMetadataTable>;
+export type NewTflTxcMetadata = Insertable<TflTxcMetadataTable>;
+export type TflTxcMetadataUpdate = Updateable<TflTxcMetadataTable>;

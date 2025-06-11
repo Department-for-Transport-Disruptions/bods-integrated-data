@@ -4,6 +4,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { TxcRoute, TxcRouteLink, TxcRouteSection } from "@bods-integrated-data/shared/schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
+import { areCoordinatesValid } from "../utils";
 import { insertShapes } from "./database";
 
 export const getRouteRefs = (routes: TxcRoute[], vehicleJourneyMappings: VehicleJourneyMapping[]) => {
@@ -74,14 +75,16 @@ export const mapRouteLinksToShapes = (routeLinks: TxcRouteLink[]) => {
                 const latitude = location.Translation ? location.Translation.Latitude : location.Latitude;
                 const longitude = location.Translation ? location.Translation.Longitude : location.Longitude;
 
-                if (latitude === undefined || longitude === undefined) {
+                const coords = [latitude, longitude] as const;
+
+                if (!areCoordinatesValid(coords)) {
                     return [];
                 }
 
                 return {
                     shape_id: shapeId,
-                    shape_pt_lat: latitude,
-                    shape_pt_lon: longitude,
+                    shape_pt_lat: coords[0],
+                    shape_pt_lon: coords[1],
                     shape_pt_sequence: currentPtSequence++,
                     shape_dist_traveled: null,
                 };

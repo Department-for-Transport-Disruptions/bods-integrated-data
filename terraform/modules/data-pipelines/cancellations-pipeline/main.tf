@@ -4,10 +4,12 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.54"
+      version = "~> 5.97"
     }
   }
 }
+
+data "aws_caller_identity" "current" {}
 
 module "integrated_data_cancellations_s3_sqs" {
   source = "../../shared/s3-sqs"
