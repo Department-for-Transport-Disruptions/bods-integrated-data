@@ -560,7 +560,46 @@ describe("stops", () => {
             expect(result).toBeFalsy();
         });
 
-        it("handles longitudes/latitudes of 0", async () => {
+        it("handles one of longitude or latitude of 0", async () => {
+            const stops: TxcStopPoint[] = [
+                {
+                    AtcoCode: "1",
+                    Descriptor: {
+                        CommonName: "name1",
+                    },
+                    Place: {
+                        Location: {
+                            Latitude: 0,
+                            Longitude: 1,
+                        },
+                    },
+                },
+            ];
+
+            const expectedStops: NewStop[] = [
+                {
+                    id: "1",
+                    wheelchair_boarding: 0,
+                    parent_station: null,
+                    stop_name: "name1",
+                    stop_lat: 0,
+                    stop_lon: 1,
+                    location_type: LocationType.StopOrPlatform,
+                    platform_code: null,
+                    region_code: null,
+                },
+            ];
+
+            getNaptanStopsMock.mockResolvedValue([]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
+
+            const result = await processStopPoints(dbClient, stops, false, []);
+            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+            expect(result).toBeTruthy();
+        });
+
+        it("handles longitude and latitude of 0", async () => {
             const stops: TxcStopPoint[] = [
                 {
                     AtcoCode: "1",
@@ -576,26 +615,12 @@ describe("stops", () => {
                 },
             ];
 
-            const expectedStops: NewStop[] = [
-                {
-                    id: "1",
-                    wheelchair_boarding: 0,
-                    parent_station: null,
-                    stop_name: "name1",
-                    stop_lat: 0,
-                    stop_lon: 0,
-                    location_type: LocationType.StopOrPlatform,
-                    platform_code: null,
-                    region_code: null,
-                },
-            ];
-
             getNaptanStopsMock.mockResolvedValue([]);
             getNaptanStopAreasMock.mockResolvedValue([]);
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
             const result = await processStopPoints(dbClient, stops, false, []);
-            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+            expect(insertStopsMock).not.toHaveBeenCalled();
             expect(result).toBeTruthy();
         });
     });
@@ -656,7 +681,7 @@ describe("stops", () => {
             expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
         });
 
-        it("handles naptan longitudes/latitudes of 0", async () => {
+        it("handles one of naptan longitude or latitude of 0", async () => {
             const stops: TxcAnnotatedStopPointRef[] = [
                 {
                     StopPointRef: "4",
@@ -671,10 +696,34 @@ describe("stops", () => {
                     parent_station: null,
                     stop_name: "naptan_name",
                     stop_lat: 0,
-                    stop_lon: 0,
+                    stop_lon: 1,
                     location_type: LocationType.StopOrPlatform,
                     platform_code: null,
                     region_code: null,
+                },
+            ];
+
+            getNaptanStopsMock.mockResolvedValue([
+                {
+                    atco_code: "4",
+                    common_name: "naptan_name",
+                    stop_type: "BCS",
+                    latitude: "0",
+                    longitude: "1",
+                },
+            ] as NaptanStopWithRegionCode[]);
+            getNaptanStopAreasMock.mockResolvedValue([]);
+            insertStopsMock.mockImplementation(() => Promise.resolve());
+
+            await processAnnotatedStopPointRefs(dbClient, stops, false, []);
+            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+        });
+
+        it("handles naptan longitude and latitude of 0", async () => {
+            const stops: TxcAnnotatedStopPointRef[] = [
+                {
+                    StopPointRef: "4",
+                    CommonName: "name2",
                 },
             ];
 
@@ -691,7 +740,7 @@ describe("stops", () => {
             insertStopsMock.mockImplementation(() => Promise.resolve());
 
             await processAnnotatedStopPointRefs(dbClient, stops, false, []);
-            expect(insertStopsMock).toHaveBeenCalledWith(dbClient, expectedStops);
+            expect(insertStopsMock).not.toHaveBeenCalled();
         });
     });
 
