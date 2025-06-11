@@ -477,17 +477,14 @@ export const createVehicleActivities = (avls: Avl[], responseTime: Dayjs): Parti
  * The purpose of this transformer is to filter out invalid AVLs
  * and return the rest of the data as valid.
  */
-
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-export const mapVehicleActivities = (namespace: string, items: any[], errors?: AvlValidationError[]) =>
-    items.map((item, index) => parseVehicleActivity(item, index, errors, namespace));
+export const mapVehicleActivities = (items: unknown[]) => items.map((item) => parseVehicleActivity(item));
 
 /**
  * The purpose of this transformer is to filter out invalid AVL cancellation data
  * and return the rest of the data as valid.
  */
-export const mapVehicleActivityCancellations = (namespace: string, items: unknown[]) =>
-    items.map((item) => parseVehicleActivityCancellation(item, namespace));
+export const mapVehicleActivityCancellations = (items: unknown[]) =>
+    items.map((item) => parseVehicleActivityCancellation(item));
 
 export const createSiriVm = (
     vehicleActivities: Partial<SiriVehicleActivity>[],
@@ -523,11 +520,9 @@ export const createSiriVm = (
                 VehicleMonitoringDelivery: {
                     ...verifiedObject.Siri.ServiceDelivery.VehicleMonitoringDelivery,
                     VehicleActivity: mapVehicleActivities(
-                        "SiriVmVehicleActivitySchema",
                         verifiedObject.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity ?? [],
                     ).filter(notEmpty),
                     VehicleActivityCancellation: mapVehicleActivityCancellations(
-                        "SiriVmVehicleActivityCancellationSchema",
                         verifiedObject.Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivityCancellation ?? [],
                     ).filter(notEmpty),
                 },
