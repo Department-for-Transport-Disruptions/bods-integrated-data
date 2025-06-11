@@ -138,7 +138,18 @@ const trackSchema = z.object({
 });
 
 const routeLinkSchema = z.object({
+    "@_id": z.string().nullish(),
     Track: trackSchema.array().optional(),
+    From: z
+        .object({
+            StopPointRef: z.string().nullish(),
+        })
+        .nullish(),
+    To: z
+        .object({
+            StopPointRef: z.string().nullish(),
+        })
+        .nullish(),
 });
 
 export type TxcRouteLink = z.infer<typeof routeLinkSchema>;
@@ -153,6 +164,7 @@ export type TxcRouteSection = z.infer<typeof routeSectionSchema>;
 export const routeSchema = z.object({
     "@_id": z.string(),
     RouteSectionRef: z.string().array(),
+    Description: z.string().nullish(),
 });
 
 export type TxcRoute = z.infer<typeof routeSchema>;
@@ -182,6 +194,8 @@ export const serviceSchema = z.object({
     Mode: z.string().optional(),
     RegisteredOperatorRef: z.string(),
     StandardService: z.object({
+        Origin: z.string().nullish(),
+        Destination: z.string().nullish(),
         JourneyPattern: journeyPatternSchema.array(),
     }),
 });
@@ -203,6 +217,7 @@ const abstractTimingLinkSchema = z.object({
     "@_id": z.string().optional(),
     From: abstractStopUsageSchema.optional(),
     To: abstractStopUsageSchema.optional(),
+    RouteLinkRef: z.string().optional(),
     RunTime: z.string().optional(),
 });
 
@@ -238,8 +253,11 @@ export const vehicleJourneyTimingLinkSchema = abstractTimingLinkSchema.extend({
     JourneyPatternTimingLinkRef: z.string(),
 });
 
+export type VehicleJourneyTimingLink = z.infer<typeof vehicleJourneyTimingLinkSchema>;
+
 export const vehicleJourneySchema = z.object({
     "@_RevisionNumber": z.string().optional(),
+    OperatorRef: z.string().nullish(),
     VehicleJourneyCode: z.string(),
     DepartureTime: z.string(),
     DepartureDayShift: z.preprocess((item) => (item === "1" || item === "+1" ? 1 : undefined), z.literal(1).optional()),
@@ -258,6 +276,7 @@ export const vehicleJourneySchema = z.object({
         .object({
             Block: z
                 .object({
+                    Description: z.string().nullish(),
                     BlockNumber: z.coerce.string(),
                 })
                 .optional(),
@@ -285,6 +304,12 @@ export const vehicleJourneySchema = z.object({
 });
 
 export type VehicleJourney = z.infer<typeof vehicleJourneySchema>;
+
+export const vehicleJourneyWithDateRangesSchema = vehicleJourneySchema.extend({
+    OperatingProfile: operatingProfileSchemaWithDateRange.optional(),
+});
+
+export type VehicleJourneyWithDateRanges = z.infer<typeof vehicleJourneyWithDateRangesSchema>;
 
 export const stopPointSchema = z.object({
     AtcoCode: z.string().toUpperCase(),
