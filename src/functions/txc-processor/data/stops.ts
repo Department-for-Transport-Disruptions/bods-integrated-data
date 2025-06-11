@@ -9,6 +9,7 @@ import {
 import { logger } from "@bods-integrated-data/shared/logger";
 import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods-integrated-data/shared/schema";
 import OsPoint from "ospoint";
+import { areCoordinatesValid } from "../utils";
 import { getNaptanStopAreas, getNaptanStops, insertStops } from "./database";
 
 const naptanPlatformStopTypeCodes = ["BCS", "FBT", "PLT", "RPL"];
@@ -175,7 +176,7 @@ export const createStopAreaStop = (
         latitude = Number.parseFloat(stopArea.latitude);
     }
 
-    if (!longitude || !latitude) {
+    if (!areCoordinatesValid([latitude, longitude])) {
         if (stopArea.northing && stopArea.easting) {
             const osPoint = new OsPoint(stopArea.northing, stopArea.easting);
             const coords = osPoint.toWGS84();
@@ -185,7 +186,7 @@ export const createStopAreaStop = (
         }
     }
 
-    if (!latitude || !longitude) {
+    if (!areCoordinatesValid([latitude, longitude])) {
         return null;
     }
 
@@ -204,29 +205,31 @@ export const createStopAreaStop = (
 };
 
 export const getCoordinates = (location?: StopPointLocation, naptanStop?: NaptanStop) => {
-    if (naptanStop?.longitude && naptanStop?.latitude) {
+    const naptanCoords = [naptanStop?.latitude, naptanStop?.longitude] as const;
+
+    if (areCoordinatesValid(naptanCoords)) {
         return {
-            latitude: Number.parseFloat(naptanStop.latitude),
-            longitude: Number.parseFloat(naptanStop.longitude),
+            latitude: Number.parseFloat(naptanCoords[0]),
+            longitude: Number.parseFloat(naptanCoords[1]),
         };
     }
 
     let latitude: number | undefined;
     let longitude: number | undefined;
 
-    if (location?.Translation?.Longitude) {
+    if (location?.Translation?.Longitude !== undefined) {
         longitude = location.Translation.Longitude;
-    } else if (location?.Longitude) {
+    } else if (location?.Longitude !== undefined) {
         longitude = location.Longitude;
     }
 
-    if (location?.Translation?.Latitude) {
+    if (location?.Translation?.Latitude !== undefined) {
         latitude = location.Translation.Latitude;
-    } else if (location?.Latitude) {
+    } else if (location?.Latitude !== undefined) {
         latitude = location.Latitude;
     }
 
-    if (!longitude || !latitude) {
+    if (!areCoordinatesValid([latitude, longitude])) {
         const easting = location?.Translation?.Easting || location?.Easting;
         const northing = location?.Translation?.Northing || location?.Northing;
 
@@ -239,7 +242,9 @@ export const getCoordinates = (location?: StopPointLocation, naptanStop?: Naptan
         }
     }
 
-    if (!latitude || !longitude) {
+    const coords = [latitude, longitude] as const;
+
+    if (!areCoordinatesValid(coords)) {
         return {
             latitude: undefined,
             longitude: undefined,
@@ -247,8 +252,8 @@ export const getCoordinates = (location?: StopPointLocation, naptanStop?: Naptan
     }
 
     return {
-        latitude,
-        longitude,
+        latitude: coords[0],
+        longitude: coords[1],
     };
 };
 
@@ -259,12 +264,7 @@ export const processStopPoints = async (
     stopsInJourneyPatternSections: string[],
 ) => {
     const atcoCodes = stops.map((stop) => stop.AtcoCode);
-    const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-
-    if (!naptanStops) {
-        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
-        return [];
-    }
+    const naptanStops = (await getNaptanStops(dbClient, atcoCodes, useStopLocality)) ?? [];
 
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code).filter((code) => code !== null);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
@@ -281,14 +281,17 @@ export const processStopPoints = async (
 
     const stopsToInsert: NewStop[] = stops.flatMap((stop) => {
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.AtcoCode);
+
         const { latitude, longitude } = getCoordinates(stop.Place.Location, naptanStop);
 
-        if (!latitude || !longitude) {
+        const coords = [latitude, longitude] as const;
+
+        if (!areCoordinatesValid(coords)) {
             stopsWithMissingCoordinates.push(stop.AtcoCode);
             return [];
         }
 
-        return mapStop(naptanStopAreaMap, stop.AtcoCode, stop.Descriptor.CommonName, latitude, longitude, naptanStop);
+        return mapStop(naptanStopAreaMap, stop.AtcoCode, stop.Descriptor.CommonName, coords[0], coords[1], naptanStop);
     });
 
     if (stopsWithMissingCoordinates.length > 0) {
@@ -312,12 +315,7 @@ export const processAnnotatedStopPointRefs = async (
     stopsInJourneyPatternSections: string[],
 ) => {
     const atcoCodes = stops.map((stop) => stop.StopPointRef);
-    const naptanStops = await getNaptanStops(dbClient, atcoCodes, useStopLocality);
-
-    if (!naptanStops) {
-        logger.warn(`No NaPTAN stops found for atcoCodes: ${atcoCodes}.`);
-        return [];
-    }
+    const naptanStops = (await getNaptanStops(dbClient, atcoCodes, useStopLocality)) ?? [];
 
     const naptanStopAreaCodes = naptanStops.map((s) => s.stop_area_code).filter((code) => code !== null);
     const naptanStopAreaMap: Record<string, NaptanStopArea> = {};
@@ -336,12 +334,14 @@ export const processAnnotatedStopPointRefs = async (
         const naptanStop = naptanStops.find((s) => s.atco_code === stop.StopPointRef);
         const { latitude, longitude } = getCoordinates(stop.Location, naptanStop);
 
-        if (!latitude || !longitude) {
+        const coords = [latitude, longitude] as const;
+
+        if (!areCoordinatesValid(coords)) {
             stopsWithMissingCoordinates.push(stop.StopPointRef);
             return [];
         }
 
-        return mapStop(naptanStopAreaMap, stop.StopPointRef, stop.CommonName, latitude, longitude, naptanStop);
+        return mapStop(naptanStopAreaMap, stop.StopPointRef, stop.CommonName, coords[0], coords[1], naptanStop);
     });
 
     if (stopsWithMissingCoordinates.length > 0) {
