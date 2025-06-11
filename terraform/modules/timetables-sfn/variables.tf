@@ -99,26 +99,6 @@ variable "nptg_bucket_name" {
   type = string
 }
 
-variable "tfl_timetable_retriever_function_arn" {
-  type = string
-}
-
-variable "tfl_timetable_unzipper_function_arn" {
-  type = string
-}
-
-variable "tfl_timetable_processor_function_arn" {
-  type = string
-}
-
-variable "tfl_timetable_zipped_bucket_name" {
-  type = string
-}
-
-variable "tfl_timetable_bucket_name" {
-  type = string
-}
-
 variable "bods_netex_retriever_function_arn" {
   type = string
 }

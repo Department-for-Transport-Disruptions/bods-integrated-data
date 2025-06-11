@@ -31,6 +31,9 @@ describe("tfl-timetable-retriever", () => {
 
     vi.mock("@aws-sdk/client-s3");
 
+    vi.mock("./database");
+    vi.mock("@bods-integrated-data/shared/database");
+
     const mockBaseVersionXml = `
 <?xml version="1.0" encoding="UTF-8"?>
 <bv:Versioning_Of_Data xmlns:bv="http://www.tfl.uk/CDII/Base_Version" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.tfl.uk/CDII/Base_Version ../Schema/Base_Version.xsd">

@@ -1,0 +1,22 @@
+{
+    "name": "@bods-integrated-data/tfl-txc-line-id-retriever",
+    "version": "0.1.0",
+    "description": "TfL TxC Line ID Retriever",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-txc-line-id-retriever.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-txc-line-id-retriever.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "kysely": "0.27.3"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^20.11.19"
+    }
+}

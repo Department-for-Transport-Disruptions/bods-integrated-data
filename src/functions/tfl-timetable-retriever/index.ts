@@ -6,6 +6,7 @@ import {
     S3Client,
     _Object,
 } from "@aws-sdk/client-s3";
+import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { listS3Objects, putS3Object } from "@bods-integrated-data/shared/s3";
 import { tflBaseVersionSchema } from "@bods-integrated-data/shared/schema";
@@ -13,6 +14,7 @@ import { Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { cleardownTables } from "./database";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -85,6 +87,8 @@ export type TflTimetableRetrieverOutput = {
     prefix: string;
 };
 
+let dbClient: KyselyDb;
+
 export const handler: Handler = async (event, context): Promise<TflTimetableRetrieverOutput> => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
@@ -95,10 +99,14 @@ export const handler: Handler = async (event, context): Promise<TflTimetableRetr
             throw new Error("Missing env vars - TFL_TIMETABLE_ZIPPED_BUCKET_NAME must be set");
         }
 
+        dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
+
         const tflS3Client = new S3Client({
             region: "eu-west-1",
             endpoint: "https://s3.eu-west-1.amazonaws.com",
         });
+
+        await cleardownTables(dbClient);
 
         const tflBaseVersionData = await getAndParseTflBaseVersionData(
             tflS3Client,

@@ -36,3 +36,7 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "bank_holidays_bucket_name" {
+  type = string
+}
