@@ -9,7 +9,8 @@
             "./terraform/",
             "./load-testing/",
             "./integration-testing/test-results/",
-            "./src/shared/gtfs-realtime/"
+            "./src/shared/gtfs-realtime/",
+            "./src/functions/tfl-txc-generator/test-data/"
         ]
     },
     "formatter": {

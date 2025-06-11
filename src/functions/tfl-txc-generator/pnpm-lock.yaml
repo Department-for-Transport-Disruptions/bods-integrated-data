@@ -27,6 +27,9 @@ importers:
       '@types/node':
         specifier: ^20.11.19
         version: 20.17.57
+      mockdate:
+        specifier: ^3.0.5
+        version: 3.0.5
 
 packages:
 
@@ -43,6 +46,9 @@ packages:
   kysely@0.27.3:
     resolution: {integrity: sha512-lG03Ru+XyOJFsjH3OMY6R/9U38IjDPfnOfDgO3ynhbDr+Dz8fak+X6L62vqu3iybQnj+lG84OttBuU9KY3L9kA==}
     engines: {node: '>=14.0.0'}
+
+  mockdate@3.0.5:
+    resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
 
   strnum@2.1.1:
     resolution: {integrity: sha512-7ZvoFTiCnGxBtDqJ//Cu6fWtZtc7Y3x+QOirG15wztbdngGSkht27o2pyGWrVy0b4WAy3jbKmnoK6g5VlVNUUw==}
@@ -66,6 +72,8 @@ snapshots:
       strnum: 2.1.1
 
   kysely@0.27.3: {}
+
+  mockdate@3.0.5: {}
 
   strnum@2.1.1: {}
 
