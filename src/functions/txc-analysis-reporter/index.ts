@@ -276,6 +276,17 @@ export const handler: Handler = async (event, context) => {
 
         if (observationByDataSourceItemsCsv) {
             archive.append(observationByDataSourceItemsCsv, { name: `${date}/observationSummariesByDataSource.csv` });
+
+            if (STAGE === "prod") {
+                dqsS3Promises.push(
+                    putS3Object({
+                        Bucket: DQS_BUCKET_NAME,
+                        Key: `tnds_analysis/${date}/observationSummariesByDataSource.csv`,
+                        ContentType: "application/csv",
+                        Body: observationByDataSourceItemsCsv,
+                    }),
+                );
+            }
         }
 
         const observationByFileItemsCsv = createCsv(Object.values(observationByFileMap));
