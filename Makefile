@@ -1,6 +1,6 @@
 NAPTAN_BUCKET_NAME="integrated-data-naptan-stops-local"
 BODS_NETEX_BUCKET_NAME="integrated-data-bods-netex-local"
-BODS_NETEX_ZIPPED_BUCKET_NAME="integrated-data-bods-netex-zipped_local"
+BODS_NETEX_ZIPPED_BUCKET_NAME="integrated-data-bods-netex-zipped-local"
 NPTG_BUCKET_NAME="integrated-data-nptg-local"
 BODS_TXC_ZIPPED_BUCKET_NAME="integrated-data-bods-txc-zipped-local"
 BODS_TXC_UNZIPPED_BUCKET_NAME="integrated-data-bods-txc-local"
@@ -157,6 +157,9 @@ run-local-naptan-uploader:
 
 run-local-bods-netex-retriever:
 	STAGE=local BUCKET_NAME=${BODS_NETEX_BUCKET_NAME} ZIPPED_BUCKET_NAME=${BODS_NETEX_ZIPPED_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-netex-retriever'; handler().catch(console.error)"
+
+run-local-bods-netex-unzipper:
+	STAGE=local FILE="${FILE}" UNZIPPED_BUCKET_NAME=${BODS_NETEX_BUCKET_NAME} npx tsx -e "import {handler} from './src/functions/bods-netex-unzipper'; handler({Records:[{s3:{bucket:{name:'${BODS_NETEX_ZIPPED_BUCKET_NAME}'},object:{key:\"${FILE}\"}}}]}).catch(console.error)"
 
 # NPTG
 
