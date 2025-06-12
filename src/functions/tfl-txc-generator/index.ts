@@ -51,6 +51,11 @@ export const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata, 
         (pattern) => pattern.journeys.length > 0 && pattern.stops.length > 0,
     );
 
+    if (filteredPatterns.length === 0) {
+        logger.warn(`No valid patterns found for line: ${iBusData.id}`);
+        return null;
+    }
+
     const txcAttributes = getTxcAttributes(metadata, iBusData.id);
 
     const txc = {
@@ -95,12 +100,23 @@ export const handler: Handler = async (event, context) => {
 
         const iBusData = await getTflIBusData(dbClient, parsedLineId);
 
+        if (!iBusData || iBusData.patterns.length === 0) {
+            logger.warn(`No patterns found for line: ${parsedLineId}`);
+            return;
+        }
+
         const txc = await buildTxc(iBusData, metadata, allBankHolidays);
+
+        if (!txc) {
+            return;
+        }
 
         await putS3Object({
             Bucket: tflTxcBucketName,
             Key: `${parsedLineId}.xml`,
             Body: txc,
+            ContentType: "application/xml",
+            StorageClass: "INTELLIGENT_TIERING",
         });
 
         logger.info(`TxC generated for line: ${parsedLineId}`);

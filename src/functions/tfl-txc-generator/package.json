@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "description": "TfL TxC Generator",
     "scripts": {
-        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-timetable-unzipper.zip .",
-        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-timetable-unzipper.zip ../dist",
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-txc-generator.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-txc-generator.zip ../dist",
         "test": "vitest run"
     },
     "keywords": [],
