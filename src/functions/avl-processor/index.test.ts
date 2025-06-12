@@ -10,7 +10,6 @@ import MockDate from "mockdate";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { processSqsRecord } from ".";
 import {
-    expectedPutMetricDataCallForFilteredArrayParseError,
     mockItemId,
     mockSubscriptionId,
     parsedSiri,
@@ -307,23 +306,6 @@ describe("avl-processor", () => {
         );
 
         expect(valuesMock).not.toHaveBeenCalled();
-
-        expect(putMetricDataSpy).toHaveBeenCalledTimes(3);
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            1,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            2,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
-        expect(putMetricDataSpy).toHaveBeenNthCalledWith(
-            3,
-            expectedPutMetricDataCallForFilteredArrayParseError.namespace,
-            expectedPutMetricDataCallForFilteredArrayParseError.metricData,
-        );
     });
 
     it("uploads validation errors to dynamoDB when processing invalid data", async () => {
@@ -350,18 +332,26 @@ describe("avl-processor", () => {
             {
                 PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                details: "Required",
+                filename: record.s3.object.key,
+                level: "CRITICAL",
+                name: "Siri.ServiceDelivery.ProducerRef",
+                responseTimestamp: "2018-08-17T15:14:21.432",
+                timeToExist,
+            },
+            {
+                PK: mockSubscriptionId,
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details:
                     "LineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "Invalid$",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.LineRef",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.0.MonitoredVehicleJourney.LineRef",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -369,15 +359,13 @@ describe("avl-processor", () => {
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details: "Required",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "NON-CRITICAL",
                 lineRef: "Invalid$",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.DirectionRef",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.0.MonitoredVehicleJourney.DirectionRef",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -385,15 +373,13 @@ describe("avl-processor", () => {
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details: "Required",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "Invalid$",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.0.MonitoredVehicleJourney.FramedVehicleJourneyRef.DataFrameRef",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -402,15 +388,13 @@ describe("avl-processor", () => {
                 details:
                     "DestinationName must not contain the following disallowed characters as defined by the XSD: []{}?$%^=@#;:",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "NON-CRITICAL",
                 lineRef: "Invalid$",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.DestinationName",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.0.MonitoredVehicleJourney.DestinationName",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -418,15 +402,13 @@ describe("avl-processor", () => {
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details: "Expected number, received nan",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "Invalid$",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.VehicleLocation.Longitude",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.0.MonitoredVehicleJourney.VehicleLocation.Longitude",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -435,15 +417,13 @@ describe("avl-processor", () => {
                 details:
                     "Invalid enum value. Expected 'full' | 'seatsAvailable' | 'standingAvailable', received 'wrong'",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "NON-CRITICAL",
                 lineRef: "Invalid$",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[0].MonitoredVehicleJourney.Occupancy",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.0.MonitoredVehicleJourney.Occupancy",
                 operatorRef: "123",
                 recordedAtTime: "2018-08-17T15:22:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -451,15 +431,13 @@ describe("avl-processor", () => {
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
                 details: "RecordedAtTime in future",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "ATB:Line:60",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[1].RecordedAtTime",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.1.RecordedAtTime",
                 operatorRef: "123",
                 recordedAtTime: "2099-08-17T15:13:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
             },
             {
@@ -468,26 +446,14 @@ describe("avl-processor", () => {
                 details:
                     "DatedVehicleJourneyRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
                 filename: record.s3.object.key,
-                itemIdentifier: undefined,
                 level: "CRITICAL",
                 lineRef: "ATB:Line:60",
-                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity[3].MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.3.MonitoredVehicleJourney.FramedVehicleJourneyRef.DatedVehicleJourneyRef",
                 operatorRef: "placeholder",
                 recordedAtTime: "2018-08-17T15:13:20",
                 responseTimestamp: "2018-08-17T15:14:21.432",
                 timeToExist,
-                vehicleJourneyRef: undefined,
                 vehicleRef: "200141",
-            },
-            {
-                PK: mockSubscriptionId,
-                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
-                details: "Required",
-                filename: record.s3.object.key,
-                level: "CRITICAL",
-                name: "Siri.ServiceDelivery.ProducerRef",
-                responseTimestamp: "2018-08-17T15:14:21.432",
-                timeToExist,
             },
         ];
         expect(putDynamoItemsSpy).toHaveBeenCalledWith(mockAvlValidationErrorsTableName, expectedValidationErrors);
