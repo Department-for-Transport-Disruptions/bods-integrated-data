@@ -30,6 +30,17 @@ type ObservationSummaryByDataSource = {
     "Serviced organisation data is out of date": number;
 };
 
+type ObservationSummaryByService = {
+    date: string;
+    importance: string;
+    category: string;
+    observation: string;
+    national_operator_code: string;
+    line_name: string;
+    number_of_observations: number;
+    data_source: string;
+};
+
 type ObservationSummaryByFile = {
     "Dataset Date": string;
     Region: string;
@@ -103,6 +114,7 @@ export const handler: Handler = async (event, context) => {
     const date = event.date;
     const formattedDate = getDate(date).format("DD/MM/YYYY");
     const observationByDataSourceMap: Record<string, ObservationSummaryByDataSource> = {};
+    const observationByNocLineNameMap: Record<string, ObservationSummaryByService> = {};
     const observationByFileMap: Record<string, ObservationSummaryByFile> = {};
     const observationByObservationTypesMap: Record<string, Record<string, ObservationSummaryByObservationType>> = {};
     const criticalObservationByObservationTypesMap: Record<
@@ -162,6 +174,23 @@ export const handler: Handler = async (event, context) => {
                     } else {
                         observationByDataSourceMap[dataSource]["Advisory observations"]++;
                     }
+
+                    const observationByNocLineNameMapKey = `${observation.noc}#${observation.lineName}`;
+
+                    if (!observationByNocLineNameMap[observationByNocLineNameMapKey]) {
+                        observationByNocLineNameMap[observationByNocLineNameMapKey] = {
+                            date: formattedDate,
+                            importance: observation.importance,
+                            category: observation.category,
+                            observation: observationType,
+                            national_operator_code: observation.noc,
+                            line_name: observation.lineName,
+                            number_of_observations: 0,
+                            data_source: dataSource,
+                        };
+                    }
+
+                    observationByNocLineNameMap[observationByNocLineNameMapKey].number_of_observations++;
 
                     if (!observationByFileMap[filepath]) {
                         observationByFileMap[filepath] = {
@@ -284,6 +313,23 @@ export const handler: Handler = async (event, context) => {
                         Key: `tnds_analysis/${date}/observationSummariesByDataSource.csv`,
                         ContentType: "application/csv",
                         Body: observationByDataSourceItemsCsv,
+                    }),
+                );
+            }
+        }
+
+        const observationByNocLineItemsCsv = createCsv(Object.values(observationByNocLineNameMap));
+
+        if (observationByNocLineItemsCsv) {
+            archive.append(observationByNocLineItemsCsv, { name: `${date}/observationSummariesByNocLineName.csv` });
+
+            if (STAGE === "prod") {
+                dqsS3Promises.push(
+                    putS3Object({
+                        Bucket: DQS_BUCKET_NAME,
+                        Key: `tnds_analysis/${date}/observationSummariesByNocLineName.csv`,
+                        ContentType: "application/csv",
+                        Body: observationByNocLineItemsCsv,
                     }),
                 );
             }

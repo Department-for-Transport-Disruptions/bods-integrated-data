@@ -92,6 +92,9 @@ describe("txc-analysis-reporter", () => {
     const observationSummariesByDataSourceCsvContent =
         "Dataset Date,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation data is out of date\r\n08/01/2025,test-dataSource-1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0\r\n08/01/2025,test-dataSource-2,2,0,2,0,2,0,0,0,0,0,0,0,0,0,0\r\n";
 
+    const observationSummariesByNocLineNameCsvContent =
+        "date,importance,category,observation,national_operator_code,line_name,number_of_observations,data_source\r\n08/01/2025,critical,dataset,Duplicate journey,test-noc-1,test-line-1,1,test-dataSource-1\r\n08/01/2025,advisory,dataset,First stop is not a timing point,test-noc-2,test-line-2,1,test-dataSource-2\r\n08/01/2025,advisory,dataset,First stop is not a timing point,test-noc-2,test-line-3,1,test-dataSource-2\r\n";
+
     const observationSummariesByFileCsvContent =
         "Dataset Date,Region,File,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation data is out of date\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,3,1,2,0,2,0,0,0,0,0,0,0,1,0,0\r\n";
 
@@ -146,23 +149,26 @@ describe("txc-analysis-reporter", () => {
             "application/zip",
         );
 
-        expect(mocks.appendMock).toHaveBeenCalledTimes(6);
+        expect(mocks.appendMock).toHaveBeenCalledTimes(7);
         expect(mocks.appendMock).toHaveBeenNthCalledWith(1, observationSummariesByDataSourceCsvContent, {
             name: "20250108/observationSummariesByDataSource.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(2, observationSummariesByFileCsvContent, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(2, observationSummariesByNocLineNameCsvContent, {
+            name: "20250108/observationSummariesByNocLineName.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(3, observationSummariesByFileCsvContent, {
             name: "20250108/observationSummariesByFile.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(3, observationByObservationTypeCsvContent1, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(4, observationByObservationTypeCsvContent1, {
             name: "20250108/observationSummariesByObservationType/Duplicate journey.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(4, observationByObservationTypeCsvContent2, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(5, observationByObservationTypeCsvContent2, {
             name: "20250108/observationSummariesByObservationType/First stop is not a timing point.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(5, observationByObservationTypeCsvContent3, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent3, {
             name: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent4, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(7, observationByObservationTypeCsvContent4, {
             name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
 
@@ -186,27 +192,30 @@ describe("txc-analysis-reporter", () => {
             "application/zip",
         );
 
-        expect(mocks.appendMock).toHaveBeenCalledTimes(6);
+        expect(mocks.appendMock).toHaveBeenCalledTimes(7);
         expect(mocks.appendMock).toHaveBeenNthCalledWith(1, observationSummariesByDataSourceCsvContent, {
             name: "20250108/observationSummariesByDataSource.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(2, observationSummariesByFileCsvContent, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(2, observationSummariesByNocLineNameCsvContent, {
+            name: "20250108/observationSummariesByNocLineName.csv",
+        });
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(3, observationSummariesByFileCsvContent, {
             name: "20250108/observationSummariesByFile.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(3, observationByObservationTypeCsvContent1, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(4, observationByObservationTypeCsvContent1, {
             name: "20250108/observationSummariesByObservationType/Duplicate journey.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(4, observationByObservationTypeCsvContent2, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(5, observationByObservationTypeCsvContent2, {
             name: "20250108/observationSummariesByObservationType/First stop is not a timing point.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(5, observationByObservationTypeCsvContent3, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent3, {
             name: "20250108/criticalObservationsByObservationType/Duplicate journey.csv",
         });
-        expect(mocks.appendMock).toHaveBeenNthCalledWith(6, observationByObservationTypeCsvContent4, {
+        expect(mocks.appendMock).toHaveBeenNthCalledWith(7, observationByObservationTypeCsvContent4, {
             name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
 
-        expect(mocks.putS3Object).toHaveBeenCalledTimes(3);
+        expect(mocks.putS3Object).toHaveBeenCalledTimes(4);
         expect(mocks.putS3Object).toHaveBeenNthCalledWith(1, {
             Bucket: "mock-dqs-bucket",
             ContentType: "application/csv",
@@ -216,10 +225,16 @@ describe("txc-analysis-reporter", () => {
         expect(mocks.putS3Object).toHaveBeenNthCalledWith(2, {
             Bucket: "mock-dqs-bucket",
             ContentType: "application/csv",
+            Key: "tnds_analysis/20250108/observationSummariesByNocLineName.csv",
+            Body: observationSummariesByNocLineNameCsvContent,
+        });
+        expect(mocks.putS3Object).toHaveBeenNthCalledWith(3, {
+            Bucket: "mock-dqs-bucket",
+            ContentType: "application/csv",
             Key: "tnds_analysis/20250108/criticalObservationsByObservationType/Duplicate journey.csv",
             Body: observationByObservationTypeCsvContent3,
         });
-        expect(mocks.putS3Object).toHaveBeenNthCalledWith(3, {
+        expect(mocks.putS3Object).toHaveBeenNthCalledWith(4, {
             Bucket: "mock-dqs-bucket",
             ContentType: "application/csv",
             Key: "tnds_analysis/20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
