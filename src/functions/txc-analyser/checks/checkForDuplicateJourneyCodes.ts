@@ -1,3 +1,4 @@
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
 import { PartialDeep } from "type-fest";
@@ -19,6 +20,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                     let serviceCode = "n/a";
                     let lineName = "n/a";
+                    let latestEndDate = "n/a";
                     const services = txcData.TransXChange?.Services;
 
                     if (services) {
@@ -28,6 +30,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                         if (service) {
                             serviceCode = service.ServiceCode;
+
+                            if (service.OperatingPeriod.EndDate) {
+                                latestEndDate = getDate(service.OperatingPeriod.EndDate).format("DD/MM/YYYY");
+                            }
+
                             const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                             if (line) {
@@ -42,6 +49,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         observation: "Duplicate journey code",
                         serviceCode,
                         lineName,
+                        latestEndDate,
                         details: `The Journey Code (${journeyCode}) is found in more than one vehicle journey.`,
                     });
                 }

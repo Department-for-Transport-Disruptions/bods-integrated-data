@@ -21,6 +21,7 @@ export default (txcData: PartialDeep<TxcSchema>, naptanStopMap: NaptanStopMap): 
                 observations.push({
                     serviceCode: "n/a",
                     lineName: "n/a",
+                    latestEndDate: "n/a",
                     observation: "Stop not found in NaPTAN",
                     category: "stop",
                     importance: "advisory",
@@ -34,6 +35,7 @@ export default (txcData: PartialDeep<TxcSchema>, naptanStopMap: NaptanStopMap): 
                 observations.push({
                     serviceCode: "n/a",
                     lineName: "n/a",
+                    latestEndDate: "n/a",
                     observation: "Incorrect stop type",
                     category: "stop",
                     importance: "critical",

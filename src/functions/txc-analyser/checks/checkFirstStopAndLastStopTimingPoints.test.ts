@@ -15,6 +15,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "08:00:00",
@@ -28,6 +29,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Departure time": "08:00:00",
@@ -51,6 +53,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "08:00:00",
@@ -64,6 +67,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "Stop 4",
                     "Departure time": "08:00:00",
@@ -133,6 +137,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "n/a",
                     "Departure time": "08:00:00",
@@ -146,6 +151,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "n/a",
                     "Departure time": "08:00:00",
@@ -175,6 +181,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "First stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "unknown departure time",
@@ -189,6 +196,7 @@ describe("checkFirstStopAndLastTimingPoints", () => {
                 observation: "Last stop is not a timing point",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Departure time": "unknown departure time",

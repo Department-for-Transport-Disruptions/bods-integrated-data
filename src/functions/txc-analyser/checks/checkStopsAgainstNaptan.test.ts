@@ -20,6 +20,7 @@ describe("checkStopsAgainstNaptan", () => {
                 observation: "Incorrect stop type",
                 serviceCode: "n/a",
                 lineName: "n/a",
+                latestEndDate: "n/a",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Stop Point Ref": "SP1",
@@ -33,6 +34,7 @@ describe("checkStopsAgainstNaptan", () => {
                 observation: "Stop not found in NaPTAN",
                 serviceCode: "n/a",
                 lineName: "n/a",
+                latestEndDate: "n/a",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Stop Point Ref": "SP2",

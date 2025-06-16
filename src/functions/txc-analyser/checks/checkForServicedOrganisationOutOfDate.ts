@@ -27,7 +27,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                         if (latestEndDate.isBefore(today)) {
                             const serviceName = servicedOrganisation.Name || "unknown name";
-                            const endDate = latestEndDate.format("YYYY-MM-DD");
+                            const endDate = latestEndDate.format("DD/MM/YYYY");
 
                             observations.push({
                                 importance: "advisory",
@@ -35,6 +35,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                 observation: "Serviced organisation data is out of date",
                                 serviceCode: "n/a",
                                 lineName: "n/a",
+                                latestEndDate: endDate,
                                 details: `The Working Days for Serviced Organisation ${serviceName} (${organisationCode}) has expired on ${endDate}. Please update the dates for this Serviced Organisation.`,
                             });
                         }

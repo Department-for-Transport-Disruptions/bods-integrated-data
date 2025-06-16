@@ -138,6 +138,7 @@ describe("checkForDuplicateJourneyCodes", () => {
                     Service: [
                         {
                             ServiceCode: "SVC1",
+                            OperatingPeriod: {},
                             Lines: {
                                 Line: [
                                     {
@@ -160,6 +161,7 @@ describe("checkForDuplicateJourneyCodes", () => {
                 observation: "Duplicate journey code",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "n/a",
                 details: "The Journey Code (J1) is found in more than one vehicle journey.",
             },
             {
@@ -168,6 +170,7 @@ describe("checkForDuplicateJourneyCodes", () => {
                 observation: "Duplicate journey code",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "n/a",
                 details: "The Journey Code (J2) is found in more than one vehicle journey.",
             },
         ]);

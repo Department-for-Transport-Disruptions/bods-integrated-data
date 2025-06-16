@@ -39,6 +39,7 @@ type ObservationSummaryByService = {
     line_name: string;
     number_of_observations: number;
     data_source: string;
+    latest_end_date: string;
 };
 
 type ObservationSummaryByFile = {
@@ -187,6 +188,7 @@ export const handler: Handler = async (event, context) => {
                             line_name: observation.lineName,
                             number_of_observations: 0,
                             data_source: dataSource,
+                            latest_end_date: observation.latestEndDate,
                         };
                     }
 

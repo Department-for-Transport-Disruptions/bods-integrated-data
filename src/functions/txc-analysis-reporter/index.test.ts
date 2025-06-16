@@ -56,6 +56,7 @@ describe("txc-analysis-reporter", () => {
             observation: "Duplicate journey",
             serviceCode: "test-service-1",
             lineName: "test-line-1",
+            latestEndDate: "01/06/2025",
             details: "test-details-1",
             extraColumns: {
                 "Extra Column": "test-extra-column-1",
@@ -72,6 +73,7 @@ describe("txc-analysis-reporter", () => {
             observation: "First stop is not a timing point",
             serviceCode: "test-service-2",
             lineName: "test-line-2",
+            latestEndDate: "01/06/2025",
             details: "test-details-2",
         },
         {
@@ -85,6 +87,7 @@ describe("txc-analysis-reporter", () => {
             observation: "First stop is not a timing point",
             serviceCode: "test-service-2",
             lineName: "test-line-3",
+            latestEndDate: "n/a",
             details: "test-details-2",
         },
     ];
@@ -93,7 +96,7 @@ describe("txc-analysis-reporter", () => {
         "Dataset Date,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation data is out of date\r\n08/01/2025,test-dataSource-1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0\r\n08/01/2025,test-dataSource-2,2,0,2,0,2,0,0,0,0,0,0,0,0,0,0\r\n";
 
     const observationSummariesByNocLineNameCsvContent =
-        "date,importance,category,observation,national_operator_code,line_name,number_of_observations,data_source\r\n08/01/2025,critical,dataset,Duplicate journey,test-noc-1,test-line-1,1,test-dataSource-1\r\n08/01/2025,advisory,dataset,First stop is not a timing point,test-noc-2,test-line-2,1,test-dataSource-2\r\n08/01/2025,advisory,dataset,First stop is not a timing point,test-noc-2,test-line-3,1,test-dataSource-2\r\n";
+        "date,importance,category,observation,national_operator_code,line_name,number_of_observations,data_source,latest_end_date\r\n08/01/2025,critical,dataset,Duplicate journey,test-noc-1,test-line-1,1,test-dataSource-1,01/06/2025\r\n08/01/2025,advisory,dataset,First stop is not a timing point,test-noc-2,test-line-2,1,test-dataSource-2,01/06/2025\r\n08/01/2025,advisory,dataset,First stop is not a timing point,test-noc-2,test-line-3,1,test-dataSource-2,n/a\r\n";
 
     const observationSummariesByFileCsvContent =
         "Dataset Date,Region,File,Data Source,Total observations,Critical observations,Advisory observations,No timing point for more than 15 minutes,First stop is not a timing point,Last stop is not a timing point,Last stop is pick up only,First stop is set down only,Stop not found in NaPTAN,Incorrect stop type,Missing journey code,Duplicate journey code,Duplicate journey,Missing bus working number,Serviced organisation data is out of date\r\n08/01/2025,test-region-1,test-PK-1,test-dataSource-1,3,1,2,0,2,0,0,0,0,0,0,0,1,0,0\r\n";
@@ -279,6 +282,7 @@ describe("txc-analysis-reporter", () => {
                 observation: "Duplicate journey",
                 serviceCode: "test-service-1",
                 lineName: "test-line-1",
+                latestEndDate: "01/06/2025",
                 details: "test-details-1",
             },
         ];

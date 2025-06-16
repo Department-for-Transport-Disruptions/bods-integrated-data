@@ -804,6 +804,7 @@ export const mockDynamoDbObservations: DynamoDbObservation[] = [
         observation: "First stop is set down only",
         serviceCode: "S1",
         lineName: "L1",
+        latestEndDate: "n/a",
         details: "The first stop (Stop 1) on the 23:30:00 outbound journey is incorrectly set to set down passengers.",
         extraColumns: {
             "Stop Name": "Stop 1",
@@ -822,6 +823,7 @@ export const mockDynamoDbObservations: DynamoDbObservation[] = [
         observation: "Last stop is pick up only",
         serviceCode: "S1",
         lineName: "L1",
+        latestEndDate: "n/a",
         details: "The last stop (Stop 2) on the 23:30:00 outbound journey is incorrectly set to pick up passengers.",
         extraColumns: {
             "Stop Name": "Stop 2",
@@ -840,6 +842,7 @@ export const mockDynamoDbObservations: DynamoDbObservation[] = [
         observation: "First stop is set down only",
         serviceCode: "S1",
         lineName: "L1",
+        latestEndDate: "n/a",
         details: "The first stop (Stop 1) on the 00:30:00 outbound journey is incorrectly set to set down passengers.",
         extraColumns: {
             "Stop Name": "Stop 1",
@@ -858,6 +861,7 @@ export const mockDynamoDbObservations: DynamoDbObservation[] = [
         observation: "Last stop is pick up only",
         serviceCode: "S1",
         lineName: "L1",
+        latestEndDate: "n/a",
         details: "The last stop (Stop 2) on the 00:30:00 outbound journey is incorrectly set to pick up passengers.",
         extraColumns: {
             "Stop Name": "Stop 2",
@@ -873,6 +877,7 @@ export const mockDynamoDbObservations: DynamoDbObservation[] = [
         dataSource: "unknown",
         serviceCode: "n/a",
         lineName: "n/a",
+        latestEndDate: "n/a",
         observation: "Incorrect stop type",
         category: "stop",
         importance: "critical",

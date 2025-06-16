@@ -1,3 +1,4 @@
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
 import { PartialDeep } from "type-fest";
@@ -12,6 +13,8 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                 let serviceCode = "n/a";
                 let lineName = "n/a";
                 let direction = "unknown direction";
+                let latestEndDate = "n/a";
+
                 const departureTime = vehicleJourney.DepartureTime || "unknown departure time";
                 const services = txcData.TransXChange?.Services;
 
@@ -22,6 +25,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                     if (service) {
                         serviceCode = service.ServiceCode;
+
+                        if (service.OperatingPeriod.EndDate) {
+                            latestEndDate = getDate(service.OperatingPeriod.EndDate).format("DD/MM/YYYY");
+                        }
+
                         const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                         if (line) {
@@ -44,6 +52,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                     observation: "Missing journey code",
                     serviceCode,
                     lineName,
+                    latestEndDate,
                     details: `The (${departureTime}) ${direction} journey is missing a journey code.`,
                     extraColumns: {
                         "Departure Time": departureTime,
