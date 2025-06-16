@@ -24,14 +24,16 @@ export const generateJourneyPatternSections = (
             return {
                 "@_id": `JPTL${patternIndex + 1}-${stopIndex + 1}`,
                 From: {
+                    "@_SequenceNumber": stopIndex + 1,
                     Activity: stopIndex === 0 ? "pickUp" : "pickUpAndSetDown",
                     StopPointRef: fromStop.atco_code,
-                    TimingStatus: fromStop.timing_point_code ? "principalTimingPoint" : undefined,
+                    TimingStatus: fromStop.timing_point_code ? "principalTimingPoint" : "otherPoint",
                 },
                 To: {
+                    "@_SequenceNumber": stopIndex + 2,
                     Activity: stopIndex === pattern.stops.length - 2 ? "setDown" : "pickUpAndSetDown",
                     StopPointRef: toStop.atco_code,
-                    TimingStatus: toStop.timing_point_code ? "principalTimingPoint" : undefined,
+                    TimingStatus: toStop.timing_point_code ? "principalTimingPoint" : "otherPoint",
                 },
                 RouteLinkRef: `RL${patternIndex + 1}-${stopIndex + 1}`,
                 RunTime: "PT0M0S",
@@ -89,6 +91,7 @@ export const generateServices = (patterns: TflIBusData["patterns"], lineId: stri
                 Destination: destination,
                 JourneyPattern: patterns.map<JourneyPattern>((pattern, index) => ({
                     "@_id": `JP${index + 1}`,
+                    OperatorRef: TFLO_NOC,
                     Direction: pattern.direction === 1 ? "outbound" : "inbound",
                     RouteRef: `R${index + 1}`,
                     JourneyPatternSectionRefs: [`JPS${index + 1}`],
