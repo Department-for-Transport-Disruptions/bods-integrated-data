@@ -45,6 +45,7 @@ describe("generateJourneyPatternSections", () => {
                 {
                     "@_id": "JPTL1-1",
                     From: {
+                        "@_SequenceNumber": 1,
                         Activity: "pickUp",
                         StopPointRef: "A",
                         TimingStatus: "principalTimingPoint",
@@ -52,21 +53,24 @@ describe("generateJourneyPatternSections", () => {
                     RouteLinkRef: "RL1-1",
                     RunTime: "PT0M0S",
                     To: {
+                        "@_SequenceNumber": 2,
                         Activity: "pickUpAndSetDown",
                         StopPointRef: "B",
-                        TimingStatus: undefined,
+                        TimingStatus: "otherPoint",
                     },
                 },
                 {
                     "@_id": "JPTL1-2",
                     From: {
+                        "@_SequenceNumber": 2,
                         Activity: "pickUpAndSetDown",
                         StopPointRef: "B",
-                        TimingStatus: undefined,
+                        TimingStatus: "otherPoint",
                     },
                     RouteLinkRef: "RL1-2",
                     RunTime: "PT0M0S",
                     To: {
+                        "@_SequenceNumber": 3,
                         Activity: "setDown",
                         StopPointRef: "C",
                         TimingStatus: "principalTimingPoint",
@@ -118,12 +122,14 @@ describe("generateServices", () => {
                         "@_id": "JP1",
                         Direction: "outbound",
                         JourneyPatternSectionRefs: ["JPS1"],
+                        OperatorRef: "TFLO",
                         RouteRef: "R1",
                     },
                     {
                         "@_id": "JP2",
                         Direction: "inbound",
                         JourneyPatternSectionRefs: ["JPS2"],
+                        OperatorRef: "TFLO",
                         RouteRef: "R2",
                     },
                 ],
