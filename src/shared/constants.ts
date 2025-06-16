@@ -178,3 +178,4 @@ export const siriSxArrayProperties = [
 ];
 
 export const DEFAULT_DATE_FORMAT = "YYYYMMDD";
+export const TXC_REPORT_DATE_FORMAT = "DD/MM/YYYY";

@@ -1,3 +1,4 @@
+import { TXC_REPORT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
@@ -27,7 +28,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                         if (latestEndDate.isBefore(today)) {
                             const serviceName = servicedOrganisation.Name || "unknown name";
-                            const endDate = latestEndDate.format("DD/MM/YYYY");
+                            const endDate = latestEndDate.format(TXC_REPORT_DATE_FORMAT);
 
                             observations.push({
                                 importance: "advisory",
