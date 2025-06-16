@@ -267,6 +267,7 @@ const mockPatterns = [
     {
         journeys: [
             {
+                id: 12345,
                 block_no: 1,
                 calendar_days: [
                     { calendar_day: "2025-05-05" }, // May Day (bank holiday)
@@ -329,6 +330,9 @@ describe("generateVehicleJourneys", () => {
                         Block: {
                             BlockNumber: "1",
                             Description: "1",
+                        },
+                        TicketMachine: {
+                            JourneyCode: "12345",
                         },
                     },
                     OperatorRef: "TFLO",
