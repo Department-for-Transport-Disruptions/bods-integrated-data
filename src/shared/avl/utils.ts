@@ -8,7 +8,7 @@ import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
 import { avlValidationErrorLevelMappings, tflOperatorRef } from "../constants";
-import { Avl, KyselyDb, NewAvl, NewAvlCancellations } from "../database";
+import { Avl, AvlCancellations, KyselyDb, NewAvl, NewAvlCancellations } from "../database";
 import { getDate } from "../dates";
 import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
@@ -98,7 +98,7 @@ const includeAdditionalFields = (avl: NewAvl, subscriptionId: string): NewAvl =>
     item_id: avl.item_id ?? randomUUID(),
 });
 
-export const removeDuplicates = <T extends NewAvl | Avl>(avl: T[]): T[] => {
+export const removeDuplicateAvls = <T extends NewAvl | Avl>(avl: T[]): T[] => {
     const uniqueRecordsMap: Map<string, T> = new Map();
 
     for (const item of avl) {
@@ -133,10 +133,42 @@ export const removeDuplicates = <T extends NewAvl | Avl>(avl: T[]): T[] => {
     });
 };
 
+export const removeDuplicateCancellations = <T extends NewAvlCancellations | AvlCancellations>(
+    cancellations: T[],
+): T[] => {
+    const uniqueRecordsMap: Map<string, T> = new Map();
+
+    for (const item of cancellations) {
+        const key = `${item.data_frame_ref}-${item.dated_vehicle_journey_ref}-${item.line_ref}-${item.direction_ref}-${item.vehicle_monitoring_ref}`;
+
+        if (!uniqueRecordsMap.has(key)) {
+            uniqueRecordsMap.set(key, item);
+        } else {
+            const existingRecord = uniqueRecordsMap.get(key);
+
+            if (!existingRecord || getDate(item.recorded_at_time).isAfter(getDate(existingRecord.recorded_at_time))) {
+                uniqueRecordsMap.set(key, item);
+            }
+        }
+    }
+
+    return Array.from(uniqueRecordsMap.values()).sort((a, b) => {
+        return (
+            a.data_frame_ref.localeCompare(b.data_frame_ref) ||
+            a.dated_vehicle_journey_ref.localeCompare(b.dated_vehicle_journey_ref) ||
+            (a.line_ref && b.line_ref ? a.line_ref.localeCompare(b.line_ref) : 0) ||
+            a.direction_ref.localeCompare(b.direction_ref) ||
+            (a.vehicle_monitoring_ref && b.vehicle_monitoring_ref
+                ? a.vehicle_monitoring_ref.localeCompare(b.vehicle_monitoring_ref)
+                : 0)
+        );
+    });
+};
+
 export const insertAvls = async (dbClient: KyselyDb, avls: NewAvl[], subscriptionId: string) => {
     const modifiedAvls = avls.map((avl) => includeAdditionalFields(avl, subscriptionId));
 
-    const insertChunks = chunkArray(removeDuplicates(modifiedAvls), 1000);
+    const insertChunks = chunkArray(removeDuplicateAvls(modifiedAvls), 1000);
 
     await Promise.all(
         insertChunks.map((chunk) =>
@@ -209,7 +241,7 @@ export const insertAvlCancellations = async (
         ...cancellation,
         subscription_id: subscriptionId,
     }));
-    const insertChunks = chunkArray(modifiedAvlsCancellations, 1000);
+    const insertChunks = chunkArray(removeDuplicateCancellations(modifiedAvlsCancellations), 1000);
 
     await Promise.all(
         insertChunks.map((chunk) =>

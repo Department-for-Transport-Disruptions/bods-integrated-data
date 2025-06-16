@@ -25,17 +25,18 @@ module "integrated_data_avl_s3_sqs" {
 module "integrated_data_avl_processor_function" {
   source = "../../shared/lambda-function"
 
-  environment     = var.environment
-  function_name   = "integrated-data-avl-processor"
-  zip_path        = "${path.module}/../../../../src/functions/dist/avl-processor.zip"
-  handler         = "index.handler"
-  runtime         = "nodejs20.x"
-  timeout         = 60
-  memory          = 1024
-  needs_db_access = var.environment != "local"
-  vpc_id          = var.vpc_id
-  subnet_ids      = var.private_subnet_ids
-  database_sg_id  = var.db_sg_id
+  environment          = var.environment
+  function_name        = "integrated-data-avl-processor"
+  zip_path             = "${path.module}/../../../../src/functions/dist/avl-processor.zip"
+  handler              = "index.handler"
+  runtime              = "nodejs20.x"
+  timeout              = 60
+  memory               = 1024
+  reserved_concurrency = 100
+  needs_db_access      = var.environment != "local"
+  vpc_id               = var.vpc_id
+  subnet_ids           = var.private_subnet_ids
+  database_sg_id       = var.db_sg_id
 
   permissions = [
     {
