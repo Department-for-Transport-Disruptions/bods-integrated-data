@@ -1,3 +1,5 @@
+import { TXC_REPORT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { JourneyPattern, JourneyPatternSections, TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedTimingPointValues } from "@bods-integrated-data/shared/txc-analysis/constants";
 import { Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
@@ -67,6 +69,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
             let direction = "unknown direction";
             let lastStopCommonName = "n/a";
             let firstStopCommonName = "n/a";
+            let latestEndDate = "n/a";
 
             const departureTime = vehicleJourney.DepartureTime || "unknown departure time";
             const journeyPatternRef = vehicleJourney.JourneyPatternRef;
@@ -82,6 +85,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                     if (service) {
                         serviceCode = service.ServiceCode;
+
+                        if (service.OperatingPeriod.EndDate) {
+                            latestEndDate = getDate(service.OperatingPeriod.EndDate).format(TXC_REPORT_DATE_FORMAT);
+                        }
+
                         const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                         if (line) {
@@ -122,6 +130,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "First stop is not a timing point",
                                     serviceCode,
                                     lineName,
+                                    latestEndDate,
                                     details: `The first stop (${firstStopCommonName}) on the ${departureTime} ${direction} journey is not set as a timing point.`,
                                     extraColumns: {
                                         "Stop Name": firstStopCommonName,
@@ -152,6 +161,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "Last stop is not a timing point",
                                     serviceCode,
                                     lineName,
+                                    latestEndDate,
                                     details: `The last stop (${lastStopCommonName}) on the ${departureTime} ${direction} journey is not set as a timing point.`,
                                     extraColumns: {
                                         "Stop Name": lastStopCommonName,

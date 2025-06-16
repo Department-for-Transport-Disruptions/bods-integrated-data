@@ -7,6 +7,7 @@ export const observationSchema = z.object({
     observation: z.enum(observationType),
     serviceCode: z.string(),
     lineName: z.string(),
+    latestEndDate: z.string(),
     details: z.string().optional(),
     extraColumns: z.record(z.string(), z.string()).optional(),
 });

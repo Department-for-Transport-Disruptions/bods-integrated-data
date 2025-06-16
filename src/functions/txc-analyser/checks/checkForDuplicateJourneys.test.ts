@@ -66,6 +66,7 @@ describe("checkForDuplicateJourneys", () => {
                     Service: [
                         {
                             ServiceCode: "service1",
+                            OperatingPeriod: {},
                             Lines: {
                                 Line: [
                                     {
@@ -156,6 +157,7 @@ describe("checkForDuplicateJourneys", () => {
                     Service: [
                         {
                             ServiceCode: "SVC1",
+                            OperatingPeriod: {},
                             Lines: {
                                 Line: [
                                     {
@@ -202,6 +204,7 @@ describe("checkForDuplicateJourneys", () => {
                 observation: "Duplicate journey",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "n/a",
                 details:
                     "The journey (with code VJ2) has the same departure time, route and operating profile as another journey.",
             },
