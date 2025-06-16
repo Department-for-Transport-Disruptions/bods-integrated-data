@@ -56,7 +56,7 @@ describe("txc-analysis-reporter", () => {
             observation: "Duplicate journey",
             serviceCode: "test-service-1",
             lineName: "test-line-1",
-            latestEndDate: "01/06/2025",
+            latestEndDate: "20250601",
             details: "test-details-1",
             extraColumns: {
                 "Extra Column": "test-extra-column-1",
@@ -73,7 +73,7 @@ describe("txc-analysis-reporter", () => {
             observation: "First stop is not a timing point",
             serviceCode: "test-service-2",
             lineName: "test-line-2",
-            latestEndDate: "01/06/2025",
+            latestEndDate: "20250601",
             details: "test-details-2",
         },
         {
@@ -282,7 +282,7 @@ describe("txc-analysis-reporter", () => {
                 observation: "Duplicate journey",
                 serviceCode: "test-service-1",
                 lineName: "test-line-1",
-                latestEndDate: "01/06/2025",
+                latestEndDate: "20250601",
                 details: "test-details-1",
             },
         ];

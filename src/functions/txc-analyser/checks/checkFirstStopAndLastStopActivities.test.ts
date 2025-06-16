@@ -16,7 +16,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 observation: "First stop is set down only",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "31/12/2023",
+                latestEndDate: "20231231",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "08:00:00",
@@ -31,7 +31,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 observation: "Last stop is pick up only",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "31/12/2023",
+                latestEndDate: "20231231",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Departure time": "08:00:00",
@@ -108,7 +108,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 observation: "First stop is set down only",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "31/12/2023",
+                latestEndDate: "20231231",
                 extraColumns: {
                     "Stop Name": "n/a",
                     "Departure time": "08:00:00",
@@ -123,7 +123,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 observation: "Last stop is pick up only",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "31/12/2023",
+                latestEndDate: "20231231",
                 extraColumns: {
                     "Stop Name": "n/a",
                     "Departure time": "08:00:00",
@@ -153,7 +153,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 observation: "First stop is set down only",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "31/12/2023",
+                latestEndDate: "20231231",
                 extraColumns: {
                     "Stop Name": "Stop 1",
                     "Departure time": "unknown departure time",
@@ -168,7 +168,7 @@ describe("checkFirstStopAndLastStopActivities", () => {
                 observation: "Last stop is pick up only",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "31/12/2023",
+                latestEndDate: "20231231",
                 extraColumns: {
                     "Stop Name": "Stop 2",
                     "Departure time": "unknown departure time",
