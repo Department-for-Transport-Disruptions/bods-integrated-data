@@ -179,11 +179,6 @@ export const handler: Handler = async (event, context) => {
                     const observationByNocLineNameMapKey = `${observation.noc}#${observation.lineName}`;
 
                     if (!observationByNocLineNameMap[observationByNocLineNameMapKey]) {
-                        const latestEndDate =
-                            observation.latestEndDate === "n/a"
-                                ? "n/a"
-                                : getDate(observation.latestEndDate).format("DD/MM/YYYY");
-
                         observationByNocLineNameMap[observationByNocLineNameMapKey] = {
                             date: formattedDate,
                             importance: observation.importance,
@@ -193,7 +188,7 @@ export const handler: Handler = async (event, context) => {
                             line_name: observation.lineName,
                             number_of_observations: 0,
                             data_source: dataSource,
-                            latest_end_date: latestEndDate,
+                            latest_end_date: observation.latestEndDate,
                         };
                     }
 

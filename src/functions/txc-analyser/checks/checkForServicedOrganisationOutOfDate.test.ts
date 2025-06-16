@@ -85,7 +85,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                 observation: "Serviced organisation data is out of date",
                 serviceCode: "n/a",
                 lineName: "n/a",
-                latestEndDate: "20250106",
+                latestEndDate: "06/01/2025",
                 details:
                     "The Working Days for Serviced Organisation Test Organisation 1 (servicedOrg1) has expired on 06/01/2025. Please update the dates for this Serviced Organisation.",
             },
@@ -95,7 +95,7 @@ describe("checkForServicedOrganisationOutOfDate", () => {
                 observation: "Serviced organisation data is out of date",
                 serviceCode: "n/a",
                 lineName: "n/a",
-                latestEndDate: "20250105",
+                latestEndDate: "05/01/2025",
                 details:
                     "The Working Days for Serviced Organisation unknown name (unknown code) has expired on 05/01/2025. Please update the dates for this Serviced Organisation.",
             },

@@ -16,7 +16,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                 observation: "No timing point for more than 15 minutes",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "20231231",
+                latestEndDate: "31/12/2023",
             },
             {
                 category: "timing",
@@ -26,7 +26,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                 observation: "No timing point for more than 15 minutes",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
-                latestEndDate: "20231231",
+                latestEndDate: "31/12/2023",
             },
         ];
         expect(
@@ -167,7 +167,7 @@ describe("checkForNoTimingPointForMoreThan15Minutes", () => {
                     observation: "No timing point for more than 15 minutes",
                     serviceCode: "SVC1",
                     lineName: "Line 1",
-                    latestEndDate: "20231231",
+                    latestEndDate: "31/12/2023",
                 },
             ],
         ],

@@ -1,4 +1,3 @@
-import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { JourneyPattern, JourneyPatternSections, TxcSchema } from "@bods-integrated-data/shared/schema";
 import { allowedTimingPointValues } from "@bods-integrated-data/shared/txc-analysis/constants";
@@ -87,7 +86,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                         serviceCode = service.ServiceCode;
 
                         if (service.OperatingPeriod.EndDate) {
-                            latestEndDate = getDate(service.OperatingPeriod.EndDate).format(DEFAULT_DATE_FORMAT);
+                            latestEndDate = getDate(service.OperatingPeriod.EndDate).format("DD/MM/YYYY");
                         }
 
                         const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
