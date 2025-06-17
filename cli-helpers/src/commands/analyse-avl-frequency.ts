@@ -40,7 +40,7 @@ const getDateTimesForSubscription = async (
 
     for (const object of objects) {
         if (object.Key) {
-            const objectDateString = object.Key.replaceAll("_", ":").substring(
+            const objectDateString = object.Key.replace(/_/g, ":").substring(
                 directory.length,
                 object.Key.lastIndexOf("."),
             );

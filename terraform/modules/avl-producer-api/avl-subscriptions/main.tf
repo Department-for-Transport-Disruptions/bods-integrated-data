@@ -23,7 +23,7 @@ module "integrated_data_avl_subscriptions_function" {
   function_name = "integrated-data-avl-subscriptions"
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-subscriptions.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 512
 

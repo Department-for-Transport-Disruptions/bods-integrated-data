@@ -17,7 +17,7 @@ module "avl_update_endpoint" {
   zip_path         = "${path.module}/../../../../src/functions/dist/avl-update-endpoint.zip"
   handler          = "index.handler"
   memory           = 512
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = 120
   needs_vpc_access = true
   custom_sg_id     = var.sg_id

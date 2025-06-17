@@ -19,7 +19,7 @@
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^20.11.19",
+        "@types/node": "^22.13.14",
         "zod": "3.23.8"
     }
 }

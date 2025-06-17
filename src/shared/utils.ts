@@ -148,7 +148,7 @@ export const isPrivateAddress = (url: string) => {
 
 export const roundToDecimalPlaces = (number: number, precision: number) => +number.toFixed(precision);
 
-export const generateApiKey = () => randomUUID().replaceAll("-", "");
+export const generateApiKey = () => randomUUID().replace(/-/g, "");
 
 export class SubscriptionIdNotFoundError extends Error {
     constructor(message: string) {

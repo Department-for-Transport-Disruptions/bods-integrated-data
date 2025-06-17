@@ -87,7 +87,7 @@ module "integrated_data_lambda_template_function" {
   function_name = "integrated-data-lambda-template"
   zip_path      = "${path.module}/../../../../src/functions/dist/lambda-template.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 30
   memory        = 512
 

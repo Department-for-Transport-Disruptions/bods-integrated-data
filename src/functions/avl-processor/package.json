@@ -20,7 +20,7 @@
     "devDependencies": {
         "@types/aws-lambda": "^8.10.110",
         "@types/lodash": "^4.17.17",
-        "@types/node": "^20.11.19",
+        "@types/node": "^22.13.14",
         "mockdate": "^3.0.5"
     }
 }

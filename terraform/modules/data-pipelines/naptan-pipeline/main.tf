@@ -36,7 +36,7 @@ module "integrated_data_naptan_retriever_function" {
   function_name   = "integrated-data-naptan-retriever"
   zip_path        = "${path.module}/../../../../src/functions/dist/naptan-retriever.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 600
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -82,7 +82,7 @@ module "integrated_data_naptan_uploader_function" {
   function_name   = "integrated-data-naptan-uploader"
   zip_path        = "${path.module}/../../../../src/functions/dist/naptan-uploader.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 300
   memory          = 6144
   needs_db_access = var.environment != "local"

@@ -17,7 +17,7 @@ module "cancellations_unsubscriber" {
   zip_path         = "${path.module}/../../../../src/functions/dist/cancellations-unsubscriber.zip"
   handler          = "index.handler"
   memory           = 1024
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = 120
   needs_vpc_access = true
   custom_sg_id     = var.sg_id
