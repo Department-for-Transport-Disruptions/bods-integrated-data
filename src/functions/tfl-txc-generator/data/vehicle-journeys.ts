@@ -270,6 +270,9 @@ export const generateVehicleJourneys = async (
                         Description: journey.block_no.toString(),
                         BlockNumber: journey.block_no.toString(),
                     },
+                    TicketMachine: {
+                        JourneyCode: journey.id?.toString(),
+                    },
                 },
                 OperatingProfile: createOperatingProfile(
                     journey.calendar_days.map((day) => day.calendar_day),
