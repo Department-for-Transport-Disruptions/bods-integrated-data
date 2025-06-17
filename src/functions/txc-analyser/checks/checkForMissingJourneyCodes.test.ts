@@ -87,6 +87,7 @@ describe("checkForMissingJourneyCodes", () => {
                     Service: [
                         {
                             ServiceCode: "SVC1",
+                            OperatingPeriod: {},
                             Lines: {
                                 Line: [
                                     {
@@ -117,6 +118,7 @@ describe("checkForMissingJourneyCodes", () => {
                 observation: "Missing journey code",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "n/a",
                 details: "The (08:00) outbound journey is missing a journey code.",
                 extraColumns: {
                     "Departure Time": "08:00",
@@ -129,6 +131,7 @@ describe("checkForMissingJourneyCodes", () => {
                 observation: "Missing journey code",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "n/a",
                 details: "The (unknown departure time) unknown direction journey is missing a journey code.",
                 extraColumns: {
                     "Departure Time": "unknown departure time",

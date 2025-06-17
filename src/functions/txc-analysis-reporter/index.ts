@@ -1,4 +1,5 @@
 import { PassThrough } from "node:stream";
+import { TXC_REPORT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { scanDynamo } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
@@ -39,6 +40,7 @@ type ObservationSummaryByService = {
     line_name: string;
     number_of_observations: number;
     data_source: string;
+    latest_end_date: string;
 };
 
 type ObservationSummaryByFile = {
@@ -112,7 +114,7 @@ export const handler: Handler = async (event, context) => {
     }
 
     const date = event.date;
-    const formattedDate = getDate(date).format("DD/MM/YYYY");
+    const formattedDate = getDate(date).format(TXC_REPORT_DATE_FORMAT);
     const observationByDataSourceMap: Record<string, ObservationSummaryByDataSource> = {};
     const observationByNocLineNameMap: Record<string, ObservationSummaryByService> = {};
     const observationByFileMap: Record<string, ObservationSummaryByFile> = {};
@@ -187,6 +189,7 @@ export const handler: Handler = async (event, context) => {
                             line_name: observation.lineName,
                             number_of_observations: 0,
                             data_source: dataSource,
+                            latest_end_date: observation.latestEndDate,
                         };
                     }
 

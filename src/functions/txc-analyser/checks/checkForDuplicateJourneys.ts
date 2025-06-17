@@ -1,3 +1,5 @@
+import { TXC_REPORT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { OperatingProfile, TxcSchema } from "@bods-integrated-data/shared/schema";
 import { Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
 import hash from "object-hash";
@@ -20,6 +22,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
         for (const vehicleJourney of vehicleJourneys) {
             let serviceCode = "n/a";
             let lineName = "n/a";
+            let latestEndDate = "n/a";
             const services = txcData.TransXChange?.Services;
 
             if (services) {
@@ -28,6 +31,11 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
 
                 if (service && operatingProfile) {
                     serviceCode = service.ServiceCode;
+
+                    if (service.OperatingPeriod.EndDate) {
+                        latestEndDate = getDate(service.OperatingPeriod.EndDate).format(TXC_REPORT_DATE_FORMAT);
+                    }
+
                     const line = service.Lines.Line.find((line) => line["@_id"] === vehicleJourney.LineRef);
 
                     if (line) {
@@ -61,6 +69,7 @@ export default (txcData: PartialDeep<TxcSchema>): Observation[] => {
                                     observation: "Duplicate journey",
                                     serviceCode,
                                     lineName,
+                                    latestEndDate,
                                     details: `The journey (with code ${vehicleJourney.VehicleJourneyCode}) has the same departure time, route and operating profile as another journey.`,
                                 });
                             }

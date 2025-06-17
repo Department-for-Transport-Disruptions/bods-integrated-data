@@ -12,6 +12,7 @@ describe("checkForMissingBusWorkingNumber", () => {
                 observation: "Missing bus working number",
                 serviceCode: "SVC1",
                 lineName: "Line 1",
+                latestEndDate: "31/12/2023",
                 details:
                     "The (08:00:00) outbound journey has not been assigned a bus working number (i.e. block number).",
             },
