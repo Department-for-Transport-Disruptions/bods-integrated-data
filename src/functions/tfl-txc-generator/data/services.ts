@@ -42,15 +42,17 @@ export const generateJourneyPatternSections = (
     })),
 });
 
-export const getOriginAndDestination = (patterns: TflIBusData["patterns"]) => {
+export const getOriginAndDestination = (pattern: TflIBusData["patterns"][0]) => ({
+    origin: pattern.stops[0].short_destination_name || pattern.stops[0].common_name,
+    destination:
+        pattern.stops[pattern.stops.length - 1].short_destination_name ||
+        pattern.stops[pattern.stops.length - 1].common_name,
+});
+
+export const getOriginAndDestinationFromListOfPatterns = (patterns: TflIBusData["patterns"]) => {
     const firstOutboundPattern = patterns.find((pattern) => pattern.direction === 1) ?? patterns[0];
 
-    return {
-        origin: firstOutboundPattern.stops[0].short_destination_name || firstOutboundPattern.stops[0].common_name,
-        destination:
-            firstOutboundPattern.stops[firstOutboundPattern.stops.length - 1].short_destination_name ||
-            firstOutboundPattern.stops[firstOutboundPattern.stops.length - 1].common_name,
-    };
+    return getOriginAndDestination(firstOutboundPattern);
 };
 
 export const getStartAndEndDates = (patterns: TflIBusData["patterns"]) => {
@@ -67,7 +69,7 @@ export const getStartAndEndDates = (patterns: TflIBusData["patterns"]) => {
 };
 
 export const generateServices = (patterns: TflIBusData["patterns"], lineId: string): { Service: Service } => {
-    const { origin, destination } = getOriginAndDestination(patterns);
+    const { origin, destination } = getOriginAndDestinationFromListOfPatterns(patterns);
     const { startDate, endDate } = getStartAndEndDates(patterns);
 
     return {
@@ -78,6 +80,11 @@ export const generateServices = (patterns: TflIBusData["patterns"], lineId: stri
                     {
                         "@_id": getTxcLineId(lineId),
                         LineName: lineId,
+                        OutboundDescription: {
+                            Origin: origin,
+                            Destination: destination,
+                            Description: `To ${destination}`,
+                        },
                     },
                 ],
             },
@@ -86,11 +93,13 @@ export const generateServices = (patterns: TflIBusData["patterns"], lineId: stri
                 EndDate: endDate,
             },
             RegisteredOperatorRef: TFLO_NOC,
+            PublicUse: "true",
             StandardService: {
                 Origin: origin,
                 Destination: destination,
                 JourneyPattern: patterns.map<JourneyPattern>((pattern, index) => ({
                     "@_id": `JP${index + 1}`,
+                    DestinationDisplay: getOriginAndDestination(pattern).destination,
                     OperatorRef: TFLO_NOC,
                     Direction: pattern.direction === 1 ? "outbound" : "inbound",
                     RouteRef: `R${index + 1}`,

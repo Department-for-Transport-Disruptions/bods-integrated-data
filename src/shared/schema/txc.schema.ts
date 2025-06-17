@@ -6,6 +6,7 @@ export const operatorSchema = z.object({
     NationalOperatorCode: z.string().optional(),
     OperatorCode: z.string().optional(),
     OperatorShortName: z.string(),
+    LicenceNumber: z.string().nullish(),
     "@_id": z.string(),
 });
 
@@ -188,11 +189,19 @@ export const serviceSchema = z.object({
             .object({
                 "@_id": z.string(),
                 LineName: z.string(),
+                OutboundDescription: z
+                    .object({
+                        Origin: z.string().nullish(),
+                        Destination: z.string().nullish(),
+                        Description: z.string().nullish(),
+                    })
+                    .nullish(),
             })
             .array(),
     }),
     Mode: z.string().optional(),
     RegisteredOperatorRef: z.string(),
+    PublicUse: z.string().nullish(),
     StandardService: z.object({
         Origin: z.string().nullish(),
         Destination: z.string().nullish(),

@@ -3,7 +3,7 @@ import { TflIBusData } from "./db";
 import {
     generateJourneyPatternSections,
     generateServices,
-    getOriginAndDestination,
+    getOriginAndDestinationFromListOfPatterns,
     getStartAndEndDates,
 } from "./services";
 
@@ -24,9 +24,9 @@ const mockPatterns = [
     {
         direction: 2,
         stops: [
-            { atco_code: "C", short_destination_name: "Stop A", common_name: "A" },
-            { atco_code: "B", short_destination_name: "Stop B", common_name: "B" },
-            { atco_code: "A", short_destination_name: "Stop C", common_name: "C" },
+            { atco_code: "Z", short_destination_name: "Stop A", common_name: "A" },
+            { atco_code: "Y", short_destination_name: "Stop B", common_name: "B" },
+            { atco_code: "X", short_destination_name: "Stop C", common_name: "C" },
         ],
         journeys: [
             {
@@ -83,7 +83,7 @@ describe("generateJourneyPatternSections", () => {
 
 describe("getOriginAndDestination", () => {
     it("returns correct origin and destination", () => {
-        const result = getOriginAndDestination(mockPatterns as TflIBusData["patterns"]);
+        const result = getOriginAndDestinationFromListOfPatterns(mockPatterns as TflIBusData["patterns"]);
         expect(result.origin).toBe("Stop A");
         expect(result.destination).toBe("C");
     });
@@ -106,6 +106,11 @@ describe("generateServices", () => {
                     {
                         "@_id": "TFLO:UZ000TFLO:Line1:Line1",
                         LineName: "Line1",
+                        OutboundDescription: {
+                            Origin: "Stop A",
+                            Destination: "C",
+                            Description: "To C",
+                        },
                     },
                 ],
             },
@@ -113,6 +118,7 @@ describe("generateServices", () => {
                 EndDate: "2025-06-03",
                 StartDate: "2025-06-01",
             },
+            PublicUse: "true",
             RegisteredOperatorRef: "TFLO",
             ServiceCode: "UZ000TFLO:Line1",
             StandardService: {
@@ -120,6 +126,7 @@ describe("generateServices", () => {
                 JourneyPattern: [
                     {
                         "@_id": "JP1",
+                        DestinationDisplay: "C",
                         Direction: "outbound",
                         JourneyPatternSectionRefs: ["JPS1"],
                         OperatorRef: "TFLO",
@@ -127,6 +134,7 @@ describe("generateServices", () => {
                     },
                     {
                         "@_id": "JP2",
+                        DestinationDisplay: "Stop C",
                         Direction: "inbound",
                         JourneyPatternSectionRefs: ["JPS2"],
                         OperatorRef: "TFLO",
