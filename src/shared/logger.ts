@@ -1,5 +1,5 @@
 import Pino, { Logger } from "pino";
-import { lambdaRequestTracker, pinoLambdaDestination } from "pino-lambda";
+import { LambdaContext, LambdaEvent, lambdaRequestTracker, pinoLambdaDestination } from "pino-lambda";
 import { z } from "zod";
 
 // Define a custom logger type to allow extra props to be included in logs
@@ -18,7 +18,9 @@ export const logger = Pino(
     pinoLambdaDestination(),
 ) as CustomLogger;
 
-export const withLambdaRequestTracker = lambdaRequestTracker();
+export const withLambdaRequestTracker = (event?: LambdaEvent, context?: LambdaContext) => {
+    return lambdaRequestTracker()(event, context);
+};
 
 /**
  * Set a global error map for Zod so that we can log invalid data for better troubleshooting.

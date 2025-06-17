@@ -37,7 +37,7 @@ const cleardownDatabase = async (dbClient: KyselyDb, onlyGtfs = false) => {
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     logger.info("Starting DB Cleardown");
 

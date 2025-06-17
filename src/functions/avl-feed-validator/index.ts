@@ -52,7 +52,7 @@ export const resubscribeToDataProducer = async (
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         logger.info("Starting AVL feed validator");

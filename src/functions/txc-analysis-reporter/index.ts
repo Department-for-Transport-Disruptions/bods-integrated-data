@@ -101,7 +101,7 @@ const createCsv = <T extends Record<string, U>, U>(data: T[]) => {
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { STAGE, TXC_OBSERVATION_TABLE_NAME, TXC_ANALYSIS_BUCKET_NAME, DQS_BUCKET_NAME } = process.env;
 

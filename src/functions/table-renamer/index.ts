@@ -73,7 +73,7 @@ export const renameTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 

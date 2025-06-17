@@ -31,7 +31,7 @@ const requestBodySchema = z
     );
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { EXAMPLE_VAR: exampleVar } = process.env;

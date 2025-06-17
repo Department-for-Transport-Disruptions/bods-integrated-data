@@ -310,7 +310,7 @@ const processRecord = async (record: S3EventRecord, bankHolidaysJson: BankHolida
 };
 
 export const handler: S3Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { STAGE: stage } = process.env;
 

@@ -19,7 +19,7 @@ z.setErrorMap(errorMapWithDataLogging);
 let naptanStopMap: NaptanStopMap;
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { TXC_OBSERVATION_TABLE_NAME, NAPTAN_BUCKET_NAME, NPTG_BUCKET_NAME, GENERATE_ADVISORY_OBSERVATION_DETAIL } =
         process.env;

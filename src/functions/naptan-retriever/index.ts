@@ -68,7 +68,7 @@ const retrieveNaptanXmlData = async (bucketName: string, atcoAreaCodes: string[]
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { STAGE, BUCKET_NAME: bucketName } = process.env;

@@ -22,7 +22,7 @@ const getNocDataAndUploadToS3 = async (nocBucketName: string) => {
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { NOC_BUCKET_NAME: nocBucketName } = process.env;
 

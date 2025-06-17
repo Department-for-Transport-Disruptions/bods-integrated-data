@@ -36,7 +36,7 @@ const getRequestPromises = (
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { STAGE, AVL_DATA_ENDPOINT, CANCELLATIONS_DATA_ENDPOINT, AVL_TABLE_NAME, CANCELLATIONS_TABLE_NAME } =

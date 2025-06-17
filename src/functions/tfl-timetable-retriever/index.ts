@@ -90,7 +90,7 @@ export type TflTimetableRetrieverOutput = {
 let dbClient: KyselyDb;
 
 export const handler: Handler = async (event, context): Promise<TflTimetableRetrieverOutput> => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { TFL_TIMETABLE_ZIPPED_BUCKET_NAME } = process.env;

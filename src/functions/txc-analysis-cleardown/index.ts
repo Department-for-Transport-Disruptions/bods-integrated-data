@@ -12,7 +12,7 @@ import { z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { TXC_OBSERVATION_TABLE_NAME } = process.env;
 

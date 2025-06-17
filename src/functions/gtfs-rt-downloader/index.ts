@@ -33,7 +33,7 @@ export const handler: Handler = async (
     event: { queryStringParameters: Record<string, string> } | APIGatewayProxyEventV2,
     context,
 ) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { BUCKET_NAME: bucketName, ENABLE_CACHE: enableCache = "true" } = process.env;

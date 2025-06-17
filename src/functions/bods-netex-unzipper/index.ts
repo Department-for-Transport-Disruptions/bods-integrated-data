@@ -8,7 +8,7 @@ import { z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: S3Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const {
         bucket: { name: bucketName },

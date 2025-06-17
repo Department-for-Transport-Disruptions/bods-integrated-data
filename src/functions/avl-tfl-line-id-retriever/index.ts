@@ -26,7 +26,7 @@ export const getLineIds = async () => {
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         logger.info("Attempting to retrieve TfL line IDs from cache...");

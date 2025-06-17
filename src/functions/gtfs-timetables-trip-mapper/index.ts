@@ -26,7 +26,7 @@ const mapMatchingTrip = (
 });
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { STAGE, GTFS_TRIP_MAPS_TABLE_NAME } = process.env;

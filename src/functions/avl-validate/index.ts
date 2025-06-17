@@ -90,7 +90,7 @@ const parseXml = (xml: string) => {
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { AVL_PRODUCER_API_KEY_ARN: avlProducerApiKeyArn } = process.env;

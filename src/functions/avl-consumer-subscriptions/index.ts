@@ -59,7 +59,7 @@ export const mapApiAvlSubscriptionResponse = (subscription: AvlConsumerSubscript
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME } = process.env;

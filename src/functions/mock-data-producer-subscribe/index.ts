@@ -126,7 +126,7 @@ export const generateCancellationsSubscriptionResponse = (subscriptionRequest: C
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     logger.info("Handling subscription request");
 

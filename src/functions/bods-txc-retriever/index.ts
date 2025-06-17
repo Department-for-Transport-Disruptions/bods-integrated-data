@@ -53,7 +53,7 @@ const getBodsDataAndUploadToS3 = async (
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { TXC_ZIPPED_BUCKET_NAME: txcZippedBucketName, TXC_BUCKET_NAME: txcBucketName } = process.env;
 
