@@ -101,7 +101,7 @@ export const createGtfsZip = async (gtfsBucket: string, outputBucket: string, fi
 };
 
 export const tripTableHandler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { STAGE: stage } = process.env;
 
@@ -123,7 +123,7 @@ export const tripTableHandler: Handler = async (event, context) => {
 };
 
 export const exportHandler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { OUTPUT_BUCKET: outputBucket, STAGE: stage } = process.env;
 
@@ -165,7 +165,7 @@ export const exportHandler: Handler = async (event, context) => {
 };
 
 export const zipHandler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { OUTPUT_BUCKET: outputBucket, GTFS_BUCKET: gtfsBucket } = process.env;
 

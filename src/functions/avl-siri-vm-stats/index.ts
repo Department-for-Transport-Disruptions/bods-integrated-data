@@ -10,7 +10,7 @@ z.setErrorMap(errorMapWithDataLogging);
 let dbClient: KyselyDb;
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));

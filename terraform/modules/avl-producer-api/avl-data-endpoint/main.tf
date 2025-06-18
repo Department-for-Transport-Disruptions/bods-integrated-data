@@ -16,7 +16,7 @@ module "integrated_data_bods_avl_data_endpoint_function" {
   function_name    = "integrated-data-bods-avl-data-endpoint"
   zip_path         = "${path.module}/../../../../src/functions/dist/avl-data-endpoint.zip"
   handler          = "index.handler"
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = 60
   memory           = 512
   needs_vpc_access = true
@@ -51,4 +51,3 @@ module "integrated_data_bods_avl_data_endpoint_function" {
   ]
 
 }
-

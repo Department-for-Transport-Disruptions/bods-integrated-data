@@ -15,7 +15,7 @@ module "integrated_data_db_cleardown_function" {
   function_name   = "integrated-data-db-cleardown"
   zip_path        = "${path.module}/../../../src/functions/dist/db-cleardown.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 120
   memory          = 1024
   needs_db_access = var.environment != "local"

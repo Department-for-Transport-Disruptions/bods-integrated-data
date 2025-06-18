@@ -9,7 +9,7 @@ import { z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { BUCKET_NAME: bucketName } = process.env;

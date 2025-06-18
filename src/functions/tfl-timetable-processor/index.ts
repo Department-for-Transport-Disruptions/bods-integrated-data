@@ -77,7 +77,7 @@ export const getAndParseTflData = async (bucketName: string, objectKey: string) 
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));

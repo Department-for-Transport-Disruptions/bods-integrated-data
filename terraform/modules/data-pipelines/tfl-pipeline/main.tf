@@ -98,7 +98,7 @@ module "integrated_data_tfl_timetable_retriever_function" {
   function_name   = "integrated-data-tfl-timetable-retriever"
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-timetable-retriever.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 600
   memory          = 512
   needs_db_access = var.environment != "local"
@@ -157,7 +157,7 @@ module "integrated_data_tfl_timetable_unzipper_function" {
   function_name = "integrated-data-tfl-timetable-unzipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/tfl-timetable-unzipper.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 256
 
@@ -195,7 +195,7 @@ module "integrated_data_tfl_timetable_processor_function" {
   function_name   = "integrated-data-tfl-timetable-processor"
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-timetable-processor.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 300
   memory          = 2048
   needs_db_access = var.environment != "local"

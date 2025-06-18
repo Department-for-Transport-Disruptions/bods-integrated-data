@@ -92,7 +92,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
     event: APIGatewayProxyEvent | ALBEvent,
     context: Context,
 ) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { STAGE: stage, BUCKET_NAME: bucketName, TABLE_NAME: tableName } = process.env;

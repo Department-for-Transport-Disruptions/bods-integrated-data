@@ -1,5 +1,5 @@
 terraform 1.6.6
-nodejs 20.11.1
+nodejs 22.16.0
 awscli 2.15.23
 sops 3.8.1
 pnpm 9.12.2

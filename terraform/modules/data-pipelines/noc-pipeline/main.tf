@@ -36,7 +36,7 @@ module "integrated_data_noc_retriever_function" {
   function_name = "integrated-data-noc-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/noc-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   memory        = 1024
 
@@ -63,7 +63,7 @@ module "integrated_data_noc_processor_function" {
   function_name   = "integrated-data-noc-processor"
   zip_path        = "${path.module}/../../../../src/functions/dist/noc-processor.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 200
   memory          = 2048
   needs_db_access = var.environment != "local"

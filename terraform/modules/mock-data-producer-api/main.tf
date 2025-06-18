@@ -17,7 +17,7 @@ module "integrated_data_mock_data_producer_send_data" {
   zip_path      = "${path.module}/../../../src/functions/dist/mock-data-producer-send-data.zip"
   handler       = "index.handler"
   memory        = 256
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   schedule      = "rate(1 minute)"
 
@@ -51,7 +51,7 @@ module "integrated_data_mock_data_producer_send_heartbeat" {
   zip_path      = "${path.module}/../../../src/functions/dist/mock-data-producer-send-heartbeat.zip"
   handler       = "index.handler"
   memory        = 256
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
   schedule      = "rate(1 minute)"
 
@@ -85,7 +85,7 @@ module "integrated_data_mock_data_producer_subscribe" {
   zip_path      = "${path.module}/../../../src/functions/dist/mock-data-producer-subscribe.zip"
   handler       = "index.handler"
   memory        = 1024
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 120
 }
 
@@ -167,7 +167,7 @@ module "integrated_data_mock_data_receiver" {
   zip_path      = "${path.module}/../../../src/functions/dist/mock-data-receiver.zip"
   handler       = "index.handler"
   memory        = 128
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
 }
 

@@ -128,7 +128,7 @@ const generateReportBody = async (
 };
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const {

@@ -58,7 +58,7 @@ type BodsNetexRetrieverOutput = {
 };
 
 export const handler: Handler = async (event, context): Promise<BodsNetexRetrieverOutput> => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { BUCKET_NAME, ZIPPED_BUCKET_NAME } = process.env;
 

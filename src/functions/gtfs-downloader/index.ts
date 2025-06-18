@@ -17,7 +17,7 @@ const requestParamsSchema = z.preprocess(
 );
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { BUCKET_NAME: bucketName } = process.env;

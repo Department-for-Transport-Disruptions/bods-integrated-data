@@ -18,7 +18,7 @@ const getDisruptionsDataAndUploadToS3 = async (disruptionsUnzippedBucketName: st
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { DISRUPTIONS_UNZIPPED_BUCKET_NAME: disruptionsUnzippedBucketName } = process.env;
 

@@ -5,7 +5,7 @@ import { z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     logger.info(event.body);
 

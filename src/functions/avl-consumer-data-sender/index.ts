@@ -150,7 +150,7 @@ const processSqsRecord = async (record: SQSRecord, consumerSubscriptionTableName
 };
 
 export const handler: SQSHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { STAGE, AVL_CONSUMER_SUBSCRIPTION_TABLE_NAME: avlConsumerSubscriptionTable } = process.env;
 

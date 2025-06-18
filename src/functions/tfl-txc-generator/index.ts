@@ -76,7 +76,7 @@ export const buildTxc = async (iBusData: TflIBusData, metadata: TflTxcMetadata, 
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { TFL_TXC_BUCKET_NAME: tflTxcBucketName, STAGE: stage } = process.env;
 

@@ -27,7 +27,7 @@ module "integrated_data_txc_analysis_cleardown_function" {
   function_name = "integrated-data-txc-analysis-cleardown"
   zip_path      = "${path.module}/../../../src/functions/dist/txc-analysis-cleardown.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 256
 
@@ -52,7 +52,7 @@ module "integrated_data_txc_analyser_function" {
   function_name = "integrated-data-txc-analyser"
   zip_path      = "${path.module}/../../../src/functions/dist/txc-analyser.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 60
   memory        = 4096
 
@@ -92,7 +92,7 @@ module "integrated_data_txc_analysis_reporter_function" {
   function_name = "integrated-data-txc-analysis-reporter"
   zip_path      = "${path.module}/../../../src/functions/dist/txc-analysis-reporter.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 900
   memory        = 4096
 

@@ -189,7 +189,7 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], napt
 };
 
 export const handler: S3Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 

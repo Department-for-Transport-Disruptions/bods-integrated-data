@@ -23,7 +23,7 @@ export const getBankHolidaysAndUploadToS3 = async (bankHolidaysBucketName: strin
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { BANK_HOLIDAYS_BUCKET_NAME: bankHolidaysBucketName } = process.env;
 

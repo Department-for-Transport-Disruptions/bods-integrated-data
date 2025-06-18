@@ -97,7 +97,7 @@ export const insertNptgData = async (dbClient: KyselyDb, data: NptgSchema) => {
 };
 
 export const handler: S3Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { bucket, object } = event.Records[0].s3;
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));

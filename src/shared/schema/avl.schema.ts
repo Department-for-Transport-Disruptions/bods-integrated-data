@@ -383,9 +383,9 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         item_id: item.item_id,
         valid_until_time: validUntilTime,
         producer_ref: item.producerRef,
-        vehicle_ref: item.vehicleRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-        vehicle_name: item.vehicleName?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-        operator_ref: item.operatorRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        vehicle_ref: item.vehicleRef?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        vehicle_name: item.vehicleName?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        operator_ref: item.operatorRef?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         monitored: item.monitored,
         longitude: roundToDecimalPlaces(item.longitude, MAX_DECIMAL_PRECISION),
         latitude: roundToDecimalPlaces(item.latitude, MAX_DECIMAL_PRECISION),
@@ -399,28 +399,22 @@ export const tflVehicleLocationSchemaTransformed = tflVehicleLocationSchema.tran
         schedule_deviation: item.scheduleDeviation,
         vehicle_state: item.vehicleState,
         next_stop_point_id: item.nextStopPointId,
-        next_stop_point_name: item.nextStopPointName?.replaceAll(
-            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
-            "",
-        ),
+        next_stop_point_name: item.nextStopPointName?.replace(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
         previous_stop_point_id: item.previousStopPointId,
-        previous_stop_point_name: item.previousStopPointName?.replaceAll(
+        previous_stop_point_name: item.previousStopPointName?.replace(
             SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
             "",
         ),
-        line_ref: item.lineRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-        published_line_name: item.publishedLineName?.replaceAll(
-            SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
-            "",
-        ),
+        line_ref: item.lineRef?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        published_line_name: item.publishedLineName?.replace(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
         direction_ref: item.directionRef.toString(),
-        origin_name: item.originName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
-        origin_ref: item.originRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        origin_name: item.originName?.replace(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+        origin_ref: item.originRef?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
         origin_aimed_departure_time:
             item.originAimedDepartureTime || item.originAimedDepartureTime === 0 ? originAimedDepartureTime : null,
-        destination_name: item.destinationName?.replaceAll(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
-        destination_ref: item.destinationRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
-        vehicle_journey_ref: item.vehicleJourneyRef?.replaceAll(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        destination_name: item.destinationName?.replace(SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX, ""),
+        destination_ref: item.destinationRef?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
+        vehicle_journey_ref: item.vehicleJourneyRef?.replace(NM_TOKEN_DISALLOWED_CHARS_REGEX, ""),
     };
 
     return avl;

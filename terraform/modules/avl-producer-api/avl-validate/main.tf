@@ -17,7 +17,7 @@ module "avl_validate" {
   zip_path      = "${path.module}/../../../../src/functions/dist/avl-validate.zip"
   handler       = "index.handler"
   memory        = 128
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   timeout       = 30
 
   permissions = [

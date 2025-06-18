@@ -15,7 +15,7 @@ const LAMBDA_TRIGGER_FREQUENCY_IN_SECONDS = 60;
 const HEARTBEAT_FREQUENCY_IN_SECONDS = 30;
 
 export const handler: ScheduledHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { subscriptionPK, SK, frequencyInSeconds, queueUrl } = subscriptionTriggerMessageSchema.parse(event);

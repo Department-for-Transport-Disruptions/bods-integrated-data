@@ -36,7 +36,7 @@ const requestBodySchema = z
     .pipe(cancellationsSubscribeMessageSchema);
 
 export const handler: APIGatewayProxyHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const {

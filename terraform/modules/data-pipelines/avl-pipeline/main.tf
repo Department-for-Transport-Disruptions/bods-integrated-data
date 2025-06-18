@@ -29,7 +29,7 @@ module "integrated_data_avl_processor_function" {
   function_name        = "integrated-data-avl-processor"
   zip_path             = "${path.module}/../../../../src/functions/dist/avl-processor.zip"
   handler              = "index.handler"
-  runtime              = "nodejs20.x"
+  runtime              = "nodejs22.x"
   timeout              = 60
   memory               = 1024
   reserved_concurrency = 100
@@ -109,7 +109,7 @@ module "integrated_data_avl_tfl_line_id_retriever_function" {
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-tfl-line-id-retriever.zip"
   handler         = "index.handler"
   memory          = 512
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 30
   needs_db_access = var.environment != "local"
   vpc_id          = var.vpc_id
@@ -133,7 +133,7 @@ module "integrated_data_avl_tfl_location_retriever_function" {
   function_name   = "integrated-data-avl-tfl-location-retriever"
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-tfl-location-retriever.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 30
   memory          = 512
   needs_db_access = var.environment != "local"
@@ -546,7 +546,7 @@ module "siri_vm_downloader" {
   function_name   = "avl-siri-vm-downloader"
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-downloader.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 300
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -593,7 +593,7 @@ module "siri_vm_stats" {
   function_name   = "avl-siri-vm-stats"
   zip_path        = "${path.module}/../../../../src/functions/dist/avl-siri-vm-stats.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs22.x"
   timeout         = 300
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -691,7 +691,7 @@ module "integrated_data_siri_vm_generator_lambda" {
     ENABLE_CANCELLATIONS  = var.enable_cancellations ? "true" : "false"
   }
 
-  runtime                    = var.environment == "local" ? "nodejs20.x" : null
+  runtime                    = var.environment == "local" ? "nodejs22.x" : null
   handler                    = var.environment == "local" ? "index.handler" : null
   deploy_as_container_lambda = var.environment != "local"
 }
@@ -730,7 +730,7 @@ module "integrated_data_siri_cleardown_lambda" {
     STAGE         = var.environment
   }
 
-  runtime = "nodejs20.x"
+  runtime = "nodejs22.x"
   handler = "index.handler"
 }
 

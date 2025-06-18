@@ -5,7 +5,7 @@ import { Handler } from "aws-lambda";
 let dbClient: KyselyDb;
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { STAGE: stage } = process.env;
 

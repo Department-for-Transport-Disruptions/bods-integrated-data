@@ -181,7 +181,7 @@ export const processSqsRecord = async (
 };
 
 export const handler: SQSHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { CANCELLATIONS_SUBSCRIPTION_TABLE_NAME, CANCELLATIONS_ERRORS_TABLE_NAME } = process.env;
 

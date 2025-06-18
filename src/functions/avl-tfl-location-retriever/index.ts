@@ -69,7 +69,7 @@ export const retrieveTflVehicleLocations = async (
 };
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 

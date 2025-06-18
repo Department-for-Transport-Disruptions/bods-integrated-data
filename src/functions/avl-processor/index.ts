@@ -181,7 +181,7 @@ export const processSqsRecord = async (
 };
 
 export const handler: SQSHandler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     const { AVL_SUBSCRIPTION_TABLE_NAME, AVL_VALIDATION_ERROR_TABLE_NAME, GTFS_TRIP_MAPS_TABLE_NAME } = process.env;
 

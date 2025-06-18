@@ -10,7 +10,7 @@
         "@types/aws-lambda": "^8.10.140",
         "@types/command-exists": "^1.2.3",
         "@types/fs-extra": "^11.0.4",
-        "@types/node": "^20.11.19",
+        "@types/node": "^22.13.14",
         "@types/pg": "^8.11.0",
         "@types/unzipper": "^0.10.9",
         "mockdate": "^3.0.5"

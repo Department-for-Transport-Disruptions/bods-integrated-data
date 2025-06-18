@@ -5,7 +5,7 @@ import { z } from "zod";
 z.setErrorMap(errorMapWithDataLogging);
 
 export const handler: Handler = async (event, context) => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         const { EXAMPLE_VAR: exampleVar } = process.env;

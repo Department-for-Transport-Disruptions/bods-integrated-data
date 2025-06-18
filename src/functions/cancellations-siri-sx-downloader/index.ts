@@ -46,7 +46,7 @@ const retrieveSiriSxFile = async (bucketName: string, key: string): Promise<stri
 };
 
 export const handler: APIGatewayProxyHandler = async (event, context): Promise<APIGatewayProxyResult> => {
-    withLambdaRequestTracker(event ?? {}, context ?? {});
+    withLambdaRequestTracker(event, context);
 
     try {
         if (event.path === "health") {
