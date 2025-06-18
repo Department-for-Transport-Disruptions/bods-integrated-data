@@ -12,6 +12,7 @@
                         "DB Cleardown": {
                             "Type": "Task",
                             "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
                             "Parameters": {
                                 "FunctionName": "${db_cleardown_function_arn}:$LATEST"
                             },
@@ -32,6 +33,7 @@
                         },
                         "Retrieve and Process Reference Data": {
                             "Type": "Parallel",
+                            "ResultPath": null,
                             "Branches": [
                                 {
                                     "StartAt": "Retrieve NOC Data",
@@ -237,6 +239,35 @@
                                     }
                                 },
                                 {
+                                    "StartAt": "Generate TfL TxC",
+                                    "States": {
+                                        "Generate TfL TxC": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::states:startExecution.sync:2",
+                                            "Parameters": {
+                                                "StateMachineArn": "${tfl_txc_sfn_arn}",
+                                                "Input": {
+                                                    "datePrefix.$": "$.prefix"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "End": true
+                                        }
+                                    }
+                                },
+                                {
                                     "StartAt": "Retrieve NeTEx Data",
                                     "States": {
                                         "Retrieve NeTEx Data": {
@@ -320,7 +351,12 @@
                                     }
                                 }
                             ],
-                            "Next": "Retrieve BODS TXC Data"
+                            "Next": "Get TfL TXC Object Keys"
+                        },
+                        "Get TfL TXC Object Keys": {
+                            "Type": "Pass",
+                            "Next": "Retrieve BODS TXC Data",
+                            "ResultPath": null
                         },
                         "Retrieve BODS TXC Data": {
                             "Type": "Task",

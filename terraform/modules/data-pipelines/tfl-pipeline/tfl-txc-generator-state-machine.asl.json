@@ -1,7 +1,23 @@
 {
     "Comment": "Map over TfL Line IDs and generate TxC",
-    "StartAt": "Retrieve TfL Data",
+    "StartAt": "ValidateInput",
     "States": {
+        "ValidateInput": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.datePrefix",
+                    "IsPresent": true,
+                    "Next": "Retrieve TfL Data"
+                }
+            ],
+            "Default": "MissingRequiredParameters"
+        },
+        "MissingRequiredParameters": {
+            "Type": "Fail",
+            "Error": "MissingRequiredParameter",
+            "Cause": "The input parameter 'datePrefix' is required."
+        },
         "Retrieve TfL Data": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
@@ -22,7 +38,7 @@
                 }
             ],
             "Next": "Get Zipped TfL Keys",
-            "OutputPath": "$.Payload"
+            "ResultPath": "$.result"
         },
         "Get Zipped TfL Keys": {
             "Type": "Map",
@@ -73,8 +89,8 @@
             "ItemReader": {
                 "Resource": "arn:aws:states:::s3:listObjectsV2",
                 "Parameters": {
-                    "Bucket.$": "$.tflTimetableZippedBucketName",
-                    "Prefix.$": "$.prefix"
+                    "Bucket.$": "$.result.Payload.tflTimetableZippedBucketName",
+                    "Prefix.$": "$.result.Payload.prefix"
                 }
             },
             "ResultPath": null,
@@ -117,7 +133,7 @@
                 "Resource": "arn:aws:states:::s3:listObjectsV2",
                 "Parameters": {
                     "Bucket": "${tfl_timetable_bucket_name}",
-                    "Prefix.$": "$.prefix"
+                    "Prefix.$": "$.result.Payload.prefix"
                 }
             },
             "MaxConcurrency": 25,
@@ -127,9 +143,10 @@
         "Get Line IDs": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
-            "OutputPath": "$.Payload",
+            "ResultPath": "$.result",
             "Parameters": {
-                "FunctionName": "${tfl_txc_line_id_retriever_function_arn}:$LATEST"
+                "FunctionName": "${tfl_txc_line_id_retriever_function_arn}:$LATEST",
+                "Payload.$": "$"
             },
             "Retry": [
                 {
@@ -149,38 +166,63 @@
         "Map Line IDs": {
             "Type": "Map",
             "MaxConcurrency": 20,
+            "InputPath": "$.result.Payload",
             "ItemProcessor": {
-              "ProcessorConfig": {
-                "Mode": "INLINE"
-              },
-              "StartAt": "Generate TxC",
-              "States": {
-                "Generate TxC": {
-                  "Type": "Task",
-                  "Resource": "arn:aws:states:::lambda:invoke",
-                  "OutputPath": "$.Payload",
-                  "Parameters": {
-                    "FunctionName": "${tfl_txc_generator_function_arn}:$LATEST",
-                    "Payload.$": "$"
-                  },
-                  "Retry": [
-                    {
-                      "ErrorEquals": [
+                "ProcessorConfig": {
+                    "Mode": "INLINE"
+                },
+                "StartAt": "Generate TxC",
+                "States": {
+                    "Generate TxC": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "OutputPath": "$.Payload",
+                        "Parameters": {
+                            "FunctionName": "${tfl_txc_generator_function_arn}:$LATEST",
+                            "Payload.$": "$"
+                        },
+                        "Retry": [
+                            {
+                                "ErrorEquals": [
+                                    "Lambda.ServiceException",
+                                    "Lambda.AWSLambdaException",
+                                    "Lambda.SdkClientException",
+                                    "Lambda.TooManyRequestsException"
+                                ],
+                                "IntervalSeconds": 1,
+                                "MaxAttempts": 1,
+                                "BackoffRate": 2,
+                                "JitterStrategy": "FULL"
+                            }
+                        ],
+                        "End": true
+                    }
+                }
+            },
+            "Next": "Zip TxC",
+            "ResultPath": null
+        },
+        "Zip TxC": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+                "FunctionName": "${tfl_txc_zipper_function_arn}:$LATEST",
+                "Payload.$": "$"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
                         "Lambda.ServiceException",
                         "Lambda.AWSLambdaException",
                         "Lambda.SdkClientException",
                         "Lambda.TooManyRequestsException"
-                      ],
-                      "IntervalSeconds": 1,
-                      "MaxAttempts": 1,
-                      "BackoffRate": 2,
-                      "JitterStrategy": "FULL"
-                    }
-                  ],
-                  "End": true
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 1,
+                    "BackoffRate": 2,
+                    "JitterStrategy": "FULL"
                 }
-              }
-            },
+            ],
             "End": true
         }
     }

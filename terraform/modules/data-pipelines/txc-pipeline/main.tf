@@ -245,6 +245,7 @@ module "integrated_data_txc_processor_function" {
       Resource = [
         "${aws_s3_bucket.integrated_data_bods_txc_bucket.arn}/*",
         "${aws_s3_bucket.integrated_data_tnds_txc_bucket.arn}/*",
+        "arn:aws:s3:::${var.tfl_txc_bucket_name}/*",
         "arn:aws:s3:::${var.bank_holidays_bucket_name}/*"
       ]
   }]

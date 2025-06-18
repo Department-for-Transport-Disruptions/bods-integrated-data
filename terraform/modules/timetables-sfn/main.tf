@@ -6,6 +6,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.97"
     }
+
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.13"
+    }
   }
 }
 
@@ -37,6 +42,58 @@ resource "aws_iam_role" "integrated_data_timetables_sfn_role" {
   })
 }
 
+resource "aws_iam_policy" "integrated_data_timetables_sfn_sync_policy" {
+  name = "integrated-data-timetables-sfn-sync-policy-${var.environment}"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "events:PutTargets",
+          "events:PutRule",
+          "events:DescribeRule"
+        ],
+        "Resource" : [
+          "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule"
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "states:StartExecution"
+        ],
+        "Resource" : [
+          var.tfl_txc_sfn_arn,
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "states:DescribeExecution",
+          "states:StopExecution"
+        ],
+        "Resource" : [
+          "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:execution:${var.tfl_txc_sfn_name}:*",
+        ]
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "integrated_data_timetables_sfn_sync_policy_attachment" {
+  policy_arn = aws_iam_policy.integrated_data_timetables_sfn_sync_policy.arn
+  role       = aws_iam_role.integrated_data_timetables_sfn_role.name
+}
+
+// Wait after attaching policy to prevent error
+resource "time_sleep" "wait_30_seconds" {
+  depends_on = [aws_iam_role_policy_attachment.integrated_data_timetables_sfn_sync_policy_attachment]
+
+  create_duration = "30s"
+}
+
+
 resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
   name     = "integrated-data-timetables-sfn-${var.environment}"
   role_arn = aws_iam_role.integrated_data_timetables_sfn_role.arn
@@ -57,6 +114,7 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     bods_txc_zipped_bucket_name                     = var.bods_txc_zipped_bucket_name,
     txc_processor_function_arn                      = var.txc_processor_function_arn,
     bods_txc_bucket_name                            = var.bods_txc_bucket_name,
+    tfl_txc_bucket_name                             = var.tfl_txc_bucket_name,
     tnds_txc_bucket_name                            = var.tnds_txc_bucket_name,
     tnds_txc_retriever_function_arn                 = var.tnds_txc_retriever_function_arn,
     tnds_txc_zipped_bucket_name                     = var.tnds_txc_zipped_bucket_name,
@@ -69,7 +127,10 @@ resource "aws_sfn_state_machine" "integrated_data_timetables_sfn" {
     bods_netex_unzipper_function_arn                = var.bods_netex_unzipper_function_arn
     bods_netex_zipped_bucket_name                   = var.bods_netex_zipped_bucket_name
     bods_netex_bucket_name                          = var.bods_netex_bucket_name
+    tfl_txc_sfn_arn                                 = var.tfl_txc_sfn_arn
   })
+
+  depends_on = [time_sleep.wait_30_seconds]
 }
 
 resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
@@ -131,6 +192,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "arn:aws:s3:::${var.bods_txc_zipped_bucket_name}",
           "arn:aws:s3:::${var.tnds_txc_zipped_bucket_name}",
           "arn:aws:s3:::${var.bods_txc_bucket_name}",
+          "arn:aws:s3:::${var.tfl_txc_bucket_name}",
           "arn:aws:s3:::${var.tnds_txc_bucket_name}",
           "arn:aws:s3:::${var.naptan_bucket_name}",
           "arn:aws:s3:::${var.bods_netex_zipped_bucket_name}",
@@ -152,7 +214,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "states:StartExecution"
         ],
         "Resource" : [
-          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
+          aws_sfn_state_machine.integrated_data_timetables_sfn.arn,
         ]
       },
       {
@@ -162,7 +224,7 @@ resource "aws_iam_policy" "integrated_data_timetables_sfn_policy" {
           "states:StopExecution"
         ],
         "Resource" : [
-          aws_sfn_state_machine.integrated_data_timetables_sfn.arn
+          "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:execution:${aws_sfn_state_machine.integrated_data_timetables_sfn.name}:*",
         ]
       },
       {
