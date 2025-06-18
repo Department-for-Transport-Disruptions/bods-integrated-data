@@ -1,10 +1,10 @@
 import {
+    getDatabaseClient,
     KyselyDb,
     NaptanStop,
     NaptanStopArea,
     NewNaptanStop,
     NewNaptanStopArea,
-    getDatabaseClient,
 } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";

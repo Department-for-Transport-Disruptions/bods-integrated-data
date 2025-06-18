@@ -13,13 +13,9 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "fast-xml-parser": "^5.2.3",
-        "kysely": "0.27.3",
-        "zod": "3.23.8"
+        "fast-xml-parser": "^5.2.3"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^20.11.19",
         "mockdate": "^3.0.5"
     }
 }

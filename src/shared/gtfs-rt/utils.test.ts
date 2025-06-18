@@ -3,13 +3,15 @@ import { NewAvl } from "../database";
 import * as dynamo from "../dynamo";
 import { transit_realtime } from "../gtfs-realtime";
 import {
-    GtfsTripMap,
-    MatchingTimetable,
     addMatchingTripToAvl,
     createTimetableMatchingLookup,
+    GtfsTripMap,
+    getDirectionRef,
+    getOccupancyStatus,
+    MatchingTimetable,
+    mapAvlToGtfsEntity,
     sanitiseTicketMachineJourneyCode,
 } from "./utils";
-import { getDirectionRef, getOccupancyStatus, mapAvlToGtfsEntity } from "./utils";
 
 describe("utils", () => {
     const mockBucketName = "mock-bucket";

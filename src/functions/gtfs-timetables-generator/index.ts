@@ -1,7 +1,7 @@
 import path from "node:path";
 import { PassThrough } from "node:stream";
 import { GTFS_FILE_SUFFIX } from "@bods-integrated-data/shared/constants";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import {
     createLazyDownloadStreamFrom,
@@ -14,12 +14,12 @@ import archiver from "archiver";
 import { Handler } from "aws-lambda";
 import { z } from "zod";
 import {
-    Files,
-    GtfsFile,
     createRegionalTripTable,
     createTripTable,
     dropRegionalTripTable,
     exportDataToS3,
+    Files,
+    GtfsFile,
     queryBuilder,
 } from "./data";
 

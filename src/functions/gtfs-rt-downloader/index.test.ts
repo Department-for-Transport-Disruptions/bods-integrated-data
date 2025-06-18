@@ -1,5 +1,5 @@
 import type { GetObjectCommandOutput } from "@aws-sdk/client-s3";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { base64Encode, generateGtfsRtFeed, getAvlDataForGtfs } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext } from "@bods-integrated-data/shared/mockHandlerArgs";

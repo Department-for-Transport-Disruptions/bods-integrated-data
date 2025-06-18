@@ -94,7 +94,9 @@ const mockCancellationsSubscriptions: CancellationsSubscription[] = [
     },
 ];
 
-const expectedHeartbeatNotification = (subscriptionId: string) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+const expectedHeartbeatNotification = (
+    subscriptionId: string,
+) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:ns2="http://www.ifopt.org.uk/acsb" xmlns:ns3="http://www.ifopt.org.uk/ifopt" xmlns:ns4="http://datex2.eu/schema/2_0RC1/2_0">
     <HeartbeatNotification>
         <RequestTimestamp>2024-03-11T15:20:02.093+00:00</RequestTimestamp>

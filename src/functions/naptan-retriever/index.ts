@@ -1,4 +1,4 @@
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
 import { chunkArray } from "@bods-integrated-data/shared/utils";

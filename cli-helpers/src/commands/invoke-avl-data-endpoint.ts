@@ -1,7 +1,7 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, getDynamoDbItem, invokeLambda, withUserPrompts } from "../utils";
+import { getDynamoDbItem, invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
 import { createDynamoDbDocClient } from "../utils/awsClients";
 
 const notificationTypeChoices = ["Heartbeat Notification", "AVL Data"];

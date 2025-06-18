@@ -22,7 +22,7 @@
         "export-to-csv": "^1.4.0",
         "fast-stats": "^0.0.7",
         "inquirer": "^8.2.6",
-        "zod": "^3.23.7"
+        "zod": "3.25.67"
     },
     "devDependencies": {
         "@tsconfig/node20": "^20.1.4",

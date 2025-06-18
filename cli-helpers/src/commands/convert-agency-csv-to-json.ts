@@ -3,6 +3,7 @@ import { program } from "commander";
 import csvToJson from "convert-csv-to-json";
 import { z } from "zod";
 import { withUserPrompts } from "../utils";
+
 const agencyCsvSchema = z.object({
     agency_id: z.string(),
     agency_name: z.string(),

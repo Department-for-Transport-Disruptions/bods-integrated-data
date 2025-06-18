@@ -14,10 +14,10 @@ import { getDynamoItem, recursiveQuery, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
 import {
-    SiriVM,
-    SiriVehicleActivity,
     parseVehicleActivity,
     parseVehicleActivityCancellation,
+    SiriVehicleActivity,
+    SiriVM,
     siriVmWithoutActivitiesSchema,
 } from "../schema";
 import { AvlSubscription, avlSubscriptionSchema, avlSubscriptionsSchema } from "../schema/avl-subscribe.schema";
@@ -25,11 +25,11 @@ import { AvlValidationError, avlValidationErrorSchema } from "../schema/avl-vali
 import { publishToSnsTopic } from "../sns";
 import {
     CompleteSiriObject,
-    SubscriptionIdNotFoundError,
     chunkArray,
     formatSiriDatetime,
     notEmpty,
     runXmlLint,
+    SubscriptionIdNotFoundError,
 } from "../utils";
 
 export const GENERATED_SIRI_VM_FILE_PATH = "SIRI-VM.xml";

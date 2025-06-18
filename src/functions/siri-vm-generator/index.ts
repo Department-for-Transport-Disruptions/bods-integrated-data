@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { generateSiriVmAndUploadToS3, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { generateGtfsRtFeed, mapAvlToGtfsEntity, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger } from "@bods-integrated-data/shared/logger";
 import { z } from "zod";

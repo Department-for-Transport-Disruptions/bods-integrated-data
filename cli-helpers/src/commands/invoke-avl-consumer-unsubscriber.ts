@@ -1,6 +1,6 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+import { invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
 
 program
     .addOption(STAGE_OPTION)

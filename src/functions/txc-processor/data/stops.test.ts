@@ -10,10 +10,10 @@ import { StopPointLocation, TxcAnnotatedStopPointRef, TxcStopPoint } from "@bods
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import {
-    NaptanStopWithRegionCode,
     createStopAreaStop,
     getCoordinates,
     mapStop,
+    NaptanStopWithRegionCode,
     processAnnotatedStopPointRefs,
     processStopPoints,
     sanitiseIndicator,

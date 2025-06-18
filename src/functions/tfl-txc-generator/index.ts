@@ -1,4 +1,4 @@
-import { KyselyDb, TflTxcMetadata, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb, TflTxcMetadata } from "@bods-integrated-data/shared/database";
 import { BankHoliday, getBankHolidaysList, getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { putS3Object } from "@bods-integrated-data/shared/s3";
@@ -6,7 +6,7 @@ import { getBankHolidaysJson } from "@bods-integrated-data/shared/utils";
 import { Handler } from "aws-lambda";
 import { XMLBuilder } from "fast-xml-parser";
 import { z } from "zod";
-import { TflIBusData, getTflIBusData, upsertTxcMetadata } from "./data/db";
+import { getTflIBusData, TflIBusData, upsertTxcMetadata } from "./data/db";
 import { generateOperators } from "./data/operators";
 import { generateRouteSections, generateRoutes } from "./data/routes";
 import { generateJourneyPatternSections, generateServices } from "./data/services";

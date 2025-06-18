@@ -6,8 +6,7 @@ import { logger } from "./logger";
 import { AvlSubscription } from "./schema/avl-subscribe.schema";
 import { CancellationsSubscription } from "./schema/cancellations-subscribe.schema";
 import { TerminateSubscriptionRequest, terminateSubscriptionResponseSchema } from "./schema/unsubscribe.schema";
-import { createAuthorizationHeader, getSubscriptionUsernameAndPassword } from "./utils";
-import { CompleteSiriObject } from "./utils";
+import { CompleteSiriObject, createAuthorizationHeader, getSubscriptionUsernameAndPassword } from "./utils";
 import { InvalidXmlError } from "./validation";
 
 export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>

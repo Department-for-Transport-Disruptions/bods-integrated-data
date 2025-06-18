@@ -1,6 +1,6 @@
 import { logger } from "@bods-integrated-data/shared/logger";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
+import { getSecretByKey, invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
 
 program
     .addOption(STAGE_OPTION)

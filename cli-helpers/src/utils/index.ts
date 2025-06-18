@@ -1,5 +1,5 @@
 import { InvokeCommand, InvokeCommandInputType } from "@aws-sdk/client-lambda";
-import { ListObjectsV2Command, S3Client, _Object } from "@aws-sdk/client-s3";
+import { _Object, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import { GetSecretValueCommand, ListSecretsCommand } from "@aws-sdk/client-secrets-manager";
 import {
     DynamoDBDocumentClient,
@@ -146,8 +146,8 @@ export const listS3ObjectsByCommonPrefix = async (client: S3Client, bucketName: 
 
 export const listS3Objects = async (client: S3Client, bucketName: string, keyPrefix: string) => {
     const objects: _Object[] = [];
-    let isTruncated = undefined;
-    let startAfterKey = undefined;
+    let isTruncated: boolean;
+    let startAfterKey: string | undefined;
 
     do {
         const response = await client.send(
@@ -163,7 +163,7 @@ export const listS3Objects = async (client: S3Client, bucketName: string, keyPre
             startAfterKey = objects[objects.length - 1].Key;
         }
 
-        isTruncated = response.IsTruncated;
+        isTruncated = response.IsTruncated ?? false;
     } while (isTruncated);
 
     return objects;

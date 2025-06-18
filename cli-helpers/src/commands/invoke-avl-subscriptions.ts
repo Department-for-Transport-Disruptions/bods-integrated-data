@@ -1,5 +1,5 @@
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
+import { getSecretByKey, invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
 
 program
     .option("--subscriptionId <subscriptionId>", "Subscription ID")

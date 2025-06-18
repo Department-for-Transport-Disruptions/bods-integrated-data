@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
+import { generateHeartbeatNotificationXml } from "@bods-integrated-data/shared/avl/heartbeat";
+import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import {
     getAvlConsumerSubscriptionByPK,
     subscriptionDataSenderMessageSchema,
 } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { generateHeartbeatNotificationXml } from "@bods-integrated-data/shared/avl/heartbeat";
-import { createSiriVm, createVehicleActivities, getAvlDataForSiriVm } from "@bods-integrated-data/shared/avl/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";

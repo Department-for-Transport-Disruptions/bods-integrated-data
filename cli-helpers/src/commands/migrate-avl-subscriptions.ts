@@ -1,7 +1,8 @@
 import { writeFile } from "node:fs/promises";
 import { program } from "commander";
 import csvToJson from "convert-csv-to-json";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
+import { getSecretByKey, invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
+
 interface BodsSubscription {
     dataset_id: string;
     organisation_id: string;

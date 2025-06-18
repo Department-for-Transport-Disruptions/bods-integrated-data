@@ -11,47 +11,16 @@ importers:
       '@bods-integrated-data/shared':
         specifier: workspace:^
         version: link:../../shared
-      zod:
-        specifier: 3.23.8
-        version: 3.23.8
     devDependencies:
-      '@types/aws-lambda':
-        specifier: ^8.10.110
-        version: 8.10.146
-      '@types/node':
-        specifier: ^20.11.19
-        version: 20.17.10
       mockdate:
         specifier: ^3.0.5
         version: 3.0.5
 
 packages:
 
-  '@types/aws-lambda@8.10.146':
-    resolution: {integrity: sha512-3BaDXYTh0e6UCJYL/jwV/3+GRslSc08toAiZSmleYtkAUyV5rtvdPYxrG/88uqvTuT6sb27WE9OS90ZNTIuQ0g==}
-
-  '@types/node@20.17.10':
-    resolution: {integrity: sha512-/jrvh5h6NXhEauFFexRin69nA0uHJ5gwk4iDivp/DeoEua3uwCUto6PC86IpRITBOs4+6i2I56K5x5b6WYGXHA==}
-
   mockdate@3.0.5:
     resolution: {integrity: sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==}
 
-  undici-types@6.19.8:
-    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
-
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-
 snapshots:
 
-  '@types/aws-lambda@8.10.146': {}
-
-  '@types/node@20.17.10':
-    dependencies:
-      undici-types: 6.19.8
-
   mockdate@3.0.5: {}
-
-  undici-types@6.19.8: {}
-
-  zod@3.23.8: {}

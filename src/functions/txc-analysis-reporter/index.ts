@@ -128,7 +128,7 @@ export const handler: Handler = async (event, context) => {
         Record<string, CriticalAndAdvisoryObservationByObservationType>
     > = {};
 
-    let dynamoScanStartKey: Record<string, string> | undefined = undefined;
+    let dynamoScanStartKey: Record<string, string> | undefined;
 
     do {
         const dynamoScanOutput = await scanDynamo({

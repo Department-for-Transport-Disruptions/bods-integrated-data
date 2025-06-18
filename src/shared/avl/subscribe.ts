@@ -123,7 +123,7 @@ export const updateDynamoWithSubscriptionInfo = async (
         requestorRef: subscription.requestorRef ?? null,
         serviceStartDatetime: subscription.serviceStartDatetime
             ? subscription.serviceStartDatetime
-            : currentTimestamp ?? null,
+            : (currentTimestamp ?? null),
         publisherId: subscription.publisherId ?? null,
         lastModifiedDateTime: currentTimestamp ?? null,
         apiKey: subscription.apiKey,

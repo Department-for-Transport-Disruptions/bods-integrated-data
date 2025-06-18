@@ -6,10 +6,10 @@ import * as s3 from "../s3";
 import { SiriVehicleActivity } from "../schema";
 import * as sns from "../sns";
 import {
-    GENERATED_SIRI_VM_FILE_PATH,
-    GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     createVehicleActivities,
+    GENERATED_SIRI_VM_FILE_PATH,
+    GENERATED_SIRI_VM_TFL_FILE_PATH,
     generateSiriVmAndUploadToS3,
     removeDuplicateAvls,
     removeDuplicateCancellations,

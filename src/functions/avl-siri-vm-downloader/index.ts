@@ -6,23 +6,23 @@ import {
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
-    GENERATED_SIRI_VM_FILE_PATH,
-    GENERATED_SIRI_VM_TFL_FILE_PATH,
     createSiriVm,
     createVehicleActivities,
+    GENERATED_SIRI_VM_FILE_PATH,
+    GENERATED_SIRI_VM_TFL_FILE_PATH,
     getAvlDataForSiriVm,
 } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import {
-    InvalidApiKeyError,
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
     createNmTokenValidation,
     createStringArrayValidation,
     createStringLengthValidation,
+    InvalidApiKeyError,
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError, z } from "zod";

@@ -1,10 +1,10 @@
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import {
+    createTimetableMatchingLookup,
     GtfsTripMap,
     MatchedTrip,
-    createTimetableMatchingLookup,
     retrieveMatchableTimetableData,
 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";

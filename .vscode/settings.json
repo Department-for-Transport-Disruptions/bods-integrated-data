@@ -12,5 +12,8 @@
     },
     "[xml]": {
         "editor.defaultFormatter": "redhat.vscode-xml"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "biomejs.biome"
     }
 }

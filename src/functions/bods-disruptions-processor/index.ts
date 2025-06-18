@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
-import { KyselyDb } from "@bods-integrated-data/shared/database";
-import { getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { generateGtfsRtFeed, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";

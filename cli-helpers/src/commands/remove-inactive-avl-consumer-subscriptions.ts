@@ -8,7 +8,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { avlConsumerSubscriptionsSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, recursiveScan, withUserPrompts } from "../utils";
+import { recursiveScan, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
 import {
     createCloudWatchClient,
     createDynamoDbDocClient,

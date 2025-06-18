@@ -5,9 +5,9 @@ import {
     DeleteQueueCommandInput,
     GetQueueAttributesCommand,
     GetQueueAttributesCommandInput,
-    SQSClient,
     SendMessageBatchCommand,
     SendMessageBatchRequestEntry,
+    SQSClient,
 } from "@aws-sdk/client-sqs";
 
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;

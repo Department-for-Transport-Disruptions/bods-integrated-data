@@ -1,17 +1,17 @@
 import { z } from "zod";
-import { MAX_DECIMAL_PRECISION, avlOccupancyValues } from "../constants";
+import { avlOccupancyValues, MAX_DECIMAL_PRECISION } from "../constants";
 import { Avl, NewAvl, NewAvlCancellations } from "../database";
 import { getDate, getTflOriginAimedDepartureTime } from "../dates";
 import { logger } from "../logger";
 import { makeFilteredArraySchema, roundToDecimalPlaces, txcEmptyProperty, txcSelfClosingProperty } from "../utils";
 import {
+    createNmTokenOrNumberSiriValidation,
+    createNmTokenSiriValidation,
+    createPopulatedStringValidation,
     NM_TOKEN_DISALLOWED_CHARS_REGEX,
     NM_TOKEN_REGEX,
     REQUEST_PARAM_MAX_LENGTH,
     SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX,
-    createNmTokenOrNumberSiriValidation,
-    createNmTokenSiriValidation,
-    createPopulatedStringValidation,
 } from "../validation";
 import { normalizedStringSchema } from "./misc.schema";
 

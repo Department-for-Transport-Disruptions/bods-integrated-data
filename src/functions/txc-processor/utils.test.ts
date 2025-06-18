@@ -13,8 +13,8 @@ import {
     getTimepointFromTimingStatus,
     isRequiredTndsDataset,
     isRequiredTndsServiceMode,
-    mapTimingLinkToStopTime,
     mapTimingLinksToStopTimes,
+    mapTimingLinkToStopTime,
 } from "./utils";
 
 describe("utils", () => {
@@ -939,7 +939,7 @@ describe("utils", () => {
             [["0", "0"] as const, false],
             [["0", 0] as const, false],
             [["1.234"] as const, false],
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: tests
         ])("validates coordinates %s as %s", (coordinates: any, expected) => {
             expect(areCoordinatesValid(coordinates)).toEqual(expected);
         });

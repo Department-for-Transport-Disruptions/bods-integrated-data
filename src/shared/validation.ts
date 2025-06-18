@@ -13,9 +13,9 @@ export const SUBSCRIPTION_ID_ARRAY_REGEX = /^[^,]+(,[^,]+){0,4}$/;
 
 export const NM_TOKEN_DISALLOWED_CHARS_REGEX = /[^a-zA-Z0-9.\-_:]/g;
 
-export const SIRI_VM_POPULATED_STRING_REGEX = /^[^,\[\]\{\}\?$%\^=@#;:]+$/g;
+export const SIRI_VM_POPULATED_STRING_REGEX = /^[^,[\]{}?$%^=@#;:]+$/g;
 
-export const SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX = /[,\[\]\{\}\?$%\^=@#;:]/g;
+export const SIRI_VM_POPULATED_STRING_TYPE_DISALLOWED_CHARS_REGEX = /[,[\]{}?$%^=@#;:]/g;
 
 export const createPopulatedStringValidation = (propertyName: string) => {
     return z.coerce

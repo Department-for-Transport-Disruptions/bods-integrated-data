@@ -4,7 +4,7 @@ import { unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ALBEvent, APIGatewayProxyEvent } from "aws-lambda";
 import { Dayjs } from "dayjs";
-import { outputFile, pathExists, readJson, readdir, stat } from "fs-extra";
+import { outputFile, pathExists, readdir, readJson, stat } from "fs-extra";
 import { ZodSchema, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { RouteType, WheelchairAccessibility } from "./database";

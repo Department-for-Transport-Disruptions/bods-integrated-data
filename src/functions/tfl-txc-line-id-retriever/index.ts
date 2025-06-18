@@ -1,4 +1,4 @@
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
 

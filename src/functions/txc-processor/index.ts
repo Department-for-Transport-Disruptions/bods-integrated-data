@@ -1,5 +1,5 @@
 import { txcArrayProperties } from "@bods-integrated-data/shared/constants";
-import { Agency, KyselyDb, NewStop, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { Agency, getDatabaseClient, KyselyDb, NewStop } from "@bods-integrated-data/shared/database";
 import { BankHolidaysJson } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
@@ -10,8 +10,8 @@ import {
     TxcJourneyPatternSection,
     TxcRoute,
     TxcRouteSection,
-    VehicleJourney,
     txcSchema,
+    VehicleJourney,
 } from "@bods-integrated-data/shared/schema";
 import { getBankHolidaysJson, notEmpty } from "@bods-integrated-data/shared/utils";
 import { S3EventRecord, S3Handler } from "aws-lambda";
@@ -23,8 +23,8 @@ import { processCalendars } from "./data/calendar";
 import { processFrequencies } from "./data/frequencies";
 import { processRoutes } from "./data/routes";
 import { processShapes } from "./data/shapes";
-import { processStopTimes } from "./data/stopTimes";
 import { processAnnotatedStopPointRefs, processStopPoints } from "./data/stops";
+import { processStopTimes } from "./data/stopTimes";
 import { processTrips } from "./data/trips";
 import { InvalidOperatorError } from "./errors";
 import { VehicleJourneyMapping } from "./types";

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, getSecretByKey, invokeLambda, withUserPrompts } from "../utils";
+import { getSecretByKey, invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
+
 interface Subscription {
     id: string;
     publisherId: string;

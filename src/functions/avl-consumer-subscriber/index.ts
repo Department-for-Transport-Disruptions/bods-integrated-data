@@ -8,11 +8,11 @@ import {
     createHttpTooManyRequestsErrorResponse,
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
+import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import {
     AvlSubscriptionTriggerMessage,
     getAvlConsumerSubscription,
 } from "@bods-integrated-data/shared/avl-consumer/utils";
-import { getAvlSubscriptions } from "@bods-integrated-data/shared/avl/utils";
 import { createAlarm, putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDuration } from "@bods-integrated-data/shared/dates";
 import { putDynamoItem } from "@bods-integrated-data/shared/dynamo";
@@ -23,12 +23,12 @@ import { AvlConsumerSubscription, avlSubscriptionRequestSchema } from "@bods-int
 import { createQueue, getQueueAttributes } from "@bods-integrated-data/shared/sqs";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import {
-    InvalidXmlError,
     createBoundingBoxValidation,
     createNmTokenArrayValidation,
     createNmTokenValidation,
     createStringLengthValidation,
     createSubscriptionIdArrayValidation,
+    InvalidXmlError,
 } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import cleanDeep from "clean-deep";
@@ -128,7 +128,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const subscriptionRequest = xml.Siri.SubscriptionRequest;
         const consumerSubscriptionId = subscriptionRequest.VehicleMonitoringSubscriptionRequest.SubscriptionIdentifier;
         const updateInterval = subscriptionRequest.VehicleMonitoringSubscriptionRequest.UpdateInterval || "PT10S";
-        let PK = undefined;
+        let PK: string;
 
         try {
             const subscription = await getAvlConsumerSubscription(

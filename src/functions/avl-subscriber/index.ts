@@ -16,7 +16,7 @@ import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { AvlSubscription, avlSubscribeMessageSchema } from "@bods-integrated-data/shared/schema/avl-subscribe.schema";
-import { SubscriptionIdNotFoundError, generateApiKey, isPrivateAddress } from "@bods-integrated-data/shared/utils";
+import { generateApiKey, isPrivateAddress, SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { AxiosError } from "axios";

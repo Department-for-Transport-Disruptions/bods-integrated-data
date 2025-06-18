@@ -1,6 +1,6 @@
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { describe, expect, it, vi } from "vitest";
-import { TableKey, checkTables, renameTables } from ".";
+import { checkTables, renameTables, TableKey } from ".";
 
 const mockExecute = vi.fn().mockResolvedValue([{ count: 100 }]);
 const mockSchema = {
@@ -24,6 +24,11 @@ describe("table renamer", () => {
                 count: vi.fn().mockReturnThis(),
                 as: vi.fn(),
             },
+            dynamic: {
+                table: vi.fn(() => ({
+                    as: vi.fn().mockReturnThis(),
+                })),
+            },
         })),
     }));
 
@@ -42,7 +47,7 @@ describe("table renamer", () => {
         it("should not throw an error with valid percentages", async () => {
             const dbClient = await getDatabaseClient(true);
 
-            await expect(checkTables(dbClient, tables)).resolves.not.toThrowError();
+            await expect(checkTables(dbClient)).resolves.not.toThrowError();
         });
 
         it("should throw an error if match percentage is less than 80%", async () => {

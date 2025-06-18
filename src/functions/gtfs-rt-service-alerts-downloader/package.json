@@ -13,11 +13,6 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "zod": "3.23.8",
         "zod-validation-error": "^3.3.0"
-    },
-    "devDependencies": {
-        "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^20.11.19"
     }
 }

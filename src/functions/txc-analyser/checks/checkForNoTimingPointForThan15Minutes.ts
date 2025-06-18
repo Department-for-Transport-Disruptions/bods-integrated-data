@@ -72,8 +72,9 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                 const previousStop = {
                                     departureTime,
                                     commonName: txcStops
-                                        ? txcStops[timingLinksForJourney[0]?.From?.StopPointRef?.toUpperCase() ?? ""] ??
-                                          "n/a"
+                                        ? (txcStops[
+                                              timingLinksForJourney[0]?.From?.StopPointRef?.toUpperCase() ?? ""
+                                          ] ?? "n/a")
                                         : "n/a",
                                     stopPointRef: timingLinksForJourney[0]?.From?.StopPointRef?.toUpperCase(),
                                 };
@@ -90,7 +91,7 @@ export default (data: PartialDeep<TxcSchema>): Observation[] => {
                                     const currentStop = {
                                         departureTime: currentStopDepartureTime,
                                         commonName: txcStops
-                                            ? txcStops[timingLink.To?.StopPointRef?.toUpperCase() ?? ""] ?? "n/a"
+                                            ? (txcStops[timingLink.To?.StopPointRef?.toUpperCase() ?? ""] ?? "n/a")
                                             : "n/a",
                                         stopPointRef: timingLink.To?.StopPointRef?.toUpperCase(),
                                     };

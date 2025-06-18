@@ -1,6 +1,7 @@
 import { Option } from "@commander-js/extra-typings";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, invokeLambda, withUserPrompts } from "../utils";
+import { invokeLambda, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
+
 const migrationOptions = ["migrate", "rollback"];
 
 program

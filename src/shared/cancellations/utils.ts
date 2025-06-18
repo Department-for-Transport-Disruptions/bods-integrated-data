@@ -17,7 +17,7 @@ import {
     cancellationsSubscriptionSchema,
     cancellationsSubscriptionsSchema,
 } from "../schema/cancellations-subscribe.schema";
-import { CompleteSiriObject, SubscriptionIdNotFoundError, chunkArray, formatSiriDatetime, runXmlLint } from "../utils";
+import { CompleteSiriObject, chunkArray, formatSiriDatetime, runXmlLint, SubscriptionIdNotFoundError } from "../utils";
 
 export const GENERATED_SIRI_SX_FILE_PATH = "SIRI-SX.xml";
 

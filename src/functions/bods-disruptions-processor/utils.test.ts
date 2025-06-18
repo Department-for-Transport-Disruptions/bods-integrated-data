@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as databaseFunctions from "./database";
 import {
     AgencyMap,
-    RouteMap,
     getAgencyMap,
     getGtfsActivePeriods,
     getGtfsCause,
@@ -14,6 +13,7 @@ import {
     getGtfsInformedIdentities,
     getGtfsSeverityLevel,
     getRouteMap,
+    RouteMap,
 } from "./utils";
 
 const { Cause, Effect, SeverityLevel } = transit_realtime.Alert;

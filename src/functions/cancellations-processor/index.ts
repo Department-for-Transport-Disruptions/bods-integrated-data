@@ -5,7 +5,7 @@ import {
     insertSituations,
 } from "@bods-integrated-data/shared/cancellations/utils";
 import { siriSxArrayProperties } from "@bods-integrated-data/shared/constants";
-import { KyselyDb, NewSituation, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb, NewSituation } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";

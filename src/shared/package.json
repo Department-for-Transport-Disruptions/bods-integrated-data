@@ -7,10 +7,8 @@
     "license": "ISC",
     "type": "module",
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.140",
         "@types/command-exists": "^1.2.3",
         "@types/fs-extra": "^11.0.4",
-        "@types/node": "^20.11.19",
         "@types/pg": "^8.11.0",
         "@types/unzipper": "^0.10.9",
         "mockdate": "^3.0.5"
@@ -35,17 +33,12 @@
         "dayjs": "^1.11.10",
         "fast-xml-parser": "^4.5.0",
         "fs-extra": "^11.3.0",
-        "kysely": "0.27.3",
         "p-limit": "^6.2.0",
         "pg": "^8.11.3",
         "pino": "^9.1.0",
         "pino-lambda": "^4.4.0",
         "unzipper": "^0.10.14",
-        "zod": "3.23.8",
         "zod-validation-error": "^3.3.0"
-    },
-    "resolutions": {
-        "brace-expansion": "^2.0.2"
     },
     "scripts": {
         "test": "vitest run"

@@ -5,13 +5,13 @@ import {
     insertAvlCancellations,
     insertAvls,
 } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { addMatchingTripToAvl } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { SiriVM, SiriVehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
+import { SiriVehicleActivity, SiriVM, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";

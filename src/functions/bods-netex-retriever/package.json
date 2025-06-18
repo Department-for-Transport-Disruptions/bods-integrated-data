@@ -14,12 +14,9 @@
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
         "axios": "^1.9.0",
-        "unzipper": "^0.12.3",
-        "zod": "3.23.8"
+        "unzipper": "^0.12.3"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^20.11.19",
         "@types/unzipper": "^0.10.11"
     }
 }

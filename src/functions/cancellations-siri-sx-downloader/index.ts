@@ -6,11 +6,11 @@ import {
     createHttpValidationErrorResponse,
 } from "@bods-integrated-data/shared/api";
 import {
-    GENERATED_SIRI_SX_FILE_PATH,
     createSiriSx,
+    GENERATED_SIRI_SX_FILE_PATH,
     getSituationsDataForSiriSx,
 } from "@bods-integrated-data/shared/cancellations/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { getDate } from "@bods-integrated-data/shared/dates";
 import { logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";

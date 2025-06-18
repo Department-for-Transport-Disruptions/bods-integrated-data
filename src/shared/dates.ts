@@ -1,4 +1,4 @@
-import dayjs, { extend as dayjsExtend, Dayjs } from "dayjs";
+import dayjs, { Dayjs, extend as dayjsExtend } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import duration from "dayjs/plugin/duration";
 import isBetween from "dayjs/plugin/isBetween";

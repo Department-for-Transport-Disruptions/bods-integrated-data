@@ -1,74 +1,120 @@
-import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { Database, getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
-import { ReferenceExpression } from "kysely";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-export interface TableKey {
+export type TableKeyBase = {
     table: keyof Database;
-    newTable: keyof Database;
-    key: ReferenceExpression<Database, keyof Database>;
-    requiredPercentage?: number;
-}
+};
 
-// Rename BODS related tables
-const databaseTables: TableKey[] = [
-    { table: "calendar", newTable: "calendar_new", key: "id", requiredPercentage: 70 },
-    { table: "calendar_date", newTable: "calendar_date_new", key: "id", requiredPercentage: 70 },
-    { table: "stop", newTable: "stop_new", key: "id", requiredPercentage: 70 },
-    { table: "shape", newTable: "shape_new", key: "id", requiredPercentage: 70 },
-    { table: "trip", newTable: "trip_new", key: "id", requiredPercentage: 70 },
-    { table: "frequency", newTable: "frequency_new", key: "id", requiredPercentage: 70 },
-    { table: "stop_time", newTable: "stop_time_new", key: "id", requiredPercentage: 70 },
-    { table: "noc_operator", newTable: "noc_operator_new", key: "noc" },
-    { table: "naptan_stop", newTable: "naptan_stop_new", key: "atco_code" },
-    { table: "naptan_stop_area", newTable: "naptan_stop_area_new", key: "stop_area_code" },
-    { table: "nptg_admin_area", newTable: "nptg_admin_area_new", key: "admin_area_code" },
-    { table: "nptg_locality", newTable: "nptg_locality_new", key: "locality_code" },
-    { table: "nptg_region", newTable: "nptg_region_new", key: "region_code" },
-];
+export type TableKeyBasic = TableKeyBase & {
+    type: "basic";
+};
 
-export const checkTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
-    for (const t of tables) {
-        const { table, newTable, key } = t;
+export type TableKeyWithRequiredPercentage = TableKeyBase & {
+    type: "withPercentage";
+    currentCount: number;
+    newCount: number;
+    requiredPercentage: number;
+};
 
-        const [newCount] = await dbClient
-            .selectFrom(`${newTable}`)
-            .select(dbClient.fn.count(key).as("count"))
-            .execute();
+export type TableKey = TableKeyBasic | TableKeyWithRequiredPercentage;
 
-        if (newCount.count === 0 || newCount.count === "0") {
-            throw new Error(`No data found in table ${newTable}`);
+export const getCount = async <T extends keyof Database, C extends keyof Database[T] & string>(
+    dbClient: KyselyDb,
+    table: T,
+    column: C,
+) => {
+    const { table: dynTable, ref } = dbClient.dynamic;
+
+    const [count] = await dbClient
+        .selectFrom(dynTable(table).as("newTable"))
+        .select(dbClient.fn.count(ref(column)).as("count"))
+        .execute();
+
+    return Number(count);
+};
+
+const getTableKey = async <T extends keyof Database, C extends keyof Database[T] & string>(
+    dbClient: KyselyDb,
+    table: T,
+    newTable?: T,
+    requiredPercentage?: number,
+    countKey?: C,
+): Promise<TableKey> => {
+    if (requiredPercentage !== undefined && countKey !== undefined && newTable !== undefined) {
+        return {
+            type: "withPercentage",
+            table,
+            currentCount: await getCount(dbClient, table, countKey),
+            newCount: await getCount(dbClient, newTable, countKey),
+            requiredPercentage: 70,
+        };
+    }
+
+    return {
+        type: "basic",
+        table,
+    };
+};
+
+export const checkTables = async (dbClient: KyselyDb) => {
+    // Rename BODS related tables
+    const databaseTables: TableKey[] = [
+        await getTableKey(dbClient, "calendar", "calendar_new", 70, "id"),
+        await getTableKey(dbClient, "calendar_date", "calendar_date_new", 70, "id"),
+        await getTableKey(dbClient, "stop", "stop_new", 70, "id"),
+        await getTableKey(dbClient, "shape", "shape_new", 70, "id"),
+        await getTableKey(dbClient, "trip", "trip_new", 70, "id"),
+        await getTableKey(dbClient, "frequency", "frequency_new", 70, "id"),
+        await getTableKey(dbClient, "stop_time", "stop_time_new", 70, "id"),
+        await getTableKey(dbClient, "noc_operator"),
+        await getTableKey(dbClient, "naptan_stop"),
+        await getTableKey(dbClient, "naptan_stop_area"),
+        await getTableKey(dbClient, "nptg_admin_area"),
+        await getTableKey(dbClient, "nptg_locality"),
+        await getTableKey(dbClient, "nptg_region"),
+    ];
+
+    for (const t of databaseTables) {
+        if (t.type === "basic") {
+            continue;
         }
 
-        const [currentCount] = await dbClient.selectFrom(table).select(dbClient.fn.count(key).as("count")).execute();
+        const { table, currentCount, newCount } = t;
 
-        if (currentCount.count === 0 || currentCount.count === "0") {
+        if (newCount === 0) {
+            throw new Error(`No data found in table ${table}_new`);
+        }
+
+        if (currentCount === 0) {
             logger.info(`Table ${table} is empty, skipping percentage check`);
             continue;
         }
 
-        const percentageResult = (Number(newCount.count) / Number(currentCount.count)) * 100;
+        const percentageResult = (newCount / currentCount) * 100;
 
         if (t.requiredPercentage && percentageResult < t.requiredPercentage) {
             throw new Error(
-                `Tables ${table} and ${newTable} have less than an ${t.requiredPercentage}% match, percentage match: ${percentageResult}%`,
+                `Tables ${table} and ${table}_new have less than an ${t.requiredPercentage}% match, percentage match: ${percentageResult}%`,
             );
         }
 
-        logger.info(`Table ${newTable} valid with ${newCount.count} rows`);
+        logger.info(`Table ${table}_new valid with ${newCount} rows`);
     }
+
+    return databaseTables;
 };
 
 export const renameTables = async (dbClient: KyselyDb, tables: TableKey[]) => {
-    for (const { table, newTable } of tables) {
+    for (const { table } of tables) {
         await dbClient.schema.dropTable(`${table}_old`).ifExists().cascade().execute();
         await dbClient.schema.alterTable(table).renameTo(`${table}_old`).execute();
-        await dbClient.schema.alterTable(newTable).renameTo(table).execute();
+        await dbClient.schema.alterTable(`${table}_new`).renameTo(table).execute();
     }
 };
 
@@ -78,7 +124,7 @@ export const handler: Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        await checkTables(dbClient, databaseTables);
+        const databaseTables = await checkTables(dbClient);
         await renameTables(dbClient, databaseTables);
     } catch (e) {
         if (e instanceof Error) {

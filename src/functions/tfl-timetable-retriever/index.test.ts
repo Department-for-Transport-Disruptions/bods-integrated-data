@@ -3,7 +3,7 @@ import { logger } from "@bods-integrated-data/shared/logger";
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { listS3Objects } from "@bods-integrated-data/shared/s3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TflTimetableRetrieverOutput, handler } from ".";
+import { handler, TflTimetableRetrieverOutput } from ".";
 
 describe("tfl-timetable-retriever", () => {
     const mockBucketName = "mock-bucket";

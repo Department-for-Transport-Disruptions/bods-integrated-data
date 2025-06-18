@@ -1,5 +1,5 @@
-import { AvlSubscriptionDataSenderMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import * as utilFunctions from "@bods-integrated-data/shared/avl/utils";
+import { AvlSubscriptionDataSenderMessage } from "@bods-integrated-data/shared/avl-consumer/utils";
 import { Avl } from "@bods-integrated-data/shared/database";
 import * as dynamo from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";

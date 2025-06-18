@@ -1,6 +1,6 @@
 import { createHttpServerErrorResponse, createHttpSuccessResponse } from "@bods-integrated-data/shared/api";
 import { getLatestAvlVehicleCount } from "@bods-integrated-data/shared/avl/utils";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { z } from "zod";

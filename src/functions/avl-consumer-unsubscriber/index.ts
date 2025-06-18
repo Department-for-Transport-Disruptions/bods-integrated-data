@@ -14,7 +14,7 @@ import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods
 import { AvlConsumerSubscription, terminateSubscriptionRequestSchema } from "@bods-integrated-data/shared/schema";
 import { deleteQueue } from "@bods-integrated-data/shared/sqs";
 import { SubscriptionIdNotFoundError } from "@bods-integrated-data/shared/utils";
-import { InvalidXmlError, createStringLengthValidation } from "@bods-integrated-data/shared/validation";
+import { createStringLengthValidation, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
 import { ZodError, z } from "zod";

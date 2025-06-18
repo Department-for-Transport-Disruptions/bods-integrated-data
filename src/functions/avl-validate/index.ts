@@ -11,8 +11,7 @@ import {
     avlCheckStatusResponseSchema,
     avlValidateRequestSchema,
 } from "@bods-integrated-data/shared/schema/avl-validate.schema";
-import { CompleteSiriObject } from "@bods-integrated-data/shared/utils";
-import { createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
+import { CompleteSiriObject, createAuthorizationHeader } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
 import axios, { AxiosError } from "axios";

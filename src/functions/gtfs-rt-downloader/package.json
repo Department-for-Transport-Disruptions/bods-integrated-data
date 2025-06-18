@@ -15,11 +15,6 @@
         "@aws-sdk/client-s3": "^3.682.0",
         "@bods-integrated-data/shared": "workspace:^",
         "node-object-hash": "^3.0.0",
-        "zod": "3.23.8",
         "zod-validation-error": "^3.3.0"
-    },
-    "devDependencies": {
-        "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^20.11.19"
     }
 }

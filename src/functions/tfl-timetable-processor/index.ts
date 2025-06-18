@@ -1,4 +1,4 @@
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { iBusArrayProperties, iBusSchema } from "@bods-integrated-data/shared/schema";
@@ -12,8 +12,8 @@ import {
     insertTflDestinations,
     insertTflGarages,
     insertTflJourneyDriveTimes,
-    insertTflJourneyWaitTimes,
     insertTflJourneys,
+    insertTflJourneyWaitTimes,
     insertTflLines,
     insertTflOperators,
     insertTflPatterns,
@@ -28,8 +28,8 @@ import {
     mapTflDestinations,
     mapTflGarages,
     mapTflJourneyDriveTimes,
-    mapTflJourneyWaitTimes,
     mapTflJourneys,
+    mapTflJourneyWaitTimes,
     mapTflLines,
     mapTflOperators,
     mapTflPatterns,

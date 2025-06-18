@@ -3,7 +3,7 @@ import { DYNAMO_DB_MAX_BATCH_SIZE } from "@bods-integrated-data/shared/dynamo";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { program } from "commander";
-import { STAGES, STAGE_OPTION, recursiveScan, withUserPrompts } from "../utils";
+import { recursiveScan, STAGE_OPTION, STAGES, withUserPrompts } from "../utils";
 import { createDynamoDbDocClient } from "../utils/awsClients";
 
 program

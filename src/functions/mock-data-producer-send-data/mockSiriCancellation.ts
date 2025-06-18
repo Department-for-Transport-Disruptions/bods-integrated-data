@@ -1,6 +1,9 @@
 import { getDate } from "@bods-integrated-data/shared/dates";
 
-export const generateMockSiriCancellation = (subscriptionId: string, currentTime: string) => `<?xml version="1.0" encoding="utf-8"?>
+export const generateMockSiriCancellation = (
+    subscriptionId: string,
+    currentTime: string,
+) => `<?xml version="1.0" encoding="utf-8"?>
 <Siri version="2.0" xmlns="http://www.siri.org.uk/siri"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd">

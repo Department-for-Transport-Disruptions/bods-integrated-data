@@ -1,12 +1,12 @@
 import {
+    _Object,
     CommonPrefix,
     GetObjectCommand,
     ListObjectsV2Command,
     ListObjectsV2CommandInput,
     S3Client,
-    _Object,
 } from "@aws-sdk/client-s3";
-import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDatabaseClient, KyselyDb } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { listS3Objects, putS3Object } from "@bods-integrated-data/shared/s3";
 import { tflBaseVersionSchema } from "@bods-integrated-data/shared/schema";
@@ -55,14 +55,14 @@ const getAndParseTflBaseVersionData = async (client: S3Client, bucketName: strin
 const listTfLS3Objects = async (client: S3Client, commandInput: ListObjectsV2CommandInput) => {
     const objects: _Object[] = [];
     const commonPrefixes: CommonPrefix[] = [];
-    let isTruncated = undefined;
-    let startAfterKey = undefined;
+    let isTruncated: boolean;
+    let startAfterKey: string | undefined;
 
     do {
         const response = await client.send(
             new ListObjectsV2Command({
                 ...commandInput,
-                StartAfter: startAfterKey,
+                StartAfter: startAfterKey ?? undefined,
             }),
         );
 
@@ -76,7 +76,7 @@ const listTfLS3Objects = async (client: S3Client, commandInput: ListObjectsV2Com
             commonPrefixes.push(...response.CommonPrefixes);
         }
 
-        isTruncated = response.IsTruncated;
+        isTruncated = response.IsTruncated ?? false;
     } while (isTruncated);
 
     return { objects, commonPrefixes };
