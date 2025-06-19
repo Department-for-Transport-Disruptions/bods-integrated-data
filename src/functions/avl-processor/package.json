@@ -14,13 +14,10 @@
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "^4.4.1",
-        "lodash": "^4.17.21",
-        "zod": "3.23.8"
+        "lodash": "^4.17.21"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.110",
         "@types/lodash": "^4.17.17",
-        "@types/node": "^20.11.19",
         "mockdate": "^3.0.5"
     }
 }
