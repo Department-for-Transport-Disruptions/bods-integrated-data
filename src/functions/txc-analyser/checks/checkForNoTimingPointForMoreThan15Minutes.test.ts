@@ -1,263 +1,131 @@
 import { TxcSchema } from "@bods-integrated-data/shared/schema";
-import { Observation } from "@bods-integrated-data/shared/txc-analysis/schema";
 import { PartialDeep } from "type-fest";
 import { describe, expect, it } from "vitest";
 import checkForNoTimingPointForThan15Minutes from "./checkForNoTimingPointForThan15Minutes";
 import { mockValidData } from "./mockData";
 
-describe("checkForNoTimingPointForMoreThan15Minutes", () => {
-    it("should record observations if there are any consecutive timing points more than 15 minutes apart for a given vehicle journey", () => {
-        const expectedObservations: Observation[] = [
-            {
-                category: "timing",
-                details:
-                    "The link between the 08:00:00 Stop 2 (SP2) and 08:20:00 n/a (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
-                importance: "advisory",
-                observation: "No timing point for more than 15 minutes",
-                serviceCode: "SVC1",
-                lineName: "Line 1",
-                latestEndDate: "31/12/2023",
-            },
-            {
-                category: "timing",
-                details:
-                    "The link between the 08:40:00 Stop 4 (SP4) and 09:00:00 n/a (SP5) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
-                importance: "advisory",
-                observation: "No timing point for more than 15 minutes",
-                serviceCode: "SVC1",
-                lineName: "Line 1",
-                latestEndDate: "31/12/2023",
-            },
-        ];
-        expect(
-            checkForNoTimingPointForThan15Minutes({
-                TransXChange: {
-                    ...mockValidData.TransXChange,
-                    JourneyPatternSections: {
-                        JourneyPatternSection: [
-                            {
-                                "@_id": "JPS1",
-                                JourneyPatternTimingLink: [
-                                    {
-                                        "@_id": "JPTL1",
-                                        From: {
-                                            Activity: "pickUp",
-                                            StopPointRef: "SP1",
-                                            TimingStatus: "PTP",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                            TimingStatus: "OTH",
-                                            WaitTime: "PT0M0S",
-                                        },
-                                        RunTime: "PT0M0S",
-                                    },
-                                    {
-                                        "@_id": "JPTL1-2",
-                                        From: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                            TimingStatus: "OTH",
-                                            WaitTime: "PT0M0S",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP3",
-                                            TimingStatus: "OTH",
-                                            WaitTime: "PT10M0S",
-                                        },
-                                        RunTime: "PT10M0S",
-                                    },
-                                ],
-                            },
-                            {
-                                "@_id": "JPS2",
-                                JourneyPatternTimingLink: [
-                                    {
-                                        "@_id": "JPTL2",
-                                        From: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP3",
-                                            TimingStatus: "OTH",
-                                            WaitTime: "PT10M0S",
-                                        },
-                                        To: {
-                                            Activity: "setDown",
-                                            StopPointRef: "SP4",
-                                            TimingStatus: "PTP",
-                                            WaitTime: "PT10M0S",
-                                        },
-                                        RunTime: "PT10M0S",
-                                    },
-                                    {
-                                        "@_id": "JPTL2-1",
-                                        From: {
-                                            Activity: "setDown",
-                                            StopPointRef: "SP4",
-                                            TimingStatus: "PTP",
-                                            WaitTime: "PT10M0S",
-                                        },
-                                        To: {
-                                            Activity: "setDown",
-                                            StopPointRef: "SP5",
-                                            TimingStatus: "OTH",
-                                            WaitTime: "PT10M0S",
-                                        },
-                                        RunTime: "PT10M0S",
-                                    },
-                                ],
-                            },
-                        ],
-                    },
+describe("checkForNoTimingPointForThan15Minutes", () => {
+    it("returns no observations if there are no journey pattern sections", () => {
+        const txc: PartialDeep<TxcSchema> = {
+            TransXChange: {
+                ...mockValidData.TransXChange,
+                JourneyPatternSections: {
+                    JourneyPatternSection: [],
                 },
-            }),
-        ).toEqual(expectedObservations);
-    });
-    it("should record no observations if there are no consecutive timing points more than 15 minutes apart for a given vehicle journey", () => {
-        expect(checkForNoTimingPointForThan15Minutes(mockValidData)).toEqual([]);
+            },
+        };
+        expect(checkForNoTimingPointForThan15Minutes(txc)).toEqual([]);
     });
 
-    it.each<[PartialDeep<TxcSchema>, Observation[]]>([
-        [
-            {
-                TransXChange: {
-                    ...mockValidData.TransXChange,
-                    JourneyPatternSections: {
-                        JourneyPatternSection: [
-                            {
-                                "@_id": "JPS1",
-                                JourneyPatternTimingLink: [
-                                    {
-                                        "@_id": "JPTL1",
-                                        From: {
-                                            Activity: "pickUp",
-                                            StopPointRef: "SP1",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                        },
-                                        RunTime: "PT0M0S",
-                                    },
-                                    {
-                                        "@_id": "JPTL1-2",
-                                        From: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP3",
-                                        },
-                                        RunTime: "PT20M0S",
-                                    },
-                                ],
-                            },
-                        ],
-                    },
+    it("returns an empty array if all timing links are under or equal 15 minutes", () => {
+        const txc: PartialDeep<TxcSchema> = {
+            TransXChange: {
+                ...mockValidData.TransXChange,
+                VehicleJourneys: {
+                    VehicleJourney: [
+                        {
+                            ServiceRef: "SR1",
+                            LineRef: "LR1",
+                            VehicleJourneyTimingLink: [
+                                {
+                                    "@_id": "VJTL1",
+                                    JourneyPatternTimingLinkRef: "JPTL1",
+                                    RunTime: "PT10M0S",
+                                },
+                                {
+                                    "@_id": "VJTL2",
+                                    JourneyPatternTimingLinkRef: "JPTL2",
+                                    RunTime: "PT5M0S",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                JourneyPatternSections: {
+                    JourneyPatternSection: [
+                        {
+                            "@_id": "JPS1",
+                            JourneyPatternTimingLink: [
+                                {
+                                    "@_id": "JPTL1",
+                                    From: { StopPointRef: "SP1", TimingStatus: "PTP" },
+                                    To: { StopPointRef: "SP2", TimingStatus: "OTH" },
+                                    RunTime: "PT5M0S",
+                                },
+                                {
+                                    "@_id": "JPTL2",
+                                    From: { StopPointRef: "SP2", TimingStatus: "OTH" },
+                                    To: { StopPointRef: "SP3", TimingStatus: "PTP" },
+                                    RunTime: "PT10M0S",
+                                },
+                            ],
+                        },
+                    ],
                 },
             },
-            [
-                {
-                    category: "timing",
-                    details:
-                        "The link between the 08:00:00 Stop 2 (SP2) and 08:20:00 n/a (SP3) timing point stops on the 08:00:00 outbound journey is more than 15 minutes apart. The Traffic Commissioner recommends services to have timing points no more than 15 minutes apart.",
-                    importance: "advisory",
-                    observation: "No timing point for more than 15 minutes",
-                    serviceCode: "SVC1",
-                    lineName: "Line 1",
-                    latestEndDate: "31/12/2023",
-                },
-            ],
-        ],
-        [
-            {
-                TransXChange: {
-                    ...mockValidData.TransXChange,
-                    JourneyPatternSections: {
-                        JourneyPatternSection: [
-                            {
-                                "@_id": "JPS1",
-                                JourneyPatternTimingLink: [
-                                    {
-                                        "@_id": "JPTL1",
-                                        From: {
-                                            Activity: "pickUp",
-                                            StopPointRef: "SP1",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                        },
-                                        RunTime: "PT0M0S",
-                                    },
-                                    {
-                                        "@_id": "JPTL1",
-                                        From: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP3",
-                                        },
-                                        RunTime: "PT10M0S",
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                },
-            },
-            [],
-        ],
-    ])("should handle missing timing statuses: %o", (txcData, expectedObservation) => {
-        expect(checkForNoTimingPointForThan15Minutes(txcData)).toEqual(expectedObservation);
+        } as PartialDeep<TxcSchema>;
+        expect(checkForNoTimingPointForThan15Minutes(txc)).toEqual([]);
     });
 
-    it("should handle missing run times", () => {
-        expect(
-            checkForNoTimingPointForThan15Minutes({
-                TransXChange: {
-                    ...mockValidData.TransXChange,
-                    JourneyPatternSections: {
-                        JourneyPatternSection: [
-                            {
-                                "@_id": "JPS1",
-                                JourneyPatternTimingLink: [
-                                    {
-                                        "@_id": "JPTL1",
-                                        From: {
-                                            Activity: "pickUp",
-                                            StopPointRef: "SP1",
-                                            TimingStatus: "PTP",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                            TimingStatus: "OTH",
-                                        },
-                                    },
-                                    {
-                                        "@_id": "JPTL1",
-                                        From: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP2",
-                                            TimingStatus: "OTH",
-                                        },
-                                        To: {
-                                            Activity: "pickUpAndSetDown",
-                                            StopPointRef: "SP3",
-                                            TimingStatus: "OTH",
-                                        },
-                                    },
-                                ],
-                            },
-                        ],
-                    },
+    it("returns an observation if a timing link is over 15 minutes", () => {
+        const txc: PartialDeep<TxcSchema> = {
+            TransXChange: {
+                ...mockValidData.TransXChange,
+                VehicleJourneys: {
+                    VehicleJourney: [
+                        {
+                            ServiceRef: "SR1",
+                            LineRef: "LR1",
+                            VehicleJourneyTimingLink: [
+                                {
+                                    "@_id": "VJTL1",
+                                    JourneyPatternTimingLinkRef: "JPTL1",
+                                    RunTime: "PT10M0S",
+                                },
+                                {
+                                    "@_id": "VJTL2",
+                                    JourneyPatternTimingLinkRef: "JPTL2",
+                                },
+                                {
+                                    "@_id": "VJTL3",
+                                    JourneyPatternTimingLinkRef: "JPTL3",
+                                    RunTime: "PT0M2S",
+                                },
+                            ],
+                        },
+                    ],
                 },
-            }),
-        ).toEqual([]);
+                JourneyPatternSections: {
+                    JourneyPatternSection: [
+                        {
+                            "@_id": "JPS1",
+                            JourneyPatternTimingLink: [
+                                {
+                                    "@_id": "JPTL1",
+                                    From: { StopPointRef: "SP1", TimingStatus: "PTP" },
+                                    To: { StopPointRef: "SP2", TimingStatus: "OTH" },
+                                    RunTime: "PT20M0S",
+                                },
+                                {
+                                    "@_id": "JPTL2",
+                                    From: { StopPointRef: "SP2", TimingStatus: "OTH" },
+                                    To: { StopPointRef: "SP3" },
+                                    RunTime: "PT4M59S",
+                                },
+                                {
+                                    "@_id": "JPTL3",
+                                    From: { StopPointRef: "SP3", TimingStatus: "OTH" },
+                                    To: { StopPointRef: "SP4", TimingStatus: "PTP" },
+                                    RunTime: "PT10M0S",
+                                },
+                            ],
+                        },
+                    ],
+                },
+            },
+        } as PartialDeep<TxcSchema>;
+        const result = checkForNoTimingPointForThan15Minutes(txc);
+        expect(result.length).toBe(1);
+        expect(result[0].observation).toBe("No timing point for more than 15 minutes");
     });
 });

@@ -117,7 +117,7 @@ export const isDateBetween = (date: Dayjs, startDate: Dayjs, endDate: Dayjs) =>
 
 export const isDateAfter = (date: Dayjs, dateToCompare: Dayjs) => date.isSameOrAfter(dateToCompare);
 
-export const getDuration = (duration: string) => dayjs.duration(duration);
+export const getDuration = dayjs.duration;
 
 export const getDurationInSeconds = (duration: number) => dayjs.duration(duration, "seconds");
 
