@@ -61,3 +61,7 @@ variable "bank_holidays_bucket_name" {
   type        = string
   description = "Name of the output bucket for bank holidays JSON"
 }
+
+variable "tfl_txc_bucket_name" {
+  type = string
+}

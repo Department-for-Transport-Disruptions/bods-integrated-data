@@ -4,9 +4,11 @@ import {
     GetObjectCommandInput,
     ListObjectsV2Command,
     ListObjectsV2CommandInput,
+    ListObjectsV2CommandOutput,
     PutObjectCommand,
     PutObjectCommandInput,
     S3Client,
+    _Object,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -32,6 +34,33 @@ const client = new S3Client({
 });
 
 export const listS3Objects = async (input: ListObjectsV2CommandInput) => client.send(new ListObjectsV2Command(input));
+
+export const listAllS3Objects = async (input: ListObjectsV2CommandInput) => {
+    let continuationToken: string | undefined = undefined;
+    const allObjects: _Object[] = [];
+
+    try {
+        do {
+            const response: ListObjectsV2CommandOutput = await client.send(
+                new ListObjectsV2Command({
+                    ...input,
+                    ContinuationToken: continuationToken,
+                }),
+            );
+
+            if (response.Contents) {
+                allObjects.push(...response.Contents);
+            }
+
+            continuationToken = response.NextContinuationToken;
+        } while (continuationToken);
+    } catch (error) {
+        console.error("Error listing S3 objects:", error);
+        throw error;
+    }
+
+    return allObjects;
+};
 
 export const getS3Object = async (input: GetObjectCommandInput) =>
     client.send(

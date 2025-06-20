@@ -17,9 +17,11 @@ export const getFilePath = (filePathWithFile: string) => {
 
 // Retry upload with exponential backoff for rate limiting errors to account for zips with many files
 const uploadWithRetry = async (entry: Entry, bucketName: string, key: string, maxRetries = 3): Promise<void> => {
+    const buffer = await entry.buffer();
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const upload = startS3Upload(bucketName, key, entry, "application/xml");
+            const upload = startS3Upload(bucketName, key, buffer, "application/xml");
             await upload.done();
             return;
         } catch (error) {
