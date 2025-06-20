@@ -84,6 +84,10 @@ export const handler: Handler = async (event, context) => {
         throw new Error("Missing env var - TFL_TXC_BUCKET_NAME must be set");
     }
 
+    if (!event.datePrefix) {
+        throw new Error("Missing event property - datePrefix must be set");
+    }
+
     dbClient = dbClient || (await getDatabaseClient(stage === "local"));
 
     const { lineId } = event;
@@ -113,7 +117,7 @@ export const handler: Handler = async (event, context) => {
 
         await putS3Object({
             Bucket: tflTxcBucketName,
-            Key: `${parsedLineId}.xml`,
+            Key: `${event.datePrefix}/${parsedLineId}.xml`,
             Body: txc,
             ContentType: "application/xml",
             StorageClass: "INTELLIGENT_TIERING",

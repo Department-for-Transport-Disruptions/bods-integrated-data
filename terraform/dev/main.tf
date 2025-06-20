@@ -174,6 +174,7 @@ module "integrated_data_txc_pipeline" {
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = module.integrated_data_aurora_db_dev.s3_output_bucket_name
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
+  tfl_txc_bucket_name       = module.integrated_data_tfl_pipeline.tfl_txc_bucket_name
 }
 
 module "integrated_data_gtfs_downloader" {
@@ -335,6 +336,7 @@ module "integrated_data_timetables_sfn" {
   tnds_txc_zipped_bucket_name                     = module.integrated_data_txc_pipeline.tnds_txc_zipped_bucket_name
   bods_txc_zipped_bucket_name                     = module.integrated_data_txc_pipeline.bods_txc_zipped_bucket_name
   bods_txc_bucket_name                            = module.integrated_data_txc_pipeline.bods_txc_bucket_name
+  tfl_txc_bucket_name                             = module.integrated_data_tfl_pipeline.tfl_txc_bucket_name
   tnds_txc_bucket_name                            = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   noc_bucket_name                                 = module.integrated_data_noc_pipeline.noc_bucket_name
   naptan_bucket_name                              = module.integrated_data_naptan_pipeline.naptan_bucket_name
@@ -343,6 +345,8 @@ module "integrated_data_timetables_sfn" {
   bods_netex_unzipper_function_arn                = module.integrated_data_bods_netex_pipeline.bods_netex_unzipper_function_arn
   bods_netex_zipped_bucket_name                   = module.integrated_data_bods_netex_pipeline.bods_netex_zipped_bucket_name
   bods_netex_bucket_name                          = module.integrated_data_bods_netex_pipeline.bods_netex_bucket_name
+  tfl_txc_sfn_arn                                 = module.integrated_data_tfl_pipeline.tfl_txc_sfn_arn
+  tfl_txc_sfn_name                                = module.integrated_data_tfl_pipeline.tfl_txc_sfn_name
 }
 
 module "integrated_data_gtfs_api" {

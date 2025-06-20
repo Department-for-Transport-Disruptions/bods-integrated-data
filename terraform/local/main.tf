@@ -101,6 +101,7 @@ module "integrated_data_txc_pipeline" {
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = "integrated-data-aurora-output-${local.env}"
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
+  tfl_txc_bucket_name       = module.integrated_data_tfl_pipeline.tfl_txc_bucket_name
 }
 
 module "integrated_data_gtfs_downloader" {

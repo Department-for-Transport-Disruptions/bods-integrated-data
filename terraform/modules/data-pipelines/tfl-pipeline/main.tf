@@ -24,6 +24,10 @@ resource "aws_s3_bucket" "integrated_data_tfl_txc_bucket" {
   bucket = "integrated-data-tfl-txc-${var.environment}"
 }
 
+resource "aws_s3_bucket" "integrated_data_zipped_tfl_txc_bucket" {
+  bucket = "integrated-data-zipped-tfl-txc-${var.environment}"
+}
+
 resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetable_zipped_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_tfl_timetable_zipped_bucket.id
 
@@ -44,6 +48,15 @@ resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_timetable_buck
 
 resource "aws_s3_bucket_public_access_block" "integrated_data_tfl_txc_bucket_block_public_access" {
   bucket = aws_s3_bucket.integrated_data_tfl_txc_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_public_access_block" "integrated_data_zipped_tfl_txc_bucket_block_public_access" {
+  bucket = aws_s3_bucket.integrated_data_zipped_tfl_txc_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -83,8 +96,24 @@ resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_timetable_
   }
 }
 
-resource "aws_s3_bucket_versioning" "integrated_data_tfl_txc_bucket_versioning" {
+resource "aws_s3_bucket_lifecycle_configuration" "integrated_data_tfl_txc_bucket_lifecycle" {
   bucket = aws_s3_bucket.integrated_data_tfl_txc_bucket.id
+  rule {
+    id = "config"
+
+    filter {
+      prefix = ""
+    }
+
+    expiration {
+      days = 30
+    }
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "integrated_data_zipped_tfl_txc_bucket_versioning" {
+  bucket = aws_s3_bucket.integrated_data_zipped_tfl_txc_bucket.id
 
   versioning_configuration {
     status = "Enabled"
@@ -325,6 +354,54 @@ module "integrated_data_tfl_txc_generator_function" {
   }
 }
 
+module "integrated_data_tfl_txc_zipper_function" {
+  source = "../../shared/lambda-function"
+
+  environment       = var.environment
+  function_name     = "integrated-data-tfl-txc-zipper"
+  zip_path          = "${path.module}/../../../../src/functions/dist/tfl-txc-zipper.zip"
+  handler           = "index.handler"
+  runtime           = "nodejs22.x"
+  timeout           = 300
+  memory            = 5120
+  ephemeral_storage = 5120
+
+  permissions = [
+    {
+      Action = [
+        "s3:PutObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_zipped_tfl_txc_bucket.arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "s3:GetObject",
+      ],
+      Effect = "Allow",
+      Resource = [
+        "${aws_s3_bucket.integrated_data_tfl_txc_bucket.arn}/*"
+      ]
+    },
+    {
+      Action = [
+        "s3:ListBucket",
+      ],
+      Effect = "Allow",
+      Resource = [
+        aws_s3_bucket.integrated_data_tfl_txc_bucket.arn
+      ]
+    },
+  ]
+
+  env_vars = {
+    TFL_TXC_BUCKET_NAME        = aws_s3_bucket.integrated_data_tfl_txc_bucket.bucket
+    ZIPPED_TFL_TXC_BUCKET_NAME = aws_s3_bucket.integrated_data_zipped_tfl_txc_bucket.bucket
+  }
+}
+
 resource "aws_iam_role" "integrated_data_tfl_txc_sfn_role" {
   name = "integrated-data-tfl-txc-sfn-role-${var.environment}"
 
@@ -348,6 +425,7 @@ resource "aws_sfn_state_machine" "integrated_data_tfl_txc_sfn" {
   definition = templatefile("${path.module}/tfl-txc-generator-state-machine.asl.json", {
     tfl_txc_line_id_retriever_function_arn = module.integrated_data_tfl_txc_line_id_retriever_function.function_arn
     tfl_txc_generator_function_arn         = module.integrated_data_tfl_txc_generator_function.function_arn
+    tfl_txc_zipper_function_arn            = module.integrated_data_tfl_txc_zipper_function.function_arn
     tfl_timetable_retriever_function_arn   = module.integrated_data_tfl_timetable_retriever_function.function_arn
     tfl_timetable_unzipper_function_arn    = module.integrated_data_tfl_timetable_unzipper_function.function_arn
     tfl_timetable_processor_function_arn   = module.integrated_data_tfl_timetable_processor_function.function_arn
@@ -370,6 +448,8 @@ resource "aws_iam_policy" "integrated_data_tfl_txc_sfn_policy" {
         "Resource" : [
           module.integrated_data_tfl_txc_generator_function.function_arn,
           "${module.integrated_data_tfl_txc_generator_function.function_arn}*",
+          module.integrated_data_tfl_txc_zipper_function.function_arn,
+          "${module.integrated_data_tfl_txc_zipper_function.function_arn}*",
           module.integrated_data_tfl_txc_line_id_retriever_function.function_arn,
           "${module.integrated_data_tfl_txc_line_id_retriever_function.function_arn}*",
           module.integrated_data_tfl_timetable_retriever_function.function_arn,

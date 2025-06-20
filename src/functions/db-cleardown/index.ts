@@ -1,4 +1,6 @@
+import { DEFAULT_DATE_FORMAT } from "@bods-integrated-data/shared/constants";
 import { Database, KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
+import { getDate } from "@bods-integrated-data/shared/dates";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
 import { sql } from "kysely";
@@ -51,9 +53,13 @@ export const handler: Handler = async (event, context) => {
         await cleardownDatabase(dbClient, ONLY_GTFS === "true");
 
         logger.info("Database preparation complete");
+
+        return {
+            prefix: getDate().format(DEFAULT_DATE_FORMAT), // For use in step function
+        };
     } catch (e) {
         if (e instanceof Error) {
-            logger.error(e, "Error running the TXC Retriever");
+            logger.error(e, "Error running the DB Cleardown");
         }
 
         throw e;

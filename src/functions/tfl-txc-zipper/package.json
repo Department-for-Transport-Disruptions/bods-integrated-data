@@ -1,0 +1,23 @@
+{
+    "name": "@bods-integrated-data/tfl-txc-zipper",
+    "version": "0.1.0",
+    "description": "Zip TfL TxC",
+    "scripts": {
+        "build:ci": "rm -rf ./dist && tsc && node ./esbuild.mjs && cd ./dist && zip -rq ./tfl-txc-zipper.zip .",
+        "build:local": "pnpm run build:ci && mkdir -p ../dist && cp ./dist/tfl-txc-zipper.zip ../dist",
+        "test": "vitest run"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@bods-integrated-data/shared": "workspace:^",
+        "adm-zip": "^0.5.10"
+    },
+    "devDependencies": {
+        "@types/adm-zip": "^0.5.5",
+        "@types/aws-lambda": "^8.10.110",
+        "@types/node": "^22.15.32"
+    }
+}

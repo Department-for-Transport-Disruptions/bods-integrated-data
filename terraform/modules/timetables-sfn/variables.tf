@@ -83,6 +83,10 @@ variable "bods_txc_bucket_name" {
   type = string
 }
 
+variable "tfl_txc_bucket_name" {
+  type = string
+}
+
 variable "tnds_txc_bucket_name" {
   type = string
 }
@@ -120,4 +124,12 @@ variable "schedule" {
   description = "Cron schedule to trigger the step function"
   nullable    = true
   default     = null
+}
+
+variable "tfl_txc_sfn_arn" {
+  type = string
+}
+
+variable "tfl_txc_sfn_name" {
+  type = string
 }
