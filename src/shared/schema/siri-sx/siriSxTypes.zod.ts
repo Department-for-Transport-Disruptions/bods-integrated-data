@@ -1,9 +1,12 @@
 import { randomUUID } from "node:crypto";
 import dayjs from "dayjs";
+import { NotNull } from "kysely";
 import { z } from "zod";
 import { getCancellationErrorDetails } from "../../cancellations/utils";
 import { putMetricData } from "../../cloudwatch";
+import { KyselyDb } from "../../database";
 import { logger } from "../../logger";
+import { notEmpty } from "../../utils";
 import { CancellationsValidationError } from "../cancellations-validation-error.schema";
 import { datetimeSchema } from "../misc.schema";
 import { enumSchema } from "../utils";
@@ -26,6 +29,7 @@ import {
     StopPointType,
     VehicleMode,
 } from "./enums";
+import { PtSituationElement } from "./siriSxTypes";
 
 export const booleanStringSchema = z.enum(["true", "false"]).transform((value) => value === "true");
 
@@ -371,11 +375,17 @@ export const ptSituationElementSchema = z
  * The purpose of this transformer is to filter out invalid situations
  * and return the rest of the data as valid.
  */
-const makeFilteredPtSituationArraySchema = (namespace: string, errors?: CancellationsValidationError[]) =>
-    z.preprocess((input) => {
+const makeFilteredPtSituationArraySchema = async (
+    namespace: string,
+    dbClient?: KyselyDb,
+    errors?: CancellationsValidationError[],
+) =>
+    z.preprocess(async (input) => {
         const result = z.any().array().parse(input);
 
-        return result.filter((item) => {
+        const stopRefs: string[] = [];
+
+        const filteredItems = result.flatMap((item) => {
             const parsedItem = ptSituationElementSchema.safeParse(item);
 
             if (!parsedItem.success) {
@@ -402,13 +412,63 @@ const makeFilteredPtSituationArraySchema = (namespace: string, errors?: Cancella
                 putMetricData(`custom/${namespace}`, [
                     { MetricName: "MakeFilteredPtSituationArrayParseError", Value: 1 },
                 ]);
+
+                return [];
             }
 
-            return parsedItem.success;
+            stopRefs.push(
+                ...(parsedItem.data.Affects?.VehicleJourneys?.AffectedVehicleJourney.flatMap((vj) =>
+                    vj.Calls?.Call.flatMap((call) => call.StopPointRef),
+                ).filter(notEmpty) || []),
+            );
+
+            return parsedItem.data;
         });
+
+        if (!dbClient || stopRefs.length === 0) {
+            return filteredItems;
+        }
+
+        logger.info(`Generating stop map for ${stopRefs.length} stop references`);
+
+        const naptanStops = await dbClient
+            .selectFrom("naptan_stop")
+            .select(["naptan_code", "atco_code"])
+            .where("naptan_code", "in", stopRefs)
+            .where("naptan_code", "is not", null)
+            .$narrowType<{ naptan_code: NotNull }>()
+            .execute();
+
+        const stopMap = naptanStops.reduce<Record<string, string>>((acc, stop) => {
+            acc[stop.naptan_code] = stop.atco_code;
+
+            return acc;
+        }, {});
+
+        return filteredItems.map<PtSituationElement>((item) => ({
+            ...item,
+            Affects: {
+                ...item.Affects,
+                VehicleJourneys: {
+                    ...item.Affects?.VehicleJourneys,
+                    AffectedVehicleJourney: (item.Affects?.VehicleJourneys?.AffectedVehicleJourney ?? []).map((vj) => ({
+                        ...vj,
+                        Calls: {
+                            ...vj.Calls,
+                            Call: (vj.Calls?.Call ?? []).map((call) => ({
+                                ...call,
+                                ...(call.StopPointRef
+                                    ? { StopPointRef: stopMap[call.StopPointRef] ?? call.StopPointRef }
+                                    : {}),
+                            })),
+                        },
+                    })),
+                },
+            },
+        }));
     }, z.array(ptSituationElementSchema));
 
-export const siriSxSchema = (errors?: CancellationsValidationError[]) =>
+export const siriSxSchema = async (dbClient?: KyselyDb, errors?: CancellationsValidationError[]) =>
     z.object({
         Siri: z.object({
             ServiceDelivery: z.object({
@@ -420,7 +480,11 @@ export const siriSxSchema = (errors?: CancellationsValidationError[]) =>
                     Status: booleanStringSchema.optional(),
                     ShortestPossibleCycle: z.string().optional(),
                     Situations: z.object({
-                        PtSituationElement: makeFilteredPtSituationArraySchema("SiriSxPtSituationArraySchema", errors),
+                        PtSituationElement: await makeFilteredPtSituationArraySchema(
+                            "SiriSxPtSituationArraySchema",
+                            dbClient,
+                            errors,
+                        ),
                     }),
                 }),
             }),

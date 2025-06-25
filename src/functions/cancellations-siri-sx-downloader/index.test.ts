@@ -100,7 +100,7 @@ describe("cancellations-siri-sx-downloader-endpoint", () => {
         describe("valid requests", () => {
             it("returns a 200 with filtered data when the subscriptionId query param is used", async () => {
                 getSituationsDataForSiriSxMock.mockResolvedValueOnce([]);
-                createSiriSxMock.mockReturnValueOnce("siri-output");
+                createSiriSxMock.mockResolvedValue("siri-output");
 
                 mockRequest.queryStringParameters = {
                     subscriptionId: "1,2,3",

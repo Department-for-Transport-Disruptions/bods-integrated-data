@@ -48,18 +48,24 @@ describe("cancellations-processor", () => {
     MockDate.set("2024-07-22T12:00:00.000Z");
     const uuidSpy = vi.spyOn(crypto, "randomUUID");
     const getDynamoItemSpy = vi.spyOn(dynamo, "getDynamoItem");
-    const putDynamoItemsSpy = vi.spyOn(dynamo, "putDynamoItems");
     const putMetricDataSpy = vi.spyOn(cloudwatch, "putMetricData");
 
     const valuesMock = vi.fn().mockReturnValue({
         execute: vi.fn().mockResolvedValue(""),
     });
 
-    const dbClient = {
+    let dbClient = {
         insertInto: () => ({
             values: vi.fn().mockReturnValue({
                 onConflict: valuesMock,
             }),
+        }),
+        selectFrom: vi.fn().mockReturnValue({
+            distinctOn: vi.fn().mockReturnThis(),
+            select: vi.fn().mockReturnThis(),
+            where: vi.fn().mockReturnThis(),
+            $narrowType: vi.fn().mockReturnThis(),
+            execute: vi.fn().mockResolvedValue([]),
         }),
     };
 
@@ -94,6 +100,21 @@ describe("cancellations-processor", () => {
 
         uuidSpy.mockReturnValue("12a345b6-2be9-49bb-852f-21e5a2400ea6");
         getDynamoItemSpy.mockResolvedValue(cancellationsSubscription);
+
+        dbClient = {
+            insertInto: () => ({
+                values: vi.fn().mockReturnValue({
+                    onConflict: valuesMock,
+                }),
+            }),
+            selectFrom: vi.fn().mockReturnValue({
+                distinctOn: vi.fn().mockReturnThis(),
+                select: vi.fn().mockReturnThis(),
+                where: vi.fn().mockReturnThis(),
+                $narrowType: vi.fn().mockReturnThis(),
+                execute: vi.fn().mockResolvedValue([]),
+            }),
+        };
     });
 
     it.each(["live", "error"] as const)(
@@ -119,6 +140,13 @@ describe("cancellations-processor", () => {
             const dbClient = {
                 insertInto: () => ({
                     values: valuesMock,
+                }),
+                selectFrom: vi.fn().mockReturnValue({
+                    distinctOn: vi.fn().mockReturnThis(),
+                    select: vi.fn().mockReturnThis(),
+                    where: vi.fn().mockReturnThis(),
+                    $narrowType: vi.fn().mockReturnThis(),
+                    execute: vi.fn().mockResolvedValue([]),
                 }),
             };
 
@@ -204,7 +232,8 @@ describe("cancellations-processor", () => {
             }),
         });
 
-        const dbClient = {
+        dbClient = {
+            ...dbClient,
             insertInto: () => ({
                 values: valuesMock,
             }),
@@ -275,7 +304,7 @@ describe("cancellations-processor", () => {
             "cancellations-validation-errors-table",
         );
 
-        expect(putDynamoItemsSpy).toHaveBeenCalledWith(
+        expect(dynamo.putDynamoItems).toHaveBeenCalledWith(
             "cancellations-validation-errors-table",
             expectedValidationErrors,
         );

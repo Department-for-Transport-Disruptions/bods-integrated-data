@@ -26,7 +26,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const getAndParseData = async (bucketName: string, objectKey: string) => {
+const getAndParseData = async (bucketName: string, objectKey: string, dbClient: KyselyDb) => {
     const file = await getS3Object({
         Bucket: bucketName,
         Key: objectKey,
@@ -46,7 +46,7 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
     });
 
     const parsedXml = parser.parse(xml);
-    const parseResult = siriSxSchema().safeParse(parsedXml);
+    const parseResult = await (await siriSxSchema(dbClient)).safeParseAsync(parsedXml);
 
     if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
@@ -140,7 +140,7 @@ export const handler: S3Handler = async (event, context) => {
         logger.filepath = object.key;
         logger.info("Starting processing of disruptions data");
 
-        const situationData = await getAndParseData(bucket.name, object.key);
+        const situationData = await getAndParseData(bucket.name, object.key, dbClient);
         const entities = await mapPtSituationsToGtfsAlertEntities(
             dbClient,
             situationData.Siri.ServiceDelivery.SituationExchangeDelivery.Situations.PtSituationElement,

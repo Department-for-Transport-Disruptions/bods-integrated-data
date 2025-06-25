@@ -69,7 +69,7 @@ export const insertSituations = async (dbClient: KyselyDb, cancellations: NewSit
     );
 };
 
-export const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
+export const createSiriSx = async (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = formatSiriDatetime(responseTime, true);
 
     const siriSx: SiriSx = {
@@ -92,7 +92,7 @@ export const createSiriSx = (situations: Situation[], requestMessageRef: string,
     };
 
     const siriSxWithoutEmptyFields = cleanDeep(siriSx, { emptyObjects: false, emptyArrays: false });
-    const verifiedObject = siriSxSchema().parse(siriSxWithoutEmptyFields);
+    const verifiedObject = await (await siriSxSchema()).parseAsync(siriSxWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriSx["Siri"]>> = {
         Siri: {
@@ -121,7 +121,7 @@ const createAndValidateSiriSx = async (
     responseTime: Dayjs,
     lintSiri: boolean,
 ) => {
-    const siriSx = createSiriSx(situations, requestMessageRef, responseTime);
+    const siriSx = await createSiriSx(situations, requestMessageRef, responseTime);
 
     if (lintSiri) {
         try {

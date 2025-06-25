@@ -19,7 +19,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const parseXml = (xml: string, errors: CancellationsValidationError[]) => {
+const parseXml = async (xml: string, errors: CancellationsValidationError[], dbClient: KyselyDb) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
@@ -28,7 +28,7 @@ const parseXml = (xml: string, errors: CancellationsValidationError[]) => {
     });
 
     const parsedXml = parser.parse(xml);
-    const parsedJson = siriSxSchema(errors).safeParse(parsedXml);
+    const parsedJson = await (await siriSxSchema(dbClient, errors)).safeParseAsync(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(`There was an error parsing the cancellations data: ${parsedJson.error.format()}`);
@@ -84,7 +84,7 @@ export const getSituationEndTime = (situationValidityPeriods: Period[]): string 
     for (const validityPeriod of situationValidityPeriods) {
         const endTime = validityPeriod.EndTime ? getDate(validityPeriod.EndTime) : undefined;
 
-        if (!!endTime && endTime >= situationEndTime) {
+        if (!!endTime && endTime.isAfter(situationEndTime)) {
             situationEndTime = endTime;
             hasEndTime = true;
         }
@@ -129,7 +129,7 @@ export const processSqsRecord = async (
         if (body) {
             const xml = await body.transformToString();
             const errors: CancellationsValidationError[] = [];
-            const { responseTimestamp, siriSx } = parseXml(xml, errors);
+            const { responseTimestamp, siriSx } = await parseXml(xml, errors, dbClient);
 
             if (errors.length > 0) {
                 await uploadValidationErrorsToDatabase(
