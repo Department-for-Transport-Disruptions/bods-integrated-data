@@ -1,5 +1,7 @@
 import { z } from "zod";
-import {
+import { siriSxSchemaWrapper } from "./siriSxTypes.zod";
+
+const {
     affectedLineSchema,
     affectedOperatorSchema,
     affectedStopPointsSchema,
@@ -21,7 +23,7 @@ import {
     siriSxSchema,
     situationElementRefSchema,
     sourceSchema,
-} from "./siriSxTypes.zod";
+} = siriSxSchemaWrapper();
 
 export type Source = z.infer<typeof sourceSchema>;
 export type Period = z.infer<typeof periodSchema>;
@@ -43,4 +45,4 @@ export type Affects = z.infer<typeof affectsSchema>;
 export type Consequence = z.infer<typeof consequenceSchema>;
 export type Consequences = z.infer<typeof consequencesSchema>;
 export type PtSituationElement = z.infer<typeof ptSituationElementSchema>;
-export type SiriSx = z.infer<ReturnType<typeof siriSxSchema>>;
+export type SiriSx = z.infer<typeof siriSxSchema>;

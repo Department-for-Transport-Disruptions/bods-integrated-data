@@ -11,7 +11,7 @@ import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
-import { SiriSx, siriSxSchema } from "../schema";
+import { SiriSx, siriSxSchemaWrapper } from "../schema";
 import {
     CancellationsSubscription,
     cancellationsSubscriptionSchema,
@@ -92,7 +92,10 @@ export const createSiriSx = (situations: Situation[], requestMessageRef: string,
     };
 
     const siriSxWithoutEmptyFields = cleanDeep(siriSx, { emptyObjects: false, emptyArrays: false });
-    const verifiedObject = siriSxSchema().parse(siriSxWithoutEmptyFields);
+
+    const { siriSxSchema } = siriSxSchemaWrapper();
+
+    const verifiedObject = siriSxSchema.parse(siriSxWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriSx["Siri"]>> = {
         Siri: {

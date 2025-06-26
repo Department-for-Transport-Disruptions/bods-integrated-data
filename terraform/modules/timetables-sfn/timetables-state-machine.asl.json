@@ -382,6 +382,7 @@
                         },
                         "Get Zipped BODS TXC Keys": {
                             "Type": "Map",
+                            "ToleratedFailureCount": 40,
                             "ItemProcessor": {
                                 "ProcessorConfig": {
                                     "Mode": "DISTRIBUTED",

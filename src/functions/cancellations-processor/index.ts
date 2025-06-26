@@ -10,16 +10,43 @@ import { getDate } from "@bods-integrated-data/shared/dates";
 import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { CancellationsValidationError, Period, siriSxSchema } from "@bods-integrated-data/shared/schema";
+import { CancellationsValidationError, Period, SiriSx, siriSxSchemaWrapper } from "@bods-integrated-data/shared/schema";
+import { notEmpty } from "@bods-integrated-data/shared/utils";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
+import type { NotNull } from "kysely";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const parseXml = (xml: string, errors: CancellationsValidationError[]) => {
+const createStopMap = async (siriSx: SiriSx, dbClient: KyselyDb) => {
+    const stopRefs =
+        siriSx.Siri?.ServiceDelivery?.SituationExchangeDelivery?.Situations?.PtSituationElement?.flatMap((pt) =>
+            pt.Affects?.VehicleJourneys?.AffectedVehicleJourney.flatMap((vj) =>
+                vj.Calls?.Call.flatMap((call) => call.StopPointRef),
+            ),
+        ).filter(notEmpty) || [];
+
+    logger.info(`Generating stop map for ${stopRefs.length} stop references`);
+
+    const naptanStops = await dbClient
+        .selectFrom("naptan_stop")
+        .select(["naptan_code", "atco_code"])
+        .where("naptan_code", "in", stopRefs)
+        .where("naptan_code", "is not", null)
+        .$narrowType<{ naptan_code: NotNull }>()
+        .execute();
+
+    return naptanStops.reduce<Record<string, string>>((acc, stop) => {
+        acc[stop.naptan_code] = stop.atco_code;
+
+        return acc;
+    }, {});
+};
+
+const parseXml = async (xml: string, errors: CancellationsValidationError[], dbClient: KyselyDb) => {
     const parser = new XMLParser({
         allowBooleanAttributes: true,
         ignoreAttributes: true,
@@ -28,7 +55,12 @@ const parseXml = (xml: string, errors: CancellationsValidationError[]) => {
     });
 
     const parsedXml = parser.parse(xml);
-    const parsedJson = siriSxSchema(errors).safeParse(parsedXml);
+
+    const stopMap = await createStopMap(parsedXml as SiriSx, dbClient);
+
+    const { siriSxSchema } = siriSxSchemaWrapper(stopMap, errors);
+
+    const parsedJson = siriSxSchema.safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(`There was an error parsing the cancellations data: ${parsedJson.error.format()}`);
@@ -84,7 +116,7 @@ export const getSituationEndTime = (situationValidityPeriods: Period[]): string 
     for (const validityPeriod of situationValidityPeriods) {
         const endTime = validityPeriod.EndTime ? getDate(validityPeriod.EndTime) : undefined;
 
-        if (!!endTime && endTime >= situationEndTime) {
+        if (!!endTime && endTime.isSameOrAfter(situationEndTime)) {
             situationEndTime = endTime;
             hasEndTime = true;
         }
@@ -129,7 +161,7 @@ export const processSqsRecord = async (
         if (body) {
             const xml = await body.transformToString();
             const errors: CancellationsValidationError[] = [];
-            const { responseTimestamp, siriSx } = parseXml(xml, errors);
+            const { responseTimestamp, siriSx } = await parseXml(xml, errors, dbClient);
 
             if (errors.length > 0) {
                 await uploadValidationErrorsToDatabase(
