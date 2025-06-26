@@ -22,7 +22,7 @@ describe("cancelllations utils", () => {
     });
 
     describe("createSiriSx", () => {
-        it("creates valid siri-sx xml, even when the Route tag has no nested properties", async () => {
+        it("creates valid siri-sx xml, even when the Route tag has no nested properties", () => {
             const timestamp = getDate();
 
             const situation: Situation = {
@@ -60,7 +60,7 @@ describe("cancelllations utils", () => {
 
             const siriSxXml = `<Siri version="2.0" xmlns="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.siri.org.uk/siri http://www.siri.org.uk/schema/2.0/xsd/siri.xsd"><ServiceDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><ProducerRef>DepartmentForTransport</ProducerRef><ResponseMessageIdentifier>ref</ResponseMessageIdentifier><SituationExchangeDelivery><ResponseTimestamp>2024-03-11T15:20:02.093+00:00</ResponseTimestamp><Situations><PtSituationElement><CreationTime>2024-03-11T15:20:02.093Z</CreationTime><ParticipantRef>par-1</ParticipantRef><SituationNumber>display-id-1</SituationNumber><Source><SourceType>other</SourceType></Source><VersionedAtTime>2024-03-11T15:20:02.093Z</VersionedAtTime><Progress>closed</Progress><MiscellaneousReason>accident</MiscellaneousReason><Affects><VehicleJourneys><AffectedVehicleJourney><VehicleJourneyRef>vj-1</VehicleJourneyRef><Route></Route></AffectedVehicleJourney></VehicleJourneys></Affects></PtSituationElement></Situations></SituationExchangeDelivery></ServiceDelivery></Siri>`;
 
-            const result = await createSiriSx([situation], "ref", timestamp);
+            const result = createSiriSx([situation], "ref", timestamp);
             expect(putMetricDataSpy).not.toHaveBeenCalled();
             expect(result).toEqual(siriSxXml);
         });

@@ -6,7 +6,7 @@ import { transit_realtime } from "@bods-integrated-data/shared/gtfs-realtime";
 import { generateGtfsRtFeed, uploadGtfsRtToS3 } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { PtSituationElement, siriSxSchema } from "@bods-integrated-data/shared/schema";
+import { PtSituationElement, siriSxSchemaWrapper } from "@bods-integrated-data/shared/schema";
 import { InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -26,7 +26,7 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const getAndParseData = async (bucketName: string, objectKey: string, dbClient: KyselyDb) => {
+const getAndParseData = async (bucketName: string, objectKey: string) => {
     const file = await getS3Object({
         Bucket: bucketName,
         Key: objectKey,
@@ -46,7 +46,8 @@ const getAndParseData = async (bucketName: string, objectKey: string, dbClient: 
     });
 
     const parsedXml = parser.parse(xml);
-    const parseResult = await (await siriSxSchema(dbClient)).safeParseAsync(parsedXml);
+    const { siriSxSchema } = siriSxSchemaWrapper();
+    const parseResult = siriSxSchema.safeParse(parsedXml);
 
     if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
@@ -140,7 +141,7 @@ export const handler: S3Handler = async (event, context) => {
         logger.filepath = object.key;
         logger.info("Starting processing of disruptions data");
 
-        const situationData = await getAndParseData(bucket.name, object.key, dbClient);
+        const situationData = await getAndParseData(bucket.name, object.key);
         const entities = await mapPtSituationsToGtfsAlertEntities(
             dbClient,
             situationData.Siri.ServiceDelivery.SituationExchangeDelivery.Situations.PtSituationElement,

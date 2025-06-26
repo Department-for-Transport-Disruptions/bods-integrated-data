@@ -11,7 +11,7 @@ import { getDate } from "../dates";
 import { getDynamoItem, recursiveScan } from "../dynamo";
 import { logger } from "../logger";
 import { putS3Object } from "../s3";
-import { SiriSx, siriSxSchema } from "../schema";
+import { SiriSx, siriSxSchemaWrapper } from "../schema";
 import {
     CancellationsSubscription,
     cancellationsSubscriptionSchema,
@@ -69,7 +69,7 @@ export const insertSituations = async (dbClient: KyselyDb, cancellations: NewSit
     );
 };
 
-export const createSiriSx = async (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
+export const createSiriSx = (situations: Situation[], requestMessageRef: string, responseTime: Dayjs) => {
     const currentTime = formatSiriDatetime(responseTime, true);
 
     const siriSx: SiriSx = {
@@ -92,7 +92,10 @@ export const createSiriSx = async (situations: Situation[], requestMessageRef: s
     };
 
     const siriSxWithoutEmptyFields = cleanDeep(siriSx, { emptyObjects: false, emptyArrays: false });
-    const verifiedObject = await (await siriSxSchema()).parseAsync(siriSxWithoutEmptyFields);
+
+    const { siriSxSchema } = siriSxSchemaWrapper();
+
+    const verifiedObject = siriSxSchema.parse(siriSxWithoutEmptyFields);
 
     const completeObject: Partial<CompleteSiriObject<SiriSx["Siri"]>> = {
         Siri: {
@@ -121,7 +124,7 @@ const createAndValidateSiriSx = async (
     responseTime: Dayjs,
     lintSiri: boolean,
 ) => {
-    const siriSx = await createSiriSx(situations, requestMessageRef, responseTime);
+    const siriSx = createSiriSx(situations, requestMessageRef, responseTime);
 
     if (lintSiri) {
         try {
