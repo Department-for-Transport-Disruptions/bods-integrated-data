@@ -127,7 +127,7 @@ export const updateDynamoWithSubscriptionInfo = async (
         serviceStartDatetime: subscription.serviceStartDatetime
             ? subscription.serviceStartDatetime
             : currentTimestamp ?? null,
-        operatorRef: subscription.operatorRef ?? null,
+        operatorRefs: subscription.operatorRefs ?? null,
         publisherId: subscription.publisherId ?? null,
         lastModifiedDateTime: currentTimestamp ?? null,
         apiKey: subscription.apiKey,
@@ -155,52 +155,70 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
     const currentTime = requestTime.toISOString();
     const initialTerminationTime = getSiriTerminationTimeOffset(requestTime);
 
-    const messageIdentifier = randomUUID();
+    const operatorRefs = subscriptionDetails.operatorRefs ?? [null];
 
-    const subscriptionRequestMessage = generateCancellationsSubscriptionRequestXml(
-        subscriptionId,
-        currentTime,
-        initialTerminationTime,
-        messageIdentifier,
-        dataEndpoint,
-        subscriptionDetails.requestorRef ?? null,
-        subscriptionDetails.apiKey,
-        subscriptionDetails.operatorRef ?? null,
-        isInternal,
-    );
+    let failedSubscriptions = false;
 
-    const url =
-        mockProducerSubscribeEndpoint && subscriptionDetails.requestorRef === "BODS_MOCK_PRODUCER"
-            ? mockProducerSubscribeEndpoint
-            : subscriptionDetails.url;
+    for (const operatorRef of operatorRefs) {
+        const messageIdentifier = randomUUID();
 
-    const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
-        headers: {
-            "Content-Type": "text/xml",
-            ...(!isInternal ? { Authorization: createAuthorizationHeader(username, password) } : {}),
-        },
-    });
+        try {
+            const subscriptionRequestMessage = generateCancellationsSubscriptionRequestXml(
+                subscriptionId,
+                currentTime,
+                initialTerminationTime,
+                messageIdentifier,
+                dataEndpoint,
+                subscriptionDetails.requestorRef ?? null,
+                subscriptionDetails.apiKey,
+                operatorRef ?? null,
+                isInternal,
+            );
 
-    const subscriptionResponseBody = subscriptionResponse.data;
+            const url =
+                mockProducerSubscribeEndpoint && subscriptionDetails.requestorRef === "BODS_MOCK_PRODUCER"
+                    ? mockProducerSubscribeEndpoint
+                    : subscriptionDetails.url;
 
-    if (!subscriptionResponseBody) {
-        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
-        throw new Error(`No response body received from the data producer: ${subscriptionDetails.url}`);
+            const subscriptionResponse = await axios.post<string>(url, subscriptionRequestMessage, {
+                headers: {
+                    "Content-Type": "text/xml",
+                    ...(!isInternal ? { Authorization: createAuthorizationHeader(username, password) } : {}),
+                },
+            });
+
+            const subscriptionResponseBody = subscriptionResponse.data;
+
+            if (!subscriptionResponseBody) {
+                logger.error(
+                    `No response body received from the data producer: ${subscriptionDetails.url}, operatorRef: ${operatorRef}`,
+                );
+                failedSubscriptions = true;
+
+                continue;
+            }
+
+            const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
+
+            if (parsedResponseBody.Siri.SubscriptionResponse.ResponseStatus.Status !== "true") {
+                logger.error(
+                    `The data producer: ${subscriptionDetails.url} did not return a status of true, operatorRef: ${operatorRef}`,
+                );
+                failedSubscriptions = true;
+            }
+        } catch (_error) {
+            logger.error(`Error subscribing to feed: ${subscriptionDetails.url}, operatorRef: ${operatorRef}`);
+            failedSubscriptions = true;
+        }
     }
 
-    try {
-        const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
-
-        if (parsedResponseBody.Siri.SubscriptionResponse.ResponseStatus.Status !== "true") {
-            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
-            throw new Error(`The data producer: ${subscriptionDetails.url} did not return a status of true.`);
-        }
-    } catch (error) {
-        if (error instanceof InvalidXmlError) {
-            await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
-        }
-
-        throw error;
+    if (failedSubscriptions) {
+        await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
+        throw new Error(
+            `Error subscribing to cancellations feed: ${subscriptionDetails.url}, operatorRefs: ${operatorRefs.join(
+                ", ",
+            )}`,
+        );
     }
 
     await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "live", currentTime);

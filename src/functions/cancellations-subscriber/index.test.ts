@@ -109,6 +109,35 @@ describe("cancellations-subscriber", () => {
         );
     });
 
+    it("should process a subscription request with multiple operator refs", async () => {
+        const mockEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+            body: JSON.stringify({ ...mockAvlSubscribeMessage, operatorRefs: ["operator1", "operator2"] }),
+        } as unknown as APIGatewayProxyEvent;
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledOnce();
+        expect(addSubscriptionAuthCredsToSsmSpy).toHaveBeenCalledWith(
+            mockAvlSubscribeMessage.subscriptionId,
+            mockAvlSubscribeMessage.username,
+            mockAvlSubscribeMessage.password,
+        );
+        expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
+        expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledWith(
+            mockAvlSubscribeMessage.subscriptionId,
+            { ...mockAvlSubscriptionDetails, operatorRefs: ["operator1", "operator2"] },
+            mockAvlSubscribeMessage.username,
+            mockAvlSubscribeMessage.password,
+            "test-dynamo-table",
+            "https://www.test.com/data",
+            false,
+            "",
+        );
+    });
+
     it.each([
         [null, ["Body must be an object with required properties"]],
         ["", ["Body must be an object with required properties"]],

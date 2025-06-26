@@ -243,7 +243,7 @@ describe("cancellations-feed-validator", () => {
             {
                 dataProducerEndpoint: "https://mock-data-producer.com/",
                 description: "test-description",
-                operatorRef: null,
+                operatorRefs: null,
                 password: "test-password",
                 requestorRef: null,
                 shortDescription: "test-short-description",
@@ -420,7 +420,7 @@ describe("cancellations-feed-validator", () => {
                 heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
                 publisherId: "test-publisher-id-1",
                 apiKey: "mock-api-key-1",
-                operatorRef: "TEST",
+                operatorRefs: ["TEST"],
             },
             {
                 PK: "mock-subscription-id-2",
@@ -454,7 +454,7 @@ describe("cancellations-feed-validator", () => {
             {
                 dataProducerEndpoint: "https://mock-data-producer.com/",
                 description: "test-description",
-                operatorRef: "TEST",
+                operatorRefs: ["TEST"],
                 password: "test-password",
                 requestorRef: null,
                 shortDescription: "test-short-description",
@@ -472,7 +472,7 @@ describe("cancellations-feed-validator", () => {
             PK: "mock-subscription-id-1",
             description: "test-description",
             heartbeatLastReceivedDateTime: "2024-04-29T15:00:00.000Z",
-            operatorRef: "TEST",
+            operatorRefs: ["TEST"],
             requestorRef: null,
             serviceStartDatetime: "2024-01-01T15:20:02.093Z",
             shortDescription: "test-short-description",

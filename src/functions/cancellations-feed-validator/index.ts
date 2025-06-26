@@ -43,7 +43,7 @@ export const resubscribeToDataProducer = async (
         requestorRef: subscription.requestorRef ?? null,
         subscriptionId: subscription.PK,
         publisherId: subscription.publisherId,
-        operatorRef: subscription.operatorRef ?? null,
+        operatorRefs: subscription.operatorRefs ?? null,
     };
 
     const cancellationsProducerApiKey = await getSecret<string>({ SecretId: cancellationsProducerApiKeyArn });
