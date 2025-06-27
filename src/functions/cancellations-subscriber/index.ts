@@ -9,7 +9,6 @@ import {
 import {
     addSubscriptionAuthCredsToSsm,
     sendSubscriptionRequestAndUpdateDynamo,
-    updateDynamoWithSubscriptionInfo,
 } from "@bods-integrated-data/shared/cancellations/subscribe";
 import { getCancellationsSubscription } from "@bods-integrated-data/shared/cancellations/utils";
 import { putMetricData } from "@bods-integrated-data/shared/cloudwatch";
@@ -22,7 +21,6 @@ import {
 import { SubscriptionIdNotFoundError, generateApiKey, isPrivateAddress } from "@bods-integrated-data/shared/utils";
 import { InvalidApiKeyError, InvalidXmlError } from "@bods-integrated-data/shared/validation";
 import { APIGatewayProxyHandler } from "aws-lambda";
-import { AxiosError } from "axios";
 import { ZodError, z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -103,37 +101,19 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             serviceStartDatetime: activeSubscription?.serviceStartDatetime,
             lastResubscriptionTime: activeSubscription ? currentTime : null,
             lastModifiedDateTime: activeSubscription ? currentTime : null,
-            operatorRef: cancellationsSubscribeMessage.operatorRef,
+            operatorRefs: cancellationsSubscribeMessage.operatorRefs,
         };
 
-        try {
-            await sendSubscriptionRequestAndUpdateDynamo(
-                subscriptionId,
-                subscriptionDetails,
-                cancellationsSubscribeMessage.username,
-                cancellationsSubscribeMessage.password,
-                tableName,
-                isInternal && internalDataEndpoint ? `http://${internalDataEndpoint}` : dataEndpoint,
-                isInternal,
-                mockProducerSubscribeEndpoint,
-            );
-        } catch (e) {
-            if (e instanceof AxiosError) {
-                await updateDynamoWithSubscriptionInfo(tableName, subscriptionId, subscriptionDetails, "error");
-
-                logger.error(
-                    e.toJSON(),
-                    `There was an error when sending the subscription request to the data producer - subscriptionId: ${subscriptionId}`,
-                );
-            }
-            await putMetricData("custom/CancellationsMetrics", [
-                {
-                    MetricName: "FailedSubscription",
-                    Value: 1,
-                },
-            ]);
-            throw e;
-        }
+        await sendSubscriptionRequestAndUpdateDynamo(
+            subscriptionId,
+            subscriptionDetails,
+            cancellationsSubscribeMessage.username,
+            cancellationsSubscribeMessage.password,
+            tableName,
+            isInternal && internalDataEndpoint ? `http://${internalDataEndpoint}` : dataEndpoint,
+            isInternal,
+            mockProducerSubscribeEndpoint,
+        );
 
         logger.info(`Successfully subscribed to data producer: ${cancellationsSubscribeMessage.dataProducerEndpoint}.`);
 
@@ -156,6 +136,13 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         if (e instanceof Error) {
             logger.error(e, "There was a problem with the cancellations subscriber endpoint");
         }
+
+        await putMetricData("custom/CancellationsMetrics", [
+            {
+                MetricName: "FailedSubscription",
+                Value: 1,
+            },
+        ]);
 
         return createHttpServerErrorResponse();
     }
