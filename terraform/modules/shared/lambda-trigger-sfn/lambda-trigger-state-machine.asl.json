@@ -15,34 +15,50 @@
         "ProcessorConfig": {
           "Mode": "INLINE"
         },
-        "StartAt": "Lambda Invoke",
+        "StartAt": "Invoke and Wait",
         "States": {
-          "Lambda Invoke": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "OutputPath": "$.Payload",
-            "Parameters": {
-              "FunctionName": "${function_arn}:$LATEST"
-            },
-            "Retry": [
+          "Invoke and Wait": {
+            "Type": "Parallel",
+            "End": true,
+            "Branches": [
               {
-                "ErrorEquals": [
-                  "Lambda.ServiceException",
-                  "Lambda.AWSLambdaException",
-                  "Lambda.SdkClientException",
-                  "Lambda.TooManyRequestsException"
-                ],
-                "IntervalSeconds": 1,
-                "MaxAttempts": 3,
-                "BackoffRate": 2
+                "StartAt": "Lambda Invoke",
+                "States": {
+                  "Lambda Invoke": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke",
+                    "OutputPath": "$.Payload",
+                    "Parameters": {
+                      "FunctionName": "${function_arn}:$LATEST"
+                    },
+                    "Retry": [
+                      {
+                        "ErrorEquals": [
+                          "Lambda.ServiceException",
+                          "Lambda.AWSLambdaException",
+                          "Lambda.SdkClientException",
+                          "Lambda.TooManyRequestsException"
+                        ],
+                        "IntervalSeconds": 1,
+                        "MaxAttempts": 3,
+                        "BackoffRate": 2
+                      }
+                    ],
+                    "End": true
+                  }
+                }
+              },
+              {
+                "StartAt": "Wait",
+                "States": {
+                  "Wait": {
+                    "Type": "Wait",
+                    "Seconds": ${invoke_every_seconds},
+                    "End": true
+                  }
+                }
               }
-            ],
-            "Next": "Wait"
-          },
-          "Wait": {
-            "Type": "Wait",
-            "Seconds": ${invoke_every_seconds},
-            "End": true
+            ]
           }
         }
       },
