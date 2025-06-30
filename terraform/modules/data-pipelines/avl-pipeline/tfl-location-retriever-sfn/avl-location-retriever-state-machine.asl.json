@@ -15,71 +15,87 @@
         "ProcessorConfig": {
           "Mode": "INLINE"
         },
-        "StartAt": "TfL Line ID Retriever",
+        "StartAt": "Retrieve TfL and Wait",
         "States": {
-          "TfL Line ID Retriever": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "OutputPath": "$.Payload",
-            "Parameters": {
-              "FunctionName": "${tfl_line_id_retriever_function_arn}:$LATEST"
-            },
-            "Retry": [
+          "Retrieve TfL and Wait": {
+            "Type": "Parallel",
+            "End": true,
+            "Branches": [
               {
-                "ErrorEquals": [
-                  "Lambda.ServiceException",
-                  "Lambda.AWSLambdaException",
-                  "Lambda.SdkClientException",
-                  "Lambda.TooManyRequestsException"
-                ],
-                "IntervalSeconds": 1,
-                "MaxAttempts": 1,
-                "BackoffRate": 2,
-                "JitterStrategy": "FULL"
-              }
-            ],
-            "Next": "Map - Tfl Lines"
-          },
-          "Map - Tfl Lines": {
-            "Type": "Map",
-            "ItemProcessor": {
-              "ProcessorConfig": {
-                "Mode": "INLINE"
-              },
-              "StartAt": "TfL Location Retriever",
-              "States": {
-                "TfL Location Retriever": {
-                  "Type": "Task",
-                  "Resource": "arn:aws:states:::lambda:invoke",
-                  "OutputPath": "$.Payload",
-                  "Parameters": {
-                    "FunctionName": "${tfl_location_retriever_function_arn}:$LATEST",
-                    "Payload.$": "$"
+                "StartAt": "TfL Line ID Retriever",
+                "States": {
+                  "TfL Line ID Retriever": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke",
+                    "OutputPath": "$.Payload",
+                    "Parameters": {
+                      "FunctionName": "${tfl_line_id_retriever_function_arn}:$LATEST"
+                    },
+                    "Retry": [
+                      {
+                        "ErrorEquals": [
+                          "Lambda.ServiceException",
+                          "Lambda.AWSLambdaException",
+                          "Lambda.SdkClientException",
+                          "Lambda.TooManyRequestsException"
+                        ],
+                        "IntervalSeconds": 1,
+                        "MaxAttempts": 1,
+                        "BackoffRate": 2,
+                        "JitterStrategy": "FULL"
+                      }
+                    ],
+                    "Next": "Map - Tfl Lines"
                   },
-                  "Retry": [
-                    {
-                      "ErrorEquals": [
-                        "Lambda.ServiceException",
-                        "Lambda.AWSLambdaException",
-                        "Lambda.SdkClientException",
-                        "Lambda.TooManyRequestsException"
-                      ],
-                      "IntervalSeconds": 1,
-                      "MaxAttempts": 1,
-                      "BackoffRate": 2,
-                      "JitterStrategy": "FULL"
-                    }
-                  ],
-                  "End": true
+                  "Map - Tfl Lines": {
+                    "Type": "Map",
+                    "ItemProcessor": {
+                      "ProcessorConfig": {
+                        "Mode": "INLINE"
+                      },
+                      "StartAt": "TfL Location Retriever",
+                      "States": {
+                        "TfL Location Retriever": {
+                          "Type": "Task",
+                          "Resource": "arn:aws:states:::lambda:invoke",
+                          "OutputPath": "$.Payload",
+                          "Parameters": {
+                            "FunctionName": "${tfl_location_retriever_function_arn}:$LATEST",
+                            "Payload.$": "$"
+                          },
+                          "Retry": [
+                            {
+                              "ErrorEquals": [
+                                "Lambda.ServiceException",
+                                "Lambda.AWSLambdaException",
+                                "Lambda.SdkClientException",
+                                "Lambda.TooManyRequestsException"
+                              ],
+                              "IntervalSeconds": 1,
+                              "MaxAttempts": 1,
+                              "BackoffRate": 2,
+                              "JitterStrategy": "FULL"
+                            }
+                          ],
+                          "End": true
+                        }
+                      }
+                    },
+                    "End": true
+                  }
+                }
+              },
+              {
+                "StartAt": "Wait",
+                "States": {
+                  "Wait": {
+                    "Type": "Wait",
+                    "Seconds": ${invoke_every_seconds},
+                    "End": true
+                  }
                 }
               }
-            },
-            "Next": "Wait"
-          },
-          "Wait": {
-            "Type": "Wait",
-            "Seconds": ${invoke_every_seconds},
-            "End": true
+            ]
           }
         }
       },

@@ -511,7 +511,7 @@ resource "aws_ecs_service" "siri_vm_generator_service" {
   name            = "integrated-data-siri-vm-generator-service-${var.environment}"
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.siri_vm_generator_task_definition[0].arn
-  desired_count   = 1
+  desired_count   = 0
 
   capacity_provider_strategy {
     base              = 1
@@ -743,5 +743,4 @@ module "integrated_data_siri_vm_generator_sfn" {
   function_arn         = module.integrated_data_siri_vm_generator_lambda.lambda_arn
   invoke_every_seconds = var.siri_vm_generator_frequency
   step_function_name   = "integrated-data-siri-vm-file-generator"
-  disable_trigger      = var.environment == "prod"
 }
