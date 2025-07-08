@@ -88,7 +88,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         await expect(
             sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError(
-            "No response body received from the data producer - subscription ID: mock-subscription-id",
+            "There was an error unsubscribing from the data producer - subscription ID: mock-subscription-id",
         );
 
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();
@@ -122,7 +122,7 @@ describe("sendTerminateSubscriptionRequest", () => {
         await expect(
             sendTerminateSubscriptionRequest("avl", mockInput.subscriptionId, mockInput.subscription),
         ).rejects.toThrowError(
-            "The data producer did not return a status of true - subscription ID: mock-subscription-id",
+            "There was an error unsubscribing from the data producer - subscription ID: mock-subscription-id",
         );
 
         expect(deleteParametersSpy).not.toHaveBeenCalledOnce();

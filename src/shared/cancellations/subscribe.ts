@@ -48,7 +48,7 @@ export const generateCancellationsSubscriptionRequestXml = (
                 },
                 SituationExchangeSubscriptionRequest: {
                     SubscriberRef: subscriptionId,
-                    SubscriptionIdentifier: subscriptionId,
+                    SubscriptionIdentifier: operatorRef ? `${subscriptionId}-${operatorRef}` : subscriptionId,
                     InitialTerminationTime: initialTerminationTime,
                     SituationExchangeRequest: {
                         RequestTimestamp: currentTimestamp,
@@ -101,8 +101,8 @@ const parseXml = (xml: string, subscriptionId: string) => {
 
     if (!parsedJson.success) {
         logger.error(
-            "There was an error parsing the subscription response from the data producer",
             parsedJson.error.format(),
+            "There was an error parsing the subscription response from the data producer",
         );
 
         throw new InvalidXmlError(`Invalid XML from subscription ID: ${subscriptionId}`);
@@ -200,14 +200,17 @@ export const sendSubscriptionRequestAndUpdateDynamo = async (
 
             const parsedResponseBody = parseXml(subscriptionResponseBody, subscriptionId);
 
-            if (parsedResponseBody.Siri.SubscriptionResponse.ResponseStatus.Status !== "true") {
+            // Stagecoach don't return a Status when passing a distinct SubscriptionIdentifier for an operator
+            // so we don't do this check if isInternal is true
+            if (!isInternal && parsedResponseBody.Siri.SubscriptionResponse.ResponseStatus.Status !== "true") {
                 logger.error(
                     `The data producer: ${subscriptionDetails.url} did not return a status of true, operatorRef: ${operatorRef}`,
                 );
                 failedSubscriptions = true;
             }
-        } catch (_error) {
+        } catch (error) {
             logger.error(`Error subscribing to feed: ${subscriptionDetails.url}, operatorRef: ${operatorRef}`);
+            logger.error(error);
             failedSubscriptions = true;
         }
     }
