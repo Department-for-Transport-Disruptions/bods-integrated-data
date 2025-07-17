@@ -69,6 +69,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             serviceStartDatetime: subscription.serviceStartDatetime,
             lastModifiedDateTime: subscription.lastModifiedDateTime,
             apiKey: subscription.apiKey,
+            operatorRefs: subscription.operatorRefs,
         };
         try {
             await sendTerminateSubscriptionRequest(

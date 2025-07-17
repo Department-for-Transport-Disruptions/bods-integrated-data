@@ -21,6 +21,14 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
+/**
+ * Certain operators provide cancellations data with NaPTAN codes instead of ATCO codes.
+ * This function creates a map of NaPTAN codes to ATCO codes by looking at a unique list
+ * of stop references in the Calls and querying the database.
+ * @param siriSx
+ * @param dbClient
+ * @returns A map where the key is the NaPTAN code and the value is the ATCO code.
+ */
 const createStopMap = async (siriSx: SiriSx, dbClient: KyselyDb) => {
     const stopRefs =
         siriSx.Siri?.ServiceDelivery?.SituationExchangeDelivery?.Situations?.PtSituationElement?.flatMap((pt) =>
