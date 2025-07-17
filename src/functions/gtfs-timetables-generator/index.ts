@@ -112,6 +112,10 @@ export const tripTableHandler: Handler = async (event, context) => {
 
         await createTripTable(dbClient);
 
+        logger.info("Creating regional trip table for region E");
+
+        await createRegionalTripTable(dbClient, "E");
+
         logger.info("GTFS Trip Table Creator successful");
     } catch (e) {
         if (e instanceof Error) {
@@ -138,7 +142,7 @@ export const exportHandler: Handler = async (event, context) => {
     try {
         logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
 
-        if (regionCode !== "ALL") {
+        if (regionCode !== "ALL" && regionCode !== "E") {
             await createRegionalTripTable(dbClient, regionCode);
         }
 
