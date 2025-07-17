@@ -228,6 +228,12 @@ describe("gtfs-timetables-generator", () => {
                 expect(handlerMocks.createRegionalTripTable).not.toBeCalled();
             });
 
+            it("doesn't create regional trip table for regionCode 'E'", async () => {
+                await exportHandler({ ...mockEvent, regionCode: "E" }, mockContext, mockCallback);
+
+                expect(handlerMocks.createRegionalTripTable).not.toBeCalled();
+            });
+
             it("creates GTFS zip", async () => {
                 await zipHandler(mockEvent, mockContext, mockCallback);
 
