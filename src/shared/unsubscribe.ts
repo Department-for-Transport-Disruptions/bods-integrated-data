@@ -22,7 +22,7 @@ export const mockSubscriptionResponseBody = `<?xml version='1.0' encoding='UTF-8
 </Siri>`;
 
 export const generateTerminationSubscriptionRequest = (
-    subscriptionId: string,
+    subscriptionRef: string,
     currentTimestamp: string,
     messageIdentifier: string,
     requestorRef: string | null,
@@ -33,7 +33,7 @@ export const generateTerminationSubscriptionRequest = (
                 RequestTimestamp: currentTimestamp,
                 RequestorRef: requestorRef ?? "BODS",
                 MessageIdentifier: messageIdentifier,
-                SubscriptionRef: subscriptionId,
+                SubscriptionRef: subscriptionRef,
             },
         },
     };
@@ -87,6 +87,12 @@ const parseXml = (xml: string) => {
     return parsedJson.data;
 };
 
+const hasOperatorRefs = (
+    subscription: Omit<AvlSubscription, "PK" | "status"> | Omit<CancellationsSubscription, "PK" | "status">,
+): subscription is CancellationsSubscription => {
+    return (subscription as CancellationsSubscription).operatorRefs !== undefined;
+};
+
 export const sendTerminateSubscriptionRequest = async (
     subscriptionType: "avl" | "cancellations",
     subscriptionId: string,
@@ -94,14 +100,8 @@ export const sendTerminateSubscriptionRequest = async (
     isInternal = false,
 ) => {
     const currentTime = getDate().toISOString();
-    const messageIdentifier = randomUUID();
 
-    const terminateSubscriptionRequestMessage = generateTerminationSubscriptionRequest(
-        subscriptionId,
-        currentTime,
-        messageIdentifier,
-        subscription.requestorRef ?? null,
-    );
+    const operatorRefs = hasOperatorRefs(subscription) ? subscription.operatorRefs || [null] : [null];
 
     const { subscriptionUsername, subscriptionPassword } = await getSubscriptionUsernameAndPassword(
         subscriptionId,
@@ -113,33 +113,61 @@ export const sendTerminateSubscriptionRequest = async (
         throw new Error("Missing auth credentials for subscription");
     }
 
-    // TODO: This block of code is to mock out the data producers response when running locally, it will be removed
-    //  when we create an unsubscribe endpoint for the mock data producer.
-    const terminateSubscriptionResponse =
-        (process.env.STAGE === "local" || process.env.STAGE === "dev" || process.env.STAGE === "test") &&
-        subscription.requestorRef === "BODS_MOCK_PRODUCER"
-            ? {
-                  data: mockSubscriptionResponseBody,
-                  status: 200,
-              }
-            : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
-                  headers: {
-                      "Content-Type": "text/xml",
-                      ...(!isInternal
-                          ? { Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword) }
-                          : {}),
-                  },
-              });
+    let successful = true;
 
-    const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data;
+    for (const operatorRef of operatorRefs) {
+        const messageIdentifier = randomUUID();
 
-    if (!terminateSubscriptionResponseBody) {
-        throw new Error(`No response body received from the data producer - subscription ID: ${subscriptionId}`);
+        const subscriptionRef = operatorRef ? `${subscriptionId}-${operatorRef}` : subscriptionId;
+
+        logger.info(`Sending terminate subscription request for subscription ref: ${subscriptionRef}`);
+
+        const terminateSubscriptionRequestMessage = generateTerminationSubscriptionRequest(
+            subscriptionRef,
+            currentTime,
+            messageIdentifier,
+            subscription.requestorRef ?? null,
+        );
+
+        // TODO: This block of code is to mock out the data producers response when running locally, it will be removed
+        //  when we create an unsubscribe endpoint for the mock data producer.
+        const terminateSubscriptionResponse =
+            (process.env.STAGE === "local" || process.env.STAGE === "dev" || process.env.STAGE === "test") &&
+            subscription.requestorRef === "BODS_MOCK_PRODUCER"
+                ? {
+                      data: mockSubscriptionResponseBody,
+                      status: 200,
+                  }
+                : await axios.post<string>(subscription.url, terminateSubscriptionRequestMessage, {
+                      headers: {
+                          "Content-Type": "text/xml",
+                          ...(!isInternal
+                              ? { Authorization: createAuthorizationHeader(subscriptionUsername, subscriptionPassword) }
+                              : {}),
+                      },
+                  });
+
+        const terminateSubscriptionResponseBody = terminateSubscriptionResponse.data;
+
+        if (!terminateSubscriptionResponseBody) {
+            logger.error(`No response body received from the data producer - subscription ref: ${subscriptionRef}`);
+            successful = false;
+            continue;
+        }
+
+        const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
+
+        if (parsedResponseBody.Siri.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
+            logger.error(`The data producer did not return a status of true - subscription ref: ${subscriptionRef}`);
+            successful = false;
+        }
     }
 
-    const parsedResponseBody = parseXml(terminateSubscriptionResponseBody);
-
-    if (parsedResponseBody.Siri.TerminateSubscriptionResponse.TerminationResponseStatus.Status !== "true") {
-        throw new Error(`The data producer did not return a status of true - subscription ID: ${subscriptionId}`);
+    if (!successful) {
+        throw new Error(
+            `There was an error unsubscribing from the data producer - subscription ID: ${subscriptionId}, operator refs: ${operatorRefs.join(
+                ", ",
+            )}`,
+        );
     }
 };
