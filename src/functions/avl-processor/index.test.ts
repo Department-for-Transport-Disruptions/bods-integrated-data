@@ -22,6 +22,7 @@ import {
     testSiriWithInvalidVehicleActivities,
     testSiriWithLocationsAndCancellations,
     testSiriWithOnwardCalls,
+    testSiriWithValidAndInvalidData,
 } from "./test/testSiriVm";
 
 describe("avl-processor", () => {
@@ -89,6 +90,7 @@ describe("avl-processor", () => {
 
     beforeAll(() => {
         process.env.STAGE = "dev";
+        process.env.ENABLE_CANCELLATIONS = "true";
     });
 
     afterAll(() => {
@@ -212,7 +214,7 @@ describe("avl-processor", () => {
             mockGtfsTripMapsTableName,
         );
 
-        expect(valuesMock).not.toHaveBeenCalledWith(parsedSiriWithCancellationsOnly);
+        expect(valuesMock).toHaveBeenCalledWith(parsedSiriWithCancellationsOnly);
     });
 
     it("correctly handles a siri-vm file with both VehicleActivity and VehicleActivityCancellation data", async () => {
@@ -244,9 +246,9 @@ describe("avl-processor", () => {
             mockGtfsTripMapsTableName,
         );
 
-        expect(valuesMock).toHaveBeenCalledTimes(1);
+        expect(valuesMock).toHaveBeenCalledTimes(2);
         expect(valuesMock).toBeCalledWith([parsedSiri[0]]);
-        expect(valuesMock).not.toBeCalledWith(parsedSiriWithCancellationsOnly);
+        expect(valuesMock).toBeCalledWith(parsedSiriWithCancellationsOnly);
     });
 
     it("correctly removes duplicates before inserting into the db", async () => {
@@ -308,6 +310,73 @@ describe("avl-processor", () => {
         expect(valuesMock).not.toHaveBeenCalled();
     });
 
+    it("filters out invalid data and only inserts valid data", async () => {
+        const valuesMock = vi.fn().mockReturnValue({
+            onConflict: vi.fn().mockReturnValue({
+                execute: vi.fn().mockResolvedValue(""),
+                returning: vi.fn().mockReturnValue({
+                    executeTakeFirst: vi.fn().mockResolvedValue({
+                        id: 123,
+                    }),
+                }),
+            }),
+        });
+
+        const dbClient = {
+            insertInto: () => ({
+                values: valuesMock,
+            }),
+        };
+
+        mocks.getS3Object.mockResolvedValueOnce({
+            Body: { transformToString: () => testSiriWithValidAndInvalidData },
+        });
+
+        const timeToExist = getDate().add(3, "days").unix();
+
+        const expectedValidationErrors: AvlValidationError[] = [
+            {
+                PK: mockSubscriptionId,
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                details:
+                    "LineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                filename: record.s3.object.key,
+                level: "CRITICAL",
+                lineRef: "Invalid$",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivity.1.MonitoredVehicleJourney.LineRef",
+                operatorRef: "123",
+                recordedAtTime: "2018-08-17T15:22:20",
+                responseTimestamp: "2018-08-17T15:14:21.432",
+                timeToExist,
+                vehicleRef: "200141",
+            },
+            {
+                PK: "123",
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                details:
+                    "LineRef must be 1-256 characters and only contain letters, numbers, periods, hyphens, underscores and colons",
+                filename: "123/test-key",
+                level: "CRITICAL",
+                name: "Siri.ServiceDelivery.VehicleMonitoringDelivery.VehicleActivityCancellation.0.LineRef",
+                recordedAtTime: "2018-08-17T15:22:20",
+                responseTimestamp: "2018-08-17T15:14:21.432",
+                timeToExist,
+            },
+        ];
+
+        await processSqsRecord(
+            record as S3EventRecord,
+            dbClient as unknown as KyselyDb,
+            mockAvlSubscriptionTableName,
+            mockAvlValidationErrorsTableName,
+            mockGtfsTripMapsTableName,
+        );
+
+        expect(valuesMock).toHaveBeenCalledTimes(1);
+        expect(valuesMock).toHaveBeenCalledWith([parsedSiri[0]]);
+        expect(putDynamoItemsSpy).toHaveBeenCalledWith(mockAvlValidationErrorsTableName, expectedValidationErrors);
+    });
+
     it("uploads validation errors to dynamoDB when processing invalid data", async () => {
         mocks.getS3Object.mockResolvedValueOnce({
             Body: { transformToString: () => testSiriWithInvalidVehicleActivities },
@@ -329,16 +398,6 @@ describe("avl-processor", () => {
         const timeToExist = getDate().add(3, "days").unix();
 
         const expectedValidationErrors: AvlValidationError[] = [
-            {
-                PK: mockSubscriptionId,
-                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
-                details: "Required",
-                filename: record.s3.object.key,
-                level: "CRITICAL",
-                name: "Siri.ServiceDelivery.ProducerRef",
-                responseTimestamp: "2018-08-17T15:14:21.432",
-                timeToExist,
-            },
             {
                 PK: mockSubscriptionId,
                 SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
@@ -455,8 +514,19 @@ describe("avl-processor", () => {
                 timeToExist,
                 vehicleRef: "200141",
             },
+            {
+                PK: mockSubscriptionId,
+                SK: "12a345b6-2be9-49bb-852f-21e5a2400ea6",
+                details: "Required",
+                filename: record.s3.object.key,
+                level: "CRITICAL",
+                name: "Siri.ServiceDelivery.ProducerRef",
+                responseTimestamp: "2018-08-17T15:14:21.432",
+                timeToExist,
+            },
         ];
         expect(putDynamoItemsSpy).toHaveBeenCalledWith(mockAvlValidationErrorsTableName, expectedValidationErrors);
+        expect(valuesMock).not.toHaveBeenCalled();
     });
 
     it("should throw an error when the subscription is not active", async () => {
