@@ -94,12 +94,12 @@ export const parseVehicleActivityCancellation = (item: unknown) => {
 };
 
 /**
- * Purpose of this function is to filter out invalid values of an array of items based on a given schema.
- * Invalid items are logged, and optional validation errors are collected.
+ * Purpose of this function is to filter out invalid data from a SIRI-VM message based on a given schema.
+ * Invalid items are logged, and validation errors are collected.
  *
  * @param namespace - A string used for logging and metric purposes.
  * @param schema - The Zod schema to validate each item in the array.
- * @param errors - An oarray to collect validation errors for invalid items to be uploaded to Dynamo later.
+ * @param errors - An array to collect validation errors for invalid items to be uploaded to the avl validation errors table later.
  * @returns A Zod schema that preprocesses and filters the array, keeping only valid items.
  */
 export const makeFilteredVehicleArraySchema = <T extends ZodSchema>(
