@@ -3,3 +3,4 @@ nodejs 20.11.1
 awscli 2.15.23
 sops 3.8.1
 pnpm 9.12.2
+python 3.9.18

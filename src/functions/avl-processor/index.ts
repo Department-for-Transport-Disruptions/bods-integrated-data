@@ -11,11 +11,10 @@ import { putDynamoItems } from "@bods-integrated-data/shared/dynamo";
 import { addMatchingTripToAvl } from "@bods-integrated-data/shared/gtfs-rt/utils";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { SiriVM, SiriVehicleActivity, siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
+import { siriSchemaTransformed } from "@bods-integrated-data/shared/schema";
 import { AvlValidationError } from "@bods-integrated-data/shared/schema/avl-validation-error.schema";
 import { S3Event, S3EventRecord, SQSHandler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
-import get from "lodash/get";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
@@ -33,7 +32,7 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
     });
 
     const parsedXml = parser.parse(xml);
-    const parsedJson = siriSchemaTransformed.safeParse(parsedXml);
+    const parsedJson = siriSchemaTransformed(errors).safeParse(parsedXml);
 
     if (!parsedJson.success) {
         logger.error(`There was an error parsing the AVL data: ${parsedJson.error.format()}`);
@@ -41,41 +40,14 @@ const parseXml = (xml: string, errors: AvlValidationError[]) => {
             ...parsedJson.error.errors.map<AvlValidationError>((error) => {
                 const { name, message, level } = getAvlErrorDetails(error);
 
-                const errorItem = parsedXml as SiriVM;
-                const vehicleActivityIndex = error.path.findIndex((item) => item === "VehicleActivity");
-                const vehicleActivityErrorPath =
-                    vehicleActivityIndex + 2 < error.path.length ? error.path.slice(0, vehicleActivityIndex + 2) : null;
-
-                const errorVehicleActivity = vehicleActivityErrorPath
-                    ? (get(parsedXml, vehicleActivityErrorPath) as SiriVehicleActivity)
-                    : null;
-
                 return {
                     PK: "",
                     SK: randomUUID(),
                     details: message,
                     filename: "",
-                    ...(errorItem?.Siri?.ServiceDelivery?.ItemIdentifier
-                        ? { itemIdentifier: errorItem.Siri.ServiceDelivery.ItemIdentifier }
-                        : {}),
                     level,
-                    ...(errorVehicleActivity?.MonitoredVehicleJourney?.LineRef
-                        ? { lineRef: errorVehicleActivity.MonitoredVehicleJourney.LineRef }
-                        : {}),
                     name,
-                    ...(errorVehicleActivity?.MonitoredVehicleJourney?.OperatorRef
-                        ? { operatorRef: errorVehicleActivity.MonitoredVehicleJourney.OperatorRef }
-                        : {}),
-                    ...(errorVehicleActivity?.RecordedAtTime
-                        ? { recordedAtTime: errorVehicleActivity.RecordedAtTime }
-                        : {}),
                     timeToExist: 0,
-                    ...(errorVehicleActivity?.MonitoredVehicleJourney?.VehicleJourneyRef
-                        ? { vehicleJourneyRef: errorVehicleActivity.MonitoredVehicleJourney.VehicleJourneyRef }
-                        : {}),
-                    ...(errorVehicleActivity?.MonitoredVehicleJourney?.VehicleRef
-                        ? { vehicleRef: errorVehicleActivity.MonitoredVehicleJourney.VehicleRef.toString() }
-                        : {}),
                 };
             }),
         );

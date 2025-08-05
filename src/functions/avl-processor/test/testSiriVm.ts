@@ -410,7 +410,7 @@ export const testInvalidSiri = `
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 `;
 
-export const testSiriWithSingleVehicleActivity = `
+export const testSiriWithValidAndInvalidData = `
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Siri xmlns="http://www.siri.org.uk/siri"
     xmlns:ns2="http://www.ifopt.org.uk/acsb"
@@ -424,6 +424,7 @@ export const testSiriWithSingleVehicleActivity = `
             <ResponseTimestamp>2018-08-17T15:14:21.432</ResponseTimestamp>
             <VehicleActivity>
                 <RecordedAtTime>2018-08-17T15:13:20</RecordedAtTime>
+                <RequestMessageRef/>
                 <ValidUntilTime>2018-08-17T16:13:29</ValidUntilTime>
                 <MonitoredVehicleJourney>
                     <LineRef>ATB:Line:60</LineRef>
@@ -447,6 +448,44 @@ export const testSiriWithSingleVehicleActivity = `
                     <PublishedLineName>1</PublishedLineName>
                 </MonitoredVehicleJourney>
             </VehicleActivity>
+            <VehicleActivity>
+                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <ValidUntilTime>2018-08-17T16:22:29</ValidUntilTime>
+                <MonitoredVehicleJourney>
+                    <LineRef>Invalid$</LineRef>
+                    <DirectionRef>2</DirectionRef>
+                    <OperatorRef>123</OperatorRef>
+                    <FramedVehicleJourneyRef>
+                        <DataFrameRef>2018-08-17</DataFrameRef>
+                        <DatedVehicleJourneyRef>ATB:ServiceJourney:00600027</DatedVehicleJourneyRef>
+                    </FramedVehicleJourneyRef>
+                    <VehicleRef>200141</VehicleRef>
+                    <Bearing>0</Bearing>
+                    <DataSource>ATB</DataSource>
+                    <VehicleLocation>
+                        <Longitude>10.40261</Longitude>
+                        <Latitude>63.43613</Latitude>
+                    </VehicleLocation>
+                    <Delay>PT0S</Delay>
+                    <IsCompleteStopSequence>false</IsCompleteStopSequence>
+                    <OriginRef>originRef</OriginRef>
+                    <OriginAimedDepartureTime>2018-08-17T15:22:20</OriginAimedDepartureTime>
+                    <DestinationRef>destinationRef</DestinationRef>
+                    <PublishedLineName>1</PublishedLineName>
+                    <Occupancy>full</Occupancy>
+                    <DestinationName>destinationName</DestinationName>
+                </MonitoredVehicleJourney>
+            </VehicleActivity>
+            <VehicleActivityCancellation>
+                <RecordedAtTime>2018-08-17T15:22:20</RecordedAtTime>
+                <VehicleMonitoringRef>TEST</VehicleMonitoringRef>
+                <VehicleJourneyRef>
+                  <DataFrameRef>2018-08-17</DataFrameRef>
+                  <DatedVehicleJourneyRef>1234</DatedVehicleJourneyRef>
+                </VehicleJourneyRef>
+                <LineRef>invalid$</LineRef>
+                <DirectionRef>inbound</DirectionRef>
+            </VehicleActivityCancellation>
         </VehicleMonitoringDelivery>
     </ServiceDelivery>
 </Siri>
