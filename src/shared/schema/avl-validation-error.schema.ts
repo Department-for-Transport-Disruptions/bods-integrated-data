@@ -18,6 +18,8 @@ export const avlValidationErrorSchema = z.object({
     vehicleRef: z.string().nullish(),
 });
 
+export const avlValidationErrorsSchema = z.array(avlValidationErrorSchema);
+
 export type AvlValidationError = z.infer<typeof avlValidationErrorSchema>;
 
 const avlValidationReportSummarySchema = z.object({
