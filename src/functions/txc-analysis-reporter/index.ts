@@ -302,40 +302,16 @@ export const handler: Handler = async (event, context) => {
         archive.pipe(passThrough);
         const s3Upload = startS3Upload(TXC_ANALYSIS_BUCKET_NAME, `${date}.zip`, passThrough, "application/zip");
 
-        const dqsS3Promises = [];
-
         const observationByDataSourceItemsCsv = createCsv(Object.values(observationByDataSourceMap));
 
         if (observationByDataSourceItemsCsv) {
             archive.append(observationByDataSourceItemsCsv, { name: `${date}/observationSummariesByDataSource.csv` });
-
-            if (STAGE === "prod") {
-                dqsS3Promises.push(
-                    putS3Object({
-                        Bucket: DQS_BUCKET_NAME,
-                        Key: `tnds_analysis/${date}/observationSummariesByDataSource.csv`,
-                        ContentType: "application/csv",
-                        Body: observationByDataSourceItemsCsv,
-                    }),
-                );
-            }
         }
 
         const observationByNocLineItemsCsv = createCsv(Object.values(observationByNocLineNameMap));
 
         if (observationByNocLineItemsCsv) {
             archive.append(observationByNocLineItemsCsv, { name: `${date}/observationSummariesByNocLineName.csv` });
-
-            if (STAGE === "prod") {
-                dqsS3Promises.push(
-                    putS3Object({
-                        Bucket: DQS_BUCKET_NAME,
-                        Key: `tnds_analysis/${date}/observationSummariesByNocLineName.csv`,
-                        ContentType: "application/csv",
-                        Body: observationByNocLineItemsCsv,
-                    }),
-                );
-            }
         }
 
         const observationByFileItemsCsv = createCsv(Object.values(observationByFileMap));
@@ -365,17 +341,6 @@ export const handler: Handler = async (event, context) => {
                 archive.append(observationByObservationTypeCsv, {
                     name: `${date}/criticalObservationsByObservationType/${observationType}.csv`,
                 });
-
-                if (STAGE === "prod") {
-                    dqsS3Promises.push(
-                        putS3Object({
-                            Bucket: DQS_BUCKET_NAME,
-                            Key: `tnds_analysis/${date}/criticalObservationsByObservationType/${observationType}.csv`,
-                            ContentType: "application/csv",
-                            Body: observationByObservationTypeCsv,
-                        }),
-                    );
-                }
             }
         }
 
@@ -388,25 +353,19 @@ export const handler: Handler = async (event, context) => {
                 archive.append(observationByObservationTypeCsv, {
                     name: `${date}/advisoryObservationsByObservationType/${observationType}.csv`,
                 });
-
-                if (STAGE === "prod") {
-                    dqsS3Promises.push(
-                        putS3Object({
-                            Bucket: DQS_BUCKET_NAME,
-                            Key: `tnds_analysis/${date}/advisoryObservationsByObservationType/${observationType}.csv`,
-                            ContentType: "application/csv",
-                            Body: observationByObservationTypeCsv,
-                        }),
-                    );
-                }
             }
         }
 
         archive.finalize();
         await s3Upload.done();
 
-        if (dqsS3Promises.length > 0) {
-            await Promise.all(dqsS3Promises);
+        if (observationByNocLineItemsCsv && STAGE === "prod") {
+            await putS3Object({
+                Bucket: DQS_BUCKET_NAME,
+                Key: `tnds_analysis/observationSummariesByNocLineName_${formattedDate.replaceAll("/", "_")}.csv`,
+                ContentType: "application/csv",
+                Body: observationByNocLineItemsCsv,
+            });
         }
     } catch (error) {
         archive.abort();
