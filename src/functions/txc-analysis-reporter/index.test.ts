@@ -218,30 +218,12 @@ describe("txc-analysis-reporter", () => {
             name: "20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
         });
 
-        expect(mocks.putS3Object).toHaveBeenCalledTimes(4);
+        expect(mocks.putS3Object).toHaveBeenCalledTimes(1);
         expect(mocks.putS3Object).toHaveBeenNthCalledWith(1, {
             Bucket: "mock-dqs-bucket",
             ContentType: "application/csv",
-            Key: "tnds_analysis/20250108/observationSummariesByDataSource.csv",
-            Body: observationSummariesByDataSourceCsvContent,
-        });
-        expect(mocks.putS3Object).toHaveBeenNthCalledWith(2, {
-            Bucket: "mock-dqs-bucket",
-            ContentType: "application/csv",
-            Key: "tnds_analysis/20250108/observationSummariesByNocLineName.csv",
+            Key: "tnds_analysis/observationSummariesByNocLineName_08_01_2025.csv",
             Body: observationSummariesByNocLineNameCsvContent,
-        });
-        expect(mocks.putS3Object).toHaveBeenNthCalledWith(3, {
-            Bucket: "mock-dqs-bucket",
-            ContentType: "application/csv",
-            Key: "tnds_analysis/20250108/criticalObservationsByObservationType/Duplicate journey.csv",
-            Body: observationByObservationTypeCsvContent3,
-        });
-        expect(mocks.putS3Object).toHaveBeenNthCalledWith(4, {
-            Bucket: "mock-dqs-bucket",
-            ContentType: "application/csv",
-            Key: "tnds_analysis/20250108/advisoryObservationsByObservationType/First stop is not a timing point.csv",
-            Body: observationByObservationTypeCsvContent4,
         });
     });
 
