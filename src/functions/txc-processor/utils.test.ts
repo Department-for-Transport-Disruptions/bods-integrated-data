@@ -49,9 +49,10 @@ describe("utils", () => {
     describe("getTimepointFromTimingStatus", () => {
         it.each([
             ["principalTimingPoint", Timepoint.Exact],
+            ["PTP", Timepoint.Exact],
             ["someOtherValue", Timepoint.Approximate],
             [undefined, Timepoint.Approximate],
-        ])("returns the correct time point for the timing status", (input, expected) => {
+        ])("returns the correct time point for the timing status: %o", (input, expected) => {
             const result = getTimepointFromTimingStatus(input);
             expect(result).toEqual(expected);
         });

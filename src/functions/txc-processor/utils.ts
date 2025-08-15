@@ -37,7 +37,7 @@ export const getDropOffTypeFromStopActivity = (activity?: string, isFirstStop = 
 };
 
 export const getTimepointFromTimingStatus = (timingStatus?: string) => {
-    return timingStatus === "principalTimingPoint" ? Timepoint.Exact : Timepoint.Approximate;
+    return timingStatus === "principalTimingPoint" || timingStatus === "PTP" ? Timepoint.Exact : Timepoint.Approximate;
 };
 
 export const appendRolloverHours = (
