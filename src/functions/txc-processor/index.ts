@@ -57,6 +57,10 @@ const processServices = (
     servicedOrganisations?: ServicedOrganisation[],
 ) => {
     const promises = services.flatMap(async (service) => {
+        logger.service = service.ServiceCode;
+        logger.operatorRef = service.RegisteredOperatorRef;
+        logger.mode = service.Mode;
+
         if (hasServiceExpired(service)) {
             logger.warn("Service has expired", {
                 service: service.ServiceCode,

@@ -6,6 +6,9 @@ import { z } from "zod";
 type CustomLogger = Logger & {
     filepath?: string;
     subscriptionId?: string;
+    service?: string;
+    operatorRef?: string;
+    mode?: string;
 };
 
 export const logger = Pino(
@@ -13,6 +16,9 @@ export const logger = Pino(
         mixin: (_mergeObject, _level, customLogger: CustomLogger) => ({
             filepath: customLogger.filepath,
             subscriptionId: customLogger.subscriptionId,
+            service: customLogger.service,
+            operatorRef: customLogger.operatorRef,
+            mode: customLogger.mode,
         }),
     },
     pinoLambdaDestination(),
