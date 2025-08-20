@@ -1,6 +1,6 @@
 import { mockCallback, mockContext, mockEvent } from "@bods-integrated-data/shared/mockHandlerArgs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createGtfsZip, exportHandler, ignoreEmptyFiles, zipHandler } from ".";
+import { createGtfsZip, exportHandler, ignoreEmptyFiles, tripTableHandler, zipHandler } from ".";
 import { Files, GtfsFile } from "./data";
 
 describe("gtfs-timetables-generator", () => {
@@ -174,6 +174,7 @@ describe("gtfs-timetables-generator", () => {
         const handlerMocks = vi.hoisted(() => {
             return {
                 createRegionalTripTable: vi.fn(),
+                createTripTable: vi.fn(),
                 queryBuilder: vi.fn().mockReturnValue([
                     {
                         fileName: "calendar",
@@ -196,6 +197,7 @@ describe("gtfs-timetables-generator", () => {
         vi.mock("./data", async (importOriginal) => ({
             ...(await importOriginal<typeof import("./data")>()),
             createRegionalTripTable: handlerMocks.createRegionalTripTable,
+            createTripTable: handlerMocks.createTripTable,
             queryBuilder: handlerMocks.queryBuilder,
             exportDataToS3: handlerMocks.exportDataToS3,
             dropRegionalTripTable: handlerMocks.dropRegionalTripTable,
@@ -207,6 +209,7 @@ describe("gtfs-timetables-generator", () => {
 
             handlerMocks.exportDataToS3.mockClear();
             mocks.startS3Upload.mockClear();
+            handlerMocks.createTripTable.mockClear();
         });
 
         describe("national GTFS", () => {
@@ -223,14 +226,10 @@ describe("gtfs-timetables-generator", () => {
             });
 
             it("doesn't create regional trip table for national file", async () => {
-                await exportHandler(mockEvent, mockContext, mockCallback);
+                await tripTableHandler(mockEvent, mockContext, mockCallback);
 
-                expect(handlerMocks.createRegionalTripTable).not.toBeCalled();
-            });
-
-            it("doesn't create regional trip table for regionCode 'E'", async () => {
-                await exportHandler({ ...mockEvent, regionCode: "E" }, mockContext, mockCallback);
-
+                expect(handlerMocks.createTripTable).toBeCalled();
+                expect(handlerMocks.dropRegionalTripTable).not.toBeCalled();
                 expect(handlerMocks.createRegionalTripTable).not.toBeCalled();
             });
 
@@ -261,8 +260,10 @@ describe("gtfs-timetables-generator", () => {
             });
 
             it("creates regional trip table", async () => {
-                await exportHandler({ regionCode: "Y" }, mockContext, mockCallback);
+                await tripTableHandler({ regionCode: "Y" }, mockContext, mockCallback);
 
+                expect(handlerMocks.createTripTable).not.toBeCalled();
+                expect(handlerMocks.dropRegionalTripTable).toBeCalledWith(handlerMocks.databaseClient, "Y");
                 expect(handlerMocks.createRegionalTripTable).toBeCalledWith(handlerMocks.databaseClient, "Y");
             });
 

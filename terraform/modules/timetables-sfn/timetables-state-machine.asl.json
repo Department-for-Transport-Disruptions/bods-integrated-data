@@ -647,7 +647,323 @@
                                     "BackoffRate": 2
                                 }
                             ],
-                            "Next": "National GTFS"
+                            "Next": "Regional Trip Table Creation"
+                        },
+                        "Regional Trip Table Creation": {
+                            "Type": "Parallel",
+                            "Next": "National GTFS",
+                            "Branches": [
+                                {
+                                    "StartAt": "Run England Trip Table Creator",
+                                    "States": {
+                                        "Run England Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "E"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run London Trip Table Creator"
+                                        },
+                                        "Run London Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "L"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run South East Trip Table Creator"
+                                        },
+                                        "Run South East Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "SE"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run South West Trip Table Creator"
+                                        },
+                                        "Run South West Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "SW"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run Wales Trip Table Creator"
+                                        },
+                                        "Run Wales Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "W"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run Scotland Trip Table Creator"
+                                        },
+                                        "Run Scotland Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "S"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "End": true
+                                        }
+                                    }
+                                },
+                                {
+                                    "StartAt": "Run North West Trip Table Creator",
+                                    "States": {
+                                        "Run North West Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "NW"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run West Midlands Trip Table Creator"
+                                        },
+                                        "Run West Midlands Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "WM"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run Yorkshire Trip Table Creator"
+                                        },
+                                        "Run Yorkshire Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "Y"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run East Anglia Trip Table Creator"
+                                        },
+                                        "Run East Anglia Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "EA"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run East Midlands Trip Table Creator"
+                                        },
+                                        "Run East Midlands Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "EM"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "Next": "Run North East Trip Table Creator"
+                                        },
+                                        "Run North East Trip Table Creator": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "OutputPath": "$.Payload",
+                                            "Parameters": {
+                                                "FunctionName": "${gtfs_timetables_trip_table_creator_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "regionCode": "NE"
+                                                }
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
+                                            "End": true
+                                        }
+                                    }
+                                }
+                            ]
                         },
                         "National GTFS": {
                             "Type": "Task",
@@ -1412,9 +1728,7 @@
             ],
             "Catch": [
                 {
-                    "ErrorEquals": [
-                        "States.ALL"
-                    ],
+                    "ErrorEquals": ["States.ALL"],
                     "Next": "Generate Trip Map Fallback"
                 }
             ],

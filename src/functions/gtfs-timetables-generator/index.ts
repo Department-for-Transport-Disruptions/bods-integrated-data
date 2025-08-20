@@ -107,14 +107,20 @@ export const tripTableHandler: Handler = async (event, context) => {
 
     dbClient = dbClient || (await getDatabaseClient(stage === "local"));
 
+    const regionCode = regionCodeSchema.parse(event?.regionCode ?? "ALL");
+
     try {
         logger.info("Starting GTFS Trip Table Creator");
 
-        await createTripTable(dbClient);
+        if (regionCode === "ALL") {
+            logger.info("Creating national trip table");
+            await createTripTable(dbClient);
+        } else {
+            logger.info(`Creating regional trip table for region: ${regionCode}`);
 
-        logger.info("Creating regional trip table for region E");
-
-        await createRegionalTripTable(dbClient, "E");
+            await dropRegionalTripTable(dbClient, regionCode);
+            await createRegionalTripTable(dbClient, regionCode);
+        }
 
         logger.info("GTFS Trip Table Creator successful");
     } catch (e) {
@@ -141,10 +147,6 @@ export const exportHandler: Handler = async (event, context) => {
 
     try {
         logger.info(`Starting GTFS Timetable Generator for region: ${regionCode}`);
-
-        if (regionCode !== "ALL" && regionCode !== "E") {
-            await createRegionalTripTable(dbClient, regionCode);
-        }
 
         const queries = queryBuilder(dbClient, regionCode);
 
