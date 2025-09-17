@@ -208,7 +208,7 @@ module "integrated_data_gtfs_rt_pipeline" {
   db_reader_host                     = module.integrated_data_aurora_db.db_reader_host
   gtfs_rt_service_alerts_bucket_arn  = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_arn
   gtfs_rt_service_alerts_bucket_name = module.integrated_data_disruptions_pipeline.disruptions_gtfs_rt_bucket_name
-  enable_cancellations               = true
+  enable_cancellations               = false
 }
 
 module "integrated_data_avl_subscription_table" {
@@ -256,7 +256,7 @@ module "integrated_data_avl_pipeline" {
   gtfs_rt_bucket_arn                          = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_arn
   save_json                                   = false
   abods_account_ids                           = local.secrets["abods_account_ids"]
-  enable_cancellations                        = true
+  enable_cancellations                        = false
 }
 
 module "integrated_data_mock_data_producer_api" {
