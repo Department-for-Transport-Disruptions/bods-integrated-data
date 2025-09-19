@@ -12,13 +12,14 @@ terraform {
 module "avl_validate" {
   source = "../../shared/lambda-function"
 
-  environment   = var.environment
-  function_name = "integrated-data-avl-validate"
-  zip_path      = "${path.module}/../../../../src/functions/dist/avl-validate.zip"
-  handler       = "index.handler"
-  memory        = 128
-  runtime       = "nodejs20.x"
-  timeout       = 30
+  environment      = var.environment
+  function_name    = "integrated-data-avl-validate"
+  zip_path         = "${path.module}/../../../../src/functions/dist/avl-validate.zip"
+  handler          = "index.handler"
+  memory           = 128
+  runtime          = "nodejs20.x"
+  timeout          = 30
+  needs_vpc_access = true
 
   permissions = [
     {
