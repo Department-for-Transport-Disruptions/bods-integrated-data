@@ -105,6 +105,8 @@ module "avl_validate" {
 
   environment              = var.environment
   avl_producer_api_key_arn = aws_secretsmanager_secret.avl_producer_api_key_secret.arn
+  sg_id                    = var.sg_id
+  subnet_ids               = var.subnet_ids
 }
 
 module "avl_datafeed_validator" {

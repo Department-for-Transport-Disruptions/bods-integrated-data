@@ -29,13 +29,13 @@ const requestBodySchema = z
     .transform((body) => JSON.parse(body))
     .pipe(avlValidateRequestSchema);
 
-const generateCheckStatusRequestMessage = (currentTimestamp: string) => {
+const generateCheckStatusRequestMessage = (currentTimestamp: string, requestorRef?: string) => {
     const checkStatusRequestJson: AvlCheckStatusRequest = {
         Siri: {
             CheckStatusRequest: {
                 RequestTimestamp: currentTimestamp,
                 AccountId: "BODS",
-                RequestorRef: "BODS",
+                RequestorRef: requestorRef ?? "BODS",
             },
         },
     };
@@ -101,12 +101,12 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
 
         await validateApiKey(avlProducerApiKeyArn, event.headers);
 
-        const { url, username, password } = requestBodySchema.parse(event.body);
+        const { url, username, password, requestorRef } = requestBodySchema.parse(event.body);
 
         const requestTime = getDate();
         const currentTime = requestTime.toISOString();
 
-        const checkStatusRequest = generateCheckStatusRequestMessage(currentTime);
+        const checkStatusRequest = generateCheckStatusRequestMessage(currentTime, requestorRef);
 
         const serviceDeliveryResponse = await axios.post<string>(url, checkStatusRequest, {
             headers: {
