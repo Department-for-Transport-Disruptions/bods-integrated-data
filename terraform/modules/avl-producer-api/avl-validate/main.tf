@@ -20,6 +20,8 @@ module "avl_validate" {
   runtime          = "nodejs20.x"
   timeout          = 30
   needs_vpc_access = true
+  custom_sg_id     = var.sg_id
+  subnet_ids       = var.subnet_ids
 
   permissions = [
     {
