@@ -9,6 +9,9 @@ type CustomLogger = Logger & {
     service?: string;
     operatorRef?: string;
     mode?: string;
+    username?: string;
+    url?: string;
+    requestorRef?: string;
 };
 
 export const logger = Pino(
@@ -19,6 +22,9 @@ export const logger = Pino(
             service: customLogger.service,
             operatorRef: customLogger.operatorRef,
             mode: customLogger.mode,
+            username: customLogger.username,
+            url: customLogger.url,
+            requestorRef: customLogger.requestorRef,
         }),
     },
     pinoLambdaDestination(),

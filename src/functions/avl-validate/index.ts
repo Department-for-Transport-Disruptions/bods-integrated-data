@@ -80,7 +80,7 @@ const parseXml = (xml: string) => {
 
     if (!parsedJson.success) {
         logger.error(
-            "There was an error parsing the service delivery response from the data producer.",
+            `There was an error parsing the service delivery response from the data producer. Data producer response: ${xml}`,
             parsedJson.error.format(),
         );
         throw new InvalidXmlError();
@@ -102,6 +102,10 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         await validateApiKey(avlProducerApiKeyArn, event.headers);
 
         const { url, username, password, requestorRef } = requestBodySchema.parse(event.body);
+
+        logger.url = url;
+        logger.username = username;
+        logger.requestorRef = requestorRef;
 
         const requestTime = getDate();
         const currentTime = requestTime.toISOString();
@@ -125,7 +129,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
         const parsedCheckStatusResponseBody = parseXml(checkStatusRequestBody);
 
         if (parsedCheckStatusResponseBody.Siri.CheckStatusResponse.Status !== "true") {
-            logger.warn("Data producer did not return a status of true");
+            logger.warn(`Data producer did not return a status of true, returned: ${serviceDeliveryResponse.data}`);
             return createHttpValidationErrorResponse(["Data producer did not return a status of true"]);
         }
 
