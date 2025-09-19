@@ -7,6 +7,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./index";
 import {
     expectedCheckStatusRequestBody,
+    expectedCheckStatusRequestBodyWithCustomRequestorRef,
     expectedCheckStatusRequestConfig,
     mockAvlValidateRequest,
     mockCheckStatusResponse,
@@ -61,6 +62,31 @@ describe("avl-validate", () => {
         expect(axiosSpy).toHaveBeenCalledWith(
             mockAvlValidateRequest.url,
             expectedCheckStatusRequestBody,
+            expectedCheckStatusRequestConfig,
+        );
+    });
+
+    it("should return a status code of 200 and use the data producers requestorRef if provided", async () => {
+        mockedAxios.post.mockResolvedValue({
+            data: mockCheckStatusResponse,
+            status: 200,
+        } as AxiosResponse);
+
+        mockEvent = {
+            headers: {
+                "x-api-key": "mock-api-key",
+            },
+            body: JSON.stringify({ ...mockAvlValidateRequest, requestorRef: "TEST-REF" }),
+        } as unknown as APIGatewayProxyEvent;
+
+        await expect(handler(mockEvent, mockContext, mockCallback)).resolves.toEqual({
+            statusCode: 200,
+            body: JSON.stringify({ siriVersion: "2.0" }),
+        });
+
+        expect(axiosSpy).toHaveBeenCalledWith(
+            mockAvlValidateRequest.url,
+            expectedCheckStatusRequestBodyWithCustomRequestorRef,
             expectedCheckStatusRequestConfig,
         );
     });

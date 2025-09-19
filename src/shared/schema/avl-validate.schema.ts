@@ -13,6 +13,7 @@ export const avlValidateRequestSchema = z.object(
             }),
         username: createStringLengthValidation("username"),
         password: createStringLengthValidation("password"),
+        requestorRef: z.string().trim().optional(),
     },
     {
         message: "Body must be an object with required properties",
