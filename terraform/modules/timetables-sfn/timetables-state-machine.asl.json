@@ -1325,42 +1325,38 @@
                                     "BackoffRate": 2
                                 }
                             ],
-                            "Next": "Zip GTFS"
+                            "Next": "Zip National GTFS"
                         },
-                        "Zip GTFS": {
+                        "Zip National GTFS": {
+                            "Type": "Task",
+                            "Resource": "arn:aws:states:::lambda:invoke",
+                            "OutputPath": "$.Payload",
+                            "Parameters": {
+                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
+                                "Payload": {
+                                    "regionCode": "ALL"
+                                }
+                            },
+                            "Retry": [
+                                {
+                                    "ErrorEquals": [
+                                        "States.TaskFailed",
+                                        "Lambda.ServiceException",
+                                        "Lambda.AWSLambdaException",
+                                        "Lambda.SdkClientException",
+                                        "Lambda.TooManyRequestsException"
+                                    ],
+                                    "IntervalSeconds": 5,
+                                    "MaxAttempts": 3,
+                                    "BackoffRate": 2
+                                }
+                            ],
+                            "Next": "Zip Regional GTFS"
+                        },
+                        "Zip Regional GTFS": {
                             "Type": "Parallel",
                             "End": true,
                             "Branches": [
-                                {
-                                    "StartAt": "Zip National GTFS",
-                                    "States": {
-                                        "Zip National GTFS": {
-                                            "Type": "Task",
-                                            "Resource": "arn:aws:states:::lambda:invoke",
-                                            "OutputPath": "$.Payload",
-                                            "End": true,
-                                            "Parameters": {
-                                                "FunctionName": "${gtfs_timetables_zipper_function_arn}:$LATEST",
-                                                "Payload": {
-                                                    "regionCode": "ALL"
-                                                }
-                                            },
-                                            "Retry": [
-                                                {
-                                                    "ErrorEquals": [
-                                                        "Lambda.ServiceException",
-                                                        "Lambda.AWSLambdaException",
-                                                        "Lambda.SdkClientException",
-                                                        "Lambda.TooManyRequestsException"
-                                                    ],
-                                                    "IntervalSeconds": 1,
-                                                    "MaxAttempts": 3,
-                                                    "BackoffRate": 2
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
                                 {
                                     "StartAt": "Zip England GTFS",
                                     "States": {
@@ -1378,6 +1374,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1408,6 +1405,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1438,6 +1436,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1468,6 +1467,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1498,6 +1498,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1528,6 +1529,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1558,6 +1560,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1588,6 +1591,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1618,6 +1622,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1648,6 +1653,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1678,6 +1684,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
@@ -1708,6 +1715,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
