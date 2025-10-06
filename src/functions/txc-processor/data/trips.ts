@@ -86,15 +86,17 @@ export const processTrips = async (
         );
 
         if (insertedTrips.length > 0) {
-            updatedVehicleJourneyMappings = updatedVehicleJourneyMappings.reduce((acc, item) => {
-                const matchingTrip = insertedTrips.find((trip) => trip.id === item.tripId);
+            const tripsWithConflicts: string[] = [];
 
-                if (!matchingTrip?.conflicting_files || !matchingTrip.conflicting_files.length) {
-                    acc.push(item);
+            for (const trip of insertedTrips) {
+                if (trip.conflicting_files && trip.conflicting_files.length > 0) {
+                    tripsWithConflicts.push(trip.id);
                 }
+            }
 
-                return acc;
-            }, [] as VehicleJourneyMappingWithCalendar[]);
+            updatedVehicleJourneyMappings = updatedVehicleJourneyMappings.filter(
+                (vehicleJourneyMapping) => !tripsWithConflicts.includes(vehicleJourneyMapping.tripId),
+            );
         }
     }
 
