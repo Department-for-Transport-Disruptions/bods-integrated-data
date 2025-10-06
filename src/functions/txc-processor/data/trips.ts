@@ -14,9 +14,7 @@ export const processTrips = async (
     revisionNumber: string,
     service?: Service,
 ): Promise<VehicleJourneyMappingWithCalendar[]> => {
-    const updatedVehicleJourneyMappings = structuredClone(
-        vehicleJourneyMappings,
-    ) as VehicleJourneyMappingWithCalendar[];
+    let updatedVehicleJourneyMappings = structuredClone(vehicleJourneyMappings) as VehicleJourneyMappingWithCalendar[];
 
     const objectHasher = hasher();
 
@@ -82,10 +80,22 @@ export const processTrips = async (
         .filter(notEmpty);
 
     if (trips.length > 0) {
-        await insertTrips(
+        const insertedTrips = await insertTrips(
             dbClient,
             trips.sort((a, b) => a.id.localeCompare(b.id)),
         );
+
+        if (insertedTrips.length > 0) {
+            updatedVehicleJourneyMappings = updatedVehicleJourneyMappings.reduce((acc, item) => {
+                const matchingTrip = insertedTrips.find((trip) => trip.id === item.tripId);
+
+                if (!matchingTrip?.conflicting_files || !matchingTrip.conflicting_files.length) {
+                    acc.push(item);
+                }
+
+                return acc;
+            }, [] as VehicleJourneyMappingWithCalendar[]);
+        }
     }
 
     return updatedVehicleJourneyMappings;

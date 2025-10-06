@@ -202,7 +202,8 @@ export const insertStopTimes = async (dbClient: KyselyDb, stopTimes: NewStopTime
 
 export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
     const insertChunks = chunkArray(trips, 3000);
-    await Promise.all(
+
+    const insertedTrips = await Promise.all(
         insertChunks.map((chunk) =>
             dbClient
                 .insertInto("trip_new")
@@ -214,9 +215,12 @@ export const insertTrips = async (dbClient: KyselyDb, trips: NewTrip[]) => {
                     })),
                 )
                 .values(chunk)
+                .returning(["id", "conflicting_files"])
                 .execute(),
         ),
     );
+
+    return insertedTrips.flatMap((result) => result);
 };
 
 export const updateTripWithOriginDestinationRefAndBlockId = async (
