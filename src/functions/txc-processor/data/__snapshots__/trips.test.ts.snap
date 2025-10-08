@@ -62,3 +62,45 @@ exports[`trips > inserts trips into the database 1`] = `
   },
 ]
 `;
+
+exports[`trips > inserts trips into the database and removes trips with conflicting files from updatedVehicleJourneyMappings 1`] = `
+[
+  {
+    "blockId": "ad4b5661e10bc4d2f9209e1e1f0083bc4112d31b",
+    "journeyPattern": {
+      "@_id": "1",
+      "DestinationDisplay": "jpDisplay1",
+      "Direction": "inbound",
+      "JourneyPatternSectionRefs": [],
+    },
+    "routeId": 1,
+    "serviceCode": "test",
+    "serviceId": 2,
+    "shapeId": "3",
+    "tripId": "VJ28c521ca45f8b29027531375bd76dec15ec90dd5",
+    "vehicleJourney": {
+      "DepartureTime": "23:59:00",
+      "DestinationDisplay": "vjDisplay1",
+      "JourneyPatternRef": "7",
+      "LineRef": "5",
+      "OperatingProfile": {
+        "RegularDayType": {
+          "DaysOfWeek": {
+            "Monday": "",
+          },
+        },
+      },
+      "Operational": {
+        "Block": {
+          "BlockNumber": "block1",
+        },
+        "TicketMachine": {
+          "JourneyCode": "journey1",
+        },
+      },
+      "ServiceRef": "6",
+      "VehicleJourneyCode": "8",
+    },
+  },
+]
+`;
