@@ -16,14 +16,19 @@ export const handler = async () => {
 
         logger.info("Starting SIRI-SX file generator");
 
-        const { BUCKET_NAME: bucketName } = process.env;
+        const { BUCKET_NAME: bucketName, EXCLUDE_STAGECOACH_CANCELLATIONS: excludeStagecoachCancellations = "true" } =
+            process.env;
 
         if (!bucketName) {
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
         const requestMessageRef = randomUUID();
-        const situations = await getSituationsDataForSiriSx(dbClient);
+        const situations = await getSituationsDataForSiriSx(
+            dbClient,
+            undefined,
+            excludeStagecoachCancellations === "true",
+        );
 
         await generateSiriSxAndUploadToS3(situations, requestMessageRef, bucketName, !isLocal);
 

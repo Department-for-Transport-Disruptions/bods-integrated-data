@@ -152,12 +152,13 @@ module "siri_sx_downloader" {
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    BUCKET_NAME   = aws_s3_bucket.integrated_data_cancellations_siri_sx_bucket.bucket
-    DB_HOST       = var.db_reader_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
+    STAGE                            = var.environment
+    BUCKET_NAME                      = aws_s3_bucket.integrated_data_cancellations_siri_sx_bucket.bucket
+    DB_HOST                          = var.db_reader_host
+    DB_PORT                          = var.db_port
+    DB_SECRET_ARN                    = var.db_secret_arn
+    DB_NAME                          = var.db_name
+    EXCLUDE_STAGECOACH_CANCELLATIONS = var.exclude_stagecoach_cancellations
   }
 }
 
@@ -194,12 +195,13 @@ module "integrated_data_siri_sx_generator_lambda" {
   ]
 
   env_vars = {
-    DB_READER_HOST = var.db_reader_host
-    DB_PORT        = var.db_port
-    DB_SECRET_ARN  = var.db_secret_arn
-    DB_NAME        = var.db_name
-    BUCKET_NAME    = aws_s3_bucket.integrated_data_cancellations_siri_sx_bucket.bucket
-    STAGE          = var.environment
+    DB_READER_HOST                   = var.db_reader_host
+    DB_PORT                          = var.db_port
+    DB_SECRET_ARN                    = var.db_secret_arn
+    DB_NAME                          = var.db_name
+    BUCKET_NAME                      = aws_s3_bucket.integrated_data_cancellations_siri_sx_bucket.bucket
+    STAGE                            = var.environment
+    EXCLUDE_STAGECOACH_CANCELLATIONS = var.exclude_stagecoach_cancellations
   }
 
   runtime                    = var.environment == "local" ? "nodejs20.x" : null
