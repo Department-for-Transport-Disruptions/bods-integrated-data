@@ -30,7 +30,7 @@ const requestParamsSchema = z.preprocess(
 const retrieveSiriSxData = async (
     dbClient: KyselyDb,
     subscriptionId?: string[],
-    excludeStagecoachCancellations = true,
+    excludeStagecoachCancellations = false,
 ) => {
     const situations = await getSituationsDataForSiriSx(dbClient, subscriptionId, excludeStagecoachCancellations);
     const requestMessageRef = randomUUID();
@@ -57,7 +57,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
             return createHttpSuccessResponse();
         }
 
-        const { BUCKET_NAME: bucketName, EXCLUDE_STAGECOACH_CANCELLATIONS: excludeStagecoachCancellations = "true" } =
+        const { BUCKET_NAME: bucketName, EXCLUDE_STAGECOACH_CANCELLATIONS: excludeStagecoachCancellations = "false" } =
             process.env;
 
         if (!bucketName) {
@@ -73,7 +73,7 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
         if (subscriptionId) {
             dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
-            siriSx = await retrieveSiriSxData(dbClient, subscriptionId, excludeStagecoachCancellations === "true");
+            siriSx = await retrieveSiriSxData(dbClient, subscriptionId, excludeStagecoachCancellations === "false");
         } else {
             siriSx = await retrieveSiriSxFile(bucketName, GENERATED_SIRI_SX_FILE_PATH);
         }

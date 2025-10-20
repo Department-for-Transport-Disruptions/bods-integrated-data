@@ -170,7 +170,7 @@ export const generateSiriSxAndUploadToS3 = async (
 const getQueryForSituations = (
     dbClient: KyselyDb,
     subscriptionId?: string[],
-    excludeStagecoachCancellations = true,
+    excludeStagecoachCancellations = false,
 ) => {
     let query = dbClient.selectFrom("situation").distinctOn(["subscription_id", "situation_number"]).selectAll();
 
@@ -188,7 +188,7 @@ const getQueryForSituations = (
 export const getSituationsDataForSiriSx = async (
     dbClient: KyselyDb,
     subscriptionId?: string[],
-    excludeStagecoachCancellations = true,
+    excludeStagecoachCancellations = false,
 ) => {
     try {
         const query = getQueryForSituations(dbClient, subscriptionId, excludeStagecoachCancellations);

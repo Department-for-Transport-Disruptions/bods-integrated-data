@@ -16,7 +16,7 @@ export const handler = async () => {
 
         logger.info("Starting SIRI-SX file generator");
 
-        const { BUCKET_NAME: bucketName, EXCLUDE_STAGECOACH_CANCELLATIONS: excludeStagecoachCancellations = "true" } =
+        const { BUCKET_NAME: bucketName, EXCLUDE_STAGECOACH_CANCELLATIONS: excludeStagecoachCancellations = "false" } =
             process.env;
 
         if (!bucketName) {
@@ -27,7 +27,7 @@ export const handler = async () => {
         const situations = await getSituationsDataForSiriSx(
             dbClient,
             undefined,
-            excludeStagecoachCancellations === "true",
+            excludeStagecoachCancellations === "false",
         );
 
         await generateSiriSxAndUploadToS3(situations, requestMessageRef, bucketName, !isLocal);
