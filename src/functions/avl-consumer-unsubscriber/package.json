@@ -14,7 +14,7 @@
     "dependencies": {
         "@aws-sdk/client-lambda": "^3.682.0",
         "@bods-integrated-data/shared": "workspace:^",
-        "fast-xml-parser": "^4.4.1",
+        "fast-xml-parser": "^5.3.4",
         "zod": "3.23.8"
     },
     "devDependencies": {
