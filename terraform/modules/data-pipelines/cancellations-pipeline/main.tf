@@ -60,6 +60,15 @@ module "integrated_data_cancellations_processor_function" {
     },
     {
       Action = [
+        "s3:ListBucket",
+      ],
+      Effect = "Allow",
+      Resource = [
+        module.integrated_data_cancellations_s3_sqs.bucket_arn
+      ]
+    },
+    {
+      Action = [
         "secretsmanager:GetSecretValue",
       ],
       Effect = "Allow",
