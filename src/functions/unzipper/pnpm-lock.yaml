@@ -21,8 +21,8 @@ importers:
         specifier: ^1.15.0
         version: 1.15.0
       yauzl:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.2.1
+        version: 3.2.1
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -74,8 +74,8 @@ packages:
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
-  yauzl@3.1.1:
-    resolution: {integrity: sha512-MPxA7oN5cvGV0wzfkeHKF2/+Q4TkMpHSWGRy/96I4Cozljmx0ph91+Muxh6HegEtDC4GftJ8qYDE51vghFiEYA==}
+  yauzl@3.2.1:
+    resolution: {integrity: sha512-k1isifdbpNSFEHFJ1ZY4YDewv0IH9FR61lDetaRMD3j2ae3bIXGV+7c+LHCqtQGofSd8PIyV4X6+dHMAnSr60A==}
     engines: {node: '>=12'}
 
   zod@3.23.8:
@@ -109,7 +109,7 @@ snapshots:
 
   undici-types@5.26.5: {}
 
-  yauzl@3.1.1:
+  yauzl@3.2.1:
     dependencies:
       buffer-crc32: 0.2.13
       pend: 1.2.0
