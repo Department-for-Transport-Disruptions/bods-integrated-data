@@ -15,8 +15,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1
       kysely:
-        specifier: ^0.27.3
-        version: 0.27.3
+        specifier: ^0.28.12
+        version: 0.28.12
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -43,9 +43,9 @@ packages:
     resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
     hasBin: true
 
-  kysely@0.27.3:
-    resolution: {integrity: sha512-lG03Ru+XyOJFsjH3OMY6R/9U38IjDPfnOfDgO3ynhbDr+Dz8fak+X6L62vqu3iybQnj+lG84OttBuU9KY3L9kA==}
-    engines: {node: '>=14.0.0'}
+  kysely@0.28.12:
+    resolution: {integrity: sha512-kWiueDWXhbCchgiotwXkwdxZE/6h56IHAeFWg4euUfW0YsmO9sxbAxzx1KLLv2lox15EfuuxHQvgJ1qIfZuHGw==}
+    engines: {node: '>=20.0.0'}
 
   strnum@1.0.5:
     resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
@@ -74,7 +74,7 @@ snapshots:
     dependencies:
       strnum: 1.0.5
 
-  kysely@0.27.3: {}
+  kysely@0.28.12: {}
 
   strnum@1.0.5: {}
 
