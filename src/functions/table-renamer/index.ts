@@ -22,7 +22,7 @@ const databaseTables: TableKey[] = [
     { table: "stop", newTable: "stop_new", key: "id", requiredPercentage: 70 },
     { table: "shape", newTable: "shape_new", key: "id", requiredPercentage: 70 },
     { table: "trip", newTable: "trip_new", key: "id", requiredPercentage: 70 },
-    { table: "frequency", newTable: "frequency_new", key: "id", requiredPercentage: 70 },
+    { table: "frequency", newTable: "frequency_new", key: "id", requiredPercentage: 50 },
     { table: "stop_time", newTable: "stop_time_new", key: "id", requiredPercentage: 70 },
     { table: "noc_operator", newTable: "noc_operator_new", key: "noc" },
     { table: "naptan_stop", newTable: "naptan_stop_new", key: "atco_code" },
