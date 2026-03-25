@@ -16,7 +16,7 @@
         "@aws-sdk/client-sqs": "^3.682.0",
         "@bods-integrated-data/shared": "workspace:^",
         "clean-deep": "^3.4.0",
-        "fast-xml-parser": "^4.4.1",
+        "fast-xml-parser": "^4.5.5",
         "zod": "3.23.8",
         "zod-validation-error": "^3.3.0"
     },
