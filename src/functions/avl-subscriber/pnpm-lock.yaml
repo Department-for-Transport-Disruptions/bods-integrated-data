@@ -15,8 +15,8 @@ importers:
         specifier: ^1.13.6
         version: 1.13.6
       fast-xml-parser:
-        specifier: ^4.5.5
-        version: 4.5.5
+        specifier: 4.5.4
+        version: 4.5.4
       mockdate:
         specifier: ^3.0.5
         version: 3.0.5
@@ -77,8 +77,8 @@ packages:
     resolution: {integrity: sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==}
     engines: {node: '>= 0.4'}
 
-  fast-xml-parser@4.5.5:
-    resolution: {integrity: sha512-cK9c5I/DwIOI7/Q7AlGN3DuTdwN61gwSfL8rvuVPK+0mcCNHHGxRrpiFtaZZRfRMJL3Gl8B2AFlBG6qXf03w9A==}
+  fast-xml-parser@4.5.4:
+    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
     hasBin: true
 
   follow-redirects@1.15.11:
@@ -198,7 +198,7 @@ snapshots:
       has-tostringtag: 1.0.2
       hasown: 2.0.2
 
-  fast-xml-parser@4.5.5:
+  fast-xml-parser@4.5.4:
     dependencies:
       strnum: 1.0.5
 

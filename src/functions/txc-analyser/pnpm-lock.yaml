@@ -12,8 +12,8 @@ importers:
         specifier: workspace:^
         version: link:../../shared
       fast-xml-parser:
-        specifier: ^4.5.5
-        version: 4.5.5
+        specifier: 4.5.4
+        version: 4.5.4
       object-hash:
         specifier: ^3.0.0
         version: 3.0.0
@@ -57,8 +57,8 @@ packages:
   '@types/papaparse@5.3.15':
     resolution: {integrity: sha512-JHe6vF6x/8Z85nCX4yFdDslN11d+1pr12E526X8WAfhadOeaOTx5AuIkvDKIBopfvlzpzkdMx4YyvSKCM9oqtw==}
 
-  fast-xml-parser@4.5.5:
-    resolution: {integrity: sha512-cK9c5I/DwIOI7/Q7AlGN3DuTdwN61gwSfL8rvuVPK+0mcCNHHGxRrpiFtaZZRfRMJL3Gl8B2AFlBG6qXf03w9A==}
+  fast-xml-parser@4.5.4:
+    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
     hasBin: true
 
   mockdate@3.0.5:
@@ -98,7 +98,7 @@ snapshots:
     dependencies:
       '@types/node': 20.17.10
 
-  fast-xml-parser@4.5.5:
+  fast-xml-parser@4.5.4:
     dependencies:
       strnum: 1.0.5
 
