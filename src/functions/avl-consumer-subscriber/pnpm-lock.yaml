@@ -21,8 +21,8 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0
       fast-xml-parser:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: ^4.4.1
+        version: 4.4.1
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -385,10 +385,6 @@ packages:
 
   fast-xml-parser@4.4.1:
     resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
-    hasBin: true
-
-  fast-xml-parser@4.5.4:
-    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
     hasBin: true
 
   lodash.isempty@4.4.0:
@@ -1223,10 +1219,6 @@ snapshots:
       lodash.transform: 4.6.0
 
   fast-xml-parser@4.4.1:
-    dependencies:
-      strnum: 1.0.5
-
-  fast-xml-parser@4.5.4:
     dependencies:
       strnum: 1.0.5
 
