@@ -12,8 +12,8 @@ importers:
         specifier: workspace:^
         version: link:../../shared
       fast-xml-parser:
-        specifier: ^4.4.1
-        version: 4.4.1
+        specifier: 4.5.4
+        version: 4.5.4
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -45,8 +45,8 @@ packages:
   '@types/node@20.11.19':
     resolution: {integrity: sha512-7xMnVEcZFu0DikYjWOlRq7NTPETrm7teqUT2WkQjrTIkEgUyyGdWsj/Zg8bEJt5TNklzbPD1X3fqfsHw3SpapQ==}
 
-  fast-xml-parser@4.4.1:
-    resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
+  fast-xml-parser@4.5.4:
+    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
     hasBin: true
 
   lodash@4.17.21:
@@ -74,7 +74,7 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
-  fast-xml-parser@4.4.1:
+  fast-xml-parser@4.5.4:
     dependencies:
       strnum: 1.0.5
 
