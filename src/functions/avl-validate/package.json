@@ -13,8 +13,8 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "axios": "^1.9.0",
-        "fast-xml-parser": "^4.4.1",
+        "axios": "^1.13.6",
+        "fast-xml-parser": "4.5.4",
         "mockdate": "^3.0.5",
         "zod": "3.23.8"
     },
