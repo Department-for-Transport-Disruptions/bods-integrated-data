@@ -12,7 +12,7 @@ importers:
         specifier: workspace:^
         version: link:../../shared
       axios:
-        specifier: ^1.13.6
+        specifier: ^1.9.0
         version: 1.13.6
       mockdate:
         specifier: ^3.0.5

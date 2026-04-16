@@ -12,10 +12,10 @@ importers:
         specifier: workspace:^
         version: link:../../shared
       axios:
-        specifier: ^1.13.6
+        specifier: ^1.9.0
         version: 1.13.6
       fast-xml-parser:
-        specifier: 4.5.4
+        specifier: ^4.4.1
         version: 4.5.4
       mockdate:
         specifier: ^3.0.5
