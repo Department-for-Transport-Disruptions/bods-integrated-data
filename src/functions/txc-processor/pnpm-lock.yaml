@@ -15,8 +15,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1
       fast-xml-parser:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.5.5
+        version: 4.5.5
       kysely:
         specifier: ^0.27.3
         version: 0.27.3
@@ -60,8 +60,8 @@ packages:
   exponential-backoff@3.1.1:
     resolution: {integrity: sha512-dX7e/LHVJ6W3DE1MHWi9S1EYzDESENfLrYohG2G++ovZrYOkm4Knwa0mc1cn84xJOR4KEU0WSchhLbd0UklbHw==}
 
-  fast-xml-parser@4.5.4:
-    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
+  fast-xml-parser@4.5.5:
+    resolution: {integrity: sha512-cK9c5I/DwIOI7/Q7AlGN3DuTdwN61gwSfL8rvuVPK+0mcCNHHGxRrpiFtaZZRfRMJL3Gl8B2AFlBG6qXf03w9A==}
     hasBin: true
 
   kysely@0.27.3:
@@ -78,8 +78,8 @@ packages:
   ospoint@0.2.1:
     resolution: {integrity: sha512-P3unHc+SfN5JLyjrR+NLdMvhK2YWoupSJj3yo0OyRlZ8S1wn3Jt6Alv+UmB+h6y0Y3MGYvn9pRlLEapayPO5KQ==}
 
-  strnum@1.0.5:
-    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
+  strnum@1.1.2:
+    resolution: {integrity: sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -105,9 +105,9 @@ snapshots:
 
   exponential-backoff@3.1.1: {}
 
-  fast-xml-parser@4.5.4:
+  fast-xml-parser@4.5.5:
     dependencies:
-      strnum: 1.0.5
+      strnum: 1.1.2
 
   kysely@0.27.3: {}
 
@@ -117,7 +117,7 @@ snapshots:
 
   ospoint@0.2.1: {}
 
-  strnum@1.0.5: {}
+  strnum@1.1.2: {}
 
   undici-types@5.26.5: {}
 
