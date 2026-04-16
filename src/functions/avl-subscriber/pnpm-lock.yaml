@@ -15,8 +15,8 @@ importers:
         specifier: ^1.9.0
         version: 1.13.6
       fast-xml-parser:
-        specifier: ^4.4.1
-        version: 4.5.4
+        specifier: ^4.5.5
+        version: 4.5.5
       mockdate:
         specifier: ^3.0.5
         version: 3.0.5
@@ -77,8 +77,8 @@ packages:
     resolution: {integrity: sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==}
     engines: {node: '>= 0.4'}
 
-  fast-xml-parser@4.5.4:
-    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
+  fast-xml-parser@4.5.5:
+    resolution: {integrity: sha512-cK9c5I/DwIOI7/Q7AlGN3DuTdwN61gwSfL8rvuVPK+0mcCNHHGxRrpiFtaZZRfRMJL3Gl8B2AFlBG6qXf03w9A==}
     hasBin: true
 
   follow-redirects@1.15.11:
@@ -139,8 +139,8 @@ packages:
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
 
-  strnum@1.0.5:
-    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
+  strnum@1.1.2:
+    resolution: {integrity: sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -198,9 +198,9 @@ snapshots:
       has-tostringtag: 1.0.2
       hasown: 2.0.2
 
-  fast-xml-parser@4.5.4:
+  fast-xml-parser@4.5.5:
     dependencies:
-      strnum: 1.0.5
+      strnum: 1.1.2
 
   follow-redirects@1.15.11: {}
 
@@ -256,7 +256,7 @@ snapshots:
 
   proxy-from-env@1.1.0: {}
 
-  strnum@1.0.5: {}
+  strnum@1.1.2: {}
 
   undici-types@5.26.5: {}
 
