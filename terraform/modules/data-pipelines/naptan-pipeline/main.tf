@@ -131,5 +131,6 @@ module "integrated_data_naptan_uploader_function" {
     DB_NAME       = var.db_name
     EXTERNAL_NAPTAN_BUCKET_NAME  = var.external_naptan_bucket_name
     NAPTAN_CROSS_ACCOUNT_ROLE_ARN = var.naptan_cross_account_role_arn
+    BUCKET_REGION = var.bucket_region
   }
 }

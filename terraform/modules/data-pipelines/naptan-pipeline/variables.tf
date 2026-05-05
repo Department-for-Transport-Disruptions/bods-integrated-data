@@ -48,3 +48,9 @@ variable "naptan_cross_account_role_arn" {
   description = "ARN of the IAM role to assume for cross-account S3 access"
   default     = ""
 }
+
+variable "bucket_region" {
+  type        = string
+  description = "Region of the external S3 bucket containing naptan data"
+  default     = ""
+}

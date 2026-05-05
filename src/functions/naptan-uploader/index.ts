@@ -99,8 +99,8 @@ export const parseXml = (xml: string) => {
 };
 
 // cross-account S3 for Naptan update
-const getCrossAccountS3Client = async (roleArn: string) => {
-    const stsClient = new STSClient({ region: "eu-west-2" });
+const getCrossAccountS3Client = async (roleArn: string, region: string) => {
+    const stsClient = new STSClient({ region });
     
     const assumeRoleCommand = new AssumeRoleCommand({
         RoleArn: roleArn,
@@ -111,7 +111,7 @@ const getCrossAccountS3Client = async (roleArn: string) => {
     const credentials = await stsClient.send(assumeRoleCommand);
     
     return new S3Client({
-        region: "eu-west-2",
+        region,
         credentials: {
             accessKeyId: credentials.Credentials!.AccessKeyId!,
             secretAccessKey: credentials.Credentials!.SecretAccessKey!,
@@ -150,10 +150,10 @@ const addLonAndLatData = (naptanData: unknown[]) => {
     });
 };
 
-const getAndParseNaptanFile = async (bucketName: string, filepath: string, crossAccountRoleArn?: string) => {
+const getAndParseNaptanFile = async (bucketName: string, filepath: string, crossAccountRoleArn?: string, region?: string) => {
     let s3Client;
-    if (crossAccountRoleArn) {
-        s3Client = await getCrossAccountS3Client(crossAccountRoleArn);
+    if (crossAccountRoleArn && region) {
+        s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
     }
     
     const file = await getS3Object(
@@ -229,6 +229,7 @@ export const handler: S3Handler = async (event, context) => {
     try {
         const externalBucketName = process.env.EXTERNAL_NAPTAN_BUCKET_NAME;
         const crossAccountRoleArn = process.env.NAPTAN_CROSS_ACCOUNT_ROLE_ARN;
+        const bucketRegion = process.env.BUCKET_REGION;
 
         const bucketName = externalBucketName || event.Records[0].s3.bucket.name;
 
@@ -244,6 +245,7 @@ export const handler: S3Handler = async (event, context) => {
             bucketName,
             naptanXmlFilename,
             crossAccountRoleArn,
+            bucketRegion,
         );
 
         const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
