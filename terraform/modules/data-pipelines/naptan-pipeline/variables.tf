@@ -37,13 +37,13 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "external_naptan_bucket_name" {
+variable "naptan_bucket" {
   type        = string
   description = "Name of the external S3 bucket containing naptan data"
   default     = ""
 }
 
-variable "naptan_cross_account_role_arn" {
+variable "naptan_arn" {
   type        = string
   description = "ARN of the IAM role to assume for cross-account S3 access"
   default     = ""

@@ -227,14 +227,14 @@ export const handler: S3Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        const externalBucketName = process.env.EXTERNAL_NAPTAN_BUCKET_NAME;
-        const crossAccountRoleArn = process.env.NAPTAN_CROSS_ACCOUNT_ROLE_ARN;
+        const externalBucketName = process.env.NAPTAN_BUCKET;
+        const crossAccountRoleArn = process.env.NAPTAN_ARN;
         const bucketRegion = process.env.BUCKET_REGION;
 
         const bucketName = externalBucketName || event.Records[0].s3.bucket.name;
 
         if (!bucketName) {
-            throw new Error("EXTERNAL_NAPTAN_BUCKET_NAME environment variable must be set");
+            throw new Error("NAPTAN_BUCKET environment variable must be set");
         }
 
         logger.info("Starting naptan uploader");
