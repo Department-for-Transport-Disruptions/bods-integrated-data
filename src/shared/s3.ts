@@ -62,13 +62,15 @@ export const listAllS3Objects = async (input: ListObjectsV2CommandInput) => {
     return allObjects;
 };
 
-export const getS3Object = async (input: GetObjectCommandInput) =>
-    client.send(
+export const getS3Object = async (input: GetObjectCommandInput, customClient?: S3Client) => {
+    const s3Client = customClient || client;
+    return s3Client.send(
         new GetObjectCommand({
             ...input,
             Key: input.Key ? decodeURIComponent(input.Key) : undefined,
         }),
     );
+};
 
 export const putS3Object = (input: PutObjectCommandInput) =>
     client.send(

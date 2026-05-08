@@ -1,3 +1,5 @@
+import { S3Client } from "@aws-sdk/client-s3";
+import { AssumeRoleCommand, STSClient } from "@aws-sdk/client-sts";
 import {
     KyselyDb,
     NaptanStop,
@@ -96,6 +98,37 @@ export const parseXml = (xml: string) => {
     return { stopPoints, stopAreas };
 };
 
+// cross-account S3 for Naptan update
+const getCrossAccountS3Client = async (roleArn: string, region: string) => {
+    const stsClient = new STSClient({ region });
+
+    const assumeRoleCommand = new AssumeRoleCommand({
+        RoleArn: roleArn,
+        RoleSessionName: "naptan-uploader-cross-account-session",
+        DurationSeconds: 3600,
+    });
+
+    const credentials = await stsClient.send(assumeRoleCommand);
+    const assumedRoleCredentials = credentials.Credentials;
+
+    if (
+        !assumedRoleCredentials?.AccessKeyId ||
+        !assumedRoleCredentials.SecretAccessKey ||
+        !assumedRoleCredentials.SessionToken
+    ) {
+        throw new Error("Failed to assume role for cross-account S3 access");
+    }
+
+    return new S3Client({
+        region,
+        credentials: {
+            accessKeyId: assumedRoleCredentials.AccessKeyId,
+            secretAccessKey: assumedRoleCredentials.SecretAccessKey,
+            sessionToken: assumedRoleCredentials.SessionToken,
+        },
+    });
+};
+
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
         naptanData as {
@@ -125,11 +158,24 @@ const addLonAndLatData = (naptanData: unknown[]) => {
     });
 };
 
-const getAndParseNaptanFile = async (bucketName: string, filepath: string) => {
-    const file = await getS3Object({
-        Bucket: bucketName,
-        Key: filepath,
-    });
+const getAndParseNaptanFile = async (
+    bucketName: string,
+    filepath: string,
+    crossAccountRoleArn?: string,
+    region?: string,
+) => {
+    let s3Client: S3Client | undefined;
+    if (crossAccountRoleArn && region) {
+        s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
+    }
+
+    const file = await getS3Object(
+        {
+            Bucket: bucketName,
+            Key: filepath,
+        },
+        s3Client,
+    );
 
     const body = (await file.Body?.transformToString()) || "";
     return parseXml(body);
@@ -194,22 +240,26 @@ export const handler: S3Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        const bucketName = event.Records[0].s3.bucket.name;
+        const externalBucketName = process.env.NAPTAN_BUCKET;
+        const crossAccountRoleArn = process.env.NAPTAN_ARN;
+        const bucketRegion = process.env.BUCKET_REGION;
+
+        const bucketName = externalBucketName || event.Records[0].s3.bucket.name;
+
+        if (!bucketName) {
+            throw new Error("NAPTAN_BUCKET environment variable must be set");
+        }
 
         logger.info("Starting naptan uploader");
 
-        const { stopPoints: stopPoints1, stopAreas: stopAreas1 } = await getAndParseNaptanFile(
-            bucketName,
-            "AreaBatch1.xml",
-        );
+        const naptanXmlFilename = process.env.NAPTAN_XML_FILENAME || "raw/naptan/naptan-latest_xml.xml";
 
-        const { stopPoints: stopPoints2, stopAreas: stopAreas2 } = await getAndParseNaptanFile(
+        const { stopPoints, stopAreas } = await getAndParseNaptanFile(
             bucketName,
-            "AreaBatch2.xml",
+            naptanXmlFilename,
+            crossAccountRoleArn,
+            bucketRegion,
         );
-
-        const stopPoints = [...stopPoints1, ...stopPoints2];
-        const stopAreas = [...stopAreas1, ...stopAreas2];
 
         const naptanStopsWithLonsAndLats = addLonAndLatData(stopPoints);
         const naptanStopAreasWithLonsAndLats = addLonAndLatData(stopAreas);
