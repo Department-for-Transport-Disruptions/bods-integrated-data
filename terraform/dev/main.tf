@@ -143,7 +143,7 @@ module "integrated_data_naptan_pipeline" {
   db_host            = module.integrated_data_aurora_db_dev.db_host
   naptan_bucket      = "bods-1297-data-landing-zone"
   naptan_arn         = null
-  bucket_name        = "eu-west-2"
+  bucket_region        = "eu-west-2"
 }
 
 module "integrated_data_bods_netex_pipeline" {
