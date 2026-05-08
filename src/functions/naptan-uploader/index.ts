@@ -1,3 +1,5 @@
+import { S3Client } from "@aws-sdk/client-s3";
+import { AssumeRoleCommand, STSClient } from "@aws-sdk/client-sts";
 import {
     KyselyDb,
     NaptanStop,
@@ -14,8 +16,6 @@ import { Promise as BluebirdPromise } from "bluebird";
 import { XMLParser } from "fast-xml-parser";
 import OsPoint from "ospoint";
 import { z } from "zod";
-import { STSClient, AssumeRoleCommand } from "@aws-sdk/client-sts";
-import { S3Client } from "@aws-sdk/client-s3";
 
 z.setErrorMap(errorMapWithDataLogging);
 
@@ -101,25 +101,33 @@ export const parseXml = (xml: string) => {
 // cross-account S3 for Naptan update
 const getCrossAccountS3Client = async (roleArn: string, region: string) => {
     const stsClient = new STSClient({ region });
-    
+
     const assumeRoleCommand = new AssumeRoleCommand({
         RoleArn: roleArn,
         RoleSessionName: "naptan-uploader-cross-account-session",
         DurationSeconds: 3600,
     });
-    
+
     const credentials = await stsClient.send(assumeRoleCommand);
-    
+    const assumedRoleCredentials = credentials.Credentials;
+
+    if (
+        !assumedRoleCredentials?.AccessKeyId ||
+        !assumedRoleCredentials.SecretAccessKey ||
+        !assumedRoleCredentials.SessionToken
+    ) {
+        throw new Error("Failed to assume role for cross-account S3 access");
+    }
+
     return new S3Client({
         region,
         credentials: {
-            accessKeyId: credentials.Credentials!.AccessKeyId!,
-            secretAccessKey: credentials.Credentials!.SecretAccessKey!,
-            sessionToken: credentials.Credentials!.SessionToken!,
+            accessKeyId: assumedRoleCredentials.AccessKeyId,
+            secretAccessKey: assumedRoleCredentials.SecretAccessKey,
+            sessionToken: assumedRoleCredentials.SessionToken,
         },
     });
 };
-
 
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
@@ -150,18 +158,23 @@ const addLonAndLatData = (naptanData: unknown[]) => {
     });
 };
 
-const getAndParseNaptanFile = async (bucketName: string, filepath: string, crossAccountRoleArn?: string, region?: string) => {
-    let s3Client;
+const getAndParseNaptanFile = async (
+    bucketName: string,
+    filepath: string,
+    crossAccountRoleArn?: string,
+    region?: string,
+) => {
+    let s3Client: S3Client | undefined;
     if (crossAccountRoleArn && region) {
         s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
     }
-    
+
     const file = await getS3Object(
         {
             Bucket: bucketName,
             Key: filepath,
         },
-        s3Client
+        s3Client,
     );
 
     const body = (await file.Body?.transformToString()) || "";
