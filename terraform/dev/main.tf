@@ -31,8 +31,10 @@ data "sops_file" "secrets" {
 }
 
 locals {
-  env     = "dev"
-  secrets = jsondecode(data.sops_file.secrets.raw)
+  env                     = "dev"
+  secrets                 = jsondecode(data.sops_file.secrets.raw)
+  bods_naptan_bucket_name = "bods-1297-data-landing-zone"
+  bods_naptan_s3_role     = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
 }
 
 module "integrated_data_monitoring_dev" {
@@ -141,9 +143,9 @@ module "integrated_data_naptan_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
-  naptan_bucket      = "bods-1297-data-landing-zone"
-  naptan_arn         = null
-  bucket_region      = "eu-west-2"
+  naptan_bucket      = local.bods_naptan_bucket_name
+  naptan_arn         = local.bods_naptan_s3_role
+  bucket_region      = data.aws_region.current.name
 }
 
 module "integrated_data_bods_netex_pipeline" {
