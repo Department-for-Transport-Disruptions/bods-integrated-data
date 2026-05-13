@@ -279,6 +279,7 @@
                                             "Retry": [
                                                 {
                                                     "ErrorEquals": [
+                                                        "States.TaskFailed",
                                                         "Lambda.ServiceException",
                                                         "Lambda.AWSLambdaException",
                                                         "Lambda.SdkClientException",
