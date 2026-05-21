@@ -132,5 +132,8 @@ module "integrated_data_naptan_uploader_function" {
     NAPTAN_BUCKET = var.naptan_bucket
     NAPTAN_ARN    = var.naptan_arn
     BUCKET_REGION = var.bucket_region
+    NAPTAN_XML_FILENAME = var.naptan_xml_filename
+    NPTG_S3_KEY = var.nptg_s3_key
+
   }
 }

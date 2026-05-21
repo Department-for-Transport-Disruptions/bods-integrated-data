@@ -54,3 +54,15 @@ variable "bucket_region" {
   description = "Region of the external S3 bucket containing naptan data"
   default     = ""
 }
+
+variable "naptan_xml_filename" {
+  type = string
+  description = ""
+  default = ""
+}
+
+variable "nptg_s3_key" {
+  type = string
+  description = ""
+  default = ""
+}
