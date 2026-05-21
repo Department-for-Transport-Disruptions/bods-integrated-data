@@ -56,13 +56,13 @@ variable "bucket_region" {
 }
 
 variable "naptan_xml_filename" {
-  type = string
+  type        = string
   description = ""
-  default = ""
+  default     = ""
 }
 
 variable "nptg_s3_key" {
-  type = string
+  type        = string
   description = ""
-  default = ""
+  default     = ""
 }
