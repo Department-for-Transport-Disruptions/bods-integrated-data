@@ -57,12 +57,12 @@ variable "bucket_region" {
 
 variable "naptan_xml_filename" {
   type        = string
-  description = ""
+  description = "Name of the Naptan XML file"
   default     = ""
 }
 
 variable "nptg_s3_key" {
   type        = string
-  description = ""
+  description = "NPTG S3 key"
   default     = ""
 }
