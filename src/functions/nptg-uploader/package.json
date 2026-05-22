@@ -12,8 +12,7 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.1052.0",
-        "@aws-sdk/client-sts": "^3.1052.0",
+        "@aws-sdk/client-sts": "3.687.0",
         "@bods-integrated-data/shared": "workspace:^",
         "fast-xml-parser": "4.5.4",
         "kysely": "^0.27.3",

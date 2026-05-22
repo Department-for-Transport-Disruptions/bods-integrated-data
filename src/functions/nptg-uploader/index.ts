@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, getS3Object } from "@bods-integrated-data/shared/s3";
 import { AssumeRoleCommand, STSClient } from "@aws-sdk/client-sts";
 import { nptgArrayProperties } from "@bods-integrated-data/shared/constants";
 import {
@@ -9,7 +9,6 @@ import {
     getDatabaseClient,
 } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { getS3Object } from "@bods-integrated-data/shared/s3";
 import { NptgSchema, nptgSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Handler } from "aws-lambda";
