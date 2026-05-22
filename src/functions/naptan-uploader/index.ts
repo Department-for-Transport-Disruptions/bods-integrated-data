@@ -161,13 +161,10 @@ const addLonAndLatData = (naptanData: unknown[]) => {
 const getAndParseNaptanFile = async (
     bucketName: string,
     filepath: string,
-    crossAccountRoleArn?: string,
-    region?: string,
+    crossAccountRoleArn: string,
+    region: string,
 ) => {
-    let s3Client: S3Client | undefined;
-    if (crossAccountRoleArn && region) {
-        s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
-    }
+    const s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
 
     const file = await getS3Object(
         {
@@ -244,18 +241,28 @@ export const handler: S3Handler = async (event, context) => {
         const crossAccountRoleArn = process.env.NAPTAN_ARN;
         const bucketRegion = process.env.BUCKET_REGION;
 
-        const bucketName = externalBucketName || event.Records[0].s3.bucket.name;
-
-        if (!bucketName) {
+        if (!externalBucketName) {
             throw new Error("NAPTAN_BUCKET environment variable must be set");
+        }
+
+        if (!crossAccountRoleArn) {
+            throw new Error("NAPTAN_ARN environment variable must be set");
+        }
+
+        if (!bucketRegion) {
+            throw new Error("BUCKET_REGION environment variable must be set");
         }
 
         logger.info("Starting naptan uploader");
 
-        const naptanXmlFilename = process.env.NAPTAN_XML_FILENAME || "raw/naptan/naptan-latest_xml.xml";
+        const naptanXmlFilename = process.env.NAPTAN_XML_FILENAME;
+
+        if (!naptanXmlFilename) {
+            throw new Error("NAPTAN_XML_FILENAME environment variable must be set");
+        }
 
         const { stopPoints, stopAreas } = await getAndParseNaptanFile(
-            bucketName,
+            externalBucketName,
             naptanXmlFilename,
             crossAccountRoleArn,
             bucketRegion,
