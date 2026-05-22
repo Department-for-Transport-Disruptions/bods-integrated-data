@@ -141,10 +141,10 @@ module "integrated_data_naptan_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
-  naptan_bucket        = var.naptan_bucket
-  naptan_arn           = var.naptan_arn
-  bucket_region        = var.naptan_bucket_region
-  naptan_xml_filename  = var.naptan_xml_filename
+  naptan_bucket       = var.naptan_bucket
+  naptan_arn          = var.naptan_arn
+  bucket_region       = var.naptan_bucket_region
+  naptan_xml_filename = var.naptan_xml_filename
 }
 
 module "integrated_data_bods_netex_pipeline" {
