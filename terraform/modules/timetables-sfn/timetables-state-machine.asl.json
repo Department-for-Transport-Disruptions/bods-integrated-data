@@ -484,7 +484,7 @@
                                 }
                             },
                             "MaxConcurrency": 50,
-                            "ToleratedFailureCount": 10,
+                            "ToleratedFailureCount": 200,
                             "Next": "Retrieve TNDS TXC Data",
                             "ResultPath": null
                         },
