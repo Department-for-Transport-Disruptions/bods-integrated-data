@@ -68,8 +68,6 @@ module "integrated_data_naptan_retriever_function" {
   env_vars = {
     STAGE         = var.environment
     BUCKET_NAME   = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
-    NAPTAN_BUCKET = var.naptan_bucket
-    NAPTAN_ARN    = var.naptan_arn
     DB_HOST       = var.db_host
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
@@ -110,15 +108,6 @@ module "integrated_data_naptan_uploader_function" {
       Resource = [
         var.db_secret_arn
       ]
-    },
-    {
-      Action = [
-        "sts:AssumeRole"
-      ],
-      Effect = "Allow",
-      Resource = [
-        var.naptan_arn
-      ]
     }
   ]
 
@@ -129,8 +118,5 @@ module "integrated_data_naptan_uploader_function" {
     DB_PORT       = var.db_port
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
-    NAPTAN_BUCKET = var.naptan_bucket
-    NAPTAN_ARN    = var.naptan_arn
-    BUCKET_REGION = var.bucket_region
   }
 }
