@@ -136,6 +136,5 @@ module "integrated_data_naptan_uploader_function" {
     NPTG_S3_KEY         = var.nptg_s3_key
     NPTG_BUCKET_NAME    = var.nptg_bucket_name
     NPTG__ARN           = var.nptg_arn
-
   }
 }
