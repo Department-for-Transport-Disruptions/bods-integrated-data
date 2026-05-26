@@ -156,13 +156,45 @@
                                                     "BackoffRate": 2
                                                 }
                                             ],
+                                            "Next": "Retrieve NaPTAN Data"
+                                        },
+                                        "Retrieve NaPTAN Data": {
+                                            "Type": "Task",
+                                            "Resource": "arn:aws:states:::lambda:invoke",
+                                            "Parameters": {
+                                                "FunctionName": "${naptan_retriever_function_arn}:$LATEST"
+                                            },
+                                            "Retry": [
+                                                {
+                                                    "ErrorEquals": [
+                                                        "Lambda.ServiceException",
+                                                        "Lambda.AWSLambdaException",
+                                                        "Lambda.SdkClientException",
+                                                        "Lambda.TooManyRequestsException"
+                                                    ],
+                                                    "IntervalSeconds": 1,
+                                                    "MaxAttempts": 3,
+                                                    "BackoffRate": 2
+                                                }
+                                            ],
                                             "Next": "Process NaPTAN Data"
                                         },
                                         "Process NaPTAN Data": {
                                             "Type": "Task",
                                             "Resource": "arn:aws:states:::lambda:invoke",
                                             "Parameters": {
-                                                "FunctionName": "${naptan_uploader_function_arn}:$LATEST"
+                                                "FunctionName": "${naptan_uploader_function_arn}:$LATEST",
+                                                "Payload": {
+                                                    "Records": [
+                                                        {
+                                                            "s3": {
+                                                                "bucket": {
+                                                                    "name": "${naptan_bucket_name}"
+                                                                }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
                                             },
                                             "Retry": [
                                                 {
