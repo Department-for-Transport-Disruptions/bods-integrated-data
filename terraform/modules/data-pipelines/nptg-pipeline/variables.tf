@@ -37,13 +37,13 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "naptan_bucket" {
+variable "nptg_bucket_name" {
   type        = string
-  description = "Name of the external S3 bucket containing NaPTAN and NPTG data"
+  description = "Name of the external S3 bucket containing NPTG data"
   default     = ""
 }
 
-variable "naptan_arn" {
+variable "nptg__arn" {
   type        = string
   description = "ARN of the IAM role to assume for cross-account S3 access"
   default     = ""

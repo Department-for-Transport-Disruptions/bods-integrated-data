@@ -98,7 +98,7 @@ module "integrated_data_nptg_uploader_function" {
       ],
       Effect = "Allow",
       Resource = [
-        var.naptan_arn
+        var.nptg__arn
       ]
     }
   ]
@@ -110,9 +110,9 @@ module "integrated_data_nptg_uploader_function" {
     DB_SECRET_ARN = var.db_secret_arn
     DB_NAME       = var.db_name
     STAGE         = var.environment
-    NAPTAN_BUCKET = var.naptan_bucket
-    NAPTAN_ARN    = var.naptan_arn
-    BUCKET_REGION = var.bucket_region
-    NPTG_S3_KEY   = var.nptg_s3_key
+    NPTG_BUCKET_NAME = var.nptg_bucket_name
+    NPTG__ARN        = var.nptg__arn
+    BUCKET_REGION    = var.bucket_region
+    NPTG_S3_KEY      = var.nptg_s3_key
   }
 }

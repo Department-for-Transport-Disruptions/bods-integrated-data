@@ -138,17 +138,17 @@ export const handler: S3Handler = async (event, context) => {
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        const externalBucketName = process.env.NAPTAN_BUCKET;
-        const crossAccountRoleArn = process.env.NAPTAN_ARN;
+        const externalBucketName = process.env.NPTG_BUCKET_NAME;
+        const crossAccountRoleArn = process.env.NPTG__ARN;
         const bucketRegion = process.env.BUCKET_REGION;
         const nptgS3Key = process.env.NPTG_S3_KEY;
 
         if (!externalBucketName) {
-            throw new Error("NAPTAN_BUCKET environment variable must be set");
+            throw new Error("NPTG_BUCKET_NAME environment variable must be set");
         }
 
         if (!crossAccountRoleArn) {
-            throw new Error("NAPTAN_ARN environment variable must be set");
+            throw new Error("NPTG__ARN environment variable must be set");
         }
 
         if (!bucketRegion) {
