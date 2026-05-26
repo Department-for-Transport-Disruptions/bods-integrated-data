@@ -66,3 +66,16 @@ variable "nptg_s3_key" {
   description = "NPTG S3 key"
   default     = ""
 }
+
+
+variable "nptg_bucket_name" {
+  type        = string
+  description = "NPTG Bucket Name"
+  default     = ""
+}
+
+variable "nptg_arn" {
+  type        = string
+  description = "NPTG ARN"
+  default     = ""
+}
