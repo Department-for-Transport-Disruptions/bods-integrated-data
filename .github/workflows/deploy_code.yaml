@@ -29,6 +29,9 @@ jobs:
     outputs:
       all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
     steps:
+      - name: Check env var
+        run: echo "ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=$ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
