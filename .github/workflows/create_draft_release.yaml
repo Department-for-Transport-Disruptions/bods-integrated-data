@@ -2,6 +2,7 @@ name: Create draft release
 
 env:
   TERRAFORM_VERSION: 1.6.6
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 on:
   workflow_dispatch:

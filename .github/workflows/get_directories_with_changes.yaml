@@ -16,6 +16,9 @@ on:
       changed_directories:
         value: ${{ jobs.get_directories_with_changes.outputs.changed_directories }}
 
+env:
+    ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   get_directories_with_changes:
     runs-on: ubuntu-24.04

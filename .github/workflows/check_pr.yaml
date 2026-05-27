@@ -12,6 +12,7 @@ env:
   TERRAFORM_VERSION: 1.6.6
   HUSKY: 0
   TZ: "Europe/London"
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   lint_pr_title:
