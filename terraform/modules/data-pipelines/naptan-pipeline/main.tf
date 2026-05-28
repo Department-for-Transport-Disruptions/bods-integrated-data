@@ -123,14 +123,18 @@ module "integrated_data_naptan_uploader_function" {
   ]
 
   env_vars = {
-    STAGE         = var.environment
-    BUCKET_NAME   = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-    NAPTAN_BUCKET = var.naptan_bucket
-    NAPTAN_ARN    = var.naptan_arn
-    BUCKET_REGION = var.bucket_region
+    STAGE               = var.environment
+    BUCKET_NAME         = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
+    DB_HOST             = var.db_host
+    DB_PORT             = var.db_port
+    DB_SECRET_ARN       = var.db_secret_arn
+    DB_NAME             = var.db_name
+    NAPTAN_BUCKET       = var.naptan_bucket
+    NAPTAN_ARN          = var.naptan_arn
+    BUCKET_REGION       = var.bucket_region
+    NAPTAN_XML_FILENAME = var.naptan_xml_filename
+    NPTG_S3_KEY         = var.nptg_s3_key
+    NPTG_BUCKET_NAME    = var.nptg_bucket_name
+    NPTG__ARN           = var.nptg_arn
   }
 }
