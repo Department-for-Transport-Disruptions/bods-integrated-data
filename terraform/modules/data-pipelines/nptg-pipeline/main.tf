@@ -111,7 +111,7 @@ module "integrated_data_nptg_uploader_function" {
     DB_NAME          = var.db_name
     STAGE            = var.environment
     NPTG_BUCKET_NAME = var.nptg_bucket_name
-    NPTG__ARN        = var.nptg__arn
+    NPTG_ROLE_ARN    = var.nptg__arn
     BUCKET_REGION    = var.bucket_region
     NPTG_S3_KEY      = var.nptg_s3_key
   }

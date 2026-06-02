@@ -139,7 +139,7 @@ export const handler: S3Handler = async (event, context) => {
 
     try {
         const externalBucketName = process.env.NPTG_BUCKET_NAME;
-        const crossAccountRoleArn = process.env.NPTG__ARN;
+        const crossAccountRoleArn = process.env.NPTG_ROLE_ARN;
         const bucketRegion = process.env.BUCKET_REGION;
         const nptgS3Key = process.env.NPTG_S3_KEY;
 
@@ -148,7 +148,7 @@ export const handler: S3Handler = async (event, context) => {
         }
 
         if (!crossAccountRoleArn) {
-            throw new Error("NPTG__ARN environment variable must be set");
+            throw new Error("NPTG_ROLE_ARN environment variable must be set");
         }
 
         if (!bucketRegion) {

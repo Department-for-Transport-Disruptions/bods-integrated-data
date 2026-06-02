@@ -238,7 +238,7 @@ export const handler: S3Handler = async (event, context) => {
 
     try {
         const externalBucketName = process.env.NAPTAN_BUCKET;
-        const crossAccountRoleArn = process.env.NAPTAN_ARN;
+        const crossAccountRoleArn = process.env.NAPTAN_ROLE_ARN;
         const bucketRegion = process.env.BUCKET_REGION;
 
         if (!externalBucketName) {
@@ -246,7 +246,7 @@ export const handler: S3Handler = async (event, context) => {
         }
 
         if (!crossAccountRoleArn) {
-            throw new Error("NAPTAN_ARN environment variable must be set");
+            throw new Error("NAPTAN_ROLE_ARN environment variable must be set");
         }
 
         if (!bucketRegion) {
