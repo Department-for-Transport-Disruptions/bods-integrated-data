@@ -66,14 +66,12 @@ module "integrated_data_naptan_retriever_function" {
   ]
 
   env_vars = {
-    STAGE           = var.environment
-    BUCKET_NAME     = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
-    NAPTAN_BUCKET   = var.naptan_bucket
-    NAPTAN_ROLE_ARN = var.naptan_arn
-    DB_HOST         = var.db_host
-    DB_PORT         = var.db_port
-    DB_SECRET_ARN   = var.db_secret_arn
-    DB_NAME         = var.db_name
+    STAGE         = var.environment
+    BUCKET_NAME   = aws_s3_bucket.integrated_data_naptan_s3_bucket.bucket
+    DB_HOST       = var.db_host
+    DB_PORT       = var.db_port
+    DB_SECRET_ARN = var.db_secret_arn
+    DB_NAME       = var.db_name
   }
 }
 
