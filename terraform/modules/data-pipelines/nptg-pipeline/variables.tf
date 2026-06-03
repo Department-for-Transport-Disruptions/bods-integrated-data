@@ -40,6 +40,7 @@ variable "db_name" {
 variable "bucket_region" {
   type        = string
   description = "Region of the S3 bucket"
+  default = "eu-west-2"
 }
 
 variable "nptg_bucket_name" {

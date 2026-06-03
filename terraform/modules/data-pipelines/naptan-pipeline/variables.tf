@@ -52,7 +52,7 @@ variable "naptan_role_arn" {
 variable "bucket_region" {
   type        = string
   description = "Region of the external S3 bucket containing naptan data"
-  default     = ""
+  default     = "eu-west-2"
 }
 
 variable "naptan_xml_filename" {
