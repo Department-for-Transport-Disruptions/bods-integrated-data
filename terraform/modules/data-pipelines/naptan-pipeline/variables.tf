@@ -43,7 +43,7 @@ variable "naptan_bucket" {
   default     = ""
 }
 
-variable "naptan_arn" {
+variable "naptan_role_arn" {
   type        = string
   description = "ARN of the IAM role to assume for cross-account S3 access"
   default     = ""
@@ -61,21 +61,3 @@ variable "naptan_xml_filename" {
   default     = ""
 }
 
-variable "nptg_s3_key" {
-  type        = string
-  description = "NPTG S3 key"
-  default     = ""
-}
-
-
-variable "nptg_bucket_name" {
-  type        = string
-  description = "NPTG Bucket Name"
-  default     = ""
-}
-
-variable "nptg_arn" {
-  type        = string
-  description = "NPTG ARN"
-  default     = ""
-}
