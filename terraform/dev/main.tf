@@ -142,7 +142,7 @@ module "integrated_data_naptan_pipeline" {
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
   naptan_bucket      = "bods-1297-data-landing-zone"
-  naptan_role_arn    = null
+  naptan_role_arn    = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
   bucket_region      = "eu-west-2"
 }
 
