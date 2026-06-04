@@ -52,7 +52,7 @@ jobs:
           merge-multiple: true
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v5
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 

@@ -18,7 +18,7 @@ jobs:
     name: Lint PR title
     runs-on: ubuntu-24.04
     steps:
-      - uses: amannn/action-semantic-pull-request@v5
+      - uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -114,13 +114,13 @@ jobs:
           role-session-name: GitHub-OIDC-TERRAFORM
 
       - name: Cache Terraform tflint plugin
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.tflint.d/plugins
           key: dev-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v5
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
@@ -128,7 +128,7 @@ jobs:
         run: terraform fmt -check -recursive
 
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@v6
         with:
           tflint_wrapper: true
 
