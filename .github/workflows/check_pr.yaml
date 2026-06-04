@@ -12,7 +12,6 @@ env:
   TERRAFORM_VERSION: 1.6.6
   HUSKY: 0
   TZ: "Europe/London"
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   lint_pr_title:
@@ -28,15 +27,15 @@ jobs:
     name: Lint code and run unit tests
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20.x"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v6
         with:
           version: 9
           run_install: false
@@ -45,7 +44,7 @@ jobs:
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/pnpm-lock.yaml') }}
@@ -100,16 +99,16 @@ jobs:
     environment: dev
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download zipped functions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./src/functions/dist
           merge-multiple: true
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
@@ -122,7 +121,7 @@ jobs:
           key: dev-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v5
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
@@ -150,7 +149,7 @@ jobs:
         run: terraform -chdir=dev plan -lock-timeout=5m -input=false -no-color -out .planfile
 
       - name: Post PR comment with Terraform plan
-        uses: borchero/terraform-plan-comment@v2
+        uses: borchero/terraform-plan-comment@v3
         with:
           token: ${{ github.token }}
           working-directory: ./terraform/dev

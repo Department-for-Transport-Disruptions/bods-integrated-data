@@ -16,9 +16,6 @@ on:
       changed_directories:
         value: ${{ jobs.get_directories_with_changes.outputs.changed_directories }}
 
-env:
-    ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
 jobs:
   get_directories_with_changes:
     runs-on: ubuntu-24.04
@@ -27,7 +24,7 @@ jobs:
       changed_directories: ${{ steps.set-output-changed-directories.outputs.changed_directories }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
