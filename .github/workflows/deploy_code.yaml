@@ -28,8 +28,11 @@ jobs:
     outputs:
       all_functions: ${{ steps.get_list_of_functions.outputs.all_functions }}
     steps:
+      - name: Check env var
+        run: echo "ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=$ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION"
+
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get list of functions
         id: get_list_of_functions
@@ -69,23 +72,23 @@ jobs:
       - zip_functions
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download zipped functions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./src/functions/dist
           merge-multiple: true
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
           role-session-name: GitHub-OIDC-TERRAFORM
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 

@@ -344,7 +344,7 @@ resource "aws_iam_policy" "siri_vm_generator_ecs_task_policy" {
       {
         "Effect" : "Allow",
         "Action" : "sns:Publish",
-        "Resource" : "${aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn}"
+        "Resource" : aws_sns_topic.integrated_data_avl_sirivm_sns_topic.arn
       }
     ]
   })

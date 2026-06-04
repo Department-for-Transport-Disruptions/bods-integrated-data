@@ -8,12 +8,6 @@ variable "vpc_id" {
   description = "VPC ID"
 }
 
-variable "sg_id" {
-  type     = string
-  default  = null
-  nullable = true
-}
-
 variable "private_subnet_ids" {
   type        = list(string)
   description = "List of Subnet IDs"
