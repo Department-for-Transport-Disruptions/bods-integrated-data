@@ -144,7 +144,7 @@ module "integrated_data_naptan_pipeline" {
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
   naptan_bucket      = local.bods_naptan_bucket_name
-  naptan_arn         = local.bods_naptan_s3_role
+  naptan_role_arn    = local.bods_naptan_s3_role
   bucket_region      = data.aws_region.current.name
 }
 
