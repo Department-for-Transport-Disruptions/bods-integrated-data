@@ -37,7 +37,7 @@ variable "db_name" {
   default = "bods_integrated_data"
 }
 
-variable "naptan_bucket" {
+variable "naptan_bucket_name" {
   type        = string
   description = "Name of the external S3 bucket containing naptan data"
   default     = ""
@@ -55,9 +55,8 @@ variable "bucket_region" {
   default     = "eu-west-2"
 }
 
-variable "naptan_xml_filename" {
+variable "naptan_s3_key" {
   type        = string
-  description = "Name of the Naptan XML file"
-  default     = ""
+  description = "S3 key/path of the NaPTAN XML file in the external bucket"
+  default     = "raw/naptan/naptan_latest_xml.xml"
 }
-

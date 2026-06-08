@@ -160,19 +160,16 @@ const addLonAndLatData = (naptanData: unknown[]) => {
 
 const getAndParseNaptanFile = async (
     bucketName: string,
-    filepath: string,
-    crossAccountRoleArn?: string,
-    region?: string,
+    s3Key: string,
+    crossAccountRoleArn: string,
+    region: string,
 ) => {
-    let s3Client: S3Client | undefined;
-    if (crossAccountRoleArn && region) {
-        s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
-    }
+    const s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
 
     const file = await getS3Object(
         {
             Bucket: bucketName,
-            Key: filepath,
+            Key: s3Key,
         },
         s3Client,
     );
@@ -241,22 +238,32 @@ export const handler: S3Handler = async (event, context) => {
 
     try {
         const externalBucketName = process.env.NAPTAN_BUCKET;
-        const crossAccountRoleArn = process.env.NAPTAN_ARN;
+        const crossAccountRoleArn = process.env.NAPTAN_ROLE_ARN;
         const bucketRegion = process.env.BUCKET_REGION;
 
-        const bucketName = externalBucketName || event.Records[0].s3.bucket.name;
-
-        if (!bucketName) {
+        if (!externalBucketName) {
             throw new Error("NAPTAN_BUCKET environment variable must be set");
+        }
+
+        if (!crossAccountRoleArn) {
+            throw new Error("NAPTAN_ROLE_ARN environment variable must be set");
+        }
+
+        if (!bucketRegion) {
+            throw new Error("BUCKET_REGION environment variable must be set");
         }
 
         logger.info("Starting naptan uploader");
 
-        const naptanXmlFilename = process.env.NAPTAN_XML_FILENAME || "raw/naptan/naptan-latest_xml.xml";
+        const naptanS3Key = process.env.NAPTAN_S3_KEY;
+
+        if (!naptanS3Key) {
+            throw new Error("NAPTAN_S3_KEY environment variable must be set");
+        }
 
         const { stopPoints, stopAreas } = await getAndParseNaptanFile(
-            bucketName,
-            naptanXmlFilename,
+            externalBucketName,
+            naptanS3Key,
             crossAccountRoleArn,
             bucketRegion,
         );

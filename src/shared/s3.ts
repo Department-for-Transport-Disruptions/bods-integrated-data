@@ -14,6 +14,8 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "./logger";
 
+export { S3Client };
+
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._!\*\'\(\)\/-]/g, "_");
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
