@@ -160,7 +160,7 @@ const addLonAndLatData = (naptanData: unknown[]) => {
 
 const getAndParseNaptanFile = async (
     bucketName: string,
-    filepath: string,
+    s3Key: string,
     crossAccountRoleArn: string,
     region: string,
 ) => {
@@ -169,7 +169,7 @@ const getAndParseNaptanFile = async (
     const file = await getS3Object(
         {
             Bucket: bucketName,
-            Key: filepath,
+            Key: s3Key,
         },
         s3Client,
     );
@@ -255,15 +255,15 @@ export const handler: S3Handler = async (event, context) => {
 
         logger.info("Starting naptan uploader");
 
-        const naptanXmlFilename = process.env.NAPTAN_XML_FILENAME;
+        const naptanS3Key = process.env.NAPTAN_S3_KEY;
 
-        if (!naptanXmlFilename) {
-            throw new Error("NAPTAN_XML_FILENAME environment variable must be set");
+        if (!naptanS3Key) {
+            throw new Error("NAPTAN_S3_KEY environment variable must be set");
         }
 
         const { stopPoints, stopAreas } = await getAndParseNaptanFile(
             externalBucketName,
-            naptanXmlFilename,
+            naptanS3Key,
             crossAccountRoleArn,
             bucketRegion,
         );

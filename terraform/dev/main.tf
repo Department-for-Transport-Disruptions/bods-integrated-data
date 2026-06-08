@@ -31,11 +31,14 @@ data "sops_file" "secrets" {
 }
 
 locals {
-  env                      = "dev"
-  secrets                  = jsondecode(data.sops_file.secrets.raw)
-  bods_naptan_bucket_name  = "bods-1297-data-landing-zone"
-  bods_naptan_s3_role      = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
-  bods_naptan_xml_filename = "raw/naptan/naptan_latest_xml.xml"
+  env                     = "dev"
+  secrets                 = jsondecode(data.sops_file.secrets.raw)
+  bods_naptan_bucket_name = "bods-1297-data-landing-zone"
+  bods_naptan_role_arn    = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
+  bods_naptan_s3_key      = "raw/naptan/naptan_latest_xml.xml"
+  bods_nptg_bucket_name   = "bods-1297-data-landing-zone"
+  bods_nptg_role_arn      = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
+  bods_nptg_s3_key        = "raw/nptg/nptg_latest.xml"
 }
 
 module "integrated_data_monitoring_dev" {
@@ -138,16 +141,16 @@ module "integrated_data_table_renamer" {
 module "integrated_data_naptan_pipeline" {
   source = "../modules/data-pipelines/naptan-pipeline"
 
-  environment         = local.env
-  vpc_id              = module.integrated_data_vpc_dev.vpc_id
-  private_subnet_ids  = module.integrated_data_vpc_dev.private_subnet_ids
-  db_secret_arn       = module.integrated_data_aurora_db_dev.db_secret_arn
-  db_sg_id            = module.integrated_data_aurora_db_dev.db_sg_id
-  db_host             = module.integrated_data_aurora_db_dev.db_host
-  naptan_bucket       = local.bods_naptan_bucket_name
-  naptan_role_arn     = local.bods_naptan_s3_role
-  bucket_region       = data.aws_region.current.name
-  naptan_xml_filename = local.bods_naptan_xml_filename
+  environment        = local.env
+  vpc_id             = module.integrated_data_vpc_dev.vpc_id
+  private_subnet_ids = module.integrated_data_vpc_dev.private_subnet_ids
+  db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
+  db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
+  db_host            = module.integrated_data_aurora_db_dev.db_host
+  naptan_bucket_name = local.bods_naptan_bucket_name
+  naptan_role_arn    = local.bods_naptan_role_arn
+  bucket_region      = data.aws_region.current.name
+  naptan_s3_key      = local.bods_naptan_s3_key
 }
 
 module "integrated_data_bods_netex_pipeline" {
@@ -165,6 +168,10 @@ module "integrated_data_nptg_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+  bucket_region      = data.aws_region.current.name
+  nptg_bucket_name   = local.bods_nptg_bucket_name
+  nptg_role_arn      = local.bods_nptg_role_arn
+  nptg_s3_key        = local.bods_nptg_s3_key
 }
 
 module "integrated_data_txc_pipeline" {
