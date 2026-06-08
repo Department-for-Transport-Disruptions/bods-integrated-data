@@ -28,7 +28,7 @@ const getAtcoAreaCodes = async (dbClient: KyselyDb) => {
         .selectFrom("nptg_admin_area_new")
         .select(["atco_code"])
         .distinctOn(["atco_code"])
-        .where("atco_code", "!=", "900") // Ignore National Coach area code since the naptan api thinks it's invalid
+        .where("atco_code", "not in", ["900", "945"]) // Ignore National Coach and APM area codes since the naptan api thinks they're invalid
         .execute();
     return nptgAdminAreas.map((nptgAdminArea) => nptgAdminArea.atco_code);
 };

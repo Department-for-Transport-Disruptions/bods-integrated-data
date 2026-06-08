@@ -24,7 +24,7 @@ jobs:
       changed_directories: ${{ steps.set-output-changed-directories.outputs.changed_directories }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Get changed directories
         id: changed-files
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         with:
           path: ${{ inputs.path }}
           dir_names: true
@@ -54,7 +54,7 @@ jobs:
 
       - name: Get changed files for shared code
         id: changed-files-shared-code
-        uses: tj-actions/changed-files@v42
+        uses: tj-actions/changed-files@v47
         with:
           path: ${{ inputs.shared_code_path }}
           dir_names_max_depth: 1
