@@ -125,6 +125,10 @@ module "integrated_data_noc_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+  noc_bucket_name    = local.bods_noc_bucket_name
+  noc_role_arn       = local.bods_noc_role_arn
+  bucket_region      = data.aws_region.current.name
+  noc_s3_key         = local.bods_noc_s3_key
 }
 
 module "integrated_data_table_renamer" {
