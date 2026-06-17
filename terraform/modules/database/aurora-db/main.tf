@@ -284,6 +284,6 @@ resource "aws_route53_record" "integrated_data_db_reader_cname_record" {
 }
 
 resource "aws_secretsmanager_secret" "integrated_data_db_user_ro" {
-  name        = "database_read_only_user"
+  name        = "rds/user/integrated_data_read_only"
   description = "Secret for the integrated data database read-only user"
 }
