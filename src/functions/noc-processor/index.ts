@@ -51,7 +51,7 @@ const getAndParseData = async (bucketName: string, objectKey: string, roleArn: s
     const file = await getS3Object({
         Bucket: bucketName,
         Key: objectKey,
-    });
+    }, s3Client);
 
     const parser = new XMLParser({
         allowBooleanAttributes: true,
