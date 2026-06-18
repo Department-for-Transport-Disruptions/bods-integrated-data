@@ -48,10 +48,13 @@ const getCrossAccountS3Client = async (roleArn: string, region: string) => {
 const getAndParseData = async (bucketName: string, objectKey: string, roleArn: string, region: string) => {
     const s3Client = await getCrossAccountS3Client(roleArn, region);
 
-    const file = await getS3Object({
-        Bucket: bucketName,
-        Key: objectKey,
-    }, s3Client);
+    const file = await getS3Object(
+        {
+            Bucket: bucketName,
+            Key: objectKey,
+        },
+        s3Client,
+    );
 
     const parser = new XMLParser({
         allowBooleanAttributes: true,
