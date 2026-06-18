@@ -33,6 +33,9 @@ data "sops_file" "secrets" {
 locals {
   env                     = "dev"
   secrets                 = jsondecode(data.sops_file.secrets.raw)
+  bods_noc_bucket_name    = "bods-1297-data-landing-zone"
+  bods_noc_role_arn       = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
+  bods_noc_s3_key         = "raw/noc/noc_latest_xml.xml"
   bods_naptan_bucket_name = "bods-1297-data-landing-zone"
   bods_naptan_role_arn    = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
   bods_naptan_s3_key      = "raw/naptan/naptan_latest_xml.xml"
