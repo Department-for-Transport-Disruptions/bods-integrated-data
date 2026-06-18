@@ -45,8 +45,8 @@ const getCrossAccountS3Client = async (roleArn: string, region: string) => {
     });
 };
 
-const getAndParseData = async (bucketName: string, objectKey: string, roleArn: string, region: string) => {
-    const s3Client = await getCrossAccountS3Client(roleArn, region);
+const getAndParseData = async (bucketName: string, objectKey: string, crossAccountRoleArn: string, region: string) => {
+    const s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
 
     const file = await getS3Object(
         {
