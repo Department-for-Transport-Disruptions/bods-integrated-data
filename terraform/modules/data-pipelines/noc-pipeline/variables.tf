@@ -38,7 +38,7 @@ variable "db_name" {
 }
 
 variable "noc_bucket_name" {
-  type    = string
+  type        = string
   description = "Name of the external S3 bucket containing NPTG data"
   default     = ""
 }
