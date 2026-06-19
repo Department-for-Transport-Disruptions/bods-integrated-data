@@ -13,7 +13,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
 
     sops = {
@@ -50,7 +50,7 @@ module "integrated_data_vpc_dev" {
   source = "../modules/networking/vpc"
 
   environment = local.env
-  region      = data.aws_region.current.name
+  region      = data.aws_region.current.region
 }
 
 module "integrated_data_route53" {
@@ -170,7 +170,7 @@ module "integrated_data_txc_pipeline" {
   db_sg_id                  = module.integrated_data_aurora_db_dev.db_sg_id
   db_host                   = module.integrated_data_aurora_db_dev.db_host
   aws_account_id            = data.aws_caller_identity.current.account_id
-  aws_region                = data.aws_region.current.name
+  aws_region                = data.aws_region.current.region
   tnds_ftp_credentials      = local.secrets["tnds_ftp"]
   rds_output_bucket_name    = module.integrated_data_aurora_db_dev.s3_output_bucket_name
   bank_holidays_bucket_name = module.integrated_data_bank_holidays_pipeline.bank_holidays_bucket_name
@@ -215,7 +215,7 @@ module "integrated_data_avl_pipeline" {
   avl_subscription_table_name                 = module.integrated_data_avl_subscription_table.table_name
   gtfs_trip_maps_table_name                   = module.integrated_data_txc_pipeline.gtfs_trip_maps_table_name
   aws_account_id                              = data.aws_caller_identity.current.account_id
-  aws_region                                  = data.aws_region.current.name
+  aws_region                                  = data.aws_region.current.region
   siri_vm_generator_frequency                 = 30
   avl_validation_error_table_name             = module.integrated_data_avl_validation_error_table.table_name
   gtfs_rt_bucket_name                         = module.integrated_data_gtfs_rt_pipeline.gtfs_rt_bucket_name
@@ -245,7 +245,7 @@ module "integrated_data_mock_data_producer_api" {
 
   environment                           = local.env
   aws_account_id                        = data.aws_caller_identity.current.account_id
-  aws_region                            = data.aws_region.current.name
+  aws_region                            = data.aws_region.current.region
   avl_consumer_data_endpoint            = "https://${module.integrated_data_avl_data_producer_api.endpoint}/subscriptions"
   avl_subscription_table_name           = module.integrated_data_avl_subscription_table.table_name
   cancellations_consumer_data_endpoint  = "https://${module.integrated_data_cancellations_data_producer_api.endpoint}/subscriptions"
@@ -257,7 +257,7 @@ module "integrated_data_avl_data_producer_api" {
   avl_raw_siri_bucket_name        = module.integrated_data_avl_pipeline.avl_raw_siri_bucket_name
   avl_subscription_table_name     = module.integrated_data_avl_subscription_table.table_name
   aws_account_id                  = data.aws_caller_identity.current.account_id
-  aws_region                      = data.aws_region.current.name
+  aws_region                      = data.aws_region.current.region
   environment                     = local.env
   sg_id                           = module.integrated_data_vpc_dev.default_sg_id
   acm_certificate_arn             = module.integrated_data_acm.acm_certificate_arn
@@ -355,7 +355,7 @@ module "integrated_data_cancellations_pipeline" {
 
   environment                           = local.env
   aws_account_id                        = data.aws_caller_identity.current.account_id
-  aws_region                            = data.aws_region.current.name
+  aws_region                            = data.aws_region.current.region
   vpc_id                                = module.integrated_data_vpc_dev.vpc_id
   private_subnet_ids                    = module.integrated_data_vpc_dev.private_subnet_ids
   db_secret_arn                         = module.integrated_data_aurora_db_dev.db_secret_arn
@@ -373,7 +373,7 @@ module "integrated_data_cancellations_data_producer_api" {
   source = "../modules/cancellations-producer-api"
 
   aws_account_id                     = data.aws_caller_identity.current.account_id
-  aws_region                         = data.aws_region.current.name
+  aws_region                         = data.aws_region.current.region
   environment                        = local.env
   acm_certificate_arn                = module.integrated_data_acm.acm_certificate_arn
   hosted_zone_id                     = module.integrated_data_route53.public_hosted_zone_id
@@ -389,7 +389,7 @@ module "siri_consumer_api_private" {
   source = "../modules/siri-consumer-api"
 
   environment                                   = local.env
-  aws_region                                    = data.aws_region.current.name
+  aws_region                                    = data.aws_region.current.region
   account_id                                    = data.aws_caller_identity.current.account_id
   api_name                                      = "integrated-data-siri-consumer-api-private"
   private                                       = true
@@ -420,7 +420,7 @@ module "siri_consumer_api_public" {
   source = "../modules/siri-consumer-api"
 
   environment                                   = local.env
-  aws_region                                    = data.aws_region.current.name
+  aws_region                                    = data.aws_region.current.region
   account_id                                    = data.aws_caller_identity.current.account_id
   api_name                                      = "integrated-data-siri-consumer-api-public"
   private                                       = false
@@ -452,7 +452,7 @@ module "integrated_data_txc_analysis" {
 
   environment          = local.env
   aws_account_id       = data.aws_caller_identity.current.account_id
-  aws_region           = data.aws_region.current.name
+  aws_region           = data.aws_region.current.region
   bods_txc_bucket_name = module.integrated_data_txc_pipeline.bods_txc_bucket_name
   tnds_txc_bucket_name = module.integrated_data_txc_pipeline.tnds_txc_bucket_name
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name

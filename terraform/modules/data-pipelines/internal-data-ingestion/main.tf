@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -121,13 +121,13 @@ resource "aws_lambda_permission" "internal_cancellations_data_endpoint_alb_tg_pe
 
 resource "aws_lb_target_group_attachment" "internal_avl_ingestion_alb_tg_attachment" {
   target_group_arn = aws_lb_target_group.internal_avl_ingestion_alb_tg.arn
-  target_id        = "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.avl_data_endpoint_function_name}"
+  target_id        = "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:${var.avl_data_endpoint_function_name}"
   depends_on       = [aws_lambda_permission.internal_avl_data_endpoint_alb_tg_permissions]
 }
 
 resource "aws_lb_target_group_attachment" "internal_cancellations_ingestion_alb_tg_attachment" {
   target_group_arn = aws_lb_target_group.internal_cancellations_ingestion_alb_tg.arn
-  target_id        = "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.cancellations_data_endpoint_function_name}"
+  target_id        = "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:${var.cancellations_data_endpoint_function_name}"
   depends_on       = [aws_lambda_permission.internal_cancellations_data_endpoint_alb_tg_permissions]
 }
 
