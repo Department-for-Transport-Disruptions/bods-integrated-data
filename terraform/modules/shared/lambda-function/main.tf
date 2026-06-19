@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -13,7 +13,7 @@ locals {
   source_code_hash = (fileexists(var.zip_path) ? filebase64sha256(var.zip_path) : data.aws_lambda_function.existing_function[0].code_sha256)
   function_name    = "${var.function_name}-${var.environment}"
   image_tag        = var.deploy_as_container_lambda ? (fileexists(var.zip_path) ? filesha256(var.zip_path) : split(":", data.aws_lambda_function.existing_function[0].image_uri)[1]) : null
-  image_uri        = var.deploy_as_container_lambda ? "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${aws_ecr_repository.ecr_repository[0].name}:${local.image_tag}" : null
+  image_uri        = var.deploy_as_container_lambda ? "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com/${aws_ecr_repository.ecr_repository[0].name}:${local.image_tag}" : null
   path_to_src      = "${path.module}/../../../../src"
 }
 
@@ -39,7 +39,7 @@ resource "terraform_data" "build_image" {
   ]
 
   provisioner "local-exec" {
-    command = "aws ecr get-login-password --region ${data.aws_region.current.name} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+    command = "aws ecr get-login-password --region ${data.aws_region.current.region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com"
   }
 
   provisioner "local-exec" {

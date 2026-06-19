@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -44,9 +44,17 @@ resource "aws_dynamodb_table" "table" {
 
     content {
       name            = "${global_secondary_index.value.hash_key}-index"
-      hash_key        = global_secondary_index.value.hash_key
-      range_key       = global_secondary_index.value.range_key
       projection_type = "ALL"
+
+      key_schema {
+        attribute_name = global_secondary_index.value.hash_key
+        key_type       = "HASH"
+      }
+
+      key_schema {
+        attribute_name = global_secondary_index.value.range_key
+        key_type       = "RANGE"
+      }
     }
   }
 
