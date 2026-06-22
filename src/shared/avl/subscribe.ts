@@ -98,8 +98,8 @@ const parseXml = (xml: string, subscriptionId: string) => {
 
     if (!parsedJson.success) {
         logger.error(
+            { zodError: parsedJson.error.format() },
             "There was an error parsing the subscription response from the data producer",
-            parsedJson.error.format(),
         );
 
         throw new InvalidXmlError(`Invalid XML from subscription ID: ${subscriptionId}`);

@@ -151,9 +151,7 @@ export const processSqsRecord = async (
         const subscription = await getCancellationsSubscription(subscriptionId, cancellationsSubscriptionTableName);
 
         if (subscription.status === "inactive") {
-            logger.warn(`Subscription ${subscriptionId} is inactive, data will not be processed.`, {
-                subscriptionId,
-            });
+            logger.warn(`Subscription ${subscriptionId} is inactive, data will not be processed.`);
             throw new Error(
                 `Unable to process cancellations for subscription ${subscriptionId} because it is inactive`,
             );
@@ -209,9 +207,7 @@ export const processSqsRecord = async (
                 }
             }
 
-            logger.info("Cancellations processed successfully", {
-                subscriptionId,
-            });
+            logger.info("Cancellations processed successfully");
         }
     } catch (e) {
         logger.error(`Cancellations processing failed for file ${record.s3.object.key}`);

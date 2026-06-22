@@ -12,12 +12,12 @@ importers:
         specifier: workspace:^
         version: link:../../shared
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/aws-lambda':
-        specifier: ^8.10.110
-        version: 8.10.146
+        specifier: ^8.10.162
+        version: 8.10.162
       '@types/node':
         specifier: ^20.11.19
         version: 20.17.10
@@ -27,8 +27,8 @@ importers:
 
 packages:
 
-  '@types/aws-lambda@8.10.146':
-    resolution: {integrity: sha512-3BaDXYTh0e6UCJYL/jwV/3+GRslSc08toAiZSmleYtkAUyV5rtvdPYxrG/88uqvTuT6sb27WE9OS90ZNTIuQ0g==}
+  '@types/aws-lambda@8.10.162':
+    resolution: {integrity: sha512-Fn658grtLOci1oxi1391vvDWJRKNGWRSqfxRkmN/Iy3c0tQH1USMKEXcPYHLvope+ZgTFocx9FRQJx1muBL6qw==}
 
   '@types/node@20.17.10':
     resolution: {integrity: sha512-/jrvh5h6NXhEauFFexRin69nA0uHJ5gwk4iDivp/DeoEua3uwCUto6PC86IpRITBOs4+6i2I56K5x5b6WYGXHA==}
@@ -39,12 +39,12 @@ packages:
   undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
 
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
 snapshots:
 
-  '@types/aws-lambda@8.10.146': {}
+  '@types/aws-lambda@8.10.162': {}
 
   '@types/node@20.17.10':
     dependencies:
@@ -54,4 +54,4 @@ snapshots:
 
   undici-types@6.19.8: {}
 
-  zod@3.23.8: {}
+  zod@3.25.76: {}

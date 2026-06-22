@@ -134,7 +134,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         }
 
         if (subscription.status === "inactive") {
-            logger.error("Subscription is inactive, data will not be processed...", { subscriptionId });
+            logger.error("Subscription is inactive, data will not be processed...");
             return createHttpNotFoundErrorResponse("Subscription is inactive");
         }
 

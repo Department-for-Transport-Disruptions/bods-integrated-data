@@ -13,7 +13,8 @@
         "preserveConstEnums": true,
         "noEmit": true,
         "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "ignoreDeprecations": "6.0"
     },
     "include": ["@bods-integrated-data/shared", "."]
 }

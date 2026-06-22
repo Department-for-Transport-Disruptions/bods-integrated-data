@@ -93,9 +93,7 @@ export const processSqsRecord = async (
         const subscription = await getAvlSubscription(subscriptionId, avlSubscriptionTableName);
 
         if (subscription.status === "inactive") {
-            logger.warn(`Subscription ${subscriptionId} is inactive, data will not be processed.`, {
-                subscriptionId,
-            });
+            logger.warn(`Subscription ${subscriptionId} is inactive, data will not be processed.`);
             throw new Error(`Unable to process AVL for subscription ${subscriptionId} because it is inactive`);
         }
 
@@ -127,22 +125,16 @@ export const processSqsRecord = async (
 
             if (totalAvlCount > 0) {
                 await insertAvls(dbClient, enrichedAvls, subscriptionId);
-                logger.info("AVL processed successfully", {
-                    subscriptionId,
-                });
+                logger.info("AVL processed successfully");
             }
 
             if (process.env.ENABLE_CANCELLATIONS === "true" && avlCancellations.length > 0) {
                 await insertAvlCancellations(dbClient, avlCancellations, subscriptionId);
-                logger.info("AVL cancellations processed successfully", {
-                    subscriptionId,
-                });
+                logger.info("AVL cancellations processed successfully");
             }
 
             if (totalAvlCount === 0 && avlCancellations.length === 0) {
-                logger.warn("No VehicleActivity or VehicleActivityCancellation was provided in SIRI-VM message", {
-                    subscriptionId,
-                });
+                logger.warn("No VehicleActivity or VehicleActivityCancellation was provided in SIRI-VM message");
             }
         }
     } catch (e) {
