@@ -23,9 +23,7 @@ const getNocObjectKey = (nocS3Key: string) => {
         throw new Error("NOC_S3_KEY environment variable must not be empty");
     }
 
-    return trimmedNocS3Key.endsWith(nocLatestFilePath)
-        ? trimmedNocS3Key
-        : `${trimmedNocS3Key}/${nocLatestFilePath}`;
+    return trimmedNocS3Key.endsWith(nocLatestFilePath) ? trimmedNocS3Key : `${trimmedNocS3Key}/${nocLatestFilePath}`;
 };
 
 const getCrossAccountS3Client = async (roleArn: string, region: string) => {
