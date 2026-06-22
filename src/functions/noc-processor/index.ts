@@ -14,6 +14,19 @@ z.setErrorMap(errorMapWithDataLogging);
 let dbClient: KyselyDb;
 
 const arrayProperties = ["NOCTableRecord"];
+const nocLatestFilePath = "noc_latest_xml.xml";
+
+const getNocObjectKey = (nocS3Key: string) => {
+    const trimmedNocS3Key = nocS3Key.trim().replace(/\/+$/, "");
+
+    if (!trimmedNocS3Key) {
+        throw new Error("NOC_S3_KEY environment variable must not be empty");
+    }
+
+    return trimmedNocS3Key.endsWith(nocLatestFilePath)
+        ? trimmedNocS3Key
+        : `${trimmedNocS3Key}/${nocLatestFilePath}`;
+};
 
 const getCrossAccountS3Client = async (roleArn: string, region: string) => {
     const stsClient = new STSClient({ region });
@@ -45,8 +58,8 @@ const getCrossAccountS3Client = async (roleArn: string, region: string) => {
     });
 };
 
-const getAndParseData = async (bucketName: string, objectKey: string, crossAccountRoleArn: string, region: string) => {
-    const s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
+const getAndParseData = async (bucketName: string, objectKey: string, roleArn: string, region: string) => {
+    const s3Client = await getCrossAccountS3Client(roleArn, region);
 
     const file = await getS3Object(
         {
@@ -86,7 +99,6 @@ const getAndParseData = async (bucketName: string, objectKey: string, crossAccou
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { bucket, object } = event.Records[0].s3;
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
@@ -111,14 +123,16 @@ export const handler: S3Handler = async (event, context) => {
             throw new Error("NOC_S3_KEY environment variable must be set");
         }
 
-        logger.info(`Starting processing of NOC data for ${object.key}`);
+        const nocObjectKey = getNocObjectKey(nocS3Key);
 
-        const nocData = await getAndParseData(bucket.name, object.key, crossAccountRoleArn, bucketRegion);
+        logger.info(`Starting processing of NOC data for ${nocObjectKey}`);
+
+        const nocData = await getAndParseData(externalBucketName, nocObjectKey, crossAccountRoleArn, bucketRegion);
 
         const { travelinedata } = nocData;
 
         if (!travelinedata.NOCTable.NOCTableRecord || travelinedata.NOCTable.NOCTableRecord.length === 0) {
-            logger.warn(`No NOCTableRecords found in file ${object.key}`);
+            logger.warn(`No NOCTableRecords found in file ${nocObjectKey}`);
             return;
         }
 
