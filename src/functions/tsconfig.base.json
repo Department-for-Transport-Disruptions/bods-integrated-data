@@ -1,0 +1,13 @@
+{
+    "extends": "@tsconfig/node24/tsconfig.json",
+    "compilerOptions": {
+        "moduleResolution": "bundler",
+        "module": "preserve",
+        "isolatedModules": true,
+        "forceConsistentCasingInFileNames": true,
+        "preserveConstEnums": true,
+        "noEmit": true,
+        "resolveJsonModule": true
+    },
+    "include": ["@bods-integrated-data/shared", "."]
+}
