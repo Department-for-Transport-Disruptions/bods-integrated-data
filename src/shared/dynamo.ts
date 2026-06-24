@@ -16,7 +16,7 @@ import {
     ScanCommandInput,
     ScanCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
-import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
+import type { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 import { chunkArray } from "./utils";
 
 export const DYNAMO_DB_MAX_BATCH_SIZE = 25; // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/BatchWriteItemCommand/
@@ -144,10 +144,13 @@ export const deleteTable = async (input: DeleteTableCommandInput) => {
     return dynamoDbClient.send(new DeleteTableCommand(input));
 };
 
-export const waitUntilTableExists = async (tableName: string) => {
+type WaitUntilTableExistsReturn = ReturnType<typeof dynamo.waitUntilTableExists>;
+type WaitUntilTableNotExistsReturn = ReturnType<typeof dynamo.waitUntilTableNotExists>;
+
+export const waitUntilTableExists = async (tableName: string): WaitUntilTableExistsReturn => {
     return dynamo.waitUntilTableExists({ client: dynamoDbClient, maxWaitTime: 60 }, { TableName: tableName });
 };
 
-export const waitUntilTableNotExists = async (tableName: string) => {
+export const waitUntilTableNotExists = async (tableName: string): WaitUntilTableNotExistsReturn => {
     return dynamo.waitUntilTableNotExists({ client: dynamoDbClient, maxWaitTime: 60 }, { TableName: tableName });
 };

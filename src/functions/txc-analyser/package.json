@@ -20,10 +20,10 @@
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.162",
-        "@types/node": "^20.11.19",
+        "@types/node": "^24.13.2",
         "@types/object-hash": "^3.0.6",
         "@types/papaparse": "^5.3.14",
-        "mockdate": "^3.0.5",
-        "type-fest": "^4.31.0"
+        "type-fest": "^4.31.0",
+        "mockdate": "^3.0.5"
     }
 }

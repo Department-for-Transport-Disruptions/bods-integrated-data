@@ -16,18 +16,13 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "@tsconfig/node20": "^20.1.5",
-        "@tsconfig/node22": "^22.0.2",
         "@tsconfig/node24": "^24.0.4",
+        "@types/aws-lambda": "^8.10.162",
         "@vitest/coverage-v8": "^4.1.9",
         "esbuild": "0.28.1",
         "protobufjs": "8.6.4",
         "protobufjs-cli": "2.5.5",
         "typescript": "^6.0.3",
         "vitest": "^4.1.9"
-    },
-    "packageManager": "pnpm@10.34.4",
-    "engines": {
-        "pnpm": "^10.0.0"
     }
 }

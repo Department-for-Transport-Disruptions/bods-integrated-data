@@ -12,13 +12,13 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.1073.0",
         "@bods-integrated-data/shared": "workspace:^",
         "node-object-hash": "^3.0.0",
         "zod": "3.25.76"
     },
     "devDependencies": {
+        "@aws-sdk/client-s3": "^3.1073.0",
         "@types/aws-lambda": "^8.10.162",
-        "@types/node": "^20.11.19"
+        "@types/node": "^24.13.2"
     }
 }

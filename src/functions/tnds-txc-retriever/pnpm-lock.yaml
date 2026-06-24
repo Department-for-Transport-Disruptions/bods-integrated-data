@@ -12,8 +12,8 @@ importers:
         specifier: workspace:^
         version: link:../../shared
       basic-ftp:
-        specifier: ^5.0.5
-        version: 5.0.5
+        specifier: ^6.0.1
+        version: 6.0.1
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -33,10 +33,9 @@ packages:
   '@types/node@24.13.2':
     resolution: {integrity: sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA==}
 
-  basic-ftp@5.0.5:
-    resolution: {integrity: sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==}
+  basic-ftp@6.0.1:
+    resolution: {integrity: sha512-3ilxa3n4276wGQp/ImRAuz4ALdsj/2Wd3FqoZBZlajDYnByCZ0JMb4+26Rde0wGXIbM0G2HWSfr/Fi8b21KX8g==}
     engines: {node: '>=10.0.0'}
-    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
@@ -52,7 +51,7 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
-  basic-ftp@5.0.5: {}
+  basic-ftp@6.0.1: {}
 
   undici-types@7.18.2: {}
 
