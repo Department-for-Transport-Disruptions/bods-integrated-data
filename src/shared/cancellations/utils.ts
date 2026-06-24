@@ -1,6 +1,6 @@
 import cleanDeep from "clean-deep";
 import { sync as commandExistsSync } from "command-exists";
-import { Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";

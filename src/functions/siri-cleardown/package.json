@@ -16,7 +16,6 @@
         "kysely": "0.29.2"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.162",
-        "@types/node": "^20.11.19"
+        "@types/node": "^24.13.2"
     }
 }

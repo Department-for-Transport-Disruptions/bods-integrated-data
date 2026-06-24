@@ -90,10 +90,7 @@ create-local-env:
 # Build
 
 install-deps:
-	pnpm i && \
-	(cd src && pnpm i) && \
-	(cd cli-helpers && pnpm i) && \
-	(cd integration-testing && pnpm i)
+	pnpm i
 
 build-functions:
 	cd src && pnpm build-all
@@ -114,7 +111,9 @@ docker-build-%:
 	docker build --platform=linux/arm64 --provenance false --file src/Dockerfile.lambda --build-arg SERVICE_NAME=$* -t $*:latest src/functions/dist
 
 check-types:
-	cd src && pnpm run check-types
+	(cd src && pnpm run check-types) && \
+	(cd cli-helpers && pnpm run check-types) && \
+	(cd integration-testing && pnpm run check-types)
 
 run-integration-tests-%:
 	cd integration-testing && pnpm run test:$*

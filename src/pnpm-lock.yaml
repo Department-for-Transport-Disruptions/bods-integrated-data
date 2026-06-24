@@ -8,15 +8,12 @@ importers:
 
   .:
     devDependencies:
-      '@tsconfig/node20':
-        specifier: ^20.1.5
-        version: 20.1.5
-      '@tsconfig/node22':
-        specifier: ^22.0.2
-        version: 22.0.2
       '@tsconfig/node24':
         specifier: ^24.0.4
         version: 24.0.4
+      '@types/aws-lambda':
+        specifier: ^8.10.162
+        version: 8.10.162
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
@@ -496,14 +493,11 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@tsconfig/node20@20.1.5':
-    resolution: {integrity: sha512-Vm8e3WxDTqMGPU4GATF9keQAIy1Drd7bPwlgzKJnZtoOsTm1tduUTbDjg0W5qERvGuxPI2h9RbMufH0YdfBylA==}
-
-  '@tsconfig/node22@22.0.2':
-    resolution: {integrity: sha512-Kmwj4u8sDRDrMYRoN9FDEcXD8UpBSaPQQ24Gz+Gamqfm7xxn+GBR7ge/Z7pK8OXNGyUzbSwJj+TH6B+DS/epyA==}
-
   '@tsconfig/node24@24.0.4':
     resolution: {integrity: sha512-2A933l5P5oCbv6qSxHs7ckKwobs8BDAe9SJ/Xr2Hy+nDlwmLE1GhFh/g/vXGRZWgxBg9nX/5piDtHR9Dkw/XuA==}
+
+  '@types/aws-lambda@8.10.162':
+    resolution: {integrity: sha512-Fn658grtLOci1oxi1391vvDWJRKNGWRSqfxRkmN/Iy3c0tQH1USMKEXcPYHLvope+ZgTFocx9FRQJx1muBL6qw==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -1268,11 +1262,9 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@tsconfig/node20@20.1.5': {}
-
-  '@tsconfig/node22@22.0.2': {}
-
   '@tsconfig/node24@24.0.4': {}
+
+  '@types/aws-lambda@8.10.162': {}
 
   '@types/chai@5.2.3':
     dependencies:

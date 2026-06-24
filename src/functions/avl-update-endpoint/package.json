@@ -13,11 +13,11 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "mockdate": "^3.0.5",
         "zod": "3.25.76"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.162",
-        "@types/node": "^20.11.19"
+        "@types/node": "^24.13.2",
+        "mockdate": "^3.0.5"
     }
 }

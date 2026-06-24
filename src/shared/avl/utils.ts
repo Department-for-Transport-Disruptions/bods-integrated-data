@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import cleanDeep from "clean-deep";
 import { sync as commandExistsSync } from "command-exists";
-import { Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
 import { ZodIssue } from "zod";

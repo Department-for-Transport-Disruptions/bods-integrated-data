@@ -11,7 +11,7 @@ import { BankHolidaysJson, getDate, getDateWithCustomFormat, isDateBetween } fro
 import { OperatingPeriod, OperatingProfile, Service, ServicedOrganisation } from "@bods-integrated-data/shared/schema";
 import { getTransformedBankHolidayOperationSchema } from "@bods-integrated-data/shared/schema/dates.schema";
 import { notEmpty } from "@bods-integrated-data/shared/utils";
-import { Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 import { hasher } from "node-object-hash";
 import { VehicleJourneyMapping, VehicleJourneyMappingWithCalendar } from "../types";
 import { insertCalendarDates, insertCalendars } from "./database";

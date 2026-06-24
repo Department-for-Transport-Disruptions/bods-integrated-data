@@ -13,7 +13,7 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "basic-ftp": "^5.0.5",
+        "basic-ftp": "^6.0.1",
         "zod": "3.25.76"
     },
     "devDependencies": {

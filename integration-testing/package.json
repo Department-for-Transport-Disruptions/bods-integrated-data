@@ -5,7 +5,8 @@
     "scripts": {
         "test": "playwright test",
         "test:dev": "STAGE=dev playwright test",
-        "test:test": "STAGE=test playwright test"
+        "test:test": "STAGE=test playwright test",
+        "check-types": "tsc --noEmit"
     },
     "keywords": [],
     "author": "",
@@ -18,10 +19,12 @@
         "@aws-sdk/client-secrets-manager": "^3.1073.0",
         "@aws-sdk/client-sqs": "^3.1073.0",
         "@aws-sdk/lib-dynamodb": "^3.1073.0",
-        "@bods-integrated-data/shared": "link:../src/shared"
+        "@bods-integrated-data/shared": "link:../src/shared",
+        "@tsconfig/node24": "^24.0.4"
     },
     "devDependencies": {
         "@playwright/test": "^1.61.0",
-        "@types/node": "^24.13.2"
+        "@types/node": "^24.13.2",
+        "typescript": "^6.0.3"
     }
 }

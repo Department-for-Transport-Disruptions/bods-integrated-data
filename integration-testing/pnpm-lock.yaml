@@ -32,6 +32,9 @@ importers:
       '@bods-integrated-data/shared':
         specifier: link:../src/shared
         version: link:../src/shared
+      '@tsconfig/node24':
+        specifier: ^24.0.4
+        version: 24.0.4
     devDependencies:
       '@playwright/test':
         specifier: ^1.61.0
@@ -222,6 +225,9 @@ packages:
   '@smithy/util-utf8@2.3.0':
     resolution: {integrity: sha512-R8Rdn8Hy72KKcebgLiv8jQcQkXoLMOGGv5uI1/k0l+snqkOzQ1R0ChUBCxWMlBsFMekWjq0wRudIweFs7sKT5A==}
     engines: {node: '>=14.0.0'}
+
+  '@tsconfig/node24@24.0.4':
+    resolution: {integrity: sha512-2A933l5P5oCbv6qSxHs7ckKwobs8BDAe9SJ/Xr2Hy+nDlwmLE1GhFh/g/vXGRZWgxBg9nX/5piDtHR9Dkw/XuA==}
 
   '@types/node@24.13.2':
     resolution: {integrity: sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA==}
@@ -638,6 +644,8 @@ snapshots:
     dependencies:
       '@smithy/util-buffer-from': 2.2.0
       tslib: 2.6.3
+
+  '@tsconfig/node24@24.0.4': {}
 
   '@types/node@24.13.2':
     dependencies:

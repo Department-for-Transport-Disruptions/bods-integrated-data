@@ -14,6 +14,7 @@ const avlProducerApiUrl = `https://avl-producer.${stage}.integrated-data.dft-cre
 const avlSubscriptionTableName = `integrated-data-avl-subscription-table-${stage}`;
 const headers = {
     apiKey: "",
+    "x-api-key": "",
 };
 
 const testSubscription: AvlSubscribeMessage = {
