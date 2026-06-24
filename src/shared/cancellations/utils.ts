@@ -2,7 +2,6 @@ import cleanDeep from "clean-deep";
 import { sync as commandExistsSync } from "command-exists";
 import { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
-import { sql } from "kysely";
 import { ZodIssue } from "zod";
 import { fromZodIssue } from "zod-validation-error";
 import { putMetricData } from "../cloudwatch";
@@ -172,7 +171,10 @@ const getQueryForSituations = (dbClient: KyselyDb, subscriptionId?: string[]) =>
         query = query.where("subscription_id", "in", subscriptionId);
     }
 
-    return query.orderBy(["subscription_id", "situation_number", sql<string>`version DESC NULLS LAST`]);
+    return query
+        .orderBy("subscription_id")
+        .orderBy("situation_number")
+        .orderBy("version", (eb) => eb.desc().nullsLast());
 };
 
 export const getSituationsDataForSiriSx = async (dbClient: KyselyDb, subscriptionId?: string[]) => {

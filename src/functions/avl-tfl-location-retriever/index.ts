@@ -53,8 +53,8 @@ export const retrieveTflVehicleLocations = async (
 
                 if (!parseResult.success) {
                     logger.warn(
+                        { zodError: parseResult.error.format() },
                         `Invalid TfL vehicle location with vehicle ref: ${vehicleLocation.vehicleRef}`,
-                        parseResult.error.format(),
                     );
                     return [];
                 }

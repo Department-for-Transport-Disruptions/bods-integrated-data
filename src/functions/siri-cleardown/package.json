@@ -13,12 +13,10 @@
     "type": "module",
     "dependencies": {
         "@bods-integrated-data/shared": "workspace:^",
-        "kysely": "^0.27.3",
-        "zod": "3.23.8"
+        "kysely": "0.29.2"
     },
     "devDependencies": {
-        "@types/aws-lambda": "^8.10.110",
-        "@types/node": "^24.13.2",
-        "typescript": "^5.3.3"
+        "@types/aws-lambda": "^8.10.162",
+        "@types/node": "^24.13.2"
     }
 }

@@ -129,7 +129,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         if (contentEncoding?.toLowerCase() === "gzip" && body) {
             logger.info("gzipped SIRI-VM message provided, beginning unzipping");
             const buffer = Buffer.from(body, "base64");
-            body = gunzipSync(buffer).toString("utf-8");
+            body = gunzipSync(new Uint8Array(buffer)).toString("utf-8");
         }
 
         const bodyContent = requestBodySchema.parse(body);
@@ -149,7 +149,7 @@ export const handler: APIGatewayProxyHandler & ALBHandler = async (
         }
 
         if (subscription.status === "inactive") {
-            logger.error("Subscription is inactive, data will not be processed...", { subscriptionId });
+            logger.error("Subscription is inactive, data will not be processed...");
             return createHttpNotFoundErrorResponse("Subscription is inactive");
         }
 

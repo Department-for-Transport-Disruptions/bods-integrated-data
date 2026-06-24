@@ -21,7 +21,7 @@ const uploadWithRetry = async (entry: Entry, bucketName: string, key: string, ma
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const upload = startS3Upload(bucketName, key, buffer, "application/xml");
+            const upload = startS3Upload(bucketName, key, new Uint8Array(buffer), "application/xml");
             await upload.done();
             return;
         } catch (error) {

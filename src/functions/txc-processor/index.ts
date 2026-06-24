@@ -62,19 +62,25 @@ const processServices = (
         logger.mode = service.Mode;
 
         if (hasServiceExpired(service)) {
-            logger.warn("Service has expired", {
-                service: service.ServiceCode,
-                operator: service.RegisteredOperatorRef,
-            });
+            logger.warn(
+                {
+                    service: service.ServiceCode,
+                    operator: service.RegisteredOperatorRef,
+                },
+                "Service has expired",
+            );
 
             return null;
         }
 
         if (isTnds && !isRequiredTndsDataset(filePath) && !isRequiredTndsServiceMode(service.Mode)) {
-            logger.warn("Ignoring TNDS service with mode", {
-                service: service.ServiceCode,
-                mode: service.Mode,
-            });
+            logger.warn(
+                {
+                    service: service.ServiceCode,
+                    mode: service.Mode,
+                },
+                "Ignoring TNDS service with mode",
+            );
 
             return null;
         }
@@ -82,9 +88,14 @@ const processServices = (
         const operator = operators.find((operator) => operator["@_id"] === service.RegisteredOperatorRef);
 
         if (!operator) {
-            logger.warn(`Unable to find operator with registered operator ref: ${service.RegisteredOperatorRef}`, {
-                filePath,
-            });
+            logger.warn(
+                {
+                    service: service.ServiceCode,
+                    operator: service.RegisteredOperatorRef,
+                    filePath,
+                },
+                `Unable to find operator with registered operator ref: ${service.RegisteredOperatorRef}`,
+            );
 
             return null;
         }
@@ -93,9 +104,12 @@ const processServices = (
         const agency = noc ? agencyData.find((agency) => agency.noc === noc.toUpperCase()) : null;
 
         if (!agency) {
-            logger.warn(`Unable to find agency with national operator code: ${noc}`, {
-                filePath,
-            });
+            logger.warn(
+                {
+                    filePath,
+                },
+                `Unable to find agency with national operator code: ${noc}`,
+            );
 
             return null;
         }
@@ -105,10 +119,13 @@ const processServices = (
         );
 
         if (!vehicleJourneysForLines.length) {
-            logger.warn("No vehicle journeys found for lines", {
-                service: service.ServiceCode,
-                operator: service.RegisteredOperatorRef,
-            });
+            logger.warn(
+                {
+                    service: service.ServiceCode,
+                    operator: service.RegisteredOperatorRef,
+                },
+                "No vehicle journeys found for lines",
+            );
 
             return null;
         }
@@ -116,7 +133,7 @@ const processServices = (
         const { routes, isDuplicateRoute } = await processRoutes(dbClient, service, agency, isTnds);
 
         if (isDuplicateRoute) {
-            logger.warn("Duplicate TNDS route found for service", {
+            logger.warn({
                 service: service.ServiceCode,
                 operator: service.RegisteredOperatorRef,
             });
@@ -125,10 +142,13 @@ const processServices = (
         }
 
         if (!routes) {
-            logger.warn("No routes found for service", {
-                service: service.ServiceCode,
-                operator: service.RegisteredOperatorRef,
-            });
+            logger.warn(
+                {
+                    service: service.ServiceCode,
+                    operator: service.RegisteredOperatorRef,
+                },
+                "No routes found for service",
+            );
 
             return null;
         }

@@ -189,9 +189,8 @@ export const exportHandler: Handler = async (event, context) => {
 
         throw e;
     } finally {
-        logger.info(`Dropping region table: trip_${regionCode}`);
-
         if (regionCode !== "ALL") {
+            logger.info(`Dropping region table: trip_${regionCode}`);
             await dropRegionalTripTable(dbClient, regionCode);
         }
     }

@@ -12,6 +12,7 @@
         "target": "es2022",
         "preserveConstEnums": true,
         "noEmit": true,
+        "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true
     },
     "include": ["@bods-integrated-data/shared", "."]

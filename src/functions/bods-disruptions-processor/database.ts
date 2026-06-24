@@ -9,6 +9,6 @@ export const getRoutes = (dbClient: KyselyDb, lineRefs: string[]) => {
         .selectFrom("route")
         .selectAll()
         .where("route_short_name", "in", lineRefs)
-        .orderBy("id desc")
+        .orderBy("id", "desc")
         .execute();
 };

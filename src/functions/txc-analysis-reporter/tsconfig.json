@@ -12,7 +12,8 @@
         "target": "ES2020",
         "preserveConstEnums": true,
         "noEmit": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "ignoreDeprecations": "6.0"
     },
     "include": ["@bods-integrated-data/shared", "."]
 }
