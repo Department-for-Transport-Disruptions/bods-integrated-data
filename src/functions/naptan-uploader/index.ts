@@ -80,11 +80,14 @@ export const streamAndParseXml = async (
     const stopPoints: NewNaptanStop[] = [];
     const stopAreas: NewNaptanStopArea[] = [];
 
-    // Helper to extract text from xml-flow nodes that may have attributes
+    // Helper to extract test from xml-flow
     const getText = (node: any): string | null => {
-        if (!node) return null;
+        if (node == null) return null;
+        if (Array.isArray(node)) return getText(node[0]);
         if (typeof node === "string") return node;
-        if (node.$text) return node.$text;
+        if (typeof node === "number" || typeof node === "boolean") return String(node);
+        if (node.$text != null) return String(node.$text);
+        if (node._ != null) return String(node._);
         return null;
     };
 
@@ -93,9 +96,13 @@ export const streamAndParseXml = async (
 
         // biome-ignore lint/suspicious/noExplicitAny: xml-flow has no TypeScript types
         stream.on("tag:StopPoint", (stop: any) => {
-            const rawRefs = [].concat(stop.StopAreas?.StopAreaRef ?? []);
+            const rawRefs = [].concat(stop.StopAreas?.StopAreaRef ?? stop.StopAreas ?? [])
             const refs: string[] = rawRefs.map((ref: any) => getText(ref)).filter((ref): ref is string => ref !== null);
             const atcoCode = getText(stop.AtcoCode);
+            const locRaw = stop.Place?.Location;
+            const loc = Array.isArray(locRaw) ? locRaw[0] : locRaw;
+            const translationRaw = loc?.Translation;
+            const translation = Array.isArray(translationRaw) ? translationRaw[0] : translationRaw;
             stopPoints.push({
                 atco_code: atcoCode?.toUpperCase() ?? null,
                 naptan_code: getText(stop.NaptanCode) ?? null,
@@ -108,27 +115,36 @@ export const streamAndParseXml = async (
                 crossing: getText(stop.Descriptor?.Crossing) ?? null,
                 indicator: getText(stop.Descriptor?.Indicator) ?? null,
                 bearing:
-                    getText(stop.StopClassification?.OnStreet?.Bus?.MarkedPoint?.Bearing?.CompassPoint) ??
-                    getText(stop.StopClassification?.OnStreet?.Bus?.UnmarkedPoint?.Bearing?.CompassPoint) ??
+                    getText(stop.StopClassification?.OnStreet?.MarkedPoint?.Bearing?.CompassPoint) ??
+                    getText(stop.StopClassification?.OnStreet?.MarkedPoint?.Bearing) ??
+                    getText(stop.StopClassification?.OnStreet?.MarkedPoint?.CompassPoint) ??
+                    getText(stop.StopClassification?.OnStreet?.MarkedPoint) ??
+                    getText(stop.StopClassification?.OnStreet?.UnmarkedPoint?.Bearing?.CompassPoint) ??
+                    getText(stop.StopClassification?.OnStreet?.UnmarkedPoint?.Bearing) ??
+                    getText(stop.StopClassification?.OnStreet?.UnmarkedPoint?.CompassPoint) ??
+                    getText(stop.StopClassification?.OnStreet?.UnmarkedPoint) ??
                     null,
                 nptg_locality_code: getText(stop.Place?.NptgLocalityRef) ?? null,
                 locality_name: getText(stop.Place?.LocalityName) ?? null,
                 town: getText(stop.Place?.Town) ?? null,
                 suburb: getText(stop.Place?.Suburb) ?? null,
                 locality_centre: getText(stop.Place?.LocalityCentre) ?? null,
-                grid_type: getText(stop.Place?.Location?.Translation?.GridType) ?? null,
-                easting: getText(stop.Place?.Location?.Translation?.Easting) || getText(stop.Place?.Location?.Easting) || null,
-                northing: getText(stop.Place?.Location?.Translation?.Northing) || getText(stop.Place?.Location?.Northing) || null,
-                longitude: getText(stop.Place?.Location?.Translation?.Longitude) || getText(stop.Place?.Location?.Longitude) || null,
-                latitude: getText(stop.Place?.Location?.Translation?.Latitude) || getText(stop.Place?.Location?.Latitude) || null,
+                grid_type:
+                    getText(loc?.GridType) ??
+                    getText(translation?.GridType) ??
+                    (typeof translation === "string" ? translation : null),
+                easting: getText(translation?.Easting) || getText(loc?.Easting) || null,
+                northing: getText(translation?.Northing) || getText(loc?.Northing) || null,
+                longitude: getText(translation?.Longitude) || getText(loc?.Longitude) || null,
+                latitude: getText(translation?.Latitude) || getText(loc?.Latitude) || null,
                 stop_type: getText(stop.StopClassification?.StopType) ?? null,
-                bus_stop_type: getText(stop.StopClassification?.OnStreet?.Bus?.BusStopType) ?? null,
+                bus_stop_type: getText(stop.StopClassification?.OnStreet?.BusStopType) ?? null,
                 timing_status:
-                    getText(stop.StopClassification?.OnStreet?.Bus?.TimingStatus) ??
+                    getText(stop.StopClassification?.OnStreet?.TimingStatus) ??
                     getText(stop.StopClassification?.OffStreet?.BusAndCoach?.Bay?.TimingStatus) ??
                     getText(stop.StopClassification?.OffStreet?.BusAndCoach?.VariableBay?.TimingStatus) ??
                     null,
-                default_wait_time: getText(stop.StopClassification?.OnStreet?.Bus?.MarkedPoint?.DefaultWaitTime) ?? null,
+                default_wait_time: getText(stop.StopClassification?.OnStreet?.MarkedPoint?.DefaultWaitTime) ?? null,
                 notes: getText(stop.StopFurtherDetails?.Notes) ?? null,
                 administrative_area_code: getText(stop.AdministrativeAreaRef) ?? null,
                 creation_date_time: null,
@@ -142,19 +158,26 @@ export const streamAndParseXml = async (
 
         // biome-ignore lint/suspicious/noExplicitAny: xml-flow has no TypeScript types
         stream.on("tag:StopArea", (stopArea: any) => {
-            const stopAreaCode = getText(stopArea.StopAreaCode);
-            stopAreas.push({
-                stop_area_code: stopAreaCode?.toUpperCase() ?? null,
-                name: getText(stopArea.Name) ?? null,
-                administrative_area_code: getText(stopArea.AdministrativeAreaRef) ?? null,
-                stop_area_type: getText(stopArea.StopAreaType) ?? null,
-                grid_type: getText(stopArea.Location?.Translation?.GridType) ?? null,
-                easting: getText(stopArea.Location?.Translation?.Easting) ?? null,
-                northing: getText(stopArea.Location?.Translation?.Northing) ?? null,
-                longitude: getText(stopArea.Location?.Translation?.Longitude) ?? null,
-                latitude: getText(stopArea.Location?.Translation?.Latitude) ?? null,
-            });
+        const stopAreaCode = getText(stopArea.StopAreaCode);
+        const areaLocRaw = stopArea.Location;
+        const areaLoc = Array.isArray(areaLocRaw) ? areaLocRaw[0] : areaLocRaw;
+        const areaTranslationRaw = areaLoc?.Translation;
+        const areaTranslation = Array.isArray(areaTranslationRaw) ? areaTranslationRaw[0] : areaTranslationRaw;
+        stopAreas.push({
+            stop_area_code: stopAreaCode?.toUpperCase() ?? null,
+            name: getText(stopArea.Name) ?? null,
+            administrative_area_code: getText(stopArea.AdministrativeAreaRef) ?? null,
+            stop_area_type: getText(stopArea.StopAreaType) ?? null,
+            grid_type:
+                getText(areaLoc?.GridType) ??
+                getText(areaTranslation?.GridType) ??
+                (typeof areaTranslation === "string" ? areaTranslation : null),
+            easting: getText(areaTranslation?.Easting) ?? getText(areaLoc?.Easting) ?? null,
+            northing: getText(areaTranslation?.Northing) ?? getText(areaLoc?.Northing) ?? null,
+            longitude: getText(areaTranslation?.Longitude) ?? getText(areaLoc?.Longitude) ?? null,
+            latitude: getText(areaTranslation?.Latitude) ?? getText(areaLoc?.Latitude) ?? null,
         });
+    });
 
         stream.on("error", reject);
         stream.on("end", resolve);
