@@ -109,7 +109,7 @@ const mapStopPoint = (stop: XmlNode): NewNaptanStop => {
         .filter((ref): ref is string => ref !== null);
 
     return {
-        atco_code: getText(getChild(stop, "AtcoCode"))?.toUpperCase() ?? null,
+        atco_code: getText(getChild(stop, "AtcoCode"))?.toUpperCase() ?? "",
         naptan_code: getText(getChild(stop, "NaptanCode")),
         plate_code: getText(getChild(stop, "PlateCode")),
         cleardown_code: getText(getChild(stop, "CleardownCode")),
@@ -155,10 +155,10 @@ const mapStopArea = (stopArea: XmlNode): NewNaptanStopArea => {
     const translation = getChild(location, "Translation");
 
     return {
-        stop_area_code: getText(getChild(stopArea, "StopAreaCode"))?.toUpperCase() ?? null,
-        name: getText(getChild(stopArea, "Name")),
-        administrative_area_code: getText(getChild(stopArea, "AdministrativeAreaRef")),
-        stop_area_type: getText(getChild(stopArea, "StopAreaType")),
+        stop_area_code: getText(getChild(stopArea, "StopAreaCode"))?.toUpperCase() ?? "",
+        name: getText(getChild(stopArea, "Name")) ?? "",
+        administrative_area_code: getText(getChild(stopArea, "AdministrativeAreaRef")) ?? "",
+        stop_area_type: getText(getChild(stopArea, "StopAreaType")) ?? "",
         grid_type: getText(getChild(translation, "GridType")) ?? getText(getChild(location, "GridType")),
         easting: getText(getChild(translation, "Easting")) ?? getText(getChild(location, "Easting")),
         northing: getText(getChild(translation, "Northing")) ?? getText(getChild(location, "Northing")),
@@ -206,7 +206,7 @@ export const streamAndParseXml = async (
                 current.text += text;
             }
         });
-        
+
         saxStream.on("closetag", (tagName) => {
             if (!capturing) {
                 return;
