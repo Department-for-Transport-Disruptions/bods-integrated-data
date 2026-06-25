@@ -20,7 +20,7 @@
         "ospoint": "^0.2.1",
         "papaparse": "^5.4.1",
         "pg": "^8.11.3",
-        "xml-flow": "^1.0.4",
+        "sax": "^1.2.4",
         "zod": "3.23.8"
     },
     "devDependencies": {
@@ -28,6 +28,7 @@
         "@types/bluebird": "^3.5.42",
         "@types/node": "^20.11.19",
         "@types/papaparse": "^5.3.14",
-        "@types/pg": "^8.11.0"
+        "@types/pg": "^8.11.0",
+        "@types/sax": "^1.2.7"
     }
 }
