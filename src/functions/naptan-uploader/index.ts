@@ -199,7 +199,7 @@ export const streamAndParseXml = async (
             stack[stack.length - 1]?.children.push(node);
             stack.push(node);
         });
-        
+
         saxStream.on("text", (text) => {
             const current = stack[stack.length - 1];
             if (current) {
@@ -207,7 +207,7 @@ export const streamAndParseXml = async (
             }
         });
 
-        saxStream.on("closetag", (tagName) => {
+        saxStream.on("closetag", (_tagName) => {
             if (!capturing) {
                 return;
             }
