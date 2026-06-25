@@ -32,9 +32,9 @@ importers:
       pg:
         specifier: ^8.11.3
         version: 8.11.3
-      xml-flow:
-        specifier: ^1.0.4
-        version: 1.0.4
+      sax:
+        specifier: ^1.2.4
+        version: 1.6.0
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -54,6 +54,9 @@ importers:
       '@types/pg':
         specifier: ^8.11.0
         version: 8.11.0
+      '@types/sax':
+        specifier: ^1.2.7
+        version: 1.2.7
 
 packages:
 
@@ -458,6 +461,9 @@ packages:
   '@types/pg@8.11.0':
     resolution: {integrity: sha512-sDAlRiBNthGjNFfvt0k6mtotoVYVQ63pA8R4EMWka7crawSR60waVYR0HAgmPRs/e2YaeJTD/43OoZ3PFw80pw==}
 
+  '@types/sax@1.2.7':
+    resolution: {integrity: sha512-rO73L89PJxeYM3s3pPPjiPgVVcymqU490g0YO5n5By0k2Erzj6tay/4lr1CHAAU4JyOWd1rpQ8bCf6cZfHU96A==}
+
   '@types/uuid@9.0.8':
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
 
@@ -589,9 +595,6 @@ packages:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
-
-  xml-flow@1.0.4:
-    resolution: {integrity: sha512-r19LXKPL7vkVGL6oWHlESoBgwUVom5w/w8opuS53qULh8+K2w+K9K72edTIQa+X/Vxx1R7ugnCabHFSZ1Tv2zA==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -1523,6 +1526,10 @@ snapshots:
       pg-protocol: 1.6.0
       pg-types: 4.0.2
 
+  '@types/sax@1.2.7':
+    dependencies:
+      '@types/node': 20.11.19
+
   '@types/uuid@9.0.8': {}
 
   bluebird@3.7.2: {}
@@ -1627,10 +1634,6 @@ snapshots:
   undici-types@5.26.5: {}
 
   uuid@9.0.1: {}
-
-  xml-flow@1.0.4:
-    dependencies:
-      sax: 1.6.0
 
   xtend@4.0.2: {}
 
