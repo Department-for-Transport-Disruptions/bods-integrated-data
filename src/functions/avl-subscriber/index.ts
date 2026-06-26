@@ -75,7 +75,9 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
             return createHttpConflictErrorResponse("Subscription ID already active");
         }
 
-        await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
+        if (!activeSubscription) {
+            await addSubscriptionAuthCredsToSsm(subscriptionId, username, password);
+        }
 
         const isInternal = isPrivateAddress(avlSubscribeMessage.dataProducerEndpoint);
 
