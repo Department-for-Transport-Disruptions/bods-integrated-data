@@ -354,6 +354,26 @@ describe("avl-subscriber", () => {
         );
     });
 
+    it("does not write to parameter store for an existing subscription", async () => {
+        getDynamoItemSpy.mockResolvedValue({
+            PK: "test",
+            url: "https://example.com",
+            description: "test",
+            shortDescription: "test",
+            publisherId: "test",
+            apiKey: "123",
+            heartbeatLastReceivedDateTime: null,
+            lastAvlDataReceivedDateTime: "2024-09-02T13:34:00Z",
+            serviceStartDatetime: "2024-08-12T09:34:00Z",
+            status: "error",
+        });
+
+        await handler(mockEvent, mockContext, mockCallback);
+
+        expect(addSubscriptionAuthCredsToSsmSpy).not.toHaveBeenCalled();
+        expect(sendSubscriptionRequestAndUpdateDynamoSpy).toHaveBeenCalledOnce();
+    });
+
     it.each([
         [{ TABLE_NAME: "", DATA_ENDPOINT: "https://www.test.com/data", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
         [{ TABLE_NAME: "test-dynamo-table", DATA_ENDPOINT: "", AVL_PRODUCER_API_KEY_ARN: "mock-key-arn" }],
