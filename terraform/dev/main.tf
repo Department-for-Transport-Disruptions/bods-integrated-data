@@ -458,3 +458,7 @@ module "integrated_data_txc_analysis" {
   naptan_bucket_name   = module.integrated_data_naptan_pipeline.naptan_bucket_name
   nptg_bucket_name     = module.integrated_data_nptg_pipeline.nptg_bucket_name
 }
+
+module "ssm_service_settings" {
+  source = "../modules/ssm-service-settings"
+}
