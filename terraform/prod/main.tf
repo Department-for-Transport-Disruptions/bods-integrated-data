@@ -493,3 +493,7 @@ module "integrated_data_txc_analysis" {
   dqs_bucket_name      = local.secrets["dqs_bucket_name"]
   dqs_kms_key_arn      = local.secrets["dqs_kms_key_arn"]
 }
+
+module "ssm_service_settings" {
+  source = "../modules/ssm-service-settings"
+}
