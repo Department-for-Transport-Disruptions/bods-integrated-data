@@ -1,10 +1,11 @@
+import { Readable } from "node:stream";
 import { NewNaptanStop, NewNaptanStopArea } from "@bods-integrated-data/shared/database";
 import { describe, expect, it } from "vitest";
-import { parseXml } from ".";
+import { streamAndParseXml } from ".";
 
 describe("naptan-uploader", () => {
-    describe("parseXml", () => {
-        it("parses the XML into a list of stops", () => {
+    describe("streamAndParseXml", () => {
+        it("parses the XML into a list of stops", async () => {
             const xml = `<NaPTAN>
   <StopPoints>
     <StopPoint CreationDateTime="2020-09-09T00:00:00" ModificationDateTime="2020-09-09T08:37:19" Modification="new" RevisionNumber="0" Status="active">
@@ -125,7 +126,7 @@ describe("naptan-uploader", () => {
 	</StopAreas>
 </NaPTAN>`;
 
-            const { stopPoints, stopAreas } = parseXml(xml);
+            const { stopPoints, stopAreas } = await streamAndParseXml(Readable.from([xml]));
             const expectedStopPoints: NewNaptanStop[] = [
                 {
                     administrative_area_code: "151",
@@ -227,7 +228,7 @@ describe("naptan-uploader", () => {
             expect(stopAreas).toEqual(expectedStopAreas);
         });
 
-        it("only sets the stop_area_code property when there is exactly one stop area ref", () => {
+        it("only sets the stop_area_code property when there is exactly one stop area ref", async () => {
             const xml = `<NaPTAN>
 <StopPoints>
   <StopPoint CreationDateTime="2020-09-09T00:00:00" ModificationDateTime="2020-09-09T08:37:19" Modification="new" RevisionNumber="0" Status="active">
@@ -275,7 +276,7 @@ describe("naptan-uploader", () => {
 </StopPoints>
 </NaPTAN>`;
 
-            const { stopPoints } = parseXml(xml);
+            const { stopPoints } = await streamAndParseXml(Readable.from([xml]));
             const expectedStopPoints: NewNaptanStop[] = [
                 {
                     administrative_area_code: "151",

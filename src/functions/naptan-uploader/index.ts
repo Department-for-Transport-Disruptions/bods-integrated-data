@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { S3Client } from "@aws-sdk/client-s3";
 import { AssumeRoleCommand, STSClient } from "@aws-sdk/client-sts";
 import {
@@ -10,93 +11,15 @@ import {
 } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { getS3Object } from "@bods-integrated-data/shared/s3";
-import { naptanSchema } from "@bods-integrated-data/shared/schema/naptan.schema";
 import { S3Handler } from "aws-lambda";
 import { Promise as BluebirdPromise } from "bluebird";
-import { XMLParser } from "fast-xml-parser";
 import OsPoint from "ospoint";
+import sax from "sax";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
-
-const arrayProperties = ["StopPoint", "StopArea", "StopAreaRef"];
-
-export const parseXml = (xml: string) => {
-    const parser = new XMLParser({
-        allowBooleanAttributes: true,
-        ignoreAttributes: true,
-        parseTagValue: false,
-        isArray: (tagName) => arrayProperties.includes(tagName),
-    });
-
-    const parsedXml = parser.parse(xml);
-    const parsedNaptanData = naptanSchema.parse(parsedXml);
-
-    const stopPoints = parsedNaptanData.NaPTAN.StopPoints.StopPoint.map<NewNaptanStop>((stop) => {
-        return {
-            atco_code: stop.AtcoCode.toUpperCase(),
-            naptan_code: stop.NaptanCode ?? null,
-            plate_code: stop.PlateCode ?? null,
-            cleardown_code: stop.CleardownCode ?? null,
-            common_name: stop.Descriptor.CommonName ?? null,
-            short_common_name: stop.Descriptor.ShortCommonName ?? null,
-            landmark: stop.Descriptor.Landmark ?? null,
-            street: stop.Descriptor.Street ?? null,
-            crossing: stop.Descriptor.Crossing ?? null,
-            indicator: stop.Descriptor.Indicator ?? null,
-            bearing:
-                stop.StopClassification.OnStreet?.Bus?.MarkedPoint?.Bearing.CompassPoint ??
-                stop.StopClassification.OnStreet?.Bus?.UnmarkedPoint?.Bearing.CompassPoint ??
-                null,
-            nptg_locality_code: stop.Place.NptgLocalityRef,
-            locality_name: stop.Place.LocalityName ?? null,
-            town: stop.Place.Town ?? null,
-            suburb: stop.Place.Suburb ?? null,
-            locality_centre: stop.Place.LocalityCentre ?? null,
-            grid_type: stop.Place.Location.Translation?.GridType ?? null,
-            easting: stop.Place.Location.Translation?.Easting || stop.Place.Location.Easting || null,
-            northing: stop.Place.Location.Translation?.Northing || stop.Place.Location.Northing || null,
-            longitude: stop.Place.Location.Translation?.Longitude || stop.Place.Location.Longitude || null,
-            latitude: stop.Place.Location.Translation?.Latitude || stop.Place.Location.Latitude || null,
-            stop_type: stop.StopClassification.StopType,
-            bus_stop_type: stop.StopClassification.OnStreet?.Bus?.BusStopType,
-            timing_status:
-                stop.StopClassification.OnStreet?.Bus?.TimingStatus ??
-                stop.StopClassification.OffStreet?.BusAndCoach?.Bay?.TimingStatus ??
-                stop.StopClassification.OffStreet?.BusAndCoach?.VariableBay?.TimingStatus ??
-                null,
-            default_wait_time: stop.StopClassification.OnStreet?.Bus?.MarkedPoint?.DefaultWaitTime ?? null,
-            notes: stop.StopFurtherDetails?.Notes ?? null,
-            administrative_area_code: stop.AdministrativeAreaRef,
-            creation_date_time: null,
-            modification_date_time: null,
-            revision_number: null,
-            modification: null,
-            status: null,
-            stop_area_code:
-                stop.StopAreas?.StopAreaRef?.length === 1 ? stop.StopAreas.StopAreaRef[0].toUpperCase() : null,
-        };
-    });
-
-    const stopAreas =
-        parsedNaptanData.NaPTAN.StopAreas?.StopArea.map<NewNaptanStopArea>((stopArea) => {
-            return {
-                stop_area_code: stopArea.StopAreaCode.toUpperCase(),
-                name: stopArea.Name,
-                administrative_area_code: stopArea.AdministrativeAreaRef,
-                stop_area_type: stopArea.StopAreaType,
-                grid_type: stopArea.Location.Translation?.GridType ?? null,
-                easting: stopArea.Location.Translation?.Easting ?? null,
-                northing: stopArea.Location.Translation?.Northing ?? null,
-                longitude: stopArea.Location.Translation?.Longitude ?? null,
-                latitude: stopArea.Location.Translation?.Latitude ?? null,
-            };
-        }) ?? [];
-
-    return { stopPoints, stopAreas };
-};
 
 // cross-account S3 for Naptan update
 const getCrossAccountS3Client = async (roleArn: string, region: string) => {
@@ -129,6 +52,213 @@ const getCrossAccountS3Client = async (roleArn: string, region: string) => {
     });
 };
 
+const streamAndParseNaptanFile = async (
+    bucketName: string,
+    s3Key: string,
+    crossAccountRoleArn: string,
+    region: string,
+): Promise<{ stopPoints: NewNaptanStop[]; stopAreas: NewNaptanStopArea[] }> => {
+    const s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
+    const file = await getS3Object(
+        {
+            Bucket: bucketName,
+            Key: s3Key,
+        },
+        s3Client,
+    );
+
+    if (!file.Body) {
+        throw new Error(`No body returned for s3://${bucketName}/${s3Key}`);
+    }
+
+    return streamAndParseXml(file.Body as Readable);
+};
+
+interface XmlNode {
+    name: string;
+    attributes: Record<string, string>;
+    children: XmlNode[];
+    text: string;
+}
+
+const getChild = (node: XmlNode | undefined, name: string): XmlNode | undefined =>
+    node?.children.find((child) => child.name === name);
+
+const getChildren = (node: XmlNode | undefined, name: string): XmlNode[] =>
+    node?.children.filter((child) => child.name === name) ?? [];
+
+const getPath = (node: XmlNode | undefined, ...names: string[]): XmlNode | undefined =>
+    names.reduce<XmlNode | undefined>((current, name) => getChild(current, name), node);
+
+const getText = (node: XmlNode | undefined): string | null => {
+    const trimmed = node?.text.trim();
+    return trimmed ? trimmed : null;
+};
+
+const mapStopPoint = (stop: XmlNode): NewNaptanStop => {
+    const descriptor = getChild(stop, "Descriptor");
+    const place = getChild(stop, "Place");
+    const location = getChild(place, "Location");
+    const translation = getChild(location, "Translation");
+    const classification = getChild(stop, "StopClassification");
+    const onStreet = getChild(classification, "OnStreet");
+    const bus = getChild(onStreet, "Bus");
+    const markedPoint = getChild(bus, "MarkedPoint");
+    const refs = getChildren(getChild(stop, "StopAreas"), "StopAreaRef")
+        .map(getText)
+        .filter((ref): ref is string => ref !== null);
+    const atcoCode = getText(getChild(stop, "AtcoCode"));
+
+    if (!atcoCode) {
+        throw new Error("StopPoint missing AtcoCode");
+    }
+
+    return {
+        atco_code: atcoCode.toUpperCase(),
+        naptan_code: getText(getChild(stop, "NaptanCode")),
+        plate_code: getText(getChild(stop, "PlateCode")),
+        cleardown_code: getText(getChild(stop, "CleardownCode")),
+        common_name: getText(getChild(descriptor, "CommonName")),
+        short_common_name: getText(getChild(descriptor, "ShortCommonName")),
+        landmark: getText(getChild(descriptor, "Landmark")),
+        street: getText(getChild(descriptor, "Street")),
+        crossing: getText(getChild(descriptor, "Crossing")),
+        indicator: getText(getChild(descriptor, "Indicator")),
+        bearing:
+            getText(getPath(markedPoint, "Bearing", "CompassPoint")) ??
+            getText(getPath(bus, "UnmarkedPoint", "Bearing", "CompassPoint")),
+        nptg_locality_code: getText(getChild(place, "NptgLocalityRef")),
+        locality_name: getText(getChild(place, "LocalityName")),
+        town: getText(getChild(place, "Town")),
+        suburb: getText(getChild(place, "Suburb")),
+        locality_centre: getText(getChild(place, "LocalityCentre")),
+        grid_type: getText(getChild(translation, "GridType")) ?? getText(getChild(location, "GridType")),
+        easting: getText(getChild(translation, "Easting")) ?? getText(getChild(location, "Easting")),
+        northing: getText(getChild(translation, "Northing")) ?? getText(getChild(location, "Northing")),
+        longitude: getText(getChild(translation, "Longitude")) ?? getText(getChild(location, "Longitude")),
+        latitude: getText(getChild(translation, "Latitude")) ?? getText(getChild(location, "Latitude")),
+        stop_type: getText(getChild(classification, "StopType")),
+        bus_stop_type: getText(getChild(bus, "BusStopType")),
+        timing_status:
+            getText(getChild(bus, "TimingStatus")) ??
+            getText(getPath(classification, "OffStreet", "BusAndCoach", "Bay", "TimingStatus")) ??
+            getText(getPath(classification, "OffStreet", "BusAndCoach", "VariableBay", "TimingStatus")),
+        default_wait_time: getText(getChild(markedPoint, "DefaultWaitTime")),
+        notes: getText(getPath(stop, "StopFurtherDetails", "Notes")),
+        administrative_area_code: getText(getChild(stop, "AdministrativeAreaRef")),
+        creation_date_time: null,
+        modification_date_time: null,
+        revision_number: null,
+        modification: null,
+        status: null,
+        stop_area_code: refs.length === 1 ? refs[0].toUpperCase() : null,
+    };
+};
+
+const mapStopArea = (stopArea: XmlNode): NewNaptanStopArea => {
+    const location = getChild(stopArea, "Location");
+    const translation = getChild(location, "Translation");
+    const stopAreaCode = getText(getChild(stopArea, "StopAreaCode"));
+
+    if (!stopAreaCode) {
+        throw new Error("StopArea missing StopAreaCode");
+    }
+
+    const name = getText(getChild(stopArea, "Name"));
+
+    if (!name) {
+        throw new Error("StopArea missing Name");
+    }
+
+    const administrativeAreaCode = getText(getChild(stopArea, "AdministrativeAreaRef"));
+
+    if (!administrativeAreaCode) {
+        throw new Error("StopArea missing AdministrativeAreaRef");
+    }
+
+    const stopAreaType = getText(getChild(stopArea, "StopAreaType"));
+
+    if (!stopAreaType) {
+        throw new Error("StopArea missing StopAreaType");
+    }
+
+    return {
+        stop_area_code: stopAreaCode.toUpperCase(),
+        name,
+        administrative_area_code: administrativeAreaCode,
+        stop_area_type: stopAreaType,
+        grid_type: getText(getChild(translation, "GridType")) ?? getText(getChild(location, "GridType")),
+        easting: getText(getChild(translation, "Easting")) ?? getText(getChild(location, "Easting")),
+        northing: getText(getChild(translation, "Northing")) ?? getText(getChild(location, "Northing")),
+        longitude: getText(getChild(translation, "Longitude")) ?? getText(getChild(location, "Longitude")),
+        latitude: getText(getChild(translation, "Latitude")) ?? getText(getChild(location, "Latitude")),
+    };
+};
+
+export const streamAndParseXml = async (
+    readable: Readable,
+): Promise<{ stopPoints: NewNaptanStop[]; stopAreas: NewNaptanStopArea[] }> => {
+    return new Promise((resolve, reject) => {
+        const stopPoints: NewNaptanStop[] = [];
+        const stopAreas: NewNaptanStopArea[] = [];
+
+        const saxStream = sax.createStream(true, { trim: true });
+        const stack: XmlNode[] = [];
+        let capturing: "StopPoint" | "StopArea" | null = null;
+
+        saxStream.on("opentag", (tag) => {
+            if (!capturing) {
+                if (tag.name === "StopPoint") {
+                    capturing = "StopPoint";
+                } else if (tag.name === "StopArea") {
+                    capturing = "StopArea";
+                } else {
+                    return;
+                }
+            }
+
+            const node: XmlNode = {
+                name: tag.name,
+                attributes: tag.attributes as Record<string, string>,
+                children: [],
+                text: "",
+            };
+
+            stack[stack.length - 1]?.children.push(node);
+            stack.push(node);
+        });
+
+        saxStream.on("text", (text) => {
+            const current = stack[stack.length - 1];
+            if (current) {
+                current.text += text;
+            }
+        });
+
+        saxStream.on("closetag", (_tagName) => {
+            if (!capturing) {
+                return;
+            }
+
+            const node = stack.pop();
+
+            if (stack.length === 0 && node) {
+                if (capturing === "StopPoint") {
+                    stopPoints.push(mapStopPoint(node));
+                } else {
+                    stopAreas.push(mapStopArea(node));
+                }
+                capturing = null;
+            }
+        });
+
+        saxStream.on("error", reject);
+        saxStream.on("end", () => resolve({ stopPoints, stopAreas }));
+
+        readable.pipe(saxStream);
+    });
+};
+
 const addLonAndLatData = (naptanData: unknown[]) => {
     return (
         naptanData as {
@@ -156,26 +286,6 @@ const addLonAndLatData = (naptanData: unknown[]) => {
             ...item,
         };
     });
-};
-
-const getAndParseNaptanFile = async (
-    bucketName: string,
-    s3Key: string,
-    crossAccountRoleArn: string,
-    region: string,
-) => {
-    const s3Client = await getCrossAccountS3Client(crossAccountRoleArn, region);
-
-    const file = await getS3Object(
-        {
-            Bucket: bucketName,
-            Key: s3Key,
-        },
-        s3Client,
-    );
-
-    const body = (await file.Body?.transformToString()) || "";
-    return parseXml(body);
 };
 
 const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], naptanStopAreas: unknown[]) => {
@@ -261,7 +371,7 @@ export const handler: S3Handler = async (event, context) => {
             throw new Error("NAPTAN_S3_KEY environment variable must be set");
         }
 
-        const { stopPoints, stopAreas } = await getAndParseNaptanFile(
+        const { stopPoints, stopAreas } = await streamAndParseNaptanFile(
             externalBucketName,
             naptanS3Key,
             crossAccountRoleArn,

@@ -20,9 +20,6 @@ importers:
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
-      fast-xml-parser:
-        specifier: 5.3.5
-        version: 5.3.5
       kysely:
         specifier: ^0.27.3
         version: 0.27.3
@@ -35,6 +32,9 @@ importers:
       pg:
         specifier: ^8.11.3
         version: 8.11.3
+      sax:
+        specifier: ^1.2.4
+        version: 1.6.0
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -54,6 +54,9 @@ importers:
       '@types/pg':
         specifier: ^8.11.0
         version: 8.11.0
+      '@types/sax':
+        specifier: ^1.2.7
+        version: 1.2.7
 
 packages:
 
@@ -458,6 +461,9 @@ packages:
   '@types/pg@8.11.0':
     resolution: {integrity: sha512-sDAlRiBNthGjNFfvt0k6mtotoVYVQ63pA8R4EMWka7crawSR60waVYR0HAgmPRs/e2YaeJTD/43OoZ3PFw80pw==}
 
+  '@types/sax@1.2.7':
+    resolution: {integrity: sha512-rO73L89PJxeYM3s3pPPjiPgVVcymqU490g0YO5n5By0k2Erzj6tay/4lr1CHAAU4JyOWd1rpQ8bCf6cZfHU96A==}
+
   '@types/uuid@9.0.8':
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
 
@@ -473,10 +479,6 @@ packages:
 
   fast-xml-parser@4.4.1:
     resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
-    hasBin: true
-
-  fast-xml-parser@5.3.5:
-    resolution: {integrity: sha512-JeaA2Vm9ffQKp9VjvfzObuMCjUYAp5WDYhRYL5LrBPY/jUDlUtOvDfot0vKSkB9tuX885BDHjtw4fZadD95wnA==}
     hasBin: true
 
   kysely@0.27.3:
@@ -572,15 +574,16 @@ packages:
   postgres-range@1.1.4:
     resolution: {integrity: sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==}
 
+  sax@1.6.0:
+    resolution: {integrity: sha512-6R3J5M4AcbtLUdZmRv2SygeVaM7IhrLXu9BmnOGmmACak8fiUtOsYNWUS4uK7upbmHIBbLBeFeI//477BKLBzA==}
+    engines: {node: '>=11.0.0'}
+
   split2@4.2.0:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
 
   strnum@1.1.2:
     resolution: {integrity: sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==}
-
-  strnum@2.2.2:
-    resolution: {integrity: sha512-DnR90I+jtXNSTXWdwrEy9FakW7UX+qUZg28gj5fk2vxxl7uS/3bpI4fjFYVmdK9etptYBPNkpahuQnEwhwECqA==}
 
   tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
@@ -1523,6 +1526,10 @@ snapshots:
       pg-protocol: 1.6.0
       pg-types: 4.0.2
 
+  '@types/sax@1.2.7':
+    dependencies:
+      '@types/node': 20.11.19
+
   '@types/uuid@9.0.8': {}
 
   bluebird@3.7.2: {}
@@ -1534,10 +1541,6 @@ snapshots:
   fast-xml-parser@4.4.1:
     dependencies:
       strnum: 1.1.2
-
-  fast-xml-parser@5.3.5:
-    dependencies:
-      strnum: 2.2.2
 
   kysely@0.27.3: {}
 
@@ -1620,11 +1623,11 @@ snapshots:
 
   postgres-range@1.1.4: {}
 
+  sax@1.6.0: {}
+
   split2@4.2.0: {}
 
   strnum@1.1.2: {}
-
-  strnum@2.2.2: {}
 
   tslib@2.6.2: {}
 
