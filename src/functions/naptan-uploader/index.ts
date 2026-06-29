@@ -177,7 +177,7 @@ const mapStopArea = (stopArea: XmlNode): NewNaptanStopArea => {
     }
 
     const stopAreaType = getText(getChild(stopArea, "StopAreaType"));
-    
+
     if (!stopAreaType) {
         throw new Error("StopArea missing StopAreaType");
     }
