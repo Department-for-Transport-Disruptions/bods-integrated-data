@@ -107,9 +107,14 @@ const mapStopPoint = (stop: XmlNode): NewNaptanStop => {
     const refs = getChildren(getChild(stop, "StopAreas"), "StopAreaRef")
         .map(getText)
         .filter((ref): ref is string => ref !== null);
+    const atcoCode = getText(getChild(stop, "AtcoCode"));
+
+    if (!atcoCode) {
+        throw new Error("StopPoint missing AtcoCode");
+    }
 
     return {
-        atco_code: getText(getChild(stop, "AtcoCode"))?.toUpperCase() ?? "",
+        atco_code: atcoCode.toUpperCase(),
         naptan_code: getText(getChild(stop, "NaptanCode")),
         plate_code: getText(getChild(stop, "PlateCode")),
         cleardown_code: getText(getChild(stop, "CleardownCode")),
@@ -153,12 +158,35 @@ const mapStopPoint = (stop: XmlNode): NewNaptanStop => {
 const mapStopArea = (stopArea: XmlNode): NewNaptanStopArea => {
     const location = getChild(stopArea, "Location");
     const translation = getChild(location, "Translation");
+    const stopAreaCode = getText(getChild(stopArea, "StopAreaCode"));
+
+    if (!stopAreaCode) {
+        throw new Error("StopArea missing StopAreaCode");
+    }
+
+    const name = getText(getChild(stopArea, "Name"));
+
+    if (!name) {
+        throw new Error("StopArea missing Name");
+    }
+
+    const administrativeAreaCode = getText(getChild(stopArea, "AdministrativeAreaRef"));
+
+    if (!administrativeAreaCode) {
+        throw new Error("StopArea missing AdministrativeAreaRef");
+    }
+
+    const stopAreaType = getText(getChild(stopArea, "StopAreaType"));
+    
+    if (!stopAreaType) {
+        throw new Error("StopArea missing StopAreaType");
+    }
 
     return {
-        stop_area_code: getText(getChild(stopArea, "StopAreaCode"))?.toUpperCase() ?? "",
-        name: getText(getChild(stopArea, "Name")) ?? "",
-        administrative_area_code: getText(getChild(stopArea, "AdministrativeAreaRef")) ?? "",
-        stop_area_type: getText(getChild(stopArea, "StopAreaType")) ?? "",
+        stop_area_code: stopAreaCode.toUpperCase(),
+        name,
+        administrative_area_code: administrativeAreaCode,
+        stop_area_type: stopAreaType,
         grid_type: getText(getChild(translation, "GridType")) ?? getText(getChild(location, "GridType")),
         easting: getText(getChild(translation, "Easting")) ?? getText(getChild(location, "Easting")),
         northing: getText(getChild(translation, "Northing")) ?? getText(getChild(location, "Northing")),
