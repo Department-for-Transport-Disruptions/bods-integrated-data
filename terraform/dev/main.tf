@@ -39,6 +39,9 @@ locals {
   bods_nptg_bucket_name   = "bods-1297-data-landing-zone"
   bods_nptg_role_arn      = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
   bods_nptg_s3_key        = "raw/nptg/nptg_latest.xml"
+  bods_noc_bucket_name    = "bods-1297-data-landing-zone"
+  bods_noc_s3_key         = "raw/noc/"
+  bods_noc_role_arn       = "arn:aws:iam::390403896175:role/bods-1297-data-landing-zone-cross-account-role"
 }
 
 module "integrated_data_monitoring_dev" {
@@ -125,6 +128,10 @@ module "integrated_data_noc_pipeline" {
   db_secret_arn      = module.integrated_data_aurora_db_dev.db_secret_arn
   db_sg_id           = module.integrated_data_aurora_db_dev.db_sg_id
   db_host            = module.integrated_data_aurora_db_dev.db_host
+  noc_bucket_name    = local.bods_noc_bucket_name
+  noc_role_arn       = local.bods_noc_role_arn
+  bucket_region      = data.aws_region.current.name
+  noc_s3_key         = local.bods_noc_s3_key
 }
 
 module "integrated_data_table_renamer" {
