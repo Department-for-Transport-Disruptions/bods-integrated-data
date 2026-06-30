@@ -316,11 +316,15 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], napt
         },
     );
 
-    const numStopRows = naptanStops.length;
+    const dedupedStops = Array.from(
+        new Map((naptanStops as NaptanStop[]).map((stop) => [stop.atco_code, stop])).values(),
+    )
+
+    const numStopRows = dedupedStops.length;
     const stopBatches = [];
 
-    while (naptanStops.length > 0) {
-        const chunk = naptanStops.splice(0, 1000);
+    while (dedupedStops.length > 0) {
+        const chunk = dedupedStops.splice(0, 1000);
         stopBatches.push(chunk);
     }
 
@@ -332,6 +336,7 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], napt
             return dbClient
                 .insertInto("naptan_stop_new")
                 .values(batch as NaptanStop[])
+                .onConflict((oc) => oc.column("atco_code").doNothing())
                 .execute()
                 .then(() => 0);
         },
