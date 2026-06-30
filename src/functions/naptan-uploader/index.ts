@@ -318,7 +318,7 @@ const insertNaptanData = async (dbClient: KyselyDb, naptanStops: unknown[], napt
 
     const dedupedStops = Array.from(
         new Map((naptanStops as NaptanStop[]).map((stop) => [stop.atco_code, stop])).values(),
-    )
+    );
 
     const numStopRows = dedupedStops.length;
     const stopBatches = [];
