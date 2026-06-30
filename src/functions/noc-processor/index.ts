@@ -1,6 +1,7 @@
+import { AssumeRoleCommand, STSClient } from "@aws-sdk/client-sts";
 import { KyselyDb, getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { getS3Object } from "@bods-integrated-data/shared/s3";
+import { S3Client, getS3Object } from "@bods-integrated-data/shared/s3";
 import { nocSchema } from "@bods-integrated-data/shared/schema/noc.schema";
 import { S3Handler } from "aws-lambda";
 import { XMLParser } from "fast-xml-parser";
@@ -13,12 +14,58 @@ z.setErrorMap(errorMapWithDataLogging);
 let dbClient: KyselyDb;
 
 const arrayProperties = ["NOCTableRecord"];
+const nocLatestFilePath = "noc_latest_xml.xml";
 
-const getAndParseData = async (bucketName: string, objectKey: string) => {
-    const file = await getS3Object({
-        Bucket: bucketName,
-        Key: objectKey,
+const getNocObjectKey = (nocS3Key: string) => {
+    const trimmedNocS3Key = nocS3Key.trim().replace(/\/+$/, "");
+
+    if (!trimmedNocS3Key) {
+        throw new Error("NOC_S3_KEY environment variable must not be empty");
+    }
+
+    return trimmedNocS3Key.endsWith(nocLatestFilePath) ? trimmedNocS3Key : `${trimmedNocS3Key}/${nocLatestFilePath}`;
+};
+
+const getCrossAccountS3Client = async (roleArn: string, region: string) => {
+    const stsClient = new STSClient({ region });
+
+    const assumeRoleCommand = new AssumeRoleCommand({
+        RoleArn: roleArn,
+        RoleSessionName: "noc-uploader-cross-account-session",
+        DurationSeconds: 3600,
     });
+
+    const credentials = await stsClient.send(assumeRoleCommand);
+    const assumedRoleCredentials = credentials.Credentials;
+
+    if (
+        !assumedRoleCredentials?.AccessKeyId ||
+        !assumedRoleCredentials.SecretAccessKey ||
+        !assumedRoleCredentials.SessionToken
+    ) {
+        throw new Error("Failed to assume role for cross-account S3 access");
+    }
+
+    return new S3Client({
+        region,
+        credentials: {
+            accessKeyId: assumedRoleCredentials.AccessKeyId,
+            secretAccessKey: assumedRoleCredentials.SecretAccessKey,
+            sessionToken: assumedRoleCredentials.SessionToken,
+        },
+    });
+};
+
+const getAndParseData = async (bucketName: string, objectKey: string, roleArn: string, region: string) => {
+    const s3Client = await getCrossAccountS3Client(roleArn, region);
+
+    const file = await getS3Object(
+        {
+            Bucket: bucketName,
+            Key: objectKey,
+        },
+        s3Client,
+    );
 
     const parser = new XMLParser({
         allowBooleanAttributes: true,
@@ -50,18 +97,40 @@ const getAndParseData = async (bucketName: string, objectKey: string) => {
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { bucket, object } = event.Records[0].s3;
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        logger.info(`Starting processing of NOC data for ${object.key}`);
+        const externalBucketName = process.env.NOC_BUCKET_NAME;
+        const crossAccountRoleArn = process.env.NOC_ROLE_ARN;
+        const bucketRegion = process.env.BUCKET_REGION;
+        const nocS3Key = process.env.NOC_S3_KEY;
 
-        const nocData = await getAndParseData(bucket.name, object.key);
+        if (!externalBucketName) {
+            throw new Error("NOC_BUCKET_NAME environment variable must be set");
+        }
+
+        if (!crossAccountRoleArn) {
+            throw new Error("NOC_ROLE_ARN environment variable must be set");
+        }
+
+        if (!bucketRegion) {
+            throw new Error("BUCKET_REGION environment variable must be set");
+        }
+
+        if (!nocS3Key) {
+            throw new Error("NOC_S3_KEY environment variable must be set");
+        }
+
+        const nocObjectKey = getNocObjectKey(nocS3Key);
+
+        logger.info(`Starting processing of NOC data for ${nocObjectKey}`);
+
+        const nocData = await getAndParseData(externalBucketName, nocObjectKey, crossAccountRoleArn, bucketRegion);
 
         const { travelinedata } = nocData;
 
         if (!travelinedata.NOCTable.NOCTableRecord || travelinedata.NOCTable.NOCTableRecord.length === 0) {
-            logger.warn(`No NOCTableRecords found in file ${object.key}`);
+            logger.warn(`No NOCTableRecords found in file ${nocObjectKey}`);
             return;
         }
 

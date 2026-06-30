@@ -36,3 +36,31 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "noc_bucket_name" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = "External NOC S3 bucket name"
+}
+
+variable "noc_role_arn" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = "Cross-account IAM role ARN used to access NOC S3"
+}
+
+variable "bucket_region" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = "Region for the external NOC S3 bucket"
+}
+
+variable "noc_s3_key" {
+  type        = string
+  nullable    = true
+  default     = null
+  description = "Prefix or object key for NOC XML/CSV in S3"
+}

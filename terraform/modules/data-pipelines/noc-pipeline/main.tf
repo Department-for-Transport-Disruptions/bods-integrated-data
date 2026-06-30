@@ -9,6 +9,47 @@ terraform {
   }
 }
 
+locals {
+  noc_processor_permissions = concat(
+    [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue",
+        ],
+        Effect = "Allow",
+        Resource = [
+          var.db_secret_arn,
+        ]
+      }
+    ],
+    var.noc_role_arn != null ? [
+      {
+        Action = [
+          "sts:AssumeRole",
+        ],
+        Effect = "Allow",
+        Resource = [
+          var.noc_role_arn,
+        ]
+      }
+    ] : [],
+  )
+
+  noc_processor_env_vars = merge(
+    {
+      STAGE         = var.environment
+      DB_HOST       = var.db_host
+      DB_PORT       = tostring(var.db_port)
+      DB_SECRET_ARN = var.db_secret_arn
+      DB_NAME       = var.db_name
+    },
+    var.noc_bucket_name != null ? { NOC_BUCKET_NAME = var.noc_bucket_name } : {},
+    var.noc_role_arn != null ? { NOC_ROLE_ARN = var.noc_role_arn } : {},
+    var.bucket_region != null ? { BUCKET_REGION = var.bucket_region } : {},
+    var.noc_s3_key != null ? { NOC_S3_KEY = var.noc_s3_key } : {},
+  )
+}
+
 resource "aws_s3_bucket" "integrated_data_noc_bucket" {
   bucket = "integrated-data-noc-${var.environment}"
 }
@@ -71,30 +112,7 @@ module "integrated_data_noc_processor_function" {
   subnet_ids      = var.private_subnet_ids
   database_sg_id  = var.db_sg_id
 
-  permissions = [{
-    Action = [
-      "secretsmanager:GetSecretValue",
-    ],
-    Effect = "Allow",
-    Resource = [
-      var.db_secret_arn,
-    ]
-    },
-    {
-      Action = [
-        "s3:GetObject",
-      ],
-      Effect = "Allow",
-      Resource = [
-        "${aws_s3_bucket.integrated_data_noc_bucket.arn}/*"
-      ]
-  }]
+  permissions = local.noc_processor_permissions
 
-  env_vars = {
-    STAGE         = var.environment
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-  }
+  env_vars = local.noc_processor_env_vars
 }
