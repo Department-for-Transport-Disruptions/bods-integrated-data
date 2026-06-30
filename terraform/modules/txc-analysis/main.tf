@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -151,7 +151,7 @@ resource "aws_iam_role" "integrated_data_txc_analysis_sfn_role" {
             "aws:SourceAccount" : data.aws_caller_identity.current.account_id
           },
           "ArnLike" : {
-            "aws:SourceArn" : "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:*"
+            "aws:SourceArn" : "arn:aws:states:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:stateMachine:*"
           }
         }
       }
@@ -207,7 +207,7 @@ resource "aws_iam_policy" "integrated_data_txc_analysis_sfn_policy" {
           "states:RedriveExecution"
         ],
         "Resource" : [
-          "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:execution:${aws_sfn_state_machine.integrated_data_txc_analysis_sfn.name}/*"
+          "arn:aws:states:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:execution:${aws_sfn_state_machine.integrated_data_txc_analysis_sfn.name}/*"
         ]
       },
       {

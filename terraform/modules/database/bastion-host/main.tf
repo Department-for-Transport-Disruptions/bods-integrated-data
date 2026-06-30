@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -107,6 +107,7 @@ resource "aws_launch_template" "integrated_data_bastion_launch_template" {
     tags = {
       Name    = "integrated-data-bastion-host-${var.environment}"
       Bastion = true
+      Type    = "Bastion"
     }
   }
 }
