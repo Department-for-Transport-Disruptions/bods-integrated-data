@@ -36,3 +36,27 @@ variable "db_name" {
   type    = string
   default = "bods_integrated_data"
 }
+
+variable "naptan_bucket_name" {
+  type        = string
+  description = "Name of the external S3 bucket containing naptan data"
+  default     = ""
+}
+
+variable "naptan_role_arn" {
+  type        = string
+  description = "ARN of the IAM role to assume for cross-account S3 access"
+  default     = ""
+}
+
+variable "bucket_region" {
+  type        = string
+  description = "Region of the external S3 bucket containing naptan data"
+  default     = "eu-west-2"
+}
+
+variable "naptan_s3_key" {
+  type        = string
+  description = "S3 key/path of the NaPTAN XML file in the external bucket"
+  default     = "raw/naptan/naptan_latest_xml.xml"
+}

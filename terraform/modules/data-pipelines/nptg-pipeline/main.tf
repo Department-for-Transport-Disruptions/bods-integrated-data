@@ -91,15 +91,28 @@ module "integrated_data_nptg_uploader_function" {
       Resource = [
         var.db_secret_arn
       ]
+    },
+    {
+      Action = [
+        "sts:AssumeRole"
+      ],
+      Effect = "Allow",
+      Resource = [
+        var.nptg_role_arn
+      ]
     }
   ]
 
   env_vars = {
-    BUCKET_NAME   = aws_s3_bucket.integrated_data_nptg_s3_bucket.bucket
-    DB_HOST       = var.db_host
-    DB_PORT       = var.db_port
-    DB_SECRET_ARN = var.db_secret_arn
-    DB_NAME       = var.db_name
-    STAGE         = var.environment
+    BUCKET_NAME      = aws_s3_bucket.integrated_data_nptg_s3_bucket.bucket
+    DB_HOST          = var.db_host
+    DB_PORT          = var.db_port
+    DB_SECRET_ARN    = var.db_secret_arn
+    DB_NAME          = var.db_name
+    STAGE            = var.environment
+    BUCKET_REGION    = var.bucket_region
+    NPTG_S3_KEY      = var.nptg_s3_key
+    NPTG_BUCKET_NAME = var.nptg_bucket_name
+    NPTG_ROLE_ARN    = var.nptg_role_arn
   }
 }

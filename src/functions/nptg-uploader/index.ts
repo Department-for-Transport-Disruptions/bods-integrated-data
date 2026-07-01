@@ -1,3 +1,4 @@
+import { AssumeRoleCommand, STSClient } from "@aws-sdk/client-sts";
 import { nptgArrayProperties } from "@bods-integrated-data/shared/constants";
 import {
     KyselyDb,
@@ -7,7 +8,7 @@ import {
     getDatabaseClient,
 } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
-import { getS3Object } from "@bods-integrated-data/shared/s3";
+import { S3Client, getS3Object } from "@bods-integrated-data/shared/s3";
 import { NptgSchema, nptgSchema } from "@bods-integrated-data/shared/schema";
 import { chunkArray } from "@bods-integrated-data/shared/utils";
 import { S3Handler } from "aws-lambda";
@@ -19,11 +20,46 @@ z.setErrorMap(errorMapWithDataLogging);
 
 let dbClient: KyselyDb;
 
-const getAndParseData = async (bucket: string, key: string) => {
-    const file = await getS3Object({
-        Bucket: bucket,
-        Key: key,
+const getCrossAccountS3Client = async (roleArn: string, region: string) => {
+    const stsClient = new STSClient({ region });
+
+    const assumeRoleCommand = new AssumeRoleCommand({
+        RoleArn: roleArn,
+        RoleSessionName: "nptg-uploader-cross-account-session",
+        DurationSeconds: 3600,
     });
+
+    const credentials = await stsClient.send(assumeRoleCommand);
+    const assumedRoleCredentials = credentials.Credentials;
+
+    if (
+        !assumedRoleCredentials?.AccessKeyId ||
+        !assumedRoleCredentials.SecretAccessKey ||
+        !assumedRoleCredentials.SessionToken
+    ) {
+        throw new Error("Failed to assume role for cross-account S3 access");
+    }
+
+    return new S3Client({
+        region,
+        credentials: {
+            accessKeyId: assumedRoleCredentials.AccessKeyId,
+            secretAccessKey: assumedRoleCredentials.SecretAccessKey,
+            sessionToken: assumedRoleCredentials.SessionToken,
+        },
+    });
+};
+
+const getAndParseData = async (bucket: string, key: string, roleArn: string, region: string) => {
+    const s3Client = await getCrossAccountS3Client(roleArn, region);
+
+    const file = await getS3Object(
+        {
+            Bucket: bucket,
+            Key: key,
+        },
+        s3Client,
+    );
 
     const parser = new XMLParser({
         allowBooleanAttributes: true,
@@ -99,13 +135,33 @@ export const insertNptgData = async (dbClient: KyselyDb, data: NptgSchema) => {
 export const handler: S3Handler = async (event, context) => {
     withLambdaRequestTracker(event ?? {}, context ?? {});
 
-    const { bucket, object } = event.Records[0].s3;
     dbClient = dbClient || (await getDatabaseClient(process.env.STAGE === "local"));
 
     try {
-        logger.info(`Starting NPTG uploader for ${object.key}`);
+        const externalBucketName = process.env.NPTG_BUCKET_NAME;
+        const crossAccountRoleArn = process.env.NPTG_ROLE_ARN;
+        const bucketRegion = process.env.BUCKET_REGION;
+        const nptgS3Key = process.env.NPTG_S3_KEY;
 
-        const data = await getAndParseData(bucket.name, object.key);
+        if (!externalBucketName) {
+            throw new Error("NPTG_BUCKET_NAME environment variable must be set");
+        }
+
+        if (!crossAccountRoleArn) {
+            throw new Error("NPTG_ROLE_ARN environment variable must be set");
+        }
+
+        if (!bucketRegion) {
+            throw new Error("BUCKET_REGION environment variable must be set");
+        }
+
+        if (!nptgS3Key) {
+            throw new Error("NPTG_S3_KEY environment variable must be set");
+        }
+
+        logger.info(`Starting NPTG uploader for ${nptgS3Key}`);
+
+        const data = await getAndParseData(externalBucketName, nptgS3Key, crossAccountRoleArn, bucketRegion);
         await insertNptgData(dbClient, data);
 
         logger.info("NPTG uploader successful");

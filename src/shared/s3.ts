@@ -14,6 +14,8 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "./logger";
 
+export { S3Client };
+
 const replaceSpecialCharacters = (input: string) => input.replace(/[^a-zA-Z0-9._!\*\'\(\)\/-]/g, "_");
 const localStackHost = process.env.LOCALSTACK_HOSTNAME;
 const isDocker = process.env.IS_DOCKER;
@@ -62,13 +64,15 @@ export const listAllS3Objects = async (input: ListObjectsV2CommandInput) => {
     return allObjects;
 };
 
-export const getS3Object = async (input: GetObjectCommandInput) =>
-    client.send(
+export const getS3Object = async (input: GetObjectCommandInput, customClient?: S3Client) => {
+    const s3Client = customClient || client;
+    return s3Client.send(
         new GetObjectCommand({
             ...input,
             Key: input.Key ? decodeURIComponent(input.Key) : undefined,
         }),
     );
+};
 
 export const putS3Object = (input: PutObjectCommandInput) =>
     client.send(
