@@ -81,7 +81,7 @@ data "aws_kms_key" "uat" {
 
 # Provision analyst database access (reuse BODDS module)
 module "database_analyst_access" {
-  source = "../../BODDS-INFRASTRUCTURE/terraform/modules/database_analyst_access"
+  source = "git::https://github.com/department-for-transport-BODS/BODDS-INFRASTRUCTURE.git//terraform/modules/database_analyst_access?ref=main"
 
   data_team_members      = local.data_team_members
   databases_to_provision = local.databases_to_provision
