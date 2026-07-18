@@ -15,8 +15,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1
       fast-xml-parser:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 5.7.0
+        version: 5.7.0
       kysely:
         specifier: ^0.27.3
         version: 0.27.3
@@ -48,6 +48,9 @@ importers:
 
 packages:
 
+  '@nodable/entities@2.1.0':
+    resolution: {integrity: sha512-nyT7T3nbMyBI/lvr6L5TyWbFJAI9FTgVRakNoBqCD+PmID8DzFrrNdLLtHMwMszOtqZa8PAOV24ZqDnQrhQINA==}
+
   '@types/aws-lambda@8.10.135':
     resolution: {integrity: sha512-kD3aDbS5la1LcS89a4bJTLVSJI5euO2fx3euZTge7SbArH7+kcoLS+lK87cdI5GCEfiBQSio5gz546N0FhMmjg==}
 
@@ -60,8 +63,11 @@ packages:
   exponential-backoff@3.1.1:
     resolution: {integrity: sha512-dX7e/LHVJ6W3DE1MHWi9S1EYzDESENfLrYohG2G++ovZrYOkm4Knwa0mc1cn84xJOR4KEU0WSchhLbd0UklbHw==}
 
-  fast-xml-parser@4.5.4:
-    resolution: {integrity: sha512-jE8ugADnYOBsu1uaoayVl1tVKAMNOXyjwvv2U6udEA2ORBhDooJDWoGxTkhd4Qn4yh59JVVt/pKXtjPwx9OguQ==}
+  fast-xml-builder@1.1.5:
+    resolution: {integrity: sha512-4TJn/8FKLeslLAH3dnohXqE3QSoxkhvaMzepOIZytwJXZO69Bfz0HBdDHzOTOon6G59Zrk6VQ2bEiv1t61rfkA==}
+
+  fast-xml-parser@5.7.0:
+    resolution: {integrity: sha512-MTcrUoRQ1GSQ9iG3QJzBGquYYYeA7piZaJoIWbPFGbRn6Jj6z7xgoAyi4DrZX4y2ZIQQBF59gc/zmvvejjgoFQ==}
     hasBin: true
 
   kysely@0.27.3:
@@ -78,8 +84,12 @@ packages:
   ospoint@0.2.1:
     resolution: {integrity: sha512-P3unHc+SfN5JLyjrR+NLdMvhK2YWoupSJj3yo0OyRlZ8S1wn3Jt6Alv+UmB+h6y0Y3MGYvn9pRlLEapayPO5KQ==}
 
-  strnum@1.0.5:
-    resolution: {integrity: sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==}
+  path-expression-matcher@1.5.0:
+    resolution: {integrity: sha512-cbrerZV+6rvdQrrD+iGMcZFEiiSrbv9Tfdkvnusy6y0x0GKBXREFg/Y65GhIfm0tnLntThhzCnfKwp1WRjeCyQ==}
+    engines: {node: '>=14.0.0'}
+
+  strnum@2.2.3:
+    resolution: {integrity: sha512-oKx6RUCuHfT3oyVjtnrmn19H1SiCqgJSg+54XqURKp5aCMbrXrhLjRN9TjuwMjiYstZ0MzDrHqkGZ5dFTKd+zg==}
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
@@ -95,6 +105,8 @@ packages:
 
 snapshots:
 
+  '@nodable/entities@2.1.0': {}
+
   '@types/aws-lambda@8.10.135': {}
 
   '@types/node@20.11.24':
@@ -105,9 +117,16 @@ snapshots:
 
   exponential-backoff@3.1.1: {}
 
-  fast-xml-parser@4.5.4:
+  fast-xml-builder@1.1.5:
     dependencies:
-      strnum: 1.0.5
+      path-expression-matcher: 1.5.0
+
+  fast-xml-parser@5.7.0:
+    dependencies:
+      '@nodable/entities': 2.1.0
+      fast-xml-builder: 1.1.5
+      path-expression-matcher: 1.5.0
+      strnum: 2.2.3
 
   kysely@0.27.3: {}
 
@@ -117,7 +136,9 @@ snapshots:
 
   ospoint@0.2.1: {}
 
-  strnum@1.0.5: {}
+  path-expression-matcher@1.5.0: {}
+
+  strnum@2.2.3: {}
 
   undici-types@5.26.5: {}
 
