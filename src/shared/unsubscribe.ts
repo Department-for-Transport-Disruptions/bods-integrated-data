@@ -77,8 +77,8 @@ const parseXml = (xml: string) => {
 
     if (!parsedJson.success) {
         logger.error(
+            { zodError: parsedJson.error.format() },
             "There was an error parsing the terminate subscription response from the data producer",
-            parsedJson.error.format(),
         );
 
         throw new InvalidXmlError();

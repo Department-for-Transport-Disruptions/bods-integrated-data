@@ -3,7 +3,7 @@
     "compilerOptions": {
         "rootDir": ".",
         "moduleResolution": "bundler",
-        "module": "preserve",
+        "module": "esnext",
         "isolatedModules": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,

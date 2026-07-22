@@ -74,7 +74,7 @@ module "integrated_data_bods_netex_retriever_function" {
   function_name = "integrated-data-bods-netex-retriever"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-netex-retriever.zip"
   handler       = "index.handler"
-  runtime       = "nodejs22.x"
+  runtime       = "nodejs24.x"
   timeout       = 600
   memory        = 2048
 
@@ -105,7 +105,7 @@ module "integrated_data_bods_netex_unzipper_function" {
   function_name = "integrated-data-bods-netex-unzipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/bods-netex-unzipper.zip"
   handler       = "index.handler"
-  runtime       = "nodejs22.x"
+  runtime       = "nodejs24.x"
   timeout       = 600
   memory        = 2048
 

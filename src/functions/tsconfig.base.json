@@ -1,15 +1,10 @@
 {
     "extends": "@tsconfig/node24/tsconfig.json",
     "compilerOptions": {
-        "rootDir": ".",
         "moduleResolution": "bundler",
         "module": "preserve",
         "isolatedModules": true,
-        "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "esModuleInterop": true,
-        "strict": true,
-        "target": "es2022",
         "preserveConstEnums": true,
         "noEmit": true,
         "resolveJsonModule": true

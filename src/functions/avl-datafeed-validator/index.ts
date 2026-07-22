@@ -166,7 +166,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 
         const reportBody = await generateReportBody(errorData, subscriptionId, avlProcessorLogGroupName);
 
-        logger.info("Executed avl data feed validator", { sampleSize });
+        logger.info({ sampleSize }, "Executed avl data feed validator");
 
         return {
             statusCode: 200,
