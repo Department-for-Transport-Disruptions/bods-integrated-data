@@ -287,3 +287,8 @@ resource "aws_secretsmanager_secret" "integrated_data_db_user_ro" {
   name        = "rds/user/integrated_data_read_only"
   description = "Secret for the integrated data database read-only user"
 }
+
+resource "aws_secretsmanager_secret" "integrated_data_db_user_rw" {
+  name        = "rds/user/integrated_data_rw"
+  description = "Secret for the integrated data database read-write user"
+}
