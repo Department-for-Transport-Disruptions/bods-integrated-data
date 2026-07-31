@@ -38,18 +38,19 @@ k6 cloud -e <VAR>=<value> <script>.js
 
 ### `avl-consumer-subscriptions.js`
 
-Load tests the AVL Consumer API subscription and unsubscription endpoints (hardcoded to the `test` environment API Gateway).
+Load tests the AVL Consumer API subscription and unsubscription endpoints.
 
 **Required environment variables**
 
 | Variable | Description |
 |----------|-------------|
+| `BASE_URL` | Base URL of the AVL Consumer API (e.g. `https://<api-id>.execute-api.eu-west-2.amazonaws.com/v1`) |
 | `API_KEY` | API key sent as the `x-api-key` request header |
 
 **Example**
 
 ```bash
-k6 run -e API_KEY=load-5 avl-consumer-subscriptions.js
+k6 run -e BASE_URL=https://6tfu67dcng.execute-api.eu-west-2.amazonaws.com/v1 -e API_KEY=load-5 avl-consumer-subscriptions.js
 ```
 
 **Scenarios**
