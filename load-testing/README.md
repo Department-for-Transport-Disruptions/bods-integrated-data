@@ -23,13 +23,13 @@ k6 login cloud --token <your-grafana-cloud-token>
 Pass the filename and any required environment variables using the `-e` flag:
 
 ```bash
-k6 run -e <VAR>=<value> <script>.js
+k6 run -e <EnvURL> <script>.js
 ```
 
 ### On Grafana Cloud
 
 ```bash
-k6 cloud -e <VAR>=<value> <script>.js
+k6 cloud -e <EnvURL> <script>.js
 ```
 
 ---
