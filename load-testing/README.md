@@ -132,6 +132,36 @@ Same ramp profile as `siri-vm-downloader.js` (0 → 30 → 50 → 0 VUs). Scenar
 
 ---
 
+## Clearing the AVL consumer queues
+
+After a load test run you may need to purge the consumer subscriptions, SQS queues, and CloudWatch alarms that were created. The `avl_consumer_cleardown.sh` script does this automatically.
+
+Log in to the AWS profile first:
+
+```bash
+aws sso login --profile bods-non-prod
+```
+
+If that doesn't pick up, export the profile explicitly:
+
+```bash
+export AWS_PROFILE="bods-non-prod"
+```
+
+Make the script executable (first run only):
+
+```bash
+chmod +x avl_consumer_cleardown.sh
+```
+
+Then run it from the `load-testing/` directory:
+
+```bash
+./avl_consumer_cleardown.sh
+```
+
+---
+
 ## Project structure
 
 ```
@@ -139,5 +169,6 @@ load-testing/
 ├── avl-consumer-subscriptions.js   # Subscribe/unsubscribe load test for AVL Consumer API
 ├── siri-vm-downloader.js           # SIRI-VM endpoint load test (ramping VUs, multiple query patterns)
 ├── gtfs-rt-downloader.js           # GTFS-RT endpoint load test (ramping VUs, multiple query patterns)
+├── avl_consumer_cleardown.sh       # Clears consumer subscriptions, SQS queues and CloudWatch alarms
 └── README.md
 ```
