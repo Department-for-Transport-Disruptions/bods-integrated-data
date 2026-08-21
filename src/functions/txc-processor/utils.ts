@@ -14,8 +14,12 @@ export const getPickupTypeFromStopActivity = (activity?: string, isLastStop = fa
     switch (activity) {
         case "pickUp":
         case "pickUpAndSetDown":
+        case "pickUpDriverRequest":
+        case "pickUpAndSetDownDriverRequest":
             return PickupType.Pickup;
         case "setDown":
+        case "setDownDriverRequest":
+        case "noPickUpAndSetDown":
         case "pass":
             return PickupType.NoPickup;
         default:
@@ -26,9 +30,13 @@ export const getPickupTypeFromStopActivity = (activity?: string, isLastStop = fa
 export const getDropOffTypeFromStopActivity = (activity?: string, isFirstStop = false) => {
     switch (activity) {
         case "setDown":
+        case "setDownDriverRequest":
         case "pickUpAndSetDown":
+        case "pickUpAndSetDownDriverRequest":
             return DropOffType.DropOff;
         case "pickUp":
+        case "pickUpDriverRequest":
+        case "noPickUpAndSetDown":
         case "pass":
             return DropOffType.NoDropOff;
         default:

@@ -22,8 +22,12 @@ describe("utils", () => {
         it.each([
             ["pickUp", false, PickupType.Pickup],
             ["pickUpAndSetDown", false, PickupType.Pickup],
+            ["pickUpDriverRequest", false, PickupType.Pickup],
+            ["pickUpAndSetDownDriverRequest", false, PickupType.Pickup],
             ["setDown", false, PickupType.NoPickup],
+            ["setDownDriverRequest", false, PickupType.NoPickup],
             ["pass", false, PickupType.NoPickup],
+            ["noPickUpAndSetDown", false, PickupType.NoPickup],
             [undefined, false, PickupType.Pickup],
             [undefined, true, PickupType.NoPickup],
         ])("returns the correct pickup type for the activity", (activity, isLastStop, expected) => {
@@ -36,8 +40,12 @@ describe("utils", () => {
         it.each([
             ["pickUp", false, DropOffType.NoDropOff],
             ["pickUpAndSetDown", false, DropOffType.DropOff],
+            ["pickUpDriverRequest", false, DropOffType.NoDropOff],
+            ["pickUpAndSetDownDriverRequest", false, DropOffType.DropOff],
             ["setDown", false, DropOffType.DropOff],
+            ["setDownDriverRequest", false, DropOffType.DropOff],
             ["pass", false, DropOffType.NoDropOff],
+            ["noPickUpAndSetDown", false, DropOffType.NoDropOff],
             [undefined, true, DropOffType.NoDropOff],
             [undefined, false, DropOffType.DropOff],
         ])("returns the correct drop off type for the activity", (activity, isFirstStop, expected) => {

@@ -17,9 +17,19 @@ export const observationType = [
     "Stop not found in NaPTAN",
 ] as const;
 
-export const allowedLastStopActivity = ["setDown", "setDownDriverRequest", "pickUpAndSetDown"];
+export const allowedLastStopActivity = [
+    "setDown",
+    "setDownDriverRequest",
+    "pickUpAndSetDown",
+    "pickUpAndSetDownDriverRequest",
+];
 
-export const allowedFirstStopActivity = ["pickUp", "pickUpDriverRequest", "pickUpAndSetDown"];
+export const allowedFirstStopActivity = [
+    "pickUp",
+    "pickUpDriverRequest",
+    "pickUpAndSetDown",
+    "pickUpAndSetDownDriverRequest",
+];
 
 export const allowedStopTypes = ["BCT", "BCQ", "BCS", "BCE", "BST"];
 
