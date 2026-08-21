@@ -11,107 +11,39 @@ importers:
       '@bods-integrated-data/shared':
         specifier: workspace:^
         version: link:../../shared
-      adm-zip:
-        specifier: ^0.5.10
-        version: 0.5.10
-      fflate:
-        specifier: ^0.8.2
-        version: 0.8.2
-      node-stream-zip:
-        specifier: ^1.15.0
-        version: 1.15.0
-      yauzl:
-        specifier: ^3.1.1
-        version: 3.1.1
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
-      '@types/adm-zip':
-        specifier: ^0.5.5
-        version: 0.5.5
       '@types/aws-lambda':
-        specifier: ^8.10.110
-        version: 8.10.134
+        specifier: ^8.10.162
+        version: 8.10.162
       '@types/node':
-        specifier: ^20.11.19
-        version: 20.11.24
-      '@types/yauzl':
-        specifier: ^2.10.3
-        version: 2.10.3
+        specifier: ^24.13.2
+        version: 24.13.2
 
 packages:
 
-  '@types/adm-zip@0.5.5':
-    resolution: {integrity: sha512-YCGstVMjc4LTY5uK9/obvxBya93axZOVOyf2GSUulADzmLhYE45u2nAssCs/fWBs1Ifq5Vat75JTPwd5XZoPJw==}
+  '@types/aws-lambda@8.10.162':
+    resolution: {integrity: sha512-Fn658grtLOci1oxi1391vvDWJRKNGWRSqfxRkmN/Iy3c0tQH1USMKEXcPYHLvope+ZgTFocx9FRQJx1muBL6qw==}
 
-  '@types/aws-lambda@8.10.134':
-    resolution: {integrity: sha512-cfv422ivDMO+EeA3N4YcshbTHBL+5lLXe+Uz+4HXvIcsCuWvqNFpOs28ZprL8NA3qRCzt95ETiNAJDn4IcC/PA==}
+  '@types/node@24.13.2':
+    resolution: {integrity: sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA==}
 
-  '@types/node@20.11.24':
-    resolution: {integrity: sha512-Kza43ewS3xoLgCEpQrsT+xRo/EJej1y0kVYGiLFE1NEODXGzTfwiC6tXTLMQskn1X4/Rjlh0MQUvx9W+L9long==}
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
-  '@types/yauzl@2.10.3':
-    resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
-
-  adm-zip@0.5.10:
-    resolution: {integrity: sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==}
-    engines: {node: '>=6.0'}
-
-  buffer-crc32@0.2.13:
-    resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
-
-  fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
-
-  node-stream-zip@1.15.0:
-    resolution: {integrity: sha512-LN4fydt9TqhZhThkZIVQnF9cwjU3qmUH9h78Mx/K7d3VvfRqqwthLwJEUOEL0QPZ0XQmNN7be5Ggit5+4dq3Bw==}
-    engines: {node: '>=0.12.0'}
-
-  pend@1.2.0:
-    resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
-
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-
-  yauzl@3.1.1:
-    resolution: {integrity: sha512-MPxA7oN5cvGV0wzfkeHKF2/+Q4TkMpHSWGRy/96I4Cozljmx0ph91+Muxh6HegEtDC4GftJ8qYDE51vghFiEYA==}
-    engines: {node: '>=12'}
-
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
 snapshots:
 
-  '@types/adm-zip@0.5.5':
+  '@types/aws-lambda@8.10.162': {}
+
+  '@types/node@24.13.2':
     dependencies:
-      '@types/node': 20.11.24
+      undici-types: 7.18.2
 
-  '@types/aws-lambda@8.10.134': {}
+  undici-types@7.18.2: {}
 
-  '@types/node@20.11.24':
-    dependencies:
-      undici-types: 5.26.5
-
-  '@types/yauzl@2.10.3':
-    dependencies:
-      '@types/node': 20.11.24
-
-  adm-zip@0.5.10: {}
-
-  buffer-crc32@0.2.13: {}
-
-  fflate@0.8.2: {}
-
-  node-stream-zip@1.15.0: {}
-
-  pend@1.2.0: {}
-
-  undici-types@5.26.5: {}
-
-  yauzl@3.1.1:
-    dependencies:
-      buffer-crc32: 0.2.13
-      pend: 1.2.0
-
-  zod@3.23.8: {}
+  zod@3.25.76: {}

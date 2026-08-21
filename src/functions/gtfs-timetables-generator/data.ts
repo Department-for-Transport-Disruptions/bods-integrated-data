@@ -33,16 +33,14 @@ export const createTripTable = async (dbClient: KyselyDb) => {
                     "trip.destination_stop_ref",
                     "trip.departure_time",
                 ])
-                .orderBy([
-                    "trip.route_id",
-                    "trip.service_id",
-                    "trip.ticket_machine_journey_code",
-                    "trip.direction",
-                    "trip.origin_stop_ref",
-                    "trip.destination_stop_ref",
-                    "trip.departure_time",
-                    "trip.revision_number desc",
-                ]),
+                .orderBy("trip.route_id")
+                .orderBy("trip.service_id")
+                .orderBy("trip.ticket_machine_journey_code")
+                .orderBy("trip.direction")
+                .orderBy("trip.origin_stop_ref")
+                .orderBy("trip.destination_stop_ref")
+                .orderBy("trip.departure_time")
+                .orderBy("trip.revision_number", "desc"),
         )
         .execute();
 };
@@ -128,7 +126,7 @@ export const exportDataToS3 = async (queries: Query[], outputBucket: string, dbC
             }
 
             return sql`
-                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.getQuery())}',
+                SELECT * from aws_s3.query_export_to_s3('${sql.raw(query.getQuery().replace(/'/g, "''"))}',
                     aws_commons.create_s3_uri('${sql.raw(outputBucket)}', '${sql.raw(`${filePath}/${query.fileName}`)}.txt', 'eu-west-2'),
                     options :='${sql.raw(options)}'
                 );
@@ -161,17 +159,17 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                 .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("route", "route.id", "trip_region.route_id")
                 .innerJoin("agency", "agency.id", "route.agency_id")
-                .select(({ ref }) => [
-                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
+                .select(({ fn }) => [
+                    fn<string>("concat", [sql.lit("OP"), "route.agency_id"]).as("agency_id"),
                     "agency.name as agency_name",
                     "agency.url as agency_url",
-                    sql.lit<string>(`'Europe/London'`).as("agency_timezone"),
-                    sql.lit<string>(`'EN'`).as("agency_lang"),
+                    sql.lit<string>("Europe/London").as("agency_timezone"),
+                    sql.lit<string>("EN").as("agency_lang"),
                     "agency.phone as agency_phone",
                     "agency.noc as agency_noc",
                 ])
                 .distinct()
-                .orderBy("agency_id asc");
+                .orderBy("agency_id", "asc");
 
             return query.compile().sql;
         },
@@ -226,15 +224,15 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
             const query = dbClient
                 .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("route", "route.id", "trip_region.route_id")
-                .select(({ ref }) => [
+                .select(({ fn }) => [
                     "route.id as route_id",
-                    sql<string>`concat(${sql.lit<string>(`'OP'`)}, ${ref("route.agency_id")})`.as("agency_id"),
+                    fn<string>("concat", [sql.lit("OP"), "route.agency_id"]).as("agency_id"),
                     "route.route_short_name",
                     "route.route_long_name",
                     "route.route_type",
                 ])
                 .distinct()
-                .orderBy("route_id asc");
+                .orderBy("route_id", "asc");
 
             return query.compile().sql;
         },
@@ -270,7 +268,7 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                         eb("sunday", "=", eb.lit(1)),
                     ]),
                 )
-                .orderBy("service_id asc");
+                .orderBy("service_id", "asc");
 
             return query.compile().sql;
         },
@@ -303,7 +301,7 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                     "trip_region.wheelchair_accessible",
                     "trip_region.vehicle_journey_code",
                 ])
-                .orderBy("trip_region.route_id asc");
+                .orderBy("trip_region.route_id", "asc");
 
             return query.compile().sql;
         },
@@ -352,12 +350,12 @@ export const queryBuilder = (dbClient: KyselyDb, regionCode: RegionCode): Query[
                 .selectFrom(sql<Trip>`${sql.table(`trip_${regionCode}`)}`.as("trip_region"))
                 .innerJoin("calendar", "calendar.id", "trip_region.service_id")
                 .select(({ fn }) => [
-                    sql.lit<string>(`'Bus Open Data Service (BODS)'`).as("feed_publisher_name"),
-                    sql.lit<string>(`'https://www.bus-data.dft.gov.uk/'`).as("feed_publisher_url"),
-                    sql.lit<string>(`'EN'`).as("feed_lang"),
+                    sql.lit<string>("Bus Open Data Service (BODS)").as("feed_publisher_name"),
+                    sql.lit<string>("https://www.bus-data.dft.gov.uk/").as("feed_publisher_url"),
+                    sql.lit<string>("EN").as("feed_lang"),
                     fn.min("calendar.start_date").as("feed_start_date"),
                     fn.max("calendar.end_date").as("feed_end_date"),
-                    sql.lit<string>(`'${getDate().format("YYYYMMDD_HHmmss")}'`).as("feed_version"),
+                    sql.lit<string>(`${getDate().format("YYYYMMDD_HHmmss")}`).as("feed_version"),
                 ])
                 .distinct();
 

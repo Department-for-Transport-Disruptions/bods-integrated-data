@@ -4,14 +4,9 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
-}
-
-provider "aws" {
-  alias  = "us_east"
-  region = "us-east-1"
 }
 
 resource "aws_acm_certificate" "integrated_data_acm_certificate" {

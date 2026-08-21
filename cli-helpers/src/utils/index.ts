@@ -10,29 +10,42 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { logger } from "@bods-integrated-data/shared/logger";
 import { Option } from "@commander-js/extra-typings";
-import inquirer, { QuestionMap } from "inquirer";
+import { input, password, select } from "@inquirer/prompts";
 import { createLambdaClient, createSecretsManagerClient } from "./awsClients";
 
 export const STAGES = ["local", "dev", "test", "prod"];
 export const STAGE_OPTION = new Option("--stage <stage>", "Stage to use").choices(STAGES);
 
 type Prompt = {
-    type: keyof QuestionMap;
+    type: "input" | "list" | "password";
     choices?: string[];
     default?: string;
 };
 
 export const withUserPrompt = async (name: string, prompt: Prompt) => {
-    const response = await inquirer.prompt<{ [name: string]: string }>([
-        {
-            name,
-            type: prompt.type,
-            choices: prompt.choices,
-            default: prompt.default,
-        },
-    ]);
-
-    return response[name];
+    switch (prompt.type) {
+        case "input": {
+            const inputResponse = await input({
+                message: name,
+                default: prompt.default,
+            });
+            return inputResponse;
+        }
+        case "password": {
+            const passwordResponse = await password({
+                message: name,
+            });
+            return passwordResponse;
+        }
+        case "list": {
+            const response = await select({
+                message: name,
+                choices: prompt.choices || [],
+                default: prompt.default,
+            });
+            return response;
+        }
+    }
 };
 
 export const withUserPrompts = async <T extends { [key: string]: string }>(

@@ -66,7 +66,7 @@ export const getTflIBusData = async (dbClient: KyselyDb, lineId: string) =>
                                             .$narrowType<{
                                                 atco_code: NotNull;
                                             }>()
-                                            .orderBy(["tfl_stop_in_pattern.sequence_no asc"]),
+                                            .orderBy("tfl_stop_in_pattern.sequence_no", "asc"),
                                     ).as("stops"),
                                 ])
                                 .where("tfl_journey.type", "=", 1)

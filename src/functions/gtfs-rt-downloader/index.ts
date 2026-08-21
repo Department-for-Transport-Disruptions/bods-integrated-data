@@ -43,7 +43,7 @@ export const handler: Handler = async (
             throw new Error("Missing env vars - BUCKET_NAME must be set");
         }
 
-        logger.info("Retrieving GTFS-RT data", { queryParams: event.queryStringParameters });
+        logger.info({ queryParams: event.queryStringParameters }, "Retrieving GTFS-RT data");
 
         const queryParams = requestParamsSchema.parse(event.queryStringParameters);
 

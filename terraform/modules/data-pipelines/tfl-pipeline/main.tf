@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -127,7 +127,7 @@ module "integrated_data_tfl_timetable_retriever_function" {
   function_name   = "integrated-data-tfl-timetable-retriever"
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-timetable-retriever.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs24.x"
   timeout         = 600
   memory          = 512
   needs_db_access = var.environment != "local"
@@ -186,7 +186,7 @@ module "integrated_data_tfl_timetable_unzipper_function" {
   function_name = "integrated-data-tfl-timetable-unzipper"
   zip_path      = "${path.module}/../../../../src/functions/dist/tfl-timetable-unzipper.zip"
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs24.x"
   timeout       = 60
   memory        = 256
 
@@ -224,7 +224,7 @@ module "integrated_data_tfl_timetable_processor_function" {
   function_name   = "integrated-data-tfl-timetable-processor"
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-timetable-processor.zip"
   handler         = "index.handler"
-  runtime         = "nodejs20.x"
+  runtime         = "nodejs24.x"
   timeout         = 300
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -269,7 +269,7 @@ module "integrated_data_tfl_txc_line_id_retriever_function" {
   function_name   = "integrated-data-tfl-txc-line-id-retriever"
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-txc-line-id-retriever.zip"
   handler         = "index.handler"
-  runtime         = "nodejs22.x"
+  runtime         = "nodejs24.x"
   timeout         = 60
   memory          = 1024
   needs_db_access = var.environment != "local"
@@ -305,7 +305,7 @@ module "integrated_data_tfl_txc_generator_function" {
   function_name   = "integrated-data-tfl-txc-generator"
   zip_path        = "${path.module}/../../../../src/functions/dist/tfl-txc-generator.zip"
   handler         = "index.handler"
-  runtime         = "nodejs22.x"
+  runtime         = "nodejs24.x"
   timeout         = 300
   memory          = 2048
   needs_db_access = var.environment != "local"
@@ -361,7 +361,7 @@ module "integrated_data_tfl_txc_zipper_function" {
   function_name     = "integrated-data-tfl-txc-zipper"
   zip_path          = "${path.module}/../../../../src/functions/dist/tfl-txc-zipper.zip"
   handler           = "index.handler"
-  runtime           = "nodejs22.x"
+  runtime           = "nodejs24.x"
   timeout           = 300
   memory            = 5120
   ephemeral_storage = 5120
@@ -476,7 +476,7 @@ resource "aws_iam_policy" "integrated_data_tfl_txc_sfn_policy" {
           "states:RedriveExecution"
         ],
         "Resource" : [
-          "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:execution:${aws_sfn_state_machine.integrated_data_tfl_txc_sfn.name}/*"
+          "arn:aws:states:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:execution:${aws_sfn_state_machine.integrated_data_tfl_txc_sfn.name}/*"
         ]
       },
       {

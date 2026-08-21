@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.97"
+      version = "6.50"
     }
   }
 }
@@ -17,7 +17,7 @@ module "avl_validate" {
   zip_path         = "${path.module}/../../../../src/functions/dist/avl-validate.zip"
   handler          = "index.handler"
   memory           = 128
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs24.x"
   timeout          = 30
   needs_vpc_access = true
   custom_sg_id     = var.sg_id

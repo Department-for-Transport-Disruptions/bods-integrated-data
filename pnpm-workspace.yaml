@@ -1,0 +1,10 @@
+packages:
+  - "."
+  - "src/functions/**/*"
+  - "src/shared"
+  - "src"
+  - "cli-helpers"
+  - "integration-testing"
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true

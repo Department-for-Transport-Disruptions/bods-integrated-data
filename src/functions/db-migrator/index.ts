@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { getDatabaseClient } from "@bods-integrated-data/shared/database";
 import { errorMapWithDataLogging, logger, withLambdaRequestTracker } from "@bods-integrated-data/shared/logger";
 import { Handler } from "aws-lambda";
-import { FileMigrationProvider, Migrator } from "kysely";
+import { FileMigrationProvider, Migrator } from "kysely/migration";
 import { z } from "zod";
 
 z.setErrorMap(errorMapWithDataLogging);

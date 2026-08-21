@@ -24,14 +24,14 @@ jobs:
       changed_directories: ${{ steps.set-output-changed-directories.outputs.changed_directories }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
       - name: Get latest release
         id: latest-release
         if: inputs.stage == 'prod'
-        uses: pozetroninc/github-action-get-latest-release@master
+        uses: pozetroninc/github-action-get-latest-release@53d33d213ee71c72360e3c829caf7cee94ec21e2 # master
         with:
           repository: ${{ github.repository }}
           excludes: prerelease, draft
@@ -43,7 +43,7 @@ jobs:
 
       - name: Get changed directories
         id: changed-files
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           path: ${{ inputs.path }}
           dir_names: true
@@ -54,7 +54,7 @@ jobs:
 
       - name: Get changed files for shared code
         id: changed-files-shared-code
-        uses: tj-actions/changed-files@v42
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           path: ${{ inputs.shared_code_path }}
           dir_names_max_depth: 1

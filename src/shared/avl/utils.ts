@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import cleanDeep from "clean-deep";
 import { sync as commandExistsSync } from "command-exists";
-import { Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
 import { XMLBuilder } from "fast-xml-parser";
 import { sql } from "kysely";
 import { ZodIssue } from "zod";
@@ -397,7 +397,7 @@ export const getQueryForLatestAvl = (dbClient: KyselyDb, avlQueryOptions: AvlQue
         );
     }
 
-    return query.orderBy(["avl.operator_ref", "avl.vehicle_ref", "avl.recorded_at_time desc"]);
+    return query.orderBy("avl.operator_ref").orderBy("avl.vehicle_ref").orderBy("avl.recorded_at_time", "desc");
 };
 
 export const getAvlDataForSiriVm = async (
